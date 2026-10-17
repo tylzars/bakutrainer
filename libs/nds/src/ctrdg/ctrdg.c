@@ -15,7 +15,7 @@ extern CTRDGGlobal data_020cddc8;
 extern u8 data_020ce1f0[];
 extern vu16 data_04000300;
 
-// The cartridge header as read into the buffer, and the block of its fields written to main memory.
+// The cartridge header as read into the buffer.
 typedef struct {
     /* 00 */ u8 mUnk_00[0xac];
     /* ac */ u32 mUnk_ac;
@@ -25,63 +25,6 @@ typedef struct {
     /* b8 */ u8 mUnk_b8[6];
     /* be */ u16 mUnk_be;
 } CartHeader;
-
-typedef struct {
-    /* 00 */ u16 mUnk_00;
-    /* 02 */ u8 mUnk_02[3];
-    /* 05 */ u8 mUnk_05;
-    /* 06 */ u16 mUnk_06;
-    /* 08 */ u32 mUnk_08;
-} CartInfo;
-
-void func_020480c0(CTRDGTiming *t) {
-    t->rom1st = (REG_EXMEMCNT & 0xc) >> 2;
-    t->rom2nd = (REG_EXMEMCNT & 0x10) >> 4;
-    REG_EXMEMCNT = (REG_EXMEMCNT & ~0xc) | 0xc;
-    REG_EXMEMCNT = REG_EXMEMCNT & ~0x10;
-}
-
-void func_02048108(CTRDGTiming *t) {
-    REG_EXMEMCNT = (t->rom1st << 2) | (REG_EXMEMCNT & ~0xc);
-    REG_EXMEMCNT = (t->rom2nd << 4) | (REG_EXMEMCNT & ~0x10);
-}
-
-void func_0204813c(u16 id, CTRDGLock *l) {
-    for (;;) {
-        l->irq = OS_DisableInterrupts();
-        l->locked = OS_ReadOwnerOfLockWord((void *) 0x027fffe8) & 0x40;
-        if (l->locked) {
-            return;
-        }
-        if (OS_TryLockCartridge(id) == 0) {
-            return;
-        }
-        OS_RestoreInterrupts(l->irq);
-        WaitByLoop(1);
-    }
-}
-
-void func_02048198(u16 id, CTRDGLock *l) {
-    if (l->locked == 0) {
-        OS_UnLockCartridge(id);
-    }
-    OS_RestoreInterrupts(l->irq);
-}
-
-void func_020481bc(u32 data) {
-    while (PXI_SendWordByFifo(0xd, data, 0) != 0) {
-        WaitByLoop(1);
-    }
-}
-
-void func_0204820c(u32 v) {
-    u32 e = OS_DisableInterrupts();
-    data_020cdbe4 = v;
-    if (func_02047f74() == 0) {
-        func_0203edb0(0xf000, v ? 0x1000 : 0x5000);
-    }
-    OS_RestoreInterrupts(e);
-}
 
 void func_02048254(void) {
     if (data_020cdc00.init != 0) {

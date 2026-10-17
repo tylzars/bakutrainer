@@ -169,9 +169,11 @@ libs/nds/src/pm/pm.c:
 libs/nds/src/rtc/rtc.c:
     .text       start:0x02044500 end:0x02044c20
 
-// provisional: the file may start at 0x02047f3c
+libs/nds/src/ctrdg/ctrdg_init.c:
+    .text       start:0x02047f3c end:0x02048254
+
 libs/nds/src/ctrdg/ctrdg.c:
-    .text       start:0x020480c0 end:0x0204873c
+    .text       start:0x02048254 end:0x0204873c
 
 libs/nds/src/card/card_common.c:
     .text       start:0x02044c20 end:0x02046018
@@ -246,3 +248,13 @@ libs/msl/src/alloc.c:
 
 libs/msl/src/rt_global_ctors.c:
     .text       start:0x0204ded0 end:0x0204df14
+
+// provisional: the WM object starts before 0x020461fc (0x020461e4 and earlier); the wm_command/wm_api split is inferred
+libs/nds/src/wm/wm_command.c:
+    .text       start:0x020461fc end:0x02046478
+
+libs/nds/src/wm/wm_api.c:
+    .text       start:0x02046478 end:0x02047be4
+
+libs/nds/src/wm/wm_worker.c:
+    .text       start:0x02047be4 end:0x02047f3c

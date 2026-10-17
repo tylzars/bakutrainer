@@ -42,6 +42,18 @@ typedef struct CTRDGState {
     /* 02 */ u16 id;
 } CTRDGState;
 
+// Cartridge information block in main memory, filled from the cartridge header.
+typedef struct {
+    /* 00 */ u16 mUnk_00;
+    /* 02 */ u8 mUnk_02[3];
+    /* 05 */ struct {
+        u8 f0 : 1;
+        u8 f1 : 1;
+    } b;
+    /* 06 */ u16 mUnk_06;
+    /* 08 */ u32 mUnk_08;
+} CartInfo;
+
 typedef struct CTRDGGlobal {
     /* 00 */ void *work;
     /* 04 */ u8 mUnk_04[0x22];
@@ -50,6 +62,7 @@ typedef struct CTRDGGlobal {
 
 void func_02047f3c(void);
 int func_02047f74(void);
+int func_02047f9c(void);
 int func_02047fb4(void);
 void func_020480c0(CTRDGTiming *timing);
 void func_02048108(CTRDGTiming *timing);
