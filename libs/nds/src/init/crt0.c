@@ -296,6 +296,6 @@ asm void func_02000ab0(void) {
 void func_02000b98(void) {
 }
 
-// Empty hook: returns immediately.
-void func_02000b9c(void) {
+// Empty hook, called with the address of a library tag string: returns immediately.
+void func_02000b9c(const void *tag) {
 }

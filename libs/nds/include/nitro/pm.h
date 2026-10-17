@@ -32,7 +32,7 @@ int func_02043c00(u32 a, u32 b, void (*cb)(u32, u32 *), u32 *arg);
 int func_02043c88(u32 a, u32 b);
 int func_02043cbc(void (*cb)(u32, u32 *), u32 *arg);
 int func_02043d10(void);
-void func_02043d5c(void);
+int func_02043d5c(void);
 int func_02043d98(u32 value);
 int func_02043db0(u32 value);
 int func_02043de0(u32 value);

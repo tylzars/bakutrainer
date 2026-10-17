@@ -30,6 +30,10 @@ void MIi_CpuCopy16(const void *src, void *dest, u32 size);
 void MIi_CpuClear32(u32 data, void *dest, u32 size);
 void MIi_CpuCopy32(const void *src, void *dest, u32 size);
 void MIi_CpuClearFast(u32 data, void *dest, u32 size);
+
+static inline void MI_CpuClearFast(void *dest, u32 size) {
+    MIi_CpuClearFast(0, dest, size);
+}
 void MIi_CpuCopyFast(const void *src, void *dest, u32 size);
 void func_0203fda0(const void *src, void *dest);
 void MI_Copy36B(const void *src, void *dest);

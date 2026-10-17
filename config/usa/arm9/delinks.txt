@@ -172,3 +172,9 @@ libs/nds/src/rtc/rtc.c:
 // provisional: the file may start at 0x02047f3c
 libs/nds/src/ctrdg/ctrdg.c:
     .text       start:0x020480c0 end:0x0204873c
+
+libs/nds/src/card/card_common.c:
+    .text       start:0x02044c20 end:0x02046018
+
+libs/nds/src/card/card_pullout.c:
+    .text       start:0x02046018 end:0x020461e4

@@ -3,9 +3,6 @@
 #include <nitro/os.h>
 #include <nitro/cp.h>
 
-// The thread-info block inside the thread system object (current thread, thread list, switch callback).
-extern char data_020ca730[];
-
 // func_01ff8000: top-level interrupt dispatcher. Reads the interrupt master
 // enable (register at +0x208 from 0x04000000); returns at once if it is zero.
 // Otherwise ANDs the enable and request words (+0x210, +0x214); returns if no

@@ -6,17 +6,6 @@
 #include <nitro/mi.h>
 
 typedef struct {
-    u16 isNeedRescheduling;
-    u16 irqDepth;
-    OSThread *current;
-    OSThread *list;
-    void (*switchCallback)(OSThread *, OSThread *);
-    OSThread idleThread;
-    OSThread mainThread;
-    u8 idleStack[0xc8];
-} OSThreadInfo;
-
-typedef struct {
     void (*switchHook)(OSThread *, OSThread *);
     u32 schedulerLock;
     OSThread **pCurrent;

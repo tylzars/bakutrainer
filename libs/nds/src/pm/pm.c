@@ -323,7 +323,7 @@ int func_02043d10(void) {
     return r;
 }
 
-void func_02043d5c(void) {
+int func_02043d5c(void) {
     if (func_02043d10() != 0) {
         do {
             OS_SpinWait(PM_RETRY_WAIT);

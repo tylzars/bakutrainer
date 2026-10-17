@@ -10,7 +10,7 @@ void func_02000a1c(void);
 void AutoloadCallback(void);
 void func_02000ab0(void);
 void func_02000b98(void);
-void func_02000b9c(void);
+void func_02000b9c(const void *tag);
 
 // Parameter block read by the start-up code: autoload list start and end, first autoload source,
 // BSS start and end, end of the compressed part, SDK version word, markers and library strings.

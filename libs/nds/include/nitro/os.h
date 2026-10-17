@@ -85,6 +85,21 @@ struct OSThread {
     /* bc */ int systemErrno;
 }; /* c0 */
 
+// Thread-info block: scheduler state, current thread, thread list, switch callback, the idle and main threads and
+// the idle thread's stack.
+typedef struct {
+    /* 00 */ u16 isNeedRescheduling;
+    /* 02 */ u16 irqDepth;
+    /* 04 */ OSThread *current;
+    /* 08 */ OSThread *list;
+    /* 0c */ void (*switchCallback)(OSThread *, OSThread *);
+    /* 10 */ OSThread idleThread;
+    /* d0 */ OSThread mainThread;
+    /* 190 */ u8 idleStack[0xc8];
+} OSThreadInfo;
+
+extern OSThreadInfo data_020ca730;
+
 struct OSMutex {
     /* 00 */ OSThreadQueue queue;
     /* 08 */ OSThread *thread;
