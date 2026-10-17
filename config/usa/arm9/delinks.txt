@@ -246,7 +246,7 @@ libs/msl/src/msl_fpclassify.c:
 libs/msl/src/alloc.c:
     .text       start:0x0204bfac end:0x0204bfc4
 
-libs/msl/src/rt_global_ctors.c:
+libs/msl/src/rt_global_ctors.cpp:
     .text       start:0x0204ded0 end:0x0204df14
 
 // provisional: the WM object starts before 0x020461fc (0x020461e4 and earlier); the wm_command/wm_api split is inferred

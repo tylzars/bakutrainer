@@ -1530,7 +1530,7 @@ _s32_div_f kind:function(arm,size=0x20c) addr:0x0204dae0
 _u32_div_f kind:function(arm,size=0x1e4) addr:0x0204dcec
 .L_0204dcf4 kind:label(arm) addr:0x0204dcf4
 func_0204ded0 kind:function(arm,size=0x4) addr:0x0204ded0
-func_0204ded4 kind:function(arm,size=0x14) addr:0x0204ded4
+_ZdlPv kind:function(arm,size=0x14) addr:0x0204ded4
 func_0204dee8 kind:function(arm,size=0x2c) addr:0x0204dee8
 func_02052468 kind:function(arm,size=0x38) addr:0x02052468
 func_02052e28 kind:function(arm,size=0x4) addr:0x02052e28

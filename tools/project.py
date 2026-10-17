@@ -61,6 +61,12 @@ PATH_DROP_FLAGS = {
 # Flags added for sources under these paths. A game with Thumb code: "src/": ["-thumb"], with an empty list for an
 # ARM-only folder or file. An ARM function inside a Thumb file can be written between `#pragma thumb off` and
 # `#pragma thumb on` instead (same code as compiling it in an ARM file).
+# C++ dialect (-lang) for .cpp sources under these paths; others use c++.
+PATH_CPP_DIALECT = {
+    # verified: operator delete builds as the original (no exception-specification frame, exception entry 0x15/0x100000,
+    # symbol _ZdlPv) only as Embedded C++; plain C++ requires throw() on it, which adds a frame
+    "libs/msl/": "ec++",
+}
 PATH_ADD_FLAGS = {
     "src/": ["-thumb"],  # most game code is Thumb; ARM game files or folders get an empty list
     # verified: the exception index holds exactly the non-leaf C runtime functions, word for word
@@ -102,7 +108,12 @@ def source_flags(src) -> tuple[str | None, list[str]]:
     """(compiler version or None for MWCC_VERSION, compiler flags) for one source file, language flag included."""
     drop = path_setting(PATH_DROP_FLAGS, src, [])
     flags = [f for f in CC_FLAGS if f not in drop] + path_setting(PATH_ADD_FLAGS, src, [])
-    return path_setting(PATH_COMPILERS, src), flags + ["-lang=c++" if str(src).endswith(".cpp") else "-lang=c"]
+    return path_setting(PATH_COMPILERS, src), flags + [lang_flag(src)]
+
+
+def lang_flag(src) -> str:
+    """The -lang flag for one source file: C, or the path's C++ dialect for a .cpp file."""
+    return "-lang=" + (path_setting(PATH_CPP_DIALECT, src, "c++") if str(src).endswith(".cpp") else "c")
 
 
 LD_FLAGS = [

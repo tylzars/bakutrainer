@@ -26,7 +26,7 @@ import struct
 import subprocess
 import sys
 from pathlib import Path
-from project import CC_FLAGS, MWCC_VERSION, VERSION, module_base, source_flags  # noqa: E402  (tools/project.py)
+from project import CC_FLAGS, MWCC_VERSION, VERSION, lang_flag, module_base, source_flags  # noqa: E402  (tools/project.py)
 
 ROOT = Path(__file__).resolve().parent.parent
 WIBO = ROOT / "tools/bin/wibo"
@@ -200,6 +200,8 @@ def main() -> None:
     if not probes:
         raise SystemExit("no // PROBE: lines in source")
     lang = "-lang=c++ -Cpp_exceptions off -RTTI off" if a.source.suffix == ".cpp" else "-lang=c"
+    if a.unit:  # the unit's own language and dialect; its flags already say whether exceptions are on
+        lang = lang_flag(a.unit)
     base_flags = BASE_FLAGS
     if a.unit:
         version, flags = unit_flags(a.unit)

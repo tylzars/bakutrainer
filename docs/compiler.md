@@ -167,6 +167,10 @@ written as C give these exact matches with every 2.0 build:
 - `-Cpp_exceptions on` for the C runtime: the exception index at 0x0204df1c lists exactly its non-leaf functions.
   Compiled with the flag, the code is byte-identical and each `.exceptix` entry equals the ROM's entry word for word
   (e.g. `qsort` size+1 0x165, info 0x70ff00; `memset` 0x15, 0x100100); leaf functions get none, as in the ROM.
+- Its C++ file (`rt_global_ctors.cpp`: `operator delete` and the start-up hooks) is Embedded C++ (`-lang=ec++`,
+  `PATH_CPP_DIALECT`). As plain C++ the compiler insists on `throw()` for `operator delete`, which adds an
+  exception-specification frame (`push {fp, lr}`, 24-byte frame, entry 0x38/0) that the ROM lacks. As Embedded C++
+  the code, the symbol `_ZdlPv` and the exception entry (0x15, 0x100000) are exactly the ROM's.
 
 Reproduce: `python3 tools/probe_compilers.py <probe>.c --unit <source path>` (or `--only 2.0 --flags=...` for a
 sweep); the library numbers come from compiling each matched source file with `-O4,p -ipa file -enum int` and the

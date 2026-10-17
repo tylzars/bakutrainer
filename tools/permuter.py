@@ -153,7 +153,7 @@ class Scorer:
             self.orig = gblob[ga - gbase: ga - gbase + gl]
         else:
             self.orig = blob[self.addr - base: self.addr - base + pc.orig_size(self.mod, self.addr)]
-        self.lang = "-lang=c++ -Cpp_exceptions off -RTTI off" if a.src.suffix == ".cpp" else "-lang=c"
+        self.lang = pc.lang_flag(a.unit or a.src)  # the unit's flags already say whether exceptions are on
         thumb_target = not getattr(a, "goal", None) and pc.orig_function(self.mod, self.addr)[1]
         self.mode = "-thumb" if thumb_target and "-thumb" not in a.cc_flags.split() else ""
         self.thumb = "-thumb" in (a.cc_flags + " " + self.mode).split()

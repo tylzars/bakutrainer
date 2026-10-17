@@ -55,9 +55,8 @@ int func_0204be94(unsigned long long x);
 int func_0204bf28(double x);
 int func_0204bf3c(double x);
 
-// Free a block unless the pointer is null (the second is the one compiled C++ calls for delete).
+// Frees a block unless the pointer is null (operator delete calls it).
 void func_02048b3c(void *ptr);
-void func_0204ded4(void *ptr);
 
 // Start-up hooks of the C runtime: an empty one and the walk over the static-initializer table.
 void func_0204ded0(void);
