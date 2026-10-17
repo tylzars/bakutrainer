@@ -1,1 +1,2 @@
 # Data symbols the original link kept although nothing references them.
+BuildInfo
