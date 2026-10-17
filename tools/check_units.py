@@ -9,7 +9,8 @@ original functions in the range (labels excepted). Every module with a delinks.t
   check_units.py
 """
 import re
-import subprocess
+
+from elftools.elf.elffile import ELFFile
 import sys
 from pathlib import Path
 
@@ -58,9 +59,13 @@ def check_module(module):
             probs.append(f"overlaps {units[i + 1][2]}")
         obj = BUILD / re.sub(r"\.(c|cpp|s)$", ".o", src)
         if obj.exists():
-            nm = subprocess.run(["arm-none-eabi-nm", "--defined-only", str(obj)], capture_output=True, text=True).stdout
-            defined = {w[2] for w in (l.split() for l in nm.splitlines())
-                       if len(w) == 3 and w[1] in "Tt" and not w[2].startswith(("$", "@", "."))}
+            # every defined function symbol, whatever its binding (inline C++ functions get an unusual one)
+            with open(obj, "rb") as f:
+                elf = ELFFile(f)
+                kind = "STT_OBJECT" if data_only else "STT_FUNC"  # a data unit holds objects, a code unit functions
+                defined = {sym.name for sym in elf.get_section_by_name(".symtab").iter_symbols()
+                           if sym["st_info"]["type"] == kind and sym["st_shndx"] != "SHN_UNDEF"
+                           and not sym.name.startswith(("$", "@", "."))}
             # a data-only unit holds every data symbol in its range
             names = {f[2] for f in orig} | ({n for a, n in data_starts.items() if start <= a < end} if data_only else set())
             if missing := sorted(names - defined - labels):
