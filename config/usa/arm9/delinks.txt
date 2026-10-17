@@ -168,3 +168,7 @@ libs/nds/src/pm/pm.c:
 
 libs/nds/src/rtc/rtc.c:
     .text       start:0x02044500 end:0x02044c20
+
+// provisional: the file may start at 0x02047f3c
+libs/nds/src/ctrdg/ctrdg.c:
+    .text       start:0x020480c0 end:0x0204873c

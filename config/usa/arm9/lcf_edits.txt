@@ -1,1 +1,3 @@
 # place / alias / inner edits for the linker script, see tools/lcf_force_active.py.
+# Register read through a symbol by the cartridge code (scheduling).
+alias data_04000300 0x04000300 0
