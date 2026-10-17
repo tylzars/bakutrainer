@@ -1,0 +1,50 @@
+// Protection-unit and CP15 control helpers, hand-written assembly.
+
+#include <nitro/os.h>
+
+// Reads the data TCM region register (c9,c1,0) and returns it with the low 12
+// bits cleared (mask 0xfffff000, kept in a literal word).
+asm u32 func_0203ed7c(void) {
+    mrc p15, 0, r0, c9, c1, 0
+    ldr r1, =0xfffff000
+    and r0, r0, r1
+    bx lr
+}
+
+// Sets bit 0 of the control register (c1,c0,0).
+asm void func_0203ed90(void) {
+    mrc p15, 0, r0, c1, c0, 0
+    orr r0, r0, #1
+    mcr p15, 0, r0, c1, c0, 0
+    bx lr
+}
+
+// Clears bit 0 of the control register (c1,c0,0).
+asm void func_0203eda0(void) {
+    mrc p15, 0, r0, c1, c0, 0
+    bic r0, r0, #1
+    mcr p15, 0, r0, c1, c0, 0
+    bx lr
+}
+
+// func_0203edb0(clear, set): read-modify-write of register c5,c0,2:
+// value = (value & ~clear) | set.
+asm void func_0203edb0(u32 clear, u32 set) {
+    mrc p15, 0, r2, c5, c0, 2
+    bic r2, r2, r0
+    orr r2, r2, r1
+    mcr p15, 0, r2, c5, c0, 2
+    bx lr
+}
+
+// OS_SetProtectionRegion1(value): writes r0 to region register c6,c1,0.
+asm void OS_SetProtectionRegion1(u32 value) {
+    mcr p15, 0, r0, c6, c1, 0
+    bx lr
+}
+
+// OS_SetProtectionRegion2(value): writes r0 to region register c6,c2,0.
+asm void OS_SetProtectionRegion2(u32 value) {
+    mcr p15, 0, r0, c6, c2, 0
+    bx lr
+}
