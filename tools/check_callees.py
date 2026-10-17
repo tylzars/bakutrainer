@@ -39,10 +39,12 @@ def original_callees(blob, base, start, size, thumb=False):
             continue
         word = struct.unpack_from("<I", blob, site - base)[0]
         cond = word >> 28
-        if word & 0x0F000000 == 0x0B000000 and cond != 0xF:  # BL
+        if word & 0x0E000000 == 0x0A000000 and cond != 0xF:  # BL, and B (a tail call when it targets a function)
             d = word & 0xFFFFFF
             d -= (1 << 24) if d & 0x800000 else 0
-            out[(site + 8 + d * 4) | 1] += 1
+            target = site + 8 + d * 4
+            if not start <= target < start + size:  # a branch within the function is a loop, not a call
+                out[target | 1] += 1
         elif cond == 0xF and word & 0x0E000000 == 0x0A000000:  # BLX imm
             d = word & 0xFFFFFF
             d -= (1 << 24) if d & 0x800000 else 0

@@ -29,6 +29,7 @@ def check_module(module):
     text = (cfg / "symbols.txt").read_text()
     funcs = sorted((int(m.group(3), 16), int(m.group(2), 16), m.group(1)) for m in SYM.finditer(text))
     labels = set(re.findall(r"^(\S+) kind:label", text, re.M))
+    data_starts = {int(m.group(2), 16): m.group(1) for m in re.finditer(r"^(\S+) kind:data\S* addr:(0x[0-9a-f]+)", text, re.M)}
     units = []
     for m in re.finditer(r"^(\S+\.(?:c|cpp|s)):\n((?:    .*\n?)+)", (cfg / "delinks.txt").read_text(), re.M):
         t = re.search(r"\.text\s+start:(0x[0-9a-f]+) end:(0x[0-9a-f]+)", m.group(2))
@@ -41,13 +42,14 @@ def check_module(module):
     for i, (start, end, src, done) in enumerate(units):
         probs = []
         orig = [f for f in funcs if start <= f[0] < end]
-        if not orig or orig[0][0] != start:
+        data_only = not orig and start in data_starts  # a unit of data only (an assembled table)
+        if (not orig or orig[0][0] != start) and not data_only:
             probs.append(f"start {start:#x} is not a function start")
         if start % 4 or end % 4:
             # The linker places every section on a 4-byte boundary: an end at a halfword (after a Thumb function)
             # moves everything after the unit. End the range after the padding.
             probs.append(f"range {start:#x}-{end:#x} is not 4-byte aligned")
-        last = max((f[0] + f[1] for f in orig), default=start)
+        last = max((f[0] + f[1] for f in orig), default=end if data_only else start)
         if last > end:
             probs.append(f"a function runs past the end ({last:#x})")
         elif any(code[last - base:end - base]):
@@ -59,7 +61,7 @@ def check_module(module):
             nm = subprocess.run(["arm-none-eabi-nm", "--defined-only", str(obj)], capture_output=True, text=True).stdout
             defined = {w[2] for w in (l.split() for l in nm.splitlines())
                        if len(w) == 3 and w[1] in "Tt" and not w[2].startswith(("$", "@", "."))}
-            names = {f[2] for f in orig}
+            names = {f[2] for f in orig} | ({data_starts[start]} if data_only else set())
             if missing := sorted(names - defined - labels):
                 probs.append("in the range but not in the source: " + ", ".join(missing))
             variants = {XTOR.sub(r"\1?\2", n) for n in names}
