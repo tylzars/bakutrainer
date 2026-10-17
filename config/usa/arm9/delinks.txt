@@ -178,3 +178,16 @@ libs/nds/src/card/card_common.c:
 
 libs/nds/src/card/card_pullout.c:
     .text       start:0x02046018 end:0x020461e4
+
+// provisional: the split from fs_archive.c at 0x02041a78 is inferred from the handler table's end
+libs/nds/src/fs/fs_command.c:
+    .text       start:0x02040eec end:0x02041a78
+
+libs/nds/src/fs/fs_archive.c:
+    .text       start:0x02041a78 end:0x020421d0
+
+libs/nds/src/fs/fs_file.c:
+    .text       start:0x020421d0 end:0x02042660
+
+libs/nds/src/fs/fs_rom.c:
+    .text       start:0x02042660 end:0x02042898
