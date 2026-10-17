@@ -1,0 +1,13 @@
+diff --git a/lib/src/rom/raw/banner.rs b/lib/src/rom/raw/banner.rs
+index 01b6862..189fcc9 100644
+--- a/lib/src/rom/raw/banner.rs
++++ b/lib/src/rom/raw/banner.rs
+@@ -329,7 +329,7 @@ impl BannerVersion {
+         match self {
+             BannerVersion::Original => 0x840,
+             BannerVersion::China => 0x940,
+-            BannerVersion::Korea => 0x1240,
++            BannerVersion::Korea => 0xa40,
+             BannerVersion::Animated => 0x23c0,
+         }
+     }
