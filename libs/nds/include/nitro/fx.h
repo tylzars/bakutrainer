@@ -8,6 +8,9 @@ static inline fx32 FX_Mul(fx32 v1, fx32 v2) {
     return (fx32) (((fx64) v1 * v2 + 0x800LL) >> FX32_SHIFT);
 }
 
+// Sine and cosine of 4096 angles, interleaved (sin, cos), in fx16.
+extern const s16 FX_SinCosTable_[];
+
 // 3D vector of fixed-point values.
 typedef struct {
     fx32 x;

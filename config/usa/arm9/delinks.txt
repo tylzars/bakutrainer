@@ -191,3 +191,58 @@ libs/nds/src/fs/fs_file.c:
 
 libs/nds/src/fs/fs_rom.c:
     .text       start:0x02042660 end:0x02042898
+
+// provisional: the C runtime's file splits follow function contiguity; the ROM shows no object edges inside it
+libs/nds/src/math/math_util.c:
+    .text       start:0x0204873c end:0x02048780
+
+libs/nds/src/math/math_crc.c:
+    .text       start:0x02048780 end:0x0204882c
+
+libs/nds/src/math/math_fft.c:
+    .text       start:0x0204882c end:0x02048b3c
+
+libs/msl/src/free_ptr.c:
+    .text       start:0x02048b3c end:0x02048b50
+
+libs/msl/src/abs.c:
+    .text       start:0x02048b50 end:0x02048b5c
+
+libs/msl/src/mbstring.c:
+    .text       start:0x02048b5c end:0x02048c3c
+
+libs/msl/src/mem.c:
+    .text       start:0x02048c3c end:0x02048d8c
+
+libs/msl/src/printf.c:
+    .text       start:0x02048d8c end:0x0204aedc
+
+libs/msl/src/qsort.c:
+    .text       start:0x0204aedc end:0x0204b040
+
+libs/msl/src/string.c:
+    .text       start:0x0204b040 end:0x0204b1b0
+
+libs/msl/src/s_copysign.c:
+    .text       start:0x0204b1b0 end:0x0204b1d8
+
+libs/msl/src/s_fabs.c:
+    .text       start:0x0204b1d8 end:0x0204b1f8
+
+libs/msl/src/s_frexp.c:
+    .text       start:0x0204b1f8 end:0x0204b2b4
+
+libs/msl/src/s_scalbn.c:
+    .text       start:0x0204b2b4 end:0x0204b500
+
+libs/msl/src/float_digits.c:
+    .text       start:0x0204b500 end:0x0204bf28
+
+libs/msl/src/msl_fpclassify.c:
+    .text       start:0x0204bf28 end:0x0204bfac
+
+libs/msl/src/alloc.c:
+    .text       start:0x0204bfac end:0x0204bfc4
+
+libs/msl/src/rt_global_ctors.c:
+    .text       start:0x0204ded0 end:0x0204df14

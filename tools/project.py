@@ -56,13 +56,15 @@ PATH_COMPILERS = {
 # Flags from CC_FLAGS that sources under these paths must not get.
 PATH_DROP_FLAGS = {
     "libs/nds/": ["-inline on,noauto"],  # the libraries' default inlining (not separated from on,noauto)
-    "libs/msl/": ["-inline on,noauto"],
+    "libs/msl/": ["-inline on,noauto", "-Cpp_exceptions off"],
 }
 # Flags added for sources under these paths. A game with Thumb code: "src/": ["-thumb"], with an empty list for an
 # ARM-only folder or file. An ARM function inside a Thumb file can be written between `#pragma thumb off` and
 # `#pragma thumb on` instead (same code as compiling it in an ARM file).
 PATH_ADD_FLAGS = {
     "src/": ["-thumb"],  # most game code is Thumb; ARM game files or folders get an empty list
+    # verified: the exception index holds exactly the non-leaf C runtime functions, word for word
+    "libs/msl/": ["-Cpp_exceptions on"],
 }
 
 

@@ -9,7 +9,7 @@ to reproduce it; a setting with no exact match that breaks when it changes is un
 |---|---|---|---|
 | Game code (main; most of it Thumb) | CodeWarrior for DS 2.0 **sp2p3** (sp2p2 or later shown; sp2p3 rests on one assumption) | `-O4,p -ipa file -inline on,noauto -enum int -char signed -str reuse`, C; `-thumb` for Thumb code | 26 probe functions, below |
 | NitroSDK | 2.0 sp1 ... sp2p2 give the same bytes; built with **sp1p5** | `-O4,p -ipa file -enum int`, C, default inlining | 313 functions, below |
-| C runtime (MSL) | same build as NitroSDK | NitroSDK's flags with `-char signed` | 52 functions, below |
+| C runtime (MSL) | same build as NitroSDK | NitroSDK's flags with `-char signed -Cpp_exceptions on` | 52 functions, below |
 | Mobiclip glue code | as the game | as the game | below |
 
 The game has no overlays. `tools/project.py` sets these through `MWCC_VERSION`, `CC_FLAGS`,
@@ -164,6 +164,9 @@ written as C give these exact matches with every 2.0 build:
 - `-inline on,noauto` changes none of them; the build drops it for `libs/` (the libraries' default inlining, not
   separated from the game's setting).
 - `_ull_mod` (0x0204da84) doesn't come out of C on any build or set.
+- `-Cpp_exceptions on` for the C runtime: the exception index at 0x0204df1c lists exactly its non-leaf functions.
+  Compiled with the flag, the code is byte-identical and each `.exceptix` entry equals the ROM's entry word for word
+  (e.g. `qsort` size+1 0x165, info 0x70ff00; `memset` 0x15, 0x100100); leaf functions get none, as in the ROM.
 
 Reproduce: `python3 tools/probe_compilers.py <probe>.c --unit <source path>` (or `--only 2.0 --flags=...` for a
 sweep); the library numbers come from compiling each matched source file with `-O4,p -ipa file -enum int` and the

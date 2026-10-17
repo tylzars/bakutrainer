@@ -8380,6 +8380,7 @@ from:0x0204ade4 kind:load to:0x02064720 module:main
 from:0x0204ade8 kind:load to:0x02064724 module:main
 from:0x0204ae18 kind:arm_call to:0x02048c3c module:main
 from:0x0204ae58 kind:arm_call to:0x0204a5c8 module:main
+from:0x0204ae94 kind:load to:0x0204adec module:main
 from:0x0204aeac kind:load to:0x0204ae30 module:main
 from:0x0204aecc kind:arm_call to:0x0204ae30 module:main
 from:0x0204b254 kind:arm_call to:0x0204c3f4 module:main
@@ -8466,6 +8467,7 @@ from:0x0204bfc0 kind:load to:0x0203eb3c module:main
 from:0x0204d904 kind:arm_call to:0x0204dae0 module:main
 from:0x0204daa8 kind:arm_call to:0x0204dcf4 module:main
 from:0x0204dee0 kind:arm_call to:0x02048b3c module:main
+from:0x0204df10 kind:link_time_const(ARM9_CTOR_START)
 from:0x0204df1c kind:load to:0x02048b3c module:main
 from:0x0204df28 kind:load to:0x02048ba8 module:main
 from:0x0204df34 kind:load to:0x02048bc4 module:main
