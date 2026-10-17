@@ -1,2 +1,6 @@
 # Data symbols the original link kept although nothing references them.
 BuildInfo
+# Zero fill before the game code at 0x02001000 and before main at 0x02003000: nothing references it, but the
+# original image has it.
+data_02000c04
+data_020011dc

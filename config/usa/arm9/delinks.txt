@@ -264,3 +264,13 @@ libs/mobiclip/src/mobiclip_api.cpp:
 
 libs/mobiclip/src/mobiclip_player.cpp:
     .text       start:0x0203a054 end:0x0203af68
+
+// provisional: no evidence yet for where these files begin and end
+src/Main/Unknown/arm_system.c:
+    .text       start:0x02001000 end:0x020011dc
+
+src/Main/Boot/main.c:
+    .text       start:0x02003000 end:0x02003194
+
+src/Main/Unknown/falling_blocks.c:
+    .text       start:0x02003194 end:0x02004254

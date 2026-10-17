@@ -2,7 +2,7 @@
 #include <nitro/fs.h>
 #include <nitro/init.h>
 #include <nitro/mi.h>
-#include <Main/Unknown/heap.h>
+#include <Main/Unknown/functions.h>
 
 void *Player::operator new(unsigned long size) {
     return func_0202f500(size);
