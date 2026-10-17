@@ -61,7 +61,8 @@ def check_module(module):
             nm = subprocess.run(["arm-none-eabi-nm", "--defined-only", str(obj)], capture_output=True, text=True).stdout
             defined = {w[2] for w in (l.split() for l in nm.splitlines())
                        if len(w) == 3 and w[1] in "Tt" and not w[2].startswith(("$", "@", "."))}
-            names = {f[2] for f in orig} | ({data_starts[start]} if data_only else set())
+            # a data-only unit holds every data symbol in its range
+            names = {f[2] for f in orig} | ({n for a, n in data_starts.items() if start <= a < end} if data_only else set())
             if missing := sorted(names - defined - labels):
                 probs.append("in the range but not in the source: " + ", ".join(missing))
             variants = {XTOR.sub(r"\1?\2", n) for n in names}
