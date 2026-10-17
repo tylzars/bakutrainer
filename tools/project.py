@@ -37,7 +37,7 @@ DSD_INIT_FLAGS = ["--allow-unknown-function-calls"]
 # ---- compilers ---------------------------------------------------------------------------------------------------
 # Pin each code family by evidence (tools/probe_compilers.py) and record the evidence in docs/compiler.md.
 # Game code and each library are often built with different CodeWarrior versions.
-MWCC_VERSION = "2.0/sp2p2"          # game code: a guess until probed
+MWCC_VERSION = "2.0/sp2p3"          # game code: 2.0 sp2p2 or later shown; sp2p3 rests on one assumption (docs/compiler.md)
 # decomp.me's compiler id for each installed build (from decomp.me's compiler list), for objdiff's scratch button.
 DECOMP_ME_IDS = {
     "1.2/b56": "mwcc_20_56", "1.2/base": "mwcc_20_72", "1.2/sp2": "mwcc_20_79", "1.2/sp2p3": "mwcc_20_82",
@@ -50,17 +50,19 @@ DECOMP_ME_COMPILER = DECOMP_ME_IDS.get(MWCC_VERSION)  # None: no decomp.me id (D
 # Sources under these paths (folders or single files; the longest matching prefix wins) compile with another
 # installed version (folders under tools/mwccarm/).
 PATH_COMPILERS = {
-    # "libs/nds/": "2.0/sp1p5",
+    "libs/nds/": "2.0/sp1p5",  # NitroSDK: sp1 ... sp2p2 give the same bytes (docs/compiler.md)
+    "libs/msl/": "2.0/sp1p5",  # C runtime, built with the SDK
 }
 # Flags from CC_FLAGS that sources under these paths must not get.
 PATH_DROP_FLAGS = {
-    # "libs/nds/": ["-inline on,noauto"],
+    "libs/nds/": ["-inline on,noauto"],  # the libraries' default inlining (not separated from on,noauto)
+    "libs/msl/": ["-inline on,noauto"],
 }
 # Flags added for sources under these paths. A game with Thumb code: "src/": ["-thumb"], with an empty list for an
 # ARM-only folder or file. An ARM function inside a Thumb file can be written between `#pragma thumb off` and
 # `#pragma thumb on` instead (same code as compiling it in an ARM file).
 PATH_ADD_FLAGS = {
-    # "src/": ["-thumb"],
+    "src/": ["-thumb"],  # most game code is Thumb; ARM game files or folders get an empty list
 }
 
 
@@ -70,22 +72,22 @@ def path_setting(table: dict, path, default=None):
     return table[max(keys, key=len)] if keys else default
 
 
-# Compiler flags for game code: a common starting point for DS CodeWarrior games, not evidence for this game.
-# Check each against the original's codegen (tools/probe_compilers.py), note the evidence beside it as "verified: ...",
-# and record it in docs/compiler.md. Library folders drop flags through PATH_DROP_FLAGS.
+# Compiler flags for game code, each checked against this game's code as noted ("verified" = an exact match that
+# breaks when the flag changes); the evidence is in docs/compiler.md. Library folders drop flags through
+# PATH_DROP_FLAGS.
 CC_FLAGS = [
-    "-O4,p",              # optimization level: -O4,s / -O3,p / -O2 differ in inlining and register allocation
-    "-ipa file",
-    "-inline on,noauto",  # auto would inline same-unit calls that games usually keep out of line
-    "-enum int",
-    "-char signed",       # plain-char loads: ldrsb when signed
-    "-str noreuse",       # identical literals in one file stay separate copies; games differ (check: docs/compiler.md)
-    "-proc arm946e",
+    "-O4,p",              # verified: -O4,s and -O2 miss; -O3,p not separated
+    "-ipa file",          # verified: duplicate pool words for in-file globals
+    "-inline on,noauto",  # verified against auto (inlines same-file calls); not separated from the default
+    "-enum int",          # not separated
+    "-char signed",       # verified for the C runtime and the Mobiclip glue code; not separated in game code
+    "-str reuse",         # verified: one copy of a literal serves three functions
+    "-proc arm946e",      # verified: arm9tdmi misses
     "-gccext,on",
     "-fp soft",
     "-Cpp_exceptions off",
     "-RTTI off",          # vtables without a typeinfo pointer
-    "-interworking",      # leaf returns are bx lr
+    "-interworking",      # verified: leaf returns are bx lr
     "-w off",
     "-sym on",
     "-gccinc",            # treat #include "" and <> alike
