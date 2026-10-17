@@ -15,7 +15,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 
 # Short name used for file names: extract/baserom_<GAME>_<ver>.nds, build/<ver>/<GAME>_<ver>.nds, <GAME>_<ver>.sha1.
-GAME = "game"
+GAME = "bakutrainer"
 
 VERSIONS = {
     "usa": {
@@ -31,7 +31,8 @@ VERSION = os.environ.get("DECOMP_VERSION") or next(iter(VERSIONS))
 # Extra `dsd init` options, used once when configure.py generates config/<ver>/. If init stops with "Local function
 # call ... leads to no function" (e.g. a one-instruction `bx lr` function its analysis doesn't find), the hidden stock
 # option "--allow-unknown-function-calls" gives such call targets a function symbol; fix their sizes afterwards.
-DSD_INIT_FLAGS = []
+# This game needs it: the start-up code calls a lone `bx lr` that the analysis doesn't find.
+DSD_INIT_FLAGS = ["--allow-unknown-function-calls"]
 
 # ---- compilers ---------------------------------------------------------------------------------------------------
 # Pin each code family by evidence (tools/probe_compilers.py) and record the evidence in docs/compiler.md.
