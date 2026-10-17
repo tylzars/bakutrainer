@@ -463,7 +463,7 @@ func_0201a3e0 kind:function(thumb,size=0xd0) addr:0x0201a3e0
 func_0201a4b0 kind:function(thumb,size=0x5c) addr:0x0201a4b0
 func_0201a50c kind:function(thumb,size=0xf4) addr:0x0201a50c
 func_0201a600 kind:function(thumb,size=0x8) addr:0x0201a600
-data_0201abec kind:data(any) addr:0x0201abec
+data_0201abec kind:data(word[39]) addr:0x0201abec
 func_0201b7e0 kind:function(thumb,size=0xc) addr:0x0201b7e0
 func_0201b7ec kind:function(thumb,size=0x344) addr:0x0201b7ec
 func_0201bb30 kind:function(thumb,size=0xe) addr:0x0201bb30
@@ -1547,11 +1547,11 @@ _u32_div_f kind:function(arm,size=0x1e4) addr:0x0204dcec
 func_0204ded0 kind:function(arm,size=0x4) addr:0x0204ded0
 _ZdlPv kind:function(arm,size=0x14) addr:0x0204ded4
 func_0204dee8 kind:function(arm,size=0x2c) addr:0x0204dee8
-data_0204e054 kind:data(any) addr:0x0204e054
-data_0204e824 kind:data(any) addr:0x0204e824
-data_0204e840 kind:data(any) addr:0x0204e840
-data_0204e8a4 kind:data(any) addr:0x0204e8a4
-data_0204e908 kind:data(any) addr:0x0204e908
+data_0204e054 kind:data(byte[120]) addr:0x0204e054
+data_0204e824 kind:data(byte[25]) addr:0x0204e824
+data_0204e840 kind:data(word[25]) addr:0x0204e840
+data_0204e8a4 kind:data(word[25]) addr:0x0204e8a4
+data_0204e908 kind:data(word[25]) addr:0x0204e908
 func_02052468 kind:function(arm,size=0x38) addr:0x02052468
 func_02052e28 kind:function(arm,size=0x4) addr:0x02052e28
 func_020530ac kind:function(arm,size=0x56c) addr:0x020530ac
