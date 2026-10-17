@@ -3,3 +3,132 @@
     .ctor       start:0x020638fc end:0x020638fc kind:rodata align:4
     .data       start:0x02063900 end:0x02064820 kind:data align:32
     .bss        start:0x02064820 end:0x020ce200 kind:bss align:32
+
+libs/nds/src/init/crt0.c:
+    .text       start:0x02000800 end:0x02000ba0
+
+libs/nds/src/init/build_info.s:
+    .text       start:0x02000ba0 end:0x02000c04
+
+// provisional: split between the matrix files
+libs/nds/src/fx/fx_mtx33.c:
+    .text       start:0x0203b8d8 end:0x0203ba2c
+
+// provisional: split between the matrix files
+libs/nds/src/fx/fx_mtx43.c:
+    .text       start:0x0203ba2c end:0x0203c1c8
+
+// provisional: split between the matrix files
+libs/nds/src/fx/fx_mtx44.c:
+    .text       start:0x0203c1c8 end:0x0203c51c
+
+libs/nds/src/fx/fx_cp.c:
+    .text       start:0x0203c51c end:0x0203c5e0
+
+libs/nds/src/fx/fx_vec.c:
+    .text       start:0x0203c5e0 end:0x0203c7b8
+
+libs/nds/src/fx/fx_trig.c:
+    .text       start:0x0203c7b8 end:0x0203c960
+
+libs/nds/src/gx/gx.c:
+    .text       start:0x0203c960 end:0x0203ca80
+
+libs/nds/src/gx/g3c.c:
+    .text       start:0x0203ca80 end:0x0203cad4
+
+libs/nds/src/gx/g3x.c:
+    .text       start:0x0203cad4 end:0x0203d030
+
+// provisional: file name and its end
+libs/nds/src/gx/g3_util.c:
+    .text       start:0x0203d030 end:0x0203d178
+
+// provisional: own file or the end of the previous one
+libs/nds/src/gx/gx_fifo.c:
+    .text       start:0x0203d178 end:0x0203d1b8
+
+libs/nds/src/os/os_irqtable.c:
+    .text       start:0x0203d1b8 end:0x0203d468
+
+libs/nds/src/os/os_interrupt.c:
+    .text       start:0x0203d468 end:0x0203d554
+
+libs/nds/src/os/os_spinlock.c:
+    .text       start:0x0203d554 end:0x0203d8c0
+
+libs/nds/src/os/os_thread.c:
+    .text       start:0x0203d8c0 end:0x0203e25c
+
+// provisional: the mutex functions at the end may be a file of their own
+libs/nds/src/os/os_message.c:
+    .text       start:0x0203e25c end:0x0203e4a4
+
+libs/nds/src/os/os_cache.c:
+    .text       start:0x0203e4a4 end:0x0203e594
+
+// provisional: split from os_arena.c
+libs/nds/src/os/os_init.c:
+    .text       start:0x0203e594 end:0x0203e5fc
+
+// provisional: split from os_init.c
+libs/nds/src/os/os_arena.c:
+    .text       start:0x0203e5fc end:0x0203e948
+
+libs/nds/src/os/os_alloc.c:
+    .text       start:0x0203e948 end:0x0203ed7c
+
+libs/nds/src/os/os_protection.c:
+    .text       start:0x0203ed7c end:0x0203edd4
+
+libs/nds/src/os/os_exception.c:
+    .text       start:0x0203edd4 end:0x0203efe8
+
+// provisional: which file the two timer-register functions belong to
+libs/nds/src/os/os_timer.c:
+    .text       start:0x0203efe8 end:0x0203f03c
+
+libs/nds/src/os/os_tick.c:
+    .text       start:0x0203f03c end:0x0203f1cc
+
+libs/nds/src/os/os_alarm.c:
+    .text       start:0x0203f1cc end:0x0203f5cc
+
+libs/nds/src/os/os_valarm.c:
+    .text       start:0x0203f5cc end:0x0203f614
+
+libs/nds/src/os/os_system.c:
+    .text       start:0x0203f614 end:0x0203f6a4
+
+// provisional: whether func_0203f6a4 starts this file
+libs/nds/src/os/os_reset.c:
+    .text       start:0x0203f6a4 end:0x0203f748
+
+libs/nds/src/os/os_owner.c:
+    .text       start:0x0203f748 end:0x0203f7e8
+
+// provisional: file name
+libs/nds/src/os/os_irqowner.c:
+    .text       start:0x0203f7e8 end:0x0203f81c
+
+libs/nds/src/os/os_terminate.c:
+    .text       start:0x0203f81c end:0x0203f838
+
+libs/nds/src/mi/mi_wram.c:
+    .text       start:0x0203f838 end:0x0203f848
+
+libs/nds/src/mi/mi_dma.c:
+    .text       start:0x0203f848 end:0x0203fc4c
+
+libs/nds/src/mi/mi_memory.c:
+    .text       start:0x0203fc4c end:0x02040038
+
+libs/nds/src/mi/mi_swap.c:
+    .text       start:0x02040038 end:0x02040040
+
+libs/nds/src/mi/mi_dma_card.c:
+    .text       start:0x02040040 end:0x020400b4
+
+// provisional: file name
+libs/nds/src/mi/mi_init.c:
+    .text       start:0x020400b4 end:0x020400cc
