@@ -2,6 +2,10 @@
 
 #include "types.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Start-up code.
 void Entry(void);
 void func_02000954(u32 value, u32 *dst, u32 size);
@@ -22,3 +26,7 @@ extern const char data_02000bec[];
 
 // The game's entry point, called at the end of start-up.
 void main(void);
+
+#ifdef __cplusplus
+}
+#endif

@@ -942,6 +942,7 @@ func_02039cd4 kind:function(thumb,size=0x50) addr:0x02039cd4
 func_02039d24 kind:function(thumb,size=0x50) addr:0x02039d24
 func_02039dd8 kind:function(arm,size=0x30) addr:0x02039dd8
 func_02039e08 kind:function(arm,size=0xd4) addr:0x02039e08
+_ZN6ReaderD0Ev kind:function(arm,size=0x14) addr:0x02039edc
 func_02039ef0 kind:function(arm,size=0x20) addr:0x02039ef0
 func_02039f10 kind:function(arm,size=0x18) addr:0x02039f10
 func_02039f28 kind:function(arm,size=0x18) addr:0x02039f28
@@ -953,10 +954,12 @@ func_02039fb8 kind:function(arm,size=0x24) addr:0x02039fb8
 func_02039fdc kind:function(arm,size=0x24) addr:0x02039fdc
 func_0203a000 kind:function(arm,size=0x18) addr:0x0203a000
 func_0203a018 kind:function(arm,size=0x24) addr:0x0203a018
-func_0203a054 kind:function(arm,size=0xc) addr:0x0203a054
-func_0203a060 kind:function(arm,size=0xc) addr:0x0203a060
-func_0203a06c kind:function(arm,size=0x30) addr:0x0203a06c
-func_0203a09c kind:function(arm,size=0x14) addr:0x0203a09c
+_ZN10ReaderBaseD1Ev kind:function(arm,size=0x4) addr:0x0203a03c
+_ZN10ReaderBaseD0Ev kind:function(arm,size=0x14) addr:0x0203a040
+_ZN6PlayernwEm kind:function(arm,size=0xc) addr:0x0203a054
+_ZN6PlayerdlEPv kind:function(arm,size=0xc) addr:0x0203a060
+_ZN6PlayerC1Ev kind:function(arm,size=0x30) addr:0x0203a06c
+_ZN6PlayerD1Ev kind:function(arm,size=0x14) addr:0x0203a09c
 func_0203a0b0 kind:function(arm,size=0x5ac) addr:0x0203a0b0
 func_0203a65c kind:function(arm,size=0x168) addr:0x0203a65c
 func_0203a7c4 kind:function(arm,size=0x8) addr:0x0203a7c4
@@ -969,8 +972,15 @@ func_0203aa1c kind:function(arm,size=0x184) addr:0x0203aa1c
 func_0203aba0 kind:function(arm,size=0x40) addr:0x0203aba0
 func_0203abe0 kind:function(arm,size=0x10) addr:0x0203abe0
 func_0203abf0 kind:function(arm,size=0x1b0) addr:0x0203abf0
-func_0203ada0 kind:function(arm,size=0xc) addr:0x0203ada0
+_ZN6ReadernwEm kind:function(arm,size=0xc) addr:0x0203ada0
+_ZN6ReaderdlEPv kind:function(arm,size=0xc) addr:0x0203adac
 func_0203adb8 kind:function(arm,size=0x38) addr:0x0203adb8
+_ZN6Reader4SeekEPv kind:function(arm,size=0x4c) addr:0x0203adf0
+_ZN6Reader4ReadEPvj kind:function(arm,size=0x70) addr:0x0203ae3c
+_ZN6Reader2v4EPhj kind:function(arm,size=0x7c) addr:0x0203aeac
+_ZN6Reader2v5Ev kind:function(arm,size=0x28) addr:0x0203af28
+_ZN6Reader5CloseEv kind:function(arm,size=0x14) addr:0x0203af50
+_ZN6ReaderD1Ev kind:function(arm,size=0x4) addr:0x0203af64
 func_0203af68 kind:function(arm,size=0x5c0) addr:0x0203af68
 func_0203b528 kind:function(arm,size=0xc) addr:0x0203b528
 func_0203b534 kind:function(arm,size=0x8) addr:0x0203b534
@@ -1539,6 +1549,9 @@ func_02052e28 kind:function(arm,size=0x4) addr:0x02052e28
 func_020530ac kind:function(arm,size=0x56c) addr:0x020530ac
 func_02053658 kind:function(arm,size=0x1cc) addr:0x02053658
 func_02053834 kind:function(arm,size=0x1a0) addr:0x02053834
+data_020541d4 kind:data(any) addr:0x020541d4
+data_020562d4 kind:data(any) addr:0x020562d4
+data_020583d4 kind:data(any) addr:0x020583d4
 func_0205e970 kind:function(arm,size=0xe4) addr:0x0205e970
 func_0205eaa0 kind:function(arm,size=0x138) addr:0x0205eaa0
 func_0205eccc kind:function(arm,size=0x108) addr:0x0205eccc
@@ -1687,8 +1700,8 @@ data_020643f4 kind:data(any) addr:0x020643f4
 data_02064410 kind:data(any) addr:0x02064410
 data_0206442c kind:data(any) addr:0x0206442c
 data_02064448 kind:data(any) addr:0x02064448
-data_02064460 kind:data(any) addr:0x02064460
-data_02064484 kind:data(any) addr:0x02064484
+_ZTV10ReaderBase kind:data(any) addr:0x02064458 weak
+_ZTV6Reader kind:data(any) addr:0x0206447c
 data_020644a0 kind:data(any) addr:0x020644a0
 data_020644a4 kind:data(any) addr:0x020644a4
 data_020644a8 kind:data(any) addr:0x020644a8

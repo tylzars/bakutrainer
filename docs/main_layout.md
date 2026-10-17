@@ -21,8 +21,8 @@ and the exception index. Each line says what shows it; anything not yet checked 
 | 0x02000800-0x02000ba0 | Start-up code (`Entry` and its helpers) | ARM; `func_02000970`, `func_02000a1c` and `func_02000ab0` match NitroSDK start-up code of the same SDK version |
 | 0x02001000-0x020011dc | Game code: four ARM functions | |
 | 0x020011dc-0x02003000 | Zero filler | |
-| 0x02003000-0x02039e08 | Game code, from `main` | Thumb for the most part with ARM runs; calls between the modes in both directions |
-| 0x02039e08-0x0203b8bc | Mobiclip glue code (ARM) | the only code that references the Mobiclip decoder (docs/compiler.md) |
+| 0x02003000-0x02039dd8 | Game code, from `main` | Thumb for the most part with ARM runs; calls between the modes in both directions |
+| 0x02039dd8-0x0203b8bc | Mobiclip glue code (ARM, C++) | the only code that references the Mobiclip decoder (docs/compiler.md); starts with the routine that passes the decoder's identification string to the start-up hook |
 | 0x0203b8d8-0x0204873c | NitroSDK (FX, GX, OS, MI, SND, PXI, FS, TP, MIC, PM, RTC, CARD, WM, CTRDG) | functions identical to NitroSDK code of the same SDK version |
 | 0x0204873c-0x0204df14 | C runtime: strings, printf, math, decimal conversion, soft float and division, the constructor walk | as above; the last function, `func_0204dee8`, walks the `.ctor` table |
 | 0x02052468-0x0205eeac | Mobiclip decoder: hand-written ARM routines mixed with their tables | referenced only from itself and the glue code |

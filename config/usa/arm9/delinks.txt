@@ -258,3 +258,9 @@ libs/nds/src/wm/wm_api.c:
 
 libs/nds/src/wm/wm_worker.c:
     .text       start:0x02047be4 end:0x02047f3c
+
+libs/mobiclip/src/mobiclip_api.cpp:
+    .text       start:0x02039dd8 end:0x0203a054
+
+libs/mobiclip/src/mobiclip_player.cpp:
+    .text       start:0x0203a054 end:0x0203af68
