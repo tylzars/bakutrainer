@@ -235,8 +235,7 @@ L_fin:
 }
 
 // Empty hook: returns immediately.
-asm void AutoloadCallback(void) {
-    bx lr
+void AutoloadCallback(void) {
 }
 
 // Cache and protection setup: clears control-register bits 0xf9005 (among them MPU, caches, TCMs),
@@ -294,11 +293,9 @@ asm void func_02000ab0(void) {
 }
 
 // Empty hook: returns immediately.
-asm void func_02000b98(void) {
-    bx lr
+void func_02000b98(void) {
 }
 
 // Empty hook: returns immediately.
-asm void func_02000b9c(void) {
-    bx lr
+void func_02000b9c(void) {
 }
