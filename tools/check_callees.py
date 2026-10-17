@@ -43,7 +43,8 @@ def original_callees(blob, base, start, size, thumb=False):
             d = word & 0xFFFFFF
             d -= (1 << 24) if d & 0x800000 else 0
             target = site + 8 + d * 4
-            if not start <= target < start + size:  # a branch within the function is a loop, not a call
+            # a B within the function is a loop, not a call; a BL to the function's own start is recursion
+            if not start <= target < start + size or (word & 0x01000000 and target == start):
                 out[target | 1] += 1
         elif cond == 0xF and word & 0x0E000000 == 0x0A000000:  # BLX imm
             d = word & 0xFFFFFF
