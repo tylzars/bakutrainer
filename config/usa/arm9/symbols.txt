@@ -1320,6 +1320,8 @@ func_02053834 kind:function(arm,size=0x1a0) addr:0x02053834
 func_0205e970 kind:function(arm,size=0xe4) addr:0x0205e970
 func_0205eaa0 kind:function(arm,size=0x138) addr:0x0205eaa0
 func_0205eccc kind:function(arm,size=0x108) addr:0x0205eccc
+func_0205edd4 kind:function(arm,size=0xd8) addr:0x0205edd4
+data_0205eeac kind:data(any) addr:0x0205eeac
 data_0205eebc kind:data(any) addr:0x0205eebc
 data_0205f03c kind:data(any) addr:0x0205f03c
 data_0205f33c kind:data(any) addr:0x0205f33c

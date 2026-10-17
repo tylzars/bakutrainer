@@ -71,6 +71,12 @@ which pointers moved; read the differing pool words (a wrong table or field behi
 - If the build ends with a SHA-1 mismatch, `python3 tools/diff_rom.py` shows the size change, which pointers shifted
   and the first other difference. Thumb function pointers that now point at veneers mean a stretch mapped as code
   that isn't: look for a function before it with a wrong or zero size.
+- Hand-written routines inside `.rodata` (a codec's code mixed with its tables) can keep function symbols, but dsd
+  emits no `$d` mapping symbol for data symbols there: after a function, the linker reads everything up to the next
+  mapping symbol as ARM code. Thumb code in the same delinked object that takes the address of data in that stretch
+  then gets a Thumb-to-ARM veneer (12 bytes, `bx pc; nop; ldr pc, [pc, #-4]`) and the ROM grows. Code in another
+  object is not affected, so the problem goes away once units split the gap. Until then, keep such a routine at the
+  end of `.text` rather than at the start of `.rodata`.
 - "Call goes to middle of function" warnings from `dsd init` usually mean merged functions; some are real second
   entries (division routines' fast paths, long-branch `bl` inside large Thumb functions) and stay labels.
 - `ninja dis` stops with "Inline tables must have a known size" when a data symbol of unknown size sits inside a
