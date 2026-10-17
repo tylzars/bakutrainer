@@ -16,5 +16,9 @@ void func_02000b9c(const void *tag);
 // BSS start and end, end of the compressed part, SDK version word, markers and library strings.
 extern char BuildInfo[];
 
+// Library identification strings after it (Mobiclip, card backup).
+extern const char data_02000bc4[];
+extern const char data_02000bec[];
+
 // The game's entry point, called at the end of start-up.
 void main(void);

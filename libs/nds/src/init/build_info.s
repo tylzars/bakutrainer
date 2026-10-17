@@ -18,6 +18,16 @@ BuildInfo:
 	.word 0x04027539        ; version word
 	.word 0xdec00621        ; marker
 	.word 0x2106c0de        ; marker, byte-reversed
+	.size BuildInfo, 36
+
+	; Library identification strings, each passed to the start-up hook by the library that carries it.
+	.global data_02000bc4
+	.type data_02000bc4, @object
+data_02000bc4:
 	.byte "[SDK+Actimagine:Mobiclip SDK V1.0.3]", 0, 0, 0, 0
+	.size data_02000bc4, 40
+	.global data_02000bec
+	.type data_02000bec, @object
+data_02000bec:
 	.byte "[SDK+NINTENDO:BACKUP]", 0, 0, 0
-	.size BuildInfo, 100
+	.size data_02000bec, 24

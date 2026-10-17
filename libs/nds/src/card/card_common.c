@@ -305,7 +305,7 @@ void func_02045310(CardCommon *c) {
     mode = c->mode;
     retry = c->retry;
     chunk = 0x100;
-    func_02000b9c((void *) 0x2000bec);
+    func_02000b9c(data_02000bec);
     if (cmd == 0xb) {
         chunk = func_020455e8();
     } else if (cmd == 0xf) {
@@ -374,7 +374,7 @@ int func_02045500(u32 src, void *dst, u32 len, void (*cb)(void *), void *cbarg, 
                   u32 mode) {
     CardCommon *c = CARD_COMMON;
     u32 e;
-    func_02000b9c((void *) 0x2000bec);
+    func_02000b9c(data_02000bec);
     e = OS_DisableInterrupts();
     while (c->flags & CF_BUSY) {
         OS_SleepThread(&c->queue);
@@ -408,7 +408,7 @@ int func_020455fc(u32 id) {
     u32 e2;
     void *arg;
     void (*fn)(void *);
-    func_02000b9c((void *) 0x2000bec);
+    func_02000b9c(data_02000bec);
     if (id == 0) {
         OS_Terminate();
     }
