@@ -41,6 +41,8 @@ naming them right once.
 - Anything not yet understood keeps an address-based name: functions `func_<addr>` / `func_ovNNN_<addr>`, data
   `data_<addr>`, members `mUnk_<offset>`, virtual slots `vfunc_<offset>`.
 - Annotate struct members and vtables with their offsets: `/* 2c */ u8 mState;`.
+- Format C/C++ with `clang-format` (the repository's `.clang-format`). It reflows `asm` function bodies into one
+  line, so fence each `asm` function with `// clang-format off` and `// clang-format on`.
 - Headers live in `include/` and `libs/<name>/include/`, never next to a source file, and are included by their path
   there (`#include "Scene/Title.h"`); there is one copy of every header.
 

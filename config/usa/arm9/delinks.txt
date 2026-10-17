@@ -155,3 +155,16 @@ libs/nds/src/snd/snd_util.c:
 
 libs/nds/src/pxi/pxi.c:
     .text       start:0x02040bd0 end:0x02040eec
+
+libs/nds/src/tp/tp.c:
+    .text       start:0x02042914 end:0x020431ec
+
+libs/nds/src/mic/mic.c:
+    .text       start:0x020431ec end:0x020436e0
+
+// provisional: func_02044474 at the end may belong to rtc.c
+libs/nds/src/pm/pm.c:
+    .text       start:0x020436e0 end:0x02044500
+
+libs/nds/src/rtc/rtc.c:
+    .text       start:0x02044500 end:0x02044c20

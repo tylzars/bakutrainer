@@ -19,10 +19,10 @@ progress below counts what is decompiled and what links from source.
 
 | Measure | Progress |
 |---|---|
-| Matched code | 8.78% (23,908 / 272,242 bytes) |
+| Matched code | 11.88% (32,880 / 276,806 bytes) |
 | Linked code (complete units) | 0.00% (0 bytes) |
-| Overall accuracy (fuzzy) | 8.80% |
-| Matched functions | 268 / 1,424 |
+| Overall accuracy (fuzzy) | 11.89% |
+| Matched functions | 327 / 1,448 |
 
 _Last updated 2026-10-17. Full history: [`progress/history.csv`](progress/history.csv)._
 <!-- progress:end -->
