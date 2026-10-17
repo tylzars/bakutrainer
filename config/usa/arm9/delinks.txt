@@ -132,3 +132,26 @@ libs/nds/src/mi/mi_dma_card.c:
 // provisional: file name
 libs/nds/src/mi/mi_init.c:
     .text       start:0x020400b4 end:0x020400cc
+
+libs/nds/src/snd/snd_cmdwrap.c:
+    .text       start:0x020400cc end:0x020402f0
+
+libs/nds/src/snd/snd_main.c:
+    .text       start:0x020402f0 end:0x02040328
+
+libs/nds/src/snd/snd_command.c:
+    .text       start:0x02040328 end:0x020409cc
+
+// provisional: split from snd_work.c
+libs/nds/src/snd/snd_alarm.c:
+    .text       start:0x020409cc end:0x02040a90
+
+// provisional: split from snd_alarm.c
+libs/nds/src/snd/snd_work.c:
+    .text       start:0x02040a90 end:0x02040b60
+
+libs/nds/src/snd/snd_util.c:
+    .text       start:0x02040b60 end:0x02040bd0
+
+libs/nds/src/pxi/pxi.c:
+    .text       start:0x02040bd0 end:0x02040eec
