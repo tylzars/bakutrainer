@@ -6,7 +6,7 @@
 extern "C" {
 #endif
 
-// The object at 0x020c661c.
+// The stream audio object data_020c661c.
 typedef struct Unk_MovieAudio {
     u8 mUnk_00[0x2c];
     /* 2c */ u32 mUnk_2c;
