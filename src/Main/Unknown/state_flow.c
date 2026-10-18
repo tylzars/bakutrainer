@@ -10,13 +10,13 @@ u16 func_0200f9c8(int index) {
 
 const char *func_0200f9f0(int id) {
     if (id != 0) {
-        return func_02021e18(func_0200f9c8(data_020b1078.mLanguage), id);
+        return (const char *) func_02021e18(func_0200f9c8(data_020b1078.mLanguage), id);
     }
     return 0;
 }
 
 const char *func_0200fa10(int id, int index) {
-    return func_02021e18(func_0200f9c8(index), id);
+    return (const char *) func_02021e18(func_0200f9c8(index), id);
 }
 
 void func_0200fa24(void) {

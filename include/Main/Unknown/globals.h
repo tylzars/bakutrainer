@@ -91,6 +91,8 @@ typedef struct Unk_020c1bbc {
     u16 mUnk_08;
     u8 mUnk_0a[6];
     u8 mUnk_10;
+    u8 mUnk_11[5];
+    u8 mUnk_16;
 } Unk_020c1bbc;
 extern Unk_020c1bbc data_020c1bbc;
 extern u8 data_020c1d3c[];
@@ -299,14 +301,27 @@ typedef struct Unk_020c642c {
     s32 mUnk_40;
 } Unk_020c642c;
 
+typedef struct Unk_EventRec {
+    s16 mUnk_00;
+    s16 mUnk_02;
+    u8 mUnk_04[0x22 - 4];
+} Unk_EventRec;
+
 typedef struct Unk_020c61ac {
-    u8 mUnk_00[0x20];
+    u8 mUnk_00[0x1a];
+    u8 mUnk_1a;
+    u8 mUnk_1b;
+    u8 mUnk_1c_0 : 2;
+    u8 mUnk_1c_2 : 1;
+    u8 mUnk_1c_3 : 5;
+    u8 mUnk_1d[3];
     u16 mUnk_20;
+    u8 mUnk_22[8];
+    s16 mUnk_2a;
 } Unk_020c61ac;
 
 extern Unk_020ae44c data_020ae44c;
 extern u8 data_020ae464[];
-extern s32 data_020ae6ec;
 extern Unk_020c642c data_020c642c;
 extern Unk_020c61ac data_020c61ac;
 extern const Unk_0204e378 data_0204e378[];
