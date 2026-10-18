@@ -1,4 +1,4 @@
-#include <string.h>
+#include <Main/clib.h>
 #include <nitro/os.h>
 #include <Main/Unknown/functions.h>
 #include <Main/Unknown/globals.h>

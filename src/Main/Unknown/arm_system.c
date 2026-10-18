@@ -1,4 +1,4 @@
-#include <string.h>
+#include <Main/clib.h>
 #include <Main/Unknown/functions.h>
 #include <Main/Unknown/globals.h>
 #include <Main/Unknown/arm_system.h>

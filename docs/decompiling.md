@@ -104,6 +104,11 @@ trace is its own gdb process, so several can run at once.
 
 ## Source patterns that matter
 
+- **memset/memcpy come from `<Main/clib.h>` in game code, never `<string.h>`.** mwccarm treats `memset` and `memcpy`
+  declared in a header named `string.h` as built-ins and expands small calls inline (a 0x44-byte struct clear becomes
+  nine stores, a 10-byte copy becomes loads and stores). The same declarations in a header of any other name give a
+  real call, which is what the game's code has. The C runtime's own files may include `<string.h>`.
+
 Each rule reads "the binary shows X -> write Y, because Z". Tags say where a rule was observed: [sp2p2] on
 CodeWarrior for DS 2.0 sp2p2 game code (`-O4,p -ipa file -inline on,noauto`); [2.0-all] also on 2.0 sp1p5 library
 code; [SP-diff] differs between 2.0 service packs; [host] depends on the host running the compiler; [mwld] [dsd]
