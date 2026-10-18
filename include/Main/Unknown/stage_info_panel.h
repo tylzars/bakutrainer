@@ -26,6 +26,7 @@ void func_02011fec(int a, int b, int c, int d, u8 e, int x, int y, int z, u8 *st
 void func_020122c0(u8 type);
 void func_020123a4(int a);
 void func_02012490(u8 a, int b);
+void func_020126a0(int stage);
 
 #ifdef __cplusplus
 }

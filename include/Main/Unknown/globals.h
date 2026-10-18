@@ -242,7 +242,9 @@ extern Unk_020c6144 data_020c6144;
 
 typedef struct Unk_020c6184 {
     u16 mUnk_00;
-    u8 mUnk_02[0x14 - 2];
+    u8 mUnk_02[0xc - 2];
+    u8 mUnk_0c;
+    u8 mUnk_0d[0x14 - 0xd];
     u16 mUnk_14;
     u8 mUnk_16[0x1b - 0x16];
     u8 mUnk_1b;
@@ -335,10 +337,14 @@ extern const u8 data_0201a676[];
 // Part of the large game state block that holds the progress values.
 // Large block of game state shared by several screens; only the members the code touches are named.
 typedef struct Unk_020b6ee0 {
-    u8 mUnk_0000[0xc60];
+    u16 mUnk_0000;
+    u16 mUnk_0002;
+    u8 mUnk_0004;
+    u8 mUnk_0005[0xc60 - 0x5];
     s32 mUnk_c60[3];
     s32 mUnk_c6c[3];
-    u8 mUnk_c78[0xc94 - 0xc78];
+    u8 mUnk_c78;
+    u8 mUnk_c79[0xc94 - 0xc79];
     s32 mUnk_c94;
     s32 mUnk_c98;
     s32 mUnk_c9c;
@@ -368,9 +374,10 @@ typedef struct Unk_020b6ee0 {
     u16 mUnk_ffa;
     u16 mUnk_ffc;
     u16 mUnk_ffe;
-    u8 mUnk_1000[0xc];
+    s32 mUnk_1000[3];
     s16 mUnk_100c;
-    u8 mUnk_100e[0xa0fc - 0x100e];
+    s16 mUnk_100e[3];
+    u8 mUnk_1014[0xa0fc - 0x1014];
     s32 mUnk_a0fc;
     s32 mUnk_a100;
     s32 mUnk_a104;
@@ -417,15 +424,23 @@ typedef struct Unk_020b6ee0 {
     u8 mUnk_a56d;
     u8 mUnk_a56e;
     u8 mUnk_a56f;
-    u8 mUnk_a570[0xa5d4 - 0xa570];
+    u8 mUnk_a570[0xa580 - 0xa570];
+    VecFx32 mUnk_a580;
+    u8 mUnk_a58c[0xa5a0 - 0xa58c];
+    s32 mUnk_a5a0;
+    s32 mUnk_a5a4;
+    u8 mUnk_a5a8[0xa5d4 - 0xa5a8];
     Sprite mUnk_a5d4;
     Sprite mUnk_a6d8[2];
     u8 mUnk_a8e0[4];
     s32 mUnk_a8e4;
-    u8 mUnk_a8e8[0xa8ee - 0xa8e8];
+    s32 mUnk_a8e8;
+    u8 mUnk_a8ec[2];
     u8 mUnk_a8ee;
     u8 mUnk_a8ef;
-    u8 mUnk_a8f0[0xa8f3 - 0xa8f0];
+    u8 mUnk_a8f0;
+    u8 mUnk_a8f1;
+    u8 mUnk_a8f2;
     u8 mUnk_a8f3[39];
     u8 mUnk_a91a;
     u8 mUnk_a91b;
@@ -558,14 +573,16 @@ typedef struct Unk_020c17a0 {
 } Unk_020c17a0;
 extern Unk_020c17a0 data_020c17a0;
 
-
 typedef struct Unk_020c1454 {
-    u8 mUnk_00[0x40];
+    u8 mUnk_00[0x3c];
+    s32 mUnk_3c;
     s32 mUnk_40;
 } Unk_020c1454;
 extern Unk_020c1454 data_020c1454;
 
 extern const u8 data_0201a66c[];
+extern const u8 data_0201a63a[];
+extern const u8 data_0201a644[];
 
 extern const u8 data_0201a612[];
 extern const u8 data_0201a68a[];
