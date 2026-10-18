@@ -29,7 +29,10 @@ def original_callees(blob, base, start, size, thumb=False):
             if base <= site < base + len(blob) - 3:
                 hi, lo = struct.unpack_from("<HH", blob, site - base)
                 if hi & 0xF800 == 0xF000 and lo & 0xE800 == 0xE800:
-                    out[thumb_branch_target(blob, site - base, site) | 1] += 1
+                    target = thumb_branch_target(blob, site - base, site)
+                    # a BL within the function is a far branch to its own code (a shared epilogue), not a call
+                    if not start <= target < start + size or target == start:
+                        out[target | 1] += 1
                     site += 4
                     continue
             site += 2
