@@ -131,7 +131,6 @@ void func_02004230(void);
 
 // The board, the falling pairs and the round's counters.
 extern Board data_02064828;
-extern s32 data_02064820;
 
 void func_02004254(void);
 void func_02004304(void);

@@ -811,7 +811,9 @@ void func_02004720(void) {
     func_02003aa8(&data_02064828.mUnk_83c4, 1, 1);
 }
 
+// Per-frame update of the board screen.
 void func_02004768(void) {
+    static s32 data_02064820;
     char buf[32];
     int r;
     int idle;

@@ -1946,7 +1946,9 @@ data_020abfc0 kind:bss addr:0x020abfc0
 data_020abfcc kind:bss addr:0x020abfcc
 data_020ace4c kind:bss addr:0x020ace4c
 data_020ae44c kind:bss addr:0x020ae44c
-data_020ae45c kind:bss addr:0x020ae45c
+data_020ae450 kind:bss addr:0x020ae450
+data_020ae454 kind:bss addr:0x020ae454
+data_020ae458 kind:bss addr:0x020ae458
 data_020ae464 kind:bss addr:0x020ae464
 data_020ae504 kind:bss addr:0x020ae504
 data_020ae524 kind:bss addr:0x020ae524

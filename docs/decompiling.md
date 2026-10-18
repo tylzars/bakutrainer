@@ -340,6 +340,10 @@ Constants held in registers:
   read-only externs const (pointer tables `const char *const`). [2.0-all]
 - A function-local static table schedules like const data (no store can reach it, loads move above stores) while
   staying in `.data` (file-scope const would move it to `.rodata`). Symbols are `name$N`.
+- Epilogue order: a store just before a return is scheduled after `add sp, #N` only when it targets a function-local
+  static whose address is never taken. The pop's memory alias is every non-const global the function touches,
+  file-scope statics included; a local static is left out, so its store loses the memory edge to the pop. A store
+  through a register the pop restores gets the same order another way. [2.0 sp2p3 Thumb, tested]
 - Volatile: a field/param re-loaded where the compiler would reuse or hoist it is volatile in the original (tick
   counter, file flags). A store followed by a reload of the same field is not by itself a sign. In small C and C++
   tests with nothing between the store and the load (2.0 sp1p5, sp2p2, sp2p3): Thumb code reloaded every byte
@@ -666,7 +670,9 @@ Consequences:
   separate copies).
 Which objects get their own section (and are addressed through their own symbol):
 - Objects the file never references (inline accessors in included headers count as references); byte-aligned const
-  tables whose size is a multiple of 4; function-local mutable statics; every string literal; arrays of char/u8/s8
+  tables whose size is a multiple of 4; function-local mutable statics (except under 2.0 sp2p3 with this project's
+  game flags: there they join the shared `.bss` and are addressed through the section base); every string literal;
+  arrays of char/u8/s8
   (1-D char arrays always, even referenced; 2-D char arrays and same-size structs stay shared); `extern` objects;
   weak objects (inline-function statics, template statics); objects under `#pragma section npdata begin/end`.
   Under sp2p2 nothing else matters (size, alignment, order, static vs global, opt level); 2.0 sp2p3 and sp2p4 also

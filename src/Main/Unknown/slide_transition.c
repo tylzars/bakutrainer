@@ -123,11 +123,13 @@ int func_0200de68(void) {
                         x = 0;
                     }
                     data_020ae504.mUnk_1bc[1] = x;
-                    x = data_020ae504.mUnk_1bc[2] - SLIDE_STEP;
-                    if (x < 0) {
-                        x = 0;
+                    for (i = 0; i < 1; i++) {
+                        x = data_020ae504.mUnk_1bc[i + 2] - SLIDE_STEP;
+                        if (x < 0) {
+                            x = 0;
+                        }
+                        data_020ae504.mUnk_1bc[i + 2] = x;
                     }
-                    data_020ae504.mUnk_1bc[2] = x;
                     sum = 0;
                     for (i = 0; i < 8; i++) {
                         sum += data_020ae504.mUnk_1bc[i];
@@ -277,14 +279,16 @@ int func_0200de68(void) {
                         x = SLIDE_NEAR;
                     }
                     data_020ae504.mUnk_1bc[1] = x;
-                    x = data_020ae504.mUnk_1bc[2] + SLIDE_STEP;
-                    if (x >= SLIDE_FAR) {
-                        x = SLIDE_FAR;
+                    for (i = 0; i < 1; i++) {
+                        x = data_020ae504.mUnk_1bc[i + 2] + SLIDE_STEP;
+                        if (x >= SLIDE_FAR) {
+                            x = SLIDE_FAR;
+                        }
+                        data_020ae504.mUnk_1bc[i + 2] = x;
                     }
-                    data_020ae504.mUnk_1bc[2] = x;
                     if (data_020ae504.mUnk_1bc[0] == -SLIDE_NEAR && data_020ae504.mUnk_1bc[1] == SLIDE_NEAR) {
-                        for (i = 2; i < 3; i++) {
-                            if (data_020ae504.mUnk_1bc[i] < SLIDE_FAR) {
+                        for (i = 0; i < 1; i++) {
+                            if (data_020ae504.mUnk_1bc[i + 2] < SLIDE_FAR) {
                                 return 0;
                             }
                         }
@@ -346,10 +350,18 @@ void func_0200e3d0(int a, int b) {
     data_020ae504.mUnk_1dc = b;
 }
 
+typedef struct Unk_020ae458 {
+    u32 mUnk_00;
+    u32 mUnk_04;
+    u32 mUnk_08;
+} Unk_020ae458;
+
+static Unk_020ae458 data_020ae458;
+
 void func_0200e3ec(void) {
     func_0202f2e8(data_020ae464);
-    data_020ae44c.mUnk_0c = data_020b1084.mUnk_04;
-    data_020ae44c.mUnk_10 = data_020b1084.mUnk_08;
+    data_020ae458.mUnk_00 = data_020b1084.mUnk_04;
+    data_020ae458.mUnk_04 = data_020b1084.mUnk_08;
     func_02020ff4(0x400, data_020b1084.mUnk_04);
     func_02021074(0x82e, 0);
 }
@@ -357,9 +369,9 @@ void func_0200e3ec(void) {
 void func_0200e424(int a) {
     func_02021458();
     if (a != 0) {
-        if (data_020ae44c.mUnk_10 != data_020b1084.mUnk_08 || data_020ae44c.mUnk_0c != data_020b1084.mUnk_04) {
-            data_020b1084.mUnk_04 = data_020ae44c.mUnk_0c;
-            data_020b1084.mUnk_08 = data_020ae44c.mUnk_10;
+        if (data_020ae458.mUnk_04 != data_020b1084.mUnk_08 || data_020ae458.mUnk_00 != data_020b1084.mUnk_04) {
+            data_020b1084.mUnk_04 = data_020ae458.mUnk_00;
+            data_020b1084.mUnk_08 = data_020ae458.mUnk_04;
             func_02014430(1);
         }
     }
@@ -413,8 +425,8 @@ void func_0200e4c4(void) {
 }
 
 static const s16 data_0204e1e4[1] = {0};
-static const u32 data_0204e1ec[1] = {0xdd1};
 static const u32 data_0204e1e8[1] = {0xdce};
+static const u32 data_0204e1ec[1] = {0xdd1};
 static const s16 data_0204e1f0[4] = {140, 70, -22, 0};
 
 typedef struct Unk_0204e1f8 {
@@ -425,6 +437,9 @@ typedef struct Unk_0204e1f8 {
 static const Unk_0204e1f8 data_0204e1f8[2] = {{0, 3}, {0, 7}};
 
 void func_0200e5b0(void) {
+    static s32 data_020ae454;
+    static s32 data_020ae44c;
+    static s32 data_020ae450;
     Unk_020ae504 *s = &data_020ae504;
     DrawParams params;
     char text[0x40];
@@ -478,7 +493,7 @@ void func_0200e5b0(void) {
             if (s->mUnk_1e0 == 0) {
                 func_0202f110(0xe7, 100, 0, 0x40, 0xffff, 0);
                 s->mUnk_1e0 = -1;
-                data_020ae44c.mUnk_08 = 12;
+                data_020ae454 = 12;
                 return;
             }
         } else {
@@ -487,14 +502,14 @@ void func_0200e5b0(void) {
             sign = (func_0201fd68() & 1) ? -1 : 1;
             d = func_0201fd84(0, 2);
             d *= sign;
-            data_020ae44c.mUnk_04 = d;
+            data_020ae450 = d;
             sign = (func_0201fd68() & 1) ? -1 : 1;
             d = func_0201fd84(0, 2);
             d *= sign;
-            data_020ae44c.mUnk_00 = d;
-            func_0202cf08(0xdfa, data_020ae44c.mUnk_04 + 0x59, d + 0x35, 0x96, 2);
-            func_0202cf08(0xdfb, data_020ae44c.mUnk_04 + 0x59, data_020ae44c.mUnk_00 + 0x35, 0x8c, 2);
-            if (--data_020ae44c.mUnk_08 == 0) {
+            data_020ae44c = d;
+            func_0202cf08(0xdfa, data_020ae450 + 0x59, d + 0x35, 0x96, 2);
+            func_0202cf08(0xdfb, data_020ae450 + 0x59, data_020ae44c + 0x35, 0x8c, 2);
+            if (--data_020ae454 == 0) {
                 s->mUnk_1e4 = 1;
                 return;
             }
@@ -678,7 +693,7 @@ void func_0200e5b0(void) {
             func_0202cf08(0xe00, (data_020ae504.mUnk_1bc[1] >> 8) + 0x7f, 0x8f, 0x8c, 1);
             func_020215fc((data_020ae504.mUnk_1bc[1] >> 8) + 0x7f, 0x9e, data_0201a61c, func_0200f9f0(0xd2), 2, 0xc0,
                           0xc, 1);
-            level = &data_020ae44c.mUnk_10;
+            level = &data_020ae458.mUnk_04;
             range = &data_0204e1f8[1];
             sprintf(num, "%d", *level + 1);
             func_020215fc((data_020ae504.mUnk_1bc[1] >> 8) + 0x82, 0xb4, data_0201a676, num, 0, 0xf0, 1, 1);
@@ -697,7 +712,7 @@ void func_0200e5b0(void) {
                     if (!(data_020c1cbc.mUnk_6c & 0x800)) {
                         OS_Terminate();
                     }
-                    v = func_0201fb74(func_020213e8((data_0204e1f8[1].mUnk_04 - data_020ae44c.mUnk_10 + 1) * 25), 7, 0,
+                    v = func_0201fb74(func_020213e8((data_0204e1f8[1].mUnk_04 - data_020ae458.mUnk_04 + 1) * 25), 7, 0,
                                       0x1f);
                 } else {
                     v = 0;
@@ -705,26 +720,26 @@ void func_0200e5b0(void) {
             } else {
                 func_020215fc((data_020ae504.mUnk_1bc[0] >> 8) + 0x7f, 0x28, data_0201a61c, func_0200f9f0(0xd3), 2,
                               0xc0, 0xc, 1);
-                data_020ae44c.mUnk_14 = 0;
+                data_020ae458.mUnk_08 = 0;
                 v = 0;
             }
-            if (v > data_020ae44c.mUnk_14) {
-                data_020ae44c.mUnk_14 = v;
+            if (v > data_020ae458.mUnk_08) {
+                data_020ae458.mUnk_08 = v;
             }
-            if (data_020ae44c.mUnk_14 != 0) {
-                func_0202cf08(data_020ae44c.mUnk_14 + 0xe01, (data_020ae504.mUnk_1bc[1] >> 8) + 0x7f, 0x8f, 0x8c, 1);
-                data_020ae44c.mUnk_14--;
+            if (data_020ae458.mUnk_08 != 0) {
+                func_0202cf08(data_020ae458.mUnk_08 + 0xe01, (data_020ae504.mUnk_1bc[1] >> 8) + 0x7f, 0x8f, 0x8c, 1);
+                data_020ae458.mUnk_08--;
             }
             func_0200bb14(0xff, (data_020ae504.mUnk_1bc[4] >> 8) + 0xa1, 0x101, 0x15, 0, 0, 0x17d, flag);
             func_0200bb14(0, (data_020ae504.mUnk_1bc[4] >> 8) + 0xa1, 0x102, 0xe, 0, 0, 0x5a, flag);
             if (func_0200bd80(0x20000000, 0x709)) {
-                func_02021054(--data_020ae44c.mUnk_0c);
+                func_02021054(--data_020ae458.mUnk_00);
             } else if (func_0200bd80(0x20000000, 0x70a)) {
-                func_02021054(++data_020ae44c.mUnk_0c);
+                func_02021054(++data_020ae458.mUnk_00);
             } else if (func_0200bd80(0x20000000, 0x70b)) {
-                data_020ae44c.mUnk_10--;
+                data_020ae458.mUnk_04--;
             } else if (func_0200bd80(0x20000000, 0x70c)) {
-                data_020ae44c.mUnk_10++;
+                data_020ae458.mUnk_04++;
             }
             if (func_0200bd80(0x20000000, 0x102)) {
                 func_0200e3d0(5, 1);

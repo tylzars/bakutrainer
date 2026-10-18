@@ -282,15 +282,6 @@ typedef struct Unk_RecordBuf {
     s32 mUnk_18;
 } Unk_RecordBuf;
 
-typedef struct Unk_020ae44c {
-    s32 mUnk_00;
-    s32 mUnk_04;
-    s32 mUnk_08;
-    u32 mUnk_0c;
-    u32 mUnk_10;
-    u32 mUnk_14;
-} Unk_020ae44c;
-
 typedef struct Unk_0204e378 {
     s32 mUnk_00;
     s32 mUnk_04;
@@ -322,7 +313,6 @@ typedef struct Unk_020c61ac {
     s16 mUnk_2a;
 } Unk_020c61ac;
 
-extern Unk_020ae44c data_020ae44c;
 extern u8 data_020ae464[];
 extern Unk_020c642c data_020c642c;
 extern Unk_020c61ac data_020c61ac;
