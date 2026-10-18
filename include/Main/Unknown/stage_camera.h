@@ -110,6 +110,16 @@ void func_02018770(StageRec *rec, int kind, int amount);
 void func_02018840(StageRec *rec, int kind, int index);
 void func_0201896c(void);
 int func_02018ccc(const u16 *a, const u16 *b);
+void func_02018cd4(void);
+void func_020192d4(void);
+void func_02019438(void);
+void func_0201944c(void);
+void func_020194ac(int stage);
+void func_02019504(void);
+void func_020196b4(void);
+int func_020196e0(int value);
+void func_02019750(u32 index);
+void func_02019788(void);
 #ifdef __cplusplus
 }
 #endif

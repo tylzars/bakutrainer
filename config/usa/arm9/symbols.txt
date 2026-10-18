@@ -2003,7 +2003,6 @@ data_020b1b24 kind:bss addr:0x020b1b24
 data_020b1bb0 kind:bss addr:0x020b1bb0
 data_020b1bb6 kind:bss addr:0x020b1bb6
 data_020b6ee0 kind:bss addr:0x020b6ee0
-data_020c0cbc kind:bss addr:0x020c0cbc
 data_020c17fc kind:bss addr:0x020c17fc
 data_020c1800 kind:bss addr:0x020c1800
 data_020c180c kind:bss addr:0x020c180c

@@ -301,10 +301,18 @@ extern const u8 data_0201a676[];
 
 // Part of data_020b6ee0 the stage info panel works on through a pointer: a position, two values and two fade
 // counters.
+typedef struct Unk_020bff04 {
+    Model mModel;
+    s32 mUnk_178;
+    s32 mUnk_17c;
+    s32 mUnk_180;
+    s32 mUnk_184;
+} Unk_020bff04;
+
 typedef struct Unk_020c1454 {
     VecFx32 mUnk_00;
     VecFx32 mUnk_0c;
-    u8 mUnk_18[0x24 - 0x18];
+    VecFx32 mUnk_18;
     s32 mUnk_24;
     s32 mUnk_28;
     s32 mUnk_2c;
@@ -345,11 +353,13 @@ typedef struct Unk_020b6ee0 {
     s32 mUnk_c6c[3];
     u8 mUnk_c78;
     u8 mUnk_c79;
-    u8 mUnk_c7a[0xc94 - 0xc7a];
+    u8 mUnk_c7a[2];
+    VecFx32 mUnk_c7c;
+    VecFx32 mUnk_c88;
     s32 mUnk_c94;
     s32 mUnk_c98;
     s32 mUnk_c9c;
-    u8 mUnk_ca0[6];
+    u16 mUnk_ca0[3];
     u16 mUnk_ca6;
     u16 mUnk_ca8;
     u8 mUnk_caa[2];
@@ -389,9 +399,9 @@ typedef struct Unk_020b6ee0 {
     u8 mUnk_8e5c;
     u8 mUnk_8e5d[3];
     Unk_020bfd40 mUnk_8e60;
-    u8 mUnk_9024[0x9c64 - 0x9024];
+    Unk_020bff04 mUnk_9024[8];
     Model mUnk_9c64;
-    u8 mUnk_9ddc[0x9de8 - 0x9ddc];
+    s32 mUnk_9ddc[3];
     MoveObj mUnk_9de8;
     s32 mUnk_a0fc;
     s32 mUnk_a100;
@@ -521,12 +531,6 @@ typedef struct Unk_020c1d60 {
 } Unk_020c1d60;
 extern Unk_020c1d60 data_020c1d60;
 
-typedef struct Unk_020c0cbc {
-    s32 mUnk_00;
-    s32 mUnk_04;
-    s32 mUnk_08;
-} Unk_020c0cbc;
-extern Unk_020c0cbc data_020c0cbc;
 extern u32 data_0201aba0[7];
 
 #ifdef __cplusplus

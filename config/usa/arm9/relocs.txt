@@ -4249,6 +4249,7 @@ from:0x020196e6 kind:thumb_call_arm to:0x0203f81c module:main
 from:0x0201971e kind:thumb_call to:0x020271ec module:main
 from:0x0201973c kind:load to:0x020b6ee0 module:main
 from:0x02019744 kind:load to:0x020b6ee0 add:0x9024 module:main
+from:0x02019748 kind:load to:0x0201aba0 module:main
 from:0x0201974c kind:load to:0x020b6ee0 add:0xa140 module:main
 from:0x02019758 kind:thumb_call_arm to:0x0203f81c module:main
 from:0x0201976c kind:thumb_call_arm to:0x0203f81c module:main

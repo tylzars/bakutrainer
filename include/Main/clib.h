@@ -14,6 +14,7 @@ void *memcpy(void *dst, const void *src, size_t n);
 void *memset(void *dst, int c, size_t n);
 char *strcpy(char *dst, const char *src);
 int abs(int x);
+void qsort(void *base, size_t count, size_t size, int (*compare)(const void *, const void *));
 
 #ifdef __cplusplus
 }

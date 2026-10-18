@@ -36,7 +36,9 @@ typedef struct StageRec {
     u16 mUnk_142;
     u8 mUnk_144[0x158 - 0x144];
     VecFx32 mUnk_158;
-    u8 mUnk_164[0x178 - 0x164];
+    u8 mUnk_164[0x170 - 0x164];
+    u16 mUnk_170;
+    u8 mUnk_172[0x178 - 0x172];
     StageInfo mInfo;
     u8 mUnk_19e[2];
     union {
