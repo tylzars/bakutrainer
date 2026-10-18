@@ -6,15 +6,16 @@
 extern "C" {
 #endif
 
-// clz exists only in ARM code; Thumb files (the compiler defines __thumb for them) get the declarations below.
-#ifndef __thumb
-// An asm statement: clz has no C expression.
+// An asm statement: clz has no C expression. clz exists only in ARM code, so the function is defined as ARM code
+// whatever mode the including file compiles in; ARM functions of Thumb files (#pragma thumb off) can use it too.
+#pragma push
+#pragma thumb off
 static inline u32 CountLeadingZeros(u32 x) {
     u32 result;
     asm { clz result, x }
     return result;
 }
-#endif
+#pragma pop
 
 u32 func_0204873c(u32 x);
 void func_02048780(u16 *table, u16 poly);
