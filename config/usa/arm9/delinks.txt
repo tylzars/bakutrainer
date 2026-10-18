@@ -346,3 +346,7 @@ src/Main/Unknown/save_data.c:
 // provisional: no split evidence against save_data.c before it or the code after it
 src/Main/Unknown/save_slot_menu.c:
     .text       start:0x02010d64 end:0x02011518
+
+// provisional: continues past 0x02011c64 (func_0201180c is called from 0x02011caa; strings shared with func_02011fec)
+src/Main/Unknown/stage_info_panel.c:
+    .text       start:0x02011518 end:0x02011c64

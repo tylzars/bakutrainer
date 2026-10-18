@@ -463,12 +463,15 @@ func_0201a3e0 kind:function(thumb,size=0xd0) addr:0x0201a3e0
 func_0201a4b0 kind:function(thumb,size=0x5c) addr:0x0201a4b0
 func_0201a50c kind:function(thumb,size=0xf4) addr:0x0201a50c
 func_0201a600 kind:function(thumb,size=0x8) addr:0x0201a600
+data_0201a612 kind:data(any) addr:0x0201a612
 data_0201a61c kind:data(any) addr:0x0201a61c
 data_0201a626 kind:data(any) addr:0x0201a626
 data_0201a64e kind:data(any) addr:0x0201a64e
 data_0201a662 kind:data(any) addr:0x0201a662
 data_0201a676 kind:data(any) addr:0x0201a676
 data_0201a680 kind:data(any) addr:0x0201a680
+data_0201a68a kind:data(any) addr:0x0201a68a
+data_0201a694 kind:data(any) addr:0x0201a694
 data_0201a6c6 kind:data(any) addr:0x0201a6c6
 data_0201aa60 kind:data(any) addr:0x0201aa60
 data_0201ab04 kind:data(any) addr:0x0201ab04

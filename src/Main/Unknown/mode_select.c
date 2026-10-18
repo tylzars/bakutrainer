@@ -1,4 +1,5 @@
 #include <Main/Unknown/functions.h>
+#include <Main/Unknown/stage_info_panel.h>
 #include <Main/Unknown/game_util.h>
 #include <Main/Unknown/stage_scene.h>
 #include <Main/Unknown/prompt_screen.h>

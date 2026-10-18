@@ -2,6 +2,7 @@
 #include <nitro/gx.h>
 #include <stdlib.h>
 #include <Main/Unknown/functions.h>
+#include <Main/Unknown/stage_info_panel.h>
 #include <Main/Unknown/game_util.h>
 #include <Main/clib.h>
 #include <Main/Unknown/sprite_slots.h>

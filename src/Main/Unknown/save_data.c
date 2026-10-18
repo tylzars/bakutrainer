@@ -3,6 +3,7 @@
 #include <Main/Unknown/state_flow.h>
 #include <Main/Unknown/globals.h>
 #include <Main/Unknown/functions.h>
+#include <Main/Unknown/stage_info_panel.h>
 #include <Main/Unknown/language_menu.h>
 
 #define STAGE_UNIT 51200

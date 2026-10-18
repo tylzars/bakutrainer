@@ -7,7 +7,6 @@
 extern "C" {
 #endif
 
-#define STAGE_MAX 0x27
 #define SAVE_BLOCK_ID 0xfba
 #define SAVE_SLOT_COUNT 3
 

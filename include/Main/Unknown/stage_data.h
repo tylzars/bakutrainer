@@ -36,4 +36,6 @@ typedef struct StageRec {
     u8 mUnk_1f0[0x40];
 } StageRec;
 
+#define STAGE_MAX 0x27
+
 extern StageRec data_020b1990[];

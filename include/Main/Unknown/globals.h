@@ -119,6 +119,7 @@ typedef struct Unk_020c1d3c {
     u8 mUnk_14;
     u8 mUnk_15[0x1c - 0x15];
     u16 mUnk_1c;
+    u16 mUnk_1e;
 } Unk_020c1d3c;
 extern Unk_020c1d3c data_020c1d3c;
 extern u8 data_020c14b4[];
@@ -418,8 +419,20 @@ typedef struct Unk_020c1440 {
 extern Unk_020c1440 data_020c1440;
 
 typedef struct Unk_020c0fe0 {
-    u8 mUnk_00[0x28];
+    u8 mUnk_00[0x10];
+    s32 mUnk_10;
+    u8 mUnk_14[0x20 - 0x14];
+    s32 mUnk_20;
+    s32 mUnk_24;
     s32 mUnk_28;
+    s32 mUnk_2c;
+    s32 mUnk_30;
+    s32 mUnk_34;
+    s32 mUnk_38;
+    u8 mUnk_3c;
+    u8 mUnk_3d;
+    u8 mUnk_3e[0x4b - 0x3e];
+    u8 mUnk_4b;
 } Unk_020c0fe0;
 extern Unk_020c0fe0 data_020c0fe0;
 
@@ -493,6 +506,29 @@ typedef struct Unk_020b122c {
     s32 mUnk_180;
 } Unk_020b122c;
 extern Unk_020b122c data_020b122c;
+
+// Objects of the stage info panel.
+typedef struct Unk_020c17a0 {
+    u8 mUnk_00[0x2c];
+    u16 mUnk_2c;
+} Unk_020c17a0;
+extern Unk_020c17a0 data_020c17a0;
+
+typedef struct Unk_020b7ee0 {
+    u8 mUnk_00[0xc];
+    s16 mUnk_0c;
+} Unk_020b7ee0;
+extern Unk_020b7ee0 data_020b7ee0;
+
+typedef struct Unk_020c1454 {
+    u8 mUnk_00[0x40];
+    s32 mUnk_40;
+} Unk_020c1454;
+extern Unk_020c1454 data_020c1454;
+
+extern const u8 data_0201a612[];
+extern const u8 data_0201a68a[];
+extern const u8 data_0201a694[];
 
 #ifdef __cplusplus
 }
