@@ -641,6 +641,14 @@ Constants held in registers:
 
 ### 1.12 Data layout, sections, link order
 
+- Thumb anchoring (2.0 sp2p3): a constant member offset becomes pool word = object + (offset & ~0x7f) for words,
+  & ~0x3f for halfwords, & ~0x1f for bytes. For an object the file defines, constant offsets go through the
+  `.bss` section base plus the anchor; taking the address or a variable index uses the object's own symbol. A
+  pool word that names no object start is an anchor: find the object it belongs to before declaring it.
+- Shared `.bss` order (2.0 sp2p3): ascending size; on a tie, definition order except that the first-defined object
+  goes last; objects of 64 bytes or more get own sections, also smallest first. A smaller object after a
+  bigger one starts a new file.
+
 The size-sort model (exact on synthetic files, needs calibration on real ones):
 1. Objects join one list per file as declared, by PREPENDING (list ends reversed). One list for the whole file
    (.bss, .data, .rodata together); each shared section is emitted at the place of its first member.
