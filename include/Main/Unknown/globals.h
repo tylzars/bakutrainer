@@ -151,8 +151,7 @@ typedef struct SystemState {
     s8 mUnk_48d;
     u8 mUnk_48e;
     u8 mUnk_48f;
-    u8 mUnk_490;
-    u8 mUnk_491;
+    u8 mUnk_490[2];
     u8 mUnk_492;
     u8 mUnk_493;
     u8 mUnk_494;

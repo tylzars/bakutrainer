@@ -1,4 +1,5 @@
 #include <Main/Unknown/functions.h>
+#include <Main/Unknown/screen_fade.h>
 #include <Main/Unknown/stage_info_panel.h>
 #include <Main/Unknown/sprite_slots.h>
 #include <Main/Unknown/game_util.h>

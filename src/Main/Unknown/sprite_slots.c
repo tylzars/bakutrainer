@@ -1,6 +1,7 @@
 #include <Main/clib.h>
 #include <nitro/os.h>
 #include <Main/Unknown/functions.h>
+#include <Main/Unknown/screen_fade.h>
 #include <Main/Unknown/game_math.h>
 #include <Main/Unknown/system_init.h>
 #include <Main/Unknown/globals.h>

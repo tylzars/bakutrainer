@@ -384,3 +384,8 @@ src/Main/Unknown/bg_image.c:
 // provisional: both ends (the ARM list helpers func_0201fa08/func_0201fa5c come before it)
 src/Main/Unknown/game_math.c:
     .text       start:0x0201fab0 end:0x0201fd68
+
+// provisional: the tail of bg_image.c's unit (its .rodata at 0x020501f4 precedes bg_image's own-section
+// data_02050200); fold it in once 0x0201e178-0x0201f450 is merged
+src/Main/Unknown/screen_fade.c:
+    .text       start:0x0201f450 end:0x0201fab0

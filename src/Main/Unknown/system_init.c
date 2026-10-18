@@ -8,6 +8,7 @@
 #include <nitro/tp.h>
 #include <stdio.h>
 #include <Main/Unknown/functions.h>
+#include <Main/Unknown/screen_fade.h>
 #include <Main/Unknown/game_math.h>
 #include <Main/Unknown/file_stream.h>
 #include <Main/Unknown/game_util.h>
@@ -107,7 +108,7 @@ void func_0201b7ec(u32 a, int b, int c) {
     data_020c2bfc[0xf] = 0;
     data_020c317c.mUnk_00[0xf] = 0;
     data_020c18bc.mUnk_45c = 0;
-    data_020c18bc.mUnk_490 = data_020c18bc.mUnk_491 = 3;
+    data_020c18bc.mUnk_490[0] = data_020c18bc.mUnk_490[1] = 3;
     *(vu16 *) 0x0400106c = *(vu16 *) 0x0400006c = 0;
     func_0201c41c();
     (void) REG_IME;
@@ -207,7 +208,7 @@ void func_0201bb40(int flags) {
     func_0201fda4();
     single = flags & 1;
     if (single == 0 && (data_020c18bc.mUnk_46c & 0x20000)) {
-        if (data_020c18bc.mUnk_490 != 2 && data_020c18bc.mUnk_491 != 2) {
+        if (data_020c18bc.mUnk_490[0] != 2 && data_020c18bc.mUnk_490[1] != 2) {
             func_0201f7f8(3);
         }
     }
