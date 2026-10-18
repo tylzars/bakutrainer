@@ -4739,6 +4739,7 @@ from:0x0201db4c kind:load to:0x020c67e0 module:main
 from:0x0201db50 kind:load to:0x020c18bc add:0x2a0 module:main
 from:0x0201db64 kind:thumb_call_arm to:0x0203f81c module:main
 from:0x0201dba0 kind:thumb_call_arm to:0x0203f81c module:main
+from:0x0201dbcc kind:load to:0x02050200 module:main
 from:0x0201dbd8 kind:thumb_call to:0x0201db94 module:main
 from:0x0201dbe0 kind:thumb_call to:0x0201db58 module:main
 from:0x0201dc24 kind:arm_call to:0x0203fc74 module:main

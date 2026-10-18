@@ -1,6 +1,7 @@
 #include <nitro/os.h>
 #include <stdio.h>
 #include <Main/Unknown/functions.h>
+#include <Main/Unknown/bg_image.h>
 #include <Main/Unknown/stage_progress.h>
 #include <Main/Unknown/game_util.h>
 #include <Main/Unknown/sprite_slots.h>

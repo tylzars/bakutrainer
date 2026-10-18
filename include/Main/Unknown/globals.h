@@ -16,8 +16,13 @@ extern "C" {
 // Global state blocks. Only the members the code touches are named.
 // Block cleared together at start-up: 0x24 bytes and the object at member 0x24.
 typedef struct Unk_020c1b0c {
-    u8 mUnk_00[0x24];
-    u8 mUnk_24[8];
+    s32 mUnk_00;
+    u32 mUnk_04;
+    s32 mUnk_08;
+    void *mUnk_0c;
+    u8 mUnk_10[0x24 - 0x10];
+    u8 *mUnk_24;
+    u8 mUnk_28[4];
 } Unk_020c1b0c;
 
 typedef struct SystemState {
@@ -66,7 +71,10 @@ typedef struct SystemState {
     u8 mUnk_2b0;
     u8 mUnk_2b1[0x2c8 - 0x2b1];
     s32 mUnk_2c8;
-    u8 mUnk_2cc[0x2d4 - 0x2cc];
+    u16 mUnk_2cc;
+    u16 mUnk_2ce;
+    u16 mUnk_2d0;
+    u8 mUnk_2d2[2];
     s32 mUnk_2d4;
     s32 mUnk_2d8;
     s32 mUnk_2dc;
