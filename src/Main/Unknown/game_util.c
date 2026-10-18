@@ -6,6 +6,51 @@
 #include <nitro/fx.h>
 #include <nitro/gx.h>
 #include <nitro/os.h>
+#include <stdarg.h>
+#include <stdio.h>
+
+// Prints a formatted line with the debug font on the given screen layer.
+void func_0200b898(int x, int y, const char *format, ...) {
+    char buf[256];
+    va_list args;
+    va_start(args, format);
+    vsprintf(buf, format, args);
+    func_020215fc(x, y, data_0201a6d0, buf, 0, 240, 16, 2);
+}
+
+void func_0200b8dc(int x, int y, const char *format, ...) {
+    char buf[256];
+    va_list args;
+    va_start(args, format);
+    vsprintf(buf, format, args);
+    func_020215fc(x, y, data_0201a6d0, buf, 0, 240, 16, 1);
+}
+
+// Debug print that does nothing in this build.
+void func_0200b920(int line, const char *format, ...) {}
+
+// Moves *p toward target by 1/steps of the distance (at least one unit); returns 1 while it is still moving.
+int func_0200b928(s32 *p, s32 target, int steps) {
+    if (steps <= 1) {
+        *p = target;
+    } else if (*p != target) {
+        s32 diff = target - *p;
+        s32 sign = diff != 0 ? (diff >> 31) | 1 : 0;
+        s32 step = diff / steps;
+        *p += step + sign;
+        return 1;
+    }
+    return 0;
+}
+
+// func_0200b928 for each component; returns how many components are still moving.
+int func_0200b960(VecFx32 *p, VecFx32 target, int steps) {
+    int moving = 0;
+    moving += func_0200b928(&p->x, target.x, steps);
+    moving += func_0200b928(&p->y, target.y, steps);
+    moving += func_0200b928(&p->z, target.z, steps);
+    return moving;
+}
 
 // Moves *p toward target by 1/steps of the distance, across the wrap-around at 0xffff when that is the shorter way.
 int func_0200b994(s32 *p, s32 target, int steps) {

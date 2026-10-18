@@ -9,16 +9,45 @@ extern "C" {
 
 #define TRAIL_LEN 10
 
+// Animation state of a model (two copies at 0x14c and 0x152).
+typedef struct ModelAnim {
+    u16 mUnk_0;
+    u16 mUnk_2;
+    u8 mUnk_4;
+    u8 mUnk_5;
+} ModelAnim;
+
 // A model object: 0x178 bytes with a model id at 0x170.
 typedef struct Model {
-    u8 mUnk_000[0x134];
+    u8 mUnk_000[4];
+    u16 mUnk_004;
+    u8 mUnk_006[6];
+    s16 mUnk_00c;
+    u8 mUnk_00e[2];
+    s16 mUnk_010;
+    u8 mUnk_012[0x22 - 0x12];
+    s16 mUnk_022;
+    u8 mUnk_024[0x134 - 0x24];
     u32 mUnk_134;
-    u8 mUnk_138[0x170 - 0x138];
+    u8 mUnk_138[0x142 - 0x138];
+    u16 mUnk_142;
+    u8 mUnk_144[0x14c - 0x144];
+    ModelAnim mUnk_14c;
+    ModelAnim mUnk_152;
+    u8 mUnk_158[0x170 - 0x158];
     u16 mUnk_170;
-    u16 mUnk_172_0 : 9;
-    u16 mUnk_172_9 : 1;
-    u16 mUnk_172_10 : 6;
-    u8 mUnk_174[4];
+    union {
+        u16 mUnk_172;
+        struct {
+            u16 mUnk_172_0 : 9;
+            u16 mUnk_172_9 : 1;
+            u16 mUnk_172_10 : 1;
+            u16 mUnk_172_11 : 5;
+        };
+    };
+    u8 mUnk_174;
+    u8 mUnk_175;
+    u8 mUnk_176[2];
 } Model;
 
 // A sprite and/or model that moves toward a target and leaves a trail of earlier positions.

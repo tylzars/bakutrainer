@@ -1,4 +1,5 @@
 #include <Main/Unknown/functions.h>
+#include <Main/Unknown/stage_minigame.h>
 #include <Main/Unknown/stage_info_panel.h>
 #include <Main/Unknown/game_util.h>
 #include <Main/Unknown/stage_scene.h>
@@ -15,7 +16,7 @@ u32 data_0206391c = 1800;
 void func_020054a4(int mode) {
     int level;
     u8 stage;
-    level = data_020c1760.mUnk_64;
+    level = data_020b6ee0.mUnk_a8e4;
     if (level < 0) {
         level = 0;
     }
@@ -45,7 +46,7 @@ void func_020054a4(int mode) {
 }
 
 void func_02005548(void) {
-    func_0200c5d8(0, 0x10d1, data_020b1990[data_020c1760.mUnk_64].mInfo.mUnk_13 + 0xdb3, 32, 16, 130, 2);
+    func_0200c5d8(0, 0x10d1, data_020b1990[data_020b6ee0.mUnk_a8e4].mInfo.mUnk_13 + 0xdb3, 32, 16, 130, 2);
     func_02024208();
     if (data_0206d444.mUnk_00 == 0) {
         func_020054a4(4);
@@ -57,8 +58,8 @@ void func_02005548(void) {
 // Draws the mode selection screen.
 void func_020055a8(void) {
     char text[32];
-    StageRec *rec = &data_020b1990[data_020c1760.mUnk_64];
-    func_02011890(data_020c1760.mUnk_64, 2);
+    StageRec *rec = &data_020b1990[data_020b6ee0.mUnk_a8e4];
+    func_02011890(data_020b6ee0.mUnk_a8e4, 2);
     func_020215fc(48, 17, data_0201a61c, func_0200f9f0(26), 0, 200, 16, 1);
     func_0200bb14(255, 161, 161 + 96, 21, 0, 0, 0x17d, 1);
     func_0200bb14(0, 161, 161 + 97, 14, 0, 0, 90, 1);

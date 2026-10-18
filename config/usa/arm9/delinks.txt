@@ -311,9 +311,18 @@ src/Main/Unknown/page_viewer.c:
 src/Main/Unknown/sprite_slots.c:
     .text       start:0x0200d6c8 end:0x0200de68
 
-// provisional: game_util.c may start before 0x0200b994 (with the helpers from 0x0200b898)
+// .bss data_02098d80..data_020990e0 (ascending sizes: one file); the 0x34-byte data_02099770 after the 0x690-byte
+// data_020990e0 starts the next file
+src/Main/Unknown/battle_screen.c:
+    .text       start:0x020071a8 end:0x0200a384
+
+// provisional: may be two files
+src/Main/Unknown/stage_minigame.c:
+    .text       start:0x0200a384 end:0x0200b898
+
+// provisional: the start; nothing before 0x0200b898 calls the helpers, func_0200b994 calls func_0200b928
 src/Main/Unknown/game_util.c:
-    .text       start:0x0200b994 end:0x0200c034
+    .text       start:0x0200b898 end:0x0200c034
 
 src/Main/Unknown/move_object.c:
     .text       start:0x0200c034 end:0x0200c65c

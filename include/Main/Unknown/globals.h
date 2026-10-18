@@ -4,6 +4,8 @@
 #include <Main/Unknown/stage_data.h>
 #include <Main/Unknown/move_object.h>
 #include <nitro/fx.h>
+#include <Main/Unknown/falling_blocks.h>
+#include <Main/Unknown/move_object.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -123,24 +125,12 @@ typedef struct Unk_020c1d3c {
 } Unk_020c1d3c;
 extern Unk_020c1d3c data_020c1d3c;
 extern u8 data_020c14b4[];
-typedef struct StateE {
-    u8 mUnk_00[0x1a];
-    u8 mUnk_1a;
-    u8 mUnk_1b;
-} StateE;
-extern StateE data_020c17e0;
 extern void *data_0201abec[];
 
 extern StateFunc data_0204e840[STATE_COUNT];
 extern StateFunc data_0204e8a4[STATE_COUNT];
 extern StateFunc data_0204e908[STATE_COUNT];
 extern u8 data_0204e824[STATE_COUNT];
-
-typedef struct Unk_020c1760 {
-    u8 mUnk_00[0x64];
-    s32 mUnk_64;
-} Unk_020c1760;
-extern Unk_020c1760 data_020c1760;
 
 typedef struct Unk_020b10fc {
     s32 mUnk_00;
@@ -221,35 +211,6 @@ extern const u32 data_0201ab04[];
 
 extern const u32 data_0201aa60[];
 
-typedef struct Unk_020c1020 {
-    u8 mUnk_00[0xc];
-    u8 mUnk_0c;
-} Unk_020c1020;
-extern Unk_020c1020 data_020c1020;
-
-typedef struct Unk_020c13e0 {
-    u8 mUnk_00[0x30];
-    s32 mUnk_30;
-    s32 mUnk_34;
-    s32 mUnk_38;
-    u8 mUnk_3c[0x60 - 0x3c];
-    s32 mUnk_60;
-    s32 mUnk_64;
-} Unk_020c13e0;
-extern Unk_020c13e0 data_020c13e0;
-
-typedef struct Unk_020c1680 {
-    u8 mUnk_00[0x16];
-    u8 mUnk_16;
-} Unk_020c1680;
-extern Unk_020c1680 data_020c1680;
-
-typedef struct Unk_020c1780 {
-    u8 mUnk_00[0x1a];
-    u8 mUnk_1a;
-} Unk_020c1780;
-extern Unk_020c1780 data_020c1780;
-
 // State objects of the 3D view and input, the light matrix, and a font table (some may be members of a larger
 // object).
 // Input state read by the button helpers: member 0x10 is a flag byte.
@@ -306,6 +267,8 @@ extern Unk_020c5f04 data_020c5f04;
 extern MtxFx43 data_020c3e80;
 
 extern const u8 data_0201a6c6[];
+extern const u8 data_0201a6bc[];
+extern const u8 data_0201a6d0[];
 
 // Objects and tables of the slide transition and title code.
 typedef struct Unk_RecordBuf {
@@ -369,15 +332,47 @@ extern const u8 data_0201a676[];
 // Objects of the sound and save code. The large state block data_020b6ee0 also contains data_020c0fe0,
 // data_020c13e0 and data_020c1440 (at +0xa100, +0xa500 and +0xa560), declared as separate objects.
 // Part of the large game state block that holds the progress values.
+// Large block of game state shared by several screens; only the members the code touches are named.
 typedef struct Unk_020b6ee0 {
-    u8 mUnk_0000[0xa120];
+    u8 mUnk_0000[0xc60];
+    s32 mUnk_c60[3];
+    s32 mUnk_c6c[3];
+    u8 mUnk_c78[0xcac - 0xc78];
+    Model mModel[2];
+    VecFx32 mUnk_f9c;
+    u8 mUnk_fa8[0xfc8 - 0xfa8];
+    VecFx32 mUnk_fc8;
+    u8 mUnk_fd4[0xfdf - 0xfd4];
+    u8 mUnk_fdf;
+    u8 mUnk_fe0;
+    u8 mUnk_fe1;
+    u16 mUnk_fe2;
+    u16 mUnk_fe4;
+    u16 mUnk_fe6[2];
+    u16 mUnk_fea;
+    u16 mUnk_fec;
+    u16 mUnk_fee;
+    u16 mUnk_ff0;
+    u16 mUnk_ff2;
+    u16 mUnk_ff4;
+    u16 mUnk_ff6;
+    u16 mUnk_ff8;
+    u16 mUnk_ffa;
+    u16 mUnk_ffc;
+    u16 mUnk_ffe;
+    u8 mUnk_1000[0xa120 - 0x1000];
     s32 mUnk_a120;
     s32 mUnk_a124;
     s32 mUnk_a128;
     s32 mUnk_a12c;
-    u8 mUnk_a130[0xa530 - 0xa130];
+    u8 mUnk_a130[0xa14c - 0xa130];
+    u8 mUnk_a14c;
+    u8 mUnk_a14d[0xa530 - 0xa14d];
     s32 mUnk_a530;
-    u8 mUnk_a534[0xa560 - 0xa534];
+    s32 mUnk_a534;
+    s32 mUnk_a538;
+    u32 mUnk_a53c;
+    s32 mUnk_a540[8];
     s32 mUnk_a560;
     s32 mUnk_a564;
     u8 mUnk_a568[0xa56c - 0xa568];
@@ -385,6 +380,18 @@ typedef struct Unk_020b6ee0 {
     u8 mUnk_a56d;
     u8 mUnk_a56e;
     u8 mUnk_a56f;
+    u8 mUnk_a570[0xa5d4 - 0xa570];
+    Sprite mUnk_a5d4;
+    Sprite mUnk_a6d8[2];
+    u8 mUnk_a8e0[4];
+    s32 mUnk_a8e4;
+    u8 mUnk_a8e8[0xa8ee - 0xa8e8];
+    u8 mUnk_a8ee;
+    u8 mUnk_a8ef;
+    u8 mUnk_a8f0[0xa8f3 - 0xa8f0];
+    u8 mUnk_a8f3[39];
+    u8 mUnk_a91a;
+    u8 mUnk_a91b;
 } Unk_020b6ee0;
 extern Unk_020b6ee0 data_020b6ee0;
 

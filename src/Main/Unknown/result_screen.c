@@ -25,7 +25,7 @@ void func_02004964(void) {
     int level;
     s32 v;
     stage = data_020b10fc.mUnk_0c == 1 ? 0x1d1 : 0x1ca;
-    level = data_020c1760.mUnk_64;
+    level = data_020b6ee0.mUnk_a8e4;
     if (level < 0) {
         level = 0;
     }

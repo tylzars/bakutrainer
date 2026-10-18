@@ -37,9 +37,9 @@ void main(void) {
     func_020143f4();
     func_0200e474();
     func_0202de60(data_020c14b4, data_0201abec[2]);
-    data_020c17e0.mUnk_1b = 0;
+    data_020b6ee0.mUnk_a91b = 0;
     func_0200dbac();
-    data_020c17e0.mUnk_1a = 1;
+    data_020b6ee0.mUnk_a91a = 1;
     func_0200fa80(1);
     func_0200fab0();
 

@@ -383,7 +383,7 @@ void func_0200e4c4(void) {
     s->mUnk_28 = -1;
     s->mUnk_2c = 0;
     s->mUnk_30 = 0;
-    s->mUnk_34 = (data_020c17e0.mUnk_1a != 0 && s->mUnk_38 < 0) ? 1 : 0x4b0;
+    s->mUnk_34 = (data_020b6ee0.mUnk_a91a != 0 && s->mUnk_38 < 0) ? 1 : 0x4b0;
     s->mUnk_1dc = -1;
     func_0200dd90();
     if (s->mUnk_38 < 0) {
@@ -394,8 +394,8 @@ void func_0200e4c4(void) {
         s->mUnk_1e0 = 0;
     }
     s->mUnk_38 = -1;
-    data_020c17e0.mUnk_1a = 0;
-    data_020c17e0.mUnk_1b = 0;
+    data_020b6ee0.mUnk_a91a = 0;
+    data_020b6ee0.mUnk_a91b = 0;
     func_020104c0(0, 0x80);
     func_0202f290(data_020ae464, "BAK_strm_Title.raw", 0x5654);
     for (i = 0; i < 3; i++) {

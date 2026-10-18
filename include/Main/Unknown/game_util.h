@@ -16,14 +16,23 @@ typedef struct DrawParams {
     s32 mUnk_30;
     s32 mUnk_34;
     u16 mUnk_38;
-    u8 mUnk_3a[0x3e - 0x3a];
+    u16 mUnk_3a;
+    u16 mUnk_3c;
     u8 mUnk_3e;
-    u8 mUnk_3f[0x43 - 0x3f];
+    u8 mUnk_3f[0x41 - 0x3f];
+    u8 mUnk_41;
+    u8 mUnk_42;
     u8 mUnk_43 : 3;
     u8 mUnk_43_3 : 1;
-    u8 mUnk_43_4 : 4;
+    u8 mUnk_43_4 : 1;
+    u8 mUnk_43_5 : 3;
 } DrawParams;
 
+void func_0200b898(int x, int y, const char *format, ...);
+void func_0200b8dc(int x, int y, const char *format, ...);
+void func_0200b920(int line, const char *format, ...);
+int func_0200b928(s32 *p, s32 target, int steps);
+int func_0200b960(VecFx32 *p, VecFx32 target, int steps);
 int func_0200b994(s32 *p, s32 target, int steps);
 int func_0200b9cc(s32 *p, int delta);
 void func_0200ba08(u32 a, const VecFx32 *pos, u32 b, u32 c, int d, int e);

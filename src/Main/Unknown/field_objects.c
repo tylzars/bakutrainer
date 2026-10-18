@@ -373,7 +373,7 @@ void func_020066c8(void) {
 }
 
 void func_020067ac(void) {
-    s32 level = data_020c1760.mUnk_64;
+    s32 level = data_020b6ee0.mUnk_a8e4;
     u16 v[5];
     s32 i, j, k;
     s32 stageNo;
@@ -463,7 +463,7 @@ void func_020067ac(void) {
 }
 
 void func_02006b1c(void) {
-    func_0201168c(data_020c1760.mUnk_64, data_0206d460.mUnk_008 >> 8, data_0206d448, data_0206d460.mUnk_004, 2);
+    func_0201168c(data_020b6ee0.mUnk_a8e4, data_0206d460.mUnk_008 >> 8, data_0206d448, data_0206d460.mUnk_004, 2);
     func_02033614(data_020c5e44.mUnk_2e8.x, data_020c5e44.mUnk_2e8.z);
     func_0202733c(&data_0206d460.mUnk_010, &data_0206d460.mUnk_1b0, 0);
     func_02005cb4();

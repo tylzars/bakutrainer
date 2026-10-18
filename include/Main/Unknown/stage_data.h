@@ -39,3 +39,4 @@ typedef struct StageRec {
 #define STAGE_MAX 0x27
 
 extern StageRec data_020b1990[];
+extern StageInfo data_020b1524[3];

@@ -242,7 +242,7 @@ void func_0201004c(void) {
                         break;
                     case 0x401:
                         running = 0;
-                        data_020c13e0.mUnk_38 = running;
+                        data_020b6ee0.mUnk_a538 = running;
                         func_02021458();
                         func_02014430(running);
                         func_0200fa80(1);

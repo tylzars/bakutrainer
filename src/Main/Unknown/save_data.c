@@ -149,9 +149,9 @@ void func_020109f4(u32 slot) {
 
     func_02010d4c(rec);
     rec->mUnk_10 = 1;
-    rec->mUnk_14 = data_020c13e0.mUnk_30;
-    rec->mUnk_18 = data_020c13e0.mUnk_60;
-    rec->mUnk_28 = data_020c13e0.mUnk_64;
+    rec->mUnk_14 = data_020b6ee0.mUnk_a530;
+    rec->mUnk_18 = data_020b6ee0.mUnk_a560;
+    rec->mUnk_28 = data_020b6ee0.mUnk_a564;
     rec->mUnk_2c = data_020c1440.mUnk_0c;
     rec->mUnk_30 = data_020c1440.mUnk_0d;
     rec->mUnk_34 = data_020c1440.mUnk_0e;

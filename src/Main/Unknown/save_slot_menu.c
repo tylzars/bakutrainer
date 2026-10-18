@@ -144,7 +144,7 @@ void func_02010dc8(void) {
                 int v = func_02021e44(ENTRY_BLOCK, n);
                 if (v < 100) {
                     data_020c17c0.mUnk_12 = v - 1;
-                    data_020c1760.mUnk_64 = -1;
+                    data_020b6ee0.mUnk_a8e4 = -1;
                     data_020b10f8.mUnk_04[1] = 4;
                     func_0200fa80(4);
                     func_0200fab0();

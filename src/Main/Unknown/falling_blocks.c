@@ -739,7 +739,7 @@ void func_0200445c(void) {
     s32 level;
     int total;
     int stagger;
-    level = data_020c1760.mUnk_64;
+    level = data_020b6ee0.mUnk_a8e4;
     if (level < 0) {
         level = 0;
     }
@@ -805,7 +805,7 @@ void func_0200445c(void) {
 }
 
 void func_02004720(void) {
-    func_0201168c(data_020c1760.mUnk_64, data_02064828.mUnk_10, data_0206d448, data_02064828.mUnk_08, 2);
+    func_0201168c(data_020b6ee0.mUnk_a8e4, data_02064828.mUnk_10, data_0206d448, data_02064828.mUnk_08, 2);
     func_02003aa8(&data_02064828.mUnk_8608, 2, 0);
     func_02004254();
     func_02003aa8(&data_02064828.mUnk_83c4, 1, 1);

@@ -20,9 +20,9 @@ void func_02006fc0(void) {
     func_020104c0(1, 0x80);
     data_02098d74.mUnk_04 = 0;
     func_02007168(1);
-    if (data_020c1020.mUnk_0c == 1) {
+    if (data_020b6ee0.mUnk_a14c == 1) {
         func_02014430(0);
-        data_020c1020.mUnk_0c = 0;
+        data_020b6ee0.mUnk_a14c = 0;
     }
 }
 
@@ -53,8 +53,8 @@ void func_020070c4(void) {
             break;
         case 1:
             if (func_0200bd80(0x20000000, 0x600) != 0) {
-                if (data_020c17e0.mUnk_1b != 0) {
-                    data_020c17e0.mUnk_1b = 0;
+                if (data_020b6ee0.mUnk_a91b != 0) {
+                    data_020b6ee0.mUnk_a91b = 0;
                     func_0200fa80(10);
                     func_0200fab0();
                 } else {
