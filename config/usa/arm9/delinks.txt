@@ -365,6 +365,6 @@ src/Main/Unknown/stage_select.c:
     .text       start:0x0201353c end:0x020145bc
 
 // provisional: a new unit starts by func_02014ac8 (its table at 0x020500d4 breaks the size order of the
-// .rodata before it); continues past 0x02014d8c (data_020500d4 is also read at 0x02015250)
+// .rodata before it); the end is provisional
 src/Main/Unknown/stage_progress.c:
-    .text       start:0x020145bc end:0x02014d8c
+    .text       start:0x020145bc end:0x02015294

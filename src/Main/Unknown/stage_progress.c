@@ -8,6 +8,8 @@
 #include <Main/Unknown/battle_screen.h>
 #include <Main/Unknown/stage_info_panel.h>
 #include <Main/Unknown/stage_progress.h>
+#include <Main/Unknown/sprite_slots.h>
+#include <Main/clib.h>
 
 const u8 data_020500d4[3] = {1, 0, 2};
 
@@ -372,4 +374,291 @@ int func_02014d2c(StageInfo *info) {
         OS_Terminate();
     }
     return func_02021e44(0x1d9, i * 20 + 2);
+}
+
+static void func_02014e4c(int index, int stage);
+static void func_02014ebc(int index, int stage);
+
+void func_02014d8c(int a) {
+    memset(data_020b1990, 0, 0x5550);
+    memset(data_020b1524, 0, 0x72);
+    data_020c17c0.mUnk_0e = 0;
+    data_020c17c0.mUnk_0f = data_020c17c0.mUnk_0e;
+    func_02014de4(1, 3);
+    func_02014de4(1, 4);
+    func_02014de4(1, 5);
+    if (a == 0) {
+        func_02014de4(0, 0x19);
+    }
+}
+
+int func_02014de4(int kind, int index) {
+    int slot;
+
+    if (index >= STAGE_MAX) {
+        OS_Terminate();
+    }
+    switch (kind) {
+        case 0:
+            if (data_020c17c0.mUnk_0e >= STAGE_MAX) {
+                OS_Terminate();
+            }
+            slot = data_020c17c0.mUnk_0e++;
+            func_02014e4c(slot, index);
+            break;
+        case 1:
+            if (data_020c17c0.mUnk_0f >= 3) {
+                OS_Terminate();
+            }
+            slot = data_020c17c0.mUnk_0f++;
+            func_02014ebc(slot, index);
+            break;
+        default:
+            if (kind != 0 && kind != 1) {
+                OS_Terminate();
+            }
+            break;
+    }
+    return slot;
+}
+
+static void func_02014e4c(int index, int stage) {
+    StageRec *rec;
+
+    if (index >= STAGE_MAX) {
+        OS_Terminate();
+    }
+    if (index >= data_020c17c0.mUnk_0e) {
+        OS_Terminate();
+    }
+    rec = &data_020b1990[index];
+    memset(rec, 0, sizeof(StageRec));
+    rec->mUnk_226 = 99;
+    rec->mInfo.mUnk_13 = stage;
+    func_02014c38(&rec->mInfo);
+    func_02014cf8(&rec->mInfo);
+    rec->mUnk_1e4 = rec->mUnk_1e8 = rec->mUnk_1ec = -1;
+}
+
+static void func_02014ebc(int index, int stage) {
+    StageInfo *info;
+
+    if (index >= 3) {
+        OS_Terminate();
+    }
+    if (index >= data_020c17c0.mUnk_0f) {
+        OS_Terminate();
+    }
+    info = &data_020b1524[index];
+    // The original clears 0x230 bytes, a StageRec's size, from this StageInfo.
+    memset(info, 0, sizeof(StageRec));
+    if (stage != -1) {
+        info->mUnk_13 = stage;
+        func_02014c38(info);
+        func_02014cf8(info);
+    } else {
+        info->mUnk_04 = -9999;
+    }
+}
+
+int func_02014f14(int kind, int index) {
+    int i;
+    u8 n;
+    int v;
+
+    if ((u32) index >= STAGE_MAX) {
+        OS_Terminate();
+    }
+    switch (kind) {
+        case 0:
+            n = data_020c17c0.mUnk_0e;
+            for (i = 0; i < n; i++) {
+                v = data_020b1990[i].mInfo.mUnk_13;
+                if (v == index) {
+                    break;
+                }
+            }
+            if (i == n) {
+                i = -1;
+            }
+            break;
+        case 1:
+            n = data_020c17c0.mUnk_0f;
+            for (i = 0; i < n; i++) {
+                v = data_020b1524[i].mUnk_13;
+                if (v == index) {
+                    break;
+                }
+            }
+            if (i == n) {
+                i = -1;
+            }
+            break;
+        default:
+            if (kind != 0 && kind != 1) {
+                OS_Terminate();
+            }
+            break;
+    }
+    return i;
+}
+
+int func_02014f98(StageRec *rec, int delta) {
+    StageInfo *info = &rec->mInfo;
+    int low;
+    int high;
+
+    low = func_02021e44(0xfd6, info->mUnk_11 + (info->mUnk_13 * 27 + 4));
+    high = func_02021e44(0xfd6, info->mUnk_11 + (info->mUnk_13 * 27 + 5));
+    info->mUnk_04 += delta;
+    if (delta > 0 && info->mUnk_04 > high) {
+        info->mUnk_04 = high;
+        return 1;
+    }
+    if (delta < 0 && info->mUnk_04 < low) {
+        info->mUnk_04 = low;
+        return 1;
+    }
+    return 0;
+}
+
+int func_02014ffc(StageRec *rec, int amount, int a, int b) {
+    StageInfo *info = &rec->mInfo;
+    int value = info->mUnk_12;
+
+    if (a != 0 && amount > 0) {
+        func_0202f110(0xe8, 100, 0, 0x40, 0xffff, 0);
+    }
+    if (b != 0 && amount > 0 && data_020b6ee0.mUnk_a8e4 != -1) {
+        func_0200d78c(0x1e, 0, func_020117e0(value), 0x5e, 0, 0, 0x3c, 2);
+    }
+    value += amount;
+    rec->mUnk_22e = value >= 100 ? 0 : rec->mUnk_22e;
+    if (value > 100) {
+        info->mUnk_12 = 100;
+        return 1;
+    }
+    if (value < 0) {
+        info->mUnk_12 = 0;
+        return 1;
+    }
+    info->mUnk_12 = value;
+    return 0;
+}
+
+int func_020150a0(StageRec *rec, int delta) {
+    StageInfo *info = &rec->mInfo;
+
+    info->mUnk_11 += delta;
+    if (info->mUnk_11 > 12) {
+        info->mUnk_11 = 12;
+        return 1;
+    }
+    return 0;
+}
+
+int func_020150c0(StageInfo *info) {
+    if (info->mUnk_04 >= func_02021e44(0xfd6, info->mUnk_11 + (info->mUnk_13 * 27 + 5))) {
+        return 1;
+    }
+    return 0;
+}
+
+void func_020150ec(int a) {
+    int i;
+
+    for (i = 0; i < 3; i++) {
+        data_020b6ee0.mUnk_c60[i] = -1;
+    }
+    data_020b6ee0.mUnk_c78 = 0;
+    data_020b6ee0.mUnk_c79 = 0;
+}
+
+int func_02015114(int a, int b) {
+    int old;
+    StageRec *rec;
+
+    if ((u32) a >= 3) {
+        OS_Terminate();
+    }
+    if (b >= STAGE_MAX) {
+        OS_Terminate();
+    }
+    old = data_020b6ee0.mUnk_c60[a];
+    if (old != -1) {
+        if (old >= STAGE_MAX) {
+            OS_Terminate();
+        }
+        rec = &data_020b1990[old];
+        rec->mUnk_22d = 0;
+    }
+    if (b != -1) {
+        if (b >= data_020c17c0.mUnk_0e) {
+            OS_Terminate();
+        }
+        data_020b6ee0.mUnk_c60[a] = b;
+        rec = &data_020b1990[b];
+        rec->mUnk_22d = 1;
+    } else {
+        data_020b6ee0.mUnk_c60[a] = -1;
+    }
+    return old;
+}
+
+StageRec *func_02015190(int index) {
+    int stage;
+
+    if ((u32) index >= 3) {
+        OS_Terminate();
+    }
+    stage = data_020b6ee0.mUnk_c60[index];
+    if (stage >= STAGE_MAX) {
+        OS_Terminate();
+    }
+    if (stage == -1) {
+        return 0;
+    }
+    return &data_020b1990[stage];
+}
+
+int func_020151cc(int stage) {
+    int i;
+
+    if (stage < 0) {
+        OS_Terminate();
+    }
+    for (i = 0; i < 3; i++) {
+        if (stage == data_020b6ee0.mUnk_c60[i]) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+void func_020151f8(void) {
+    int i;
+    int j;
+    u8 stage;
+
+    for (i = 0; i < 3; i++) {
+        stage = data_020500d4[i];
+        if (func_02015190(stage) == 0) {
+            for (j = 0; j < data_020c17c0.mUnk_0e; j++) {
+                if (data_020b1990[j].mUnk_22d == 0) {
+                    func_02015114(stage, j);
+                }
+            }
+        }
+    }
+}
+
+int func_02015260(void) {
+    int i;
+
+    for (i = 0; i < data_020c17c0.mUnk_0e; i++) {
+        if (data_020b1990[i].mUnk_22d == 0) {
+            return i;
+        }
+    }
+    return -1;
 }

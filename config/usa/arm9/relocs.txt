@@ -3543,6 +3543,7 @@ from:0x020151d2 kind:thumb_call_arm to:0x0203f81c module:main
 from:0x020151f4 kind:load to:0x020b6ee0 module:main
 from:0x0201520c kind:thumb_call to:0x02015190 module:main
 from:0x0201522a kind:thumb_call to:0x02015114 module:main
+from:0x02015250 kind:load to:0x020500d4 module:main
 from:0x02015254 kind:load to:0x020c17c0 module:main
 from:0x02015258 kind:load to:0x020b1990 module:main
 from:0x0201528c kind:load to:0x020c17c0 module:main
