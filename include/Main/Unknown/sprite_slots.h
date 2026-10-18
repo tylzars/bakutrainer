@@ -1,6 +1,7 @@
 #pragma once
 
 #include "types.h"
+#include <Main/Unknown/move_object.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -69,7 +70,7 @@ typedef struct SlotCounters {
 // Three words read from a record (func_0200e4c4).
 typedef struct Unk_020ae504_Rec {
     s32 mUnk_00;
-    s32 mUnk_04;
+    u32 mUnk_04;
     s32 mUnk_08;
 } Unk_020ae504_Rec;
 
@@ -83,7 +84,8 @@ typedef struct Unk_020ae504 {
     s32 mUnk_34;
     s8 mUnk_38;
     u8 mUnk_39[3];
-    u8 mUnk_3c[0x1b8 - 0x3c];
+    Model mUnk_3c;
+    u32 mUnk_1b4;
     u8 mUnk_1b8;
     u8 mUnk_1b9[3];
     s32 mUnk_1bc[8];
@@ -110,7 +112,7 @@ void func_0200daec(void);
 void func_0200daf8(void);
 void func_0200dbac(void);
 void func_0200dc08(int id, u16 *outId, u16 *outVal, u16 *outOpt1, u16 *outZ1, u16 *outZ2, u16 *outOpt2);
-void func_0200dd5c(int a, int b);
+void func_0200dd5c(const char *path, int b);
 void func_0200dd90(void);
 
 #ifdef __cplusplus

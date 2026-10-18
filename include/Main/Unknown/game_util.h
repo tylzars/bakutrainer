@@ -20,7 +20,8 @@ typedef struct DrawParams {
     u8 mUnk_3e;
     u8 mUnk_3f[0x43 - 0x3f];
     u8 mUnk_43 : 3;
-    u8 mUnk_43_3 : 5;
+    u8 mUnk_43_3 : 1;
+    u8 mUnk_43_4 : 4;
 } DrawParams;
 
 int func_0200b994(s32 *p, s32 target, int steps);

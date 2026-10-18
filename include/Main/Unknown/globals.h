@@ -132,11 +132,12 @@ typedef struct Unk_020c2660 {
 } Unk_020c2660;
 extern Unk_020c2660 data_020c2660;
 
-// Language and two more settings words (the first is saved under the key "LANGUAGE").
+// Language and three more settings words (the first is saved under the key "LANGUAGE").
 typedef struct Unk_020b1084 {
     u32 mLanguage;
     u32 mUnk_04;
     u32 mUnk_08;
+    s32 mUnk_0c;
 } Unk_020b1084;
 extern Unk_020b1084 data_020b1084;
 
@@ -284,9 +285,12 @@ typedef struct Unk_RecordBuf {
 } Unk_RecordBuf;
 
 typedef struct Unk_020ae44c {
-    u8 mUnk_00[0xc];
+    s32 mUnk_00;
+    s32 mUnk_04;
+    s32 mUnk_08;
     u32 mUnk_0c;
     u32 mUnk_10;
+    u32 mUnk_14;
 } Unk_020ae44c;
 
 typedef struct Unk_0204e378 {
@@ -325,6 +329,11 @@ extern u8 data_020ae464[];
 extern Unk_020c642c data_020c642c;
 extern Unk_020c61ac data_020c61ac;
 extern const Unk_0204e378 data_0204e378[];
+
+// Font blocks in the code area (as data_0201a61c).
+extern const u8 data_0201a626[];
+extern const u8 data_0201a662[];
+extern const u8 data_0201a676[];
 
 #ifdef __cplusplus
 }

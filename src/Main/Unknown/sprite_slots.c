@@ -303,8 +303,8 @@ void func_0200dc08(int id, u16 *outId, u16 *outVal, u16 *outOpt1, u16 *outZ1, u1
     }
 }
 
-void func_0200dd5c(int a, int b) {
-    func_0202f638(a, b);
+void func_0200dd5c(const char *path, int b) {
+    func_0202f638(path, b);
     while (func_0202f8d0() == 1 && data_020c18bc.mUnk_12 == 0 && !data_020c1b5c.mUnk_0c_0) {
         func_0201bb30();
     }
