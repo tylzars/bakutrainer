@@ -840,3 +840,4 @@ See 1.15 above for the known causes. The ROM check is the proof; record each suc
 | `_fdiv` (rt_soft_float_b.s) | 83.87% | its 256-byte reciprocal table sits inside the routine; the assembled object marks it as data (`$d`), the delinked original decodes it as instructions. `dsd delink -M` would emit `$d` there but lowers other units, so it is not used |
 | `data_02027398`, `data_02027410`, `data_02027478` (engine_asm.s) | 20% | data objects in `.text` (`.incbin` blocks), as for BuildInfo |
 | `data_02028270`, `data_0202829c` (engine_asm.s) | 40% | data objects in `.text`, as for BuildInfo |
+| the 166 `data_0201a608`..`data_0201b7d2` objects (script_data.s) | 0-40% | data objects in `.text`, as for BuildInfo; the assembled object matches the ROM byte for byte, relocations included |

@@ -365,7 +365,7 @@ src/Main/Unknown/stage_camera.c:
 src/Main/Unknown/three_in_row.c:
     .text       start:0x02015340 end:0x02015d4c
 
-// provisional: the data block 0x0201a608-0x0201b7e0 (font records, resource tables) follows; its owner is not known
+// provisional: the data block 0x0201a608-0x0201b7e0 (script_data.s) follows
 src/Main/Unknown/stage_map_menu.c:
     .text       start:0x02019fa0 end:0x0201a608
 
@@ -488,8 +488,13 @@ src/Main/Unknown/wireless_helper.c:
     .text       start:0x020386a4 end:0x02039830
     .data       start:0x02063cc8 end:0x02064448
 
+// the fonts, the model and sprite scripts and their pointer tables: data between the stage map menu and the
+// start-up code, in the order the scripts were written (assembler: the compiler cannot place const data in .text
+// or keep objects of different sizes in source order)
+src/Main/Unknown/script_data.s:
+    .text       start:0x0201a608 end:0x0201b7e0
+
 // one file: its own-section .bss ascend (0x020c1818.. -> FSFile -> SystemState) and the JPEG and start-up code reach
-// the same objects through one section base; the .rodata own sections ascend as one file's; the data block
-// 0x0201a608-0x0201b7e0 before it has no known owner
+// the same objects through one section base; the .rodata own sections ascend as one file's
 src/Main/Unknown/system_init.c:
     .text       start:0x0201b7e0 end:0x0201fab0
