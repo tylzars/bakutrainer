@@ -482,10 +482,10 @@ src/Main/Unknown/tracker_player.c:
     .text       start:0x02035108 end:0x020386a4
 
 // provisional: the wireless helper state machine on data_020c8380 and the WM buffers (data_020c83e0..data_020c95e0)
-// with its state-name tables and debug strings; the Thumb functions from 0x02039830 to the SDK at 0x02039dd8 (string
-// "WIR Shut Down" at 0x02064448, .bss 0x020c9e00) continue it and still have to be added
+// with its state-name tables and debug strings, then (Thumb) the link indicator and shutdown on data_020c9e00, up to
+// the SDK at 0x02039dd8; its rodata 0x02052444-0x02052458 sits in the code area and is not delinked with it
 src/Main/Unknown/wireless_helper.c:
-    .text       start:0x020386a4 end:0x02039830
+    .text       start:0x020386a4 end:0x02039dd8
     .data       start:0x02063cc8 end:0x02064448
 
 // the fonts, the model and sprite scripts and their pointer tables: data between the stage map menu and the

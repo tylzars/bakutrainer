@@ -20,13 +20,6 @@ void func_020220c8(int a);
 void func_02022120(void);
 void func_0202224c(void);
 void func_02022370(void);
-u32 func_02039a64(void);
-void func_02039a94(void);
-void func_02039b70(void);
-void func_02039ba8(void);
-u8 *func_02039cd4(u32 size);
-void func_02039d24(void);
-void func_02039d74();
 void func_0204028c(u32 a);
 
 #ifdef __cplusplus

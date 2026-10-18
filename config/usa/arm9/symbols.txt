@@ -1185,7 +1185,9 @@ func_02039ba8 kind:function(thumb,size=0xe0) addr:0x02039ba8
 func_02039c88 kind:function(thumb,size=0x4c) addr:0x02039c88
 func_02039cd4 kind:function(thumb,size=0x50) addr:0x02039cd4
 func_02039d24 kind:function(thumb,size=0x50) addr:0x02039d24
-func_02039d74 kind:function(thumb,size=0x64) addr:0x02039d74
+func_02039d74 kind:function(thumb,size=0x24) addr:0x02039d74
+func_02039d98 kind:function(thumb,size=0x20) addr:0x02039d98
+func_02039db8 kind:function(thumb,size=0x20) addr:0x02039db8
 func_02039dd8 kind:function(arm,size=0x30) addr:0x02039dd8
 func_02039e08 kind:function(arm,size=0xd4) addr:0x02039e08
 _ZN6ReaderD0Ev kind:function(arm,size=0x14) addr:0x02039edc
@@ -1881,6 +1883,9 @@ data_02050ac0 kind:data(short[64]) addr:0x02050ac0
 data_02050b40 kind:data(word[65]) addr:0x02050b40
 data_02050c44 kind:data(word[768]) addr:0x02050c44
 data_02051844 kind:data(short[1536]) addr:0x02051844
+data_02052444 kind:data(byte[4]) addr:0x02052444
+data_02052448 kind:data(word[2]) addr:0x02052448
+data_02052450 kind:data(byte[8]) addr:0x02052450
 func_02052468 kind:function(arm,size=0x4) addr:0x02052468
 func_02052478 kind:function(arm,size=0x28) addr:0x02052478
 func_020524a8 kind:function(arm,size=0x148) addr:0x020524a8
