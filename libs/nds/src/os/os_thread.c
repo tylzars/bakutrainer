@@ -426,6 +426,11 @@ void OS_SetThreadDestructor(OSThread *thread, void (*destructor)(void *)) {
 // address OS_LoadContext uses), +0x44 = newsp, +0x38 (sp slot) = newsp - 0x40,
 // lowered by 4 more if that leaves bit 2 set; +0 (CPSR) = 0x3f if newpc has
 // bit 0 set, else 0x1f; zeroes r0-r12 (+4..+0x34) and lr (+0x3c).
+// Not compiled: at chk, `beq arm` tests the flags of the `ands` before the split: chk sets no flags itself and is
+// reached two ways (`b chk`, and the fall-through after `mov r1, #0x3f`). The compiler leaves a branch with no
+// flag-setting instruction in its own block only when it deletes that instruction as a repeat of the one ending
+// the block's single predecessor (branch merge pass), after which that block never gains a predecessor, or right
+// after a call to a float or double compare helper.
 asm void OS_InitContext(OSContext *context, u32 newpc, u32 newsp) {
     add r1, r1, #4
     str r1, [r0, #0x40]
