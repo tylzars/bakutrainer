@@ -6,6 +6,8 @@
 #include <Main/Unknown/vram_cache.h>
 #include <Main/Unknown/file_loader.h>
 #include <Main/Unknown/qrk_decode.h>
+#include <Main/Unknown/align_util.h>
+#include <Main/Unknown/comm_link.h>
 #include <nitro/mi.h>
 #include <nitro/os.h>
 
@@ -364,7 +366,7 @@ void func_0202e7c4(void) {
         cmd[2] = 0;
         *(u16 *) (cmd + 4) = 1;
         func_0201bb30();
-        if (*(u32 *) data_020c66e0 == 0) {
+        if (data_020c66e0[0] == 0) {
             continue;
         }
         if (reply[0] != 0x52) {

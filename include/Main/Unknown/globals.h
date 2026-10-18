@@ -22,7 +22,9 @@ typedef struct Unk_020c1b0c {
     u32 mUnk_04;
     s32 mUnk_08;
     void *mUnk_0c;
-    u8 mUnk_10[0x24 - 0x10];
+    u8 mUnk_10[4];
+    u32 mUnk_14[2];
+    u32 mUnk_1c[2];
     u8 *mUnk_24;
     u8 mUnk_28[4];
 } Unk_020c1b0c;
@@ -106,7 +108,9 @@ typedef struct SystemState {
     s32 mUnk_280;
     u8 mUnk_284[4];
     u16 mUnk_288;
-    u8 mUnk_28a[0x292 - 0x28a];
+    u16 mUnk_28a;
+    u16 mUnk_28c;
+    u8 mUnk_28e[0x292 - 0x28e];
     u16 mUnk_292;
     u16 mUnk_294;
     u16 mUnk_296;
@@ -242,16 +246,16 @@ typedef struct SystemState {
 typedef struct StateC {
     u16 mUnk_0;
     u16 mUnk_2;
-    s32 mUnk_4;
+    u16 *mUnk_4;
+    u8 *mUnk_8;
 } StateC;
 
 extern SystemState data_020c18bc;
 extern StateC data_020c66d4;
-extern u8 data_020c66dc[];
-extern u8 data_020c67e0[];
-extern u8 data_020c68e0[];
-extern u8 data_020c66e0[];
-extern u8 data_020c6720[];
+extern u8 data_020c67e0[] __attribute__((aligned(32)));
+extern u8 data_020c68e0[] __attribute__((aligned(32)));
+extern u32 data_020c66e0[] __attribute__((aligned(32)));
+extern u8 data_020c6720[] __attribute__((aligned(32)));
 
 // Main loop state: frame counter, current/previous/requested state numbers, the queue of requested states and a
 // table of per-state handler words.
@@ -471,7 +475,7 @@ typedef struct Unk_020c6144 {
     u8 mUnk_5c;
     u8 mUnk_5d[3];
     s32 mUnk_60;
-    s32 mUnk_64;
+    const u16 *mUnk_64;
 } Unk_020c6144;
 
 // The camera object (0x368 bytes). The ARM camera and model code reaches every part of it from its start

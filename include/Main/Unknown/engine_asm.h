@@ -8,6 +8,7 @@ extern "C" {
 
 // The C-callable routines of the hand-written engine object (engine_asm.s) that game code calls.
 void func_02027fc2(const char *msg);
+void func_02028036(const char *msg, int line);
 void func_02028150(const void *src, void *dst, u32 skip, u32 size);
 u32 func_02028250(u32 x);
 const void *func_020282ec(const void *src, void *dst);

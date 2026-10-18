@@ -464,7 +464,17 @@ src/Main/Unknown/map_floor.c:
 // projection, blends and modes (data_020c3e44, which holds the camera object); it starts with the ring quadtree of
 // chunk 0x5540, whose rings func_02031c70 walks (func_0203129c before it also reads what func_02031824 writes)
 src/Main/Unknown/map_entries.c:
-    .text       start:0x020312b8 end:0x02034768
+    .text       start:0x020312b8 end:0x02034918
+
+// provisional: rounding helpers (32, 4, 2) used by several files; no tie to either neighbour
+src/Main/Unknown/align_util.c:
+    .text       start:0x02034918 end:0x02034954
+
+// provisional: the wireless link's per-frame step, record exchange and error screen (data_020c66d4..data_020c68e0,
+// data_020c18bc.mUnk_250/mUnk_288) and the error screen's strings; func_02035108 after it is the tracker's
+src/Main/Unknown/comm_link.c:
+    .text       start:0x02034954 end:0x02035108
+    .data       start:0x02063b58 end:0x02063c9c
 
 // provisional: the music tracker player on data_020c6b14 (defined here); func_02035108 before this range and the
 // missed ARM code after it (the tick at 0x02036198 and on) use the same object and belong here once decompiled

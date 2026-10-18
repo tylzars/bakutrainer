@@ -3,6 +3,7 @@
 #include <Main/Unknown/mic_input.h>
 #include <Main/Unknown/game_math.h>
 #include <Main/Unknown/system_init.h>
+#include <Main/Unknown/align_util.h>
 #include <nitro/math.h>
 #include <Main/clib.h>
 #include <nitro/mic.h>

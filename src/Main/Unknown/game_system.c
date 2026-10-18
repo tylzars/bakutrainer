@@ -25,6 +25,7 @@
 #include <Main/Unknown/texture_blocks.h>
 #include <Main/Unknown/wave_player.h>
 #include <Main/Unknown/tracker_player.h>
+#include <Main/Unknown/map_entries.h>
 #include <Main/clib.h>
 
 // Objects of this file: save menu, settings, sound control, prompt, main loop and model viewer state.

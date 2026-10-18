@@ -139,10 +139,10 @@ struct OSAlarm {
 
 // Owner information from the firmware settings.
 typedef struct {
-    /* 00 */ u8 favoriteColor;
-    /* 01 */ u8 birthMonth;
-    /* 02 */ u8 birthDay;
-    /* 03 */ u8 mUnk_03;
+    /* 00 */ u8 language;
+    /* 01 */ u8 favoriteColor;
+    /* 02 */ u8 birthMonth;
+    /* 03 */ u8 birthDay;
     /* 04 */ u16 nickName[10];
     /* 18 */ u16 nickNameEnd;
     /* 1a */ u16 nickNameLength;

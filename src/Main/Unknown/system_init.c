@@ -35,6 +35,7 @@
 #include <Main/Unknown/stream_audio.h>
 #include <Main/Unknown/file_loader.h>
 #include <Main/Unknown/tracker_player.h>
+#include <Main/Unknown/comm_link.h>
 
 #define EZ10_MAGIC 0x30315a45
 #define HW_DISPCNT 0x04000000

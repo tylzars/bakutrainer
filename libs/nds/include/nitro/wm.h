@@ -164,7 +164,7 @@ int func_02046a9c(WMCallback cb, u16 *p, void *q, u32 arg, u16 extra);
 int func_02046b68(WMCallback cb, u32 idx);
 int func_02046c50(WMCallback cb, u32 a, int b, u32 c, u16 e, void *f);
 int func_02046dc0(WMCallback cb, u32 a, u32 b, u32 c, u16 e, u16 f);
-int func_02046e28(WMCallback cb, void *a, void *buf, u32 size, u16 x, u16 y, u16 z);
+int func_02046e28(WMCallback cb, void *a, void *buf, u16 size, u16 x, u16 y, u16 z);
 int func_02046f58(WMCallback cb);
 int func_02046fc8(WMDataSharing *buf, u16 n, u16 mask, u16 m, int flag);
 void func_020475ac(u16 *msg);

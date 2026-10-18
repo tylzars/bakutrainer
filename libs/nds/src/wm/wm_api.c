@@ -377,7 +377,7 @@ int func_02046dc0(WMCallback cb, u32 a, u32 b, u32 c, u16 e, u16 f) {
     return func_02046c50(cb, a, b, c, e, t);
 }
 
-int func_02046e28(WMCallback cb, void *a, void *buf, u32 size, u16 x, u16 y, u16 z) {
+int func_02046e28(WMCallback cb, void *a, void *buf, u16 size, u16 x, u16 y, u16 z) {
     u16 ok = 1;
     WMStatus *st = func_02046370()->st;
     int r = func_020463e4(2, 9, 10);

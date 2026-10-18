@@ -7,10 +7,10 @@ void OS_GetMacAddress(u8 *macAddress) {
 
 void OS_GetOwnerInfo(OSOwnerInfo *info) {
     vu8 *src = (vu8 *) 0x27ffc80;
-    info->favoriteColor = ((u32) *(vu16 *) (src + 0x64) << 29) >> 29;
-    info->birthMonth = ((u32) src[2] << 28) >> 28;
-    info->birthDay = src[3];
-    info->mUnk_03 = src[4];
+    info->language = ((u32) * (vu16 *) (src + 0x64) << 29) >> 29;
+    info->favoriteColor = ((u32) src[2] << 28) >> 28;
+    info->birthMonth = src[3];
+    info->birthDay = src[4];
     info->nickNameLength = src[0x1a];
     info->commentLength = src[0x50];
     MIi_CpuCopy16((const void *) (src + 6), info->nickName, 0x14);

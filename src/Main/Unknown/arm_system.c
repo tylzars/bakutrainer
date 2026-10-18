@@ -3,11 +3,12 @@
 #include <Main/Unknown/system_init.h>
 #include <Main/Unknown/globals.h>
 #include <Main/Unknown/arm_system.h>
+#include <Main/Unknown/comm_link.h>
 
 #pragma thumb off
 
 void func_02001000(void) {
-    func_0201c4f0(data_020c66dc);
+    func_0201c4f0(&data_020c66d4.mUnk_8);
     func_0201c4f0(&data_020c18bc.mUnk_250.mUnk_24);
     memset(&data_020c18bc.mUnk_250, 0, 0x2c);
     data_020c18bc.mUnk_2a2 = 0;

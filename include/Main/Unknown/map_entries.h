@@ -140,6 +140,14 @@ void func_02033e38(int a, int b, int c);
 void func_02033f38(CameraTrack *t, s32 *whole, s32 *next, s32 *rest);
 // Moves the camera by its position and look-at modes, then sets up the view.
 void func_02033fc8(void);
+// Sets the fog with the default density table.
+void func_02034768(int a, int b, int c);
+// Sets the fog (off when a and b are 0), its colour and the clear colour, and loads a density table.
+void func_02034778(int a, int b, int c, const u16 *table);
+// Sets light 0's colour and a -z direction and marks it on.
+void func_020348ac(int r, int g, int b, int z);
+// Marks all lights off.
+void func_02034904(void);
 
 #ifdef __cplusplus
 }

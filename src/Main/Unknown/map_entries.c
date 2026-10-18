@@ -11,6 +11,7 @@
 #include <Main/Unknown/game_util.h>
 #include <Main/Unknown/model.h>
 #include <Main/Unknown/vram_cache.h>
+#include <Main/Unknown/align_util.h>
 #include <Main/clib.h>
 
 // The stage data file starts with MAP_FILE_MAGIC and MAP_FILE_VERSION, followed by chunks of 16 * n bytes whose
@@ -2195,5 +2196,67 @@ void func_02033fc8(void) {
             break;
     }
     func_02033520();
+}
+
+// Sets the fog with the default density table.
+void func_02034768(int a, int b, int c) {
+    func_02034778(a, b, c, NULL);
+}
+
+// Turns the fog off when a and b are both 0. Otherwise it switches it on with the shift and offset worked out from
+// a and b, sets the fog colour to c (opaque) and the clear colour to c, and loads the density table: the given one,
+// else the camera's pending one (which it then forgets), else a ramp.
+void func_02034778(int a, int b, int c, const u16 *table) {
+    u32 lim;
+    u32 t;
+    u32 i;
+    u32 tab[8];
+
+    if (a == 0 && b == 0) {
+        func_0203cd9c(0, 0, 0, 0);
+        return;
+    }
+    t = (u32) b >> 5;
+    lim = 0x400;
+    for (i = 0; i < 10; i++) {
+        if (lim <= (t >> 9)) {
+            break;
+        }
+        lim >>= 1;
+    }
+    func_0203cd9c(1, 0, i, (u32) (a - t) >> 9);
+    *(vu32 *) 0x04000358 = (u16) c | 0x1f0000;
+    G3X_SetClearColor((u16) c, 8, 0x7fff, 0, 0);
+    if (table == NULL) {
+        if (data_020c3e44.mUnk_2000.mUnk_300.mUnk_64 == 0) {
+            for (i = 0; i < 8; i++) {
+                tab[i] = 15 * i | (15 * i + 4) << 8 | (15 * i + 8) << 16 | (15 * i + 12) << 24;
+            }
+            func_0203cdf4((u16 *) tab);
+        } else {
+            func_0203cdf4(data_020c3e44.mUnk_2000.mUnk_300.mUnk_64);
+            data_020c3e44.mUnk_2000.mUnk_300.mUnk_64 = 0;
+        }
+    } else {
+        func_0203cdf4(table);
+    }
+}
+
+// Light 0: colour (r, g, b, 5 bits each) and a direction that has only the component -z (in 1/8 units, 10 bits),
+// under the identity matrix; marks light 0 as on in the camera object.
+void func_020348ac(int r, int g, int b, int z) {
+    u32 color = (u16) (r | g << 5 | b << 10);
+    s16 neg = -z;
+
+    *(vu32 *) 0x04000454 = 0;
+    *(vu32 *) 0x04000440 = 2;
+    *(vu32 *) 0x040004cc = color;
+    *(vu32 *) 0x040004c8 = (u32) ((neg >> 3) << 22) >> 2;
+    data_020c3e44.mUnk_2000.mUnk_300.mUnk_5b = 1;
+}
+
+// Marks all lights as off.
+void func_02034904(void) {
+    data_020c3e44.mUnk_2000.mUnk_300.mUnk_5b = 0;
 }
 #pragma thumb on
