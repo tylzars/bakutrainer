@@ -758,10 +758,10 @@ void func_020175e8(int index, int *sel, int flags) {
     if (!(flags & 1)) {
         if (index == *sel) {
             if (data_020c18bc.mUnk_2ac_2) {
-                int n = data_020c2660.mUnk_10 - 1;
+                int n = data_020c2560.mUnk_100.mUnk_10 - 1;
                 if (n < 30 && n > 1) {
-                    s32 dx = (data_020c1d60.mUnk_800[n].mUnk_0 - data_020c1d60.mUnk_800[0].mUnk_0) / 4;
-                    s32 dy = (data_020c1d60.mUnk_800[n].mUnk_1 - data_020c1d60.mUnk_800[0].mUnk_1) / 4;
+                    s32 dx = (data_020c2560.mUnk_000[n].mUnk_0 - data_020c2560.mUnk_000[0].mUnk_0) / 4;
+                    s32 dy = (data_020c2560.mUnk_000[n].mUnk_1 - data_020c2560.mUnk_000[0].mUnk_1) / 4;
                     int len = func_0201faf0(dx, dy);
                     if (len > 8) {
                         dx = (dx << 3) / len;
@@ -775,11 +775,11 @@ void func_020175e8(int index, int *sel, int flags) {
                     rec->mUnk_220 = len < 0x14000 ? len : 0x14000;
                 }
             } else if (data_020c18bc.mUnk_2ac_1) {
-                int n = data_020c2660.mUnk_10 - 1;
+                int n = data_020c2560.mUnk_100.mUnk_10 - 1;
                 if (n > 4) {
-                    if ((int) func_0201faf0(data_020c1d60.mUnk_800[n].mUnk_0 - (data_020c1d60.mUnk_800 + n - 4)->mUnk_0,
-                                            data_020c1d60.mUnk_800[n].mUnk_1 -
-                                                (data_020c1d60.mUnk_800 + n - 4)->mUnk_1) < 4) {
+                    if ((int) func_0201faf0(data_020c2560.mUnk_000[n].mUnk_0 - (data_020c2560.mUnk_000 + n - 4)->mUnk_0,
+                                            data_020c2560.mUnk_000[n].mUnk_1 -
+                                                (data_020c2560.mUnk_000 + n - 4)->mUnk_1) < 4) {
                         rec->mUnk_220 -= 3276.8;
                     }
                 }

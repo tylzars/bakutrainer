@@ -1,4 +1,5 @@
 #include <Main/Unknown/functions.h>
+#include <Main/Unknown/touch_buttons.h>
 #include <Main/Unknown/random_angle.h>
 #include <Main/Unknown/game_math.h>
 #include <Main/Unknown/state_flow.h>
@@ -157,9 +158,9 @@ void func_0200bc50(int a, int b, int c, int d, int e, int f, int g, const char *
     int mode = func_02020878() ? 2 : 1;
     int g2 = g;
     if (o == 0 && data_020b6ee0.mUnk_a5d0 != 0 && p == 0) {
-        g2 = g + (data_020c2660.mUnk_04 == f + 0x40000000);
+        g2 = g + (data_020c2560.mUnk_100.mUnk_04 == f + 0x40000000);
     }
-    if (n == 0 && (p != 1 || data_020c2660.mUnk_04 == f + 0x40000000)) {
+    if (n == 0 && (p != 1 || data_020c2560.mUnk_100.mUnk_04 == f + 0x40000000)) {
         func_0202de80(g2, a, b, e, -1, mode);
     }
     if (h != 0) {
@@ -185,14 +186,15 @@ int func_0200bd80(u32 mask, u32 id) {
     if (data_020b6ee0.mUnk_a5d0 == 0) {
         return 0;
     }
-    if ((mask & data_020c2660.mUnk_04) && (u16) data_020c2660.mUnk_04 == id) {
+    if ((mask & data_020c2560.mUnk_100.mUnk_04) && (u16) data_020c2560.mUnk_100.mUnk_04 == id) {
         return 1;
     }
     return 0;
 }
 
 int func_0200bdac(u32 mask, u32 lo, u32 hi) {
-    if ((mask & data_020c2660.mUnk_04) && (u16) data_020c2660.mUnk_04 >= lo && (u16) data_020c2660.mUnk_04 <= hi) {
+    if ((mask & data_020c2560.mUnk_100.mUnk_04) && (u16) data_020c2560.mUnk_100.mUnk_04 >= lo &&
+        (u16) data_020c2560.mUnk_100.mUnk_04 <= hi) {
         return 1;
     }
     return 0;

@@ -8,6 +8,7 @@
 #include <nitro/tp.h>
 #include <stdio.h>
 #include <Main/Unknown/functions.h>
+#include <Main/Unknown/touch_buttons.h>
 #include <Main/Unknown/random_angle.h>
 #include <Main/Unknown/screen_fade.h>
 #include <Main/Unknown/game_math.h>
@@ -273,7 +274,7 @@ void func_0201bb40(int flags) {
             data_020c18bc.mUnk_2ac_1 = data_020c18bc.mUnk_2ad;
             if (data_020c18bc.mUnk_2ac_2 == 1) {
                 data_020c18bc.mUnk_2b0 = 8;
-                if (data_020c2660.mUnk_10 < 10) {
+                if (data_020c2560.mUnk_100.mUnk_10 < 10) {
                     if (func_0201fae4(data_020c18bc.mUnk_2b1 - data_020c18bc.mUnk_2b3,
                                       data_020c18bc.mUnk_2b2 - data_020c18bc.mUnk_2b4) < 0x19) {
                         data_020c18bc.mUnk_2ac_3 = 1;
@@ -315,7 +316,7 @@ void func_0201bb40(int flags) {
             }
         }
         if (data_020c18bc.mUnk_46c & 0x800000) {
-            data_020c2660.mUnk_04 = func_02020bac(0xffff);
+            data_020c2560.mUnk_100.mUnk_04 = func_02020bac(0xffff);
         }
         func_02020ba0();
     }

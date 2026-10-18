@@ -1,4 +1,5 @@
 #include <Main/Unknown/functions.h>
+#include <Main/Unknown/touch_buttons.h>
 #include <Main/Unknown/game_math.h>
 #include <Main/Unknown/bg_image.h>
 #include <Main/Unknown/game_util.h>
@@ -58,7 +59,7 @@ u8 func_0200f468(void) {
 void func_0200f4d4(void) {
     int id;
     u32 idx;
-    if (data_020c2660.mUnk_04 == 0x40000400) {
+    if (data_020c2560.mUnk_100.mUnk_04 == 0x40000400) {
         id = 0xf8f;
     } else {
         id = 0xf8e;

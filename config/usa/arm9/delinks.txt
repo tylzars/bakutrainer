@@ -401,3 +401,11 @@ src/Main/Unknown/mic_input.c:
 // provisional: may include random_angle.c's func_0201fed4/ff80/ffa0 (same SystemState block fields)
 src/Main/Unknown/save_blocks.c:
     .text       start:0x0201ffd4 end:0x02020878
+
+// provisional: func_02020878/func_02020890 may be save_blocks.c's tail
+src/Main/Unknown/touch_buttons.c:
+    .text       start:0x02020878 end:0x02020ee0
+
+// backup memory access, called only from save_blocks.c
+src/Main/Unknown/backup_access.c:
+    .text       start:0x02020ee0 end:0x02020ff4

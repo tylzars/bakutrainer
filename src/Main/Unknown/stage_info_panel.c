@@ -1,6 +1,7 @@
 #include <nitro/os.h>
 #include <stdio.h>
 #include <Main/Unknown/functions.h>
+#include <Main/Unknown/touch_buttons.h>
 #include <Main/Unknown/mic_input.h>
 #include <Main/Unknown/random_angle.h>
 #include <Main/Unknown/screen_fade.h>
@@ -728,7 +729,7 @@ void func_020126a0(int stage) {
             }
             func_0202cf08(0x800041, 0x10, data_020b6ee0.mUnk_a8f1 * 0x16 + 0x54, 0x5f, 1);
             if (func_0200bdac(0x80000000, 0x19, 0x1b) == 1) {
-                id = (u16) data_020c2660.mUnk_04 - 0x19;
+                id = (u16) data_020c2560.mUnk_100.mUnk_04 - 0x19;
                 if (data_020b6ee0.mUnk_a8f1 != id) {
                     data_020b6ee0.mUnk_a8f1 = id;
                 }
@@ -892,8 +893,8 @@ void func_020126a0(int stage) {
     if (bottom >= 0) {
         func_0200bc50(0, 0xa1, 0, 0, 0x8c, bottom, 0xe, 0, 0, 0, 0, 0x5a, 1, 0, 0, 0);
     }
-    key = (u16) data_020c2660.mUnk_04;
-    if ((data_020c2660.mUnk_04 & 0x20000000) && key != 0xffff && data_020b6ee0.mUnk_a5d0 == 1) {
+    key = (u16) data_020c2560.mUnk_100.mUnk_04;
+    if ((data_020c2560.mUnk_100.mUnk_04 & 0x20000000) && key != 0xffff && data_020b6ee0.mUnk_a5d0 == 1) {
         switch (key) {
             case 0xa:
                 data_020b6ee0.mUnk_a146 = 2;

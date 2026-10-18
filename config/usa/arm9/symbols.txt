@@ -2030,15 +2030,9 @@ data_020c1834 kind:bss addr:0x020c1834
 data_020c1874 kind:bss addr:0x020c1874
 data_020c18bc kind:bss addr:0x020c18bc
 data_020c1d60 kind:bss addr:0x020c1d60
-data_020c1d68 kind:bss addr:0x020c1d68
-data_020c1d6a kind:bss addr:0x020c1d6a
-data_020c1d6c kind:bss addr:0x020c1d6c
-data_020c1d6e kind:bss addr:0x020c1d6e
 data_020c2558 kind:bss addr:0x020c2558
 data_020c2559 kind:bss addr:0x020c2559
 data_020c2560 kind:bss addr:0x020c2560
-data_020c2561 kind:bss addr:0x020c2561
-data_020c2660 kind:bss addr:0x020c2660
 data_020c267c kind:bss addr:0x020c267c
 data_020c2680 kind:bss addr:0x020c2680
 data_020c268e kind:bss addr:0x020c268e
