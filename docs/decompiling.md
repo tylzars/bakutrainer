@@ -328,10 +328,12 @@ Constants held in registers:
   whatever volatility/casts; a base from a symbol (`lda &sym`) gets that symbol's class and can pass stores to other
   objects. When the original reads a hardware register ahead of an earlier store -> declare the register as an extern
   object and pin its address in the linker script (alias line).
-- Half-size rule: a following load may move above a store only when the store's offset is below half the declared
-  size of the stored-to object. When a store seems to pin a later load, check the declared size (an object declared
-  too small blocked a store near its declared end; its real size fixed a run of functions). Applies to globals and
-  extern objects too (stores at 0x1c/0x1d into an extern scheduled right only once its type was >= 0x3c bytes).
+- Out-of-bounds rule (2.0, read from the compiler): a direct access to a global gets the worst-case alias set when
+  offset + size runs past the declared type's size (incomplete arrays `T x[]` excepted); a worst-case store is
+  ordered against every later load and store. Within bounds, all members of one object alias each other and
+  different objects never do. So when a store seems to pin a later load, check the declared size: an object
+  declared too small pins its stores past the end, and its real size frees them. The pool-word anchor can't tell
+  a member of a big object from a store past a smaller object's end; this scheduling difference can.
 - Globals: a store through any pointer makes the compiler re-read a global declared with a complete type
   (`extern T g;`, `extern T g[1];`) but not one declared `extern T g[];` (kept in a register / hoisted). Give globals
   their real size (pad a struct to the size its block has in the binary). Loads through a pointer local die at any

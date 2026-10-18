@@ -30,7 +30,7 @@ void func_0201eb74(int a);
 void func_0201f450(int a, int b, int c, int d);
 void func_0201f6d0(int a, int b, int c, int d, int e);
 int func_0201f794(int a, int b);
-void func_0201f7cc(void);
+void func_0201f7cc(int a);
 void func_0201f7f8(int a);
 void func_0201f830(int a);
 void func_0201f880(int a);

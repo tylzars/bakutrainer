@@ -262,7 +262,7 @@ void func_02005194(void) {
             if (++data_0206d1d4.mUnk_08 >= 60) {
                 data_0206d1d4.mUnk_04 = 1;
                 data_0206d1d4.mUnk_08 = 0;
-                func_0201f7cc();
+                func_0201f7cc(1);
                 data_020c18bc.mUnk_46c &= ~(2 << 16);
             }
         }
@@ -355,7 +355,7 @@ void func_02005194(void) {
             } else {
                 data_0206d1d4.mUnk_04 = 2;
                 data_0206d1d4.mUnk_08 = 0;
-                func_0201f7cc();
+                func_0201f7cc(3);
                 data_020c18bc.mUnk_46c &= ~(2 << 16);
             }
         }
