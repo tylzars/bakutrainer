@@ -2,6 +2,7 @@
 
 #include "types.h"
 #include <nitro/fx.h>
+#include <Main/Unknown/globals.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -56,21 +57,6 @@ typedef struct MapRecord {
     u8 mUnk_18c;
     u8 mUnk_18d[3];
 } MapRecord;
-
-// An animation track of the camera object: a timestamp at 0xc, the model id, frame and frame count, and flags.
-typedef struct CameraTrack {
-    u8 mUnk_00[0xc];
-    u32 mUnk_0c;
-    u16 mUnk_10;
-    u16 mUnk_12;
-    u16 mUnk_14;
-    u8 mUnk_16_0 : 1;
-    u8 mUnk_16_1 : 1;
-    u8 mUnk_16_2 : 1;
-    u8 mUnk_16_3 : 2;
-    u8 mUnk_16_5 : 1;
-    u8 mUnk_16_6 : 2;
-} CameraTrack;
 
 // The chunk of the stage data file whose key is id; 0 when the file has no such chunk.
 u16 *func_02031eb8(u32 id);
@@ -152,6 +138,8 @@ void func_02033df4(int a);
 void func_02033e38(int a, int b, int c);
 // Advances an animation track.
 void func_02033f38(CameraTrack *t, s32 *whole, s32 *next, s32 *rest);
+// Moves the camera by its position and look-at modes, then sets up the view.
+void func_02033fc8(void);
 
 #ifdef __cplusplus
 }

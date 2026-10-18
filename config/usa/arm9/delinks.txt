@@ -456,10 +456,10 @@ src/Main/Unknown/qrk_decode.c:
     .data       start:0x02063ab8 end:0x02063b58
 
 // provisional: the stage data file's chunks and entries, the placed objects, the visible cells and the camera
-// projection and blends (data_020c3e44 and the camera object); it starts with the ring quadtree of chunk 0x5540,
-// whose rings func_02031c70 walks (func_0203129c before it also reads what func_02031824 writes); the camera code continues past the end (func_02033fc8)
+// projection, blends and modes (data_020c3e44, which holds the camera object); it starts with the ring quadtree of
+// chunk 0x5540, whose rings func_02031c70 walks (func_0203129c before it also reads what func_02031824 writes)
 src/Main/Unknown/map_entries.c:
-    .text       start:0x020312b8 end:0x02033fc8
+    .text       start:0x020312b8 end:0x02034768
 
 // one file: its own-section .bss ascend (0x020c1818.. -> FSFile -> SystemState) and the JPEG and start-up code reach
 // the same objects through one section base; the .rodata own sections ascend as one file's; the data block

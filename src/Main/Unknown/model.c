@@ -1697,13 +1697,13 @@ int func_02026718(Model *m) {
                         if (entry == NULL) {
                             OS_Terminate();
                         }
-                        data_020c5e44.mUnk_0c0.mUnk_1ec.x = func_02031f98(entry);
-                        data_020c5e44.mUnk_0c0.mUnk_1ec.y = func_02031fa4(entry);
-                        data_020c5e44.mUnk_0c0.mUnk_1ec.z = func_02031fb0(entry);
+                        data_020c5e44.mUnk_0c0.mUnk_1ec.mUnk_00.x = func_02031f98(entry);
+                        data_020c5e44.mUnk_0c0.mUnk_1ec.mUnk_00.y = func_02031fa4(entry);
+                        data_020c5e44.mUnk_0c0.mUnk_1ec.mUnk_00.z = func_02031fb0(entry);
                     } else {
-                        data_020c5e44.mUnk_0c0.mUnk_1ec.x = 0;
-                        data_020c5e44.mUnk_0c0.mUnk_1ec.y = 0;
-                        data_020c5e44.mUnk_0c0.mUnk_1ec.z = 0;
+                        data_020c5e44.mUnk_0c0.mUnk_1ec.mUnk_00.x = 0;
+                        data_020c5e44.mUnk_0c0.mUnk_1ec.mUnk_00.y = 0;
+                        data_020c5e44.mUnk_0c0.mUnk_1ec.mUnk_00.z = 0;
                     }
                     break;
                 }

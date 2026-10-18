@@ -10,6 +10,7 @@
 #include <Main/Unknown/system_init.h>
 #include <Main/Unknown/game_util.h>
 #include <Main/Unknown/model.h>
+#include <Main/Unknown/vram_cache.h>
 #include <Main/clib.h>
 
 // The stage data file starts with MAP_FILE_MAGIC and MAP_FILE_VERSION, followed by chunks of 16 * n bytes whose
@@ -116,8 +117,11 @@ typedef struct MapMarker {
 // The map object's .bss block: two bit sets, indexed by cell number (mUnk_24) and by position in a rectangle
 // (mUnk_28), the squared distance limits, the sorted pair table with its search step, the buffers the map code
 // allocates, the view matrices (0x3c, 0x6c with its translation at 0x90, and 0x9c, reached through data_020c3e80,
-// data_020c3eb0 and data_020c3ee0) and the placed objects. The 20 records end at 0x2024, 0x24 bytes past the camera
-// object at 0x020c5e44 (data_020c3e44 + 0x2000); no code found reaches the camera object below its 0x24.
+// data_020c3eb0 and data_020c3ee0) and the placed objects, then the camera object (0x2368 bytes in all, up to
+// data_020c61ac). The camera's fields start right after the 20 records, at 0x2024; the other files reach it through
+// data_020c5e44 = data_020c3e44 + 0x2000, where its type (Unk_020c5e44) begins with the 0x24 bytes the records end in,
+// hence the union. Reached as a part of this object, the camera's loads and stores in func_02033fc8, func_02033614
+// and func_02031824 are ordered as in the original; reached through data_020c5e44 they are not.
 typedef struct MapState {
     s32 mUnk_00;
     u32 mUnk_04[3];
@@ -144,7 +148,13 @@ typedef struct MapState {
     u8 mUnk_9c[0xdc - 0x9c];
     s32 mUnk_dc;
     s32 mUnk_e0;
-    MapRecord mUnk_e4[MAP_RECORDS];
+    union {
+        MapRecord mUnk_e4[MAP_RECORDS];
+        struct {
+            u8 mUnk_e4_pad[0x2000 - 0xe4];
+            Unk_020c5e44 mUnk_2000;
+        };
+    };
 } MapState;
 
 extern MapState data_020c3e44;
@@ -178,8 +188,8 @@ static void func_020312b8(VecFx32 *pos, MapRingPoint *out, u8 *counts, u16 *keys
 
     base = func_02031eb8(0x5540);
     x0 = 0;
-    w = data_020c5e44.mUnk_000.mUnk_78 * data_020c5e44.mUnk_000.mUnk_64;
-    h = data_020c5e44.mUnk_000.mUnk_7a * data_020c5e44.mUnk_000.mUnk_64;
+    w = data_020c3e44.mUnk_2000.mUnk_000.mUnk_78 * data_020c3e44.mUnk_2000.mUnk_000.mUnk_64;
+    h = data_020c3e44.mUnk_2000.mUnk_000.mUnk_7a * data_020c3e44.mUnk_2000.mUnk_000.mUnk_64;
     node = base;
     z0 = 0;
     total = 0;
@@ -417,13 +427,13 @@ u32 func_02031824(VecFx32 *pos, int radius, int top, int bottom, u16 any, u16 no
                         hits++;
                         if (dist < best) {
                             best = dist;
-                            data_020c5e44.mUnk_000.mUnk_34 = rings[i];
+                            data_020c3e44.mUnk_2000.mUnk_000.mUnk_34 = rings[i];
                             result = (i << 8) + k + MAP_RING_HIT;
-                            data_020c5e44.mUnk_000.mUnk_5c = dist;
-                            data_020c5e44.mUnk_000.mUnk_5e = keys[i];
-                            data_020c5e44.mUnk_000.mUnk_38 = *cur;
-                            data_020c5e44.mUnk_000.mUnk_44 = *next;
-                            data_020c5e44.mUnk_000.mUnk_50 = nearest;
+                            data_020c3e44.mUnk_2000.mUnk_000.mUnk_5c = dist;
+                            data_020c3e44.mUnk_2000.mUnk_000.mUnk_5e = keys[i];
+                            data_020c3e44.mUnk_2000.mUnk_000.mUnk_38 = *cur;
+                            data_020c3e44.mUnk_2000.mUnk_000.mUnk_44 = *next;
+                            data_020c3e44.mUnk_2000.mUnk_000.mUnk_50 = nearest;
                         } else if (dist == best) {
                             tie = 1;
                         }
@@ -481,9 +491,9 @@ int func_02031c98(u16 *entry, u16 mask, u16 bits) {
 
 // 1 when (x, z) is within the view radius of the camera position.
 static int func_02031cc8(int x, int z) {
-    int dx = (data_020c5e44.mUnk_000.mUnk_80.x - x) / 0x1000;
-    int dz = (data_020c5e44.mUnk_000.mUnk_80.z - z) / 0x1000;
-    u32 r = (u32) data_020c5e44.mUnk_300.mUnk_44 >> 12;
+    int dx = (data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.x - x) / 0x1000;
+    int dz = (data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.z - z) / 0x1000;
+    u32 r = (u32) data_020c3e44.mUnk_2000.mUnk_300.mUnk_44 >> 12;
 
     if ((u32) (dx * dx + dz * dz) <= r * r) {
         return 1;
@@ -499,7 +509,7 @@ int func_02031d0c(VecFx32 *pos, int a, int b, int c) {
     if (func_02031cc8(pos->x, pos->z) == 0) {
         return 0;
     }
-    if (data_020c5e44.mUnk_300.mUnk_4a != 0) {
+    if (data_020c3e44.mUnk_2000.mUnk_300.mUnk_4a != 0) {
         func_020334f8(0);
     }
     reg_G3X_MTX_MODE = 2;
@@ -528,7 +538,7 @@ int func_02031d0c(VecFx32 *pos, int a, int b, int c) {
 // 1 when the map cell under (x, z) is marked in the first bit set, or lies in a rectangle of chunk 0x5530 whose
 // bit in the second set is marked.
 int func_02031dc4(s32 x, s32 z) {
-    u32 grid = data_020c5e44.mUnk_000.mUnk_64;
+    u32 grid = data_020c3e44.mUnk_2000.mUnk_000.mUnk_64;
     s32 cx = (u32) x / grid;
     s32 cz = (u32) z / grid;
     u16 *cells;
@@ -542,7 +552,7 @@ int func_02031dc4(s32 x, s32 z) {
         return 0;
     }
     cells = func_02032898();
-    v = cells[cx + cz * data_020c5e44.mUnk_000.mUnk_78] & 0x7fff;
+    v = cells[cx + cz * data_020c3e44.mUnk_2000.mUnk_000.mUnk_78] & 0x7fff;
     if (v != 0) {
         if (data_020c3e44.mUnk_24[v >> 5] & (1 << (v & 0x1f))) {
             return 1;
@@ -584,16 +594,16 @@ int func_02031dc4(s32 x, s32 z) {
 // Returns the data of the chunk with key id, or 0 when the file has none. Loads the file when it is not loaded.
 #pragma thumb off
 u16 *func_02031eb8(u32 id) {
-    u16 *p = data_020c5e44.mUnk_000.mUnk_6c;
+    u16 *p = data_020c3e44.mUnk_2000.mUnk_000.mUnk_6c;
     int key;
 
     if (p == 0 || p[0] != MAP_FILE_MAGIC) {
-        p = func_0202ded8(data_020c5e44.mUnk_000.mUnk_74);
-        data_020c5e44.mUnk_000.mUnk_6c = p;
-        data_020c5e44.mUnk_300.mUnk_50 = func_02031eb8(0x5511);
+        p = func_0202ded8(data_020c3e44.mUnk_2000.mUnk_000.mUnk_74);
+        data_020c3e44.mUnk_2000.mUnk_000.mUnk_6c = p;
+        data_020c3e44.mUnk_2000.mUnk_300.mUnk_50 = func_02031eb8(0x5511);
     }
-    if (data_020c5e44.mUnk_000.mUnk_70 != data_020c5e44.mUnk_000.mUnk_6c) {
-        data_020c5e44.mUnk_000.mUnk_70 = data_020c5e44.mUnk_000.mUnk_6c;
+    if (data_020c3e44.mUnk_2000.mUnk_000.mUnk_70 != data_020c3e44.mUnk_2000.mUnk_000.mUnk_6c) {
+        data_020c3e44.mUnk_2000.mUnk_000.mUnk_70 = data_020c3e44.mUnk_2000.mUnk_000.mUnk_6c;
         func_02032b88(0);
     }
     if (p[0] != MAP_FILE_MAGIC) {
@@ -756,8 +766,8 @@ u16 *func_020321ac(int a, int b, u32 *count) {
                 return NULL;
             }
             if ((a == -1 || p->mUnk_02 == a) && (b == -1 || p->mUnk_03 == b)) {
-                data_020c5e44.mUnk_000.mUnk_60 = p->mUnk_02;
-                data_020c5e44.mUnk_000.mUnk_61 = p->mUnk_03;
+                data_020c3e44.mUnk_2000.mUnk_000.mUnk_60 = p->mUnk_02;
+                data_020c3e44.mUnk_2000.mUnk_000.mUnk_61 = p->mUnk_03;
                 if (count != NULL) {
                     *count = p[1].mUnk_00 - p->mUnk_00;
                 }
@@ -805,13 +815,13 @@ void func_020322b8(u16 count) {
 
 // The distance in cells from the camera's map position to the rectangle (x, z) of w by h cells, 0 when it lies inside.
 u32 func_020322f4(int x, int z, int w, int h) {
-    u32 k = data_020c5e44.mUnk_000.mUnk_64;
+    u32 k = data_020c3e44.mUnk_2000.mUnk_000.mUnk_64;
     int cw = k * w;
     int ch = k * h;
-    int cx = data_020c5e44.mUnk_000.mUnk_80.x;
+    int cx = data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.x;
 
     if (cx < x) {
-        int cz = data_020c5e44.mUnk_000.mUnk_80.z;
+        int cz = data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.z;
         if (cz >= z) {
             z += ch;
             if (cz < z) {
@@ -819,7 +829,7 @@ u32 func_020322f4(int x, int z, int w, int h) {
             }
         }
     } else if (cx < x + cw) {
-        int cz = data_020c5e44.mUnk_000.mUnk_80.z;
+        int cz = data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.z;
         if (cz < z) {
             x = cx;
         } else {
@@ -830,7 +840,7 @@ u32 func_020322f4(int x, int z, int w, int h) {
             x = cx;
         }
     } else {
-        int cz = data_020c5e44.mUnk_000.mUnk_80.z;
+        int cz = data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.z;
         x += cw;
         if (cz >= z) {
             z += ch;
@@ -839,7 +849,7 @@ u32 func_020322f4(int x, int z, int w, int h) {
             }
         }
     }
-    return func_0201fae4((x - cx) / 512, (z - data_020c5e44.mUnk_000.mUnk_80.z) / 512);
+    return func_0201fae4((x - cx) / 512, (z - data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.z) / 512);
 }
 
 // Classifies the rectangle's distance from the camera against the squared limits (rebuilt when the camera's value at
@@ -854,7 +864,7 @@ u32 func_02032368(u32 flags, int x, int z, int w, int h) {
         int k;
         MapState *st = &data_020c3e44;
 
-        if (data_020c3e44.mUnk_00 != data_020c5e44.mUnk_300.mUnk_44) {
+        if (data_020c3e44.mUnk_00 != data_020c3e44.mUnk_2000.mUnk_300.mUnk_44) {
             base = (data_020c3e44.mUnk_10 * 5 * 256) / 256 - 256;
             k = 0;
             t = 0;
@@ -863,11 +873,11 @@ u32 func_02032368(u32 flags, int x, int z, int w, int h) {
                 int r;
                 t += 256;
                 v = func_0201fab0(0, 0x400, base, t);
-                r = ((u32) data_020c5e44.mUnk_300.mUnk_44 >> 6) * 41 >> 15;
+                r = ((u32) data_020c3e44.mUnk_2000.mUnk_300.mUnk_44 >> 6) * 41 >> 15;
                 v = v * r / 1024;
                 st->mUnk_04[k++] = v * v;
             }
-            data_020c3e44.mUnk_00 = data_020c5e44.mUnk_300.mUnk_44;
+            data_020c3e44.mUnk_00 = data_020c3e44.mUnk_2000.mUnk_300.mUnk_44;
         }
         d = func_020322f4(x, z, w, h);
         if (d == 0) {
@@ -951,8 +961,8 @@ u32 func_0203249c(u32 key) {
 // Starts the map: initialises with a, b, c and the pair table size d and stores the camera's two halfwords at 0x24.
 void func_020325b0(u16 a, u16 b, u16 c, u16 d, u16 e, u16 f) {
     func_020325d0(a, b, c, d);
-    data_020c5e44.mUnk_000.mUnk_24 = e;
-    data_020c5e44.mUnk_000.mUnk_26 = f;
+    data_020c3e44.mUnk_2000.mUnk_000.mUnk_24 = e;
+    data_020c3e44.mUnk_2000.mUnk_000.mUnk_26 = f;
 }
 
 // Resets the map object and the camera for a new stage, sets up the 3D display and loads the buffers and the two
@@ -963,11 +973,11 @@ void func_020325d0(u16 a, u16 b, u16 c, u16 count) {
     MapEntry *entry;
 
     func_02032850();
-    data_020c5e44.mUnk_000.mUnk_6c = NULL;
-    data_020c5e44.mUnk_000.mUnk_70 = NULL;
-    data_020c5e44.mUnk_000.mUnk_74 = a;
-    data_020c5e44.mUnk_000.mUnk_76 = b;
-    data_020c5e44.mUnk_000.mUnk_7c = c;
+    data_020c3e44.mUnk_2000.mUnk_000.mUnk_6c = NULL;
+    data_020c3e44.mUnk_2000.mUnk_000.mUnk_70 = NULL;
+    data_020c3e44.mUnk_2000.mUnk_000.mUnk_74 = a;
+    data_020c3e44.mUnk_2000.mUnk_000.mUnk_76 = b;
+    data_020c3e44.mUnk_2000.mUnk_000.mUnk_7c = c;
     *(vu32 *) 0x04000060 &= ~0x20;
     reg_GX_DISP3DCNT &= ~0x3002;
     *(vu16 *) 0x04000050 = 0;
@@ -982,72 +992,72 @@ void func_020325d0(u16 a, u16 b, u16 c, u16 count) {
     if (hdr == NULL) {
         OS_Terminate();
     }
-    data_020c5e44.mUnk_000.mUnk_78 = hdr[0];
-    data_020c5e44.mUnk_000.mUnk_7a = hdr[1];
-    data_020c5e44.mUnk_000.mUnk_64 = (hdr[3] << 16) + hdr[2];
+    data_020c3e44.mUnk_2000.mUnk_000.mUnk_78 = hdr[0];
+    data_020c3e44.mUnk_2000.mUnk_000.mUnk_7a = hdr[1];
+    data_020c3e44.mUnk_2000.mUnk_000.mUnk_64 = (hdr[3] << 16) + hdr[2];
     verts = func_02031eb8(0x5511);
-    data_020c5e44.mUnk_300.mUnk_50 = verts;
+    data_020c3e44.mUnk_2000.mUnk_300.mUnk_50 = verts;
     data_020c3e44.mUnk_34 = (((verts[-1] * 8) / 8 + 16) & ~3);
     data_020c3e44.mUnk_24 = func_0201c430(data_020c3e44.mUnk_34);
     data_020c3e44.mUnk_28 = func_0201c430(0x400);
     data_020c3e44.mUnk_2c = func_0201c430(0x1200);
     data_020c3e44.mUnk_30 = func_0201c430(0x9c40);
-    data_020c5e44.mUnk_300.mUnk_56 = 0;
+    data_020c3e44.mUnk_2000.mUnk_300.mUnk_56 = 0;
     entry = func_0203204c(0, NULL);
     if (entry != NULL) {
-        data_020c5e44.mUnk_0c0.mUnk_204.x = func_02031f98(entry);
-        data_020c5e44.mUnk_0c0.mUnk_204.y = func_02031fa4(entry);
-        data_020c5e44.mUnk_0c0.mUnk_204.z = func_02031fb0(entry);
+        data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_204.x = func_02031f98(entry);
+        data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_204.y = func_02031fa4(entry);
+        data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_204.z = func_02031fb0(entry);
     } else {
-        data_020c5e44.mUnk_0c0.mUnk_204.x = 0x32000;
-        data_020c5e44.mUnk_0c0.mUnk_204.y = 0x32000 >> 2;
-        data_020c5e44.mUnk_0c0.mUnk_204.z = 0x32000;
+        data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_204.x = 0x32000;
+        data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_204.y = 0x32000 >> 2;
+        data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_204.z = 0x32000;
     }
-    data_020c5e44.mUnk_300.mUnk_32 = 1;
-    data_020c5e44.mUnk_0c0.mUnk_21c = data_020c5e44.mUnk_0c0.mUnk_204;
+    data_020c3e44.mUnk_2000.mUnk_300.mUnk_32 = 1;
+    data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_21c = data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_204;
     entry = func_0203204c(1, NULL);
     if (entry != NULL) {
-        data_020c5e44.mUnk_0c0.mUnk_228.x = func_02031f98(entry);
-        data_020c5e44.mUnk_0c0.mUnk_228.y = func_02031fa4(entry);
-        data_020c5e44.mUnk_0c0.mUnk_228.z = func_02031fb0(entry);
+        data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_228.x = func_02031f98(entry);
+        data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_228.y = func_02031fa4(entry);
+        data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_228.z = func_02031fb0(entry);
     } else {
-        data_020c5e44.mUnk_0c0.mUnk_228.x = 0x4b000;
-        data_020c5e44.mUnk_0c0.mUnk_228.y = 0x19000;
-        data_020c5e44.mUnk_0c0.mUnk_228.z = 0x4b000;
+        data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_228.x = 0x4b000;
+        data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_228.y = 0x19000;
+        data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_228.z = 0x4b000;
     }
-    data_020c5e44.mUnk_300.mUnk_33 = 8;
-    *(VecFx32 *) &data_020c5e44.mUnk_300 = data_020c5e44.mUnk_0c0.mUnk_228;
+    data_020c3e44.mUnk_2000.mUnk_300.mUnk_33 = 8;
+    *(VecFx32 *) &data_020c3e44.mUnk_2000.mUnk_300 = data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_228;
     data_020c3e44.mUnk_38 = 0;
-    data_020c5e44.mUnk_300.mUnk_54 = 0x190;
-    data_020c5e44.mUnk_300.mUnk_30 = 0x3c00;
-    data_020c5e44.mUnk_300.mUnk_0f = 1;
-    data_020c5e44.mUnk_300.mUnk_11[0] = 4;
-    data_020c5e44.mUnk_300.mUnk_0e = 0;
-    data_020c5e44.mUnk_300.mUnk_10 = 0;
-    data_020c5e44.mUnk_300.mUnk_11[1] = 0;
-    data_020c5e44.mUnk_300.mUnk_14 = 0xe38;
-    data_020c5e44.mUnk_300.mUnk_16 = data_020c5e44.mUnk_300.mUnk_14;
-    data_020c5e44.mUnk_300.mUnk_18 = data_020c5e44.mUnk_300.mUnk_14;
-    data_020c5e44.mUnk_000.mUnk_8c = 1;
-    data_020c5e44.mUnk_000.mUnk_90 = 0x1000;
-    data_020c5e44.mUnk_000.mUnk_94 = 0;
-    data_020c5e44.mUnk_000.mUnk_80.x = data_020c5e44.mUnk_0c0.mUnk_204.x;
-    data_020c5e44.mUnk_000.mUnk_80.y = data_020c5e44.mUnk_0c0.mUnk_204.y;
-    data_020c5e44.mUnk_000.mUnk_80.z = data_020c5e44.mUnk_0c0.mUnk_204.z;
-    data_020c5e44.mUnk_000.mUnk_98.x = data_020c5e44.mUnk_0c0.mUnk_228.x;
-    data_020c5e44.mUnk_000.mUnk_98.y = data_020c5e44.mUnk_0c0.mUnk_228.y;
-    data_020c5e44.mUnk_000.mUnk_98.z = data_020c5e44.mUnk_0c0.mUnk_228.z;
-    data_020c5e44.mUnk_300.mUnk_40 = 0;
-    data_020c5e44.mUnk_300.mUnk_42[0] = 0;
-    data_020c5e44.mUnk_300.mUnk_44 = 0x1f4000;
-    data_020c5e44.mUnk_300.mUnk_64 = 0;
+    data_020c3e44.mUnk_2000.mUnk_300.mUnk_54 = 0x190;
+    data_020c3e44.mUnk_2000.mUnk_300.mUnk_30 = 0x3c00;
+    data_020c3e44.mUnk_2000.mUnk_300.mUnk_0f = 1;
+    data_020c3e44.mUnk_2000.mUnk_300.mUnk_11[0] = 4;
+    data_020c3e44.mUnk_2000.mUnk_300.mUnk_0e = 0;
+    data_020c3e44.mUnk_2000.mUnk_300.mUnk_10 = 0;
+    data_020c3e44.mUnk_2000.mUnk_300.mUnk_11[1] = 0;
+    data_020c3e44.mUnk_2000.mUnk_300.mUnk_14 = 0xe38;
+    data_020c3e44.mUnk_2000.mUnk_300.mUnk_16 = data_020c3e44.mUnk_2000.mUnk_300.mUnk_14;
+    data_020c3e44.mUnk_2000.mUnk_300.mUnk_18 = data_020c3e44.mUnk_2000.mUnk_300.mUnk_14;
+    data_020c3e44.mUnk_2000.mUnk_000.mUnk_8c = 1;
+    data_020c3e44.mUnk_2000.mUnk_000.mUnk_90 = 0x1000;
+    data_020c3e44.mUnk_2000.mUnk_000.mUnk_94 = 0;
+    data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.x = data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_204.x;
+    data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.y = data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_204.y;
+    data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.z = data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_204.z;
+    data_020c3e44.mUnk_2000.mUnk_000.mUnk_98.x = data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_228.x;
+    data_020c3e44.mUnk_2000.mUnk_000.mUnk_98.y = data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_228.y;
+    data_020c3e44.mUnk_2000.mUnk_000.mUnk_98.z = data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_228.z;
+    data_020c3e44.mUnk_2000.mUnk_300.mUnk_40 = 0;
+    data_020c3e44.mUnk_2000.mUnk_300.mUnk_42[0] = 0;
+    data_020c3e44.mUnk_2000.mUnk_300.mUnk_44 = 0x1f4000;
+    data_020c3e44.mUnk_2000.mUnk_300.mUnk_64 = 0;
     data_020c3e44.mUnk_00 = -1;
     data_020c3e44.mUnk_10 = 0x80;
-    data_020c5e44.mUnk_000.mUnk_28 = NULL;
+    data_020c3e44.mUnk_2000.mUnk_000.mUnk_28 = NULL;
     func_020322b8(count);
-    data_020c5e44.mUnk_300.mUnk_5a = 0;
-    data_020c5e44.mUnk_300.mUnk_5c = 0;
-    data_020c5e44.mUnk_000.mUnk_7f_1 = 0;
+    data_020c3e44.mUnk_2000.mUnk_300.mUnk_5a = 0;
+    data_020c3e44.mUnk_2000.mUnk_300.mUnk_5c = 0;
+    data_020c3e44.mUnk_2000.mUnk_000.mUnk_7f_1 = 0;
     data_020c18bc.mUnk_46c &= ~0x10000;
 }
 
@@ -1085,18 +1095,18 @@ void func_020328b0(MapRecord *rec) {
         u16 b = (v >> 6) & 0x3f;
 
         if (v >> 15) {
-            if (data_020c5e44.mUnk_000.mUnk_28 == NULL) {
+            if (data_020c3e44.mUnk_2000.mUnk_000.mUnk_28 == NULL) {
                 OS_Terminate();
             }
-            data_020c5e44.mUnk_000.mUnk_28(a, rec, (u16) (b + data_020c5e44.mUnk_000.mUnk_26));
+            data_020c3e44.mUnk_2000.mUnk_000.mUnk_28(a, rec, (u16) (b + data_020c3e44.mUnk_2000.mUnk_000.mUnk_26));
         }
-        if (a == 0x3f || (data_020c5e44.mUnk_000.mUnk_68 & (1 << a))) {
+        if (a == 0x3f || (data_020c3e44.mUnk_2000.mUnk_000.mUnk_68 & (1 << a))) {
             anim = b;
             kind = (rec->mUnk_00->mUnk_04[i] >> 12) & 7;
         }
     }
     if (anim != 0x3f) {
-        anim += data_020c5e44.mUnk_000.mUnk_26;
+        anim += data_020c3e44.mUnk_2000.mUnk_000.mUnk_26;
     } else {
         anim = 0;
     }
@@ -1154,7 +1164,7 @@ void func_020329d0(u8 *p) {
                 return;
             }
             fresh->mUnk_00 = def;
-            fresh->mUnk_174 = def->mUnk_02 + data_020c5e44.mUnk_000.mUnk_24;
+            fresh->mUnk_174 = def->mUnk_02 + data_020c3e44.mUnk_2000.mUnk_000.mUnk_24;
             rec = fresh;
             fresh->mUnk_176_10 = 0;
             fresh->mUnk_176_4 = 0;
@@ -1189,7 +1199,7 @@ void func_020329d0(u8 *p) {
             }
             func_020328b0(rec);
             if (rec->mUnk_18a == 0) {
-                data_020c5e44.mUnk_300.mUnk_60++;
+                data_020c3e44.mUnk_2000.mUnk_300.mUnk_60++;
                 func_0202733c(rec->mUnk_04, &dp, flags);
             }
         }
@@ -1205,8 +1215,8 @@ void func_02032b88(int a) {
         data_020c3e44.mUnk_e4[i].mUnk_00 = NULL;
     }
     if (a == 1) {
-        data_020c5e44.mUnk_000.mUnk_24 = 0;
-        data_020c5e44.mUnk_000.mUnk_26 = 0;
+        data_020c3e44.mUnk_2000.mUnk_000.mUnk_24 = 0;
+        data_020c3e44.mUnk_2000.mUnk_000.mUnk_26 = 0;
     }
 }
 
@@ -1321,14 +1331,14 @@ void func_02032d50(u32 px, u32 pz) {
     u32 i;
     int n;
 
-    if (!data_020c5e44.mUnk_000.mUnk_7f_3) {
+    if (!data_020c3e44.mUnk_2000.mUnk_000.mUnk_7f_3) {
         return;
     }
     area = (MapArea *) func_02031eb8(0x5530);
     if (area == NULL) {
         OS_Terminate();
     }
-    scale = data_020c5e44.mUnk_000.mUnk_64;
+    scale = data_020c3e44.mUnk_2000.mUnk_000.mUnk_64;
     cx = px / scale;
     cz = pz / scale;
     n = *(u8 *) area;
@@ -1379,17 +1389,17 @@ void func_02032d50(u32 px, u32 pz) {
         row = q >> shift;
         col = q & ((1 << shift) - 1);
         v = area->mUnk_06[col + row * w];
-        x = data_020c5e44.mUnk_000.mUnk_64 * (x0 + col);
-        z = data_020c5e44.mUnk_000.mUnk_64 * (z0 + row);
+        x = data_020c3e44.mUnk_2000.mUnk_000.mUnk_64 * (x0 + col);
+        z = data_020c3e44.mUnk_2000.mUnk_000.mUnk_64 * (z0 + row);
         if ((v & 0x3ff) == 0) {
-            data_020c5e44.mUnk_000.mUnk_7f_2 = 1;
+            data_020c3e44.mUnk_2000.mUnk_000.mUnk_7f_2 = 1;
             data_020c3e44.mUnk_dc = x;
             data_020c3e44.mUnk_e0 = z;
         } else {
             data_020c3e44.mUnk_2c[data_020c3e44.mUnk_36].mUnk_04 = x;
             data_020c3e44.mUnk_2c[data_020c3e44.mUnk_36].mUnk_08 = z;
             data_020c3e44.mUnk_2c[data_020c3e44.mUnk_36].mUnk_00 =
-                func_0203249c(v & 0x3ff) + data_020c5e44.mUnk_000.mUnk_7c - 1;
+                func_0203249c(v & 0x3ff) + data_020c3e44.mUnk_2000.mUnk_000.mUnk_7c - 1;
             data_020c3e44.mUnk_36++;
             if (data_020c3e44.mUnk_36 >= 0x180) {
                 OS_Terminate();
@@ -1409,9 +1419,10 @@ void func_02032d50(u32 px, u32 pz) {
                 if (!(bit & word)) {
                     data_020c3e44.mUnk_28[idx >> 5] = word | bit;
                     *(vu32 *) 0x04000450 = 0x1e;
-                    PutTrans(data_020c5e44.mUnk_000.mUnk_64 * (nc + x0), 0, data_020c5e44.mUnk_000.mUnk_64 * (nr + z0));
-                    PutScale(data_020c5e44.mUnk_000.mUnk_64, data_020c5e44.mUnk_000.mUnk_64 << 4,
-                             data_020c5e44.mUnk_000.mUnk_64);
+                    PutTrans(data_020c3e44.mUnk_2000.mUnk_000.mUnk_64 * (nc + x0), 0,
+                             data_020c3e44.mUnk_2000.mUnk_000.mUnk_64 * (nr + z0));
+                    PutScale(data_020c3e44.mUnk_2000.mUnk_000.mUnk_64, data_020c3e44.mUnk_2000.mUnk_000.mUnk_64 << 4,
+                             data_020c3e44.mUnk_2000.mUnk_000.mUnk_64);
                     reg_G3X_BEGIN_VTXS = 0;
                     reg_G3X_END_VTXS = 0;
                     reg_G3X_BOX_TEST = *(u32 *) &box[0];
@@ -1430,13 +1441,13 @@ void func_02032d50(u32 px, u32 pz) {
             j++;
         }
     }
-    if (!data_020c5e44.mUnk_000.mUnk_7f_2) {
-        if (data_020c5e44.mUnk_000.mUnk_7e == 1) {
-            data_020c5e44.mUnk_000.mUnk_7f_3 = 0;
+    if (!data_020c3e44.mUnk_2000.mUnk_000.mUnk_7f_2) {
+        if (data_020c3e44.mUnk_2000.mUnk_000.mUnk_7e == 1) {
+            data_020c3e44.mUnk_2000.mUnk_000.mUnk_7f_3 = 0;
             data_020c3e44.mUnk_36 = saved;
         } else {
-            data_020c5e44.mUnk_000.mUnk_7f_4 = 0;
-            data_020c5e44.mUnk_000.mUnk_30 = 0;
+            data_020c3e44.mUnk_2000.mUnk_000.mUnk_7f_4 = 0;
+            data_020c3e44.mUnk_2000.mUnk_000.mUnk_30 = 0;
             MIi_CpuClearFast(0, data_020c3e44.mUnk_24, data_020c3e44.mUnk_34);
             for (i = saved; i < data_020c3e44.mUnk_36; i++) {
                 data_020c3e44.mUnk_2c[i - saved] = data_020c3e44.mUnk_2c[i];
@@ -1495,10 +1506,10 @@ void func_0203315c(int x, int z) {
     box[3] = 1;
     box[4] = 1;
     box[5] = 1;
-    cx = (u32) x / data_020c5e44.mUnk_000.mUnk_64;
-    cz = (u32) z / data_020c5e44.mUnk_000.mUnk_64;
-    cols = data_020c5e44.mUnk_000.mUnk_78;
-    rows = data_020c5e44.mUnk_000.mUnk_7a;
+    cx = (u32) x / data_020c3e44.mUnk_2000.mUnk_000.mUnk_64;
+    cz = (u32) z / data_020c3e44.mUnk_2000.mUnk_000.mUnk_64;
+    cols = data_020c3e44.mUnk_2000.mUnk_000.mUnk_78;
+    rows = data_020c3e44.mUnk_2000.mUnk_000.mUnk_7a;
     if (!(cz < rows && cx < cols)) {
         return;
     }
@@ -1507,16 +1518,16 @@ void func_0203315c(int x, int z) {
     if (chunk == 0) {
         OS_Terminate();
     }
-    v = cells[cx + cz * data_020c5e44.mUnk_000.mUnk_78];
+    v = cells[cx + cz * data_020c3e44.mUnk_2000.mUnk_000.mUnk_78];
     if (v & 0x8000) {
         v &= 0x7fff;
-        data_020c5e44.mUnk_000.mUnk_7f_3 = 1;
+        data_020c3e44.mUnk_2000.mUnk_000.mUnk_7f_3 = 1;
     }
     if (v != 0) {
         data_020c3e44.mUnk_24[v >> 5] |= 1 << (v & 0x1f);
         list[0] = v;
         n++;
-        data_020c5e44.mUnk_000.mUnk_7f_4 = 1;
+        data_020c3e44.mUnk_2000.mUnk_000.mUnk_7f_4 = 1;
     }
     if (n == 0) {
         return;
@@ -1536,7 +1547,7 @@ void func_0203315c(int x, int z) {
         int sx, sy, sz;
 
         m++;
-        offs = data_020c5e44.mUnk_300.mUnk_50;
+        offs = data_020c3e44.mUnk_2000.mUnk_300.mUnk_50;
         rec = (MapCellRec *) (chunk + offs[idx]);
         listlen =
             (u32) ((offs[idx + 1] - offs[idx]) * 2 - ((u8 *) (rec + 1) - (u8 *) rec) - (rec->mUnk_12 - 1) * 2) >> 1;
@@ -1555,14 +1566,15 @@ void func_0203315c(int x, int z) {
         px = rec->mUnk_06[0] + (rec->mUnk_06[1] << 16);
         pz = rec->mUnk_0a[0] + (rec->mUnk_0a[1] << 16);
         py = rec->mUnk_0e[0] + (rec->mUnk_0e[1] << 16);
-        r = (u32) data_020c5e44.mUnk_300.mUnk_44 >> 9;
+        r = (u32) data_020c3e44.mUnk_2000.mUnk_300.mUnk_44 >> 9;
         if (func_020322f4(px, pz, rec->mUnk_02, rec->mUnk_03) > r * r) {
             continue;
         }
         *(vu32 *) 0x04000450 = 0x1e;
         PutTrans(px, py, pz);
-        PutScale(rec->mUnk_02 * data_020c5e44.mUnk_000.mUnk_64, rec->mUnk_04 * data_020c5e44.mUnk_000.mUnk_64,
-                 rec->mUnk_03 * data_020c5e44.mUnk_000.mUnk_64);
+        PutScale(rec->mUnk_02 * data_020c3e44.mUnk_2000.mUnk_000.mUnk_64,
+                 rec->mUnk_04 * data_020c3e44.mUnk_2000.mUnk_000.mUnk_64,
+                 rec->mUnk_03 * data_020c3e44.mUnk_2000.mUnk_000.mUnk_64);
         reg_G3X_BEGIN_VTXS = 0;
         reg_G3X_END_VTXS = 0;
         reg_G3X_BOX_TEST = *(u32 *) &box[0];
@@ -1571,7 +1583,7 @@ void func_0203315c(int x, int z) {
         while (G3X_GetBoxTestResult(&result) != 0) {
         }
         if (result != 0 && rec->mUnk_12 > 1) {
-            data_020c5e44.mUnk_000.mUnk_2c[data_020c5e44.mUnk_000.mUnk_30++] = &rec->mUnk_13;
+            data_020c3e44.mUnk_2000.mUnk_000.mUnk_2c[data_020c3e44.mUnk_2000.mUnk_000.mUnk_30++] = &rec->mUnk_13;
         }
         if (result == 0 && data_020c3e44.mUnk_36 != 0) {
             continue;
@@ -1582,7 +1594,7 @@ void func_0203315c(int x, int z) {
             data_020c3e44.mUnk_2c[data_020c3e44.mUnk_36].mUnk_04 = px;
             data_020c3e44.mUnk_2c[data_020c3e44.mUnk_36].mUnk_08 = pz;
             data_020c3e44.mUnk_2c[data_020c3e44.mUnk_36].mUnk_00 =
-                data_020c5e44.mUnk_000.mUnk_7c - 1 + func_0203249c(k);
+                data_020c3e44.mUnk_2000.mUnk_000.mUnk_7c - 1 + func_0203249c(k);
             data_020c3e44.mUnk_36++;
             if (data_020c3e44.mUnk_36 >= 0x180) {
                 OS_Terminate();
@@ -1620,26 +1632,32 @@ void func_0203315c(int x, int z) {
 // Moves the camera's target and position a step (1 / 2^mUnk_bc of the way) towards their goals and redraws the
 // projection.
 void func_02033488(void) {
-    u8 s = data_020c5e44.mUnk_000.mUnk_bc;
+    u8 s = data_020c3e44.mUnk_2000.mUnk_000.mUnk_bc;
 
-    data_020c5e44.mUnk_000.mUnk_98.x += (data_020c5e44.mUnk_000.mUnk_b0.x - data_020c5e44.mUnk_000.mUnk_98.x) >> s;
-    data_020c5e44.mUnk_000.mUnk_98.y += (data_020c5e44.mUnk_000.mUnk_b0.y - data_020c5e44.mUnk_000.mUnk_98.y) >> s;
-    data_020c5e44.mUnk_000.mUnk_98.z += (data_020c5e44.mUnk_000.mUnk_b0.z - data_020c5e44.mUnk_000.mUnk_98.z) >> s;
-    data_020c5e44.mUnk_000.mUnk_80.x += (data_020c5e44.mUnk_000.mUnk_a4.x - data_020c5e44.mUnk_000.mUnk_80.x) >> s;
-    data_020c5e44.mUnk_000.mUnk_80.y += (data_020c5e44.mUnk_000.mUnk_a4.y - data_020c5e44.mUnk_000.mUnk_80.y) >> s;
-    data_020c5e44.mUnk_000.mUnk_80.z += (data_020c5e44.mUnk_000.mUnk_a4.z - data_020c5e44.mUnk_000.mUnk_80.z) >> s;
+    data_020c3e44.mUnk_2000.mUnk_000.mUnk_98.x +=
+        (data_020c3e44.mUnk_2000.mUnk_000.mUnk_b0.x - data_020c3e44.mUnk_2000.mUnk_000.mUnk_98.x) >> s;
+    data_020c3e44.mUnk_2000.mUnk_000.mUnk_98.y +=
+        (data_020c3e44.mUnk_2000.mUnk_000.mUnk_b0.y - data_020c3e44.mUnk_2000.mUnk_000.mUnk_98.y) >> s;
+    data_020c3e44.mUnk_2000.mUnk_000.mUnk_98.z +=
+        (data_020c3e44.mUnk_2000.mUnk_000.mUnk_b0.z - data_020c3e44.mUnk_2000.mUnk_000.mUnk_98.z) >> s;
+    data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.x +=
+        (data_020c3e44.mUnk_2000.mUnk_000.mUnk_a4.x - data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.x) >> s;
+    data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.y +=
+        (data_020c3e44.mUnk_2000.mUnk_000.mUnk_a4.y - data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.y) >> s;
+    data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.z +=
+        (data_020c3e44.mUnk_2000.mUnk_000.mUnk_a4.z - data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.z) >> s;
     func_02033b8c();
     func_02033520();
 }
 
 // The camera's field of view angle.
 u16 func_020334ec(void) {
-    return data_020c5e44.mUnk_300.mUnk_14;
+    return data_020c3e44.mUnk_2000.mUnk_300.mUnk_14;
 }
 
 // Sets the projection with the far distance scaled by 8 when a is 1, then restores it.
 void func_020334f8(int a) {
-    s32 saved = data_020c5e44.mUnk_300.mUnk_44;
+    s32 saved = data_020c3e44.mUnk_2000.mUnk_300.mUnk_44;
     int sh;
 
     if (a == 1) {
@@ -1647,9 +1665,9 @@ void func_020334f8(int a) {
     } else {
         sh = 0;
     }
-    data_020c5e44.mUnk_300.mUnk_44 <<= sh;
+    data_020c3e44.mUnk_2000.mUnk_300.mUnk_44 <<= sh;
     func_02033520();
-    data_020c5e44.mUnk_300.mUnk_44 = saved;
+    data_020c3e44.mUnk_2000.mUnk_300.mUnk_44 = saved;
 }
 
 // Sets up the projection (from the field of view angle and the far distance) and the view matrix from the camera
@@ -1658,28 +1676,28 @@ void func_020334f8(int a) {
 void func_02033520(void) {
     int a = func_020334ec();
 
-    if (data_020c5e44.mUnk_000.mUnk_74 != 0) {
+    if (data_020c3e44.mUnk_2000.mUnk_000.mUnk_74 != 0) {
         int i;
 
         func_0203cbe0();
-        if (data_020c5e44.mUnk_000.mUnk_80.x == data_020c5e44.mUnk_000.mUnk_98.x &&
-            data_020c5e44.mUnk_000.mUnk_80.y == data_020c5e44.mUnk_000.mUnk_98.y &&
-            data_020c5e44.mUnk_000.mUnk_80.z == data_020c5e44.mUnk_000.mUnk_98.z) {
-            data_020c5e44.mUnk_000.mUnk_80.y += 0xc800;
+        if (data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.x == data_020c3e44.mUnk_2000.mUnk_000.mUnk_98.x &&
+            data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.y == data_020c3e44.mUnk_2000.mUnk_000.mUnk_98.y &&
+            data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.z == data_020c3e44.mUnk_2000.mUnk_000.mUnk_98.z) {
+            data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.y += 0xc800;
         }
         i = (a >> 4) * 2;
-        func_0203d030(FX_SinCosTable_[i], FX_SinCosTable_[i + 1], 0x1555, 0x400, data_020c5e44.mUnk_300.mUnk_44, 0x1000,
-                      1, &data_020c3ee0);
+        func_0203d030(FX_SinCosTable_[i], FX_SinCosTable_[i + 1], 0x1555, 0x400,
+                      data_020c3e44.mUnk_2000.mUnk_300.mUnk_44, 0x1000, 1, &data_020c3ee0);
         *(vu32 *) 0x040004c8 = 0x20000000;
-        func_0203d0f0(&data_020c5e44.mUnk_000.mUnk_80, (VecFx32 *) &data_020c5e44.mUnk_000.mUnk_8c,
-                      &data_020c5e44.mUnk_000.mUnk_98, 1, &data_020c3e80);
+        func_0203d0f0(&data_020c3e44.mUnk_2000.mUnk_000.mUnk_80, (VecFx32 *) &data_020c3e44.mUnk_2000.mUnk_000.mUnk_8c,
+                      &data_020c3e44.mUnk_2000.mUnk_000.mUnk_98, 1, &data_020c3e80);
         func_0203b8bc((MtxFx33 *) &data_020c3e80, (MtxFx33 *) &data_020c3eb0);
         func_0203b9b0((VecFx32 *) &data_020c3e80._[9], (MtxFx33 *) &data_020c3eb0, &data_020c3e44.mUnk_90);
         data_020c3e44.mUnk_90.x = -data_020c3e44.mUnk_90.x;
         data_020c3e44.mUnk_90.y = -data_020c3e44.mUnk_90.y;
         data_020c3e44.mUnk_90.z = -data_020c3e44.mUnk_90.z;
         reg_G3X_MTX_MODE = 2;
-        data_020c5e44.mUnk_300.mUnk_4a = 0;
+        data_020c3e44.mUnk_2000.mUnk_300.mUnk_4a = 0;
     }
 }
 
@@ -1693,36 +1711,37 @@ void func_02033614(s32 x, s32 z) {
     DrawParams marker;
     DrawParams camera;
 
-    data_020c5e44.mUnk_000.mUnk_2c = func_0201c430(0x80);
-    data_020c5e44.mUnk_000.mUnk_30 = 0;
-    if (data_020c5e44.mUnk_300.mUnk_42[0] != 0) {
-        a = data_020c5e44.mUnk_300.mUnk_38;
-        b = data_020c5e44.mUnk_300.mUnk_3c;
+    data_020c3e44.mUnk_2000.mUnk_000.mUnk_2c = func_0201c430(0x80);
+    data_020c3e44.mUnk_2000.mUnk_000.mUnk_30 = 0;
+    if (data_020c3e44.mUnk_2000.mUnk_300.mUnk_42[0] != 0) {
+        a = data_020c3e44.mUnk_2000.mUnk_300.mUnk_38;
+        b = data_020c3e44.mUnk_2000.mUnk_300.mUnk_3c;
     } else {
-        a = data_020c5e44.mUnk_300.mUnk_38 * 0xc800;
-        b = data_020c5e44.mUnk_300.mUnk_3c * 0xc800;
+        a = data_020c3e44.mUnk_2000.mUnk_300.mUnk_38 * 0xc800;
+        b = data_020c3e44.mUnk_2000.mUnk_300.mUnk_3c * 0xc800;
     }
-    func_02034768(a, b, data_020c5e44.mUnk_300.mUnk_40);
+    func_02034768(a, b, data_020c3e44.mUnk_2000.mUnk_300.mUnk_40);
     func_02034904();
-    data_020c5e44.mUnk_000.mUnk_68 = 0;
-    data_020c5e44.mUnk_000.mUnk_7f_4 = 0;
-    data_020c5e44.mUnk_000.mUnk_7f_3 = 0;
-    data_020c5e44.mUnk_000.mUnk_7f_2 = 0;
+    data_020c3e44.mUnk_2000.mUnk_000.mUnk_68 = 0;
+    data_020c3e44.mUnk_2000.mUnk_000.mUnk_7f_4 = 0;
+    data_020c3e44.mUnk_2000.mUnk_000.mUnk_7f_3 = 0;
+    data_020c3e44.mUnk_2000.mUnk_000.mUnk_7f_2 = 0;
     data_020c3e44.mUnk_36 = 0;
     MIi_CpuClearFast(0, data_020c3e44.mUnk_24, data_020c3e44.mUnk_34);
     func_0203315c(x, z);
     func_02032d50(x, z);
-    if (data_020c5e44.mUnk_000.mUnk_7f_2 == 1 && data_020c5e44.mUnk_000.mUnk_7f_4 == 0) {
+    if (data_020c3e44.mUnk_2000.mUnk_000.mUnk_7f_2 == 1 && data_020c3e44.mUnk_2000.mUnk_000.mUnk_7f_4 == 0) {
         func_0203315c(data_020c3e44.mUnk_dc, data_020c3e44.mUnk_e0);
     }
-    data_020c5e44.mUnk_000.mUnk_7e = (data_020c5e44.mUnk_000.mUnk_7f_3 << 1) + data_020c5e44.mUnk_000.mUnk_7f_4;
-    data_020c5e44.mUnk_300.mUnk_60 = 0;
-    if (data_020c5e44.mUnk_300.mUnk_5c == 0) {
-        for (i = 0; i < data_020c5e44.mUnk_000.mUnk_30; i++) {
-            func_020329d0(data_020c5e44.mUnk_000.mUnk_2c[i]);
+    data_020c3e44.mUnk_2000.mUnk_000.mUnk_7e =
+        (data_020c3e44.mUnk_2000.mUnk_000.mUnk_7f_3 << 1) + data_020c3e44.mUnk_2000.mUnk_000.mUnk_7f_4;
+    data_020c3e44.mUnk_2000.mUnk_300.mUnk_60 = 0;
+    if (data_020c3e44.mUnk_2000.mUnk_300.mUnk_5c == 0) {
+        for (i = 0; i < data_020c3e44.mUnk_2000.mUnk_000.mUnk_30; i++) {
+            func_020329d0(data_020c3e44.mUnk_2000.mUnk_000.mUnk_2c[i]);
         }
     }
-    func_0201c4f0(&data_020c5e44.mUnk_000.mUnk_2c);
+    func_0201c4f0(&data_020c3e44.mUnk_2000.mUnk_000.mUnk_2c);
     marker.mUnk_43_4 = 0;
     marker.mUnk_43_3 = marker.mUnk_43_4;
     marker.mUnk_43 = 0;
@@ -1732,39 +1751,40 @@ void func_02033614(s32 x, s32 z) {
     marker.mUnk_3c = 0;
     marker.mUnk_3e = 0xff;
     {
-        s32 v = -(data_020c5e44.mUnk_300.mUnk_5a == 0);
+        s32 v = -(data_020c3e44.mUnk_2000.mUnk_300.mUnk_5a == 0);
         marker.mUnk_2c = v;
         marker.mUnk_30 = v;
         marker.mUnk_34 = v;
     }
     for (i = 0; i < data_020c3e44.mUnk_36; i++) {
         if ((data_020c3e44.mUnk_38 & 0x8000) == 0 ||
-            (data_020c3e44.mUnk_38 & ~0x8000) + data_020c5e44.mUnk_000.mUnk_7c == data_020c3e44.mUnk_2c[i].mUnk_00) {
+            (data_020c3e44.mUnk_38 & ~0x8000) + data_020c3e44.mUnk_2000.mUnk_000.mUnk_7c ==
+                data_020c3e44.mUnk_2c[i].mUnk_00) {
             MapMarker *m = &data_020c3e44.mUnk_2c[i];
             marker.mPos.x = m->mUnk_04;
             marker.mPos.z = m->mUnk_08;
-            func_020248e8(m->mUnk_00 & 0x7fff, &marker, data_020c5e44.mUnk_000.mUnk_7f_0 == 1 ? 0x10 : 0);
-            if (*(vu16 *) 0x04000604 > data_020c5e44.mUnk_300.mUnk_54) {
+            func_020248e8(m->mUnk_00 & 0x7fff, &marker, data_020c3e44.mUnk_2000.mUnk_000.mUnk_7f_0 == 1 ? 0x10 : 0);
+            if (*(vu16 *) 0x04000604 > data_020c3e44.mUnk_2000.mUnk_300.mUnk_54) {
                 break;
             }
         }
     }
-    if (data_020c5e44.mUnk_000.mUnk_76 == 0) {
+    if (data_020c3e44.mUnk_2000.mUnk_000.mUnk_76 == 0) {
         return;
     }
     func_020334ec();
     func_020334f8(1);
-    camera.mPos.x = data_020c5e44.mUnk_000.mUnk_80.x;
-    camera.mPos.y = data_020c5e44.mUnk_000.mUnk_80.y;
+    camera.mPos.x = data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.x;
+    camera.mPos.y = data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.y;
     camera.mUnk_43_3 = 0;
     camera.mUnk_43_4 = 0;
     camera.mUnk_43 = 0;
-    camera.mPos.z = data_020c5e44.mUnk_000.mUnk_80.z;
+    camera.mPos.z = data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.z;
     camera.mUnk_38 = 0;
     camera.mUnk_3c = 0;
     camera.mUnk_3a = 0;
     camera.mUnk_28 = 0x1000;
-    func_020248e8(data_020c5e44.mUnk_000.mUnk_76, &camera, data_020c5e44.mUnk_000.mUnk_7f_1 == 0);
+    func_020248e8(data_020c3e44.mUnk_2000.mUnk_000.mUnk_76, &camera, data_020c3e44.mUnk_2000.mUnk_000.mUnk_7f_1 == 0);
     func_020334f8(0);
 }
 
@@ -1776,33 +1796,33 @@ void func_02033b04(void) {
     s32 diff;
     VecFx32 *target;
 
-    if (data_020c5e44.mUnk_300.mUnk_34[0] != 0) {
-        data_020c5e44.mUnk_300.mUnk_34[0] = 0;
+    if (data_020c3e44.mUnk_2000.mUnk_300.mUnk_34[0] != 0) {
+        data_020c3e44.mUnk_2000.mUnk_300.mUnk_34[0] = 0;
         return;
     }
-    target = &data_020c5e44.mUnk_000.mUnk_98;
-    dx = data_020c5e44.mUnk_000.mUnk_80.x - target->x;
-    dz = data_020c5e44.mUnk_000.mUnk_80.z - target->z;
-    diff = func_0201fe34(data_020c5e44.mUnk_300.mUnk_56, func_0201feb0(-dx >> 6, -dz >> 6));
-    data_020c5e44.mUnk_300.mUnk_56 += (u16) (diff / 4);
+    target = &data_020c3e44.mUnk_2000.mUnk_000.mUnk_98;
+    dx = data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.x - target->x;
+    dz = data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.z - target->z;
+    diff = func_0201fe34(data_020c3e44.mUnk_2000.mUnk_300.mUnk_56, func_0201feb0(-dx >> 6, -dz >> 6));
+    data_020c3e44.mUnk_2000.mUnk_300.mUnk_56 += (u16) (diff / 4);
 }
 
 // One step of the view angle blend from mUnk_16 to mUnk_18 over mUnk_11[0] steps (mUnk_10 counts them); c points at
 // the blend counters from mUnk_0c on.
 void func_02033b8c(void) {
-    u8 *c = &data_020c5e44.mUnk_300.mUnk_0c;
+    u8 *c = &data_020c3e44.mUnk_2000.mUnk_300.mUnk_0c;
     if (c[4] == 0) {
         return;
     }
     if (c[5] - 1 > 1) {
-        data_020c5e44.mUnk_300.mUnk_14 =
-            func_0201fb74(c[4], c[5] - 1, data_020c5e44.mUnk_300.mUnk_16, data_020c5e44.mUnk_300.mUnk_18);
+        data_020c3e44.mUnk_2000.mUnk_300.mUnk_14 = func_0201fb74(
+            c[4], c[5] - 1, data_020c3e44.mUnk_2000.mUnk_300.mUnk_16, data_020c3e44.mUnk_2000.mUnk_300.mUnk_18);
         c[4]++;
         if (c[4] == c[5]) {
             c[4] = 0;
         }
     } else {
-        data_020c5e44.mUnk_300.mUnk_14 = data_020c5e44.mUnk_300.mUnk_18;
+        data_020c3e44.mUnk_2000.mUnk_300.mUnk_14 = data_020c3e44.mUnk_2000.mUnk_300.mUnk_18;
         c[4] = 0;
     }
 }
@@ -1817,49 +1837,52 @@ void func_0203393c(VecFx32 *pos) {
     int dy;
     int dz;
 
-    if (data_020c5e44.mUnk_300.mUnk_4e == 0) {
-        if (data_020c5e44.mUnk_300.mUnk_0d < 2) {
-            data_020c5e44.mUnk_000.mUnk_98.x = pos->x;
-            data_020c5e44.mUnk_000.mUnk_98.y = pos->y;
-            data_020c5e44.mUnk_000.mUnk_98.z = pos->z;
-            data_020c5e44.mUnk_300.mUnk_0c = 0;
+    if (data_020c3e44.mUnk_2000.mUnk_300.mUnk_4e == 0) {
+        if (data_020c3e44.mUnk_2000.mUnk_300.mUnk_0d < 2) {
+            data_020c3e44.mUnk_2000.mUnk_000.mUnk_98.x = pos->x;
+            data_020c3e44.mUnk_2000.mUnk_000.mUnk_98.y = pos->y;
+            data_020c3e44.mUnk_2000.mUnk_000.mUnk_98.z = pos->z;
+            data_020c3e44.mUnk_2000.mUnk_300.mUnk_0c = 0;
             return;
         }
-        cur = &data_020c5e44.mUnk_300.mUnk_00;
+        cur = &data_020c3e44.mUnk_2000.mUnk_300.mUnk_00;
         dy = (cur->y - pos->y) >> 9;
         dx = (cur->x - pos->x) >> 9;
         dz = (cur->z - pos->z) >> 9;
         d = dx * dx + dy * dy + dz * dz;
-        from = &data_020c5e44.mUnk_0c0.mUnk_234;
-        if (d > (data_020c5e44.mUnk_300.mUnk_30 * data_020c5e44.mUnk_300.mUnk_30 >> 18)) {
+        from = &data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_234;
+        if (d > (data_020c3e44.mUnk_2000.mUnk_300.mUnk_30 * data_020c3e44.mUnk_2000.mUnk_300.mUnk_30 >> 18)) {
             cur->x = pos->x;
             cur->y = pos->y;
             cur->z = pos->z;
-            from->x = data_020c5e44.mUnk_000.mUnk_98.x;
-            from->y = data_020c5e44.mUnk_000.mUnk_98.y;
-            from->z = data_020c5e44.mUnk_000.mUnk_98.z;
-            data_020c5e44.mUnk_300.mUnk_0c = 1;
+            from->x = data_020c3e44.mUnk_2000.mUnk_000.mUnk_98.x;
+            from->y = data_020c3e44.mUnk_2000.mUnk_000.mUnk_98.y;
+            from->z = data_020c3e44.mUnk_2000.mUnk_000.mUnk_98.z;
+            data_020c3e44.mUnk_2000.mUnk_300.mUnk_0c = 1;
         }
-        if (data_020c5e44.mUnk_300.mUnk_0c == 0) {
+        if (data_020c3e44.mUnk_2000.mUnk_300.mUnk_0c == 0) {
             return;
         }
-        data_020c5e44.mUnk_000.mUnk_98.x =
-            func_0201fb74(data_020c5e44.mUnk_300.mUnk_0c, data_020c5e44.mUnk_300.mUnk_0d, from->x, cur->x);
-        data_020c5e44.mUnk_000.mUnk_98.y =
-            func_0201fb74(data_020c5e44.mUnk_300.mUnk_0c, data_020c5e44.mUnk_300.mUnk_0d, from->y, cur->y);
-        data_020c5e44.mUnk_000.mUnk_98.z =
-            func_0201fb74(data_020c5e44.mUnk_300.mUnk_0c, data_020c5e44.mUnk_300.mUnk_0d, from->z, cur->z);
-        data_020c5e44.mUnk_300.mUnk_0c++;
-        if (data_020c5e44.mUnk_300.mUnk_0c >= data_020c5e44.mUnk_300.mUnk_0d) {
-            data_020c5e44.mUnk_300.mUnk_0c = 0;
+        data_020c3e44.mUnk_2000.mUnk_000.mUnk_98.x = func_0201fb74(
+            data_020c3e44.mUnk_2000.mUnk_300.mUnk_0c, data_020c3e44.mUnk_2000.mUnk_300.mUnk_0d, from->x, cur->x);
+        data_020c3e44.mUnk_2000.mUnk_000.mUnk_98.y = func_0201fb74(
+            data_020c3e44.mUnk_2000.mUnk_300.mUnk_0c, data_020c3e44.mUnk_2000.mUnk_300.mUnk_0d, from->y, cur->y);
+        data_020c3e44.mUnk_2000.mUnk_000.mUnk_98.z = func_0201fb74(
+            data_020c3e44.mUnk_2000.mUnk_300.mUnk_0c, data_020c3e44.mUnk_2000.mUnk_300.mUnk_0d, from->z, cur->z);
+        data_020c3e44.mUnk_2000.mUnk_300.mUnk_0c++;
+        if (data_020c3e44.mUnk_2000.mUnk_300.mUnk_0c >= data_020c3e44.mUnk_2000.mUnk_300.mUnk_0d) {
+            data_020c3e44.mUnk_2000.mUnk_300.mUnk_0c = 0;
         }
     } else {
-        data_020c5e44.mUnk_000.mUnk_98.x +=
-            (data_020c5e44.mUnk_0c0.mUnk_228.x - data_020c5e44.mUnk_000.mUnk_98.x) / data_020c5e44.mUnk_300.mUnk_4e;
-        data_020c5e44.mUnk_000.mUnk_98.y +=
-            (data_020c5e44.mUnk_0c0.mUnk_228.y - data_020c5e44.mUnk_000.mUnk_98.y) / data_020c5e44.mUnk_300.mUnk_4e;
-        data_020c5e44.mUnk_000.mUnk_98.z +=
-            (data_020c5e44.mUnk_0c0.mUnk_228.z - data_020c5e44.mUnk_000.mUnk_98.z) / data_020c5e44.mUnk_300.mUnk_4e;
+        data_020c3e44.mUnk_2000.mUnk_000.mUnk_98.x +=
+            (data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_228.x - data_020c3e44.mUnk_2000.mUnk_000.mUnk_98.x) /
+            data_020c3e44.mUnk_2000.mUnk_300.mUnk_4e;
+        data_020c3e44.mUnk_2000.mUnk_000.mUnk_98.y +=
+            (data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_228.y - data_020c3e44.mUnk_2000.mUnk_000.mUnk_98.y) /
+            data_020c3e44.mUnk_2000.mUnk_300.mUnk_4e;
+        data_020c3e44.mUnk_2000.mUnk_000.mUnk_98.z +=
+            (data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_228.z - data_020c3e44.mUnk_2000.mUnk_000.mUnk_98.z) /
+            data_020c3e44.mUnk_2000.mUnk_300.mUnk_4e;
     }
 }
 
@@ -1868,58 +1891,65 @@ void func_02033c0c(VecFx32 *pos) {
     u8 *c;
     int t;
 
-    if (data_020c5e44.mUnk_300.mUnk_4d == 0) {
-        c = &data_020c5e44.mUnk_300.mUnk_0c;
+    if (data_020c3e44.mUnk_2000.mUnk_300.mUnk_4d == 0) {
+        c = &data_020c3e44.mUnk_2000.mUnk_300.mUnk_0c;
         func_02033b8c();
         if (c[3] < 2) {
-            data_020c5e44.mUnk_000.mUnk_80.x = pos->x;
-            data_020c5e44.mUnk_000.mUnk_80.y = pos->y;
-            data_020c5e44.mUnk_000.mUnk_80.z = pos->z;
-            data_020c5e44.mUnk_300.mUnk_0f = 0;
+            data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.x = pos->x;
+            data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.y = pos->y;
+            data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.z = pos->z;
+            data_020c3e44.mUnk_2000.mUnk_300.mUnk_0f = 0;
             return;
         }
         if (c[2] != 0) {
             t = c[3] - 1;
             if (t > 1) {
-                data_020c5e44.mUnk_000.mUnk_80.x = func_0201fb74(c[2], t, data_020c5e44.mUnk_0c0.mUnk_21c.x, pos->x);
-                data_020c5e44.mUnk_000.mUnk_80.y = func_0201fb74(c[2], t, data_020c5e44.mUnk_0c0.mUnk_21c.y, pos->y);
-                data_020c5e44.mUnk_000.mUnk_80.z = func_0201fb74(c[2], t, data_020c5e44.mUnk_0c0.mUnk_21c.z, pos->z);
+                data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.x =
+                    func_0201fb74(c[2], t, data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_21c.x, pos->x);
+                data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.y =
+                    func_0201fb74(c[2], t, data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_21c.y, pos->y);
+                data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.z =
+                    func_0201fb74(c[2], t, data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_21c.z, pos->z);
                 c[2]++;
                 if (c[2] == c[3]) {
                     c[2] = 0;
                 }
             } else {
-                data_020c5e44.mUnk_000.mUnk_80.x = pos->x;
-                data_020c5e44.mUnk_000.mUnk_80.y = pos->y;
-                data_020c5e44.mUnk_000.mUnk_80.z = pos->z;
+                data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.x = pos->x;
+                data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.y = pos->y;
+                data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.z = pos->z;
                 c[2] = 0;
             }
-        } else if (data_020c5e44.mUnk_000.mUnk_80.x != pos->x || data_020c5e44.mUnk_000.mUnk_80.y != pos->y ||
-                   data_020c5e44.mUnk_000.mUnk_80.z != pos->z) {
-            data_020c5e44.mUnk_0c0.mUnk_21c.x = data_020c5e44.mUnk_000.mUnk_80.x;
-            data_020c5e44.mUnk_0c0.mUnk_21c.y = data_020c5e44.mUnk_000.mUnk_80.y;
-            data_020c5e44.mUnk_0c0.mUnk_21c.z = data_020c5e44.mUnk_000.mUnk_80.z;
-            data_020c5e44.mUnk_300.mUnk_0e = 1;
+        } else if (data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.x != pos->x ||
+                   data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.y != pos->y ||
+                   data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.z != pos->z) {
+            data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_21c.x = data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.x;
+            data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_21c.y = data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.y;
+            data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_21c.z = data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.z;
+            data_020c3e44.mUnk_2000.mUnk_300.mUnk_0e = 1;
         } else {
-            data_020c5e44.mUnk_0c0.mUnk_204.x = pos->x;
-            data_020c5e44.mUnk_0c0.mUnk_204.y = pos->y;
-            data_020c5e44.mUnk_0c0.mUnk_204.z = pos->z;
+            data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_204.x = pos->x;
+            data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_204.y = pos->y;
+            data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_204.z = pos->z;
         }
     } else {
-        data_020c5e44.mUnk_000.mUnk_80.x +=
-            (data_020c5e44.mUnk_0c0.mUnk_204.x - data_020c5e44.mUnk_000.mUnk_80.x) / data_020c5e44.mUnk_300.mUnk_4d;
-        data_020c5e44.mUnk_000.mUnk_80.y +=
-            (data_020c5e44.mUnk_0c0.mUnk_204.y - data_020c5e44.mUnk_000.mUnk_80.y) / data_020c5e44.mUnk_300.mUnk_4d;
-        data_020c5e44.mUnk_000.mUnk_80.z +=
-            (data_020c5e44.mUnk_0c0.mUnk_204.z - data_020c5e44.mUnk_000.mUnk_80.z) / data_020c5e44.mUnk_300.mUnk_4d;
+        data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.x +=
+            (data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_204.x - data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.x) /
+            data_020c3e44.mUnk_2000.mUnk_300.mUnk_4d;
+        data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.y +=
+            (data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_204.y - data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.y) /
+            data_020c3e44.mUnk_2000.mUnk_300.mUnk_4d;
+        data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.z +=
+            (data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_204.z - data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.z) /
+            data_020c3e44.mUnk_2000.mUnk_300.mUnk_4d;
     }
 }
 
 // Starts the view angle blend towards a, given in degrees (stored as a 16-bit angle).
 void func_02033df4(int a) {
-    data_020c5e44.mUnk_300.mUnk_16 = data_020c5e44.mUnk_300.mUnk_14;
-    data_020c5e44.mUnk_300.mUnk_18 = ((u32) a << 16) / 360;
-    data_020c5e44.mUnk_300.mUnk_10 = 1;
+    data_020c3e44.mUnk_2000.mUnk_300.mUnk_16 = data_020c3e44.mUnk_2000.mUnk_300.mUnk_14;
+    data_020c3e44.mUnk_2000.mUnk_300.mUnk_18 = ((u32) a << 16) / 360;
+    data_020c3e44.mUnk_2000.mUnk_300.mUnk_10 = 1;
 }
 
 // Sets the goal of the position blend (a 1 or 2) or the look-at blend (a 7 or 8) to entry b of chunk 0x5513 (-1:
@@ -1932,21 +1962,21 @@ void func_02033e38(int a, int b, int c) {
     switch (a) {
         case 1:
         case 2:
-            dst = &data_020c5e44.mUnk_0c0.mUnk_204;
-            src = &data_020c5e44.mUnk_000.mUnk_80;
-            data_020c5e44.mUnk_300.mUnk_4d = 0;
-            data_020c5e44.mUnk_300.mUnk_32 = a;
-            data_020c5e44.mUnk_300.mUnk_0f = c;
-            data_020c5e44.mUnk_300.mUnk_0e = 0;
+            dst = &data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_204;
+            src = &data_020c3e44.mUnk_2000.mUnk_000.mUnk_80;
+            data_020c3e44.mUnk_2000.mUnk_300.mUnk_4d = 0;
+            data_020c3e44.mUnk_2000.mUnk_300.mUnk_32 = a;
+            data_020c3e44.mUnk_2000.mUnk_300.mUnk_0f = c;
+            data_020c3e44.mUnk_2000.mUnk_300.mUnk_0e = 0;
             break;
         case 7:
         case 8:
-            dst = &data_020c5e44.mUnk_0c0.mUnk_228;
-            src = &data_020c5e44.mUnk_000.mUnk_98;
-            data_020c5e44.mUnk_300.mUnk_4e = 0;
-            data_020c5e44.mUnk_300.mUnk_33 = a;
-            data_020c5e44.mUnk_300.mUnk_0d = c;
-            data_020c5e44.mUnk_300.mUnk_0c = 0;
+            dst = &data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_228;
+            src = &data_020c3e44.mUnk_2000.mUnk_000.mUnk_98;
+            data_020c3e44.mUnk_2000.mUnk_300.mUnk_4e = 0;
+            data_020c3e44.mUnk_2000.mUnk_300.mUnk_33 = a;
+            data_020c3e44.mUnk_2000.mUnk_300.mUnk_0d = c;
+            data_020c3e44.mUnk_2000.mUnk_300.mUnk_0c = 0;
             break;
         default:
             OS_Terminate();
@@ -1983,5 +2013,187 @@ void func_02033f38(CameraTrack *t, s32 *whole, s32 *next, s32 *rest) {
         t->mUnk_0c = data_020c18bc.mUnk_45c;
     }
     func_0202601c(t->mUnk_10, &t->mUnk_12, t->mUnk_14, step, whole, next, rest, t->mUnk_16_2);
+}
+#pragma thumb on
+
+// Moves the camera (position mode mUnk_32, look-at mode mUnk_33), then sets up the view. Position modes: 0 orbits
+// target mUnk_1c at distance mUnk_28 and height mUnk_2c, turned by its angle; 1 and 2 blend towards mUnk_204; 3 plays
+// track mUnk_1bc; 4 follows the target; 10 plays track mUnk_1ec and 11 the camera's own model, both giving a position
+// and a look-at point. Look-at modes: 5 the position of target mUnk_20 and 6 its model point, raised by mUnk_24; 7
+// and 8 blend towards mUnk_228; 9 plays track mUnk_1d4; 10 and 11 take the point mode 10 or 11 gave (jumping there
+// when flag 3 or 4 of track mUnk_1ec is set, else moving an eighth of the way). While the top bit of
+// data_020c18bc.mUnk_46c is set only the tracks' timestamps follow the frame counter.
+#pragma thumb off
+void func_02033fc8(void) {
+    VecFx32 eye;
+    VecFx32 at;
+    VecFx32 pos;
+    s32 whole;
+    s32 next;
+    s32 rest;
+    CameraTarget *target;
+    u32 count;
+    s32 dx;
+    s32 dz;
+    int idx;
+    s32 x;
+    s32 y;
+    s32 z;
+
+    if (data_020c18bc.mUnk_46c & 0x80000000) {
+        data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1ec.mUnk_0c = data_020c18bc.mUnk_45c;
+        data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1d4.mUnk_0c = data_020c18bc.mUnk_45c;
+        data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1bc.mUnk_0c = data_020c18bc.mUnk_45c;
+        func_02033520();
+        return;
+    }
+    target = data_020c3e44.mUnk_2000.mUnk_300.mUnk_1c;
+    switch (data_020c3e44.mUnk_2000.mUnk_300.mUnk_32) {
+        case 0:
+            idx = (u16) (target->mDraw.mUnk_38 + 0x8000) >> 4 << 1;
+            dx = data_020c3e44.mUnk_2000.mUnk_300.mUnk_28 * FX_SinCosTable_[idx];
+            dz = data_020c3e44.mUnk_2000.mUnk_300.mUnk_28 * FX_SinCosTable_[idx + 1];
+            y = target->mDraw.mPos.y + data_020c3e44.mUnk_2000.mUnk_300.mUnk_2c;
+            x = target->mDraw.mPos.x + dx / 4096;
+            z = target->mDraw.mPos.z - dz / 4096;
+            data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.y = y;
+            data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.x = x;
+            data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.z = z;
+            break;
+        case 3:
+            func_02033f38(&data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1bc, &whole, &next, &rest);
+            func_02023478(data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1bc.mUnk_10, NULL, &eye, NULL, whole, next, rest, 0);
+            data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1bc.mUnk_16_0 =
+                data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1bc.mUnk_12 == 0;
+            if (data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1bc.mUnk_16_2 == 1) {
+                data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1bc.mUnk_16_0 =
+                    data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1bc.mUnk_12 == 0;
+            } else {
+                data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1bc.mUnk_16_0 =
+                    data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1bc.mUnk_12 /
+                        data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1bc.mUnk_14 ==
+                    func_02025fc0(data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1bc.mUnk_10) - 2;
+            }
+            data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.x = data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1bc.mUnk_00.x + eye.x;
+            data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.y = data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1bc.mUnk_00.y + eye.y;
+            data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.z = data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1bc.mUnk_00.z + eye.z;
+            func_02033b8c();
+            break;
+        case 1:
+        case 2:
+            func_02033c0c(&data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_204);
+            break;
+        case 4:
+            data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_204 = target->mDraw.mPos;
+            func_02033c0c(&data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_204);
+            break;
+        case 11:
+            if (data_020c3e44.mUnk_2000.mUnk_0c0.mModel.mUnk_170 != 0) {
+                OS_Terminate();
+            }
+            func_0202733c(&data_020c3e44.mUnk_2000.mUnk_0c0.mModel, &data_020c3e44.mUnk_2000.mUnk_0c0.mDraw, 0);
+            count = data_020c3e44.mUnk_2000.mUnk_0c0.mModel.mUnk_14c.mUnk_4;
+            whole = func_0201fd10(data_020c3e44.mUnk_2000.mUnk_0c0.mModel.mUnk_14c.mUnk_2, count, (u32 *) &rest);
+            next = (u32) (whole + 1) % func_02025fc0(data_020c3e44.mUnk_2000.mUnk_0c0.mModel.mUnk_14c.mUnk_0);
+            rest = (rest << 8) / count;
+            func_02023478(data_020c3e44.mUnk_2000.mUnk_0c0.mModel.mUnk_14c.mUnk_0, NULL, &eye, NULL, whole, next, rest,
+                          1);
+            func_02023478(data_020c3e44.mUnk_2000.mUnk_0c0.mModel.mUnk_14c.mUnk_0, NULL, &at, NULL, whole, next, rest,
+                          2);
+            break;
+        case 10:
+            func_02033f38(&data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1ec, &whole, &next, &rest);
+            if (data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1ec.mUnk_16_2 == 1) {
+                data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1ec.mUnk_16_0 =
+                    data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1ec.mUnk_12 == 0;
+            } else {
+                data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1ec.mUnk_16_0 =
+                    (u32) (data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1ec.mUnk_12 /
+                           data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1ec.mUnk_14) >=
+                    func_02025fc0(data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1ec.mUnk_10) - 2;
+            }
+            func_02023478(data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1ec.mUnk_10, NULL, &eye, NULL, whole, next, rest, 1);
+            func_02023478(data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1ec.mUnk_10, NULL, &at, NULL, whole, next, rest, 2);
+            break;
+        default:
+            OS_Terminate();
+            break;
+    }
+    target = data_020c3e44.mUnk_2000.mUnk_300.mUnk_20;
+    switch (data_020c3e44.mUnk_2000.mUnk_300.mUnk_33) {
+        case 6:
+            pos = target->mModel.mUnk_158;
+            pos.y += data_020c3e44.mUnk_2000.mUnk_300.mUnk_24;
+            func_0203393c(&pos);
+            func_02033b04();
+            break;
+        case 5:
+            pos = target->mDraw.mPos;
+            pos.y += data_020c3e44.mUnk_2000.mUnk_300.mUnk_24;
+            func_0203393c(&pos);
+            func_02033b04();
+            break;
+        case 7:
+        case 8:
+            func_0203393c(&data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_228);
+            func_02033b04();
+            break;
+        case 9:
+            func_02033f38(&data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1d4, &whole, &next, &rest);
+            func_02023478(data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1d4.mUnk_10, NULL, &eye, NULL, whole, next, rest, 0);
+            if (data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1d4.mUnk_16_2 == 1) {
+                data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1d4.mUnk_16_0 =
+                    data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1d4.mUnk_12 == 0;
+            } else {
+                data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1d4.mUnk_16_0 =
+                    data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1d4.mUnk_12 /
+                        data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1d4.mUnk_14 ==
+                    func_02025fc0(data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1d4.mUnk_10) - 2;
+            }
+            data_020c3e44.mUnk_2000.mUnk_000.mUnk_98.x = data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1d4.mUnk_00.x + eye.x;
+            data_020c3e44.mUnk_2000.mUnk_000.mUnk_98.y = data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1d4.mUnk_00.y + eye.y;
+            data_020c3e44.mUnk_2000.mUnk_000.mUnk_98.z = data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1d4.mUnk_00.z + eye.z;
+            break;
+        case 10:
+        case 11:
+            if (data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1ec.mUnk_16_3 == 1 ||
+                data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1ec.mUnk_16_4 == 1) {
+                data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1ec.mUnk_16_3 = 0;
+                data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.x =
+                    data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1ec.mUnk_00.x + eye.x;
+                data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.y =
+                    data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1ec.mUnk_00.y + eye.y;
+                data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.z =
+                    data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1ec.mUnk_00.z + eye.z;
+                data_020c3e44.mUnk_2000.mUnk_000.mUnk_98.x = data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1ec.mUnk_00.x + at.x;
+                data_020c3e44.mUnk_2000.mUnk_000.mUnk_98.y = data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1ec.mUnk_00.y + at.y;
+                data_020c3e44.mUnk_2000.mUnk_000.mUnk_98.z = data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1ec.mUnk_00.z + at.z;
+            } else {
+                data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.x += (data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1ec.mUnk_00.x +
+                                                               eye.x - data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.x) /
+                                                              8;
+                data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.y += (data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1ec.mUnk_00.y +
+                                                               eye.y - data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.y) /
+                                                              8;
+                data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.z += (data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1ec.mUnk_00.z +
+                                                               eye.z - data_020c3e44.mUnk_2000.mUnk_000.mUnk_80.z) /
+                                                              8;
+                data_020c3e44.mUnk_2000.mUnk_000.mUnk_98.x += (data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1ec.mUnk_00.x +
+                                                               at.x - data_020c3e44.mUnk_2000.mUnk_000.mUnk_98.x) /
+                                                              8;
+                data_020c3e44.mUnk_2000.mUnk_000.mUnk_98.y += (data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1ec.mUnk_00.y +
+                                                               at.y - data_020c3e44.mUnk_2000.mUnk_000.mUnk_98.y) /
+                                                              8;
+                data_020c3e44.mUnk_2000.mUnk_000.mUnk_98.z += (data_020c3e44.mUnk_2000.mUnk_0c0.mUnk_1ec.mUnk_00.z +
+                                                               at.z - data_020c3e44.mUnk_2000.mUnk_000.mUnk_98.z) /
+                                                              8;
+            }
+            func_02033b8c();
+            break;
+        default:
+            OS_Terminate();
+            break;
+    }
+    func_02033520();
 }
 #pragma thumb on

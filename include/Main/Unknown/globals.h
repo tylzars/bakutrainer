@@ -389,12 +389,37 @@ typedef struct CameraState {
     u8 mUnk_bd[3];
 } CameraState;
 
+// An object drawn with a model: the model and its draw parameters.
+typedef struct CameraTarget {
+    Model mModel;
+    DrawParams mDraw;
+} CameraTarget;
+
+// An animation track of the camera object: a base position, a timestamp at 0xc, the model id, frame and frame
+// count, and flags.
+typedef struct CameraTrack {
+    VecFx32 mUnk_00;
+    u32 mUnk_0c;
+    u16 mUnk_10;
+    u16 mUnk_12;
+    u16 mUnk_14;
+    u8 mUnk_16_0 : 1;
+    u8 mUnk_16_1 : 1;
+    u8 mUnk_16_2 : 1;
+    u8 mUnk_16_3 : 1;
+    u8 mUnk_16_4 : 1;
+    u8 mUnk_16_5 : 1;
+    u8 mUnk_16_6 : 2;
+} CameraTrack;
+
 // The camera object's block at 0xc0. The camera code passes its address to func_0202733c; the scene code keeps a
 // pointer to it and moves the two camera positions at 0x204 and 0x228.
 typedef struct Unk_020c5f04 {
-    u8 mUnk_000[0x1ec];
-    VecFx32 mUnk_1ec;
-    u8 mUnk_1f8[0x204 - 0x1f8];
+    Model mModel;
+    DrawParams mDraw;
+    CameraTrack mUnk_1bc;
+    CameraTrack mUnk_1d4;
+    CameraTrack mUnk_1ec;
     VecFx32 mUnk_204;
     u8 mUnk_210[0x21c - 0x210];
     VecFx32 mUnk_21c;
@@ -415,7 +440,12 @@ typedef struct Unk_020c6144 {
     u16 mUnk_14;
     u16 mUnk_16;
     u16 mUnk_18;
-    u8 mUnk_1a[0x30 - 0x1a];
+    u8 mUnk_1a[2];
+    CameraTarget *mUnk_1c;
+    CameraTarget *mUnk_20;
+    s32 mUnk_24;
+    s32 mUnk_28;
+    s32 mUnk_2c;
     u16 mUnk_30;
     u8 mUnk_32;
     u8 mUnk_33;
