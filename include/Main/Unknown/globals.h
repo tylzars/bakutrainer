@@ -379,7 +379,11 @@ typedef struct Unk_020c5f04 {
 // Camera view settings at 0x300 of the camera object: 0x14/0x16/0x18 are angles, 0x30 and 0x38/0x3c are flags, 0x44
 // a register value, 0x4a the projection set up last, 0x4b/0x4c the polygon alpha and id the model code last wrote.
 typedef struct Unk_020c6144 {
-    u8 mUnk_00[0x10];
+    u8 mUnk_00[0xc];
+    u8 mUnk_0c;
+    u8 mUnk_0d;
+    u8 mUnk_0e;
+    u8 mUnk_0f;
     u8 mUnk_10;
     u8 mUnk_11[3];
     u16 mUnk_14;
@@ -387,7 +391,9 @@ typedef struct Unk_020c6144 {
     u16 mUnk_18;
     u8 mUnk_1a[0x30 - 0x1a];
     u16 mUnk_30;
-    u8 mUnk_32[0x38 - 0x32];
+    u8 mUnk_32;
+    u8 mUnk_33;
+    u8 mUnk_34[0x38 - 0x34];
     s32 mUnk_38;
     s32 mUnk_3c;
     u16 mUnk_40;
@@ -492,9 +498,9 @@ typedef struct Unk_020c61ac_Slot {
 typedef struct Unk_020c61ac_Rec10 {
     u16 mUnk_00;
     s16 mUnk_02;
-    s16 mUnk_04;
-    s16 mUnk_06;
-    s16 mUnk_08;
+    u16 mUnk_04;
+    u16 mUnk_06;
+    u16 mUnk_08;
     s16 mUnk_0a;
     s16 mUnk_0c;
     s16 mUnk_0e;
@@ -507,9 +513,9 @@ typedef struct Unk_020c61ac_Entry {
     s16 mUnk_04;
     s16 mUnk_06;
     s16 mUnk_08;
-    u16 mUnk_0a;
+    s16 mUnk_0a;
     u16 mUnk_0c;
-    s16 mUnk_0e;
+    u16 mUnk_0e;
     u8 mUnk_10;
     u8 mUnk_11;
 } Unk_020c61ac_Entry;
@@ -525,8 +531,8 @@ typedef struct Unk_020c61ac_Cmd {
     s16 mUnk_10;
     s16 mUnk_12;
     s16 mUnk_14;
-    s16 mUnk_16;
-    s16 mUnk_18;
+    u16 mUnk_16;
+    u16 mUnk_18;
     u16 mUnk_1a;
     u8 mUnk_1c;
     u8 mUnk_1d;
@@ -555,14 +561,12 @@ typedef struct Unk_020c642c {
     u8 mUnk_10;
     u8 mUnk_11;
     u8 mUnk_12[2];
-    u8 mUnk_14;
-    u8 mUnk_15;
-    s16 mUnk_16;
-    s16 mUnk_18;
+    u8 mUnk_14[2];
+    u16 mUnk_16[2];
     u8 mUnk_1a[2];
     s32 mUnk_1c;
-    s16 mUnk_20;
-    s16 mUnk_22;
+    u16 mUnk_20;
+    u16 mUnk_22;
     s16 mUnk_24;
     s16 mUnk_26;
     u8 (*mUnk_28)(void);
@@ -578,7 +582,7 @@ typedef struct Unk_020c642c {
 } Unk_020c642c;
 
 typedef struct Unk_020c61ac {
-    s32 mUnk_00;
+    void (*mUnk_00)(u32 id, int x, int y, int w, int mode);
     u32 (*mUnk_04)(u32);
     u16 mUnk_08;
     u16 mUnk_0a;
@@ -591,14 +595,20 @@ typedef struct Unk_020c61ac {
     u16 mUnk_18;
     u8 mUnk_1a;
     u8 mUnk_1b;
-    u8 mUnk_1c_0 : 2;
-    u8 mUnk_1c_2 : 1;
-    u8 mUnk_1c_3 : 1;
-    u8 mUnk_1c_4 : 4;
+    union {
+        u8 mUnk_1c;
+        struct {
+            u8 mUnk_1c_0 : 1;
+            u8 mUnk_1c_1 : 1;
+            u8 mUnk_1c_2 : 1;
+            u8 mUnk_1c_3 : 1;
+            u8 mUnk_1c_4 : 4;
+        };
+    };
     u8 mUnk_1d;
     u16 mUnk_1e;
     u16 mUnk_20;
-    u8 mUnk_22[2];
+    u16 mUnk_22;
     u16 mUnk_24;
     u16 mUnk_26;
     u16 mUnk_28;
@@ -636,6 +646,7 @@ extern Unk_020c61ac data_020c61ac;
 extern const u16 data_0204e208[];
 extern const u16 data_0204e210[];
 extern const u32 data_0204e214[];
+extern const u16 data_0204e20c[];
 extern const u16 data_0204e2c8[];
 extern const Unk_0204e378 data_0204e378[];
 

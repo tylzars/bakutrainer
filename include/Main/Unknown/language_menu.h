@@ -64,7 +64,7 @@ extern const Unk_0204e218 data_0204e218[];
 extern const Unk_0204e248 data_0204e248[];
 
 void func_0200f374(void);
-u8 func_0200f468(void);
+int func_0200f468(void);
 void func_0200f4d4(void);
 void func_0200f580(void);
 u8 func_0200f588(void);

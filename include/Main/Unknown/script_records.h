@@ -9,7 +9,8 @@ extern "C" {
 
 void func_02028e5c(const char *name);
 void func_02028eb4(int index);
-void func_02028f0c(int a, int b, int c, int d, int e, int f, int g, u8 (*h)(void), u32 (*i)(u32));
+void func_02028f0c(int a, int b, int c, int d, int e, int f, void (*g)(u32 id, int x, int y, int w, int mode),
+                   u8 (*h)(void), u32 (*i)(u32));
 void func_02028fe8(void);
 u8 func_0202903c(u8 c);
 int func_02029050(u8 c);
@@ -60,6 +61,7 @@ u8 func_0202a188(void);
 void func_0202a194(void);
 Unk_EventRec *func_0202a1a4(void);
 void func_0202a1cc(void);
+void func_0202a1ec(int (*callback)(void));
 
 #ifdef __cplusplus
 }

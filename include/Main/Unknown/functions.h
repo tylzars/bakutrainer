@@ -20,7 +20,6 @@ void func_020220c8(int a);
 void func_02022120(void);
 void func_0202224c(void);
 void func_02022370(void);
-void func_0202a1ec(u8 (*callback)(void));
 void func_0202c2f0(void *dst, const void *src, u32 w, u32 h, BOOL mode);
 void func_0202c3e0(Unk_LoadEntry *entry, const void *src, u32 w);
 void func_0202cf08(int id, int x, int y, int w, int mode);

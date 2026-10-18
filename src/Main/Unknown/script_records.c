@@ -9,6 +9,9 @@
 #include <Main/Unknown/texture_blocks.h>
 #include <nitro/mi.h>
 #include <nitro/os.h>
+#include <Main/Unknown/bg_image.h>
+#include <Main/Unknown/game_math.h>
+#include <Main/clib.h>
 #include <Main/Unknown/script_records.h>
 
 // Finds the entry of the message block whose normalised text equals name and selects it.
@@ -46,7 +49,7 @@ void func_02028eb4(int index) {
     data_020c61ac.mUnk_1a = 0;
     data_020c61ac.mUnk_1c_3 = 0;
     data_020c61ac.mUnk_1c_2 = 0;
-    data_020c61ac.mUnk_280.mUnk_14 = data_020c61ac.mUnk_280.mUnk_15 = 0;
+    data_020c61ac.mUnk_280.mUnk_14[0] = data_020c61ac.mUnk_280.mUnk_14[1] = 0;
     data_020c61ac.mUnk_280.mUnk_1c = 0;
     data_020c61ac.mUnk_18 = 0;
     for (i = 0; i < 0x20; i++) {
@@ -55,7 +58,8 @@ void func_02028eb4(int index) {
 }
 
 // Sets up the record store: the ids and buffers, or releases the old buffers when the ids change.
-void func_02028f0c(int a, int b, int c, int d, int e, int f, int g, u8 (*h)(void), u32 (*i)(u32)) {
+void func_02028f0c(int a, int b, int c, int d, int e, int f, void (*g)(u32 id, int x, int y, int w, int mode),
+                   u8 (*h)(void), u32 (*i)(u32)) {
     data_020c61ac.mUnk_280.mUnk_28 = h;
     data_020c61ac.mUnk_04 = i;
     if ((a != data_020c61ac.mUnk_08 && a != 0) || (b != data_020c61ac.mUnk_0a && b != 0)) {
@@ -719,19 +723,19 @@ void func_02029aac(u8 *text, int flag) {
     }
 }
 
-// Reads a value and a mode; odd modes store the value in mUnk_280.mUnk_16 with the mode in mUnk_280.mUnk_14, even
-// modes store it in mUnk_280.mUnk_18 and set mUnk_280.mUnk_15 to 2.
+// Reads a value and a mode; odd modes store the value in mUnk_280.mUnk_16[0] with the mode in mUnk_280.mUnk_14[0],
+// even modes store it in mUnk_280.mUnk_16[1] and set mUnk_280.mUnk_14[1] to 2.
 void func_02029b28(u8 *text) {
     s16 v[4];
     if (func_020293c4(v, text, 8) > 2) {
         OS_Terminate();
     }
     if (v[1] & 1) {
-        data_020c61ac.mUnk_280.mUnk_16 = v[0];
-        data_020c61ac.mUnk_280.mUnk_14 = v[1];
+        data_020c61ac.mUnk_280.mUnk_16[0] = v[0];
+        data_020c61ac.mUnk_280.mUnk_14[0] = v[1];
     } else {
-        data_020c61ac.mUnk_280.mUnk_18 = v[0];
-        data_020c61ac.mUnk_280.mUnk_15 = 2;
+        data_020c61ac.mUnk_280.mUnk_16[1] = v[0];
+        data_020c61ac.mUnk_280.mUnk_14[1] = 2;
     }
 }
 
@@ -1106,4 +1110,438 @@ void func_0202a1cc(void) {
     data_020c5e44.mUnk_300.mUnk_4b = 0;
     data_020c5e44.mUnk_300.mUnk_4c++;
     data_020c5e44.mUnk_300.mUnk_4c &= 0x1f;
+}
+
+// Runs one frame of the script engine: applies queued screen changes, moves and draws the command sprites, builds
+// and draws the message text, then reads script commands until one waits; repeats while mUnk_1c_2 is set.
+void func_0202a1ec(int (*callback)(void)) {
+    char text[0x200];
+    u8 name[0x80];
+    TexInfo info;
+    int dx;
+    int dy;
+    int id;
+    u8 *line;
+    BOOL flag;
+    BOOL done;
+    int i;
+    u32 start;
+    s32 flip;
+    u8 saved;
+
+    if (data_020c61ac.mUnk_280.mUnk_28 != 0) {
+        data_020c18bc.mUnk_304 = (u32(*)(u32)) data_020c61ac.mUnk_280.mUnk_28;
+    }
+    do {
+        done = 0;
+        flag = 0;
+        if (data_020c61ac.mUnk_08 == 0) {
+            OS_Terminate();
+        }
+        data_020c61ac.mUnk_1c_0 = 0;
+        for (i = 0; i < 2; i++) {
+            if (data_020c61ac.mUnk_280.mUnk_14[i] != 0) {
+                u16 image = data_0204e20c[data_020c61ac.mUnk_280.mUnk_16[i]];
+                func_0201f880(data_020c61ac.mUnk_280.mUnk_14[i]);
+                func_0201dde0(image, data_020c61ac.mUnk_280.mUnk_14[i]);
+                if (data_020c61ac.mUnk_280.mUnk_14[i] == 1) {
+                    data_020c61ac.mUnk_280.mUnk_1c = 0;
+                    data_020c61ac.mUnk_280.mUnk_2c = image;
+                    flag = 1;
+                } else if (data_020c61ac.mUnk_280.mUnk_14[i] == 2) {
+                    data_020c61ac.mUnk_280.mUnk_2e = image;
+                } else if (data_020c61ac.mUnk_280.mUnk_14[i] == 3) {
+                    flag = 1;
+                    data_020c61ac.mUnk_280.mUnk_2c = data_020c61ac.mUnk_280.mUnk_2e = image;
+                }
+                data_020c61ac.mUnk_280.mUnk_14[i] = 0;
+            }
+            if (flag == 1 && (data_020c18bc.mUnk_46c & 0x80)) {
+                func_02024208();
+            }
+        }
+
+        if (data_020c61ac.mUnk_280.mUnk_1c != 0) {
+            if (data_020c61ac.mUnk_280.mUnk_1c & 0x80000000) {
+                data_020c61ac.mUnk_280.mUnk_1c &= 0x7fffffff;
+                func_0201f880(1);
+                data_020c61ac.mUnk_280.mUnk_30 = data_020c61ac.mUnk_280.mUnk_1c;
+            }
+            if (!(data_020c61ac.mUnk_280.mUnk_1c & 0x40000000)) {
+                func_020242e8(data_020c61ac.mUnk_280.mUnk_1c, data_020c61ac.mUnk_280.mUnk_20,
+                              data_020c61ac.mUnk_280.mUnk_22, 0x4000, 0x1000, 0x8000, 0xff, 0);
+            } else {
+                u32 tex = data_020c61ac.mUnk_280.mUnk_1c & 0x3fffffff;
+                func_0202ae84(tex, &info, 0);
+                if (info.mUnk_12 <= 1) {
+                    OS_Terminate();
+                }
+                func_0202a1cc();
+                func_0202cf08(tex + 0x800000, data_020c61ac.mUnk_280.mUnk_20, data_020c61ac.mUnk_280.mUnk_22, 0xff, 1);
+            }
+        }
+
+        for (i = 0; i < data_020c61ac.mUnk_16; i++) {
+            Unk_020c61ac_Cmd *cmd = &data_020c61ac.mUnk_60[i];
+            int x;
+            int y;
+            flip = 0;
+            if (cmd->mUnk_16 != 0) {
+                data_020c61ac.mUnk_1c_0 = 1;
+                cmd->mUnk_16--;
+                continue;
+            }
+            if (cmd->mUnk_18 != 0) {
+                data_020c61ac.mUnk_1c_0 = 1;
+                cmd->mUnk_18--;
+                if (cmd->mUnk_18 == 0) {
+                    if (cmd->mUnk_12 == cmd->mUnk_08 && cmd->mUnk_14 == cmd->mUnk_0a) {
+                        cmd->mUnk_04 = -1;
+                    } else {
+                        func_0202a10c(cmd);
+                        cmd->mUnk_21_0 = 1;
+                    }
+                }
+            }
+            if (cmd->mUnk_1e != 0 && cmd->mUnk_04 != -1) {
+                data_020c61ac.mUnk_1c_0 = 1;
+                cmd->mUnk_1f++;
+                if (cmd->mUnk_1f == cmd->mUnk_1e) {
+                    cmd->mUnk_04++;
+                    cmd->mUnk_1f = 0;
+                    cmd->mUnk_1d--;
+                    if (cmd->mUnk_1d == 0) {
+                        if (cmd->mUnk_21_1 == 0) {
+                            cmd->mUnk_04--;
+                            cmd->mUnk_1e = 0;
+                        } else {
+                            data_020c61ac.mUnk_1c_0 = 0;
+                            cmd->mUnk_04 -= cmd->mUnk_1c;
+                            cmd->mUnk_1d = cmd->mUnk_1c;
+                        }
+                    }
+                }
+            }
+            if (cmd->mUnk_10 != 0) {
+                s16 to = cmd->mUnk_10 > 0 ? cmd->mUnk_0c : cmd->mUnk_12;
+                if (cmd->mUnk_08 < to) {
+                    cmd->mUnk_08 += abs(cmd->mUnk_10);
+                    if (cmd->mUnk_08 >= to) {
+                        cmd->mUnk_08 = to;
+                        if (cmd->mUnk_21_2 == 1) {
+                            cmd->mUnk_10 = -cmd->mUnk_10;
+                        }
+                    }
+                } else if (cmd->mUnk_08 > to) {
+                    cmd->mUnk_08 -= abs(cmd->mUnk_10);
+                    if (cmd->mUnk_08 <= to) {
+                        cmd->mUnk_08 = to;
+                        if (cmd->mUnk_21_2 == 1) {
+                            cmd->mUnk_10 = -cmd->mUnk_10;
+                        }
+                    }
+                }
+                to = cmd->mUnk_10 > 0 ? cmd->mUnk_0e : cmd->mUnk_14;
+                if (cmd->mUnk_0a < to) {
+                    cmd->mUnk_0a += abs(cmd->mUnk_10);
+                    if (cmd->mUnk_0a >= to) {
+                        cmd->mUnk_0a = to;
+                        if (cmd->mUnk_21_2 == 1) {
+                            cmd->mUnk_10 = -cmd->mUnk_10;
+                        }
+                    }
+                } else if (cmd->mUnk_0a > to) {
+                    cmd->mUnk_0a -= abs(cmd->mUnk_10);
+                    if (cmd->mUnk_0a <= to) {
+                        cmd->mUnk_0a = to;
+                        if (cmd->mUnk_21_2 == 1) {
+                            cmd->mUnk_10 = -cmd->mUnk_10;
+                        }
+                    }
+                }
+                if (cmd->mUnk_10 < 0 && cmd->mUnk_21_3 == 1) {
+                    flip = 0x10000;
+                }
+                x = cmd->mUnk_08 / 100;
+                y = cmd->mUnk_0a / 100;
+            } else if (cmd->mUnk_20 < 0x80) {
+                if (cmd->mUnk_21_4 == 0) {
+                    cmd->mUnk_20 += 20;
+                } else if (cmd->mUnk_21_4 > 1) {
+                    cmd->mUnk_21_4--;
+                } else if (data_020c18bc.mUnk_480 == 0) {
+                    cmd->mUnk_21_4 = 0;
+                }
+                data_020c61ac.mUnk_1c_0 = 1;
+                x = func_0201fb74(cmd->mUnk_20 < 0x80 ? cmd->mUnk_20 : 0x80, 0x80, cmd->mUnk_12, cmd->mUnk_08);
+                y = func_0201fb74(cmd->mUnk_20 < 0x80 ? cmd->mUnk_20 : 0x80, 0x80, cmd->mUnk_14, cmd->mUnk_0a);
+                if (x == cmd->mUnk_08 && y == cmd->mUnk_0a) {
+                    cmd->mUnk_20 = 0x80;
+                }
+            } else {
+                x = cmd->mUnk_08;
+                y = cmd->mUnk_0a;
+            }
+
+            if (data_020c61ac.mUnk_1c_2 == 0) {
+                if (!(cmd->mUnk_04 & 0x80000000)) {
+                    if (data_020c61ac.mUnk_00 != 0) {
+                        data_020c61ac.mUnk_00(cmd->mUnk_04 ^ flip, x, y, cmd->mUnk_1a, cmd->mUnk_22);
+                    } else {
+                        func_0202ae84(cmd->mUnk_04, &info, 0);
+                        if (info.mUnk_12 > 1) {
+                            func_0202a1cc();
+                            func_0202cf08(cmd->mUnk_04 ^ (flip + 0x800000), x, y, cmd->mUnk_1a, cmd->mUnk_22);
+                        } else {
+                            func_0202cf08(flip ^ cmd->mUnk_04, x, y, cmd->mUnk_1a, cmd->mUnk_22);
+                        }
+                    }
+                } else {
+                    func_020242e8(cmd->mUnk_04 & 0x7fffffff, x, y, cmd->mUnk_1a << 6, 0x1000, 0x8000, 0xff, 0);
+                }
+            }
+
+            func_02029ed8(cmd->mUnk_00, &id, &dx, &dy);
+            if (id != -1) {
+                id = data_0204e2c8[id];
+                func_0202ae84(id, &info, 0);
+                if (info.mUnk_12 > 1) {
+                    func_0202a1cc();
+                    func_0202cf08(id + flip + 0x800000, x + dx, y + dy, cmd->mUnk_1a - 2, cmd->mUnk_22);
+                } else {
+                    func_0202cf08(id + flip, x + dx, y + dy, cmd->mUnk_1a - 2, cmd->mUnk_22);
+                }
+            }
+
+            if (data_020c61ac.mUnk_280.mUnk_34 != -1 && data_020c61ac.mUnk_280.mUnk_38 == i) {
+                Unk_020c61ac_Rec10 *rec = &data_020c61ac.mUnk_58[data_020c61ac.mUnk_280.mUnk_34];
+                id = -1;
+                if (data_020c61ac.mUnk_280.mUnk_3c != 0) {
+                    data_020c61ac.mUnk_280.mUnk_3c--;
+                    // Always true: mUnk_04 is 16-bit.
+                    if (rec->mUnk_04 != -1) {
+                        id = data_0204e2c8[rec->mUnk_04] + (data_020c18bc.mUnk_45c / rec->mUnk_08) % rec->mUnk_06;
+                    }
+                } else if (rec->mUnk_02 != -1) {
+                    id = data_0204e2c8[rec->mUnk_02];
+                }
+                if (id != -1) {
+                    func_0202ae84(id, &info, 0);
+                    if (info.mUnk_12 > 1) {
+                        func_0202a1cc();
+                        func_0202cf08(id + flip + 0x800000, x + rec->mUnk_0a, y + rec->mUnk_0c, cmd->mUnk_1a - 2,
+                                      cmd->mUnk_22);
+                    } else {
+                        func_0202cf08(id + flip, x + rec->mUnk_0a, y + rec->mUnk_0c, cmd->mUnk_1a - 2, cmd->mUnk_22);
+                    }
+                }
+            }
+        }
+
+        {
+            u32 len;
+            start = 0;
+            len = 0;
+            i = 0;
+            for (; i < data_020c61ac.mUnk_1e; i++) {
+                Unk_020c61ac_Entry *entry = &data_020c61ac.mUnk_64[i];
+                const u8 *s;
+                u16 pos;
+                if (data_020c61ac.mUnk_280.mUnk_28 != 0) {
+                    s = name;
+                    func_02021e94(data_020c61ac.mUnk_0a, entry->mUnk_00, name, 1);
+                } else {
+                    s = func_02021e18(data_020c61ac.mUnk_0a, entry->mUnk_00);
+                }
+                pos = data_020c18bc.mUnk_30c;
+                if (pos >= start && pos <= start + entry->mUnk_0c) {
+                    data_020c61ac.mUnk_22++;
+                    if (data_020c61ac.mUnk_22 > entry->mUnk_10 && data_020c61ac.mUnk_1c_3 == 1) {
+                        data_020c61ac.mUnk_280.mUnk_3c = entry->mUnk_10 + 1;
+                        data_020c18bc.mUnk_30c = pos + 1;
+                        if (data_020c61ac.mUnk_28 != 0) {
+                            func_0202eb64(data_020c61ac.mUnk_28, 100, 0, 0x40, 0xffff, 0);
+                        }
+                        data_020c61ac.mUnk_22 = 0;
+                    }
+                }
+                start += entry->mUnk_0c;
+                while (*s != 0) {
+                    text[len++] = *s++;
+                }
+                if (len >= 0x200) {
+                    OS_Terminate();
+                }
+            }
+            text[len] = 0;
+
+            if (data_020c61ac.mUnk_1c_2 == 0 && len != 0) {
+                Unk_020c61ac_Entry *entry = data_020c61ac.mUnk_64;
+                u8 value = 0;
+                u32 extra = 0;
+                if (callback != 0) {
+                    value = callback();
+                }
+                func_0202ae84(data_02063988[entry->mUnk_0e]->mGlyph, &info, 0);
+                if (info.mUnk_12 > 1) {
+                    extra = TEXT_ROTATE;
+                    saved = data_020c18bc.mUnk_30a[0];
+                    data_020c18bc.mUnk_30a[0] = value;
+                    func_0202a1cc();
+                }
+                func_02021624(entry->mUnk_02, entry->mUnk_04 + data_020c61ac.mUnk_2a, data_02063988,
+                              (u8) entry->mUnk_0e, (const u8 *) text, 0,
+                              extra + (entry->mUnk_0a + (TEXT_LINE_WINDOW | TEXT_LIMIT | TEXT_HILITE) +
+                                       (data_020c61ac.mUnk_280.mUnk_28 != 0 ? TEXT_ESCAPES : 0)),
+                              entry->mUnk_06, entry->mUnk_08, entry->mUnk_11);
+                if (extra & TEXT_ROTATE) {
+                    data_020c18bc.mUnk_30a[0] = saved;
+                }
+                data_020c61ac.mUnk_1c_3 = data_020c18bc.mUnk_317_0;
+            }
+        }
+
+        if (data_020c61ac.mUnk_1b == 3) {
+            return;
+        }
+        if (data_020c61ac.mUnk_1b == 1) {
+            if (data_020c61ac.mUnk_1c_2 == 1 ||
+                (data_020c61ac.mUnk_16 == 0 && data_020c61ac.mUnk_1e == 0 && data_020c61ac.mUnk_18 == 0)) {
+                func_0202a160();
+            } else {
+                if (data_020c61ac.mUnk_1c_1 == 1 && data_020c61ac.mUnk_1c_3 == 1) {
+                    data_020c18bc.mUnk_30c += 2;
+                }
+                if (data_020c61ac.mUnk_18 != 0 && --data_020c61ac.mUnk_18 == 0) {
+                    func_0202a160();
+                } else if (!(data_020c61ac.mUnk_1a & 8) &&
+                           ((data_020c18bc.mUnk_10 & 1) ||
+                            (data_020c2560.mUnk_100.mUnk_04 & 0x4000ffff) == 0x40000400)) {
+                    if (data_020c61ac.mUnk_1c_3 == 1) {
+                        if ((data_020c18bc.mUnk_12 & 1) ||
+                            (data_020c2560.mUnk_100.mUnk_04 & 0xc000ffff) == 0xc0000400) {
+                            data_020c61ac.mUnk_1c |= 2;
+                        }
+                    } else if ((data_020c18bc.mUnk_12 & 1) ||
+                               (data_020c2560.mUnk_100.mUnk_04 & 0xc000ffff) == 0xc0000400) {
+                        if (data_020c18bc.mUnk_313 + data_020c18bc.mUnk_314 < data_020c18bc.mUnk_315) {
+                            data_020c18bc.mUnk_313 += data_020c18bc.mUnk_314;
+                        } else {
+                            func_0202a160();
+                        }
+                    }
+                }
+            }
+        } else if (data_020c61ac.mUnk_1b == 2) {
+            if (data_020c61ac.mUnk_1c_2 == 1 || data_020c61ac.mUnk_1c_0 == 0) {
+                if (((data_020c5e44.mUnk_300.mUnk_0c != 0 && data_020c5e44.mUnk_300.mUnk_33 == 8 &&
+                      (data_020c18bc.mUnk_46c & 0x80)) ||
+                     (data_020c5e44.mUnk_300.mUnk_0e != 0 && (data_020c18bc.mUnk_46c & 0x80))) &&
+                    !(data_020c18bc.mUnk_46c & 0x08000000)) {
+                    continue;
+                }
+                if (!(data_020c61ac.mUnk_1a & 1)) {
+                    data_020c61ac.mUnk_16 = 0;
+                    data_020c61ac.mUnk_280.mUnk_34 = data_020c61ac.mUnk_280.mUnk_38 = -1;
+                }
+                if (data_020c61ac.mUnk_1a & 4) {
+                    data_020c61ac.mUnk_1b = 3;
+                    func_020298c8();
+                } else {
+                    data_020c61ac.mUnk_1b = 0;
+                }
+            }
+        } else {
+            data_020c61ac.mUnk_1c_1 = 0;
+            do {
+                int kind = func_02021e08(data_020c61ac.mUnk_08, data_020c61ac.mUnk_10);
+                // kind is compared with 0 before the test for 4 (both compares are in the code).
+                if (kind != 0 && kind == 4) {
+                    line = (u8 *) func_02021e18(data_020c61ac.mUnk_08, data_020c61ac.mUnk_10);
+                    switch (func_02029298(&line)) {
+                        case 0:
+                            func_020292f4((const char *) line);
+                            break;
+                        case 1:
+                            func_020294c4(line, 0);
+                            break;
+                        case 2:
+                            func_020294c4(line, 0);
+                            data_020c61ac.mUnk_60[data_020c61ac.mUnk_16 - 1].mUnk_04 |= 0x10000;
+                            break;
+                        case 3:
+                            func_02029aac(line, 1);
+                            break;
+                        case 4:
+                            func_02029aac(line, 0);
+                            break;
+                        case 5:
+                            func_020294c4(line, 1);
+                            break;
+                        case 6:
+                            func_020297c8(line);
+                            data_020c18bc.mUnk_30c = 0;
+                            break;
+                        case 8:
+                            func_02029898(line);
+                            break;
+                        case 7:
+                            func_02029970(line);
+                            data_020c61ac.mUnk_1b = 1;
+                            done = 1;
+                            break;
+                        case 9:
+                            func_020299d4(line);
+                            break;
+                        case 10:
+                            func_02029a1c((const char *) line);
+                            break;
+                        case 11:
+                            func_02029a74(line);
+                            break;
+                        case 12:
+                            func_02029b28(line);
+                            break;
+                        case 13:
+                            func_02029b6c(line);
+                            break;
+                        case 14:
+                            func_02029b98(line);
+                            break;
+                        case 15:
+                            func_02029bd8(line);
+                            break;
+                        case 16:
+                            func_02029c18(line);
+                            break;
+                        case 17:
+                            func_02029c58(line);
+                            break;
+                        case 18:
+                            func_02029c98(line);
+                            break;
+                        case 19:
+                            func_02029d00(line);
+                            break;
+                        case 20:
+                            func_02029d8c((const char *) line);
+                            break;
+                        case 21:
+                            func_02029da0(line);
+                            break;
+                        case 22:
+                            func_02029dd8(line);
+                            break;
+                        case 23:
+                            func_02029f6c(line);
+                            break;
+                        case 24:
+                            func_0202a034(line);
+                            break;
+                    }
+                }
+                data_020c61ac.mUnk_10++;
+            } while (done == 0);
+        }
+    } while (data_020c61ac.mUnk_1c_2);
 }

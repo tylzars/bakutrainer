@@ -45,7 +45,7 @@ void func_0200f374(void) {
     }
 }
 
-u8 func_0200f468(void) {
+int func_0200f468(void) {
     Unk_020ae6ec *state = &data_020ae6ec;
     if (data_020ae6ec.mUnk_00 != -1) {
         int i = state->mUnk_00;
