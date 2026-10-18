@@ -2,6 +2,7 @@
 #include <Main/Unknown/state_flow.h>
 #include <Main/Unknown/globals.h>
 #include <Main/Unknown/functions.h>
+#include <Main/Unknown/random_angle.h>
 #include <Main/Unknown/screen_fade.h>
 #include <Main/Unknown/bg_image.h>
 #include <Main/Unknown/system_init.h>

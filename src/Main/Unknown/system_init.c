@@ -8,6 +8,7 @@
 #include <nitro/tp.h>
 #include <stdio.h>
 #include <Main/Unknown/functions.h>
+#include <Main/Unknown/random_angle.h>
 #include <Main/Unknown/screen_fade.h>
 #include <Main/Unknown/game_math.h>
 #include <Main/Unknown/file_stream.h>

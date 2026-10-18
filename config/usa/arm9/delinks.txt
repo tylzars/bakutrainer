@@ -389,3 +389,7 @@ src/Main/Unknown/game_math.c:
 // data_02050200); fold it in once 0x0201e178-0x0201f450 is merged
 src/Main/Unknown/screen_fade.c:
     .text       start:0x0201f450 end:0x0201fab0
+
+// provisional: may be the same file as game_math.c (contiguous, no boundary evidence)
+src/Main/Unknown/random_angle.c:
+    .text       start:0x0201fd68 end:0x0201ffd4
