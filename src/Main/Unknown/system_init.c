@@ -21,8 +21,10 @@
 #include <nitro/fx.h>
 #include <nitro/wm.h>
 #include <Main/Unknown/arm_system.h>
+#include <Main/clib.h>
 #include <Main/Unknown/system_init.h>
 
+#define EZ10_MAGIC 0x30315a45
 #define HW_DISPCNT 0x04000000
 #define HW_VCOUNT 0x04000006
 #define HW_BG3PA 0x04000030
@@ -106,8 +108,8 @@ void func_0201b7ec(u32 a, int b, int c) {
     MIi_CpuClearFast(0, (void *) 0x05000000, 0x400);
     MIi_CpuClearFast(0xc0, (void *) 0x07000400, 0x400);
     MIi_CpuClearFast(0, (void *) 0x05000400, 0x400);
-    data_020c2bfc[0xf] = 0;
-    data_020c317c.mUnk_00[0xf] = 0;
+    data_020c267c.mUnk_018[0].mUnk_568[0xf] = 0;
+    data_020c267c.mUnk_018[1].mUnk_568[0xf] = 0;
     data_020c18bc.mUnk_45c = 0;
     data_020c18bc.mUnk_490[0] = data_020c18bc.mUnk_490[1] = 3;
     *(vu16 *) 0x0400106c = *(vu16 *) 0x0400006c = 0;
@@ -242,8 +244,8 @@ void func_0201bb40(int flags) {
         }
     }
     for (engine = 0; engine < 2; engine++) {
-        if (data_020c267c.mUnk_18[engine].mUnk_57c != 0) {
-            data_020c267c.mUnk_18[engine].mUnk_57c = 0;
+        if (data_020c267c.mUnk_018[engine].mUnk_57c != 0) {
+            data_020c267c.mUnk_018[engine].mUnk_57c = 0;
             func_0202bb30(engine == 0 ? 1 : 2);
         }
     }
@@ -619,5 +621,536 @@ u32 func_0201c550(void) {
 }
 
 u32 func_0201c564(void) {
-    return func_0201c544() + ((func_0202e760(data_020c317c.mUnk_24) >> 5) << 2);
+    return func_0201c544() + ((func_0202e760(data_020c267c.mUnk_b24) >> 5) << 2);
 }
+
+#pragma thumb off
+// Queues a transfer for func_0201c7b8: grows the queue's byte count, waits for the queue to drain when it is full
+// (terminating when it stays full), and appends the entry.
+void func_0201c580(u16 file, u32 src, u32 dst, u32 size, u32 unpackedSize, u8 mode, u8 flag) {
+    Unk_LoadEntry entry;
+    int limit;
+    if (unpackedSize == 0) {
+        unpackedSize = size;
+    }
+    if (func_02035058() == 0) {
+        limit = data_020c18bc.mUnk_47e;
+    } else {
+        limit = (u32) data_020c18bc.mUnk_47e >> 1;
+    }
+    if (!(data_020c18bc.mUnk_480 < limit && (u32) data_020c18bc.mUnk_484 < (u32) data_020c18bc.mUnk_47c << 10 &&
+          data_020c18bc.mUnk_484 + unpackedSize < (u32) (data_020c18bc.mUnk_47c + 0x40) << 10)) {
+        func_0201bb40(3);
+        if (data_020c18bc.mUnk_480 >= data_020c18bc.mUnk_47e) {
+            OS_Terminate();
+        }
+    }
+    entry.mUnk_12 = mode;
+    entry.mUnk_13 = flag;
+    entry.mUnk_10 = file;
+    entry.mUnk_00 = src;
+    entry.mUnk_08 = size;
+    entry.mUnk_0c = unpackedSize;
+    entry.mUnk_04 = dst;
+    if (data_020c18bc.mUnk_480 != 0) {
+        memcmp(&entry, &data_020c18bc.mUnk_03c[data_020c18bc.mUnk_480 - 1], sizeof(Unk_LoadEntry));
+    }
+    data_020c18bc.mUnk_03c[data_020c18bc.mUnk_480++] = entry;
+    data_020c18bc.mUnk_484 += unpackedSize;
+}
+
+// Queues a transfer whose unpacked size equals its stored size.
+void func_0201c6b0(u16 file, u32 src, u32 dst, u32 size) {
+    func_0201c580(file, src, dst, size, 0, 0, 0);
+}
+
+// Empties the transfer queue when the system is not busy.
+void func_0201c6d4(void) {
+    if (func_02035058() == 0) {
+        data_020c18bc.mUnk_480 = 0;
+        data_020c18bc.mUnk_484 = 0;
+    }
+}
+
+// Limits a transfer size to what fits before the next scanline window (lines 0xbf-0xd6), waiting out the other
+// lines when the display mode is 3.
+u32 func_0201c704(u32 size) {
+    u32 result = size;
+    if (data_020c18bc.mUnk_490[0] == 3) {
+        int line = *(vu16 *) HW_VCOUNT;
+        if (!(line >= 0xbf && line < 0xd6)) {
+            result = data_020c18bc.mUnk_48a * 0x16;
+            while (*(vu16 *) HW_VCOUNT >= 0xd6 || *(vu16 *) HW_VCOUNT < 0xbf) {
+            }
+        } else {
+            result = (0xd6 - line) * data_020c18bc.mUnk_48a;
+        }
+    }
+    if (result >= size) {
+        result = size;
+    }
+    return result;
+}
+
+// In display mode 3, waits until the display reaches line 0xc0.
+void func_0201c78c(void) {
+    if (data_020c18bc.mUnk_490[0] == 3) {
+        while (*(vu16 *) HW_VCOUNT < 0xc0) {
+        }
+    }
+}
+#pragma thumb on
+
+#pragma thumb off
+// Runs the queued transfers: maps the VRAM banks to LCDC when the bank layout changed, picks the queued entries for
+// VRAM (flags & 2) or other memory (flags & 1), sorts them by file and offset, reads and unpacks them into one
+// buffer (packed block files, EZ10 blocks, plain file reads, memory copies), converts textures and palettes, then
+// copies each entry to its destination with the banks mapped. When the system is busy, finished entries are
+// removed from the queue instead.
+void func_0201c7b8(int flags) {
+    int i;
+    u32 count;
+    u32 n;
+    Unk_LoadEntry **list;
+    Unk_LoadEntry *e;
+    int j;
+    BOOL busy;
+    u16 cachedFile;
+    u32 total;
+    int cachedSize;
+    u8 *buf;
+    int cachedOff;
+    u32 bits;
+    int rest;
+    u8 *dst;
+    u8 *src;
+    u32 part;
+    u32 saved;
+    u8 *tmp;
+    u32 hdr[4];
+    u8 *tex;
+    u32 lastDst;
+
+    busy = func_02035058();
+    if (data_020c18bc.mUnk_480 == 0) {
+        return;
+    }
+    if (busy && (data_020c18bc.mUnk_46c & 3) == 0) {
+        return;
+    }
+    list = func_0201c430(data_020c18bc.mUnk_47e << 2);
+    bits = 0;
+    cachedFile = 0;
+    tmp = 0;
+    tex = 0;
+    if (data_020c18bc.mUnk_0c1 == 1) {
+        data_020c18bc.mUnk_070.mUnk_2e = 0;
+        data_020c18bc.mUnk_040.mUnk_2e = 0;
+        for (i = 0; i < 9; i++) {
+            u32 idx = data_020c18bc.mUnk_0b8[i];
+            u32 use;
+            const Unk_02050478 *head;
+            const Unk_02050478 *rec;
+            if (idx == 0xff) {
+                continue;
+            }
+            use = data_02050478[idx].mUnk_2;
+            if (use != 11 && use != 10 && use != 5 && use != 9) {
+                continue;
+            }
+            for (j = idx - 1; data_02050478[j].mUnk_2 != 0; j--) {
+            }
+            head = &data_02050478[j];
+            rec = &data_02050478[idx];
+            switch (use) {
+                case 11:
+                    data_020c18bc.mUnk_040.mUnk_00[data_020c18bc.mUnk_040.mUnk_2e] =
+                        (vu8 *) (data_02050220[head->mUnk_0] + (data_020502ac[head->mUnk_0] / 8));
+                    data_020c18bc.mUnk_040.mUnk_28[data_020c18bc.mUnk_040.mUnk_2e] =
+                        (rec->mUnk_9 << 3) + 0x80 + rec->mUnk_8;
+                    data_020c18bc.mUnk_040.mUnk_18[data_020c18bc.mUnk_040.mUnk_2e] = head->mUnk_4;
+                    data_020c18bc.mUnk_040.mUnk_2e++;
+                    break;
+                case 10:
+                    data_020c18bc.mUnk_070.mUnk_00[data_020c18bc.mUnk_070.mUnk_2e] =
+                        (vu8 *) (data_02050220[head->mUnk_0] + (data_020502ac[head->mUnk_0] / 8));
+                    data_020c18bc.mUnk_070.mUnk_28[data_020c18bc.mUnk_070.mUnk_2e] =
+                        (rec->mUnk_9 << 3) + 0x80 + rec->mUnk_8;
+                    data_020c18bc.mUnk_070.mUnk_10[data_020c18bc.mUnk_070.mUnk_2e] = head->mUnk_1;
+                    data_020c18bc.mUnk_070.mUnk_18[data_020c18bc.mUnk_070.mUnk_2e] = head->mUnk_4;
+                    data_020c18bc.mUnk_070.mUnk_2e++;
+                    break;
+                case 5:
+                    data_020c18bc.mUnk_0a0.mUnk_0 =
+                        (vu8 *) (data_02050220[head->mUnk_0] + (data_020502ac[head->mUnk_0] / 8));
+                    data_020c18bc.mUnk_0a0.mUnk_8 = (rec->mUnk_9 << 3) + 0x80 + rec->mUnk_8;
+                    data_020c18bc.mUnk_0a0.mUnk_4 = head->mUnk_4;
+                    break;
+                case 9:
+                    data_020c18bc.mUnk_0ac.mUnk_0 =
+                        (vu8 *) (data_02050220[head->mUnk_0] + (data_020502ac[head->mUnk_0] / 8));
+                    data_020c18bc.mUnk_0ac.mUnk_8 = (rec->mUnk_9 << 3) + 0x80 + rec->mUnk_8;
+                    data_020c18bc.mUnk_0ac.mUnk_4 = head->mUnk_4;
+                    break;
+            }
+        }
+        for (i = 1; i < data_020c18bc.mUnk_070.mUnk_2e; i++) {
+            if (data_020c18bc.mUnk_070.mUnk_18[i] !=
+                data_020c18bc.mUnk_070.mUnk_18[i - 1] + (data_020c18bc.mUnk_070.mUnk_10[i - 1] << 10)) {
+                OS_Terminate();
+            }
+        }
+        data_020c18bc.mUnk_0c1 = 0;
+    }
+
+    count = 0;
+    for (i = 0; i < data_020c18bc.mUnk_480; i++) {
+        u32 addr;
+        e = &data_020c18bc.mUnk_03c[i];
+        if (e->mUnk_08 == 0) {
+            continue;
+        }
+        addr = e->mUnk_04;
+        if ((addr >> 28) == 11 || (addr >> 28) == 10 || (addr >= 0x06000000 && addr < 0x06400000)) {
+            if ((flags & 2) && !busy) {
+                list[count++] = e;
+            }
+        } else {
+            if ((flags & 1) && !busy) {
+                list[count++] = e;
+            }
+        }
+    }
+    if (count == 0) {
+        func_0201c4f0(&list);
+        return;
+    }
+
+    if (count > 1) {
+        int gap = (1 << (32 - func_02028250(count))) - 1;
+        while (gap > 0) {
+            for (i = 0; i < (int) (count - gap); i++) {
+                j = i;
+                while (list[j]->mUnk_10 < list[j + gap]->mUnk_10 ||
+                       (list[j]->mUnk_10 == list[j + gap]->mUnk_10 && list[j]->mUnk_00 > list[j + gap]->mUnk_00)) {
+                    Unk_LoadEntry *t = list[j];
+                    list[j] = list[j + gap];
+                    list[j + gap] = t;
+                    j -= gap;
+                    if (j < 0) {
+                        break;
+                    }
+                }
+            }
+            gap = (gap - 1) / 2;
+        }
+    }
+
+    total = 0;
+    for (i = 0; i < count; i++) {
+        total += list[i]->mUnk_0c;
+    }
+    buf = func_0201c43c(total + 0x80, 1);
+    dst = buf;
+    cachedOff = 0;
+    cachedSize = 0;
+    for (i = 0; i < count; i++) {
+        e = list[i];
+        if (data_020c267c.mUnk_b26 == e->mUnk_10 && data_020c267c.mUnk_b2e == 1) {
+            if (data_020c267c.mUnk_000 != 0 && e->mUnk_00 == data_020c267c.mUnk_00c << 3) {
+                MIi_CpuCopy32(data_020c267c.mUnk_004, dst, e->mUnk_0c);
+                data_020c267c.mUnk_017 = 0;
+            } else {
+                u32 *offsets = data_020c267c.mUnk_b1c;
+                u32 first = e->mUnk_00 >> 11;
+                u32 last = (e->mUnk_00 + e->mUnk_08) >> 11;
+                u32 next;
+                int size;
+                for (j = i + 1; j < count && (next = (list[j]->mUnk_00 + list[j]->mUnk_08) >> 11) <= last + 1 &&
+                                offsets[next + 1] - offsets[first] <= 0x8000;
+                     j++) {
+                    if (next > last) {
+                        last = next;
+                    }
+                }
+                size = offsets[last + 1] - offsets[first];
+                if (tmp == 0) {
+                    tmp = func_0201c43c(0x8000, 1);
+                }
+                if ((int) data_020c267c.mUnk_b1c[first] + size > cachedOff + cachedSize || j == 0 ||
+                    list[i]->mUnk_10 != cachedFile) {
+                    func_0202e4fc(list[i]->mUnk_10, tmp, size, data_020c267c.mUnk_b1c[first]);
+                    cachedSize = size;
+                    cachedOff = data_020c267c.mUnk_b1c[first];
+                }
+                func_02028150(tmp + (data_020c267c.mUnk_b1c[first] - cachedOff), dst, list[i]->mUnk_00 & 0x7ff,
+                              list[i]->mUnk_08);
+            }
+        } else if (data_020c267c.mUnk_b26 == e->mUnk_10 && data_020c267c.mUnk_b2e == 2) {
+            u32 sub = (e->mUnk_00 << 25) >> 20;
+            u32 off;
+            e->mUnk_00 = (e->mUnk_00 >> 7) << 2;
+            e = list[i];
+            off = e->mUnk_00;
+            if (data_020c267c.mUnk_000 != 0 && data_020c267c.mUnk_00c == off + (sub << 20)) {
+                MIi_CpuCopy32(data_020c267c.mUnk_004, dst, e->mUnk_0c);
+                data_020c267c.mUnk_017 = 0;
+            } else if (cachedOff != off || cachedFile != e->mUnk_10) {
+                func_0202e4fc(e->mUnk_10, hdr, 0x10, off);
+                if (hdr[0] == EZ10_MAGIC) {
+                    u8 *packed;
+                    if (tmp == 0) {
+                        tmp = func_0201c43c(0x8000, 1);
+                    }
+                    if (hdr[1] > 0x8000) {
+                        OS_Terminate();
+                    }
+                    if (hdr[1] < 0x10) {
+                        OS_Terminate();
+                    }
+                    packed = (u8 *) (((u32) tmp + 0x8000 - hdr[3]) & ~3);
+                    memcpy(packed, hdr, 0x10);
+                    func_0202e4fc(list[i]->mUnk_10, packed + 0x10, hdr[3] - 0x10, off + 0x10);
+                    func_0202875c(packed, tmp);
+                    MIi_CpuCopy32(tmp + sub, dst, list[i]->mUnk_0c);
+                    cachedOff = off;
+                    cachedFile = list[i]->mUnk_10;
+                } else {
+                    func_0202e4fc(list[i]->mUnk_10, dst, list[i]->mUnk_0c, off + sub);
+                }
+            } else {
+                MIi_CpuCopy32(tmp + sub, dst, e->mUnk_0c);
+            }
+        } else if (data_020c18bc.mUnk_42c == e->mUnk_10) {
+            u32 sub = (e->mUnk_00 << 26) >> 20;
+            u32 off = (e->mUnk_00 >> 6) << 2;
+            if (data_020c18bc.mUnk_350 != off || data_020c18bc.mUnk_354 != e->mUnk_10) {
+                u32 *packed;
+                if (data_020c18bc.mUnk_34c == 0) {
+                    data_020c18bc.mUnk_34c = func_0201c430(0x1200);
+                }
+                packed = (u32 *) (((u32) data_020c18bc.mUnk_34c + 0x1000 - list[i]->mUnk_08) & ~3);
+                func_0202e4fc(list[i]->mUnk_10, packed, list[i]->mUnk_08, off);
+                if (packed[0] != EZ10_MAGIC) {
+                    data_020c18bc.mUnk_350 = off;
+                    data_020c18bc.mUnk_354 = list[i]->mUnk_10;
+                    MIi_CpuCopyFast(packed, data_020c18bc.mUnk_34c, list[i]->mUnk_08);
+                    MIi_CpuCopyFast(data_020c18bc.mUnk_34c + sub, dst, list[i]->mUnk_0c);
+                    list[i]->mUnk_08 = list[i]->mUnk_0c;
+                } else {
+                    if (packed[0] != EZ10_MAGIC) {
+                        OS_Terminate();
+                    }
+                    if (packed[1] > 0x8000) {
+                        OS_Terminate();
+                    }
+                    if (packed[3] != list[i]->mUnk_08) {
+                        OS_Terminate();
+                    }
+                    func_0202875c(packed, data_020c18bc.mUnk_34c);
+                    MIi_CpuCopyFast(data_020c18bc.mUnk_34c + sub, dst, list[i]->mUnk_0c);
+                    data_020c18bc.mUnk_350 = off;
+                    data_020c18bc.mUnk_354 = list[i]->mUnk_10;
+                    list[i]->mUnk_08 = list[i]->mUnk_0c;
+                }
+            } else {
+                MIi_CpuCopyFast(data_020c18bc.mUnk_34c + sub, dst, e->mUnk_0c);
+                list[i]->mUnk_08 = list[i]->mUnk_0c;
+            }
+        } else if (data_020c31dc.mUnk_54 == e->mUnk_10 && e->mUnk_08 < e->mUnk_0c) {
+            u32 size = e->mUnk_08;
+            u32 *packed = (u32 *) (((u32) dst + e->mUnk_0c + 0x80 - size) & ~3);
+            func_0202e4fc(e->mUnk_10, packed, size, e->mUnk_00);
+            data_020c1834.mUnk_08 += size;
+            data_020c1834.mUnk_0c++;
+            if (packed[0] != EZ10_MAGIC) {
+                OS_Terminate();
+            }
+            if (packed[1] != list[i]->mUnk_0c) {
+                OS_Terminate();
+            }
+            if (-packed[2] >= list[i]->mUnk_0c + 0x80 - size) {
+                OS_Terminate();
+            }
+            func_0202875c(packed, dst);
+            list[i]->mUnk_08 = list[i]->mUnk_0c;
+        } else if (e->mUnk_10 != 0) {
+            u32 size = e->mUnk_08;
+            j = i + 1;
+            if (cachedFile != e->mUnk_10 || e->mUnk_00 + size > cachedOff + cachedSize ||
+                (i > 0 && list[i - 1]->mUnk_00 == e->mUnk_00) || (lastDst & ~0x3ffff) != (e->mUnk_04 & ~0x3ffff)) {
+                cachedFile = list[i]->mUnk_10;
+                cachedOff = list[i]->mUnk_00;
+                lastDst = list[j - 1]->mUnk_04;
+                cachedSize = size;
+                func_0202e4fc(cachedFile, dst, size, cachedOff);
+                if (data_020c18bc.mUnk_464 != 0 && (list[i]->mUnk_04 >> 28) == 11) {
+                    DC_FlushRange(dst, size);
+                    data_020c18bc.mUnk_464(dst, size);
+                }
+            }
+        } else {
+            if (e->mUnk_08 & 1) {
+                OS_Terminate();
+            }
+            MIi_CpuCopy16((void *) list[i]->mUnk_00, dst, list[i]->mUnk_08);
+        }
+
+        e = list[i];
+        if (data_020c267c.mUnk_b26 == e->mUnk_10) {
+            BOOL bg = 0;
+            u32 area = e->mUnk_04 >> 20;
+            if (area < 0x64 && area >= 0x60) {
+                bg = 1;
+            }
+            if (e->mUnk_13 != 0 && e->mUnk_13 != 0xff) {
+                Unk_020c2694 *half = &data_020c267c.mUnk_018[e->mUnk_13 & 1];
+                func_02028928((u16 *) dst, &half->mUnk_115[half->mUnk_014[e->mUnk_13 >> 1]], e->mUnk_08 >> 1);
+            }
+            e = list[i];
+            if ((e->mUnk_04 >> 28) == 10 || bg == 1) {
+                int w = (1 << (e->mUnk_12 & 0xf)) / 8;
+                u32 h = e->mUnk_08 / (e->mUnk_13 == 0 ? 0x20 : 0x40) / w;
+                if (tex == 0) {
+                    tex = func_0201c43c(0x4000, 1);
+                }
+                func_0202c2f0(tex, dst, w, h, list[i]->mUnk_13 == 0);
+                e = list[i];
+                if ((e->mUnk_04 >> 28) == 10) {
+                    MIi_CpuCopy16(tex, dst, e->mUnk_08);
+                } else {
+                    func_0202c3e0(e, tex, w);
+                }
+            }
+        }
+        dst += list[i]->mUnk_08;
+    }
+
+    func_0203e4a4();
+    src = buf;
+    for (i = 0; i < count;) {
+        u32 base;
+        u32 run;
+        rest = 0;
+        part = 0;
+        e = list[i];
+        if (e->mUnk_12 == 0xff) {
+            src += e->mUnk_08;
+            i++;
+            continue;
+        }
+        base = e->mUnk_00;
+        run = e->mUnk_08;
+        for (j = i + 1; j < count && base + run == list[j]->mUnk_00 && run == 0 && list[i]->mUnk_10 == list[j]->mUnk_10;
+             j++) {
+            run += list[j]->mUnk_08;
+        }
+        while (i < j) {
+            u32 addr;
+            u32 type;
+            e = list[i];
+            addr = e->mUnk_04;
+            type = addr >> 28;
+            if (type == 5) {
+                bits |= 0x20;
+                e->mUnk_04 = data_020c18bc.mUnk_0a0.mUnk_4 + (addr & 0x1fff);
+                func_0201c78c();
+                *data_020c18bc.mUnk_0a0.mUnk_0 = 0x80;
+            } else if (type == 9) {
+                bits |= 0x200;
+                e->mUnk_04 = data_020c18bc.mUnk_0ac.mUnk_4 + (addr & 0x1fff);
+                func_0201c78c();
+                *data_020c18bc.mUnk_0ac.mUnk_0 = 0x80;
+            } else if (type == 11) {
+                if (data_020c18bc.mUnk_040.mUnk_2e != 0) {
+                    saved = addr;
+                    e->mUnk_04 = data_020c18bc.mUnk_040.mUnk_18[0] + (addr & 0x7fffff);
+                    bits |= 0x800;
+                    part = func_0201c704(list[i]->mUnk_08);
+                    e = list[i];
+                    rest = e->mUnk_08 - part;
+                    e->mUnk_08 = part;
+                    *data_020c18bc.mUnk_040.mUnk_00[0] = 0x80;
+                } else {
+                    rest = 0;
+                    goto next;
+                }
+            } else if (type == 10) {
+                Unk_VramGroup *group = &data_020c18bc.mUnk_070;
+                if (data_020c18bc.mUnk_070.mUnk_2e != 0) {
+                    saved = addr;
+                    e->mUnk_04 = group->mUnk_18[0] + (addr & 0x7fffff);
+                    bits |= 0x400;
+                    part = func_0201c704(list[i]->mUnk_08);
+                    e = list[i];
+                    rest = e->mUnk_08 - part;
+                    e->mUnk_08 = part;
+                    for (n = 0; n < group->mUnk_2e; n++) {
+                        Unk_LoadEntry *f = list[i];
+                        if (group->mUnk_18[n] <= f->mUnk_04 + f->mUnk_08 &&
+                            group->mUnk_18[n] + (group->mUnk_10[n] << 10) >= f->mUnk_04) {
+                            *data_020c18bc.mUnk_070.mUnk_00[n] = 0x80;
+                        }
+                    }
+                } else {
+                    rest = 0;
+                    goto next;
+                }
+            }
+            e = list[i];
+            if (e->mUnk_08 < 0x100) {
+                MIi_CpuCopyFast(src, (void *) e->mUnk_04, e->mUnk_08);
+            } else {
+                MI_DmaCopy32(3, src, (void *) e->mUnk_04, e->mUnk_08);
+            }
+            if (bits & 0x400) {
+                for (n = 0; n < data_020c18bc.mUnk_070.mUnk_2e; n++) {
+                    *data_020c18bc.mUnk_070.mUnk_00[n] = data_020c18bc.mUnk_070.mUnk_28[n];
+                }
+                bits &= ~0x400;
+            } else if (bits & 0x800) {
+                *data_020c18bc.mUnk_040.mUnk_00[0] = data_020c18bc.mUnk_040.mUnk_28[0];
+                bits &= ~0x800;
+            } else if (bits & 0x20) {
+                *data_020c18bc.mUnk_0a0.mUnk_0 = data_020c18bc.mUnk_0a0.mUnk_8;
+                bits &= ~0x20;
+            } else if (bits & 0x200) {
+                *data_020c18bc.mUnk_0ac.mUnk_0 = data_020c18bc.mUnk_0ac.mUnk_8;
+                bits &= ~0x200;
+            }
+        next:
+            e = list[i];
+            src += e->mUnk_08;
+            if (rest > 0) {
+                e->mUnk_04 = saved + part;
+                list[i]->mUnk_08 = rest;
+                rest = 0;
+            } else {
+                i++;
+            }
+        }
+    }
+
+    func_0201c4f0(&tmp);
+    func_0201c4f0(&tex);
+    func_0201c4f0(&buf);
+    func_0201c4f0(&list);
+    if (busy == 1) {
+        i = 0;
+        while (1) {
+            if (i == data_020c18bc.mUnk_480) {
+                return;
+            }
+            e = &data_020c18bc.mUnk_03c[i];
+            if (e->mUnk_08 == 0 || e->mUnk_12 == 0xff || data_020c267c.mUnk_b26 == e->mUnk_10) {
+                if (i != data_020c18bc.mUnk_480 - 1) {
+                    memcpy(e, &data_020c18bc.mUnk_03c[data_020c18bc.mUnk_480 - 1], sizeof(Unk_LoadEntry));
+                }
+                data_020c18bc.mUnk_480--;
+            } else {
+                i++;
+            }
+        }
+    }
+}
+#pragma thumb on

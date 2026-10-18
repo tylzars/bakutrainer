@@ -25,6 +25,37 @@ typedef struct Unk_020c1b0c {
     u8 mUnk_28[4];
 } Unk_020c1b0c;
 
+// One queued transfer (0x14 bytes): the source (a file offset, packed with a block index for some files, or an
+// address when the file is 0), the destination, the stored and the unpacked size, the file and two format bytes.
+typedef struct Unk_LoadEntry {
+    u32 mUnk_00;
+    u32 mUnk_04;
+    u32 mUnk_08;
+    u32 mUnk_0c;
+    u16 mUnk_10;
+    u8 mUnk_12;
+    u8 mUnk_13;
+} Unk_LoadEntry;
+
+// VRAM banks mapped for one use: each bank's control register, its size in KB, its LCDC address and the control
+// value to restore, then the number of banks.
+typedef struct Unk_VramGroup {
+    vu8 *mUnk_00[4];
+    u16 mUnk_10[4];
+    u32 mUnk_18[4];
+    u8 mUnk_28[6];
+    u8 mUnk_2e;
+    u8 mUnk_2f;
+} Unk_VramGroup;
+
+// One VRAM bank: its control register, its LCDC address and the control value to restore.
+typedef struct Unk_VramBank {
+    vu8 *mUnk_0;
+    u32 mUnk_4;
+    u8 mUnk_8;
+    u8 mUnk_9[3];
+} Unk_VramBank;
+
 typedef struct SystemState {
     void *mUnk_000;
     u8 mUnk_004[0xc];
@@ -41,8 +72,14 @@ typedef struct SystemState {
     u8 *mUnk_030;
     s32 mUnk_034;
     s32 mUnk_038;
-    void *mUnk_03c;
-    u8 mUnk_040[0x230 - 0x40];
+    Unk_LoadEntry *mUnk_03c;
+    Unk_VramGroup mUnk_040;
+    Unk_VramGroup mUnk_070;
+    Unk_VramBank mUnk_0a0;
+    Unk_VramBank mUnk_0ac;
+    u8 mUnk_0b8[9];
+    u8 mUnk_0c1;
+    u8 mUnk_0c2[0x230 - 0xc2];
     s32 mUnk_230;
     s32 mUnk_234;
     s32 mUnk_238;
@@ -127,7 +164,11 @@ typedef struct SystemState {
     s32 mUnk_334;
     u8 mUnk_338[0x340 - 0x338];
     u16 mUnk_340[4];
-    u8 mUnk_348[0x42c - 0x348];
+    u8 mUnk_348[4];
+    u8 *mUnk_34c;
+    u32 mUnk_350;
+    u16 mUnk_354;
+    u8 mUnk_356[0x42c - 0x356];
     s32 mUnk_42c;
     u8 mUnk_430[0x450 - 0x430];
     u32 mUnk_450;
@@ -137,7 +178,7 @@ typedef struct SystemState {
     u8 mUnk_458[4];
     vu32 mUnk_45c;
     u32 mUnk_460;
-    s32 mUnk_464;
+    void (*mUnk_464)(void *data, u32 size);
     void (*mUnk_468)(void);
     u32 mUnk_46c;
     s32 mUnk_470;
@@ -649,14 +690,6 @@ typedef struct Unk_020c1818 {
 } Unk_020c1818;
 extern Unk_020c1818 data_020c1818;
 extern FSFile data_020c1874;
-extern u8 data_020c2bfc[0x10];
-typedef struct Unk_020c317c {
-    u8 mUnk_00[0x24];
-    u16 mUnk_24;
-    u8 mUnk_26[4];
-    u16 mUnk_2a;
-} Unk_020c317c;
-extern Unk_020c317c data_020c317c;
 
 #ifdef __cplusplus
 }
