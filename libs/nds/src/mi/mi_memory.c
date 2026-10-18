@@ -111,6 +111,9 @@ L6:
 }
 
 // Copies size bytes from src to dest: eight words per step while 32 bytes remain, then single words.
+// Not compiled: saves seven registers (r4-r10) and has no stack frame. A compiled function adds r3 to its
+// save list whenever the saved registers and its frame come to an odd number of words, so it would save
+// {r3-r10}.
 asm void MIi_CpuCopyFast(const void *src, void *dest, u32 size) {
     stmfd sp!, {r4, r5, r6, r7, r8, r9, r10}
     add r10, r1, r2

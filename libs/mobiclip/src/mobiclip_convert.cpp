@@ -5,6 +5,8 @@
 // Y rows are 0x100 bytes apart; each U/V row (0x100 bytes, U in the first 0x80, V in the second) serves two Y
 // rows, one U/V pair per 2x2 pixels. Output pixels are 16-bit with bit 15 set. The loops take 16 pixels and two
 // rows per pass.
+// Not compiled: saves ip (r12) with r4-r11 and lr. A compiled function saves r12 only as an interrupt function,
+// which saves every register among r0-r7 it writes; this one writes r0-r3 and does not save them.
 // clang-format off
 asm void func_0203af68(void *args) {
     // save the registers; unpack the argument block

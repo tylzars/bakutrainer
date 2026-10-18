@@ -18,6 +18,8 @@ extern char data_027e0021[];
 // zeroes a word in shared main memory, stores the IRQ handler address at data TCM + 0x3ffc, calls
 // func_0204ded0 (empty), func_02000b98 (empty) and func_0204dee8 (runs the static-initializer
 // table), and finally jumps to main with lr = 0xffff0000 and sp lowered to an 8-byte boundary.
+// Not compiled: sets the processor modes with msr and keeps the caches coherent with CP15 mcr instructions,
+// which C has no expression for.
 asm void Entry(void) {
     mov ip, #0x4000000
     str ip, [ip, #0x208]            // master interrupt enable off
@@ -127,6 +129,7 @@ L_nx:
 // source cursor reaches the lower bound. Does nothing if r0 is null. Afterwards, for each 32-byte
 // line from the packed data's lower bound up to the output end, drains the write buffer,
 // invalidates the instruction line and cleans and invalidates the data line.
+// Not compiled: the cache maintenance is CP15 mcr instructions, which C has no expression for.
 asm void func_02000970(void *end) {
     cmp r0, #0
     beq L_ret
@@ -185,6 +188,7 @@ L_ret:
 // zero length): copies the words from the source stream to dest, zero-fills the following
 // words, then for every 32-byte line of the whole area drains the write buffer, invalidates the
 // instruction line and cleans and invalidates the data line. Ends by jumping to AutoloadCallback.
+// Not compiled: the cache maintenance is CP15 mcr instructions, which C has no expression for.
 asm void func_02000a1c(void) {
     ldr r0, =BuildInfo
     ldr r1, [r0, #0]                // table cursor
@@ -243,6 +247,7 @@ void AutoloadCallback(void) {
 // data/instruction TCM windows, the cacheability / bufferability / access-permission registers,
 // then sets control-register bits 0x5707d (MPU, caches, write buffer, both TCMs, high exception
 // vectors, round-robin replacement).
+// Not compiled: CP15 mrc/mcr instructions, which C has no expression for.
 asm void func_02000ab0(void) {
     mrc p15, 0, r0, c1, c0, 0
     ldr r1, =0xf9005

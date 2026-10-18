@@ -8,6 +8,7 @@ extern "C" {
 
 // clz exists only in ARM code; Thumb files (the compiler defines __thumb for them) get the declarations below.
 #ifndef __thumb
+// An asm statement: clz has no C expression.
 static inline u32 CountLeadingZeros(u32 x) {
     u32 result;
     asm { clz result, x }

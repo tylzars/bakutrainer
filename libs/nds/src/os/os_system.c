@@ -4,6 +4,7 @@
 
 // OS_EnableInterrupts: clears the IRQ-disable bit (0x80) in CPSR; returns the
 // previous value of that bit.
+// Not compiled: reads and writes CPSR with mrs/msr, which C has no expression for.
 asm OSIntrMode OS_EnableInterrupts(void) {
     mrs r0, cpsr
     bic r1, r0, #0x80
@@ -13,6 +14,7 @@ asm OSIntrMode OS_EnableInterrupts(void) {
 }
 
 // OS_DisableInterrupts: sets the IRQ-disable bit; returns its previous value.
+// Not compiled: reads and writes CPSR with mrs/msr, which C has no expression for.
 asm OSIntrMode OS_DisableInterrupts(void) {
     mrs r0, cpsr
     orr r1, r0, #0x80
@@ -23,6 +25,7 @@ asm OSIntrMode OS_DisableInterrupts(void) {
 
 // OS_RestoreInterrupts(old): sets the IRQ-disable bit to 'old' (0 or 0x80);
 // returns the bit's previous value.
+// Not compiled: reads and writes CPSR with mrs/msr, which C has no expression for.
 asm OSIntrMode OS_RestoreInterrupts(OSIntrMode old) {
     mrs r1, cpsr
     bic r2, r1, #0x80
@@ -34,6 +37,7 @@ asm OSIntrMode OS_RestoreInterrupts(OSIntrMode old) {
 
 // OS_DisableInterrupts_IrqAndFiq: sets both disable bits (0xc0); returns their
 // previous value.
+// Not compiled: reads and writes CPSR with mrs/msr, which C has no expression for.
 asm OSIntrMode OS_DisableInterrupts_IrqAndFiq(void) {
     mrs r0, cpsr
     orr r1, r0, #0xc0
@@ -44,6 +48,7 @@ asm OSIntrMode OS_DisableInterrupts_IrqAndFiq(void) {
 
 // OS_RestoreInterrupts_IrqAndFiq(old): sets both bits (0xc0 field) to 'old';
 // returns the previous value.
+// Not compiled: reads and writes CPSR with mrs/msr, which C has no expression for.
 asm OSIntrMode OS_RestoreInterrupts_IrqAndFiq(OSIntrMode old) {
     mrs r1, cpsr
     bic r2, r1, #0xc0
@@ -54,6 +59,7 @@ asm OSIntrMode OS_RestoreInterrupts_IrqAndFiq(OSIntrMode old) {
 }
 
 // OS_GetCpsrIrqBits: returns CPSR & 0x80.
+// Not compiled: reads CPSR with mrs, which C has no expression for.
 asm u32 OS_GetCpsrIrqBits(void) {
     mrs r0, cpsr
     and r0, r0, #0x80
@@ -61,6 +67,7 @@ asm u32 OS_GetCpsrIrqBits(void) {
 }
 
 // OS_GetProcMode: returns the mode field of CPSR (CPSR & 0x1f).
+// Not compiled: reads CPSR with mrs, which C has no expression for.
 asm u32 OS_GetProcMode(void) {
     mrs r0, cpsr
     and r0, r0, #0x1f

@@ -475,6 +475,7 @@ store:
 // the address 4 bytes past the final 'bx lr'. Returns 0 on the direct path;
 // OS_LoadContext resumes at that address minus 4, i.e. at the 'bx lr', with
 // r0 = 1, so the caller sees a second return of 1.
+// Not compiled: reads CPSR with mrs and changes mode with msr, which C has no expression for.
 asm u32 OS_SaveContext(OSContext *context) {
     stmfd sp!, {r0, lr}
     add r0, r0, #0x48
@@ -501,6 +502,8 @@ asm u32 OS_SaveContext(OSContext *context) {
 // IRQ/FIQ masked, loads SPSR from the saved CPSR (+0), the supervisor sp from
 // +0x44 and lr from +0x40, then loads r0-r12 and the user/system-bank sp and
 // lr from +4..+0x3c, and returns to lr - 4 with CPSR restored from SPSR.
+// Not compiled: writes CPSR and SPSR with msr, which C has no expression for, and returns with
+// `subs pc, lr, #4`.
 asm void OS_LoadContext(OSContext *context) {
     stmfd sp!, {r0, lr}
     add r0, r0, #0x48

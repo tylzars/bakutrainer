@@ -14,6 +14,8 @@
 // func_01ff8068, so the handler returns into the thread-switch code; the lr
 // pushed on entry is popped there. The routine ends with two literal words
 // (table base, return address).
+// Not compiled: clz has no C expression; and the lr it pushes is popped by func_01ff8068 when a
+// handler has run.
 asm void func_01ff8000(void) {
     stmfd sp!, {lr}
     mov ip, #0x4000000
@@ -66,6 +68,8 @@ Lfind:
 // sp, SPSR and user-bank registers from its record, writes r0-r3, ip and the
 // resume address (+0x40) over the IRQ stack frame, and returns through the
 // word popped from the stack. Four literal words follow the routine.
+// Not compiled: changes mode with msr and reads SPSR with mrs, which C has no expression for; and it
+// returns through the lr that func_01ff8000 pushed.
 asm void func_01ff8068(void) {
     ldr ip, =data_027e0060
     mov r3, #0

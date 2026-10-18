@@ -156,6 +156,8 @@ _s32_div_f:
 ; immediately. The part after the zero test (_u32_div_f+0x8, also called from the code _ll_udiv and
 ; _ull_mod share) is the same shift-count search and unrolled 32-step computed-jump divide as in
 ; _s32_div_f, without sign handling. If a < b the quotient is 0 and the remainder is a.
+; Not compiled: _ull_mod calls .L_0204dcf4, an entry inside this routine past its zero-divisor test; a
+; compiled function is entered only at its start.
 	.global _u32_div_f
 	.type _u32_div_f, @function
 _u32_div_f:

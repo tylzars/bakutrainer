@@ -5,6 +5,12 @@
 ; The comparison routines return their result both in r0 and in the condition flags.
 ; _fsub branches into _fadd (.L_0204cb30, rt_soft_float_a.s) and _fadd into _fsub (.L_0204d64c, global here);
 ; _ll_sdiv calls _s32_div_f and _ull_mod calls .L_0204dcf4 inside _u32_div_f (both in rt_div32.s).
+; "Not compiled" lines say why the compiler cannot have produced a routine. Save rule: the stmfd list of a
+; compiled ARM function holds every register among r4-r7 it writes and, unless it is an interrupt function, also
+; every one among r8-r11; lr if it calls or writes lr; and r3 when the saved registers and its stack frame would
+; otherwise come to an odd number of words, or in place of a one-word frame. r0-r2 and r12 appear only in an
+; interrupt function, which saves every register among r0-r7 it writes. A compiled function that saved lr
+; returns by loading it into pc (a variadic one, which starts with stmfd {r0-r3}, excepted).
 
 	.text
 	.global .L_0204d64c
@@ -16,6 +22,7 @@
 ; gives 0 (unordered); +0 and -0 compare equal. Unordered and the +0/-0 case give 0 with C set.
 ; Non-negative operands compare as unsigned 64-bit values; if either is negative the raw bits
 ; are compared in reverse order, which is correct for two negatives and for mixed signs.
+; Not compiled: sets the carry flag of its result with mrs/msr, which C has no expression for.
 	.global _dls
 	.type _dls, @function
 _dls:
@@ -74,6 +81,7 @@ _dls:
 
 ; _deq: returns 1 if a == b (doubles), else 0. NaN gives 0 with Z cleared; +0 equals -0;
 ; otherwise both words must be equal.
+; Not compiled: sets the Z flag of its result with mrs/msr, which C has no expression for.
 	.global _deq
 	.type _deq, @function
 _deq:
@@ -129,6 +137,7 @@ _deq:
 ; Otherwise each operand is converted from sign-magnitude to two's complement and the two
 ; are compared as signed integers, so +0 and -0 compare equal. The flags are left set to
 ; match the returned condition.
+; Not compiled: sets the carry flag of its result with mrs/msr, which C has no expression for.
 	.global _fgeq
 	.type _fgeq, @function
 _fgeq:
@@ -165,6 +174,7 @@ _fgeq:
 ; Otherwise each operand is converted from sign-magnitude to two's complement and the two
 ; are compared as signed integers, so +0 and -0 compare equal. The flags are left set to
 ; match the returned condition.
+; Not compiled: sets the carry flag of its result with mrs/msr, which C has no expression for.
 	.global _fls
 	.type _fls, @function
 _fls:
@@ -198,6 +208,7 @@ _fls:
 
 ; _fneq: returns 1 if a != b (floats), else 0. NaN -> 1 with Z cleared. Two zeros of either
 ; sign are equal (returns 0); otherwise the raw bit patterns are compared.
+; Not compiled: sets the Z flag of its result with mrs/msr, which C has no expression for.
 	.global _fneq
 	.type _fneq, @function
 _fneq:
@@ -236,6 +247,8 @@ _fneq:
 
 ; _frdiv: reverse-operand entry for _fdiv: swaps the two float operands with three
 ; exclusive-ors and falls through into _fdiv, which follows directly.
+; Not compiled: has no return; execution runs on into _fdiv, the next routine. Each compiled function
+; is a section of its own, so none can rely on the code placed after it.
 	.global _frdiv
 	.type _frdiv, @function
 _frdiv:
@@ -255,6 +268,8 @@ _frdiv:
 ; Special cases: NaN operand, 0/0 and inf/inf return the quiet NaN 0x7fffffff; x/0 and
 ; inf/finite return a signed infinity; 0/finite and finite/inf return a signed zero. Denormal
 ; operands are normalised with clz first.
+; Not compiled: clz has no C expression; and (save rule) it saves lr alone with no frame and no r3, then
+; pops it and returns with bx lr.
 	.global _fdiv
 	.type _fdiv, @function
 _fdiv:
@@ -543,6 +558,7 @@ _fdiv:
 ; Normal numbers: rebias the exponent (+0x380) and shift the 23-bit mantissa into the 52-bit
 ; field. Zero maps to signed zero; a float denormal is normalised with clz so it becomes a
 ; normal double; infinity becomes the double infinity; any NaN becomes 0x7fffffff_ffffffff.
+; Not compiled: clz has no C expression.
 	.global _f2d
 	.type _f2d, @function
 _f2d:
@@ -619,6 +635,7 @@ _ffix:
 ; exponent to 0x9e - clz, packs sign | exponent | top 23 mantissa bits, and uses the 8 bits
 ; shifted out below the mantissa to round: exact or below half truncates, above half rounds up,
 ; exactly half rounds to even.
+; Not compiled: clz has no C expression.
 	.global _fflt
 	.type _fflt, @function
 _fflt:
@@ -651,6 +668,7 @@ _fflt:
 ; bits below the mantissa plus a sticky bit from the low product word.
 ; Special cases: NaN operand or 0 * inf return 0x7fffffff; inf * finite gives signed infinity;
 ; zero * finite gives signed zero; denormal inputs are normalised with clz.
+; Not compiled: clz has no C expression.
 	.global _fmul
 	.type _fmul, @function
 _fmul:
@@ -808,6 +826,8 @@ _fmul:
 
 ; _frsb: reverse-operand entry for _fsub: swaps r0 and r1 with three exclusive-ors
 ; and falls through into _fsub, which follows directly.
+; Not compiled: has no return; execution runs on into _fsub, the next routine. Each compiled function
+; is a section of its own, so none can rely on the code placed after it.
 	.global _frsb
 	.type _frsb, @function
 _frsb:
@@ -825,6 +845,8 @@ _frsb:
 ; rounded to nearest even. Denormals, infinities and NaNs are handled in the tail blocks:
 ; inf - inf and NaN operands give 0x7fffffff, otherwise the infinity or the other operand is
 ; returned.
+; Not compiled: branches into the middle of _fadd (.L_0204cb30), and _fadd branches back into this body
+; (.L_0204d64c); a compiled function is entered only at its start. Also uses clz.
 	.global _fsub
 	.type _fsub, @function
 _fsub:
@@ -1037,6 +1059,8 @@ _fsub:
 ; quotient in r11:ip (high:low) and the partial remainder in r7:r1:r0. The remainder case shifts
 ; the partial remainder back right by r5; finally the result is negated if bit 31 of r4 is set.
 ; _ll_sdiv+0x74 is also the target of a branch in _ull_mod (code shared with _ll_udiv).
+; Not compiled: ends by branching into the middle of _ll_sdiv (.L_ll_sdiv_common) with its registers
+; still saved; a compiled function is entered only at its start.
 	.global _ll_mod
 	.type _ll_mod, @function
 _ll_mod:
@@ -1047,6 +1071,8 @@ _ll_mod:
 	.size _ll_mod, .-_ll_mod
 
 ; _ll_sdiv: signed 64-bit quotient, a / b; also the shared body of _ll_mod (see above).
+; Not compiled: _ll_mod branches into its body (.L_ll_sdiv_common) and _ull_mod into .L_ll_sdiv_unsigned;
+; a compiled function is entered only at its start. Also (save rule) saves ip, yet writes r0-r3 unsaved.
 	.global _ll_sdiv
 	.type _ll_sdiv, @function
 _ll_sdiv:
@@ -1193,6 +1219,8 @@ _ll_sdiv:
 ; it is a 32-bit divide: the compare/divide part of _u32_div_f (_u32_div_f+0x8) is called, r0
 ; takes the quotient (or the remainder) and r1 is cleared. Otherwise it jumps into the 64-bit
 ; divide in _ll_sdiv at _ll_sdiv+0x74, past the absolute-value step.
+; Not compiled: ends by branching into the middle of _ull_mod (.L_ull_mod_common) with its registers
+; still saved; a compiled function is entered only at its start.
 	.global _ll_udiv
 	.type _ll_udiv, @function
 _ll_udiv:
@@ -1202,6 +1230,8 @@ _ll_udiv:
 	.size _ll_udiv, .-_ll_udiv
 
 ; _ull_mod: unsigned 64-bit remainder, a % b; also the shared body of _ll_udiv (see above).
+; Not compiled: calls .L_0204dcf4 inside _u32_div_f and branches into the middle of _ll_sdiv
+; (.L_ll_sdiv_unsigned); a compiled function is entered only at its start.
 	.global _ull_mod
 	.type _ull_mod, @function
 _ull_mod:
@@ -1227,6 +1257,8 @@ _ull_mod:
 
 ; _ll_mul: 64-bit multiply, a * b (a in r1:r0, b in r3:r2), low 64 bits of the product in r1:r0:
 ; the full 64-bit product of the low words plus both cross products added into the high word.
+; Not compiled (save rule): saves three words {r4, r5, lr} with no frame and no r3, then pops lr and
+; returns with bx lr.
 	.global _ll_mul
 	.type _ll_mul, @function
 _ll_mul:

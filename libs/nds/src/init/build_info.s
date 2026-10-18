@@ -1,5 +1,6 @@
 ; Parameter block read by the start-up code: where the autoload list and the BSS are, followed by a version
 ; word, a marker pair and two library identification strings.
+; Data only, no code: nothing here is a routine the compiler could have emitted.
 
 	.text
 	.global BuildInfo

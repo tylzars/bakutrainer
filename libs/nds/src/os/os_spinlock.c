@@ -148,6 +148,7 @@ u16 OS_ReadOwnerOfLockWord(OSLockWord *lockp) {
 // the leading-zero count, and that bit is cleared. Returns -3 when both words
 // are empty. The compares feed two consecutive conditional branches, reusing
 // their flags.
+// Not compiled: clz has no C expression.
 asm int OS_GetLockID(void) {
     ldr r3, =0x27fffb0
     ldr r1, [r3, #0]

@@ -2,6 +2,12 @@
 ; integer, and single-precision add. A float or int travels in r0 (second operand r1); a double or 64-bit
 ; integer in the pair r0 (low word) / r1 (high word), the second operand in r2/r3.
 ; _fadd and _fsub (in rt_soft_float_b.s) branch into each other: the entry .L_0204cb30 inside _fadd is global.
+; "Not compiled" lines say why the compiler cannot have produced a routine. Save rule: the stmfd list of a
+; compiled ARM function holds every register among r4-r7 it writes and, unless it is an interrupt function, also
+; every one among r8-r11; lr if it calls or writes lr; and r3 when the saved registers and its stack frame would
+; otherwise come to an odd number of words, or in place of a one-word frame. r0-r2 and r12 appear only in an
+; interrupt function, which saves every register among r0-r7 it writes. A compiled function that saved lr
+; returns by loading it into pc (a variadic one, which starts with stmfd {r0-r3}, excepted).
 
 	.text
 	.global .L_0204cb30
@@ -20,6 +26,8 @@
 ; Inf + finite = Inf, Inf + Inf (same sign) = Inf, zero + x returns x, denormal inputs are
 ; treated as exponent 1 without hidden bit. Overflow gives +-Inf. Result is rounded to
 ; nearest, ties to even, using the 11 bits shifted out plus a sticky bit.
+; Not compiled: branches into the middle of _dsub (.L_dsub_sub_magnitudes), and _dsub branches back into
+; this body (.L_dadd_add_magnitudes); a compiled function is entered only at its start.
 	.global _dadd
 	.type _dadd, @function
 _dadd:
@@ -360,6 +368,7 @@ _ll_ufrom_d:
 ; Takes the magnitude, returns +0 for zero, normalizes with a leading-zero count, and
 ; builds the exponent as 0x41e - clz. The 32-bit value always fits in the 53-bit
 ; mantissa, so no rounding is needed; the hidden bit is left out when packing.
+; Not compiled: clz has no C expression.
 	.global _dflt
 	.type _dflt, @function
 _dflt:
@@ -394,6 +403,8 @@ _dflt:
 ; normalized first with a leading-zero count. Exponent overflow -> signed Inf; exponent
 ; underflow shifts into a denormal (smallest denormal / zero when far enough down).
 ; Rounding is to nearest, ties to even.
+; Not compiled: clz has no C expression; and (save rule) it saves five words {r4-r7, lr} with no frame and
+; no r3, then pops lr and returns with bx lr.
 	.global _dmul
 	.type _dmul, @function
 _dmul:
@@ -661,6 +672,8 @@ _dmul:
 
 ; _drsb: reverse-operand entry for _dsub: swaps the two double operands with three
 ; exclusive-ors each and falls through into _dsub, which follows directly.
+; Not compiled: has no return; execution runs on into _dsub, the next routine. Each compiled function
+; is a section of its own, so none can rely on the code placed after it.
 	.global _drsb
 	.type _drsb, @function
 _drsb:
@@ -681,6 +694,8 @@ _drsb:
 ; leading-zero count (zero result -> +0), denormal results are shifted back down, and
 ; the result is rounded to nearest-even. NaN/Inf/zero/denormal inputs are handled as in
 ; _dadd (NaN -> 0x7fffffffffffffff; Inf - Inf of the same sign and Inf with NaN -> NaN).
+; Not compiled: branches into the middle of _dadd (.L_dadd_add_magnitudes), and _dadd branches back into
+; this body (.L_dsub_sub_magnitudes); a compiled function is entered only at its start. Also uses clz.
 	.global _dsub
 	.type _dsub, @function
 _dsub:
@@ -988,6 +1003,8 @@ _dsub:
 ; 255 gives +-Inf), and the 8 bits shifted out are rounded to nearest, ties to even.
 ; NaN -> 0x7fffffff, Inf + finite or Inf + Inf -> Inf, a zero operand returns the other
 ; one, denormal inputs are treated as exponent 1 without hidden bit.
+; Not compiled: branches into the middle of _fsub (.L_0204d64c), and _fsub branches back into this body
+; (.L_0204cb30); a compiled function is entered only at its start.
 	.global _fadd
 	.type _fadd, @function
 _fadd:
