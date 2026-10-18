@@ -6,7 +6,8 @@ pool words inside it (and calls into it from other missed code) have no relocati
 links them as plain bytes and the linker can strip a function nothing seems to reference. For every function of
 the unit's compiled object that matches the original at its address (relocations masked), this reads each
 relocation site's target from the ORIGINAL bytes (bl/blx/b decoding, or the pool word) and adds an entry for
-every site relocs.txt doesn't have. Targets outside every module (hardware registers, constants) are skipped.
+every site relocs.txt doesn't have. Targets outside every module (hardware registers, constants) are skipped; a
+pool word pointing inside a symbol is written as that symbol plus an offset, the only form dsd accepts.
 
   add_relocs.py build/<ver>/libs/nds/src/os/os_init.o [more objects...] [--write]
 
@@ -14,6 +15,7 @@ Dry run unless --write. Run `ninja report` (or `ninja`) first so the objects exi
 match.
 """
 import argparse
+import bisect
 import re
 import struct
 import sys
@@ -28,6 +30,7 @@ from project import BASES, CONFIG, module_paths  # noqa: E402  (tools/project.py
 
 FUNC = re.compile(r"(\S+) kind:function\((\w+),size=(0x[0-9a-f]+)[^)]*\) addr:(0x[0-9a-f]+)")
 MODULE_SIZES = {}
+SYMBOLS = {}
 
 
 def module_of(addr):
@@ -51,6 +54,30 @@ def functions_by_name(module):
         if m := FUNC.match(line):
             out[m[1]] = (int(m[4], 16), int(m[3], 16), m[2] == "thumb")
     return out
+
+
+def symbol_starts(module):
+    """Sorted start addresses of every symbol of a module, and its Thumb function addresses."""
+    starts, thumb = set(), set()
+    for line in (module_paths(module)[0] / "symbols.txt").read_text().splitlines():
+        if m := re.search(r"addr:(0x[0-9a-f]+)", line):
+            starts.add(int(m[1], 16))
+            if "kind:function(thumb" in line:
+                thumb.add(int(m[1], 16))
+    return sorted(starts), thumb
+
+
+def load_target(target, module):
+    """Pool-word target as relocs.txt writes it: a symbol, a Thumb function + 1, or `<symbol> add:<offset>`."""
+    if module not in SYMBOLS:
+        SYMBOLS[module] = symbol_starts(module)
+    starts, thumb = SYMBOLS[module]
+    if target in starts or target - 1 in thumb:
+        return f"to:{target:#010x}"
+    i = bisect.bisect_right(starts, target) - 1
+    if i < 0:
+        return f"to:{target:#010x}"
+    return f"to:{starts[i]:#010x} add:{target - starts[i]:#x}"
 
 
 def arm_branch_target(word, pc):
@@ -119,7 +146,8 @@ def main():
                     tmod = module_of(target & ~1)
                     if tmod is None:
                         continue
-                    added.setdefault(path, {})[site] = f"from:{site:#010x} kind:{kind} to:{target:#010x} module:{tmod}"
+                    to = load_target(target, tmod) if kind == "load" else f"to:{target:#010x}"
+                    added.setdefault(path, {})[site] = f"from:{site:#010x} kind:{kind} {to} module:{tmod}"
     for path, entries in added.items():
         print(f"{path.relative_to(CONFIG.parent.parent.parent)}: {len(entries)} relocation(s) to add")
         for site in sorted(entries):
