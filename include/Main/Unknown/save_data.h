@@ -9,6 +9,7 @@ extern "C" {
 
 #define STAGE_MAX 0x27
 #define SAVE_BLOCK_ID 0xfba
+#define SAVE_SLOT_COUNT 3
 
 // Saved progress record. Member 0x58 counts the stages whose entry in the per-stage arrays is valid.
 typedef struct SaveRecord {
@@ -46,6 +47,10 @@ typedef struct SaveRecord {
 void func_02010648(u32 a);
 int func_0201079c(u32 slot);
 void func_020109f4(u32 slot);
+void func_02010c94(void);
+void func_02010cfc(void);
+void func_02010d34(void);
+void func_02010d4c(SaveRecord *rec);
 
 #ifdef __cplusplus
 }

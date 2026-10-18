@@ -3,6 +3,7 @@
 #include <Main/Unknown/state_flow.h>
 #include <Main/Unknown/globals.h>
 #include <Main/Unknown/functions.h>
+#include <Main/Unknown/language_menu.h>
 
 #define STAGE_UNIT 51200
 
@@ -230,4 +231,52 @@ void func_020109f4(u32 slot) {
     }
     func_02020258(slot, rec, SAVE_BLOCK_ID);
     func_0201ffcc(&rec);
+}
+
+void func_02010c94(void) {
+    SaveRecord *buf = func_0201ffbc();
+    int i;
+    int usedDefaults = 0;
+    for (i = 0; (u32) i < SAVE_SLOT_COUNT; i++) {
+        func_02020140(i, buf, SAVE_BLOCK_ID);
+        if (buf->mUnk_00[0] == 1) {
+            data_020b1078.mLanguage = buf->mUnk_00[1];
+            data_020b1078.mUnk_10 = buf->mUnk_00[2];
+            data_020b1078.mUnk_14 = buf->mUnk_00[3];
+            break;
+        }
+    }
+    if (i == SAVE_SLOT_COUNT) {
+        func_02010d34();
+        usedDefaults = 1;
+    }
+    func_0201ffcc(&buf);
+    if (usedDefaults == 1) {
+        data_020c1bbc.mUnk_1c(6);
+        func_02010cfc();
+    }
+}
+
+void func_02010cfc(void) {
+    SaveRecord *buf = func_0201ffbc();
+    int i;
+    for (i = 0; (u32) i < SAVE_SLOT_COUNT; i++) {
+        func_02020140(i, buf, SAVE_BLOCK_ID);
+        func_02010d4c(buf);
+        func_02020258(i, buf, SAVE_BLOCK_ID);
+    }
+    func_0201ffcc(&buf);
+}
+
+void func_02010d34(void) {
+    data_020b1078.mLanguage = func_0200f9b8();
+    data_020b1078.mUnk_10 = 1;
+    data_020b1078.mUnk_14 = 3;
+}
+
+void func_02010d4c(SaveRecord *rec) {
+    rec->mUnk_00[0] = 1;
+    rec->mUnk_00[1] = data_020b1078.mLanguage;
+    rec->mUnk_00[2] = data_020b1078.mUnk_10;
+    rec->mUnk_00[3] = data_020b1078.mUnk_14;
 }

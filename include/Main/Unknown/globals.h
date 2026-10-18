@@ -1,6 +1,7 @@
 #pragma once
 
 #include "types.h"
+#include <Main/Unknown/stage_data.h>
 #include <nitro/fx.h>
 
 #ifdef __cplusplus
@@ -102,7 +103,9 @@ typedef struct Unk_020c1bbc {
     u8 mUnk_10;
     u8 mUnk_11[5];
     u8 mUnk_16;
-    u8 mUnk_17[0x24 - 0x17];
+    u8 mUnk_17[5];
+    void (*mUnk_1c)(int);
+    u8 mUnk_20[4];
     s32 mUnk_24;
     u8 mUnk_28[4];
     u16 mUnk_2c;
@@ -399,6 +402,8 @@ typedef struct Unk_020c17c0 {
     u8 mUnk_00[0xe];
     u8 mUnk_0e;
     u8 mUnk_0f;
+    u8 mUnk_10[2];
+    u8 mUnk_12;
 } Unk_020c17c0;
 extern Unk_020c17c0 data_020c17c0;
 
@@ -468,6 +473,32 @@ typedef struct Unk_0204e96c {
     s32 mUnk_0c;
 } Unk_0204e96c;
 extern const Unk_0204e96c data_0204e96c[];
+
+// Objects of the debug save menu and model viewer.
+typedef struct Unk_020b10d8 {
+    u8 mUnk_00[0xd];
+    u8 mUnk_0d;
+} Unk_020b10d8;
+extern Unk_020b10d8 data_020b10d8;
+extern StageInfo data_020b10d4;
+extern s32 data_020b1090[];
+extern s32 data_020b1094[];
+typedef struct Unk_020b132c {
+    u8 mUnk_00[0x34];
+    s32 mUnk_34;
+    u8 mUnk_38[0x40];
+    s32 mUnk_78;
+} Unk_020b132c;
+extern Unk_020b132c data_020b132c;
+typedef struct Unk_020b136c {
+    u8 mUnk_00[0x30];
+    u16 mUnk_30;
+    u8 mUnk_32[10];
+    u16 mUnk_3c;
+} Unk_020b136c;
+extern Unk_020b136c data_020b136c;
+extern volatile s32 data_020b13ac;
+extern u8 data_020b122c[];
 
 #ifdef __cplusplus
 }

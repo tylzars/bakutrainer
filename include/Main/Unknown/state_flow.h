@@ -14,8 +14,12 @@ typedef struct StateFlowAux {
 
 // Text block the language-dependent string lookups index into.
 typedef struct TextBase {
-    u8 mUnk_00[0x0c];
+    s32 mUnk_00;
+    s32 mUnk_04;
+    s32 mUnk_08;
     s32 mLanguage;
+    s32 mUnk_10;
+    s32 mUnk_14;
 } TextBase;
 
 extern StateFlowAux data_020b1214;
