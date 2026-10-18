@@ -1933,7 +1933,7 @@ void func_02019df8(void) {
     p->mUnk_44 = 0;
     p->mUnk_4c = 0;
     p->mUnk_3d8 = 0xb4;
-    func_02027230(p->mUnk_50, 0xde5, 0xde4, 2, 0);
+    func_02027230(&p->mUnk_50, 0xde5, 0xde4, 2, 0);
     if ((u32) data_020b6ee0.mUnk_a564 > 0xc) {
         func_0202f110(0x59, 0x64, 0, 0x40, 0xffff, 0);
     }

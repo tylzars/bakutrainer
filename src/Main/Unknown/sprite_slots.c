@@ -1,6 +1,7 @@
 #include <Main/clib.h>
 #include <nitro/os.h>
 #include <Main/Unknown/functions.h>
+#include <Main/Unknown/system_init.h>
 #include <Main/Unknown/globals.h>
 #include <Main/Unknown/sprite_slots.h>
 

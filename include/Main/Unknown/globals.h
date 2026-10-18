@@ -1,6 +1,7 @@
 #pragma once
 
 #include "types.h"
+#include <nitro/fs.h>
 #include <Main/Unknown/stage_data.h>
 #include <Main/Unknown/move_object.h>
 #include <nitro/fx.h>
@@ -20,12 +21,28 @@ typedef struct Unk_020c1b0c {
 } Unk_020c1b0c;
 
 typedef struct SystemState {
-    u8 mUnk_000[0x10];
+    void *mUnk_000;
+    u8 mUnk_004[0xc];
     u16 mUnk_10;
     u16 mUnk_12;
-    u8 mUnk_014[0x250 - 0x14];
+    u8 mUnk_014[0x30 - 0x14];
+    u8 *mUnk_030;
+    s32 mUnk_034;
+    s32 mUnk_038;
+    void *mUnk_03c;
+    u8 mUnk_040[0x230 - 0x40];
+    s32 mUnk_230;
+    s32 mUnk_234;
+    s32 mUnk_238;
+    s32 mUnk_23c;
+    s32 mUnk_240;
+    s32 mUnk_244;
+    s32 mUnk_248;
+    void (*mUnk_24c)(int);
     Unk_020c1b0c mUnk_250;
-    u8 mUnk_27c[0x292 - 0x27c];
+    u8 mUnk_27c[4];
+    s32 mUnk_280;
+    u8 mUnk_284[0x292 - 0x284];
     u16 mUnk_292;
     u16 mUnk_294;
     u16 mUnk_296;
@@ -47,7 +64,9 @@ typedef struct SystemState {
     u8 mUnk_2ae;
     u8 mUnk_2af;
     u8 mUnk_2b0;
-    u8 mUnk_2b1[0x2d4 - 0x2b1];
+    u8 mUnk_2b1[0x2c8 - 0x2b1];
+    s32 mUnk_2c8;
+    u8 mUnk_2cc[0x2d4 - 0x2cc];
     s32 mUnk_2d4;
     s32 mUnk_2d8;
     s32 mUnk_2dc;
@@ -58,7 +77,8 @@ typedef struct SystemState {
     u8 mUnk_2fa;
     u8 mUnk_2fb[0x308 - 0x2fb];
     u16 mUnk_308;
-    u8 mUnk_30a[6];
+    u8 mUnk_30a[4];
+    u16 mUnk_30e;
     u8 mUnk_310;
     u8 mUnk_311[5];
     u8 mUnk_316;
@@ -69,21 +89,42 @@ typedef struct SystemState {
     u8 mUnk_328[4];
     u16 mUnk_32c;
     u8 mUnk_32e;
-    u8 mUnk_32f[0x450 - 0x32f];
+    u8 mUnk_32f[0x334 - 0x32f];
+    s32 mUnk_334;
+    u8 mUnk_338[0x340 - 0x338];
+    u16 mUnk_340[4];
+    u8 mUnk_348[0x42c - 0x348];
+    s32 mUnk_42c;
+    u8 mUnk_430[0x450 - 0x430];
     u32 mUnk_450;
-    u8 mUnk_454[3];
+    u16 mUnk_454;
+    u8 mUnk_456;
     u8 mUnk_457;
     u8 mUnk_458[4];
     vu32 mUnk_45c;
-    u8 mUnk_460[0x46c - 0x460];
+    u8 mUnk_460[4];
+    s32 mUnk_464;
+    s32 mUnk_468;
     u32 mUnk_46c;
-    u8 mUnk_470[0x492 - 0x470];
+    s32 mUnk_470;
+    u8 mUnk_474[0x47c - 0x474];
+    u16 mUnk_47c;
+    u16 mUnk_47e;
+    u16 mUnk_480;
+    u8 mUnk_482[2];
+    s32 mUnk_484;
+    u8 mUnk_488[2];
+    u16 mUnk_48a;
+    u8 mUnk_48c[0x490 - 0x48c];
+    u8 mUnk_490;
+    u8 mUnk_491;
     u8 mUnk_492;
     u8 mUnk_493;
     u8 mUnk_494;
     u8 mUnk_495[3];
     s32 mUnk_498;
     u16 mUnk_49c[2];
+    s32 mUnk_4a0;
 } SystemState;
 
 typedef struct StateC {
@@ -203,7 +244,9 @@ typedef struct CameraState {
     s32 mUnk_54;
     u8 mUnk_58[0x5e - 0x58];
     u16 mUnk_5e;
-    u8 mUnk_60[0x7f - 0x60];
+    u8 mUnk_60[0x74 - 0x60];
+    u16 mUnk_74;
+    u8 mUnk_76[0x7f - 0x76];
     u8 mUnk_7f;
     VecFx32 mUnk_80;
     u8 mUnk_8c[0x98 - 0x8c];
@@ -335,7 +378,9 @@ typedef struct Unk_020c1030 {
     s32 mUnk_44;
     u8 mUnk_48[4];
     s32 mUnk_4c;
-    u8 mUnk_50[0x3d0 - 0x50];
+    Model mUnk_50;
+    Sprite mUnk_1c8;
+    Sprite mUnk_2cc;
     s32 mUnk_3d0;
     s32 mUnk_3d4;
     s32 mUnk_3d8;
@@ -524,6 +569,8 @@ typedef struct Unk_020b122c {
 extern Unk_020b122c data_020b122c;
 
 extern const u8 data_0201a66c[];
+extern const u8 data_0201a630[];
+extern const u8 data_0201a6b2[];
 extern const u8 data_0201a63a[];
 extern const u8 data_0201a644[];
 
@@ -546,6 +593,19 @@ typedef struct Unk_020c1d60 {
 extern Unk_020c1d60 data_020c1d60;
 
 extern u32 data_0201aba0[7];
+
+// Objects of the system start-up code.
+typedef struct Unk_020c1818 {
+    u32 mUnk_00;
+    void *mUnk_04;
+    u8 mUnk_08[8];
+    void (*mUnk_10)(void);
+    s32 mUnk_14;
+} Unk_020c1818;
+extern Unk_020c1818 data_020c1818;
+extern FSFile data_020c1874;
+extern u8 data_020c2bfc[0x10];
+extern u8 data_020c317c[0x10];
 
 #ifdef __cplusplus
 }

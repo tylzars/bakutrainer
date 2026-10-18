@@ -1,4 +1,5 @@
 #include <Main/Unknown/functions.h>
+#include <Main/Unknown/system_init.h>
 #include <Main/Unknown/sound_control.h>
 #include <Main/Unknown/game_util.h>
 #include <Main/Unknown/globals.h>
