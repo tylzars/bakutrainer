@@ -22,6 +22,54 @@ extern "C" {
 #define TRACKER_ENV_SUSTAIN 2
 #define TRACKER_ENV_LOOP 4
 
+// Row cell values: an empty note or effect column, and the note that releases the channel.
+#define TRACKER_NOTE_NONE 255
+#define TRACKER_NOTE_OFF 97
+#define TRACKER_FX_NONE 255
+
+// Effect commands of a row cell; the volume column is translated to these.
+#define TRACKER_FX_ARPEGGIO 0
+#define TRACKER_FX_SLIDE_UP 1
+#define TRACKER_FX_SLIDE_DOWN 2
+#define TRACKER_FX_TONE_SLIDE 3
+#define TRACKER_FX_VIBRATO 4
+#define TRACKER_FX_TONE_SLIDE_VOL 5
+#define TRACKER_FX_VIBRATO_VOL 6
+#define TRACKER_FX_TREMOLO 7
+#define TRACKER_FX_PAN 8
+#define TRACKER_FX_SAMPLE_OFFSET 9
+#define TRACKER_FX_VOL_SLIDE 10
+#define TRACKER_FX_ORDER_JUMP 11
+#define TRACKER_FX_VOLUME 12
+#define TRACKER_FX_ROW_BREAK 13
+#define TRACKER_FX_EXTENDED 14
+#define TRACKER_FX_SPEED 15
+#define TRACKER_FX_GLOBAL_VOLUME 16
+#define TRACKER_FX_GLOBAL_VOL_SLIDE 17
+#define TRACKER_FX_ENV_POS 21
+#define TRACKER_FX_PAN_SLIDE 25
+
+// Sub-commands of TRACKER_FX_EXTENDED (high digit of the parameter).
+#define TRACKER_FXE_FINE_SLIDE_UP 1
+#define TRACKER_FXE_FINE_SLIDE_DOWN 2
+#define TRACKER_FXE_VIBRATO_WAVE 4
+#define TRACKER_FXE_FINETUNE 5
+#define TRACKER_FXE_TREMOLO_WAVE 7
+#define TRACKER_FXE_PAN 8
+#define TRACKER_FXE_RETRIGGER 9
+#define TRACKER_FXE_FINE_VOL_UP 10
+#define TRACKER_FXE_FINE_VOL_DOWN 11
+#define TRACKER_FXE_NOTE_CUT 12
+#define TRACKER_FXE_NOTE_DELAY 13
+#define TRACKER_FXE_ROW_DELAY 14
+
+// How a channel's sample is started (TrackerChannel mUnk_4c): after a delay of ticks, or again every few ticks.
+#define TRACKER_START_DELAYED 1
+#define TRACKER_START_RETRIGGER 2
+
+// Smallest period the slides leave on a channel.
+#define TRACKER_PERIOD_MIN 54
+
 // A loaded block: the data pointer sits in the second word.
 typedef struct TrackerPattern {
     u8 mUnk_00;
@@ -59,10 +107,10 @@ typedef struct TrackerSample {
     void *mUnk_0c;
     u16 mUnk_10;
     u8 mUnk_12;
-    u8 mUnk_13;
+    s8 mUnk_13;
     u8 mUnk_14;
-    u8 mUnk_15;
-    u16 mUnk_16;
+    s8 mUnk_15;
+    s16 mUnk_16;
 } TrackerSample;
 
 // An instrument: a table of samples, the number of them at 0x26c.
@@ -82,7 +130,7 @@ typedef struct TrackerInstrument {
 
 // State of one hardware channel (0x88 bytes).
 typedef struct TrackerChannel {
-    u32 mUnk_00;
+    TrackerSample *mUnk_00;
     u16 mUnk_04;
     u16 mUnk_06;
     const s16 *mUnk_08;
@@ -92,7 +140,7 @@ typedef struct TrackerChannel {
     u8 mUnk_15;
     u8 mUnk_16;
     u8 mUnk_17;
-    u8 mUnk_18[2];
+    u16 mUnk_18;
     u16 mUnk_1a;
     u8 mUnk_1c;
     u8 mUnk_1d;
@@ -107,7 +155,17 @@ typedef struct TrackerChannel {
     TrackerEnvState mUnk_28;
     TrackerEnvState mUnk_38;
     s32 mUnk_48;
-    u8 mUnk_4c[0x68 - 0x4c];
+    u8 mUnk_4c;
+    u8 mUnk_4d;
+    u8 mUnk_4e;
+    u8 mUnk_4f;
+    u8 mUnk_50;
+    u16 mUnk_52;
+    u32 mUnk_54;
+    u32 mUnk_58;
+    u32 mUnk_5c;
+    u32 mUnk_60;
+    u32 mUnk_64;
     u16 mUnk_68;
     u16 mUnk_6a[14];
     u8 mUnk_86[0x88 - 0x86];
@@ -193,7 +251,7 @@ int func_020380b8(TrackerPlayer *p, TrackerChannel *c, int type, int keyOff);
 void func_020382c0(TrackerPlayer *p, TrackerChannel *c, int type, u16 pos);
 int func_02038464(TrackerPlayer *p, TrackerChannel *c);
 int func_020384f8(int vol, u16 env, int fade, u8 master, u8 chanVol);
-int func_02038524(int pan, u16 level);
+u32 func_02038524(int pan, u16 level);
 void func_02038578(u8 volume, int mode);
 u8 func_02038694(void);
 

@@ -8,9 +8,14 @@
 #include <Main/Unknown/wave_player.h>
 #include <Main/Unknown/tracker_player.h>
 #include <Main/clib.h>
+#include <stdio.h>
 
 // One period of a sine wave, 64 entries with amplitude 255; every channel points at it twice.
 extern const s16 data_02050ac0[64];
+// A curve falling from 255 to -255 over 64 entries.
+extern const s16 data_02050a40[64];
+// A square wave: 32 entries of -255, then 32 of 255.
+extern const s16 data_020509c0[64];
 // Volume levels for the sound command, indexed 0..64.
 extern const s32 data_02050b40[65];
 // Playback rates of the linear note scale: 768 entries per octave.
@@ -22,6 +27,10 @@ extern const u16 data_02051844[16][96];
 #define TRACKER_IRQ_TIMER2 0x20
 
 TrackerPlayer data_020c6b14;
+
+// Wave shapes the vibrato and tremolo effects select (low three bits of the parameter).
+const s16 *data_02063c9c[8] = {data_02050ac0, data_02050a40, data_020509c0, data_02050ac0,
+                               data_02050ac0, data_02050a40, data_020509c0, data_02050ac0};
 
 #pragma thumb off
 
@@ -539,6 +548,874 @@ void func_020360f4(void) {
 
 void func_02036194(void) {}
 
+// Player tick, run from the timer interrupt. Each time the tick accumulator passes the tick length the tick counter
+// advances: on the first tick of a row the row's cells are read (note, instrument, volume column, effect, parameter;
+// the volume column is applied as a second effect), the samples of new notes are started and the first-tick effects
+// applied; on the other ticks the running effects and envelopes update period, volume and pan. The changes go to the
+// sound driver as channel commands. With flag 0x400 of data_020c18bc.mUnk_2c8 each channel's effect parameter is
+// formatted for display.
+void func_02036198(void) {
+    s8 globalVol;
+    char text[3];
+    BOOL volChanged;
+    u8 *cell;
+    s8 nextRow;
+    u32 i;
+    u8 volume;
+    u8 cellEffect;
+    BOOL trigger;
+    BOOL periodUpd;
+    BOOL panUpd;
+    BOOL notePresent;
+    BOOL instPresent;
+    BOOL instChanged;
+    BOOL porta;
+    u32 sampleOffset;
+    BOOL tickPanUpd;
+    u32 tickK;
+    u8 note;
+    u8 inst;
+    u8 vol;
+    u8 cellParam;
+    u16 param;
+    u16 hi;
+    int lo;
+    u16 period;
+    BOOL volUpd;
+    u8 effect;
+    TrackerChannel *c;
+    u32 k;
+
+    volChanged = FALSE;
+    globalVol = data_020c6b14.mUnk_1747;
+    data_020c6b14.mUnk_1720 += data_020c6b14.mUnk_1714;
+    if (data_020c6b14.mUnk_1720 >= data_020c6b14.mUnk_171c) {
+        data_020c6b14.mUnk_1720 -= data_020c6b14.mUnk_171c;
+        nextRow = -1;
+        data_020c6b14.mUnk_1856++;
+        if (data_020c6b14.mUnk_1856 >= data_020c6b14.mUnk_1852 + data_020c6b14.mUnk_1858) {
+            data_020c6b14.mUnk_1856 = 0;
+        }
+        if (data_020c6b14.mUnk_1856 == 0) {
+            data_020c6b14.mUnk_1858 = 0;
+            if (data_020c6b14.mUnk_1742 > data_020c6b14.mUnk_1740) {
+                data_020c6b14.mUnk_1742 = 0;
+                func_02037c10();
+            }
+            // Five bytes per cell, one cell per channel.
+            cell = (u8 *) data_020c6b14.mUnk_10[data_020c6b14.mUnk_1854]->mUnk_04 +
+                   data_020c6b14.mUnk_1742 * data_020c6b14.mUnk_174c * 5;
+            for (i = 0; i < data_020c6b14.mUnk_174c; i++) {
+                c = &data_020c6b14.mUnk_610[i];
+                trigger = FALSE;
+                c->mUnk_4c = 0;
+                effect = TRACKER_FX_NONE;
+                note = cell[0];
+                periodUpd = FALSE;
+                volUpd = FALSE;
+                panUpd = FALSE;
+                notePresent = FALSE;
+                instPresent = FALSE;
+                instChanged = FALSE;
+                porta = FALSE;
+                sampleOffset = 0;
+                if (note != TRACKER_NOTE_OFF) {
+                    inst = cell[1];
+                    vol = cell[2];
+                    cellEffect = cell[3];
+                    cellParam = cell[4];
+                    effect = cellEffect;
+                    param = cellParam;
+                    if (cellEffect != TRACKER_FX_NONE) {
+                        hi = (param & 0xf0) >> 4;
+                        lo = param & 0xf;
+                        switch (cellEffect) {
+                            case TRACKER_FX_ORDER_JUMP:
+                                if (data_020c6b14.mUnk_00 != 0 && cellParam <= data_020c6b14.mUnk_1738) {
+                                    data_020c6b14.mUnk_00(4);
+                                }
+                                data_020c6b14.mUnk_1742 = data_020c6b14.mUnk_1740;
+                                data_020c6b14.mUnk_1738 = cellParam - 1;
+                                break;
+                            case TRACKER_FX_ROW_BREAK:
+                                param = hi * 10 + lo;
+                                if (param < data_020c6b14.mUnk_1740) {
+                                    nextRow = param;
+                                } else {
+                                    nextRow = 0;
+                                }
+                                break;
+                            case TRACKER_FX_SPEED:
+                                if (cellParam < 32) {
+                                    if (cellParam != 0) {
+                                        data_020c6b14.mUnk_1852 = cellParam;
+                                    }
+                                } else {
+                                    data_020c6b14.mUnk_1853 = cellParam;
+                                    data_020c6b14.mUnk_171c = 8192000 / (data_020c6b14.mUnk_1853 * 50);
+                                }
+                                break;
+                        }
+                    }
+                    if (inst != 0) {
+                        if (inst > data_020c6b14.mUnk_174e) {
+                            OS_Terminate();
+                        }
+                        if (data_020c6b14.mUnk_410[inst - 1]->mUnk_26c == 0) {
+                            OS_Terminate();
+                        }
+                        instPresent = TRUE;
+                        if (c->mUnk_15 != inst || c->mUnk_10 == 1) {
+                            c->mUnk_15 = inst;
+                            instChanged = TRUE;
+                        }
+                        c->mUnk_1d = 0;
+                        trigger = TRUE;
+                    } else {
+                        inst = c->mUnk_15;
+                    }
+                    if (note == TRACKER_NOTE_NONE) {
+                        note = c->mUnk_14;
+                    } else {
+                        c->mUnk_14 = note;
+                        notePresent = TRUE;
+                        c->mUnk_1d = 0;
+                        trigger = notePresent;
+                    }
+                    if (note != TRACKER_NOTE_NONE && inst != 0 && inst <= data_020c6b14.mUnk_174e) {
+                        if (cellEffect == TRACKER_FX_EXTENDED && lo == TRACKER_FXE_FINETUNE) {
+                            TrackerInstrument *in = data_020c6b14.mUnk_410[inst - 1];
+
+                            in->mUnk_000[in->mUnk_26d[note - 1]]->mUnk_13 = lo;
+                        }
+                        if (trigger == TRUE) {
+                            inst--;
+                            note--;
+                            if (data_020c6b14.mUnk_410[inst]->mUnk_26d[note] >=
+                                data_020c6b14.mUnk_410[inst]->mUnk_26c) {
+                                OS_Terminate();
+                            }
+                            c->mUnk_00 =
+                                data_020c6b14.mUnk_410[inst]->mUnk_000[data_020c6b14.mUnk_410[inst]->mUnk_26d[note]];
+                            if (c->mUnk_00 == 0) {
+                                OS_Terminate();
+                            }
+                            if (instPresent == TRUE) {
+                                volUpd = TRUE;
+                                panUpd = TRUE;
+                                c->mUnk_24 = c->mUnk_00->mUnk_12;
+                                c->mUnk_26 = c->mUnk_00->mUnk_16;
+                            }
+                            period = func_02037eac((u8) (note + c->mUnk_00->mUnk_15), c->mUnk_00->mUnk_13);
+                        } else {
+                            period = c->mUnk_04;
+                        }
+                        c->mUnk_17 = TRACKER_FX_NONE;
+                        c->mUnk_16 = TRACKER_FX_NONE;
+                        c->mUnk_1a = 0;
+                        c->mUnk_18 = 0;
+                        // Pass 0 applies the volume column, pass 1 the effect column.
+                        for (k = 0; k < 2; k++) {
+                            effect = TRACKER_FX_NONE;
+                            if (k == 0) {
+                                if (vol >= 0x10 && vol <= 0x50) {
+                                    effect = TRACKER_FX_VOLUME;
+                                    param = vol - 0x10;
+                                } else if (vol >= 0x60 && vol <= 0x70) {
+                                    effect = TRACKER_FX_VOL_SLIDE;
+                                    param = vol & 0xf;
+                                } else if (vol >= 0x70 && vol <= 0x80) {
+                                    effect = TRACKER_FX_VOL_SLIDE;
+                                    param = (vol & 0xf) << 4;
+                                } else if (vol >= 0x80 && vol <= 0x90) {
+                                    effect = TRACKER_FX_EXTENDED;
+                                    param = 0xb0 | (vol & 0xf);
+                                } else if (vol >= 0x90 && vol <= 0xa0) {
+                                    effect = TRACKER_FX_EXTENDED;
+                                    param = 0xa0 | (vol & 0xf);
+                                } else if (vol >= 0xa0 && vol <= 0xb0) {
+                                    c->mUnk_20 = vol & 0xf;
+                                } else if (vol >= 0xb0 && vol <= 0xc0) {
+                                    c->mUnk_21 = vol & 0xf;
+                                } else if (vol >= 0xc0 && vol < 0xd0) {
+                                    effect = TRACKER_FX_PAN;
+                                    param = (vol & 0xf) << 4;
+                                } else if (vol >= 0xd0 && vol <= 0xe0) {
+                                    effect = TRACKER_FX_PAN_SLIDE;
+                                    param = vol & 0xf;
+                                } else if (vol >= 0xe0 && vol <= 0xf0) {
+                                    effect = TRACKER_FX_PAN_SLIDE;
+                                    param = (vol & 0xf) << 4;
+                                } else if (vol >= 0xf0) {
+                                    effect = TRACKER_FX_TONE_SLIDE;
+                                    param = (vol & 0xf) << 4;
+                                }
+                            } else {
+                                effect = cellEffect;
+                                param = cellParam;
+                                if (effect == TRACKER_FX_NONE && cellParam != 0) {
+                                    effect = TRACKER_FX_ARPEGGIO;
+                                }
+                            }
+                            if (effect == TRACKER_FX_NONE) {
+                                continue;
+                            }
+                            hi = (param & 0xf0) >> 4;
+                            lo = param & 0xf;
+                            switch (effect) {
+                                case TRACKER_FX_ARPEGGIO:
+                                    if (param != 0) {
+                                        c->mUnk_16 = effect;
+                                        c->mUnk_18 = param;
+                                        c->mUnk_1c = 0;
+                                    }
+                                    break;
+                                case TRACKER_FX_SLIDE_UP:
+                                    if (param != 0) {
+                                        c->mUnk_6a[0] = param;
+                                    } else {
+                                        param = c->mUnk_6a[0];
+                                    }
+                                    c->mUnk_16 = effect;
+                                    c->mUnk_18 = param;
+                                    if (data_020c6b14.mUnk_174f & 1) {
+                                        c->mUnk_18 <<= 2;
+                                    }
+                                    break;
+                                case TRACKER_FX_SLIDE_DOWN:
+                                    if (param != 0) {
+                                        c->mUnk_6a[1] = param;
+                                    } else {
+                                        param = c->mUnk_6a[1];
+                                    }
+                                    c->mUnk_16 = effect;
+                                    c->mUnk_18 = param;
+                                    if (data_020c6b14.mUnk_174f & 1) {
+                                        c->mUnk_18 <<= 2;
+                                    }
+                                    break;
+                                case TRACKER_FX_TONE_SLIDE:
+                                case TRACKER_FX_TONE_SLIDE_VOL:
+                                    if (param != 0) {
+                                        if (effect == TRACKER_FX_TONE_SLIDE) {
+                                            c->mUnk_6a[2] = param;
+                                        } else {
+                                            c->mUnk_6a[4] = param;
+                                        }
+                                    } else {
+                                        if (effect == TRACKER_FX_TONE_SLIDE) {
+                                            param = c->mUnk_6a[2];
+                                        } else {
+                                            param = c->mUnk_6a[4];
+                                        }
+                                    }
+                                    if (k != 0) {
+                                        c->mUnk_16 = effect;
+                                        c->mUnk_18 = param;
+                                    } else {
+                                        c->mUnk_17 = effect;
+                                        c->mUnk_1a = param;
+                                    }
+                                    if (notePresent == TRUE && period != 0) {
+                                        c->mUnk_06 = period;
+                                    }
+                                    if (param != 0 && effect == TRACKER_FX_TONE_SLIDE) {
+                                        c->mUnk_1e = param;
+                                        if (data_020c6b14.mUnk_174f & 1) {
+                                            c->mUnk_1e <<= 2;
+                                        }
+                                    }
+                                    porta = TRUE;
+                                    break;
+                                case TRACKER_FX_VIBRATO:
+                                    if (param != 0) {
+                                        c->mUnk_6a[3] = param;
+                                    } else {
+                                        param = c->mUnk_6a[3];
+                                        hi = (param & 0xf0) >> 4;
+                                        lo = param & 0xf;
+                                    }
+                                    c->mUnk_16 = effect;
+                                    c->mUnk_18 = param;
+                                    if (hi != 0 && lo != 0) {
+                                        c->mUnk_20 = hi;
+                                        c->mUnk_21 = lo;
+                                    }
+                                    break;
+                                case TRACKER_FX_PAN:
+                                    c->mUnk_26 = param;
+                                    panUpd = TRUE;
+                                    break;
+                                case TRACKER_FX_TREMOLO:
+                                    if (param != 0) {
+                                        c->mUnk_6a[6] = param;
+                                    } else {
+                                        param = c->mUnk_6a[6];
+                                        hi = (param & 0xf0) >> 4;
+                                        lo = param & 0xf;
+                                    }
+                                    c->mUnk_16 = effect;
+                                    c->mUnk_18 = param;
+                                    if (hi != 0 && lo != 0) {
+                                        c->mUnk_22 = hi;
+                                        c->mUnk_23 = lo;
+                                    }
+                                    break;
+                                case TRACKER_FX_SAMPLE_OFFSET:
+                                    if (param != 0) {
+                                        sampleOffset = param << 8;
+                                        trigger = TRUE;
+                                    }
+                                    break;
+                                case TRACKER_FX_VIBRATO_VOL:
+                                    if (param != 0) {
+                                        c->mUnk_6a[5] = param;
+                                    } else {
+                                        param = c->mUnk_6a[5];
+                                    }
+                                    c->mUnk_16 = effect;
+                                    c->mUnk_18 = param;
+                                    break;
+                                case TRACKER_FX_VOL_SLIDE:
+                                    if (param != 0) {
+                                        c->mUnk_6a[7] = param;
+                                    } else {
+                                        param = c->mUnk_6a[7];
+                                    }
+                                    if (k != 0) {
+                                        c->mUnk_16 = effect;
+                                        c->mUnk_18 = param;
+                                    } else {
+                                        c->mUnk_17 = effect;
+                                        c->mUnk_1a = param;
+                                    }
+                                    break;
+                                case TRACKER_FX_VOLUME:
+                                    if (param > 64) {
+                                        param = 64;
+                                    }
+                                    c->mUnk_24 = param;
+                                    volUpd = TRUE;
+                                    break;
+                                case TRACKER_FX_EXTENDED:
+                                    c->mUnk_16 = effect;
+                                    c->mUnk_18 = param;
+                                    switch (hi) {
+                                        case TRACKER_FXE_VIBRATO_WAVE:
+                                            c->mUnk_08 = data_02063c9c[lo & 7];
+                                            break;
+                                        case TRACKER_FXE_TREMOLO_WAVE:
+                                            c->mUnk_0c = data_02063c9c[lo & 7];
+                                            break;
+                                        case TRACKER_FXE_RETRIGGER:
+                                            c->mUnk_4c = TRACKER_START_RETRIGGER;
+                                            c->mUnk_4d = 0;
+                                            c->mUnk_4e = lo;
+                                            break;
+                                        case TRACKER_FXE_PAN:
+                                            c->mUnk_26 = lo << 4;
+                                            panUpd = TRUE;
+                                            break;
+                                        case TRACKER_FXE_NOTE_DELAY:
+                                            c->mUnk_4c = TRACKER_START_DELAYED;
+                                            c->mUnk_4d = 0;
+                                            c->mUnk_4e = lo;
+                                            break;
+                                        case TRACKER_FXE_ROW_DELAY:
+                                            if (lo != 0) {
+                                                data_020c6b14.mUnk_1858 = (lo - 1) * data_020c6b14.mUnk_1852;
+                                            }
+                                            break;
+                                    }
+                                    break;
+                                case TRACKER_FX_GLOBAL_VOLUME:
+                                    if (data_020c6b14.mUnk_1748 != 1 && data_020c6b14.mUnk_1748 != 2) {
+                                        globalVol = param << 1;
+                                        if (globalVol > 128) {
+                                            globalVol = 128;
+                                        }
+                                        volChanged = TRUE;
+                                    }
+                                    break;
+                                case TRACKER_FX_GLOBAL_VOL_SLIDE:
+                                    if (data_020c6b14.mUnk_1748 != 1 && data_020c6b14.mUnk_1748 != 2) {
+                                        if (param != 0) {
+                                            c->mUnk_6a[12] = param;
+                                        } else {
+                                            param = c->mUnk_6a[12];
+                                        }
+                                        c->mUnk_16 = effect;
+                                        c->mUnk_18 = param;
+                                    }
+                                    break;
+                                case TRACKER_FX_PAN_SLIDE:
+                                    if (param != 0) {
+                                        c->mUnk_6a[13] = param;
+                                    } else {
+                                        param = c->mUnk_6a[13];
+                                    }
+                                    if (k != 0) {
+                                        c->mUnk_16 = effect;
+                                        c->mUnk_18 = param;
+                                    } else {
+                                        c->mUnk_17 = effect;
+                                        c->mUnk_1a = param;
+                                    }
+                                    break;
+                            }
+                        }
+                        if (porta == FALSE) {
+                            c->mUnk_04 = period;
+                        } else {
+                            period = c->mUnk_04;
+                        }
+                        volume = c->mUnk_24;
+                        if (porta == TRUE && instChanged == FALSE) {
+                            trigger = FALSE;
+                        }
+                        // First-tick part of the two stored effects.
+                        for (k = 0; k < 2; k++) {
+                            if (k == 0) {
+                                param = c->mUnk_1a;
+                                effect = c->mUnk_17;
+                            } else {
+                                param = c->mUnk_18;
+                                effect = c->mUnk_16;
+                            }
+                            hi = (param & 0xf0) >> 4;
+                            lo = param & 0xf;
+                            switch (effect) {
+                                case TRACKER_FX_ARPEGGIO:
+                                    period = c->mUnk_04;
+                                    periodUpd = TRUE;
+                                    break;
+                                case TRACKER_FX_SLIDE_UP:
+                                    if (data_020c6b14.mUnk_174f & 1) {
+                                        c->mUnk_04 -= param;
+                                        if (c->mUnk_04 < TRACKER_PERIOD_MIN) {
+                                            c->mUnk_04 = TRACKER_PERIOD_MIN;
+                                        }
+                                    }
+                                    period = c->mUnk_04;
+                                    periodUpd = TRUE;
+                                    break;
+                                case TRACKER_FX_SLIDE_DOWN:
+                                    if (data_020c6b14.mUnk_174f & 1) {
+                                        c->mUnk_04 += param;
+                                    }
+                                    period = c->mUnk_04;
+                                    periodUpd = TRUE;
+                                    break;
+                                case TRACKER_FX_TONE_SLIDE:
+                                case TRACKER_FX_TONE_SLIDE_VOL:
+                                    period = c->mUnk_04;
+                                    periodUpd = TRUE;
+                                    if (effect == TRACKER_FX_TONE_SLIDE_VOL) {
+                                        func_02037df8(c, (s8) hi, (s8) lo);
+                                        volume = c->mUnk_24;
+                                        volUpd = TRUE;
+                                    }
+                                    break;
+                                case TRACKER_FX_VIBRATO:
+                                case TRACKER_FX_VIBRATO_VOL:
+                                    period = func_02037d38(c);
+                                    periodUpd = TRUE;
+                                    if (effect == TRACKER_FX_VIBRATO_VOL) {
+                                        func_02037df8(c, (s8) hi, (s8) lo);
+                                        volume = c->mUnk_24;
+                                        volUpd = TRUE;
+                                    }
+                                    break;
+                                case TRACKER_FX_TREMOLO:
+                                    volume = func_02037dac(c);
+                                    volUpd = TRUE;
+                                    break;
+                                case TRACKER_FX_VOL_SLIDE:
+                                    func_02037df8(c, (s8) hi, (s8) lo);
+                                    volume = c->mUnk_24;
+                                    volUpd = TRUE;
+                                    break;
+                                case TRACKER_FX_EXTENDED:
+                                    switch (hi) {
+                                        case TRACKER_FXE_FINE_SLIDE_UP:
+                                            if (lo != 0) {
+                                                c->mUnk_6a[8] = lo;
+                                            } else {
+                                                lo = c->mUnk_6a[8];
+                                            }
+                                            if (data_020c6b14.mUnk_174f & 1) {
+                                                c->mUnk_04 -= lo << 2;
+                                            } else {
+                                                c->mUnk_04 -= lo;
+                                            }
+                                            if (c->mUnk_04 < TRACKER_PERIOD_MIN) {
+                                                c->mUnk_04 = TRACKER_PERIOD_MIN;
+                                            }
+                                            period = c->mUnk_04;
+                                            periodUpd = TRUE;
+                                            break;
+                                        case TRACKER_FXE_FINE_SLIDE_DOWN:
+                                            if (lo != 0) {
+                                                c->mUnk_6a[9] = lo;
+                                            } else {
+                                                lo = c->mUnk_6a[9];
+                                            }
+                                            if (data_020c6b14.mUnk_174f & 1) {
+                                                c->mUnk_04 += lo << 2;
+                                            } else {
+                                                c->mUnk_04 += lo;
+                                            }
+                                            period = c->mUnk_04;
+                                            periodUpd = TRUE;
+                                            break;
+                                        case TRACKER_FXE_FINE_VOL_UP:
+                                            if (lo != 0) {
+                                                c->mUnk_6a[10] = lo;
+                                            } else {
+                                                lo = c->mUnk_6a[10];
+                                            }
+                                            if (lo != 0) {
+                                                func_02037df8(c, (s8) lo, 0);
+                                                volume = c->mUnk_24;
+                                                volUpd = TRUE;
+                                            }
+                                            break;
+                                        case TRACKER_FXE_FINE_VOL_DOWN:
+                                            if (lo != 0) {
+                                                c->mUnk_6a[11] = lo;
+                                            } else {
+                                                lo = c->mUnk_6a[11];
+                                            }
+                                            if (lo != 0) {
+                                                func_02037df8(c, 0, (s8) lo);
+                                                volume = c->mUnk_24;
+                                                volUpd = TRUE;
+                                            }
+                                            break;
+                                    }
+                                    break;
+                                case TRACKER_FX_GLOBAL_VOL_SLIDE:
+                                    if (data_020c6b14.mUnk_1748 != 1 && data_020c6b14.mUnk_1748 != 2) {
+                                        func_02037e70(&globalVol, (s8) hi, (s8) lo);
+                                        volChanged = TRUE;
+                                    }
+                                    break;
+                                case TRACKER_FX_PAN_SLIDE:
+                                    func_02037e34(c, (s8) hi, (s8) lo);
+                                    panUpd = TRUE;
+                                    break;
+                            }
+                        }
+                        if (trigger == TRUE) {
+                            u32 freq;
+                            u16 chVol;
+                            TrackerSample *s;
+                            u32 data;
+
+                            freq = func_02037efc(period, (data_020c6b14.mUnk_174f & 1) ? TRUE : FALSE);
+                            c->mUnk_10 = 0;
+                            if (cellEffect != TRACKER_FX_ENV_POS) {
+                                func_02037f5c(&data_020c6b14, c, TRACKER_ENV_VOLUME);
+                                func_02037f5c(&data_020c6b14, c, TRACKER_ENV_PAN);
+                            } else {
+                                func_020382c0(&data_020c6b14, c, TRACKER_ENV_VOLUME, cellParam);
+                                func_020382c0(&data_020c6b14, c, TRACKER_ENV_PAN, cellParam);
+                            }
+                            c->mUnk_48 = 0x10000;
+                            chVol = func_02040b60(data_02050b40[func_020384f8(
+                                (s8) volume, c->mUnk_28.mUnk_04, c->mUnk_48, data_020c6b14.mUnk_1747, c->mUnk_25)]);
+                            if (c->mUnk_4c != TRACKER_START_DELAYED) {
+                                func_020400f4(1 << (data_020c6b14.mUnk_1744 + i), 0, 0, 0);
+                            }
+                            s = c->mUnk_00;
+                            // A sample without a loop plays once from the offset; a looped one plays from its start.
+                            if ((s->mUnk_14 & 3) == 0 || s->mUnk_08 == 0) {
+                                if (sampleOffset >= s->mUnk_00) {
+                                    goto next;
+                                }
+                                data = (u32) s->mUnk_0c;
+                                if (data == 0) {
+                                    goto next;
+                                }
+                                if (c->mUnk_4c != 0) {
+                                    c->mUnk_4f = (s->mUnk_14 & 0x10) ? TRUE : FALSE;
+                                    c->mUnk_54 = data + sampleOffset;
+                                    c->mUnk_58 = (c->mUnk_00->mUnk_00 - sampleOffset) >> 2;
+                                    c->mUnk_5c = 0;
+                                    c->mUnk_52 = chVol;
+                                    c->mUnk_60 = 0xffb0ff / freq;
+                                    c->mUnk_50 = func_02038524(c->mUnk_26, c->mUnk_38.mUnk_04) >> 1;
+                                }
+                                if (c->mUnk_4c == TRACKER_START_DELAYED) {
+                                    goto next;
+                                }
+                                c->mUnk_64 = 0xffb0ff / freq;
+                                c->mUnk_68 = chVol;
+                                func_02040240(data_020c6b14.mUnk_1744 + i, (c->mUnk_00->mUnk_14 & 0x10) ? TRUE : FALSE,
+                                              data + sampleOffset, 2, 0, (c->mUnk_00->mUnk_00 - sampleOffset) >> 2,
+                                              c->mUnk_68 & 0xff, c->mUnk_68 >> 8, c->mUnk_64,
+                                              func_02038524(c->mUnk_26, c->mUnk_38.mUnk_04) >> 1);
+                                func_020400cc(1 << (data_020c6b14.mUnk_1744 + i), 0, 0, 0);
+                            } else {
+                                data = (u32) s->mUnk_0c;
+                                if (data == 0) {
+                                    goto next;
+                                }
+                                if (c->mUnk_4c != 0) {
+                                    c->mUnk_4f = (s->mUnk_14 & 0x10) ? TRUE : FALSE;
+                                    c->mUnk_54 = data;
+                                    c->mUnk_58 = c->mUnk_00->mUnk_04 >> 2;
+                                    c->mUnk_5c = c->mUnk_00->mUnk_08 >> 2;
+                                    c->mUnk_52 = chVol;
+                                    c->mUnk_60 = 0xffb0ff / freq;
+                                    c->mUnk_50 = func_02038524(c->mUnk_26, c->mUnk_38.mUnk_04) >> 1;
+                                }
+                                if (c->mUnk_4c == TRACKER_START_DELAYED) {
+                                    goto next;
+                                }
+                                c->mUnk_64 = 0xffb0ff / freq;
+                                c->mUnk_68 = chVol;
+                                s = c->mUnk_00;
+                                func_02040240(data_020c6b14.mUnk_1744 + i, (s->mUnk_14 & 0x10) ? TRUE : FALSE, data, 1,
+                                              s->mUnk_04 >> 2, s->mUnk_08 >> 2, c->mUnk_68 & 0xff, c->mUnk_68 >> 8,
+                                              c->mUnk_64, func_02038524(c->mUnk_26, c->mUnk_38.mUnk_04) >> 1);
+                                func_020400cc(1 << (data_020c6b14.mUnk_1744 + i), 0, 0, 0);
+                            }
+                        } else {
+                            BOOL changed;
+
+                            if (cellEffect != TRACKER_FX_ENV_POS) {
+                                changed = func_020380b8(&data_020c6b14, c, TRACKER_ENV_VOLUME, FALSE) |
+                                          func_02038464(&data_020c6b14, c);
+                            } else {
+                                func_020382c0(&data_020c6b14, c, TRACKER_ENV_VOLUME, cellParam);
+                                changed = TRUE;
+                            }
+                            if (changed == TRUE && volUpd == FALSE) {
+                                volume = c->mUnk_24;
+                                volUpd = TRUE;
+                            }
+                            if (cellEffect != TRACKER_FX_ENV_POS) {
+                                if (func_020380b8(&data_020c6b14, c, TRACKER_ENV_PAN, FALSE) == TRUE) {
+                                    panUpd = TRUE;
+                                }
+                            } else {
+                                func_020382c0(&data_020c6b14, c, TRACKER_ENV_PAN, cellParam);
+                                panUpd = TRUE;
+                            }
+                            if (periodUpd == TRUE) {
+                                c->mUnk_64 =
+                                    0xffb0ff / func_02037efc(period, (data_020c6b14.mUnk_174f & 1) ? TRUE : FALSE);
+                                func_020401d8(1 << (data_020c6b14.mUnk_1744 + i), c->mUnk_64);
+                            }
+                            if (volUpd == TRUE) {
+                                c->mUnk_68 = func_02040b60(data_02050b40[func_020384f8(
+                                    (s8) volume, c->mUnk_28.mUnk_04, c->mUnk_48, data_020c6b14.mUnk_1747, c->mUnk_25)]);
+                                func_020401f8(1 << (data_020c6b14.mUnk_1744 + i), c->mUnk_68 & 0xff, c->mUnk_68 >> 8);
+                            }
+                            if (panUpd == TRUE) {
+                                func_02040220(1 << (data_020c6b14.mUnk_1744 + i),
+                                              func_02038524(c->mUnk_26, c->mUnk_38.mUnk_04) >> 1);
+                            }
+                            if (data_020c18bc.mUnk_2c8 & 0x400) {
+                                // The debug display flag is tested here, but nothing in this branch formats the
+                                // parameter: the statement only keeps the test, as in the original.
+                                param = (u16) param;
+                            }
+                        }
+                    } else {
+                        if (data_020c18bc.mUnk_2c8 & 0x400) {
+                            effect = TRACKER_FX_NONE;
+                            param = 0;
+                        }
+                    }
+                } else {
+                    BOOL changed;
+
+                    c->mUnk_10 = 1;
+                    changed =
+                        func_020380b8(&data_020c6b14, c, TRACKER_ENV_VOLUME, TRUE) | func_02038464(&data_020c6b14, c);
+                    if (changed == TRUE) {
+                        c->mUnk_68 = func_02040b60(data_02050b40[func_020384f8(
+                            c->mUnk_24, c->mUnk_28.mUnk_04, c->mUnk_48, data_020c6b14.mUnk_1747, c->mUnk_25)]);
+                        func_020401f8(1 << (data_020c6b14.mUnk_1744 + i), c->mUnk_68 & 0xff, c->mUnk_68 >> 8);
+                    }
+                    if (func_020380b8(&data_020c6b14, c, TRACKER_ENV_PAN, TRUE) == TRUE) {
+                        func_02040220(1 << (data_020c6b14.mUnk_1744 + i),
+                                      func_02038524(c->mUnk_26, c->mUnk_38.mUnk_04) >> 1);
+                    }
+                }
+            next:
+                if (data_020c18bc.mUnk_2c8 & 0x400) {
+                    if (effect != TRACKER_FX_NONE) {
+                        sprintf(text, "%02x", param);
+                    } else {
+                        sprintf(text, "--");
+                    }
+                }
+                cell += 5;
+            }
+            data_020c6b14.mUnk_1742++;
+            if (nextRow != -1) {
+                data_020c6b14.mUnk_1742 = nextRow;
+                func_02037c10();
+            }
+        } else {
+            for (i = 0; i < data_020c6b14.mUnk_174c; i++) {
+                u8 tickEffect;
+                u8 tickParam;
+                u8 tickHi;
+                u8 tickLo;
+                u8 tickVolume;
+                BOOL tickPeriodUpd;
+
+                c = &data_020c6b14.mUnk_610[i];
+                tickPeriodUpd = FALSE;
+                volUpd = FALSE;
+                tickPanUpd = FALSE;
+                // A delayed note starts, or a retriggered one restarts, when its tick count is reached.
+                if (c->mUnk_4c != 0) {
+                    if (++c->mUnk_4d == c->mUnk_4e) {
+                        if (c->mUnk_4c != TRACKER_START_DELAYED) {
+                            c->mUnk_4d = 0;
+                        } else {
+                            c->mUnk_4c = 0;
+                        }
+                        func_020400f4(1 << (data_020c6b14.mUnk_1744 + i), 0, 0, 0);
+                        if (c->mUnk_5c == 0) {
+                            func_02040240(data_020c6b14.mUnk_1744 + i, c->mUnk_4f, c->mUnk_54, 2, 0, c->mUnk_58,
+                                          c->mUnk_52 & 0xff, c->mUnk_52 >> 8, c->mUnk_60, c->mUnk_50);
+                        } else {
+                            func_02040240(data_020c6b14.mUnk_1744 + i, c->mUnk_4f, c->mUnk_54, 1, c->mUnk_58,
+                                          c->mUnk_5c, c->mUnk_52 & 0xff, c->mUnk_52 >> 8, c->mUnk_60, c->mUnk_50);
+                        }
+                        func_020400cc(1 << (data_020c6b14.mUnk_1744 + i), 0, 0, 0);
+                    }
+                }
+                for (tickK = 0; tickK < 2; tickK++) {
+                    if (tickK == 0) {
+                        tickParam = c->mUnk_1a;
+                        tickEffect = c->mUnk_17;
+                    } else {
+                        tickParam = c->mUnk_18;
+                        tickEffect = c->mUnk_16;
+                    }
+                    tickHi = (tickParam & 0xf0) >> 4;
+                    tickLo = tickParam & 0xf;
+                    switch (tickEffect) {
+                        case TRACKER_FX_ARPEGGIO:
+                            note = c->mUnk_14 - 1;
+                            switch ((u8) (c->mUnk_1c % 3)) {
+                                case 0:
+                                    period = func_02037eac((u8) (note + c->mUnk_00->mUnk_15), c->mUnk_00->mUnk_13);
+                                    break;
+                                case 1:
+                                    period =
+                                        func_02037eac((u8) (note + tickHi + c->mUnk_00->mUnk_15), c->mUnk_00->mUnk_13);
+                                    break;
+                                case 2:
+                                    period =
+                                        func_02037eac((u8) (note + tickLo + c->mUnk_00->mUnk_15), c->mUnk_00->mUnk_13);
+                                    break;
+                            }
+                            c->mUnk_1c++;
+                            tickPeriodUpd = TRUE;
+                            break;
+                        case TRACKER_FX_SLIDE_UP:
+                            c->mUnk_04 -= tickParam;
+                            if (c->mUnk_04 < TRACKER_PERIOD_MIN) {
+                                c->mUnk_04 = TRACKER_PERIOD_MIN;
+                            }
+                            tickPeriodUpd = TRUE;
+                            period = c->mUnk_04;
+                            break;
+                        case TRACKER_FX_SLIDE_DOWN:
+                            c->mUnk_04 += tickParam;
+                            tickPeriodUpd = TRUE;
+                            period = c->mUnk_04;
+                            break;
+                        case TRACKER_FX_TONE_SLIDE:
+                        case TRACKER_FX_TONE_SLIDE_VOL:
+                            func_02037cdc(c);
+                            period = c->mUnk_04;
+                            tickPeriodUpd = TRUE;
+                            if (tickEffect == TRACKER_FX_TONE_SLIDE_VOL) {
+                                func_02037df8(c, (s8) tickHi, (s8) tickLo);
+                                tickVolume = c->mUnk_24;
+                                volUpd = TRUE;
+                            }
+                            break;
+                        case TRACKER_FX_VIBRATO:
+                        case TRACKER_FX_VIBRATO_VOL:
+                            period = func_02037d38(c);
+                            tickPeriodUpd = TRUE;
+                            if (tickEffect == TRACKER_FX_VIBRATO_VOL) {
+                                func_02037df8(c, (s8) tickHi, (s8) tickLo);
+                                tickVolume = c->mUnk_24;
+                                volUpd = TRUE;
+                            }
+                            break;
+                        case TRACKER_FX_TREMOLO:
+                            tickVolume = func_02037dac(c);
+                            volUpd = TRUE;
+                            break;
+                        case TRACKER_FX_VOL_SLIDE:
+                            func_02037df8(c, (s8) tickHi, (s8) tickLo);
+                            tickVolume = c->mUnk_24;
+                            volUpd = TRUE;
+                            break;
+                        case TRACKER_FX_EXTENDED:
+                            if (tickHi == TRACKER_FXE_NOTE_CUT && data_020c6b14.mUnk_1856 >= tickLo) {
+                                c->mUnk_24 = 0;
+                                tickVolume = 0;
+                                volUpd = TRUE;
+                            }
+                            break;
+                        case TRACKER_FX_GLOBAL_VOL_SLIDE:
+                            if (data_020c6b14.mUnk_1748 != 1 && data_020c6b14.mUnk_1748 != 2) {
+                                func_02037e70(&globalVol, (s8) tickHi, (s8) tickLo);
+                                volChanged = TRUE;
+                            }
+                            break;
+                        case TRACKER_FX_PAN_SLIDE:
+                            func_02037e34(c, (s8) tickHi, (s8) tickLo);
+                            tickPanUpd = TRUE;
+                            break;
+                    }
+                }
+                if ((func_020380b8(&data_020c6b14, c, TRACKER_ENV_VOLUME, FALSE) | func_02038464(&data_020c6b14, c)) ==
+                        TRUE &&
+                    volUpd == FALSE) {
+                    tickVolume = c->mUnk_24;
+                    volUpd = TRUE;
+                }
+                if (func_020380b8(&data_020c6b14, c, TRACKER_ENV_PAN, FALSE) == TRUE) {
+                    tickPanUpd = TRUE;
+                }
+                if (tickPeriodUpd == TRUE) {
+                    c->mUnk_64 = 0xffb0ff / func_02037efc(period, (data_020c6b14.mUnk_174f & 1) ? TRUE : FALSE);
+                    func_020401d8(1 << (data_020c6b14.mUnk_1744 + i), c->mUnk_64);
+                }
+                if (volUpd == TRUE) {
+                    c->mUnk_68 = func_02040b60(data_02050b40[func_020384f8(
+                        (s8) tickVolume, c->mUnk_28.mUnk_04, c->mUnk_48, data_020c6b14.mUnk_1747, c->mUnk_25)]);
+                    func_020401f8(1 << (data_020c6b14.mUnk_1744 + i), c->mUnk_68 & 0xff, c->mUnk_68 >> 8);
+                }
+                if (tickPanUpd == TRUE) {
+                    func_02040220(1 << (data_020c6b14.mUnk_1744 + i),
+                                  func_02038524(c->mUnk_26, c->mUnk_38.mUnk_04) >> 1);
+                }
+            }
+        }
+    }
+    while (SND_RecvCommandReply(0) != 0) {
+    }
+    SND_FlushCommand(2);
+    if (volChanged == TRUE) {
+        func_02038578(globalVol, 0);
+    }
+}
+
 // Advances to the next order position (or the jump target), stops the voices when the song ends or loops and
 // loads the pattern's row count.
 void func_02037c10(void) {
@@ -859,7 +1736,7 @@ int func_020384f8(int vol, u16 env, int fade, u8 master, u8 chanVol) {
 }
 
 // Panning (0..255) after the panning envelope level is applied, weighted toward the middle.
-int func_02038524(int pan, u16 level) {
+u32 func_02038524(int pan, u16 level) {
     int v = pan + (((level >> 8) - 32) * (128 - abs(pan - 128))) / 32;
 
     if ((v < 255 ? v : 255) < 0) {
