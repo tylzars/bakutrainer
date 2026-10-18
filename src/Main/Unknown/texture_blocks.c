@@ -6,6 +6,7 @@
 #include <Main/Unknown/vram_cache.h>
 #include <nitro/mi.h>
 #include <nitro/os.h>
+#include <Main/Unknown/engine_asm.h>
 #include <Main/Unknown/texture_blocks.h>
 
 // Block counts by texture size code, used by func_0202b32c.
@@ -434,6 +435,263 @@ void func_0202c1d4(int a) {
         func_0201c4f0(&data_020c267c.mUnk_b20);
     }
     data_020c18bc.mUnk_46c &= ~3;
+}
+
+// Rearranges `w` x `h` tiles from sequential order into rows of a bitmap `w` tiles wide: for each tile, `mode` 1
+// copies eight words (4 bits per pixel), any other mode eight word pairs (8 bits per pixel). Terminates when the
+// source and destination are the same.
+void func_0202c2f0(void *dst, const void *src, u32 w, u32 h, BOOL mode) {
+    u32 *d = dst;
+    const u32 *s = src;
+    u32 n = 0;
+    u32 y;
+    u32 x;
+    u32 k;
+    u32 base = 0;
+
+    if (dst == src) {
+        OS_Terminate();
+    }
+    for (y = 0; y < h; y++) {
+        for (x = 0; x < w; x++) {
+            if (mode == 1) {
+                u32 *p = d + (base * 8 + x);
+                for (k = 0; k < 8; k++) {
+                    *p = s[n++];
+                    p += w;
+                }
+            } else {
+                u32 *p = d + (base * 8 + x) * 2;
+                for (k = 0; k < 8; k++) {
+                    p[0] = s[n];
+                    p[1] = s[n + 1];
+                    n += 2;
+                    p += w * 2;
+                }
+            }
+        }
+        base += w;
+    }
+}
+
+// Expands the tiles of `src` (`w` tiles wide, 4 or 8 bits per pixel by the entry's byte 13) into 16-bit colours
+// at the entry's destination: every non-zero pixel is looked up in the palette memory of the engine the
+// destination belongs to and written with bit 15 set; the rows of the destination are func_0201db94(engine)
+// halfwords apart. Sets the entry's palette byte to 0xff. In the 8-bit branch the test uses the low four bits of
+// the pixel but the palette index is the whole byte.
+void func_0202c3e0(Unk_LoadEntry *entry, const void *src, u32 w) {
+    u32 dst = entry->mUnk_04;
+    u32 size = entry->mUnk_08;
+    int engine = (dst >> 20) == 0x60 ? 1 : 2;
+    int stride = func_0201db94(engine);
+    const u32 *s = src;
+    u32 j;
+    int k;
+
+    if (entry->mUnk_13 == 0) {
+        const u16 *pal = (const u16 *) ((engine == 1 ? 0x5000200 : 0x5000600) + (entry->mUnk_12 >> 4) * 32);
+        if (size != 0) {
+            do {
+                u32 row = dst;
+                for (j = 0; j < w; j++) {
+                    u32 word = *s++;
+                    for (k = 0; k < 8; k++) {
+                        if ((word & 0xf) != 0) {
+                            *(u16 *) dst = pal[word & 0xf] + 0x8000;
+                        }
+                        dst += 2;
+                        word >>= 4;
+                    }
+                }
+                dst = row + stride * 2;
+                size -= w * 4;
+            } while (size != 0);
+        }
+    } else {
+        const u16 *pal = (const u16 *) (engine == 1 ? 0x5000200 : 0x5000600);
+        if (size != 0) {
+            do {
+                u32 row = dst;
+                for (j = 0; j < w * 2; j++) {
+                    const u8 *p = (const u8 *) s++;
+                    for (k = 0; k < 4; k++) {
+                        u32 b = *p++;
+                        if ((b & 0xf) != 0) {
+                            *(u16 *) dst = pal[b] + 0x8000;
+                        }
+                        dst += 2;
+                    }
+                }
+                dst = row + stride * 2;
+                size -= w * 8;
+            } while (size != 0);
+        }
+    }
+    entry->mUnk_12 = 0xff;
+}
+
+// Moves entry `i` of the half's chain table to the end of the list threaded through bytes 4 (previous) and 5
+// (next); entry 255 is the list's anchor.
+void func_0202c548(u32 i, Unk_020c2694 *half) {
+    half->mUnk_518[half->mUnk_518[i].mUnk_4].mUnk_5 = half->mUnk_518[i].mUnk_5;
+    half->mUnk_518[half->mUnk_518[i].mUnk_5].mUnk_4 = half->mUnk_518[i].mUnk_4;
+    half->mUnk_518[i].mUnk_4 = half->mUnk_518[255].mUnk_4;
+    half->mUnk_518[i].mUnk_5 = 0xff;
+    half->mUnk_518[255].mUnk_4 = (u8) i;
+    half->mUnk_518[half->mUnk_518[i].mUnk_4].mUnk_5 = (u8) i;
+}
+
+// Looks for the entry of block `key` whose slot (high nibble of byte 6) is `val`: the chain starts at
+// half->mUnk_52c[key] and continues through byte 3 of each entry. Returns 0xff when there is none.
+u32 func_0202c5c0(u32 key, u32 val, Unk_020c2694 *half) {
+    u32 n = half->mUnk_52c[key];
+
+    if (n == 0xff) {
+        return 0xff;
+    }
+    do {
+        if (val == half->mUnk_518[n].mUnk_6 >> 4) {
+            return n;
+        }
+        n = half->mUnk_518[n].mUnk_3;
+    } while (n != 0xff);
+    return 0xff;
+}
+
+// Takes the oldest entry of slot `val` from the list (func_0202c548), loads block `key` into the 32 bytes that
+// entry names (from the file when `key` is below the file's block count, otherwise from the preloaded block at
+// data_020c267c.mUnk_008 + index * 32), chains the entry at the end of key `key`'s chain and returns its number.
+u32 func_0202c5fc(u32 index, u32 key, u32 val, Unk_020c2694 *half) {
+    u32 n = half->mUnk_518[255].mUnk_5;
+    u32 sel;
+    Unk_ChainEntry *t;
+    u32 prev;
+    u32 next;
+
+    while (val != half->mUnk_518[n].mUnk_6 >> 4) {
+        n = half->mUnk_518[n].mUnk_5;
+    }
+    half->mUnk_51c[val]--;
+    func_0202c548(n, half);
+    sel = (&data_020c267c.mUnk_018[1] == half) ? 9 : 5;
+    if (key < data_020c267c.mUnk_014) {
+        func_0201c6b0(data_020c267c.mUnk_b24, key << 5, (half->mUnk_518[n].mUnk_6 << 5) + (sel << 28), 0x20);
+    } else {
+        func_0201c6b0(0, (u32) (data_020c267c.mUnk_008 + (index << 5)), (half->mUnk_518[n].mUnk_6 << 5) + (sel << 28),
+                      0x20);
+    }
+    prev = half->mUnk_52c[key];
+    if (prev == 0xff) {
+        half->mUnk_52c[key] = n;
+        half->mUnk_518[n].mUnk_0 = key;
+        half->mUnk_518[n].mUnk_2 = 0xff;
+        half->mUnk_518[n].mUnk_3 = 0xff;
+    } else {
+        t = half->mUnk_518;
+        next = t[prev].mUnk_3;
+        while (next != 0xff) {
+            prev = next;
+            next = t[next].mUnk_3;
+        }
+        t[prev].mUnk_3 = n;
+        half->mUnk_518[n].mUnk_2 = prev;
+        half->mUnk_518[n].mUnk_0 = 0xffff;
+    }
+    return half->mUnk_518[n].mUnk_6;
+}
+
+// Makes the `n` consecutive blocks starting at keys[0] (or the `n` keys listed there when keys[0] is below the
+// file's block count) resident in one slot: a slot already holding all of them is used if there is one, otherwise
+// the slot that needs the fewest loads and has room, evicting the oldest entries until one has. Each key is then
+// looked up or loaded (func_0202c5c0, func_0202c5fc) and its entry's low nibble appended to the half's index list
+// (mUnk_115, count in mUnk_516). Returns the slot. `a` is not used.
+s32 func_0202c778(u16 *keys, int a, u32 n, int engine) {
+    Unk_020c2694 *half = &data_020c267c.mUnk_018[engine == 2];
+    u32 node2;
+    u8 count[16];
+    int min;
+    u16 list[16];
+    u32 mask = 0xffff;
+    int s;
+    u32 k;
+    u32 j;
+    u32 idx;
+    s32 slot;
+    u32 node;
+    u32 i;
+    u32 m;
+    u32 avail;
+    u32 key;
+
+    if (keys[0] < data_020c267c.mUnk_014) {
+        memcpy(list, keys, n * 2);
+    } else {
+        for (j = 0; j < n; j++) {
+            list[j] = keys[0] + j;
+        }
+    }
+    for (i = 0; i < n; i++) {
+        key = list[i];
+        node = half->mUnk_52c[key];
+        avail = 0;
+        while (node != 0xff) {
+            avail |= 1 << (half->mUnk_518[node].mUnk_6 >> 4);
+            node = half->mUnk_518[node].mUnk_3;
+        }
+        mask &= avail;
+    }
+    if (mask != 0) {
+        slot = 31 - func_02028250(mask);
+    } else {
+        MI_CpuClear32(count, 16);
+        for (m = 0; m < n; m++) {
+            node = half->mUnk_52c[list[m]];
+            while (node != 0xff) {
+                count[half->mUnk_518[node].mUnk_6 >> 4]++;
+                node = half->mUnk_518[node].mUnk_3;
+            }
+        }
+        for (;;) {
+            slot = -1;
+            min = 32;
+            for (s = 0; s < 16; s++) {
+                int need = n - count[s];
+                if (need <= half->mUnk_51c[s]) {
+                    if (need < min) {
+                        min = need;
+                        slot = s;
+                    }
+                }
+            }
+            if (slot != -1) {
+                break;
+            }
+            node = half->mUnk_518[255].mUnk_5;
+            while (half->mUnk_518[node].mUnk_0 == 0xfffe) {
+                node = half->mUnk_518[node].mUnk_5;
+            }
+            if (half->mUnk_518[node].mUnk_0 != 0xffff) {
+                half->mUnk_52c[half->mUnk_518[node].mUnk_0] = half->mUnk_518[node].mUnk_3;
+            }
+            half->mUnk_518[node].mUnk_2 = 0xff;
+            half->mUnk_518[node].mUnk_3 = 0xff;
+            half->mUnk_518[node].mUnk_0 = 0xfffe;
+            half->mUnk_51c[half->mUnk_518[node].mUnk_6 >> 4]++;
+        }
+    }
+    for (k = 0; k < n; k++) {
+        node2 = func_0202c5c0(list[k], slot, half);
+        if (node2 == 0xff) {
+            node2 = func_0202c5fc(k, list[k], slot, half);
+        }
+        if (half->mUnk_516 >= 0x400) {
+            OS_Terminate();
+        }
+        idx = half->mUnk_516;
+        half->mUnk_516++;
+        half->mUnk_115[idx] = half->mUnk_518[node2].mUnk_6 & 0xf;
+    }
+    return slot;
 }
 
 #pragma thumb on

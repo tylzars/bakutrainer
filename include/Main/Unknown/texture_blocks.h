@@ -2,6 +2,7 @@
 
 #include "types.h"
 #include <Main/Unknown/globals.h>
+#include <Main/Unknown/system_init.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -48,6 +49,12 @@ void func_0202bb30(int layer);
 void func_0202bdd8(int a, int b, int c, u32 d, int e);
 void func_0202c1c4(void);
 void func_0202c1d4(int a);
+void func_0202c2f0(void *dst, const void *src, u32 w, u32 h, BOOL mode);
+void func_0202c3e0(Unk_LoadEntry *entry, const void *src, u32 w);
+void func_0202c548(u32 i, Unk_020c2694 *half);
+u32 func_0202c5c0(u32 key, u32 val, Unk_020c2694 *half);
+u32 func_0202c5fc(u32 index, u32 key, u32 val, Unk_020c2694 *half);
+s32 func_0202c778(u16 *keys, int a, u32 n, int engine);
 
 #ifdef __cplusplus
 }

@@ -71,7 +71,7 @@ typedef struct Unk_020c2694 {
     u16 mUnk_516;
     Unk_ChainEntry *mUnk_518;
     u8 mUnk_51c[0x10];
-    void *mUnk_52c;
+    u8 *mUnk_52c;
     void *mUnk_530;
     Unk_SlotPair mUnk_534[0x10];
     u16 mUnk_574;
@@ -89,7 +89,7 @@ typedef struct Unk_020c2694 {
 typedef struct Unk_020c267c {
     u32 mUnk_000;
     void *mUnk_004;
-    u8 mUnk_008[4];
+    u8 *mUnk_008;
     u32 mUnk_00c;
     u8 mUnk_010[2];
     u16 mUnk_012;
