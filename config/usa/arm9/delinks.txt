@@ -409,3 +409,11 @@ src/Main/Unknown/touch_buttons.c:
 // backup memory access, called only from save_blocks.c
 src/Main/Unknown/backup_access.c:
     .text       start:0x02020ee0 end:0x02020ff4
+
+// provisional: probably continues with func_020225dc (same pool objects)
+src/Main/Unknown/gx_pool.c:
+    .text       start:0x02021fb0 end:0x020223e8
+
+// provisional: may belong to gx_pool.c
+src/Main/Unknown/angle_blend.c:
+    .text       start:0x020223e8 end:0x020225dc

@@ -86,6 +86,7 @@ void func_0202de60(void *obj, void *p);
 int func_0202de80(int a, int x, int y, int prio, int e, int mode);
 void func_0202de94(void);
 void func_0202dec4(int id);
+u16 *func_0202ded8(int id);
 void func_0202e494(void);
 void func_0202e4fc(u32 file, void *dst, u32 size, u32 offset);
 u32 func_0202e760(u32 index);

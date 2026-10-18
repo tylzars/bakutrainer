@@ -25,9 +25,18 @@ u32 func_0201c564(void);
 
 // Objects of the per-frame system code.
 typedef struct Unk_020c321c {
-    u8 mUnk_00[0x18];
+    u8 mUnk_00[6];
+    u8 mUnk_06;
+    u8 mUnk_07[0x14 - 7];
+    u16 mUnk_14;
+    u16 mUnk_16;
     u16 mUnk_18;
     u16 mUnk_1a;
+    u8 mUnk_1c[2];
+    u16 mUnk_1e;
+    u16 mUnk_20;
+    u16 mUnk_22;
+    u16 mUnk_24;
 } Unk_020c321c;
 extern Unk_020c321c data_020c321c;
 
@@ -111,8 +120,35 @@ typedef struct Unk_020c1834 {
     u8 mUnk_10[0x30];
 } Unk_020c1834;
 
+typedef struct Unk_PoolNode {
+    u8 mUnk_00[0xa];
+    u16 mUnk_0a;
+    u16 mUnk_0c;
+    u8 mUnk_0e[2];
+} Unk_PoolNode;
+
+typedef struct Unk_PoolSlot {
+    s32 mUnk_00;
+    s32 mUnk_04;
+} Unk_PoolSlot;
+
+typedef struct Unk_PoolRange {
+    u16 mUnk_0;
+    u16 mUnk_2;
+    u16 mUnk_4;
+    u16 mUnk_6;
+} Unk_PoolRange;
+
 typedef struct Unk_020c31dc {
-    u8 mUnk_00[0x54];
+    Unk_PoolNode *mUnk_00;
+    Unk_PoolSlot *mUnk_04;
+    Unk_PoolRange *mUnk_08;
+    Unk_PoolNode *mUnk_0c;
+    Unk_PoolSlot *mUnk_10;
+    Unk_PoolRange *mUnk_14;
+    u8 mUnk_18[0x4c - 0x18];
+    u32 mUnk_4c;
+    u32 mUnk_50;
     u16 mUnk_54;
 } Unk_020c31dc;
 

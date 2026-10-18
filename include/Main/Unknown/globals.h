@@ -44,7 +44,8 @@ typedef struct Unk_VramGroup {
     vu8 *mUnk_00[4];
     u16 mUnk_10[4];
     u32 mUnk_18[4];
-    u8 mUnk_28[6];
+    u8 mUnk_28[4];
+    u16 mUnk_2c;
     u8 mUnk_2e;
     u8 mUnk_2f;
 } Unk_VramGroup;
@@ -132,7 +133,11 @@ typedef struct SystemState {
     u8 mUnk_2b2;
     u8 mUnk_2b3;
     u8 mUnk_2b4;
-    u8 mUnk_2b5[0x2c8 - 0x2b5];
+    u8 mUnk_2b5[0x2b8 - 0x2b5];
+    s32 mUnk_2b8;
+    s32 mUnk_2bc;
+    s32 mUnk_2c0;
+    s32 mUnk_2c4;
     s32 mUnk_2c8;
     u16 mUnk_2cc;
     u16 mUnk_2ce;
@@ -162,7 +167,9 @@ typedef struct SystemState {
     u8 mUnk_310;
     u8 mUnk_311[5];
     u8 mUnk_316;
-    u8 mUnk_317[5];
+    u8 mUnk_317;
+    u8 mUnk_318;
+    u8 mUnk_319[3];
     void (*mUnk_31c)(u32);
     u8 *mUnk_320;
     s32 mUnk_324;
