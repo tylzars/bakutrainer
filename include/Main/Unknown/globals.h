@@ -119,7 +119,8 @@ typedef struct Unk_020c1d3c {
     u8 mUnk_12;
     u8 mUnk_13;
     u8 mUnk_14;
-    u8 mUnk_15[0x1c - 0x15];
+    u8 mUnk_15[3];
+    s32 mUnk_18;
     u16 mUnk_1c;
     u16 mUnk_1e;
 } Unk_020c1d3c;
@@ -337,7 +338,14 @@ typedef struct Unk_020b6ee0 {
     u8 mUnk_0000[0xc60];
     s32 mUnk_c60[3];
     s32 mUnk_c6c[3];
-    u8 mUnk_c78[0xcac - 0xc78];
+    u8 mUnk_c78[0xc94 - 0xc78];
+    s32 mUnk_c94;
+    s32 mUnk_c98;
+    s32 mUnk_c9c;
+    u8 mUnk_ca0[6];
+    u16 mUnk_ca6;
+    u16 mUnk_ca8;
+    u8 mUnk_caa[2];
     Model mModel[2];
     VecFx32 mUnk_f9c;
     u8 mUnk_fa8[0xfc8 - 0xfa8];
@@ -360,14 +368,43 @@ typedef struct Unk_020b6ee0 {
     u16 mUnk_ffa;
     u16 mUnk_ffc;
     u16 mUnk_ffe;
-    u8 mUnk_1000[0xa120 - 0x1000];
+    u8 mUnk_1000[0xc];
+    s16 mUnk_100c;
+    u8 mUnk_100e[0xa0fc - 0x100e];
+    s32 mUnk_a0fc;
+    s32 mUnk_a100;
+    s32 mUnk_a104;
+    s32 mUnk_a108;
+    s32 mUnk_a10c;
+    s32 mUnk_a110;
+    s32 mUnk_a114;
+    s32 mUnk_a118;
+    s32 mUnk_a11c;
     s32 mUnk_a120;
     s32 mUnk_a124;
     s32 mUnk_a128;
     s32 mUnk_a12c;
-    u8 mUnk_a130[0xa14c - 0xa130];
+    s32 mUnk_a130;
+    s32 mUnk_a134;
+    s32 mUnk_a138;
+    u8 mUnk_a13c;
+    u8 mUnk_a13d;
+    u8 mUnk_a13e;
+    u8 mUnk_a13f;
+    u8 mUnk_a140;
+    u8 mUnk_a141;
+    u8 mUnk_a142;
+    u8 mUnk_a143;
+    u8 mUnk_a144;
+    s8 mUnk_a145;
+    u8 mUnk_a146;
+    u8 mUnk_a147;
+    u8 mUnk_a148;
+    u8 mUnk_a149[2];
+    u8 mUnk_a14b;
     u8 mUnk_a14c;
-    u8 mUnk_a14d[0xa530 - 0xa14d];
+    u8 mUnk_a14d;
+    u8 mUnk_a14e[0xa530 - 0xa14e];
     s32 mUnk_a530;
     s32 mUnk_a534;
     s32 mUnk_a538;
@@ -521,17 +558,14 @@ typedef struct Unk_020c17a0 {
 } Unk_020c17a0;
 extern Unk_020c17a0 data_020c17a0;
 
-typedef struct Unk_020b7ee0 {
-    u8 mUnk_00[0xc];
-    s16 mUnk_0c;
-} Unk_020b7ee0;
-extern Unk_020b7ee0 data_020b7ee0;
 
 typedef struct Unk_020c1454 {
     u8 mUnk_00[0x40];
     s32 mUnk_40;
 } Unk_020c1454;
 extern Unk_020c1454 data_020c1454;
+
+extern const u8 data_0201a66c[];
 
 extern const u8 data_0201a612[];
 extern const u8 data_0201a68a[];

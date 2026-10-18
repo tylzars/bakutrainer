@@ -356,6 +356,6 @@ src/Main/Unknown/save_data.c:
 src/Main/Unknown/save_slot_menu.c:
     .text       start:0x02010d64 end:0x02011518
 
-// provisional: continues past 0x02011c64 (func_0201180c is called from 0x02011caa; strings shared with func_02011fec)
+// provisional: the end; func_020126a0 uses the same tables (0x0204ff30/0x0204ff40) and state block
 src/Main/Unknown/stage_info_panel.c:
-    .text       start:0x02011518 end:0x02011c64
+    .text       start:0x02011518 end:0x020126a0

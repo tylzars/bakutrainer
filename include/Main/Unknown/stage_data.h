@@ -27,13 +27,24 @@ typedef struct StageInfo {
 } StageInfo;
 
 typedef struct StageRec {
-    u8 mUnk_000[0x178];
+    u8 mUnk_000[0x134];
+    u32 mUnk_134;
+    u8 mUnk_138[0x178 - 0x138];
     StageInfo mInfo;
-    u8 mUnk_19e[0x1e4 - 0x19e];
+    u8 mUnk_19e[0x1d8 - 0x19e];
+    u16 mUnk_1d8;
+    u8 mUnk_1da[2];
+    u16 mUnk_1dc;
+    u8 mUnk_1de[0x1e4 - 0x1de];
     s32 mUnk_1e4;
     s32 mUnk_1e8;
     s32 mUnk_1ec;
-    u8 mUnk_1f0[0x40];
+    u8 mUnk_1f0[0x2c];
+    s32 mUnk_21c;
+    s32 mUnk_220;
+    u8 mUnk_224[0x22e - 0x224];
+    u8 mUnk_22e;
+    u8 mUnk_22f;
 } StageRec;
 
 #define STAGE_MAX 0x27

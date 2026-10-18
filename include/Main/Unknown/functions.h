@@ -28,11 +28,13 @@ void func_020145bc(void);
 int func_020149b0(void);
 void func_020149e0(void);
 void func_02014bf0(void);
+void func_02014cdc(StageInfo *info);
 void func_02014cf8(StageInfo *info);
 int func_02014d2c(StageInfo *info);
 int func_02014de4(int kind, int index);
 int func_02014f14(int kind, int index);
 int func_02014f98(StageRec *rec);
+int func_02014ffc(StageRec *rec, int amount, int a, int b);
 int func_020150c0(StageInfo *info);
 int func_02015114(int a, int b);
 StageRec *func_02015190(int index);
@@ -167,6 +169,7 @@ u8 func_02038694(void);
 int func_0203946c(void);
 void func_0203947c(int a, u16 b, u16 c);
 void func_02039ba8(void);
+void func_0204028c(u32 a);
 
 #ifdef __cplusplus
 }
