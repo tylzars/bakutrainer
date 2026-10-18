@@ -1967,6 +1967,7 @@ from:0x0200d768 kind:load to:0x020abfc0 module:main
 from:0x0200d784 kind:thumb_call to:0x0200d78c module:main
 from:0x0200d7a4 kind:thumb_call to:0x0200d6ec module:main
 from:0x0200d7b6 kind:thumb_call to:0x0202de60 module:main
+from:0x0200d7c8 kind:load to:0x0201abec module:main
 from:0x0200d7dc kind:thumb_call_arm to:0x0203f81c module:main
 from:0x0200d7ea kind:thumb_call_arm to:0x0203f81c module:main
 from:0x0200d806 kind:thumb_call to:0x0200d6ec module:main

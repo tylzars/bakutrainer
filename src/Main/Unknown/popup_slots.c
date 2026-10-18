@@ -2,6 +2,7 @@
 #include <Main/Unknown/mode_select.h>
 #include <Main/Unknown/globals.h>
 #include <Main/Unknown/popup_slots.h>
+#include <Main/Unknown/sprite_slots.h>
 #include <nitro/os.h>
 
 void func_0200ce24(void) {
@@ -163,7 +164,7 @@ void func_0200d098(void) {
             func_02020978(i + 0x100, x, y, 0, 0, 0xe83);
         }
     }
-    if (data_020b10fc.mUnk_00 < 2 && data_020c1b5c.mFlag) {
+    if (data_020b10fc.mUnk_00 < 2 && data_020c1b5c.mUnk_0c_0) {
         if (func_0200bdac(0x80000000, 0x100, 0x108)) {
             func_0200d2a4(&data_02063940->mSlots[(u16) data_020c2660.mUnk_04 - 0x100]);
         }

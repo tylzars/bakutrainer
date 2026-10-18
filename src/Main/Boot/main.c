@@ -21,7 +21,7 @@ void main(void) {
         func_02010c94();
         func_02020348();
     }
-    data_020c1bbc[0x10] = 0x40;
+    data_020c1bbc.mUnk_10 = 0x40;
     data_020c1d3c[0x13] = 1;
     data_020c1d3c[0x14] = 1;
     func_0202f00c();

@@ -72,10 +72,16 @@ extern GameFlow data_020b1194;
 extern StateD data_020c1cbc;
 typedef struct Unk_020c1b5c {
     u8 mUnk_00[0xc];
-    u8 mFlag : 1;
+    u8 mUnk_0c_0 : 1;
 } Unk_020c1b5c;
 extern Unk_020c1b5c data_020c1b5c;
-extern u8 data_020c1bbc[];
+typedef struct Unk_020c1bbc {
+    u8 mUnk_00[8];
+    u16 mUnk_08;
+    u8 mUnk_0a[6];
+    u8 mUnk_10;
+} Unk_020c1bbc;
+extern Unk_020c1bbc data_020c1bbc;
 extern u8 data_020c1d3c[];
 extern u8 data_020c14b4[];
 typedef struct StateE {
