@@ -44,7 +44,9 @@ def check_module(module):
         probs = []
         orig = [f for f in funcs if start <= f[0] < end]
         data_only = not orig and start in data_starts  # a unit of data only (an assembled table)
-        if (not orig or orig[0][0] != start) and not data_only:
+        # An assembler unit may open with padding or a table and carry pools and tables after its last routine.
+        assembled = src.endswith(".s")
+        if (not orig or orig[0][0] != start) and not data_only and not assembled:
             probs.append(f"start {start:#x} is not a function start")
         if start % 4 or end % 4:
             # The linker places every section on a 4-byte boundary: an end at a halfword (after a Thumb function)
@@ -53,7 +55,7 @@ def check_module(module):
         last = max((f[0] + f[1] for f in orig), default=end if data_only else start)
         if last > end:
             probs.append(f"a function runs past the end ({last:#x})")
-        elif any(code[last - base:end - base]):
+        elif any(code[last - base:end - base]) and not assembled:
             probs.append(f"non-zero bytes after the last function ({last:#x}-{end:#x})")
         if i + 1 < len(units) and units[i + 1][0] < end:
             probs.append(f"overlaps {units[i + 1][2]}")

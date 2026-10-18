@@ -261,6 +261,12 @@ libs/msl/src/rt_div32.s:
 libs/msl/src/rt_global_ctors.cpp:
     .text       start:0x0204ded0 end:0x0204df14
 
+libs/mobiclip/src/mobiclip_sound_a_call.c:
+    .text       start:0x02052468 end:0x0205246c
+
+libs/mobiclip/src/mobiclip_sound_b_call.c:
+    .text       start:0x02052e28 end:0x02052e2c
+
 // provisional: the WM object starts before 0x020461fc (0x020461e4 and earlier); the wm_command/wm_api split is inferred
 libs/nds/src/wm/wm_command.c:
     .text       start:0x020461fc end:0x02046478

@@ -8704,13 +8704,13 @@ from:0x0204e968 kind:load to:0x0200719d module:main
 from:0x02050438 kind:load to:0x020901fd module:main
 from:0x02051b9c kind:load to:0x020c022b module:main
 from:0x02051c5c kind:load to:0x02080227 module:main
+from:0x02052468 kind:arm_branch to:0x02052c78 module:main
 from:0x02052e28 kind:arm_branch to:0x02053834 module:main
 from:0x02053848 kind:arm_call to:0x020530ac module:main
 from:0x02053868 kind:arm_call to:0x02053658 module:main
 from:0x02053878 kind:arm_call to:0x02053658 module:main
 from:0x02053888 kind:arm_call to:0x02053658 module:main
 from:0x02053898 kind:arm_call to:0x02053658 module:main
-from:0x02056294 kind:load to:0x02071501 module:main
 from:0x0205e9c8 kind:arm_call to:0x0205eaa0 module:main
 from:0x0205ea08 kind:arm_call to:0x0205eccc module:main
 from:0x0205ea38 kind:arm_call to:0x0205eccc module:main
