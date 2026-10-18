@@ -41,9 +41,9 @@ typedef struct Unk_SlotPair {
 // Entry of a half's hash table (16 bytes): the key at +8 (-1 = never used, -2 = removed) and the number of
 // search paths that pass through the entry.
 typedef struct Unk_HashEntry {
-    u8 mUnk_0[8];
+    u32 mUnk_0[2];
     s32 mUnk_8;
-    u8 mUnk_c[2];
+    u16 mUnk_c;
     u16 mUnk_e;
 } Unk_HashEntry;
 

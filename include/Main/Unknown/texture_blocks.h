@@ -45,7 +45,7 @@ u16 func_0202afb0(u32 index, int layer);
 void func_0202b19c(int layer, u32 key);
 u16 func_0202b26c(u32 index, int layer);
 u32 func_0202b32c(u32 index, int mode);
-u16 func_0202b35c(u32 size, u32 offset, u32 sub, u32 shape, u32 count, int mode);
+u16 func_0202b35c(u32 code, u32 key, u32 sub, u32 mode, u32 count, int layer);
 void func_0202bb30(int layer);
 void func_0202bdd8(int a, int b, int c, u32 d, int e);
 void func_0202c1c4(void);

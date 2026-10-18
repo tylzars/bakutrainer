@@ -9,6 +9,7 @@
 #include <nitro/mi.h>
 #include <nitro/os.h>
 #include <Main/Unknown/engine_asm.h>
+#include <Main/Unknown/screen_fade.h>
 #include <Main/Unknown/texture_blocks.h>
 
 // Block counts by texture size code, used by func_0202b32c.
@@ -238,6 +239,211 @@ u32 func_0202b32c(u32 index, int mode) {
         v <<= 1;
     }
     return v;
+}
+
+// Finds or adds the cache entry of block `key` (with `sub` in mode-2 packed files) in a layer's hash table and returns
+// the first VRAM unit of its block. A hit moves its hash entry up into the first removed entry the search passed and
+// its list entry to the front of the list; its data is reloaded from the preloaded file block when that block is the
+// one asked for, and in mode 0 its sixteen 4-bit palette slots are compared with the current ones and its tiles
+// remapped when they differ. A miss takes the first never-used entry on the search path (or the first removed one
+// once the search comes round to it), a list entry and a run of VRAM units from the block heap (dropping the oldest
+// list entries until a large enough run is free), and loads the block from the packed file.
+u16 func_0202b35c(u32 code, u32 key, u32 sub, u32 mode, u32 count, int layer) {
+    unsigned long entry;
+    s32 stored;
+    u32 val;
+    Unk_020c2694 *half = &data_020c267c.mUnk_018[layer == 2];
+    u32 step;
+    u32 n;
+    int home;
+    Unk_PoolRange *heap;
+    u32 blk;
+    u32 pos;
+    Unk_HashEntry *he;
+    Unk_PoolRange *node;
+    u32 i;
+    u8 *vals;
+    u32 split;
+    u32 steps = 0;
+    u32 before;
+    u32 next;
+    u32 *map;
+    int loaded = 0;
+    s32 freePos = -1;
+
+    if (data_020c267c.mUnk_000 != 0 && data_020c267c.mUnk_017 == 1) {
+        if (data_020c267c.mUnk_00c == ((key << 2) | (sub << 25))) {
+            data_020c267c.mUnk_017 = 0;
+            loaded = 1;
+        }
+    }
+    if (data_020c267c.mUnk_b2e == 2) {
+        key = sub | (key << 7);
+    } else {
+        key <<= 5;
+    }
+    step = data_02050378[(key >> 10) & 0x7f];
+    home = key & 0x3ff;
+    pos = home;
+    for (;;) {
+        stored = half->mUnk_008[pos].mUnk_8;
+        steps++;
+        if (stored == key) {
+            if (freePos != -1) {
+                n = pos;
+                while (n != freePos) {
+                    n = (n - step) & 0x3ff;
+                    half->mUnk_008[n].mUnk_e--;
+                    he = &half->mUnk_008[n];
+                    if (he->mUnk_e == 0 && he->mUnk_8 == -2) {
+                        he->mUnk_8 = -1;
+                    }
+                }
+                half->mUnk_008[freePos].mUnk_0[0] = half->mUnk_008[pos].mUnk_0[0];
+                half->mUnk_008[freePos].mUnk_0[1] = half->mUnk_008[pos].mUnk_0[1];
+                half->mUnk_008[freePos].mUnk_8 = half->mUnk_008[pos].mUnk_8;
+                half->mUnk_008[freePos].mUnk_c = half->mUnk_008[pos].mUnk_c;
+                he = &half->mUnk_008[pos];
+                he->mUnk_8 = he->mUnk_e == 0 ? -1 : -2;
+                pos = freePos;
+            }
+            entry = half->mUnk_008[pos].mUnk_c;
+            half->mUnk_004[entry].mUnk_0 = pos;
+            func_0201fa5c((IndexNode *) half->mUnk_004, entry);
+            if (loaded == 1) {
+                u32 addr = (layer == 1 ? 0x6400000 : 0x6600000) +
+                           ((half->mUnk_004[entry].mUnk_6 * (1 << half->mUnk_577)) << 5);
+
+                MIi_CpuCopy32(data_020c267c.mUnk_004, (void *) addr, func_0202b32c(code, mode));
+                half->mUnk_008[pos].mUnk_0[0] = 0x76543210;
+                half->mUnk_008[pos].mUnk_0[1] = 0xfedcba98;
+            }
+            if (mode > 1) {
+                OS_Terminate();
+            }
+            if (mode == 0) {
+                vals = &half->mUnk_115[half->mUnk_516 - count];
+                map = half->mUnk_008[pos].mUnk_0;
+                for (i = 0; i < count; i++) {
+                    val = (map[(i * 4) >> 5] >> ((i * 4) & 0x1f)) & 0xf;
+                    if (val != *vals++) {
+                        u8 buf[16];
+                        u32 addr = (layer == 1 ? 0x6400000 : 0x6600000) +
+                                   ((half->mUnk_004[entry].mUnk_6 * (1 << half->mUnk_577)) << 5);
+                        int size = func_0202b32c(code, mode);
+
+                        vals = &half->mUnk_115[half->mUnk_516 - count];
+                        for (i = 0; i < count; i++) {
+                            u32 w = (i * 4) >> 5;
+                            u32 sh = (i * 4) & 0x1f;
+
+                            buf[(map[w] >> sh) & 0xf] = *vals;
+                            map[w] = (map[w] & ~(0xf << sh)) | (*vals++ << sh);
+                        }
+                        func_02028928((u16 *) addr, buf, size / 2);
+                        break;
+                    }
+                }
+            }
+            return half->mUnk_004[entry].mUnk_6;
+        }
+        if (stored == -2 && freePos == -1) {
+            freePos = pos;
+        } else if (stored == -1 || freePos == pos) {
+            half->mUnk_574++;
+            entry = half->mUnk_004[1].mUnk_2;
+            half->mUnk_004[1].mUnk_2 = half->mUnk_004[entry].mUnk_2;
+            half->mUnk_004[entry].mUnk_2 = half->mUnk_004[0].mUnk_2;
+            half->mUnk_004[entry].mUnk_4 = 0;
+            half->mUnk_004[0].mUnk_2 = entry;
+            half->mUnk_004[half->mUnk_004[entry].mUnk_2].mUnk_4 = entry;
+            half->mUnk_008[pos].mUnk_8 = key;
+            half->mUnk_008[pos].mUnk_c = entry;
+            half->mUnk_004[entry].mUnk_0 = pos;
+            n = pos;
+            while (n != home) {
+                n = (n - step) & 0x3ff;
+                half->mUnk_008[n].mUnk_e++;
+            }
+            if (steps > 20) {
+                half->mUnk_57c = 1;
+            }
+            if (mode > 1) {
+                OS_Terminate();
+            }
+            if (mode == 0) {
+                vals = &half->mUnk_115[half->mUnk_516 - count];
+                map = half->mUnk_008[pos].mUnk_0;
+                for (n = 0; n < count; n++) {
+                    u32 w = (n * 4) >> 5;
+                    u32 sh = (n * 4) & 0x1f;
+
+                    map[w] = (map[w] & ~(0xf << sh)) | (*vals++ << sh);
+                }
+            }
+            break;
+        }
+        pos = (pos + step) & 0x3ff;
+    }
+
+    n = data_02050978[code] << (mode == 0);
+    n = ((n - 1) >> half->mUnk_577) + 1;
+    heap = half->mUnk_00c;
+    for (;;) {
+        blk = -1;
+        next = heap[half->mUnk_578].mUnk_4;
+        while (n <= heap[next].mUnk_0) {
+            blk = next;
+            next = heap[next].mUnk_4;
+        }
+        if (half->mUnk_574 > 0x2fe) {
+            func_0202b26c(half->mUnk_004[1].mUnk_4, layer);
+        }
+        if (blk != -1) {
+            break;
+        }
+        i = 1;
+        do {
+            i = half->mUnk_004[i].mUnk_4;
+        } while (func_0202b26c(i, layer) < n);
+    }
+    {
+        u32 rest = heap[blk].mUnk_0;
+
+        heap[blk].mUnk_0 = n + 0x8000;
+        rest -= n;
+        if (mode == 0) {
+            half->mUnk_014[half->mUnk_114] = half->mUnk_516 - count;
+            val = half->mUnk_114++;
+            func_0201c580(data_020c267c.mUnk_b26, key,
+                          (layer == 1 ? 0x6400000 : 0x6600000) + ((blk * (1 << half->mUnk_577)) << 5),
+                          (n * (1 << half->mUnk_577)) << 5, 0, 0, (val << 1) | (layer == 2));
+        } else {
+            func_0201c6b0(data_020c267c.mUnk_b26, key,
+                          (layer == 1 ? 0x6400000 : 0x6600000) + ((blk * (1 << half->mUnk_577)) << 5),
+                          (n * (1 << half->mUnk_577)) << 5);
+        }
+        half->mUnk_004[entry].mUnk_6 = blk;
+        node = &heap[blk];
+        before = node->mUnk_2;
+        heap[node->mUnk_4].mUnk_2 = before;
+        heap[node->mUnk_2].mUnk_4 = node->mUnk_4;
+        if (rest != 0) {
+            split = blk + n;
+            heap[split].mUnk_0 = rest;
+            heap[split].mUnk_6 = blk;
+            heap[split + rest].mUnk_6 = split;
+            while (rest < heap[next].mUnk_0) {
+                before = next;
+                next = heap[next].mUnk_4;
+            }
+            heap[split].mUnk_4 = next;
+            heap[split].mUnk_2 = before;
+            heap[before].mUnk_4 = split;
+            heap[next].mUnk_2 = split;
+        }
+        return blk;
+    }
 }
 
 // Resets a layer's tables: the block list (entries 0 and 1 are the ends, the rest chained as free), the hash
