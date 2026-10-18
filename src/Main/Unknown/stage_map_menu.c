@@ -8,6 +8,7 @@
 #include <nitro/tp.h>
 #include <stdio.h>
 #include <Main/Unknown/functions.h>
+#include <Main/Unknown/save_blocks.h>
 #include <Main/Unknown/screen_fade.h>
 #include <Main/Unknown/bg_image.h>
 #include <Main/Unknown/system_init.h>

@@ -163,8 +163,8 @@ typedef struct SystemState {
     u8 mUnk_311[5];
     u8 mUnk_316;
     u8 mUnk_317[5];
-    void (*mUnk_31c)(int);
-    u8 mUnk_320[4];
+    void (*mUnk_31c)(u32);
+    u8 *mUnk_320;
     s32 mUnk_324;
     u16 mUnk_328;
     u16 mUnk_32a;

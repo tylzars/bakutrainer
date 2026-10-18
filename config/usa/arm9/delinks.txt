@@ -397,3 +397,7 @@ src/Main/Unknown/random_angle.c:
 // provisional: both ends (card code before it, no microphone calls after it)
 src/Main/Unknown/mic_input.c:
     .text       start:0x02020ff4 end:0x02021498
+
+// provisional: may include random_angle.c's func_0201fed4/ff80/ffa0 (same SystemState block fields)
+src/Main/Unknown/save_blocks.c:
+    .text       start:0x0201ffd4 end:0x02020878
