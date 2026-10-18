@@ -1,6 +1,7 @@
 #include <Main/Unknown/functions.h>
 #include <Main/Unknown/globals.h>
 #include <Main/Unknown/mode_select.h>
+#include <Main/Unknown/field_objects.h>
 #include <stdio.h>
 
 u32 data_0206391c = 1800;

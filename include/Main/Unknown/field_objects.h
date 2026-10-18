@@ -1,6 +1,8 @@
 #pragma once
 
 #include "types.h"
+#include <Main/Unknown/globals.h>
+#include <Main/Unknown/stage_data.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -13,7 +15,9 @@ typedef struct Pos2 {
 
 // Extent of the playing field in 8 x 8 cells.
 typedef struct FieldInfo {
-    u8 mUnk_00[0x1c];
+    Pos3 mUnk_00;
+    Pos3 mUnk_0c;
+    s32 mUnk_18;
     s32 mUnk_1c;
     s32 mUnk_20;
     s32 mUnk_24;
@@ -44,12 +48,24 @@ typedef struct FieldObject {
 typedef struct FieldObjects {
     u8 mUnk_000[4];
     u32 mUnk_004;
-    u8 mUnk_008[4];
+    u32 mUnk_008;
     s32 mUnk_00c;
-    u8 mUnk_010[0x230];
+    u8 mUnk_010[0x134];
+    u32 mUnk_144;
+    u8 mUnk_148[0x40];
+    StageInfo mStage;
+    u8 mPad_1ae[2];
+    Pos3 mUnk_1b0;
+    u8 mUnk_1bc[0x1c];
+    u32 mUnk_1d8;
+    u8 mUnk_1dc[0xc];
+    u16 mUnk_1e8;
+    u8 mUnk_1ea[9];
+    u8 mUnk_1f3;
+    u8 mUnk_1f4[0x4c];
     Pos2 mUnk_240;
     s32 mUnk_248;
-    u8 mUnk_24c[4];
+    s32 mUnk_24c;
     Pos2 mUnk_250;
     s32 mUnk_258;
     u32 mUnk_25c;
@@ -58,12 +74,22 @@ typedef struct FieldObjects {
     s32 mUnk_264;
     s32 mUnk_268;
     s32 mUnk_26c;
-    u8 mUnk_270[0x10];
+    s32 mUnk_270;
+    Pos3 mUnk_274;
     FieldInfo mInfo;
     FieldObject mGrid[4][8][8];
     FieldObject mList[128];
     u8 mUnk_2a8b4[0x1000];
-    u8 mUnk_2b8b4[0x2c];
+    u8 mUnk_2b8b4[0x40];
+    u8 mUnk_2b8f4;
+    u8 mUnk_2b8f5[3];
+    u32 mUnk_2b8f8;
+    u32 mUnk_2b8fc;
+    u32 mUnk_2b900;
+    u32 mUnk_2b904;
+    u32 mUnk_2b908;
+    u32 mUnk_2b90c;
+    u32 mUnk_2b910;
 } FieldObjects;
 
 extern FieldObjects data_0206d460;
@@ -82,6 +108,14 @@ int func_020062ec(void);
 void func_0200630c(s32 value, u32 time);
 void func_02006350(s32 value, u32 time);
 void func_02006398(FieldObject *obj);
+void func_020064e8(void);
+void func_0200659c(void);
+void func_020066c8(void);
+void func_020067ac(void);
+void func_02006b1c(void);
+void func_02006b68(void);
+void func_02006fac(void);
+int func_02006fb4(u8 stage);
 
 #ifdef __cplusplus
 }

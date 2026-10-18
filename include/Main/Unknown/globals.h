@@ -73,6 +73,11 @@ extern StateD data_020c1cbc;
 typedef struct Unk_020c1b5c {
     u8 mUnk_00[0xc];
     u8 mUnk_0c_0 : 1;
+    u8 mUnk_0c_1 : 1;
+    u8 mUnk_0c_2 : 6;
+    u8 mUnk_0d;
+    u8 mUnk_0e;
+    u8 mUnk_0f;
 } Unk_020c1b5c;
 extern Unk_020c1b5c data_020c1b5c;
 typedef struct Unk_020c1bbc {
@@ -119,25 +124,6 @@ typedef struct Unk_020c2660 {
 } Unk_020c2660;
 extern Unk_020c2660 data_020c2660;
 
-typedef struct Unk_020c60c4 {
-    u8 mUnk_00[0x70];
-    s32 mUnk_70;
-} Unk_020c60c4;
-extern Unk_020c60c4 data_020c60c4;
-
-typedef struct Unk_02098d40 {
-    u8 mUnk_00[0x14];
-    u8 mUnk_14;
-} Unk_02098d40;
-extern Unk_02098d40 data_02098d40;
-
-typedef struct Unk_02098d60 {
-    u8 mUnk_00[0xc];
-    u32 mUnk_0c;
-    s32 mUnk_10;
-} Unk_02098d60;
-extern Unk_02098d60 data_02098d60;
-
 extern u32 data_020b1084;
 
 // Word tables and constant blocks in the code area.
@@ -153,6 +139,77 @@ extern const s32 data_0204e124[];
 extern const u32 data_0204e0f0[];
 extern const u32 data_0204e0e8[];
 extern const u32 data_0204e144[];
+
+// A position or vector of three fixed-point coordinates.
+typedef struct Pos3 {
+    s32 mX;
+    s32 mY;
+    s32 mZ;
+} Pos3;
+
+// Camera and projection state (the ARM render code also addresses it).
+typedef struct CameraState {
+    u8 mUnk_000[0x28];
+    void (*mUnk_28)(void);
+    u8 mUnk_2c[0x7f - 0x2c];
+    u8 mUnk_7f;
+    u8 mUnk_80[0xa4 - 0x80];
+    Pos3 mUnk_a4;
+    Pos3 mUnk_b0;
+    u8 mUnk_bc;
+    u8 mUnk_bd[0x2c4 - 0xbd];
+    Pos3 mUnk_2c4;
+    u8 mUnk_2d0[0x2e8 - 0x2d0];
+    Pos3 mUnk_2e8;
+    u8 mUnk_2f4[0x310 - 0x2f4];
+    u8 mUnk_310;
+    u8 mUnk_311[3];
+    u16 mUnk_314;
+    u8 mUnk_316[2];
+    u16 mUnk_318;
+    u8 mUnk_31a[0x330 - 0x31a];
+    u16 mUnk_330;
+    u8 mUnk_332[0x338 - 0x332];
+    s32 mUnk_338;
+    s32 mUnk_33c;
+    u16 mUnk_340;
+    u8 mUnk_342[2];
+    s32 mUnk_344;
+    u8 mUnk_348[0x354 - 0x348];
+    u16 mUnk_354;
+} CameraState;
+extern CameraState data_020c5e44;
+
+// Tables in the code area and state objects the field and page screens read.
+extern const u16 data_0204e138[];
+
+extern const u32 data_0201ab04[];
+
+extern const u32 data_0201aa60[];
+
+typedef struct Unk_020c1020 {
+    u8 mUnk_00[0xc];
+    u8 mUnk_0c;
+} Unk_020c1020;
+extern Unk_020c1020 data_020c1020;
+
+typedef struct Unk_020c13e0 {
+    u8 mUnk_00[0x34];
+    s32 mUnk_34;
+} Unk_020c13e0;
+extern Unk_020c13e0 data_020c13e0;
+
+typedef struct Unk_020c1680 {
+    u8 mUnk_00[0x16];
+    u8 mUnk_16;
+} Unk_020c1680;
+extern Unk_020c1680 data_020c1680;
+
+typedef struct Unk_020c1780 {
+    u8 mUnk_00[0x1a];
+    u8 mUnk_1a;
+} Unk_020c1780;
+extern Unk_020c1780 data_020c1780;
 
 #ifdef __cplusplus
 }
