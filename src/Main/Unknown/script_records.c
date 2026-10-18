@@ -14,6 +14,7 @@
 #include <Main/clib.h>
 #include <Main/Unknown/script_records.h>
 #include <Main/Unknown/wave_player.h>
+#include <Main/Unknown/tracker_player.h>
 
 // Finds the entry of the message block whose normalised text equals name and selects it.
 void func_02028e5c(const char *name) {

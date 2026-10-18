@@ -20,7 +20,6 @@ void func_020220c8(int a);
 void func_02022120(void);
 void func_0202224c(void);
 void func_02022370(void);
-void func_02035108(u16 a, int b, u8 c, int d, int e, int f);
 int func_0203946c(void);
 void func_0203947c(int a, u16 b, u16 c);
 int func_02039598(int mode, const void *data);

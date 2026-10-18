@@ -53,9 +53,16 @@ typedef struct TrackerEnvState {
 
 // A sample of an instrument; its data pointer is released with the instrument.
 typedef struct TrackerSample {
-    u8 mUnk_00[0xc];
+    u32 mUnk_00;
+    u32 mUnk_04;
+    u32 mUnk_08;
     void *mUnk_0c;
-    u8 mUnk_10[0x18 - 0x10];
+    u16 mUnk_10;
+    u8 mUnk_12;
+    u8 mUnk_13;
+    u8 mUnk_14;
+    u8 mUnk_15;
+    u16 mUnk_16;
 } TrackerSample;
 
 // An instrument: a table of samples, the number of them at 0x26c.
@@ -64,7 +71,12 @@ typedef struct TrackerInstrument {
     TrackerEnvelope mUnk_200;
     TrackerEnvelope mUnk_236;
     u8 mUnk_26c;
-    u8 mUnk_26d[0x2d2 - 0x26d];
+    u8 mUnk_26d[0x60];
+    u8 mUnk_2cd;
+    u8 mUnk_2ce;
+    u8 mUnk_2cf;
+    u8 mUnk_2d0;
+    u8 mUnk_2d1;
     u16 mUnk_2d2;
 } TrackerInstrument;
 
@@ -117,7 +129,7 @@ typedef struct TrackerPlayer {
     u32 mUnk_1720;
     s32 mUnk_1724;
     s32 mUnk_1728;
-    u8 mUnk_172c[0x172e - 0x172c];
+    u16 mUnk_172c;
     u16 mUnk_172e;
     u16 mUnk_1730;
     u16 mUnk_1732;
@@ -155,6 +167,7 @@ typedef struct TrackerPlayer {
 
 extern TrackerPlayer data_020c6b14;
 
+void func_02035108(u16 a, u16 b, u8 c, u16 d, int e, int f);
 void func_020359d0(int a);
 u16 func_02035bcc(const u8 *text, int base);
 void func_02035c7c(u8 a, s16 b);

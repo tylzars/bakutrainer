@@ -1,8 +1,11 @@
+#include <nitro/mi.h>
 #include <nitro/os.h>
 #include <nitro/snd.h>
 #include <Main/Unknown/functions.h>
 #include <Main/Unknown/globals.h>
 #include <Main/Unknown/system_init.h>
+#include <Main/Unknown/file_loader.h>
+#include <Main/Unknown/wave_player.h>
 #include <Main/Unknown/tracker_player.h>
 #include <Main/clib.h>
 
@@ -21,6 +24,246 @@ extern const u16 data_02051844[16][96];
 TrackerPlayer data_020c6b14;
 
 #pragma thumb off
+
+// Loads song a (a file id) and starts it with volume c (at most 0x80; 0 while data_020c18bc.mUnk_493 is 0). The song
+// already loaded with nothing pending only takes the new volume. b is the number added to each sample name's number to
+// get the sample's file id (0 keeps the last one); d goes to func_02035c7c. With e == 1 while a song plays the request
+// is stored for func_020360f4 to replay. A new song's file gives the header bytes, the order table, the patterns (a
+// cell byte with bit 7 set says which of the five bytes follow; the others become 0xff, 0, 0, 0xff, 0), the instruments
+// with their two envelopes, and their samples, whose data is loaded by the number in the sample's name.
+void func_02035108(u16 a, u16 b, u8 c, u16 d, int e, int f) {
+    u8 name[0x17];
+    u8 *patterns;
+    TrackerInstrument *instruments;
+    u8 *next;
+    u32 size;
+    u32 i;
+    u8 *src;
+    u8 *pattern;
+    u32 j;
+    TrackerSample *samples;
+    u32 left;
+
+    if (c > 0x80) {
+        OS_Terminate();
+    }
+    if (data_020c18bc.mUnk_493 == 0) {
+        c = 0;
+    }
+    if (a == data_020c6b14.mUnk_172e && data_020c6b14.mUnk_1748 == 0 && f == 0) {
+        func_02038578(c, 0);
+        return;
+    }
+    data_020c6b14.mUnk_1745 = 1;
+    if (b == 0) {
+        if (!(data_020c18bc.mUnk_46c & 0x1000000)) {
+            OS_Terminate();
+        }
+        b = data_020c6b14.mUnk_172c;
+    } else {
+        data_020c6b14.mUnk_172c = b;
+    }
+    if (data_020c6b14.mUnk_1724 == 1 && e == 1) {
+        if (data_020c6b14.mUnk_1748 != 3) {
+            data_020c6b14.mUnk_1748 = 1;
+        }
+        data_020c6b14.mUnk_1730 = a;
+        if (b != 0) {
+            data_020c6b14.mUnk_1732 = b;
+        }
+        data_020c6b14.mUnk_1749 = c;
+        data_020c6b14.mUnk_173c = d;
+        data_020c6b14.mUnk_1734 = f;
+        data_020c6b14.mUnk_1745 = 0;
+        return;
+    }
+    data_020c6b14.mUnk_1748 = 0;
+    if (a != data_020c6b14.mUnk_172e) {
+        func_020359d0(0);
+    }
+    if (data_020c6b14.mUnk_1724 == 1) {
+        func_02035e40();
+    }
+    if (data_020c6b14.mUnk_172e == 0) {
+        if (a == 0) {
+            OS_Terminate();
+        }
+        data_020c6b14.mUnk_172e = a;
+        src = func_0202ded8(data_020c6b14.mUnk_172e);
+        if (src == NULL) {
+            OS_Terminate();
+        }
+        data_020c6b14.mUnk_174a = (src[0x41] << 8) | src[0x40];
+        data_020c6b14.mUnk_174b = (src[0x43] << 8) | src[0x42];
+        data_020c6b14.mUnk_174c = (src[0x45] << 8) | src[0x44];
+        data_020c6b14.mUnk_174d = (src[0x47] << 8) | src[0x46];
+        data_020c6b14.mUnk_174e = (src[0x49] << 8) | src[0x48];
+        data_020c6b14.mUnk_174f = (src[0x4b] << 8) | src[0x4a];
+        data_020c6b14.mUnk_1750 = (src[0x4d] << 8) | src[0x4c];
+        data_020c6b14.mUnk_1751 = (src[0x4f] << 8) | src[0x4e];
+        src += 0x50;
+        for (i = 0; i < TRACKER_ORDER_COUNT; i++) {
+            data_020c6b14.mUnk_1752[i] = *src++;
+        }
+
+        patterns = func_0201c430(data_020c6b14.mUnk_174d * sizeof(TrackerPattern));
+        data_020c6b14.mUnk_04 = (TrackerPattern *) patterns;
+        if (patterns == NULL) {
+            OS_Terminate();
+        }
+        for (i = 0; i < data_020c6b14.mUnk_174d; i++) {
+            u32 row;
+            u32 channel;
+
+            data_020c6b14.mUnk_10[i] = (TrackerPattern *) patterns;
+            patterns += sizeof(TrackerPattern);
+            data_020c6b14.mUnk_10[i]->mUnk_00 = src[4];
+            data_020c6b14.mUnk_10[i]->mUnk_01 = (src[6] << 8) | src[5];
+            size = (src[8] << 8) | src[7];
+            src += 9;
+            next = src;
+            data_020c6b14.mUnk_10[i]->mUnk_04 =
+                func_0201c430(data_020c6b14.mUnk_174c * data_020c6b14.mUnk_10[i]->mUnk_01 * 5);
+            if (data_020c6b14.mUnk_10[i]->mUnk_04 == NULL) {
+                OS_Terminate();
+            }
+            pattern = data_020c6b14.mUnk_10[i]->mUnk_04;
+            for (row = 0; row < data_020c6b14.mUnk_10[i]->mUnk_01; row++) {
+                for (channel = 0; channel < data_020c6b14.mUnk_174c; channel++) {
+                    u8 flags = *src++;
+
+                    if (flags & 0x80) {
+                        if (flags & 1) {
+                            *pattern++ = *src++;
+                        } else {
+                            *pattern++ = 0xff;
+                        }
+                        if (flags & 2) {
+                            *pattern++ = *src++;
+                        } else {
+                            *pattern++ = 0;
+                        }
+                        if (flags & 4) {
+                            *pattern++ = *src++;
+                        } else {
+                            *pattern++ = 0;
+                        }
+                        if (flags & 8) {
+                            *pattern++ = *src++;
+                        } else {
+                            *pattern++ = 0xff;
+                        }
+                        if (flags & 0x10) {
+                            *pattern++ = *src++;
+                        } else {
+                            *pattern++ = 0;
+                        }
+                    } else {
+                        pattern[0] = flags;
+                        pattern[1] = src[0];
+                        pattern[2] = src[1];
+                        pattern[3] = src[2];
+                        pattern[4] = src[3];
+                        src += 4;
+                        pattern += 5;
+                    }
+                }
+            }
+            src = next + size;
+        }
+
+        instruments = func_0201c430(data_020c6b14.mUnk_174e * sizeof(TrackerInstrument));
+        data_020c6b14.mUnk_08 = instruments;
+        if (instruments == NULL) {
+            OS_Terminate();
+        }
+        left = data_020c6b14.mUnk_174e * 2;
+        samples = func_0201c430(left * sizeof(TrackerSample));
+        data_020c6b14.mUnk_0c = samples;
+        if (samples == NULL) {
+            OS_Terminate();
+        }
+        for (i = 0; i < data_020c6b14.mUnk_174e; i++) {
+            u8 *start;
+            u32 header;
+
+            start = src;
+            data_020c6b14.mUnk_410[i] = instruments;
+            instruments++;
+            header = (src[3] << 24) | (src[2] << 16) | (src[1] << 8) | src[0];
+            data_020c6b14.mUnk_410[i]->mUnk_26c = (src[0x1c] << 8) | src[0x1b];
+            if (data_020c6b14.mUnk_410[i]->mUnk_26c != 0) {
+                src += 0x21;
+                for (j = 0; j < 0x60; j++) {
+                    data_020c6b14.mUnk_410[i]->mUnk_26d[j] = *src++;
+                }
+                for (j = 0; j < 12; j++) {
+                    data_020c6b14.mUnk_410[i]->mUnk_200.mUnk_00[j] = (src[1] << 8) | src[0];
+                    data_020c6b14.mUnk_410[i]->mUnk_200.mUnk_18[j] = (src[3] << 8) | src[2];
+                    src += 4;
+                }
+                for (j = 0; j < 12; j++) {
+                    data_020c6b14.mUnk_410[i]->mUnk_236.mUnk_00[j] = (src[1] << 8) | src[0];
+                    data_020c6b14.mUnk_410[i]->mUnk_236.mUnk_18[j] = (src[3] << 8) | src[2];
+                    src += 4;
+                }
+                data_020c6b14.mUnk_410[i]->mUnk_200.mUnk_30 = src[0];
+                data_020c6b14.mUnk_410[i]->mUnk_236.mUnk_30 = src[1];
+                data_020c6b14.mUnk_410[i]->mUnk_200.mUnk_31 = src[2];
+                data_020c6b14.mUnk_410[i]->mUnk_200.mUnk_32 = src[3];
+                data_020c6b14.mUnk_410[i]->mUnk_200.mUnk_33 = src[4];
+                data_020c6b14.mUnk_410[i]->mUnk_236.mUnk_31 = src[5];
+                data_020c6b14.mUnk_410[i]->mUnk_236.mUnk_32 = src[6];
+                data_020c6b14.mUnk_410[i]->mUnk_236.mUnk_33 = src[7];
+                data_020c6b14.mUnk_410[i]->mUnk_200.mUnk_34 = src[8];
+                data_020c6b14.mUnk_410[i]->mUnk_236.mUnk_34 = src[9];
+                data_020c6b14.mUnk_410[i]->mUnk_2cd = src[10];
+                data_020c6b14.mUnk_410[i]->mUnk_2ce = src[11];
+                data_020c6b14.mUnk_410[i]->mUnk_2cf = src[12];
+                data_020c6b14.mUnk_410[i]->mUnk_2d0 = src[13];
+                data_020c6b14.mUnk_410[i]->mUnk_2d2 = ((src[15] << 8) | src[14]) * 2;
+                src += 16;
+                src += header - (src - start);
+                for (j = 0; j < data_020c6b14.mUnk_410[i]->mUnk_26c; j++) {
+                    if (left == 0) {
+                        OS_Terminate();
+                    }
+                    left--;
+                    data_020c6b14.mUnk_410[i]->mUnk_000[j] = samples;
+                    samples++;
+                    data_020c6b14.mUnk_410[i]->mUnk_000[j]->mUnk_00 =
+                        (src[3] << 24) | (src[2] << 16) | (src[1] << 8) | src[0];
+                    data_020c6b14.mUnk_410[i]->mUnk_000[j]->mUnk_04 =
+                        (src[7] << 24) | (src[6] << 16) | (src[5] << 8) | src[4];
+                    data_020c6b14.mUnk_410[i]->mUnk_000[j]->mUnk_08 =
+                        (src[11] << 24) | (src[10] << 16) | (src[9] << 8) | src[8];
+                    data_020c6b14.mUnk_410[i]->mUnk_000[j]->mUnk_12 = src[12];
+                    data_020c6b14.mUnk_410[i]->mUnk_000[j]->mUnk_13 = src[13];
+                    data_020c6b14.mUnk_410[i]->mUnk_000[j]->mUnk_14 = src[14];
+                    data_020c6b14.mUnk_410[i]->mUnk_000[j]->mUnk_16 = src[15];
+                    data_020c6b14.mUnk_410[i]->mUnk_000[j]->mUnk_15 = src[16];
+                    if (data_020c6b14.mUnk_410[i]->mUnk_000[j]->mUnk_00 != 0) {
+                        MI_CpuCopy8(src + 0x12, name, 0x16);
+                        name[0x16] = 0;
+                        data_020c6b14.mUnk_410[i]->mUnk_000[j]->mUnk_10 = func_02035bcc(name, b);
+                        data_020c6b14.mUnk_410[i]->mUnk_000[j]->mUnk_0c =
+                            func_0202e86c(data_020c6b14.mUnk_410[i]->mUnk_000[j]->mUnk_10);
+                    }
+                    src += 0x28;
+                }
+            } else {
+                src += header - (src - start);
+            }
+        }
+    }
+    data_020c6b14.mUnk_1744 = 16 - data_020c6b14.mUnk_174c;
+    data_020c6b14.mUnk_1718 = 0;
+    data_020c18bc.mUnk_46c |= 0x1000000;
+    data_020c648c.mUnk_181 = data_020c6b14.mUnk_1744;
+    func_0202f084();
+    func_02035c7c(c, (s16) d);
+    data_020c6b14.mUnk_1745 = 0;
+}
 
 // Releases everything the loaded song allocated and resets the player; with a == 1 while a song plays it
 // only requests a fade-out (mode 2).
