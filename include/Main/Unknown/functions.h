@@ -46,11 +46,10 @@ void func_02028928(u16 *data, const u8 *table, u32 count);
 void func_02028980(s16 *block, int comp, s16 *maxcode, u8 *valptr, u16 *mincode, u8 *huffval, s16 *dc,
                    const u8 *zigzag);
 void func_02028b8c(u8 *blocks, u16 *out, u8 *clamp);
-void func_02028f0c(int a, int b, int c, int d, int e, int f, int g, u8 (*h)(void), int i);
-int func_020290ac(const char *a, const char *b);
 void func_020292f4(const char *text);
 char *func_0202938c(char *dst, const char *src);
 u8 func_0202a188(void);
+void func_0202a194(void);
 Unk_EventRec *func_0202a1a4(void);
 void func_0202a1cc(void);
 void func_0202a1ec(u8 (*callback)(void));

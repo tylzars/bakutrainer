@@ -9,6 +9,7 @@
 #include <Main/Unknown/globals.h>
 #include <Main/Unknown/language_menu.h>
 #include <Main/Unknown/text_draw.h>
+#include <Main/Unknown/script_records.h>
 #include <Main/clib.h>
 #include <nitro/os.h>
 #include <stdio.h>
@@ -23,9 +24,9 @@ void func_0200f374(void) {
     func_02010294(0x180, 1, 1);
     if (data_0204e378[idx].mUnk_00 >= 0) {
         func_0200f848(data_0204e378[idx].mUnk_00, data_0204e378[idx].mUnk_04);
-        data_020c642c.mUnk_40 = 1;
+        data_020c61ac.mUnk_280.mUnk_40 = 1;
     } else {
-        data_020c642c.mUnk_40 = 0;
+        data_020c61ac.mUnk_280.mUnk_40 = 0;
     }
     func_0201dde0(0x237, 2);
     func_02024208();

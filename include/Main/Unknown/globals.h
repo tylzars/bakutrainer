@@ -440,7 +440,21 @@ typedef struct Unk_0204e378 {
 } Unk_0204e378;
 
 typedef struct Unk_020c642c {
-    u8 mUnk_00[0x40];
+    u8 mUnk_00[0x14];
+    u8 mUnk_14;
+    u8 mUnk_15;
+    u8 mUnk_16[6];
+    s32 mUnk_1c;
+    u8 mUnk_20[8];
+    u8 (*mUnk_28)(void);
+    u16 mUnk_2c;
+    u16 mUnk_2e;
+    u16 mUnk_30;
+    u8 mUnk_32[2];
+    s32 mUnk_34;
+    s32 mUnk_38;
+    u16 mUnk_3c;
+    u8 mUnk_3e[2];
     s32 mUnk_40;
 } Unk_020c642c;
 
@@ -467,21 +481,53 @@ typedef struct Unk_EventRec {
     u8 mUnk_04[0x22 - 4];
 } Unk_EventRec;
 
+typedef struct Unk_020c61ac_Slot {
+    u8 mUnk_00[0x12];
+    s16 mUnk_12;
+    u8 mUnk_14[2];
+} Unk_020c61ac_Slot;
+
 typedef struct Unk_020c61ac {
-    u8 mUnk_00[0x1a];
+    s32 mUnk_00;
+    s32 mUnk_04;
+    u16 mUnk_08;
+    u16 mUnk_0a;
+    u16 mUnk_0c;
+    u16 mUnk_0e;
+    u16 mUnk_10;
+    u8 mUnk_12[2];
+    u16 mUnk_14;
+    u16 mUnk_16;
+    u16 mUnk_18;
     u8 mUnk_1a;
     u8 mUnk_1b;
     u8 mUnk_1c_0 : 2;
     u8 mUnk_1c_2 : 1;
-    u8 mUnk_1c_3 : 5;
-    u8 mUnk_1d[3];
+    u8 mUnk_1c_3 : 1;
+    u8 mUnk_1c_4 : 4;
+    u8 mUnk_1d;
+    u16 mUnk_1e;
     u16 mUnk_20;
-    u8 mUnk_22[8];
+    u8 mUnk_22[2];
+    u16 mUnk_24;
+    u16 mUnk_26;
+    u16 mUnk_28;
     s16 mUnk_2a;
+    u8 *mUnk_2c;
+    u8 mUnk_30[2];
+    u16 mUnk_32;
+    u8 mUnk_34[0x58 - 0x34];
+    void *mUnk_58;
+    Unk_020c61ac_Slot *mUnk_5c;
+    void *mUnk_60;
+    void *mUnk_64;
+    void *mUnk_68;
+    void *mUnk_6c;
+    u8 mUnk_70[0x280 - 0x70];
+    Unk_020c642c mUnk_280;
 } Unk_020c61ac;
 
 extern u8 data_020ae464[];
-extern Unk_020c642c data_020c642c;
 extern Unk_020c61ac data_020c61ac;
 extern const Unk_0204e378 data_0204e378[];
 
