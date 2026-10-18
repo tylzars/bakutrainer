@@ -70,7 +70,11 @@ typedef void (*StateFunc)(void);
 
 extern GameFlow data_020b1194;
 extern StateD data_020c1cbc;
-extern u8 data_020c1b5c[];
+typedef struct Unk_020c1b5c {
+    u8 mUnk_00[0xc];
+    u8 mFlag : 1;
+} Unk_020c1b5c;
+extern Unk_020c1b5c data_020c1b5c;
 extern u8 data_020c1bbc[];
 extern u8 data_020c1d3c[];
 extern u8 data_020c14b4[];
@@ -94,7 +98,7 @@ typedef struct Unk_020c1760 {
 extern Unk_020c1760 data_020c1760;
 
 typedef struct Unk_020b10fc {
-    u8 mUnk_00[4];
+    s32 mUnk_00;
     s32 mUnk_04;
     s32 mUnk_08;
     s32 mUnk_0c;
@@ -133,6 +137,7 @@ extern u32 data_020b1084;
 // Word tables and constant blocks in the code area.
 extern const u32 data_0201abbc[];
 extern const u8 data_0201a61c[];
+extern const u8 data_0201a680[];
 extern const u8 data_0201a64e[];
 extern const u32 data_0204e0cc[];
 extern const u32 data_0204e0d4[];

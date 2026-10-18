@@ -1957,6 +1957,7 @@ from:0x0200d65c kind:thumb_call to:0x0201fb24 module:main
 from:0x0200d674 kind:thumb_call to:0x0201fbe4 module:main
 from:0x0200d696 kind:thumb_call to:0x0200bffc module:main
 from:0x0200d6a0 kind:load to:0x02063940 module:main
+from:0x0200d6ac kind:load to:0x0201a680 module:main
 from:0x0200d6c0 kind:load to:0x02021e45 module:main
 from:0x0200d6e4 kind:load to:0x020abfc0 module:main
 from:0x0200d6e8 kind:load to:0x020ace4c module:main

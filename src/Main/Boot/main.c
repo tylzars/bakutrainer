@@ -9,7 +9,7 @@ void main(void) {
 
     data_020c1cbc.mUnk_6c = 0;
     if (*(vu16 *) 0x027ffc40 != 2) {
-        data_020c1b5c[7] = 0;
+        data_020c1b5c.mUnk_00[7] = 0;
         func_0201b7e0(0xfa);
         func_0201eb20();
     }

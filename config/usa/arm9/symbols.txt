@@ -465,6 +465,7 @@ func_0201a50c kind:function(thumb,size=0xf4) addr:0x0201a50c
 func_0201a600 kind:function(thumb,size=0x8) addr:0x0201a600
 data_0201a61c kind:data(any) addr:0x0201a61c
 data_0201a64e kind:data(any) addr:0x0201a64e
+data_0201a680 kind:data(any) addr:0x0201a680
 data_0201abbc kind:data(any) addr:0x0201abbc
 data_0201abec kind:data(word[39]) addr:0x0201abec
 func_0201b7e0 kind:function(thumb,size=0xc) addr:0x0201b7e0
