@@ -709,7 +709,7 @@ void func_020126a0(int stage) {
             x = 0x39 - alpha;
             func_0202cf08(0xda, x, 0x12, 0x8c, 1);
             func_020215fc(x, 0x12, data_0201a61c, func_0200f9f0(0x10), 0, 0xf0, 0x10, 1);
-            data_020c5e44.mUnk_34c = 1;
+            data_020c6144.mUnk_4c = 1;
             func_0202cf08(0x800017, 0, 0, 0x64, 1);
             for (i = 0, y = 0x54; i < 3; i++, y += 0x16) {
                 id = data_020b6ee0.mUnk_1000[i];

@@ -231,10 +231,10 @@ static inline void G3_LightColor(u32 num, u16 color) {
 void func_0200be50(u32 num, s8 x, s8 y, s8 z, u16 color) {
     G3_LoadMtx43(&data_020c3e80);
     reg_G3X_MTX_MODE = 2;
-    data_020c5e44.mUnk_35b = 0;
+    data_020c6144.mUnk_5b = 0;
     G3_LightVector(num, x << 5, y << 5, z << 5);
     G3_LightColor(num, color);
-    data_020c5e44.mUnk_35b |= 1 << num;
+    data_020c6144.mUnk_5b |= 1 << num;
 }
 
 void func_0200bec0(VecFx32 *out, int a, int b, int scale) {
@@ -249,9 +249,9 @@ void func_0200bec0(VecFx32 *out, int a, int b, int scale) {
 }
 
 void func_0200bf38(u32 value) {
-    data_020c5e44.mUnk_314 = (value << 16) / 360;
-    data_020c5e44.mUnk_316 = data_020c5e44.mUnk_314;
-    data_020c5e44.mUnk_318 = data_020c5e44.mUnk_316;
+    data_020c6144.mUnk_14 = (value << 16) / 360;
+    data_020c6144.mUnk_16 = data_020c6144.mUnk_14;
+    data_020c6144.mUnk_18 = data_020c6144.mUnk_16;
 }
 
 u32 func_0200bf54(int n) {

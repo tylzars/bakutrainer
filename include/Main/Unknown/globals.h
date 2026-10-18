@@ -218,17 +218,10 @@ extern const u32 data_0204e0f0[];
 extern const u32 data_0204e0e8[];
 extern const u32 data_0204e144[];
 
-// Camera block: two position vectors the scene moves.
-typedef struct Unk_020c5f04 {
-    u8 mUnk_000[0x204];
-    VecFx32 mUnk_204;
-    u8 mUnk_210[0x228 - 0x210];
-    VecFx32 mUnk_228;
-    u8 mUnk_234[0x240 - 0x234];
-} Unk_020c5f04;
-
-// Camera and projection state (the ARM render code also addresses it). Member 0xc0 is the camera block the scene
-// moves; 0x314/0x316/0x318 are angles, 0x330 and 0x338/0x33c are flags, 0x344 a register value.
+// Camera and projection state (the ARM render code also addresses it), declared 0x120 bytes: it ends with the
+// eight vectors at 0xc0, and the scene code reaches the two camera positions further on as mUnk_0c0[43] and
+// mUnk_0c0[46], past the declared end. The declared size is what orders the stores to mUnk_a4/mUnk_b0 before
+// later loads from other objects.
 typedef struct CameraState {
     u8 mUnk_000[0x28];
     void (*mUnk_28)(void);
@@ -255,29 +248,39 @@ typedef struct CameraState {
     VecFx32 mUnk_b0;
     u8 mUnk_bc;
     u8 mUnk_bd[3];
-    Unk_020c5f04 mUnk_0c0;
-    u8 mUnk_300[0x310 - 0x300];
-    u8 mUnk_310;
-    u8 mUnk_311[3];
-    u16 mUnk_314;
-    u16 mUnk_316;
-    u16 mUnk_318;
-    u8 mUnk_31a[0x330 - 0x31a];
-    u16 mUnk_330;
-    u8 mUnk_332[0x338 - 0x332];
-    s32 mUnk_338;
-    s32 mUnk_33c;
-    u16 mUnk_340;
-    u8 mUnk_342[2];
-    s32 mUnk_344;
-    u8 mUnk_348[0x34c - 0x348];
-    u8 mUnk_34c;
-    u8 mUnk_34d[0x354 - 0x34d];
-    u16 mUnk_354;
-    u8 mUnk_356[0x35b - 0x356];
-    u8 mUnk_35b;
+    // The game code's view of the camera module's object ends at 0x120: the vectors further in (0x2c4 and 0x2e8)
+    // are reached as mUnk_0c0[43] and mUnk_0c0[46], past this array's end. The bytes show that view size (the
+    // accesses anchor like members of this object, and a larger declared size changes four functions).
+    VecFx32 mUnk_0c0[8];
 } CameraState;
 extern CameraState data_020c5e44;
+
+// Camera view settings after the camera state: 0x14/0x16/0x18 are angles, 0x30 and 0x38/0x3c are flags, 0x44 a
+// register value.
+typedef struct Unk_020c6144 {
+    u8 mUnk_00[0x10];
+    u8 mUnk_10;
+    u8 mUnk_11[3];
+    u16 mUnk_14;
+    u16 mUnk_16;
+    u16 mUnk_18;
+    u8 mUnk_1a[0x30 - 0x1a];
+    u16 mUnk_30;
+    u8 mUnk_32[0x38 - 0x32];
+    s32 mUnk_38;
+    s32 mUnk_3c;
+    u16 mUnk_40;
+    u8 mUnk_42[2];
+    s32 mUnk_44;
+    u8 mUnk_48[0x4c - 0x48];
+    u8 mUnk_4c;
+    u8 mUnk_4d[0x54 - 0x4d];
+    u16 mUnk_54;
+    u8 mUnk_56[0x5b - 0x56];
+    u8 mUnk_5b;
+    u8 mUnk_5c[0x68 - 0x5c];
+} Unk_020c6144;
+extern Unk_020c6144 data_020c6144;
 
 // Tables in the code area and state objects the field and page screens read.
 extern const u16 data_0204e138[];

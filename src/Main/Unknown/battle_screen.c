@@ -168,8 +168,8 @@ void func_020074ac(void) {
     func_020220c8(0x10d0);
     func_020325b0(a[sel], 0, b[sel], 0, 0, 0);
     data_020c5e44.mUnk_28 = func_020071a8;
-    data_020c5e44.mUnk_354 = 25 << 6;
-    data_020c5e44.mUnk_344 = 0x128e000;
+    data_020c6144.mUnk_54 = 25 << 6;
+    data_020c6144.mUnk_44 = 0x128e000;
     data_020c5e44.mUnk_bc = 1;
     memset(&data_020b6ee0.mUnk_f9c, 0, 0x44);
     data_020b6ee0.mUnk_fc8.x = -1;

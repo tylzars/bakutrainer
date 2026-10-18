@@ -334,6 +334,11 @@ Constants held in registers:
   different objects never do. So when a store seems to pin a later load, check the declared size: an object
   declared too small pins its stores past the end, and its real size frees them. The pool-word anchor can't tell
   a member of a big object from a store past a smaller object's end; this scheduling difference can.
+  Exact form (from the compiler): a Thumb access re-anchored to obj+A (A = offset & ~imm range) is checked as
+  A + offset + 1 > declared size, so in a big object every access far enough in is already worst-case and the
+  declared size only decides accesses below about half of it. Of the out-of-bounds spellings only `obj.arr[k]` /
+  `&obj.arr[k]` with k past the end folds into the pool word and anchors like a member; casts compute the address
+  at run time.
 - Globals: a store through any pointer makes the compiler re-read a global declared with a complete type
   (`extern T g;`, `extern T g[1];`) but not one declared `extern T g[];` (kept in a register / hoisted). Give globals
   their real size (pad a struct to the size its block has in the binary). Loads through a pointer local die at any

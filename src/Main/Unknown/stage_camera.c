@@ -1024,8 +1024,8 @@ void func_020182cc(void) {
     func_02021fb0(0x1c7, 0x1c6, 0x180, 0x10);
     func_020325b0(data_020501c4[data_020b6ee0.mUnk_a8f2], 0, data_02050194[data_020b6ee0.mUnk_a8f2], 0, 0, 0);
     data_020c5e44.mUnk_28 = func_02015d48;
-    data_020c5e44.mUnk_354 = 0x640;
-    data_020c5e44.mUnk_344 = 0x186a000;
+    data_020c6144.mUnk_54 = 0x640;
+    data_020c6144.mUnk_44 = 0x186a000;
     func_020104c0(3, 0x4c);
     MI_CpuFill8(&rec->mDraw, 0, 0x44);
     func_02031fc4(0, &rec->mUnk_1a0);
@@ -1210,9 +1210,9 @@ void func_0201896c(void) {
     func_02021fb0(0x1c7, 0x1c6, 0x180, 0x10);
     func_020325b0(0x1db, 0, 0x1dc, 0, 0, 0);
     data_020c5e44.mUnk_28 = func_02015d48;
-    data_020c5e44.mUnk_354 = 0x640;
+    data_020c6144.mUnk_54 = 0x640;
     func_020104e0(6, 0x4c, 3);
-    data_020c5e44.mUnk_344 = 0x186a000;
+    data_020c6144.mUnk_44 = 0x186a000;
     func_02031fc4(0, &offset);
     func_02033df4(0x18);
     data_020c5e44.mUnk_bc = 0;
@@ -1909,8 +1909,8 @@ void func_02019df8(void) {
     func_02021fb0(0x1c7, 0x1c6, 0x100, 0x10);
     func_020325b0(0xdda, 0, 0xddb, 0, 0, 0);
     data_020c5e44.mUnk_28 = func_02019b38;
-    data_020c5e44.mUnk_354 = 0x640;
-    data_020c5e44.mUnk_344 = 0x9c4000;
+    data_020c6144.mUnk_54 = 0x640;
+    data_020c6144.mUnk_44 = 0x9c4000;
     func_02031fc4(0, &data_020c180c);
     func_02031fc4(1, &data_020c1800);
     func_02031fc4(0, &data_020c5e44.mUnk_80);

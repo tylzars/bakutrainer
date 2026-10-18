@@ -410,8 +410,8 @@ void func_02014190(void) {
     func_020220c8(0x10d0);
     func_020325b0(0xf87, 0, 0xf88, 0, 0, 0);
     data_020c5e44.mUnk_28 = func_0201418c;
-    data_020c5e44.mUnk_354 = 0x640;
-    data_020c5e44.mUnk_344 = 0x128e000;
+    data_020c6144.mUnk_54 = 0x640;
+    data_020c6144.mUnk_44 = 0x128e000;
     memset(&data_020b6ee0.mUnk_f9c, 0, 0x44);
     func_02031fc4(0, &data_020b6ee0.mUnk_f9c);
     data_020b6ee0.mUnk_fdf &= ~7;
