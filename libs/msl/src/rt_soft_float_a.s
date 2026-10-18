@@ -282,6 +282,11 @@ _dadd:
 ; shift = 0x41e - biased exponent. shift <= 0 (|x| >= 2^31, Inf, NaN) saturates by sign
 ; to 0x7fffffff / 0x80000000; shift >= 32 (|x| < 1) gives 0; otherwise the top 32
 ; mantissa bits (hidden bit included) are shifted right by `shift` and negated if x < 0.
+; Not compiled: `subs r2, r2, r3, lsr #0x14` is followed by `ble`.
+; The compiler makes a flag-setting subtract only by folding a following `cmp rd, #0` into it, which leaves
+; the branch testing eq, ne, mi or pl (ge and lt become pl and mi, hs becomes always; lo, gt and le are not
+; folded), or inside 64-bit subtract, compare and shift sequences, where the next sbc, sbcs or conditional orr
+; reads the flags.
 	.global _dfix
 	.type _dfix, @function
 _dfix:
@@ -315,6 +320,11 @@ _dfix:
 ; shift = 0x43e - biased exponent. Negative inputs give 0 (a negative NaN gives all ones);
 ; shift < 0 saturates to all ones; shift >= 64 gives 0; otherwise the 53-bit mantissa,
 ; left-justified in a 64-bit value, is shifted right by `shift`.
+; Not compiled: `subs r2, r2, r1, lsr #0x14` is followed by `blt`.
+; The compiler makes a flag-setting subtract only by folding a following `cmp rd, #0` into it, which leaves
+; the branch testing eq, ne, mi or pl (ge and lt become pl and mi, hs becomes always; lo, gt and le are not
+; folded), or inside 64-bit subtract, compare and shift sequences, where the next sbc, sbcs or conditional orr
+; reads the flags.
 	.global _ll_ufrom_d
 	.type _ll_ufrom_d, @function
 _ll_ufrom_d:

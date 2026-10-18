@@ -14,6 +14,9 @@
 ; computed jump (add pc, pc, r2*12) lands in an unrolled sequence of 32 three-instruction
 ; steps, each of which shifts the partial remainder in r3, subtracts the divisor when it fits,
 ; and shifts the new quotient bit into r0. The signs are then applied.
+; Not compiled: `add pc, pc, r2, lsl #0x2` jumps into the middle of the unrolled divide steps. The compiler
+; writes pc with an add only to dispatch a switch, and every slot it can land on is a one-instruction `b` to a
+; case.
 	.global _s32_div_f
 	.type _s32_div_f, @function
 _s32_div_f:

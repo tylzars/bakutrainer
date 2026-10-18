@@ -105,6 +105,8 @@ s32 OS_UnlockCartridge(u16 lockID) {
 }
 
 // Jumps straight to OS_UnlockCartridge with the argument unchanged.
+// Not compiled: jumps on through r1. The compiler turns a final call into a jump only when it calls a named
+// function, and then always as `ldr ip, =f; bx ip` (`b f` without interworking); any other call saves lr.
 asm s32 OS_UnLockCartridge(u16 lockID) {
     ldr r1, =OS_UnlockCartridge
     bx r1

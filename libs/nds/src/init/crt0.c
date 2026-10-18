@@ -109,6 +109,10 @@ L_ex2:
 }
 
 // Fills size bytes at dst (r1, word aligned) with the word in r0, a word at a time.
+// Not compiled: stores with `stmia r1!, {r0}` (one register, base written back).
+// The compiler writes back an ldm/stm base only in push/pop on sp and in struct copies and fills, whose
+// registers are always r0-r3 (r0-r1 for a two-word fill); the pass that merges loads or stores into one ldm/stm
+// never adds writeback.
 asm void func_02000954(u32 val, u32 *dst, u32 size) {
     add ip, r1, r2                  // end address
 L_loop:

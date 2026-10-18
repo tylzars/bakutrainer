@@ -610,6 +610,11 @@ _f2d:
 ; The shift is 0x9e minus the biased exponent; if it is not positive (|a| >= 2^31, infinity,
 ; NaN) the result saturates to 0x7fffffff for a non-negative input or 0x80000000 for a negative
 ; one. Otherwise the mantissa with its implicit bit is shifted right and negated if a < 0.
+; Not compiled: `subs r2, r2, r1, lsr #0x17` is followed by `ble`.
+; The compiler makes a flag-setting subtract only by folding a following `cmp rd, #0` into it, which leaves
+; the branch testing eq, ne, mi or pl (ge and lt become pl and mi, hs becomes always; lo, gt and le are not
+; folded), or inside 64-bit subtract, compare and shift sequences, where the next sbc, sbcs or conditional orr
+; reads the flags.
 	.global _ffix
 	.type _ffix, @function
 _ffix:

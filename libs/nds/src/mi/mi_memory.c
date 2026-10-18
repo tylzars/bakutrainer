@@ -1,6 +1,11 @@
 #include <nitro/mi.h>
 
 // Stores the halfword data over size bytes at dest, two bytes at a time.
+// Not compiled: `blt L2; b L3; L2:` branches over a lone `b` that nothing else reaches. With optimisation on, the
+// compiler rewrites each such pair into one inverted branch until none is left; the merges that run after that
+// could only leave a moved instruction before `blt L2` (only the compare is there) or at L3 (which starts with a
+// branch). Without optimisation no parameter stays in its incoming register unless an asm statement names it,
+// and this routine works on r0-r2 as they arrive.
 asm void MIi_CpuClear16(u16 data, void *dest, u32 size) {
     mov r3, #0
 L1:
@@ -20,6 +25,11 @@ L5:
 }
 
 // Copies size bytes from src to dest as halfwords.
+// Not compiled: `blt L2; b L3; L2:` branches over a lone `b` that nothing else reaches. With optimisation on, the
+// compiler rewrites each such pair into one inverted branch until none is left; the merges that run after that
+// could only leave a moved instruction before `blt L2` (only the compare is there) or at L3 (which starts with a
+// branch). Without optimisation no parameter stays in its incoming register unless an asm statement names it,
+// and this routine works on r0-r2 as they arrive.
 asm void MIi_CpuCopy16(const void *src, void *dest, u32 size) {
     mov ip, #0
 L1:
@@ -44,6 +54,10 @@ L7:
 }
 
 // Stores the word data over size bytes at dest.
+// Not compiled: stores with `stmia r1!, {r0}` (one register, base written back).
+// The compiler writes back an ldm/stm base only in push/pop on sp and in struct copies and fills, whose
+// registers are always r0-r3 (r0-r1 for a two-word fill); the pass that merges loads or stores into one ldm/stm
+// never adds writeback.
 asm void MIi_CpuClear32(u32 data, void *dest, u32 size) {
     add ip, r1, r2
 L1:
@@ -58,6 +72,10 @@ L3:
 }
 
 // Copies size bytes from src to dest as words.
+// Not compiled: copies with `ldmia r0!, {r2}` and `stmia r1!, {r2}` (one register, base written back).
+// The compiler writes back an ldm/stm base only in push/pop on sp and in struct copies and fills, whose
+// registers are always r0-r3 (r0-r1 for a two-word fill); the pass that merges loads or stores into one ldm/stm
+// never adds writeback.
 asm void MIi_CpuCopy32(const void *src, void *dest, u32 size) {
     add ip, r1, r2
 L1:
@@ -78,6 +96,10 @@ L5:
 
 // Stores the word data over size bytes at dest: eight words per store while 32 bytes remain,
 // then single words.
+// Not compiled: stores with `stmia r1!, {r0, r2-r8}` and `stmia r1!, {r0}` (base written back).
+// The compiler writes back an ldm/stm base only in push/pop on sp and in struct copies and fills, whose
+// registers are always r0-r3 (r0-r1 for a two-word fill); the pass that merges loads or stores into one ldm/stm
+// never adds writeback.
 asm void MIi_CpuClearFast(u32 data, void *dest, u32 size) {
     stmfd sp!, {r4, r5, r6, r7, r8, r9}
     add r9, r1, r2
@@ -150,6 +172,10 @@ L10:
 }
 
 // Copies 32 bytes (eight words) from src to dest.
+// Not compiled: copies with `ldmia r0!, {r2, r3, ip}` and `stmia r1!, {r2, r3, ip}` (base written back).
+// The compiler writes back an ldm/stm base only in push/pop on sp and in struct copies and fills, whose
+// registers are always r0-r3 (r0-r1 for a two-word fill); the pass that merges loads or stores into one ldm/stm
+// never adds writeback.
 asm void func_0203fda0(const void *src, void *dest) {
     ldmia r0!, {r2, r3, ip}
     stmia r1!, {r2, r3, ip}
@@ -161,6 +187,10 @@ asm void func_0203fda0(const void *src, void *dest) {
 }
 
 // Copies 36 bytes (nine words) from src to dest.
+// Not compiled: copies with `ldmia r0!, {r2, r3, ip}` and `stmia r1!, {r2, r3, ip}` (base written back).
+// The compiler writes back an ldm/stm base only in push/pop on sp and in struct copies and fills, whose
+// registers are always r0-r3 (r0-r1 for a two-word fill); the pass that merges loads or stores into one ldm/stm
+// never adds writeback.
 asm void MI_Copy36B(const void *src, void *dest) {
     ldmia r0!, {r2, r3, ip}
     stmia r1!, {r2, r3, ip}
@@ -172,6 +202,10 @@ asm void MI_Copy36B(const void *src, void *dest) {
 }
 
 // Copies 48 bytes (twelve words) from src to dest.
+// Not compiled: copies with `ldmia r0!, {r2, r3, ip}` and `stmia r1!, {r2, r3, ip}` (base written back).
+// The compiler writes back an ldm/stm base only in push/pop on sp and in struct copies and fills, whose
+// registers are always r0-r3 (r0-r1 for a two-word fill); the pass that merges loads or stores into one ldm/stm
+// never adds writeback.
 asm void func_0203fdd8(const void *src, void *dest) {
     ldmia r0!, {r2, r3, ip}
     stmia r1!, {r2, r3, ip}
@@ -186,6 +220,11 @@ asm void func_0203fdd8(const void *src, void *dest) {
 
 // Fills size bytes at dest with the low byte of data using halfword and word stores. An odd first or
 // last byte is merged into its halfword by read-modify-write. Does nothing when size is 0.
+// Not compiled: `beq L1; b L2; L1: bx lr` branches over a lone `b` that nothing else reaches. With optimisation
+// on, the compiler rewrites each such pair into one inverted branch until none is left; the merges that run after
+// that could only leave a moved instruction before `beq L1` (only the compare is there) or at L2, and L1 returns
+// instead of falling into L2. Without optimisation no parameter stays in its incoming register unless an asm
+// statement names it, and this routine works on r0-r2 as they arrive.
 asm void MI_CpuFill8(void *dest, u8 data, u32 size) {
     cmp r2, #0
     beq L1
@@ -251,6 +290,11 @@ L12:
 // Copies size bytes from src to dest using halfword and word accesses only, for any alignment of
 // src and dest. An odd first or last byte is merged into its halfword by read-modify-write; when src
 // and dest differ in parity the source halfwords are shifted by a byte on the way.
+// Not compiled: `subs r2, r2, #2` is followed by `bcc` and `bcs`, branches on the subtract's carry.
+// The compiler makes a flag-setting subtract only by folding a following `cmp rd, #0` into it, which leaves
+// the branch testing eq, ne, mi or pl (ge and lt become pl and mi, hs becomes always; lo, gt and le are not
+// folded), or inside 64-bit subtract, compare and shift sequences, where the next sbc, sbcs or conditional orr
+// reads the flags.
 asm void MI_CpuCopy8(const void *src, void *dest, u32 size) {
     cmp r2, #0
     beq L1

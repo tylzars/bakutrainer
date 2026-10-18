@@ -3,6 +3,10 @@
 #define MUL33(a, b) ((fx32) (((fx64) (a) * (b)) >> FX32_SHIFT))
 
 // Writes the transpose of a 3x3 matrix.
+// Not compiled: stores with `stmia r1!, {r2, r5, r8}` (base written back).
+// The compiler writes back an ldm/stm base only in push/pop on sp and in struct copies and fills, whose
+// registers are always r0-r3 (r0-r1 for a two-word fill); the pass that merges loads or stores into one ldm/stm
+// never adds writeback.
 // clang-format off
 asm void func_0203b8bc(const MtxFx33 *src, MtxFx33 *dst) {
     stmfd sp!, {r4, r5, r6, r7, r8, r9}

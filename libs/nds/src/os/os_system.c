@@ -76,6 +76,11 @@ asm u32 OS_GetProcMode(void) {
 
 // OS_SpinWait(n): busy loop; subtracts 4 from n until the subtraction borrows
 // (about n/4 iterations).
+// Not compiled: the loop is `subs r0, r0, #4; bhs L1`, a branch on the subtract's carry.
+// The compiler makes a flag-setting subtract only by folding a following `cmp rd, #0` into it, which leaves
+// the branch testing eq, ne, mi or pl (ge and lt become pl and mi, hs becomes always; lo, gt and le are not
+// folded), or inside 64-bit subtract, compare and shift sequences, where the next sbc, sbcs or conditional orr
+// reads the flags.
 asm void OS_SpinWait(u32 n) {
 L1:
     subs r0, r0, #4
