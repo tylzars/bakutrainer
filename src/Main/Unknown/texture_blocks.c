@@ -4,6 +4,7 @@
 #include <Main/Unknown/bg_image.h>
 #include <Main/Unknown/functions.h>
 #include <Main/Unknown/vram_cache.h>
+#include <Main/Unknown/model.h>
 #include <nitro/fx.h>
 #include <nitro/mi.h>
 #include <nitro/os.h>
@@ -858,6 +859,194 @@ u32 func_0202cde4(int angle, int sx, int sy, u32 flags) {
 // Draws sprite id at x, y with width w on a layer, unrotated and at full scale (0x100).
 void func_0202cf08(int id, int x, int y, int w, int mode) {
     func_0202cf38(id, x, y, w, 0, 0x100, 0x100, mode);
+}
+
+// Draws sprite `id` of a layer (mode 1 or 2) at x, y. The low 16 bits of id select the block; bits 16 and 17 flip
+// it horizontally and vertically, bit 18 sets the semi-transparent mode, bit 19 the double size of a rotated
+// sprite, bit 20 copies the tiles straight into the layer's background VRAM instead, bit 21 draws nothing and keeps
+// the tile and palette of the first record it reaches in mUnk_b28 and mUnk_b2c, bit 22 sets attribute 2 bit 11,
+// and bit 23 hands the sprite to func_020243c0 with the alpha in bits 27-31 (0 = 31). w >> 8 is the priority and
+// its low byte the sort key of each entry. angle and the scales sx, sy (0x100 = 1) give the sprite a rotation/scale
+// matrix.
+void func_0202cf38(int id, int x, int y, int w, int angle, int sx, int sy, int mode) {
+    u32 bit;
+    u32 flags;
+    u32 aff;
+    u32 w0;
+    u16 *ids;
+    u32 b0;
+    u32 b1;
+    int b2;
+    u8 count;
+    u32 *p;
+    u16 key;
+    int dx;
+    int dy;
+    int dbl;
+    u32 n;
+    int prio;
+    s8 rect[8];
+    Unk_020c2694 *half;
+
+    key = id;
+    flags = id & 0xffff0000;
+    bit = mode == 1 ? 1 : 2;
+    half = &data_020c267c.mUnk_018[mode == 2];
+    aff = -1;
+    (void) ((data_020c18bc.mUnk_46c & bit) || (id & 0x800000) || (OS_Terminate(), 0));
+    if (id == -1 || key == 0xffff) {
+        return;
+    }
+    data_020c267c.mUnk_b28 = -1;
+    data_020c267c.mUnk_b2c = -1;
+    if (id & 0x800000) {
+        u32 alpha = (u32) id >> 27;
+
+        (void) (mode == 1 || (OS_Terminate(), 0));
+        if (alpha == 0) {
+            alpha = 0x1f;
+        }
+        func_020243c0(id | flags, x, y, -w << 6, -angle << 8, sx << 4, sy << 4, alpha);
+        return;
+    }
+    p = func_0202adc0(key);
+    w0 = *p;
+    b0 = w0 & 0xff;
+    b1 = (w0 >> 8) & 0xff;
+    b2 = (w0 >> 16) & 0xff;
+    count = (w0 >> 24) & 0xff;
+    (void) (b1 != 0 || (OS_Terminate(), 0));
+    p += b0 + 1 + b1 * 2 + b2 / 2;
+    ids = (u16 *) (p - b2 / 2);
+    if (data_020c267c.mUnk_000 == 1 && data_020c267c.mUnk_010 == key) {
+        ids = &data_020c267c.mUnk_012;
+    }
+    if (sx != 0x100 || sy != 0x100 || angle != 0) {
+        int sxv;
+        int syv;
+        int cx;
+        int cy;
+
+        sxv = sx;
+        syv = sy;
+        (void) ((sx >= 0 && sy >= 0) || (OS_Terminate(), 0));
+        if (flags & 0x10000) {
+            angle = (u8) -angle;
+            sxv = -sx;
+            flags &= ~0x10000;
+        }
+        if (flags & 0x20000) {
+            angle = (u8) -angle;
+            syv = -sy;
+            flags &= ~0x20000;
+        }
+        func_0202cce0(key, *p, (u8 *) rect);
+        dbl = ((flags & 0x80000) && (angle != 0 || sx > 0x100 || sy > 0x100)) ? 1 : 0;
+        aff = func_0202cde4(angle, sxv, syv, mode);
+        // Offset from the first record's centre to the object's point, scaled and turned by the matrix.
+        cx = (-(rect[2] + (rect[4] / 2 - rect[0])) * ((s16) sx * (s16) sx)) >> 8;
+        cy = (-(rect[3] + (rect[5] / 2 - rect[1])) * ((s16) sy * (s16) sy)) >> 8;
+        cx = sxv < 0 ? -cx : cx;
+        cy = syv < 0 ? -cy : cy;
+        dx = (cx * -((Mat4 *) half->mUnk_010)[aff].mUnk_0 + cy * ((Mat4 *) half->mUnk_010)[aff].mUnk_2) >> 16;
+        dy = (cx * ((Mat4 *) half->mUnk_010)[aff].mUnk_4 - cy * ((Mat4 *) half->mUnk_010)[aff].mUnk_6) >> 16;
+        dx = sxv < 0 ? -dx : dx;
+        dy = syv < 0 ? -dy : dy;
+        dx = dx - (rect[4] >> (1 - dbl)) + rect[0] * sxv / 256 - rect[2];
+        dy = dy - (rect[5] >> (1 - dbl)) + rect[1] * syv / 256 - rect[3];
+    }
+    (void) (w < 0x400 || (OS_Terminate(), 0));
+    n = half->mUnk_57a;
+    prio = w >> 8;
+    while (count-- != 0 && n < 0x80) {
+        int px = ((TexRec *) p)->mUnk_00_0;
+        int py = ((TexRec *) p)->mUnk_00_9;
+        u32 shape = ((TexRec *) p)->mUnk_00_18;
+        u32 size = ((TexRec *) p)->mUnk_00_21;
+        u32 c = ((TexRec *) p)->mUnk_00_25;
+        u32 w1 = ((TexRec *) p)->mUnk_04;
+        u32 off = (w1 << 8) >> 8;
+        u32 pi = (w1 << 4) >> 28;
+        int cnt = shape == 1 ? 1 : (w1 >> 28) + 1;
+        int wd;
+        int ht;
+        u32 pal;
+        u16 tile;
+        u16 a0;
+        u16 a1;
+
+        wd = data_02050998[size][0];
+        ht = data_02050998[size][1];
+        p += 2;
+        if (flags & 0x10000) {
+            px = -px - wd;
+        }
+        px += x;
+        if (flags & 0x20000) {
+            py = -py - ht;
+        }
+        py += y;
+        if (aff == -1 && (px + wd < 0 || px >= 0x100 || py + ht < 0 || py >= 0xc0)) {
+            continue;
+        }
+        pal = func_0202ca80(&ids[pi], shape, cnt, mode);
+        if (flags & 0x100000) {
+            u32 base;
+            u32 dst;
+            u32 src;
+            u32 shift;
+            u32 sz;
+            u32 fl;
+            u32 bits;
+
+            (void) (func_0201db58(mode) == 0x8000 || (OS_Terminate(), 0));
+            (void) (shape == 1 || half->mUnk_57b == 0 || (OS_Terminate(), 0));
+            (void) ((flags & 0x30000) == 0 || (OS_Terminate(), 0));
+            (void) (aff == -1 || (OS_Terminate(), 0));
+            base = mode == 1 ? 0x6000000 : 0x6200000;
+            dst = base + (py * func_0201db94(mode) + px) * 2;
+            if (data_020c267c.mUnk_b2e == 2) {
+                src = c + (off << 7);
+            } else {
+                (void) (data_020c267c.mUnk_b2e == 1 || (OS_Terminate(), 0));
+                src = off << 5;
+            }
+            // shift = log2 of the width: 32 minus the leading zeros of the bits below its lowest set bit. An asm
+            // statement: clz has no C expression.
+            bits = data_02050998[size][0];
+            bits = ~bits & (bits - 1);
+            asm { clz bits, bits }
+            shift = 32 - bits;
+            sz = func_0202b32c(size, shape);
+            if (shape == 1) {
+                fl = 0;
+            } else {
+                fl = ((half->mUnk_516 - cnt) << 1) | (mode == 2);
+            }
+            func_0201c580(data_020c267c.mUnk_b26, src, dst, sz, 0, shift + (pal << 4), fl);
+            continue;
+        }
+        tile = func_0202b35c(size, off, c, shape, cnt, mode);
+        if (flags & 0x200000) {
+            data_020c267c.mUnk_b28 = tile;
+            data_020c267c.mUnk_b2c = pal;
+            return;
+        }
+        if (aff == -1) {
+            a0 = (u8) py | ((size >> 2) << 14) | ((shape == 0) << 13) | ((flags & 0x40000) >> 8);
+            a1 = (px & 0x1ff) | ((size & 3) << 14) | ((flags & 0x30000) >> 4);
+        } else {
+            a0 = (u8) (py + dy) | ((size >> 2) << 14) | ((shape == 0) << 13) | 0x100 | (dbl << 9) |
+                 ((flags & 0x40000) >> 8);
+            a1 = ((px + dx) & 0x1ff) | ((size & 3) << 14) | (aff << 9);
+        }
+        ((Oam *) half->mUnk_000)[n].mUnk_0 = a0;
+        ((Oam *) half->mUnk_000)[n].mUnk_2 = a1;
+        ((Oam *) half->mUnk_000)[n].mUnk_4 = tile | (pal << 12) | (prio << 10) | ((flags & 0x400000) >> 11);
+        ((u8 *) half->mUnk_530)[n] = w;
+        n++;
+    }
+    half->mUnk_57a = n;
 }
 
 // Looks up the point of type index in the object's record and flips it for the flip flags in bits 16 and 17 of

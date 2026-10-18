@@ -91,7 +91,7 @@ typedef struct Unk_020c267c {
     void *mUnk_004;
     u8 *mUnk_008;
     u32 mUnk_00c;
-    u8 mUnk_010[2];
+    u16 mUnk_010;
     u16 mUnk_012;
     u16 mUnk_014;
     u8 mUnk_016;

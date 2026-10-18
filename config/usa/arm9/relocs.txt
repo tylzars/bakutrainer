@@ -6100,6 +6100,7 @@ from:0x0202d78c kind:load to:0x020c18bc module:main
 from:0x0202d790 kind:load to:0x020c267c add:0xb00 module:main
 from:0x0202d794 kind:load to:0x020c267c module:main
 from:0x0202d798 kind:load to:0x020c268e module:main
+from:0x0202d79c kind:load to:0x02050998 module:main
 from:0x0202d7b0 kind:arm_call to:0x0202adc0 module:main
 from:0x0202d840 kind:arm_call to:0x0202adc0 module:main
 from:0x0202d98c kind:arm_call to:0x0203fcec module:main
