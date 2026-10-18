@@ -8,7 +8,8 @@ extern "C" {
 
 // Global state blocks. Only the members the code touches are named.
 typedef struct SystemState {
-    u8 mUnk_000[0x12];
+    u8 mUnk_000[0x10];
+    u16 mUnk_10;
     u16 mUnk_12;
     u8 mUnk_014[0x2a2 - 0x14];
     u8 mUnk_2a2;
@@ -85,6 +86,62 @@ extern StateFunc data_0204e840[STATE_COUNT];
 extern StateFunc data_0204e8a4[STATE_COUNT];
 extern StateFunc data_0204e908[STATE_COUNT];
 extern u8 data_0204e824[STATE_COUNT];
+
+typedef struct Unk_020c1760 {
+    u8 mUnk_00[0x64];
+    s32 mUnk_64;
+} Unk_020c1760;
+extern Unk_020c1760 data_020c1760;
+
+typedef struct Unk_020b10fc {
+    u8 mUnk_00[4];
+    s32 mUnk_04;
+    s32 mUnk_08;
+    s32 mUnk_0c;
+    u32 mUnk_10;
+} Unk_020b10fc;
+extern Unk_020b10fc data_020b10fc;
+extern u32 data_020b1110[];
+
+typedef struct Unk_020c2660 {
+    u8 mUnk_00[4];
+    u32 mUnk_04;
+} Unk_020c2660;
+extern Unk_020c2660 data_020c2660;
+
+typedef struct Unk_020c60c4 {
+    u8 mUnk_00[0x70];
+    s32 mUnk_70;
+} Unk_020c60c4;
+extern Unk_020c60c4 data_020c60c4;
+
+typedef struct Unk_02098d40 {
+    u8 mUnk_00[0x14];
+    u8 mUnk_14;
+} Unk_02098d40;
+extern Unk_02098d40 data_02098d40;
+
+typedef struct Unk_02098d60 {
+    u8 mUnk_00[0xc];
+    u32 mUnk_0c;
+    s32 mUnk_10;
+} Unk_02098d60;
+extern Unk_02098d60 data_02098d60;
+
+extern u32 data_020b1084;
+
+// Word tables and constant blocks in the code area.
+extern const u32 data_0201abbc[];
+extern const u8 data_0201a61c[];
+extern const u8 data_0201a64e[];
+extern const u32 data_0204e0cc[];
+extern const u32 data_0204e0d4[];
+extern const s32 data_0204e0fc[];
+extern const s32 data_0204e110[];
+extern const s32 data_0204e124[];
+extern const u32 data_0204e0f0[];
+extern const u32 data_0204e0e8[];
+extern const u32 data_0204e144[];
 
 #ifdef __cplusplus
 }

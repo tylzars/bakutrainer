@@ -1,6 +1,9 @@
 #include <Main/Unknown/functions.h>
 #include <Main/Unknown/globals.h>
 #include <Main/Unknown/falling_blocks.h>
+#include <Main/Unknown/mode_select.h>
+#include <nitro/os.h>
+#include <stdio.h>
 
 int func_02003194(int a, int b) {
     return func_02021e44(0xd66, b + a * 12);
@@ -661,4 +664,223 @@ void func_02004230(void) {
             func_0200400c(col, row);
         }
     }
+}
+
+// Redraws every cell and sprite at its position.
+void func_02004254(void) {
+    int i, j;
+    for (i = 0; i < BOARD_COLS; i++) {
+        for (j = 0; j < BOARD_ROWS; j++) {
+            func_020032e4(&data_02064828.mGrid[i][j], data_02064828.mGrid[i][j].mPos.x >> 8,
+                          data_02064828.mGrid[i][j].mPos.y >> 8, 1, 0);
+        }
+    }
+    if (data_02064828.mCount != 0) {
+        for (j = 0; j < PIECE_LIST_SIZE; j++) {
+            func_020032e4(&data_02064828.mList[j], data_02064828.mList[j].mPos.x >> 8,
+                          data_02064828.mList[j].mPos.y >> 8, 1, 0);
+        }
+    }
+}
+
+void func_02004304(void) {
+    int g, k;
+    if (data_02064828.mCount != 0) {
+        int i;
+        for (i = 0; i < PIECE_LIST_SIZE; i++) {
+            if (data_02064828.mList[i].mType != 0 && func_02003430(&data_02064828.mList[i])) {
+                func_020032b4(&data_02064828.mList[i], 0);
+                if (--data_02064828.mCount == 0) {
+                    func_02004230();
+                    if (data_02064828.mCount == 0) {
+                        func_0200420c();
+                    }
+                    return;
+                }
+            }
+        }
+    } else {
+        for (g = 0; g < BOARD_COLS; g++) {
+            u8 row = g;
+            for (k = BOARD_ROWS - 1; k >= 0; k--) {
+                if (data_02064828.mGrid[g][k].mType != 0) {
+                    Piece *c = &data_02064828.mGrid[g][k];
+                    if (c->mUnk_110 > 0) {
+                        if (c->mSprite.mUnk_de != 0) {
+                            c->mUnk_110 = 0;
+                        }
+                        if (c->mSprite.mUnk_04 == data_02064828.mUnk_8974) {
+                            func_020040e8(row, k);
+                        } else if (c->mUnk_110 == 0) {
+                            func_02003f08(row, k);
+                            data_02064828.mUnk_430c--;
+                        }
+                    } else if (data_02064828.mUnk_430c == 0) {
+                        func_0200400c(row, k);
+                    }
+                }
+            }
+        }
+    }
+}
+
+void func_0200443c(int a) {
+    func_02005a8c(0, data_02064828.mUnk_10 >= data_02064828.mUnk_14);
+}
+
+// Starts the board screen: loads the stage settings, clears the cells and sprites and sets the counters.
+void func_0200445c(void) {
+    int i, j;
+    s32 level;
+    int total;
+    int stagger;
+    level = data_020c1760.mUnk_64;
+    if (level < 0) {
+        level = 0;
+    }
+    data_02064828.mStage = data_020b1990[level].mInfo;
+    data_02064828.mUnk_00 = data_02064828.mStage.mUnk_11 - 1;
+    if (data_020b10fc.mUnk_08 < 0 || data_02064828.mUnk_00 >= 12) {
+        OS_Terminate();
+    }
+    func_0200c5d8(0, data_02064828.mStage.mUnk_10 + 0x1cb, data_02064828.mStage.mUnk_13 + 0xdb3, 64, 16, 2, 130);
+    func_02024208();
+    func_020104c0(3, 76);
+    func_0200bdcc(2, 16);
+    for (i = 0; i < BOARD_COLS; i++) {
+        for (j = 0; j < BOARD_ROWS; j++) {
+            func_020032b4(&data_02064828.mGrid[i][j], 0);
+        }
+    }
+    data_02064828.mUnk_4300 = ~13;
+    data_02064828.mUnk_42fc = 67;
+    data_02064828.mUnk_4308 = 186;
+    data_02064828.mUnk_4304 = 187;
+    data_02064828.mUnk_430c = 0;
+    for (i = 0; i < PIECE_LIST_SIZE; i++) {
+        func_020032b4(&data_02064828.mList[i], 0);
+    }
+    data_02064828.mCount = 0;
+    data_02064828.mUnk_8974 = 3738;
+    func_0202de60(&data_02064828.mUnk_884c, data_0201abec[26]);
+    data_02064828.mUnk_01 = func_02003194(data_02064828.mUnk_00, 2);
+    stagger = func_02003194(data_02064828.mUnk_00, 3);
+    data_02064828.mUnk_08 = data_02064828.mUnk_04 = func_02003194(data_02064828.mUnk_00, 5) * 60000 / 1000;
+    data_02064828.mUnk_0c = -12800;
+    data_02064828.mUnk_10 = 0;
+    data_02064828.mUnk_14 = func_02003194(data_02064828.mUnk_00, 6);
+    data_02064828.mUnk_18 = 0;
+    data_02064828.mUnk_896a = func_02003194(data_02064828.mUnk_00, 8);
+    data_02064828.mUnk_896c = func_02003194(data_02064828.mUnk_00, 9);
+    data_02064828.mUnk_8968 = func_020031f0();
+    data_02064828.mUnk_8970 = func_02003194(data_02064828.mUnk_00, 10);
+    data_02064828.mUnk_8972 = func_02003194(data_02064828.mUnk_00, 11);
+    data_02064828.mUnk_896e = func_02003240();
+    data_02064828.mUnk_8964 = func_02003194(data_02064828.mUnk_00, 4) << 8;
+    data_02064828.mUnk_8990 = func_02003194(data_02064828.mUnk_00, 7);
+    data_02064828.mUnk_8994 = 0;
+    total = func_0201fd84(func_02003194(data_02064828.mUnk_00, 12), func_02003194(data_02064828.mUnk_00, 13));
+    for (i = 0; i < 6; i++) {
+        if (i < data_02064828.mUnk_01 - 1) {
+            data_02064828.mUnk_8978[i] = func_0201fd84(total / 8, total / 2);
+            total -= data_02064828.mUnk_8978[i];
+        } else if (i == data_02064828.mUnk_01 - 1) {
+            data_02064828.mUnk_8978[i] = total;
+        } else {
+            data_02064828.mUnk_8978[i] = -1;
+        }
+    }
+    func_020039bc();
+    if (stagger > 0) {
+        func_02003f2c((u8) ((stagger - 1 < 1 ? stagger - 1 : 1) < 0 ? 0 : (stagger - 1 < 1 ? stagger - 1 : 1)));
+    }
+    func_020031ac(2, 0, &data_02064828.mUnk_83c4.mPos);
+    data_02064828.mUnk_83c4.mPos.y -= 5 << 10;
+    func_02005a8c(1, 0);
+}
+
+void func_02004720(void) {
+    func_0201168c(data_020c1760.mUnk_64, data_02064828.mUnk_10, data_0206d448, data_02064828.mUnk_08, 2);
+    func_02003aa8(&data_02064828.mUnk_8608, 2, 0);
+    func_02004254();
+    func_02003aa8(&data_02064828.mUnk_83c4, 1, 1);
+}
+
+void func_02004768(void) {
+    char buf[32];
+    int r;
+    int idle;
+    Pair *cursor = &data_02064828.mUnk_83c4;
+    func_020059cc(data_02064828.mUnk_10);
+    r = func_02005bf8();
+    if (r != 0) {
+        func_02004720();
+        idle = func_02005b1c(1);
+        if (r == 2 && idle == 0) {
+            func_020059b4(func_02005c04(), data_02064828.mUnk_10);
+            return;
+        }
+        if (r == 1) {
+            data_02064820 = 0;
+            return;
+        }
+        return;
+    }
+    data_02064828.mUnk_0c += 0x355;
+    if (data_02064828.mUnk_0c > 0x2000) {
+        data_02064828.mUnk_0c = 0x2000;
+    }
+    if (data_02064820 == 0) {
+        data_02064820 = 1;
+        func_02003a5c();
+    }
+    if (--data_02064828.mUnk_08 == 0) {
+        func_0200443c(1);
+    }
+    func_02003b3c(cursor);
+    if (data_02064828.mUnk_8950 == 1) {
+        data_02064828.mUnk_8994 = 0;
+        func_020040e8(data_02064828.mUnk_8954.x, data_02064828.mUnk_8954.y);
+        func_020040e8(data_02064828.mUnk_895c.x, data_02064828.mUnk_895c.y);
+        data_02064828.mUnk_8950++;
+    } else if (data_02064828.mUnk_8950 == 2) {
+        if (func_02003e60()) {
+            if (data_02064828.mUnk_8994 >= 6) {
+                func_020059e8(&data_02064828.mUnk_08, 300);
+                sprintf(buf, "+%d'", 5);
+                func_0200d838(buf, 2, data_0201a61c, 30, data_02064828.mUnk_83c4.mPos.x >> 8,
+                              data_02064828.mUnk_83c4.mPos.y >> 8, 0, -128, 100, 1, 0);
+            }
+            data_02064828.mUnk_8994 = 0;
+            func_02003a5c();
+        }
+    }
+    func_02004304();
+    if (data_020c18bc.mUnk_12 & 0x20) {
+        func_020035b0(cursor);
+    } else if (data_020c18bc.mUnk_12 & 0x10) {
+        func_02003670(cursor);
+    }
+    if (data_020c18bc.mUnk_10 & 0x80) {
+        data_02064828.mUnk_83c4.mUnk_23c = 25 << 12;
+    } else if (data_020c18bc.mUnk_12 & 0x40) {
+        func_02003e50(cursor);
+    } else {
+        data_02064828.mUnk_83c4.mUnk_23c = data_02064828.mUnk_8964;
+    }
+    if (data_020c18bc.mUnk_12 & 1) {
+        func_02003924(cursor);
+    } else if (data_020c18bc.mUnk_12 & 2) {
+        func_0200396c(cursor);
+    }
+    func_02004720();
+}
+
+void func_02004930(void) {
+    func_0201f880(3);
+    func_02022370();
+}
+
+int func_02004940(u8 stage) {
+    return func_02003194(stage, 6);
 }

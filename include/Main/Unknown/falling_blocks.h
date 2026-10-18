@@ -1,6 +1,7 @@
 #pragma once
 
 #include "types.h"
+#include <Main/Unknown/stage_data.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -12,7 +13,9 @@ typedef struct Sprite {
     s32 mUnk_04;
     u8 mUnk_08[0x14 - 0x08];
     u32 mUnk_14;
-    u8 mUnk_18[0x104 - 0x18];
+    u8 mUnk_18[0xde - 0x18];
+    u8 mUnk_de;
+    u8 mUnk_df[0x104 - 0xdf];
 } Sprite;
 
 typedef struct Vec2i {
@@ -48,12 +51,21 @@ typedef struct Pair {
 typedef struct Board {
     u8 mUnk_00;
     u8 mUnk_01;
-    u8 mUnk_02[0x10 - 0x02];
-    s32 mUnk_10;
-    s32 mUnk_14;
-    u8 mUnk_18[0x24c - 0x18];
+    u8 mUnk_02[2];
+    s32 mUnk_04;
+    u32 mUnk_08;
+    s32 mUnk_0c;
+    u32 mUnk_10;
+    u32 mUnk_14;
+    u8 mUnk_18;
+    u8 mUnk_19[0x194 - 0x19];
+    StageInfo mStage;
+    u8 mUnk_1ba[0x24c - 0x1ba];
     Piece mGrid[BOARD_COLS][BOARD_ROWS];
-    u8 mUnk_42fc[0x430c - 0x42fc];
+    s32 mUnk_42fc;
+    s32 mUnk_4300;
+    s32 mUnk_4304;
+    s32 mUnk_4308;
     u16 mUnk_430c;
     u8 mUnk_430e[0x4310 - 0x430e];
     Piece mList[PIECE_LIST_SIZE];
@@ -119,6 +131,16 @@ void func_02004230(void);
 
 // The board, the falling pairs and the round's counters.
 extern Board data_02064828;
+extern s32 data_02064820;
+
+void func_02004254(void);
+void func_02004304(void);
+void func_0200443c(int a);
+void func_0200445c(void);
+void func_02004720(void);
+void func_02004768(void);
+void func_02004930(void);
+int func_02004940(u8 stage);
 
 #ifdef __cplusplus
 }

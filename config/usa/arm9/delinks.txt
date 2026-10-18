@@ -273,4 +273,13 @@ src/Main/Boot/main.c:
     .text       start:0x02003000 end:0x02003194
 
 src/Main/Unknown/falling_blocks.c:
-    .text       start:0x02003194 end:0x02004254
+    .text       start:0x02003194 end:0x0200494c
+
+src/Main/Unknown/result_screen.c:
+    .text       start:0x0200494c end:0x020054a4
+
+src/Main/Unknown/mode_select.c:
+    .text       start:0x020054a4 end:0x02005c10
+
+src/Main/Unknown/field_objects.c:
+    .text       start:0x02005c10 end:0x020064e8
