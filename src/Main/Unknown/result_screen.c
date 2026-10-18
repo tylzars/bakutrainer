@@ -1,4 +1,8 @@
 #include <Main/Unknown/functions.h>
+#include <Main/Unknown/game_util.h>
+#include <Main/Unknown/move_object.h>
+#include <Main/Unknown/prompt_screen.h>
+#include <Main/Unknown/sound_control.h>
 #include <Main/Unknown/language_menu.h>
 #include <Main/Unknown/state_flow.h>
 #include <Main/Unknown/globals.h>

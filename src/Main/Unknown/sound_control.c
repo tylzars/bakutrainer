@@ -4,6 +4,23 @@
 
 #define SE_COUNT 0x78
 
+void func_02010388(u32 a, s32 b) {
+    SoundCtl *ctl = &data_020b10b4;
+
+    if (a >= 9) {
+        OS_Terminate();
+    }
+    data_020c8214.mUnk_10 |= 2;
+    ctl->mUnk_14 = 0;
+    ctl->mUnk_18 = 0;
+    ctl->mUnk_08 = b;
+    ctl->mUnk_0c = b;
+    ctl->mUnk_00 = 0;
+    ctl->mUnk_1c = 0;
+    ctl->mUnk_14 = a;
+    func_020103c0();
+}
+
 void func_020103c0(void) {
     SoundCtl *ctl = &data_020b10b4;
     u8 volume;

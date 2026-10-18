@@ -1,5 +1,7 @@
 #include <nitro/os.h>
 #include <Main/Unknown/functions.h>
+#include <Main/Unknown/prompt_screen.h>
+#include <Main/Unknown/sprite_slots.h>
 #include <Main/Unknown/save_data.h>
 #include <Main/Unknown/sound_control.h>
 #include <Main/Unknown/state_flow.h>
@@ -25,8 +27,8 @@ void main(void) {
         func_02020348();
     }
     data_020c1bbc.mUnk_10 = 0x40;
-    data_020c1d3c[0x13] = 1;
-    data_020c1d3c[0x14] = 1;
+    data_020c1d3c.mUnk_13 = 1;
+    data_020c1d3c.mUnk_14 = 1;
     func_0202f00c();
     func_02010388(0, 0x80);
     func_0200fa24();

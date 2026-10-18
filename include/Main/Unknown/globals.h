@@ -21,6 +21,8 @@ typedef struct SystemState {
     s32 mUnk_2a8;
     u8 mUnk_2ac[0x45c - 0x2ac];
     vu32 mUnk_45c;
+    u8 mUnk_460[0x49c - 0x460];
+    u16 mUnk_49c[2];
 } SystemState;
 
 typedef struct StateB {
@@ -82,10 +84,15 @@ typedef struct Unk_020c1b5c {
     u8 mUnk_00[0xc];
     u8 mUnk_0c_0 : 1;
     u8 mUnk_0c_1 : 1;
-    u8 mUnk_0c_2 : 6;
+    u8 mUnk_0c_2 : 1;
+    u8 mUnk_0c_3 : 1;
+    u8 mUnk_0c_4 : 1;
+    u8 mUnk_0c_5 : 1;
+    u8 mUnk_0c_6 : 2;
     u8 mUnk_0d;
     u8 mUnk_0e;
     u8 mUnk_0f;
+    u8 mUnk_10;
 } Unk_020c1b5c;
 extern Unk_020c1b5c data_020c1b5c;
 typedef struct Unk_020c1bbc {
@@ -101,7 +108,15 @@ typedef struct Unk_020c1bbc {
     u16 mUnk_2c;
 } Unk_020c1bbc;
 extern Unk_020c1bbc data_020c1bbc;
-extern u8 data_020c1d3c[];
+typedef struct Unk_020c1d3c {
+    u8 mUnk_00[0x12];
+    u8 mUnk_12;
+    u8 mUnk_13;
+    u8 mUnk_14;
+    u8 mUnk_15[0x1c - 0x15];
+    u16 mUnk_1c;
+} Unk_020c1d3c;
+extern Unk_020c1d3c data_020c1d3c;
 extern u8 data_020c14b4[];
 typedef struct StateE {
     u8 mUnk_00[0x1a];
@@ -211,7 +226,8 @@ typedef struct Unk_020c13e0 {
     u8 mUnk_00[0x30];
     s32 mUnk_30;
     s32 mUnk_34;
-    u8 mUnk_38[0x60 - 0x38];
+    s32 mUnk_38;
+    u8 mUnk_3c[0x60 - 0x3c];
     s32 mUnk_60;
     s32 mUnk_64;
 } Unk_020c13e0;
@@ -419,10 +435,39 @@ typedef struct Unk_020c8254 {
 extern Unk_020c8254 data_020c8254;
 
 typedef struct Unk_020c8214 {
-    u8 mUnk_00[0x24];
+    u8 mUnk_00[0x10];
+    u32 mUnk_10;
+    u8 mUnk_14[0x24 - 0x14];
     s32 mUnk_24;
 } Unk_020c8214;
 extern Unk_020c8214 data_020c8214;
+
+// Objects of the prompt screen code.
+typedef struct Unk_020c1b3c {
+    u8 mUnk_00[0x54];
+    s32 mUnk_54;
+    s32 mUnk_58;
+    s32 mUnk_5c;
+    s32 mUnk_60;
+} Unk_020c1b3c;
+extern Unk_020c1b3c data_020c1b3c;
+
+typedef struct Unk_020c1b9c {
+    u8 mUnk_00[0x10];
+    u8 mUnk_10;
+    u8 mUnk_11[0x1a - 0x11];
+    u8 mUnk_1a;
+} Unk_020c1b9c;
+extern Unk_020c1b9c data_020c1b9c;
+
+// Rows of 16 bytes (0x49 of them); the first word is passed on by func_0201033c.
+typedef struct Unk_0204e96c {
+    s32 mUnk_00;
+    s32 mUnk_04;
+    s32 mUnk_08;
+    s32 mUnk_0c;
+} Unk_0204e96c;
+extern const Unk_0204e96c data_0204e96c[];
 
 #ifdef __cplusplus
 }

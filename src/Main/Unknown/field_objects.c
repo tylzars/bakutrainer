@@ -2,6 +2,11 @@
 #include <nitro/gx.h>
 #include <stdlib.h>
 #include <Main/Unknown/functions.h>
+#include <Main/Unknown/game_util.h>
+#include <Main/clib.h>
+#include <Main/Unknown/sprite_slots.h>
+#include <Main/Unknown/prompt_screen.h>
+#include <Main/Unknown/sound_control.h>
 #include <Main/Unknown/globals.h>
 #include <Main/Unknown/field_objects.h>
 #include <stdio.h>
