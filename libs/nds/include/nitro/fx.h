@@ -45,6 +45,7 @@ void FX_DivAsync(fx32 num, fx32 den);
 u16 FX_Atan2Idx(fx32 y, fx32 x);
 
 void func_0203b8d8(const MtxFx33 *src, MtxFx33 *dst, fx32 x, fx32 y, fx32 z);
+void func_0203b8bc(const MtxFx33 *src, MtxFx33 *dst);
 void func_0203b998(MtxFx33 *m, fx32 sin, fx32 cos);
 void func_0203b9b0(const VecFx32 *v, const MtxFx33 *m, VecFx32 *out);
 void func_0203ba2c(const MtxFx43 *src, MtxFx43 *dst, fx32 x, fx32 y, fx32 z);

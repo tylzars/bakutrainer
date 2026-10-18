@@ -2,6 +2,19 @@
 
 #define MUL33(a, b) ((fx32) (((fx64) (a) * (b)) >> FX32_SHIFT))
 
+// Writes the transpose of a 3x3 matrix.
+// clang-format off
+asm void func_0203b8bc(const MtxFx33 *src, MtxFx33 *dst) {
+    stmfd sp!, {r4, r5, r6, r7, r8, r9}
+    ldmia r0, {r2, r3, r4, r5, r6, r7, r8, r9, ip}
+    stmia r1!, {r2, r5, r8}
+    stmia r1!, {r3, r6, r9}
+    stmia r1!, {r4, r7, ip}
+    ldmfd sp!, {r4, r5, r6, r7, r8, r9}
+    bx lr
+}
+// clang-format on
+
 // Scales the three rows of a 3x3 matrix by x, y and z.
 void func_0203b8d8(const MtxFx33 *src, MtxFx33 *dst, fx32 x, fx32 y, fx32 z) {
     dst->_[0] = MUL33(x, src->_[0]);

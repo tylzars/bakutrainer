@@ -175,8 +175,14 @@ void *func_0203b6e0(void);
 void func_0203b750(AdSt *st, u8 *p);
 void func_0203b764(AdSt *st, u8 *in, int n, u32 *out);
 
-// One of the decoder's tables.
+// The decoder's tables, and the step tables of its 4-bit audio.
 extern u8 data_020541d4[];
+extern u8 data_020562d4[];
+extern u8 data_020583d4[];
+extern u8 data_0205eebc[];
+extern u8 data_0205f03c[];
+extern const s8 data_0205f33c[];
+extern const s16 data_0205f34c[];
 
 // Decoder entry points: picture filter (nine argument words), and the two audio channel decoders.
 void func_0205e970(void *args);
