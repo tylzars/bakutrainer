@@ -140,7 +140,8 @@ s32 func_0200fb5c(void) {
     return data_020b1194.mUnk_94;
 }
 
-#define PROMPT_STATE_SAVED 0x400000
+// Flag of SystemState.mUnk_46c: the per-frame code samples the touch screen while it is set.
+#define TOUCH_SAMPLING 0x400000
 
 // Saves the display setup and button flags, then starts the prompt: returns 0 when there is nothing to show.
 int func_0200fb68(int *a, int *b) {
@@ -150,7 +151,7 @@ int func_0200fb68(int *a, int *b) {
     if (data_020c18bc.mUnk_49c[0] != 0xffff || (data_020c18bc.mUnk_46c & 0x80)) {
         st = &data_020b1124;
         func_0201f880(3);
-        if (!(data_020c18bc.mUnk_46c & PROMPT_STATE_SAVED)) {
+        if (!(data_020c18bc.mUnk_46c & TOUCH_SAMPLING)) {
             st->mUnk_28 = 0;
             st->mUnk_2c = data_020c18bc.mUnk_2ac_4;
             st->mUnk_30 = data_020c18bc.mUnk_2ac_1;
@@ -162,7 +163,7 @@ int func_0200fb68(int *a, int *b) {
                 0;
             data_020c18bc.mUnk_2b0 = 0;
             data_020c18bc.mUnk_2ac_5 = 1;
-            data_020c18bc.mUnk_46c |= PROMPT_STATE_SAVED;
+            data_020c18bc.mUnk_46c |= TOUCH_SAMPLING;
         } else {
             st->mUnk_28 = 1;
         }
@@ -264,7 +265,7 @@ void func_0200fd90(void) {
         data_020c18bc.mUnk_2ac_0 = st->mUnk_38;
         data_020c18bc.mUnk_2b0 = st->mUnk_3c;
         data_020c18bc.mUnk_2ac_5 = st->mUnk_40;
-        data_020c18bc.mUnk_46c &= ~PROMPT_STATE_SAVED;
+        data_020c18bc.mUnk_46c &= ~TOUCH_SAMPLING;
     }
 }
 
