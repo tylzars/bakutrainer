@@ -11,11 +11,45 @@ extern "C" {
 #define TRACKER_INSTRUMENT_COUNT 128
 #define TRACKER_ORDER_COUNT 256
 
+// Envelope kinds of an instrument and the default levels used without one.
+#define TRACKER_ENV_VOLUME 0
+#define TRACKER_ENV_PAN 1
+#define TRACKER_ENV_VOLUME_LEVEL 0x4000
+#define TRACKER_ENV_PAN_LEVEL 0x2000
+
+// Flags of an envelope.
+#define TRACKER_ENV_ON 1
+#define TRACKER_ENV_SUSTAIN 2
+#define TRACKER_ENV_LOOP 4
+
 // A loaded block: the data pointer sits in the second word.
 typedef struct TrackerPattern {
-    u32 mUnk_00;
+    u8 mUnk_00;
+    u8 mUnk_01;
+    u8 mUnk_02[2];
     void *mUnk_04;
 } TrackerPattern;
+
+// Points of an instrument envelope: frame numbers and levels, with the point count and loop points.
+typedef struct TrackerEnvelope {
+    u16 mUnk_00[12];
+    u16 mUnk_18[12];
+    u8 mUnk_30;
+    u8 mUnk_31;
+    u8 mUnk_32;
+    u8 mUnk_33;
+    u8 mUnk_34;
+    u8 mUnk_35;
+} TrackerEnvelope;
+
+// Playback state of one envelope of a channel (0x10 bytes).
+typedef struct TrackerEnvState {
+    u8 mUnk_00;
+    u16 mUnk_02;
+    u32 mUnk_04;
+    s32 mUnk_08;
+    s32 mUnk_0c;
+} TrackerEnvState;
 
 // A sample of an instrument; its data pointer is released with the instrument.
 typedef struct TrackerSample {
@@ -26,9 +60,12 @@ typedef struct TrackerSample {
 
 // An instrument: a table of samples, the number of them at 0x26c.
 typedef struct TrackerInstrument {
-    TrackerSample *mUnk_000[0x26c / 4];
+    TrackerSample *mUnk_000[0x200 / 4];
+    TrackerEnvelope mUnk_200;
+    TrackerEnvelope mUnk_236;
     u8 mUnk_26c;
-    u8 mUnk_26d[0x2d4 - 0x26d];
+    u8 mUnk_26d[0x2d2 - 0x26d];
+    u16 mUnk_2d2;
 } TrackerInstrument;
 
 // State of one hardware channel (0x88 bytes).
@@ -52,12 +89,14 @@ typedef struct TrackerChannel {
     u8 mUnk_21;
     u8 mUnk_22;
     u8 mUnk_23;
-    u8 mUnk_24;
+    s8 mUnk_24;
     u8 mUnk_25;
-    u16 mUnk_26;
-    u8 mUnk_28[0x48 - 0x28];
-    u32 mUnk_48;
-    u8 mUnk_4c[0x6a - 0x4c];
+    s16 mUnk_26;
+    TrackerEnvState mUnk_28;
+    TrackerEnvState mUnk_38;
+    s32 mUnk_48;
+    u8 mUnk_4c[0x68 - 0x4c];
+    u16 mUnk_68;
     u16 mUnk_6a[14];
     u8 mUnk_86[0x88 - 0x86];
 } TrackerChannel;
@@ -83,10 +122,11 @@ typedef struct TrackerPlayer {
     u16 mUnk_1730;
     u16 mUnk_1732;
     u32 mUnk_1734;
-    u16 mUnk_1738;
+    s16 mUnk_1738;
     s16 mUnk_173a;
     u16 mUnk_173c;
-    u8 mUnk_173e[0x1740 - 0x173e];
+    u8 mUnk_173e;
+    u8 mUnk_173f;
     s16 mUnk_1740;
     s16 mUnk_1742;
     u8 mUnk_1744;
@@ -126,6 +166,23 @@ void func_02035fd4(void);
 void func_020360f4(void);
 void func_02036194(void);
 void func_02036198(void);
+void func_02037c10(void);
+void func_02037cdc(TrackerChannel *c);
+u16 func_02037d38(TrackerChannel *c);
+u8 func_02037dac(TrackerChannel *c);
+void func_02037df8(TrackerChannel *c, int up, int down);
+void func_02037e34(TrackerChannel *c, int up, int down);
+void func_02037e70(s8 *v, int up, int down);
+u16 func_02037eac(int note, int finetune);
+u32 func_02037efc(int period, int linear);
+void func_02037f5c(TrackerPlayer *p, TrackerChannel *c, int type);
+int func_020380b8(TrackerPlayer *p, TrackerChannel *c, int type, int keyOff);
+void func_020382c0(TrackerPlayer *p, TrackerChannel *c, int type, u16 pos);
+int func_02038464(TrackerPlayer *p, TrackerChannel *c);
+int func_020384f8(int vol, u16 env, int fade, u8 master, u8 chanVol);
+int func_02038524(int pan, u16 level);
+void func_02038578(u8 volume, int mode);
+u8 func_02038694(void);
 
 #ifdef __cplusplus
 }

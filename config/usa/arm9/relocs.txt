@@ -6984,6 +6984,8 @@ from:0x02037158 kind:load to:0x02063c9c module:main
 from:0x02037c00 kind:load to:0x020c18bc module:main
 from:0x02037c04 kind:load to:0x02063cbc module:main
 from:0x02037c08 kind:load to:0x02063cc4 module:main
+from:0x02037c40 kind:arm_call to:0x02035e7c module:main
+from:0x02037c6c kind:arm_call to:0x02035e7c module:main
 from:0x02037cc8 kind:load to:0x020c6b14 add:0x1700 module:main
 from:0x02037ccc kind:load to:0x020c6b14 add:0x1000 module:main
 from:0x02037cd0 kind:load to:0x020c6b14 module:main
@@ -6991,10 +6993,17 @@ from:0x02037cd4 kind:load to:0x020c6b14 add:0x1752 module:main
 from:0x02037cd8 kind:load to:0x020c6b14 add:0x10 module:main
 from:0x02037da8 kind:load to:0x020c6b14 add:0x1000 module:main
 from:0x02037ef4 kind:load to:0x020c6b14 add:0x1000 module:main
+from:0x02037ef8 kind:load to:0x02051844 module:main
+from:0x02037f14 kind:arm_call to:0x0204dae0 module:main
+from:0x02037f58 kind:load to:0x02050c44 module:main
+from:0x02038058 kind:arm_call to:0x0204dae0 module:main
 from:0x020380b4 kind:load to:0x020c6b14 add:0x1000 module:main
+from:0x02038254 kind:arm_call to:0x0204dae0 module:main
 from:0x020382bc kind:load to:0x020c6b14 add:0x1000 module:main
+from:0x02038408 kind:arm_call to:0x0204dae0 module:main
 from:0x02038460 kind:load to:0x020c6b14 add:0x1000 module:main
 from:0x020384f4 kind:load to:0x020c6b14 add:0x1000 module:main
+from:0x02038534 kind:arm_call to:0x02048b50 module:main
 from:0x020385c4 kind:arm_call to:0x02040a90 module:main
 from:0x02038620 kind:arm_call to:0x020384f8 module:main
 from:0x02038628 kind:arm_call to:0x02040b60 module:main
@@ -7004,6 +7013,7 @@ from:0x02038678 kind:arm_call to:0x020405cc module:main
 from:0x02038684 kind:load to:0x020c18bc module:main
 from:0x02038688 kind:load to:0x020c6b14 add:0x1000 module:main
 from:0x0203868c kind:load to:0x020c6b14 add:0x610 module:main
+from:0x02038690 kind:load to:0x02050b40 module:main
 from:0x020386a0 kind:load to:0x020c6b14 add:0x1000 module:main
 from:0x020386b8 kind:load to:0x02064108 module:main
 from:0x020386bc kind:load to:0x02064174 module:main

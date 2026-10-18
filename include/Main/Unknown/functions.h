@@ -21,8 +21,6 @@ void func_02022120(void);
 void func_0202224c(void);
 void func_02022370(void);
 void func_02035108(u16 a, int b, u8 c, int d, int e, int f);
-void func_02038578(u8 volume, int mode);
-u8 func_02038694(void);
 int func_0203946c(void);
 void func_0203947c(int a, u16 b, u16 c);
 int func_02039598(int mode, const void *data);

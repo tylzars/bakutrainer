@@ -476,10 +476,10 @@ src/Main/Unknown/comm_link.c:
     .text       start:0x02034954 end:0x02035108
     .data       start:0x02063b58 end:0x02063c9c
 
-// provisional: the music tracker player on data_020c6b14 (defined here); func_02035108 before this range and the
-// missed ARM code after it (the tick at 0x02036198 and on) use the same object and belong here once decompiled
+// provisional: the music tracker player on data_020c6b14 (defined here), up to the wireless helpers that start at
+// 0x020386a4; func_02035108 before this range uses the same object; the tick func_02036198 is not decompiled yet
 src/Main/Unknown/tracker_player.c:
-    .text       start:0x020359d0 end:0x02036198
+    .text       start:0x020359d0 end:0x020386a4
 
 // one file: its own-section .bss ascend (0x020c1818.. -> FSFile -> SystemState) and the JPEG and start-up code reach
 // the same objects through one section base; the .rodata own sections ascend as one file's; the data block
