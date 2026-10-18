@@ -6,6 +6,7 @@
 #include <nitro/os.h>
 #include <Main/Unknown/random_angle.h>
 #include <Main/Unknown/vram_cache.h>
+#include <Main/Unknown/model.h>
 
 #pragma thumb off
 

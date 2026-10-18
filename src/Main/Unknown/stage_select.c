@@ -21,6 +21,7 @@
 #include <Main/Unknown/stage_select.h>
 #include <Main/Unknown/text_draw.h>
 #include <Main/Unknown/camera.h>
+#include <Main/Unknown/model.h>
 
 #define TABLE_ENTRY_COUNT 100
 

@@ -10,7 +10,10 @@ extern "C" {
 // Parameter block for creating a sprite or a model effect.
 typedef struct DrawParams {
     VecFx32 mPos;
-    u8 mUnk_0c[0x28 - 0x0c];
+    u16 mUnk_0c[8];
+    s8 mUnk_1c[8];
+    u8 mUnk_24;
+    u8 mUnk_25[3];
     s32 mUnk_28;
     s32 mUnk_2c;
     s32 mUnk_30;
@@ -19,7 +22,8 @@ typedef struct DrawParams {
     u16 mUnk_3a;
     u16 mUnk_3c;
     u8 mUnk_3e;
-    u8 mUnk_3f[0x41 - 0x3f];
+    u8 mUnk_3f;
+    u8 mUnk_40;
     u8 mUnk_41;
     u8 mUnk_42;
     u8 mUnk_43 : 3;
@@ -27,9 +31,6 @@ typedef struct DrawParams {
     u8 mUnk_43_4 : 1;
     u8 mUnk_43_5 : 3;
 } DrawParams;
-
-// Fills a DrawParams (an ARM routine of the 3D code).
-void func_02023f58(DrawParams *p, int x, int y, int z, int a, u16 b, u8 c, u8 d, int flags);
 
 void func_0200b898(int x, int y, const char *format, ...);
 void func_0200b8dc(int x, int y, const char *format, ...);

@@ -21,6 +21,7 @@
 #include <Main/Unknown/move_object.h>
 #include <Main/Unknown/save_slot_menu.h>
 #include <Main/Unknown/text_draw.h>
+#include <Main/Unknown/model.h>
 #include <Main/clib.h>
 
 // Objects of this file: save menu, settings, sound control, prompt, main loop and model viewer state.

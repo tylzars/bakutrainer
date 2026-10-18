@@ -4,6 +4,10 @@
 #include <nitro/os.h>
 #include <nitro/fx.h>
 
+// Declared without a prototype: this file passes func_020243c0's angle as an int, unconverted (model.h's u16
+// prototype would truncate it).
+void func_020243c0();
+
 u16 func_02021498(const u8 **text) {
     u32 first;
     u32 lead;

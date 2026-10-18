@@ -25,6 +25,7 @@
 #include <Main/Unknown/text_draw.h>
 #include <Main/Unknown/camera_state.h>
 #include <Main/Unknown/vram_cache.h>
+#include <Main/Unknown/model.h>
 
 void func_02015d4c(void) {
     data_020b6ee0.mUnk_a146 = 0;
@@ -1079,7 +1080,7 @@ void func_02018558(void) {
     func_0202733c(rec, &rec->mUnk_1a0, 0);
     func_020105f4(rec);
     func_02025db4(&rec->mUnk_1a0, &rec->mUnk_1f0);
-    func_020262a0(&data_020b6ee0.mUnk_8e60);
+    func_020262a0(&data_020b6ee0.mUnk_8e60.mModel);
     if (data_020b6ee0.mUnk_8e60.mModel.mUnk_142 != 1) {
         data_020b6ee0.mUnk_8e60.mDraw.mPos = rec->mUnk_1a0;
         func_02024b5c(data_020b6ee0.mUnk_8e60.mModel.mUnk_170, &data_020b6ee0.mUnk_8e60.mDraw, &data_020b6ee0.mUnk_8e60,
@@ -1383,7 +1384,7 @@ void func_02018cd4(void) {
                     rec->mUnk_158 = params.mPos;
                 }
                 if (data_020b6ee0.mUnk_a10c != -1 && idx == data_020b6ee0.mUnk_a8e4) {
-                    func_02025ff4(rec);
+                    func_02025ff4((Model *) rec, data_020b6ee0.mUnk_a10c);
                 }
                 func_0202733c(rec, &params, 0x10);
                 func_020105f4(rec);

@@ -10,6 +10,7 @@
 #include <Main/Unknown/language_menu.h>
 #include <Main/Unknown/text_draw.h>
 #include <Main/Unknown/script_records.h>
+#include <Main/Unknown/model.h>
 #include <Main/clib.h>
 #include <nitro/os.h>
 #include <stdio.h>
@@ -209,7 +210,7 @@ void func_0200f898(void) {
     int a, x, y, z;
     func_020242a8(params, 0xff, 0, 0, 0x1000, 0x8000, -1, 0x100);
     params[0x43] |= 8;
-    func_020262a0(data_020ae6f8);
+    func_020262a0((Model *) data_020ae6f8);
     func_02024b5c(data_020ae834.mUnk_34, params, data_020ae6f8, 0);
     a = func_02021e44(0x235, idx * 4 + 2);
     if (data_020ae834.mUnk_12 >= a) {

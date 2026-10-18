@@ -17,6 +17,7 @@
 #include <Main/Unknown/mode_select.h>
 #include <Main/Unknown/text_draw.h>
 #include <Main/Unknown/camera.h>
+#include <Main/Unknown/model.h>
 
 s32 func_02005c10(int a, int b) {
     return func_02021e44(0xda0, b + a * 7);

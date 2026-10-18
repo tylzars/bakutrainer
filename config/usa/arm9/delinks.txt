@@ -411,6 +411,11 @@ src/Main/Unknown/angle_blend.c:
 src/Main/Unknown/vram_cache.c:
     .text       start:0x020225dc end:0x0202350c
 
+// provisional: the .rodata 0x02050898-0x020508d8 of the ARM pose code, the ARM render code and func_02025f58 ascends
+// by size as one file's, and the Thumb code after it follows with no gap and calls both ways
+src/Main/Unknown/model.c:
+    .text       start:0x0202350c end:0x02027398
+
 // provisional: the record store on data_020c61ac; the file continues past 0x02029250 (func_0202938c is called from
 // here, the same object's pool words recur up to about 0x0202ad30)
 src/Main/Unknown/script_records.c:

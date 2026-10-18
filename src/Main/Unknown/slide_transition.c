@@ -14,6 +14,7 @@
 #include <Main/Unknown/slide_transition.h>
 #include <Main/Unknown/game_util.h>
 #include <Main/Unknown/text_draw.h>
+#include <Main/Unknown/model.h>
 #include <nitro/os.h>
 #include <stdio.h>
 

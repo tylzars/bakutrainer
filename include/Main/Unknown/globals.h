@@ -231,7 +231,7 @@ typedef struct SystemState {
     u8 mUnk_493;
     u8 mUnk_494;
     u8 mUnk_495;
-    u8 mUnk_496[2];
+    s16 mUnk_496;
     s32 mUnk_498;
     u16 mUnk_49c[2];
     s32 mUnk_4a0;
@@ -367,7 +367,9 @@ typedef struct CameraState {
 // The camera object's block at 0xc0. The camera code passes its address to func_0202733c; the scene code keeps a
 // pointer to it and moves the two camera positions at 0x204 and 0x228.
 typedef struct Unk_020c5f04 {
-    u8 mUnk_000[0x204];
+    u8 mUnk_000[0x1ec];
+    VecFx32 mUnk_1ec;
+    u8 mUnk_1f8[0x204 - 0x1f8];
     VecFx32 mUnk_204;
     u8 mUnk_210[0x228 - 0x210];
     VecFx32 mUnk_228;
@@ -417,6 +419,13 @@ extern const u32 data_0201ab04[];
 
 extern const u32 data_0201aa60[];
 
+// Matrices of the model code: the working matrix, the matrix of each pose node (0xc00
+// bytes up to the next object), the matrix func_0203ba60 derives from data_020c3e80 and the projection matrix.
+extern MtxFx43 data_020c31ac;
+extern MtxFx43 data_020c3244[64];
+extern MtxFx43 data_020c3eb0;
+extern MtxFx44 data_020c3ee0;
+
 // The light matrix and font tables in the code area.
 extern MtxFx43 data_020c3e80;
 
@@ -465,7 +474,7 @@ typedef struct TexInfo {
     s16 mUnk_08;
     s16 mUnk_0a;
     s16 mUnk_0c;
-    u16 mUnk_0e;
+    s16 mUnk_0e;
     u8 mUnk_10;
     u8 mUnk_11;
     s8 mUnk_12;

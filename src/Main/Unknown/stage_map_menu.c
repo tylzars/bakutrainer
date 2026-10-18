@@ -21,6 +21,7 @@
 #include <Main/Unknown/stage_map_menu.h>
 #include <Main/Unknown/text_draw.h>
 #include <Main/Unknown/camera.h>
+#include <Main/Unknown/model.h>
 
 void func_02019fa0(void) {
     static int prevSel = -1;

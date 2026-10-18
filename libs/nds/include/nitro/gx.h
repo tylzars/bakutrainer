@@ -15,6 +15,7 @@
 #define GX_DISPCNT_MODE_GRAPHICS 1
 
 #define reg_G2_BG0CNT (*(vu16 *) 0x04000008)
+#define reg_G2_BG3CNT (*(vu16 *) 0x0400000e)
 #define reg_G2_BG0OFS (*(vu32 *) 0x04000010)
 
 #define reg_G3X_GXFIFO (*(vu32 *) 0x04000400)
@@ -24,9 +25,26 @@
 #define reg_G3X_FOG_COLOR (*(vu32 *) 0x04000358)
 #define reg_G3X_FOG_OFFSET (*(vu16 *) 0x0400035c)
 #define reg_G3X_MTX_MODE (*(vu32 *) 0x04000440)
+#define reg_G3X_MTX_PUSH (*(vu32 *) 0x04000444)
 #define reg_G3X_MTX_POP (*(vu32 *) 0x04000448)
+#define reg_G3X_MTX_STORE (*(vu32 *) 0x0400044c)
 #define reg_G3X_MTX_IDENTITY (*(vu32 *) 0x04000454)
+#define reg_G3X_MTX_SCALE (*(vu32 *) 0x0400046c)
+#define reg_G3X_MTX_TRANS (*(vu32 *) 0x04000470)
+#define reg_G3X_NORMAL (*(vu32 *) 0x04000484)
+#define reg_G3X_TEXCOORD (*(vu32 *) 0x04000488)
+#define reg_G3X_VTX_16 (*(vu32 *) 0x0400048c)
+#define reg_G3X_VTX_XY (*(vu32 *) 0x04000494)
+#define reg_G3X_POLYGON_ATTR (*(vu32 *) 0x040004a4)
+#define reg_G3X_TEXIMAGE_PARAM (*(vu32 *) 0x040004a8)
+#define reg_G3X_PLTT_BASE (*(vu32 *) 0x040004ac)
+#define reg_G3X_DIF_AMB (*(vu32 *) 0x040004c0)
+#define reg_G3X_SPE_EMI (*(vu32 *) 0x040004c4)
+#define reg_G3X_LIGHT_COLOR (*(vu32 *) 0x040004cc)
+#define reg_G3X_BEGIN_VTXS (*(vu32 *) 0x04000500)
 #define reg_G3X_END_VTXS (*(vu32 *) 0x04000504)
+#define reg_G3X_VIEWPORT (*(vu32 *) 0x04000580)
+#define reg_G3X_POS_TEST (*(vu32 *) 0x040005c4)
 #define reg_G3X_GXSTAT (*(vu32 *) 0x04000600)
 
 #ifdef __cplusplus

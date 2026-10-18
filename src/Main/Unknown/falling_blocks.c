@@ -10,6 +10,7 @@
 #include <Main/Unknown/falling_blocks.h>
 #include <Main/Unknown/mode_select.h>
 #include <Main/Unknown/text_draw.h>
+#include <Main/Unknown/model.h>
 #include <nitro/os.h>
 #include <stdio.h>
 

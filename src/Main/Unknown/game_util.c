@@ -7,6 +7,7 @@
 #include <Main/Unknown/globals.h>
 #include <Main/Unknown/text_draw.h>
 #include <Main/Unknown/camera.h>
+#include <Main/Unknown/model.h>
 #include <Main/clib.h>
 #include <nitro/fx.h>
 #include <nitro/gx.h>

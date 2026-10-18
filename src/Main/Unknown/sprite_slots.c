@@ -7,6 +7,7 @@
 #include <Main/Unknown/globals.h>
 #include <Main/Unknown/sprite_slots.h>
 #include <Main/Unknown/text_draw.h>
+#include <Main/Unknown/model.h>
 
 void func_0200d6c8(void) {
     u32 i;

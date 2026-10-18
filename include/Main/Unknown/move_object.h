@@ -17,32 +17,72 @@ typedef struct ModelAnim {
     u8 mUnk_5;
 } ModelAnim;
 
+// A queued event of a model: the command-list position it starts and the 16-bit key that orders it.
+typedef struct ModelEvent {
+    s16 *mUnk_0;
+    u16 mUnk_4;
+    u8 mUnk_6[2];
+} ModelEvent;
+
 // A model object: 0x178 bytes with a model id at 0x170.
 typedef struct Model {
-    u8 mUnk_000[4];
-    u16 mUnk_004;
-    u8 mUnk_006[6];
-    s16 mUnk_00c;
-    u8 mUnk_00e[2];
-    s16 mUnk_010;
-    u8 mUnk_012[0x22 - 0x12];
-    s16 mUnk_022;
-    u8 mUnk_024[0x134 - 0x24];
+    s16 *mUnk_000;
+    union {
+        s16 mUnk_004_all[16];
+        struct {
+            u16 mUnk_004;
+            u8 mUnk_006[6];
+            s16 mUnk_00c;
+            u8 mUnk_00e[2];
+            s16 mUnk_010;
+            u8 mUnk_012[0x22 - 0x12];
+            s16 mUnk_022;
+        };
+    };
+    u8 mUnk_024;
+    u8 mUnk_025[3];
+    // Entry 32 is the one an event index of -1 selects.
+    ModelEvent mUnk_028[33];
+    u32 mUnk_130;
     u32 mUnk_134;
-    u8 mUnk_138[0x142 - 0x138];
+    u32 mUnk_138;
+    s16 *mUnk_13c;
+    u16 mUnk_140;
     u16 mUnk_142;
-    u8 mUnk_144[0x14c - 0x144];
-    ModelAnim mUnk_14c;
-    ModelAnim mUnk_152;
-    u8 mUnk_158[0x170 - 0x158];
+    s16 mUnk_144;
+    s16 mUnk_146;
+    u8 mUnk_148;
+    u8 mUnk_149;
+    u8 mUnk_14a[2];
+    union {
+        struct {
+            ModelAnim mUnk_14c;
+            ModelAnim mUnk_152;
+        };
+        ModelAnim mAnim[2];
+    };
+    VecFx32 mUnk_158;
+    VecFx32 mUnk_164;
     u16 mUnk_170;
     union {
         u16 mUnk_172;
         struct {
-            u16 mUnk_172_0 : 9;
+            u16 mUnk_172_0 : 1;
+            u16 mUnk_172_1 : 1;
+            u16 mUnk_172_2 : 1;
+            u16 mUnk_172_3 : 1;
+            u16 mUnk_172_4 : 1;
+            u16 mUnk_172_5 : 1;
+            u16 mUnk_172_6 : 1;
+            u16 mUnk_172_7 : 1;
+            u16 mUnk_172_8 : 1;
             u16 mUnk_172_9 : 1;
             u16 mUnk_172_10 : 1;
-            u16 mUnk_172_11 : 5;
+            u16 mUnk_172_11 : 1;
+            u16 mUnk_172_12 : 1;
+            u16 mUnk_172_13 : 1;
+            u16 mUnk_172_14 : 1;
+            u16 mUnk_172_15 : 1;
         };
     };
     u8 mUnk_174;

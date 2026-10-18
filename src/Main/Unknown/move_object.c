@@ -9,6 +9,7 @@
 #include <Main/Unknown/game_util.h>
 #include <Main/Unknown/globals.h>
 #include <Main/Unknown/move_object.h>
+#include <Main/Unknown/model.h>
 #include <Main/clib.h>
 #include <nitro/fx.h>
 #include <nitro/gx.h>
