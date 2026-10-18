@@ -16,6 +16,7 @@
 #include <Main/Unknown/system_init.h>
 #include <Main/Unknown/vram_cache.h>
 #include <Main/Unknown/engine_asm.h>
+#include <Main/Unknown/texture_blocks.h>
 
 typedef struct Unk_PoseChannel {
     u16 mUnk_0;

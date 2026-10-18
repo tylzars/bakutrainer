@@ -25,14 +25,25 @@ u32 func_0201c564(void);
 
 // Objects of the per-frame system code.
 
+typedef struct Unk_PoolRange {
+    u16 mUnk_0;
+    u16 mUnk_2;
+    u16 mUnk_4;
+    u16 mUnk_6;
+} Unk_PoolRange;
+
 // The two halves of the file cache block (0x580 bytes each): an offset table and the data it indexes.
 typedef struct Unk_020c2694 {
-    u8 mUnk_000[0x14];
+    u8 mUnk_000[0xc];
+    Unk_PoolRange *mUnk_00c;
+    u8 mUnk_010[4];
     u16 mUnk_014[0x80];
     u8 mUnk_114;
     u8 mUnk_115[0x568 - 0x115];
     u8 mUnk_568[0x10];
-    u8 mUnk_578[4];
+    u16 mUnk_578;
+    u8 mUnk_57a;
+    u8 mUnk_57b;
     u8 mUnk_57c;
     u8 mUnk_57d[3];
 } Unk_020c2694;
@@ -49,12 +60,13 @@ typedef struct Unk_020c267c {
     Unk_020c2694 mUnk_018[2];
     u8 mUnk_b18[4];
     u32 *mUnk_b1c;
-    u8 mUnk_b20[4];
+    u32 *mUnk_b20;
     u16 mUnk_b24;
     u16 mUnk_b26;
-    u8 mUnk_b28[2];
+    s16 mUnk_b28;
     u16 mUnk_b2a;
-    u8 mUnk_b2c[2];
+    s8 mUnk_b2c;
+    u8 mUnk_b2d;
     u8 mUnk_b2e;
 } Unk_020c267c;
 extern Unk_020c267c data_020c267c;
@@ -119,13 +131,6 @@ typedef struct Unk_PoolSlot {
     u16 mUnk_04;
     u16 mUnk_06;
 } Unk_PoolSlot;
-
-typedef struct Unk_PoolRange {
-    u16 mUnk_0;
-    u16 mUnk_2;
-    u16 mUnk_4;
-    u16 mUnk_6;
-} Unk_PoolRange;
 
 // An animation track: its data, the current and next frame, the blend between them and the mode.
 typedef struct Unk_AnimTrack {

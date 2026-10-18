@@ -7,6 +7,7 @@
 #include <Main/Unknown/random_angle.h>
 #include <Main/Unknown/vram_cache.h>
 #include <Main/Unknown/model.h>
+#include <Main/Unknown/texture_blocks.h>
 
 #pragma thumb off
 

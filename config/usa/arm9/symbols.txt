@@ -1668,6 +1668,8 @@ data_02050378 kind:data(short[128]) addr:0x02050378
 data_02050478 kind:data(any) addr:0x02050478
 data_02050898 kind:data(byte[8]) addr:0x02050898
 data_020508a0 kind:data(any) addr:0x020508a0
+data_02050998 kind:data(byte[32]) addr:0x02050998
+data_020509b8 kind:data(any) addr:0x020509b8
 func_02052468 kind:function(arm,size=0x4) addr:0x02052468
 func_02052478 kind:function(arm,size=0x28) addr:0x02052478
 func_020524a8 kind:function(arm,size=0x148) addr:0x020524a8

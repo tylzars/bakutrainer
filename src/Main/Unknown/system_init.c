@@ -30,6 +30,7 @@
 #include <Main/Unknown/camera.h>
 #include <Main/Unknown/model.h>
 #include <Main/Unknown/engine_asm.h>
+#include <Main/Unknown/texture_blocks.h>
 
 #define EZ10_MAGIC 0x30315a45
 #define HW_DISPCNT 0x04000000
@@ -2214,7 +2215,7 @@ void func_0201f450(int a, int b, u32 c, u32 d) {
     rows = (size * d) >> 10;
     if (a & 1) {
         *(vu32 *) 0x04000000 =
-            (data_020c267c.mUnk_018[0].mUnk_578[3] << 31) + (data_020c267c.mUnk_018[0].mUnk_568[0xf] << 20) + 0x11833;
+            (data_020c267c.mUnk_018[0].mUnk_57b << 31) + (data_020c267c.mUnk_018[0].mUnk_568[0xf] << 20) + 0x11833;
         data_020c18bc.mUnk_474[0] &= ~4;
         data_020c18bc.mUnk_2d4 = 0;
         data_020c18bc.mUnk_2d8 = 0;
@@ -2243,7 +2244,7 @@ void func_0201f450(int a, int b, u32 c, u32 d) {
     }
     if (a & 2) {
         *(vu32 *) 0x04001000 =
-            (data_020c267c.mUnk_018[1].mUnk_578[3] << 31) + (data_020c267c.mUnk_018[1].mUnk_568[0xf] << 20) + 0x11813;
+            (data_020c267c.mUnk_018[1].mUnk_57b << 31) + (data_020c267c.mUnk_018[1].mUnk_568[0xf] << 20) + 0x11813;
         data_020c18bc.mUnk_474[0] &= ~8;
         data_020c18bc.mUnk_2dc = 0;
         data_020c18bc.mUnk_2e0 = 0;
