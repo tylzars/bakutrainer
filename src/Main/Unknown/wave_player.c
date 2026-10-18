@@ -5,6 +5,7 @@
 #include <Main/Unknown/functions.h>
 #include <Main/Unknown/globals.h>
 #include <Main/Unknown/wave_player.h>
+#include <Main/Unknown/file_loader.h>
 
 WavePlayer data_020c648c;
 

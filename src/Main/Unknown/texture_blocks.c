@@ -11,6 +11,7 @@
 #include <Main/Unknown/engine_asm.h>
 #include <Main/Unknown/screen_fade.h>
 #include <Main/Unknown/texture_blocks.h>
+#include <Main/Unknown/file_loader.h>
 
 // Block counts by texture size code, used by func_0202b32c.
 const u16 data_02050978[16] = {

@@ -9,13 +9,22 @@ extern "C" {
 
 // Sprite object embedded in each piece.
 typedef struct Sprite {
-    u32 mUnk_00;
+    const u16 *mUnk_00;
     s32 mUnk_04;
-    u8 mUnk_08[0x14 - 0x08];
+    const u16 *mUnk_08;
+    u32 mUnk_0c;
+    u32 mUnk_10;
     u32 mUnk_14;
-    u8 mUnk_18[0xde - 0x18];
+    const u16 *mUnk_18[32];
+    u16 mUnk_98[32];
+    u16 mUnk_d8;
+    u16 mUnk_da;
+    s16 mUnk_dc;
     u8 mUnk_de;
-    u8 mUnk_df[0x104 - 0xdf];
+    u8 mUnk_df;
+    u8 mUnk_e0;
+    u8 mUnk_e1;
+    u16 mUnk_e2[17];
 } Sprite;
 
 typedef struct Vec2i {

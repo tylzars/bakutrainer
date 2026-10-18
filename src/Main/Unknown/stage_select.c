@@ -24,6 +24,7 @@
 #include <Main/Unknown/model.h>
 #include <Main/Unknown/texture_blocks.h>
 #include <Main/Unknown/wave_player.h>
+#include <Main/Unknown/sprite_script.h>
 
 #define TABLE_ENTRY_COUNT 100
 

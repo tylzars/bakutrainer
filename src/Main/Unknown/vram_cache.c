@@ -8,6 +8,7 @@
 #include <Main/Unknown/vram_cache.h>
 #include <Main/Unknown/model.h>
 #include <Main/Unknown/texture_blocks.h>
+#include <Main/Unknown/file_loader.h>
 
 #pragma thumb off
 

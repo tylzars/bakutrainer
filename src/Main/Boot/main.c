@@ -13,6 +13,7 @@
 #include <Main/Unknown/state_flow.h>
 #include <Main/Unknown/globals.h>
 #include <Main/Unknown/wave_player.h>
+#include <Main/Unknown/sprite_script.h>
 #include <nitro/init.h>
 
 void main(void) {

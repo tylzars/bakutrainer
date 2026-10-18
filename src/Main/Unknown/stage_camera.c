@@ -28,6 +28,7 @@
 #include <Main/Unknown/model.h>
 #include <Main/Unknown/texture_blocks.h>
 #include <Main/Unknown/wave_player.h>
+#include <Main/Unknown/file_loader.h>
 
 void func_02015d4c(void) {
     data_020b6ee0.mUnk_a146 = 0;

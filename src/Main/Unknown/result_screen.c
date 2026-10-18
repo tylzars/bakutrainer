@@ -15,6 +15,7 @@
 #include <Main/Unknown/text_draw.h>
 #include <Main/Unknown/model.h>
 #include <Main/Unknown/texture_blocks.h>
+#include <Main/Unknown/sprite_script.h>
 #include <stdio.h>
 #include <stdlib.h>
 

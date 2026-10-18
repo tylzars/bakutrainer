@@ -4,6 +4,7 @@
 #include <Main/Unknown/system_init.h>
 #include <Main/Unknown/file_stream.h>
 #include <Main/Unknown/camera.h>
+#include <Main/Unknown/file_loader.h>
 #include <nitro/gx.h>
 #include <nitro/mi.h>
 #include <nitro/os.h>

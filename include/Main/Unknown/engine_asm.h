@@ -10,6 +10,7 @@ extern "C" {
 void func_02027fc2(const char *msg);
 void func_02028150(const void *src, void *dst, u32 skip, u32 size);
 u32 func_02028250(u32 x);
+const void *func_020282ec(const void *src, void *dst);
 void func_0202875c(const void *src, void *dst);
 void func_02028928(u16 *data, const u8 *table, u32 count);
 void func_02028980(s16 *block, int comp, s16 *maxcode, u8 *valptr, u16 *mincode, u8 *huffval, s16 *dc,

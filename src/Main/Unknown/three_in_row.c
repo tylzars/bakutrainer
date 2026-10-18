@@ -11,6 +11,7 @@
 #include <Main/Unknown/three_in_row.h>
 #include <Main/Unknown/text_draw.h>
 #include <Main/Unknown/texture_blocks.h>
+#include <Main/Unknown/sprite_script.h>
 
 u8 data_020b13c8[SHAPE_COUNT];
 Unk_020b13d4 data_020b13d4;

@@ -431,6 +431,14 @@ src/Main/Unknown/script_records.c:
 src/Main/Unknown/texture_blocks.c:
     .text       start:0x0202ad34 end:0x0202db1c
 
+// provisional: the Thumb sprite script player after texture_blocks.c's ARM run, up to the padding before ARM code
+src/Main/Unknown/sprite_script.c:
+    .text       start:0x0202db1c end:0x0202de94
+
+// provisional: the ARM file cache and loader on data_020c6470 (defined here), up to the wave player's func_0202ea50
+src/Main/Unknown/file_loader.c:
+    .text       start:0x0202de94 end:0x0202ea50
+
 // provisional: the wave player on data_020c648c (16 channels and the channel count at 0x180); func_0202ea50 (ARM)
 // claims its channels; the wave stream (from 0x0202f110) uses the same object; ARM code resumes at 0x0202f500
 src/Main/Unknown/wave_player.c:

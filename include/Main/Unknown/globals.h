@@ -192,7 +192,9 @@ typedef struct SystemState {
     u16 mUnk_330;
     u8 mUnk_332[2];
     s32 mUnk_334;
-    u8 mUnk_338[0x340 - 0x338];
+    u32 mUnk_338;
+    u16 mUnk_33c;
+    u8 mUnk_33e[2];
     u16 mUnk_340[4];
     u8 mUnk_348[4];
     u8 *mUnk_34c;
