@@ -360,6 +360,6 @@ src/Main/Unknown/save_slot_menu.c:
 src/Main/Unknown/stage_info_panel.c:
     .text       start:0x02011518 end:0x0201353c
 
-// provisional: continues past 0x02014124 (later functions also use data_020b13b0)
+// provisional: the end (the lookup helpers func_020144a4..func_0201456c show no file break)
 src/Main/Unknown/stage_select.c:
-    .text       start:0x0201353c end:0x02014124
+    .text       start:0x0201353c end:0x020145bc

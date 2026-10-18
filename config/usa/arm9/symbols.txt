@@ -1602,6 +1602,7 @@ data_0204e8a4 kind:data(word[25]) addr:0x0204e8a4
 data_0204e908 kind:data(word[25]) addr:0x0204e908
 data_0204e96c kind:data(any) addr:0x0204e96c
 data_0204edfc kind:data(any) addr:0x0204edfc
+data_0204fedc kind:data(byte[5]) addr:0x0204fedc
 data_0204fee2 kind:data(byte[6]) addr:0x0204fee2
 data_0204fee8 kind:data(byte[6]) addr:0x0204fee8
 data_0204fef0 kind:data(byte[12]) addr:0x0204fef0

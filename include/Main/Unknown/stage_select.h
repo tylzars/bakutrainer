@@ -10,7 +10,8 @@ extern "C" {
 // Stage selection screen state: member 3 is set once the shown stage was changed with a button, member 4 is the stage
 // shown in the large panel (-1 for none) and member 8 the highlighted entry of the row of five (-1 for none).
 typedef struct Unk_020b13b0 {
-    u8 mUnk_00[2];
+    u8 mUnk_00;
+    u8 mUnk_01;
     u8 mUnk_02;
     u8 mUnk_03;
     s32 mUnk_04;
@@ -30,6 +31,21 @@ void func_02013d48(StageInfo *info, s16 slot, u8 flag, int a, int b, int c, int 
 void func_02013dc8(StageInfo *info, s16 slot, int a, int b);
 void func_02013f74(int stage, int *cursor, int x, int y, int mode, int flags);
 void func_020140d4(void);
+void func_02014124(void);
+void func_02014184(void);
+void func_0201418c(void);
+void func_02014190(void);
+void func_02014260(void);
+void func_0201438c(void);
+void func_02014390(int a);
+void func_020143f4(void);
+void func_0201440c(void);
+void func_02014430(int a);
+int func_020144a4(int a);
+int func_020144e0(int a, int b);
+int func_02014518(int stage, int field);
+int func_02014538(int a, int b);
+int func_0201456c(int a);
 
 #ifdef __cplusplus
 }

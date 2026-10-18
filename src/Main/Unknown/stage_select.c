@@ -1,6 +1,8 @@
 #include <nitro/os.h>
 #include <Main/clib.h>
 #include <Main/Unknown/functions.h>
+#include <Main/Unknown/sound_control.h>
+#include <Main/Unknown/save_data.h>
 #include <Main/Unknown/game_util.h>
 #include <Main/Unknown/state_flow.h>
 #include <Main/Unknown/battle_screen.h>
@@ -10,6 +12,8 @@
 #include <Main/Unknown/stage_data.h>
 #include <Main/Unknown/stage_info_panel.h>
 #include <Main/Unknown/stage_select.h>
+
+#define TABLE_ENTRY_COUNT 100
 
 void func_0201353c(void) {
     int stage;
@@ -365,4 +369,236 @@ void func_020140d4(void) {
     func_02024208();
     data_020b13b0.mUnk_02 = 0;
     func_0200f848(0, 1);
+}
+
+void func_02014124(void) {
+    u32 sel;
+
+    func_0200f898();
+    if (data_020c18bc.mUnk_12 & 0x100) {
+        sel = data_020b13b0.mUnk_02 + 1;
+        if (sel >= func_0200f988() - 1) {
+            sel = func_0200f988() - 1;
+        }
+        data_020b13b0.mUnk_02 = sel;
+        func_0200f848(data_020b13b0.mUnk_02, 1);
+    } else if (data_020c18bc.mUnk_12 & 0x200) {
+        int prev = data_020b13b0.mUnk_02 - 1;
+        if (prev < 0) {
+            prev = 0;
+        }
+        data_020b13b0.mUnk_02 = prev;
+        func_0200f848(data_020b13b0.mUnk_02, 1);
+    }
+}
+
+void func_02014184(void) {
+    func_020102f8();
+}
+
+void func_0201418c(void) {}
+
+void func_02014190(void) {
+    func_0201eb20();
+    func_0202c1c4();
+    func_02022370();
+    func_0202bdd8(0x10cb, 0x10ca, 0x10cc, 0, 1);
+    func_02021fb0(0x1c7, 0x1c6, 0x100, 0x10);
+    func_02020854(1);
+    func_020220c8(0x10d0);
+    func_020325b0(0xf87, 0, 0xf88, 0, 0, 0);
+    data_020c5e44.mUnk_28 = func_0201418c;
+    data_020c6184.mUnk_14 = 0x640;
+    data_020c6144.mUnk_44 = 0x128e000;
+    memset(&data_020b6ee0.mUnk_f9c, 0, 0x44);
+    func_02031fc4(0, &data_020b6ee0.mUnk_f9c);
+    data_020b6ee0.mUnk_fdf &= ~7;
+    func_020271ec(&data_020b6ee0.mModel[0], 0, 0, 0, data_0201aa60[0]);
+    data_020b13b0.mUnk_01 = 0;
+    data_020b13b0.mUnk_00 = 0;
+}
+
+void func_02014260(void) {
+    u8 order[5] = {0, 1, 2, 3, 4};
+    u16 keys;
+
+    func_020073b0();
+    func_02033614(data_020c5e44.mUnk_a4.x, data_020c5e44.mUnk_a4.z);
+    func_020072a8();
+    func_0200b8dc(10, 10, "t:%i a:%i", data_020b13b0.mUnk_00, data_020b13b0.mUnk_01);
+    keys = data_020c18bc.mUnk_12;
+    if (keys & 0x10) {
+        if (data_020b13b0.mUnk_00 < 4) {
+            data_020b13b0.mUnk_00++;
+            data_020b6ee0.mModel[0].mUnk_142 = 0;
+            data_020b6ee0.mModel[0].mUnk_134 |= 1 << order[data_020b13b0.mUnk_00];
+        }
+    } else if (keys & 0x20) {
+        if (data_020b13b0.mUnk_00 != 0) {
+            data_020b13b0.mUnk_00--;
+            data_020b6ee0.mModel[0].mUnk_142 = 0;
+            data_020b6ee0.mModel[0].mUnk_134 |= 1 << order[data_020b13b0.mUnk_00];
+        }
+    }
+    if (keys & 0x40) {
+        if (data_020b13b0.mUnk_01 < 0x26) {
+            data_020b13b0.mUnk_01++;
+            func_02007244(data_020b13b0.mUnk_01);
+            data_020b6ee0.mModel[0].mUnk_142 = 0;
+            data_020b6ee0.mModel[0].mUnk_134 |= 1 << order[data_020b13b0.mUnk_00];
+        }
+    } else if (keys & 0x80) {
+        if (data_020b13b0.mUnk_01 != 0) {
+            data_020b13b0.mUnk_01--;
+            func_02007244(data_020b13b0.mUnk_01);
+            data_020b6ee0.mModel[0].mUnk_142 = 0;
+            data_020b6ee0.mModel[0].mUnk_134 |= 1 << order[data_020b13b0.mUnk_00];
+        }
+    }
+}
+
+void func_0201438c(void) {}
+
+void func_02014390(int a) {
+    int i;
+
+    data_020b6ee0.mUnk_a530 = 0;
+    data_020b6ee0.mUnk_a560 = 0;
+    data_020b6ee0.mUnk_a538 = 0;
+    data_020b6ee0.mUnk_a53c = 0;
+    data_020b6ee0.mUnk_a8e4 = -1;
+    data_020b6ee0.mUnk_a147 = 0;
+    data_020b6ee0.mUnk_a14a = 1;
+    data_020b6ee0.mUnk_a14c = 0;
+    data_020b6ee0.mUnk_a564 = 1;
+    data_020b6ee0.mUnk_a568 = 0;
+    data_020b6ee0.mUnk_a56c = 0;
+    data_020b6ee0.mUnk_a56d = 0;
+    data_020b6ee0.mUnk_a56e = 0;
+    data_020b6ee0.mUnk_a56f = 0;
+    data_020b6ee0.mUnk_a570 = 0;
+    data_020b6ee0.mUnk_a5d0 = 1;
+    func_02011bcc(-1, 0, 0);
+    data_020b10fc.mUnk_08 = 0;
+    for (i = 0; i < 5; i++) {
+        data_020b10fc.mUnk_14[i] = 0;
+    }
+}
+
+void func_020143f4(void) {
+    func_02014390(0);
+    func_02014d8c(0);
+    func_020150ec(0);
+}
+
+void func_0201440c(void) {
+    func_02014390(1);
+    func_02014d8c(1);
+    func_020150ec(1);
+    func_0201079c(data_020b1084.mUnk_0c);
+}
+
+void func_02014430(int a) {
+    int local;
+    int timer;
+    int fired;
+    int running = 1;
+
+    if (func_0200fb68(&local, 0) == 1) {
+        timer = 0x78;
+        fired = 0;
+        func_0202eeec();
+        func_02010500(running);
+        do {
+            timer--;
+            if (timer == 0) {
+                running = 0;
+            }
+            if (func_0201f794(3, 3) != 0 && fired == 0) {
+                fired = 1;
+                func_0201944c();
+                switch (a) {
+                    case 0:
+                        func_020109f4(data_020b1084.mUnk_0c);
+                        break;
+                    case 1:
+                        func_02010cfc();
+                        break;
+                }
+            }
+            func_020101d0();
+            func_020103c0();
+            func_0201bb30();
+        } while (running == 1);
+        func_02010500(2);
+        func_0200fd90();
+    }
+}
+
+int func_020144a4(int a) {
+    int i;
+
+    if (a != -1) {
+        for (i = 0; i < TABLE_ENTRY_COUNT; i++) {
+            if (a == func_02021e44(0x1d9, i * 20 + 2)) {
+                return i;
+            }
+        }
+        if (i >= TABLE_ENTRY_COUNT) {
+            OS_Terminate();
+        }
+    }
+    return -1;
+}
+
+int func_020144e0(int a, int b) {
+    if ((u32) a >= TABLE_ENTRY_COUNT) {
+        OS_Terminate();
+    }
+    if ((u32) (func_02021e08(0x1d9, b + a * 20) - 2) <= 1) {
+        return func_02021e44(0x1d9, b + a * 20);
+    }
+    return -1;
+}
+
+int func_02014518(int stage, int field) {
+    int index = func_020144a4(stage);
+
+    if (index == -1) {
+        OS_Terminate();
+    }
+    return func_020144e0(index, field);
+}
+
+int func_02014538(int a, int b) {
+    int index;
+
+    if ((u32) a >= 0x19) {
+        OS_Terminate();
+    }
+    index = b + a * 17;
+    if ((u32) (func_02021e08(0xda2, index) - 2) <= 1) {
+        return func_02021e44(0xda2, index);
+    }
+    return -1;
+}
+
+int func_0201456c(int a) {
+    int result;
+    int other;
+
+    if ((u32) a >= 3) {
+        OS_Terminate();
+    }
+    if (data_020b6ee0.mUnk_a534 == -1) {
+        OS_Terminate();
+    }
+    result = func_02014538(data_020b6ee0.mUnk_a534, a + 8);
+    if (func_020149b0() == 0) {
+        other = func_02014538(data_020b6ee0.mUnk_a534, a + 11);
+        if (other != -1) {
+            result = other;
+        }
+    }
+    return result;
 }

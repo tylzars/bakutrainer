@@ -3297,6 +3297,7 @@ from:0x02014240 kind:load to:0x020c6184 module:main
 from:0x02014248 kind:load to:0x020c6144 module:main
 from:0x0201424c kind:load to:0x020b7e7c module:main
 from:0x02014250 kind:load to:0x020b7ea0 module:main
+from:0x02014254 kind:load to:0x0201aa60 module:main
 from:0x02014258 kind:load to:0x020b7b8c module:main
 from:0x0201425c kind:load to:0x020b13b0 module:main
 from:0x0201427c kind:thumb_call to:0x020073b0 module:main
@@ -3305,6 +3306,7 @@ from:0x0201428a kind:thumb_call to:0x020072a8 module:main
 from:0x0201429c kind:thumb_call to:0x0200b8dc module:main
 from:0x0201430e kind:thumb_call to:0x02007244 module:main
 from:0x02014348 kind:thumb_call to:0x02007244 module:main
+from:0x02014370 kind:load to:0x0204fedc module:main
 from:0x02014374 kind:load to:0x020c5ec4 module:main
 from:0x02014378 kind:load to:0x020b13b0 module:main
 from:0x0201437c kind:load to:0x02063a50 module:main
