@@ -342,6 +342,9 @@ Constants held in registers:
   read-only externs const (pointer tables `const char *const`). [2.0-all]
 - A function-local static table schedules like const data (no store can reach it, loads move above stores) while
   staying in `.data` (file-scope const would move it to `.rodata`). Symbols are `name$N`.
+- `abs` (and other functions) declared in a header named stdlib.h are treated as pure: calls with the same argument
+  merge, even across stores. Declare it in a project header when the original calls it repeatedly. In ARM code an
+  `add sp` was seen scheduled before global stores at a return (the Thumb epilogue rule above is Thumb-only).
 - Epilogue order: a store just before a return is scheduled after `add sp, #N` only when it targets a function-local
   static whose address is never taken. The pop's memory alias is every non-const global the function touches,
   file-scope statics included; a local static is left out, so its store loses the memory edge to the pop. A store
@@ -647,6 +650,8 @@ Constants held in registers:
   & ~0x3f for halfwords, & ~0x1f for bytes. For an object the file defines, constant offsets go through the
   `.bss` section base plus the anchor; taking the address or a variable index uses the object's own symbol. A
   pool word that names no object start is an anchor: find the object it belongs to before declaring it.
+- ARM anchoring: word and byte members are reached as object + (offset & ~0xfff), halfwords as object +
+  (offset & ~0xff); pointer locals fold the same way. Register-offset loads carry the full address.
 - Shared `.bss` order (2.0 sp2p3): ascending size; on a tie, definition order except that the first-defined object
   goes last; objects of 64 bytes or more get own sections, also smallest first. A smaller object after a
   bigger one starts a new file.
