@@ -74,7 +74,7 @@ typedef struct MoveObj {
     Vec2i mTrail[TRAIL_LEN];
     u16 mTrailStart;
     u16 mTrailEnd;
-    u8 mUnk_310[4];
+    void *mUnk_310;
 } MoveObj;
 
 void func_0200c034(MoveObj *o, int sprite, int model, const Vec2i *pos, int e, int f, int g);

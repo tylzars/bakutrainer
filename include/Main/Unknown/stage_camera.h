@@ -120,6 +120,18 @@ void func_020196b4(void);
 int func_020196e0(int value);
 void func_02019750(u32 index);
 void func_02019788(void);
+extern VecFx32 data_020c1800;
+extern VecFx32 data_020c180c;
+int func_02019874(VecFx32 *pos);
+void func_02019a38(StageRec *rec, int x, int y, int c, int d, int e);
+void func_02019b38(void);
+void func_02019b3c(VecFx32 *a, VecFx32 *b);
+void func_02019df8(void);
+void func_02019800(StageRec *rec);
+void func_020198f0(void);
+void func_02019974(StageRec *rec, int a, int b, int c, int d, int e);
+void func_02019ad8(void);
+void func_02019aec(void);
 #ifdef __cplusplus
 }
 #endif

@@ -12,6 +12,7 @@
 #include <Main/Unknown/game_util.h>
 #include <Main/Unknown/stage_data.h>
 #include <Main/Unknown/stage_camera.h>
+#include <Main/Unknown/move_object.h>
 #include <Main/Unknown/three_in_row.h>
 #include <Main/Unknown/stage_select.h>
 #include <Main/Unknown/sprite_slots.h>
@@ -1644,7 +1645,7 @@ int func_020196e0(int value) {
             Unk_020bff04 *e = &data_020b6ee0.mUnk_9024[i];
             e->mUnk_184 = value;
             if (e->mUnk_184 == 1) {
-                func_020271ec(e, 0, 0, 2, data_0201aba0[4]);
+                func_020271ec(&e->mModel, 0, 0, 2, data_0201aba0[4]);
             }
             data_020b6ee0.mUnk_a149++;
             return i;
@@ -1671,8 +1672,269 @@ void func_02019788(void) {
 
     for (i = 0; i < 8; i++) {
         if (data_020b6ee0.mUnk_9024[i].mUnk_184 != 0 && e[i].mUnk_184 == 1) {
-            func_02023f58(&params, e[i].mUnk_178, e[i].mUnk_17c, e[i].mUnk_180, 0x100000, 0, 2, 0, 0x100);
+            func_02023f58(&params, e[i].mUnk_178.x, e[i].mUnk_178.y, e[i].mUnk_178.z, 0x100000, 0, 2, 0, 0x100);
             func_0202733c(&e[i], &params, 0);
         }
+    }
+}
+
+// Looks for an element of the table at mUnk_9024 near the record position; one in state 1 is released and the move
+// object is started.
+void func_02019800(StageRec *rec) {
+    int i = func_02019874(&rec->mUnk_1a0);
+
+    if (i != -1) {
+        Unk_020bff04 *e = &data_020b6ee0.mUnk_9024[i];
+
+        if (e->mUnk_184 == 1) {
+            func_02019750(i);
+            func_02019a38(rec, rec->mUnk_1f0, rec->mUnk_1f4, 0x3e, 0x5e, 1);
+            func_0202f110(0xe0, 0x64, 0, 0x40, 0xffff, 0);
+            data_020b6ee0.mUnk_a570 = 1;
+        }
+    }
+}
+
+// Index of the first used element of the table whose x/z distance to pos is under 8 units of 0xc800, or -1.
+int func_02019874(VecFx32 *pos) {
+    Unk_020bff04 *e = data_020b6ee0.mUnk_9024;
+    int i;
+
+    for (i = 0; i < 8; i++) {
+        if (data_020b6ee0.mUnk_9024[i].mUnk_184 != 0) {
+            s32 dx = e[i].mUnk_178.x - pos->x;
+            s32 dz = e[i].mUnk_178.z - pos->z;
+            u8 inRange = (abs(dx) + abs(dz)) / 0xc800 < 8;
+
+            if (inRange == 1) {
+                return i;
+            }
+        }
+    }
+    return -1;
+}
+
+// Picks a random point around a fixed position and adds a table element there when none lies near it.
+void func_020198f0(void) {
+    VecFx32 v;
+    int j;
+
+    func_02031fc4(0, &v);
+    v.x += (0x40 - (func_0201fd68() & 0x7f)) * 0xc800;
+    v.z += (0x40 - (func_0201fd68() & 0x7f)) * 0xc800;
+    v.y += 0x19000;
+    if (func_02019874(&v) == -1) {
+        j = func_020196e0(1);
+        if (j != -1) {
+            Unk_020bff04 *e = &data_020b6ee0.mUnk_9024[j];
+
+            e->mUnk_178 = v;
+        }
+    }
+}
+
+// Eases the offset of the record with number index toward mulX and mulY (scaled by the screen mode) and draws the
+// sprite at it.
+void func_02019974(StageRec *rec, int index, int sprite, int mulX, int mulY, int width) {
+    int scale;
+    StageOffset *e;
+
+    if (rec->mUnk_22f != 0) {
+        if ((u32) index >= 3) {
+            OS_Terminate();
+        }
+        e = &rec->mUnk_1f8[index];
+        switch (data_020b6ee0.mUnk_a146) {
+            case 0:
+                scale = 0x200;
+                break;
+            case 1:
+                scale = 0x280;
+                break;
+            default:
+                scale = 0x500;
+                break;
+        }
+        if (index == 1 && rec->mUnk_22e == 0) {
+            sprite = 0;
+        }
+        if (index == 1 && !((data_020c18bc.mUnk_45c >> 5) & 1)) {
+            sprite = 0;
+        }
+        mulX = mulX * scale;
+        mulY = mulY * scale;
+        func_0200b928(&e->x, mulX, 8);
+        func_0200b928(&e->y, mulY, 8);
+        if (sprite != 0) {
+            func_0202cf08(sprite, rec->mUnk_1f0 + e->x / 512, rec->mUnk_1f4 - e->y / 512, width, 1);
+        }
+    }
+}
+
+// Starts the move object for the record, with the end point depending on mode.
+void func_02019a38(StageRec *rec, int x, int y, int c, int d, int mode) {
+    MoveObj *o = &data_020b6ee0.mUnk_9de8;
+    Vec2i pos;
+    int r;
+
+    o->mUnk_310 = rec;
+    r = func_020117e0(rec->mInfo.mUnk_12);
+    pos.x = mode == 1 ? x : r;
+    pos.y = mode == 1 ? y : 0x5e;
+    pos.y += mode == 1 ? 0 : -252;
+    func_0200c034(o, 0x1f, -1, &pos, 0x3c, 1, 1);
+    func_0200c124(o, 1, 7);
+    pos.x = mode == 1 ? r : x;
+    pos.y = mode == 1 ? 0x5e : y;
+    pos.y += mode == 1 ? -252 : 0;
+    func_0200c0dc(o, 0x800, &pos, 0);
+}
+
+void func_02019ad8(void) {
+    func_0200c164(&data_020b6ee0.mUnk_9de8);
+    func_0200d6c8();
+}
+
+// Runs the move object; when it has ended, calls the record update.
+void func_02019aec(void) {
+    MoveObj *o = &data_020b6ee0.mUnk_9de8;
+
+    if (o->mActive == 1) {
+        func_0200c174(o, 0);
+        if (o->mActive == 1) {
+            func_0200c470(o);
+            return;
+        }
+        if (o->mUnk_310 == 0) {
+            OS_Terminate();
+        }
+        func_02014ffc(o->mUnk_310, 10, 1, 1);
+    }
+}
+
+void func_02019b38(void) {}
+
+// Per-frame update of the stage camera: eases the zoom, follows the touch drag and moves both targets.
+void func_02019b3c(VecFx32 *a, VecFx32 *b) {
+    Unk_020c1030 *p = &data_020b6ee0.mUnk_a150;
+    VecFx32 v;
+    s32 out0[2];
+    s32 out1[2];
+
+    func_02031fc4(0, &v);
+    data_020b6ee0.mUnk_a574.mUnk_0c.x = a->x;
+    data_020b6ee0.mUnk_a574.mUnk_0c.y = a->y;
+    data_020b6ee0.mUnk_a574.mUnk_0c.z = a->z;
+    data_020b6ee0.mUnk_a574.mUnk_00.x = b->x;
+    data_020b6ee0.mUnk_a574.mUnk_00.y = b->y;
+    data_020b6ee0.mUnk_a574.mUnk_00.z = b->z;
+    func_0200b928(&p->mUnk_3d0, p->mUnk_3d4, 0x20);
+    if (p->mUnk_3d0 != 0x200) {
+        data_020b6ee0.mUnk_a574.mUnk_00.x =
+            (data_020b6ee0.mUnk_a574.mUnk_0c.x - data_020b6ee0.mUnk_a574.mUnk_00.x) * p->mUnk_3d0 / 512;
+        data_020b6ee0.mUnk_a574.mUnk_00.y =
+            (data_020b6ee0.mUnk_a574.mUnk_0c.y - data_020b6ee0.mUnk_a574.mUnk_00.y) * p->mUnk_3d0 / 512;
+        data_020b6ee0.mUnk_a574.mUnk_00.z =
+            (data_020b6ee0.mUnk_a574.mUnk_0c.z - data_020b6ee0.mUnk_a574.mUnk_00.z) * p->mUnk_3d0 / 512;
+        data_020b6ee0.mUnk_a574.mUnk_00.x = data_020b6ee0.mUnk_a574.mUnk_0c.x - data_020b6ee0.mUnk_a574.mUnk_00.x;
+        data_020b6ee0.mUnk_a574.mUnk_00.y = data_020b6ee0.mUnk_a574.mUnk_0c.y - data_020b6ee0.mUnk_a574.mUnk_00.y;
+        data_020b6ee0.mUnk_a574.mUnk_00.z = data_020b6ee0.mUnk_a574.mUnk_0c.z - data_020b6ee0.mUnk_a574.mUnk_00.z;
+    }
+    func_0200b960(&data_020c5e44.mUnk_80, data_020b6ee0.mUnk_a574.mUnk_00, data_020b6ee0.mUnk_a574.mUnk_34);
+    func_0200b960(&data_020c5e44.mUnk_98, data_020b6ee0.mUnk_a574.mUnk_0c, data_020b6ee0.mUnk_a574.mUnk_34);
+    func_02033b8c();
+    func_02033520();
+    func_02025db4(p, out1);
+    if (p->mUnk_3d8 == 0) {
+        func_0202cf08(0xe25, 0x7f, out1[1], 0xdc, 1);
+        func_0202cf08(0xe26, out1[0], 0x5f, 0xd2, 1);
+        func_0202cf08(0xe29, out1[0], out1[1], 0xc8, 1);
+        func_0202cf08(0xe2e, out1[0], out1[1], 0xbe, 1);
+    } else {
+        p->mUnk_3d8--;
+    }
+    if (data_020c18bc.mUnk_2ac_1 == 1 && func_0200bd80(0x40000000, 0x101) == 0 &&
+        func_0200bd80(0x40000000, 0x102) == 0 && data_020b6ee0.mUnk_a5d0 == 0 && p->mUnk_3dd == 1) {
+        s32 dx;
+        s32 dy;
+
+        func_02025db4(p, out0);
+        dy = data_020c18bc.mUnk_2af - out0[1];
+        dx = data_020c18bc.mUnk_2ae - out0[0];
+        p->mUnk_44 = (dx << 9) / 16;
+        p->mUnk_4c = (dy << 9) / 16;
+    }
+    if (p->mUnk_44 != 0 || p->mUnk_4c != 0) {
+        s32 d;
+
+        p->mUnk_00.mPos.x += p->mUnk_44;
+        p->mUnk_00.mPos.z += p->mUnk_4c;
+        p->mUnk_00.mPos.y =
+            func_02031270(p->mUnk_00.mPos.x, p->mUnk_00.mPos.z, p->mUnk_00.mPos.y + 0x32000, 0, 0, 0) + 0x1900;
+        d = func_0201faf0((p->mUnk_00.mPos.x - v.x) / 512, (p->mUnk_00.mPos.z - v.z) / 512);
+        if (d > 0x320) {
+            s32 r = 0x64000 / d;
+
+            p->mUnk_00.mPos.x = v.x + (p->mUnk_00.mPos.x - v.x) / 512 * r;
+            p->mUnk_00.mPos.z = v.z + (p->mUnk_00.mPos.z - v.z) / 512 * r;
+        }
+    }
+    func_0200b928(&p->mUnk_44, 0, 0x10);
+    func_0200b928(&p->mUnk_4c, 0, 0x10);
+    {
+        s32 d = (p->mUnk_00.mPos.z - a->z) / 16;
+
+        b->z += d;
+        a->z += d;
+    }
+    {
+        s32 d = (p->mUnk_00.mPos.x - a->x) / 16;
+
+        b->x += d;
+        a->x += d;
+    }
+}
+
+// Sets up the stage camera view and the follow state.
+void func_02019df8(void) {
+    Unk_020c1030 *p = &data_020b6ee0.mUnk_a150;
+
+    func_0201eb20();
+    func_0202c1c4();
+    func_0202bdd8(0x10cb, 0x10ca, 0x10cc, 0x82, 2);
+    func_0202bdd8(0x10cb, 0x10ca, 0x10cc, 0, 1);
+    func_0201dde0(0xda3, 2);
+    func_02020854(0);
+    func_0200bdcc(2, 0x10);
+    func_02021fb0(0x1c7, 0x1c6, 0x100, 0x10);
+    func_020325b0(0xdda, 0, 0xddb, 0, 0, 0);
+    data_020c5e44.mUnk_28 = func_02019b38;
+    data_020c5e44.mUnk_354 = 0x640;
+    data_020c5e44.mUnk_344 = 0x9c4000;
+    func_02031fc4(0, &data_020c180c);
+    func_02031fc4(1, &data_020c1800);
+    func_02031fc4(0, &data_020c5e44.mUnk_80);
+    func_02031fc4(0, &data_020c5e44.mUnk_98);
+    data_020c5e44.mUnk_80.z += 0x352000;
+    data_020c5e44.mUnk_98.y += 0x32000;
+    data_020b6ee0.mUnk_a574.mUnk_34 = 0x80;
+    func_0200bf38(8);
+    memset(p, 0, 0x44);
+    p->mUnk_00.mUnk_43 = 2;
+    p->mUnk_00.mUnk_28 = 0x8000;
+    func_02031fc4(data_020b6ee0.mUnk_a530 + 0xa00, &p->mUnk_00.mPos);
+    p->mUnk_00.mPos.y += 0x1900;
+    p->mUnk_3dc = 0;
+    p->mUnk_3dd = 1;
+    data_020b6ee0.mUnk_a5d0 = 1;
+    p->mUnk_3d4 = 0x200;
+    p->mUnk_3d0 = p->mUnk_3d4;
+    data_020b6ee0.mUnk_a574.mUnk_38 = 0x28;
+    p->mUnk_44 = 0;
+    p->mUnk_4c = 0;
+    p->mUnk_3d8 = 0xb4;
+    func_02027230(p->mUnk_50, 0xde5, 0xde4, 2, 0);
+    if ((u32) data_020b6ee0.mUnk_a564 > 0xc) {
+        func_0202f110(0x59, 0x64, 0, 0x40, 0xffff, 0);
     }
 }

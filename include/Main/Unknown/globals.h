@@ -303,9 +303,7 @@ extern const u8 data_0201a676[];
 // counters.
 typedef struct Unk_020bff04 {
     Model mModel;
-    s32 mUnk_178;
-    s32 mUnk_17c;
-    s32 mUnk_180;
+    VecFx32 mUnk_178;
     s32 mUnk_184;
 } Unk_020bff04;
 
@@ -318,7 +316,7 @@ typedef struct Unk_020c1454 {
     s32 mUnk_2c;
     s32 mUnk_30;
     s32 mUnk_34;
-    u8 mUnk_38[0x3c - 0x38];
+    s32 mUnk_38;
     s32 mUnk_3c;
     s32 mUnk_40;
 } Unk_020c1454;
@@ -330,6 +328,21 @@ typedef struct Unk_020bfd40 {
     s32 mUnk_1bc;
     u32 mUnk_1c0;
 } Unk_020bfd40;
+
+// Camera follow state: draw parameters, the drag velocity and the zoom (current, target) with a countdown.
+typedef struct Unk_020c1030 {
+    DrawParams mUnk_00;
+    s32 mUnk_44;
+    u8 mUnk_48[4];
+    s32 mUnk_4c;
+    u8 mUnk_50[0x3d0 - 0x50];
+    s32 mUnk_3d0;
+    s32 mUnk_3d4;
+    s32 mUnk_3d8;
+    u8 mUnk_3dc;
+    u8 mUnk_3dd;
+    u8 mUnk_3de[2];
+} Unk_020c1030;
 
 // Large block of game state shared by several screens; only the members the code touches are named.
 typedef struct Unk_020b6ee0 {
@@ -437,7 +450,8 @@ typedef struct Unk_020b6ee0 {
     u8 mUnk_a14b;
     u8 mUnk_a14c;
     u8 mUnk_a14d;
-    u8 mUnk_a14e[0xa530 - 0xa14e];
+    u8 mUnk_a14e[2];
+    Unk_020c1030 mUnk_a150;
     s32 mUnk_a530;
     s32 mUnk_a534;
     s32 mUnk_a538;
