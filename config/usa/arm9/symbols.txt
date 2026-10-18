@@ -479,7 +479,8 @@ data_0201a6bc kind:data(any) addr:0x0201a6bc
 data_0201a6c6 kind:data(any) addr:0x0201a6c6
 data_0201a6d0 kind:data(any) addr:0x0201a6d0
 data_0201aa60 kind:data(any) addr:0x0201aa60
-data_0201ab04 kind:data(any) addr:0x0201ab04
+data_0201ab04 kind:data(word[39]) addr:0x0201ab04
+data_0201aba0 kind:data(word[7]) addr:0x0201aba0
 data_0201abbc kind:data(any) addr:0x0201abbc
 data_0201abec kind:data(word[39]) addr:0x0201abec
 func_0201b7e0 kind:function(thumb,size=0xc) addr:0x0201b7e0
@@ -1999,6 +2000,7 @@ data_020b1b24 kind:bss addr:0x020b1b24
 data_020b1bb0 kind:bss addr:0x020b1bb0
 data_020b1bb6 kind:bss addr:0x020b1bb6
 data_020b6ee0 kind:bss addr:0x020b6ee0
+data_020c0cbc kind:bss addr:0x020c0cbc
 data_020c17fc kind:bss addr:0x020c17fc
 data_020c1800 kind:bss addr:0x020c1800
 data_020c180c kind:bss addr:0x020c180c

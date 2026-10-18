@@ -141,6 +141,8 @@ extern Unk_020b10fc data_020b10fc;
 typedef struct Unk_020c2660 {
     u8 mUnk_00[4];
     u32 mUnk_04;
+    u8 mUnk_08[8];
+    u16 mUnk_10;
 } Unk_020c2660;
 extern Unk_020c2660 data_020c2660;
 
@@ -189,7 +191,19 @@ typedef struct Unk_020c5f04 {
 typedef struct CameraState {
     u8 mUnk_000[0x28];
     void (*mUnk_28)(void);
-    u8 mUnk_2c[0x7f - 0x2c];
+    u8 mUnk_2c[0x34 - 0x2c];
+    u16 *mUnk_34;
+    s32 mUnk_38;
+    s32 mUnk_3c;
+    u8 mUnk_40[4];
+    s32 mUnk_44;
+    s32 mUnk_48;
+    u8 mUnk_4c[4];
+    s32 mUnk_50;
+    s32 mUnk_54;
+    u8 mUnk_58[0x5e - 0x58];
+    u16 mUnk_5e;
+    u8 mUnk_60[0x7f - 0x60];
     u8 mUnk_7f;
     u8 mUnk_80[0xa4 - 0x80];
     VecFx32 mUnk_a4;
@@ -288,7 +302,9 @@ extern const u8 data_0201a676[];
 typedef struct Unk_020c1454 {
     VecFx32 mUnk_00;
     VecFx32 mUnk_0c;
-    u8 mUnk_18[0x2c - 0x18];
+    u8 mUnk_18[0x24 - 0x18];
+    s32 mUnk_24;
+    s32 mUnk_28;
     s32 mUnk_2c;
     s32 mUnk_30;
     s32 mUnk_34;
@@ -305,7 +321,16 @@ typedef struct Unk_020b6ee0 {
     u8 mUnk_0005[3];
     Unk_020b6ee8 mUnk_0008[8];
     u8 mUnk_0c48;
-    u8 mUnk_0c49[0xc60 - 0xc49];
+    u8 mUnk_0c49[3];
+    u16 *mUnk_0c4c;
+    s32 mUnk_0c50;
+    s32 mUnk_0c54;
+    u8 mUnk_0c58;
+    u8 mUnk_0c59;
+    u16 mUnk_0c5a;
+    u8 mUnk_0c5c;
+    u8 mUnk_0c5d;
+    u8 mUnk_0c5e[2];
     s32 mUnk_c60[3];
     s32 mUnk_c6c[3];
     u8 mUnk_c78;
@@ -348,7 +373,13 @@ typedef struct Unk_020b6ee0 {
     u8 mUnk_5a55[3];
     Unk_020bc938 mUnk_5a58[32];
     u8 mUnk_8ad8;
-    u8 mUnk_8ad9[0xa0fc - 0x8ad9];
+    u8 mUnk_8ad9;
+    u8 mUnk_8ada[2];
+    Unk_020bf9bc mUnk_8adc[32];
+    u8 mUnk_8e5c;
+    u8 mUnk_8e5d[0x8f94 - 0x8e5d];
+    u32 mUnk_8f94;
+    u8 mUnk_8f98[0xa0fc - 0x8f98];
     s32 mUnk_a0fc;
     s32 mUnk_a100;
     s32 mUnk_a104;
@@ -462,6 +493,28 @@ extern const u8 data_0201a644[];
 extern const u8 data_0201a612[];
 extern const u8 data_0201a68a[];
 extern const u8 data_0201a694[];
+
+// Objects of the stage camera code.
+// Touch trail at 0x800: the points (two bytes each) func_02020e3c appends; their count is data_020c2660.mUnk_10
+// (it wraps at 0x80).
+typedef struct Unk_TouchPoint {
+    u8 mUnk_0;
+    u8 mUnk_1;
+} Unk_TouchPoint;
+
+typedef struct Unk_020c1d60 {
+    u8 mUnk_000[0x800];
+    Unk_TouchPoint mUnk_800[0x80];
+} Unk_020c1d60;
+extern Unk_020c1d60 data_020c1d60;
+
+typedef struct Unk_020c0cbc {
+    s32 mUnk_00;
+    s32 mUnk_04;
+    s32 mUnk_08;
+} Unk_020c0cbc;
+extern Unk_020c0cbc data_020c0cbc;
+extern u32 data_0201aba0[7];
 
 #ifdef __cplusplus
 }

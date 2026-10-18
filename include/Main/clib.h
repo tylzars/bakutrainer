@@ -13,6 +13,7 @@ extern "C" {
 void *memcpy(void *dst, const void *src, size_t n);
 void *memset(void *dst, int c, size_t n);
 char *strcpy(char *dst, const char *src);
+int abs(int x);
 
 #ifdef __cplusplus
 }
