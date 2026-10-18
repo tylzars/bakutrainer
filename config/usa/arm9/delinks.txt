@@ -330,3 +330,11 @@ src/Main/Unknown/slide_transition.c:
 // provisional: the end may lie past 0x0200f9c8 (the language-table lookups after it)
 src/Main/Unknown/language_menu.c:
     .text       start:0x0200f374 end:0x0200f9c8
+
+// provisional: may start at func_02010388 (same sound state object, calls func_020103c0)
+src/Main/Unknown/sound_control.c:
+    .text       start:0x020103c0 end:0x02010648
+
+// provisional: probably continues past 0x02010c94 (func_02010c94 is called right after the callback is registered)
+src/Main/Unknown/save_data.c:
+    .text       start:0x02010648 end:0x02010c94

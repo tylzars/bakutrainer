@@ -64,7 +64,9 @@ typedef struct GameFlow {
 } GameFlow;
 
 typedef struct StateD {
-    u8 mUnk_00[0x5c];
+    u8 mUnk_00[0x50];
+    u32 mUnk_50;
+    u8 mUnk_54[8];
     u32 mUnk_5c;
     u8 mUnk_60[0x6c - 0x60];
     u32 mUnk_6c;
@@ -93,6 +95,10 @@ typedef struct Unk_020c1bbc {
     u8 mUnk_10;
     u8 mUnk_11[5];
     u8 mUnk_16;
+    u8 mUnk_17[0x24 - 0x17];
+    s32 mUnk_24;
+    u8 mUnk_28[4];
+    u16 mUnk_2c;
 } Unk_020c1bbc;
 extern Unk_020c1bbc data_020c1bbc;
 extern u8 data_020c1d3c[];
@@ -202,8 +208,12 @@ typedef struct Unk_020c1020 {
 extern Unk_020c1020 data_020c1020;
 
 typedef struct Unk_020c13e0 {
-    u8 mUnk_00[0x34];
+    u8 mUnk_00[0x30];
+    s32 mUnk_30;
     s32 mUnk_34;
+    u8 mUnk_38[0x60 - 0x38];
+    s32 mUnk_60;
+    s32 mUnk_64;
 } Unk_020c13e0;
 extern Unk_020c13e0 data_020c13e0;
 
@@ -334,6 +344,85 @@ extern const Unk_0204e378 data_0204e378[];
 extern const u8 data_0201a626[];
 extern const u8 data_0201a662[];
 extern const u8 data_0201a676[];
+
+// Objects of the sound and save code. The large state block data_020b6ee0 also contains data_020c0fe0,
+// data_020c13e0 and data_020c1440 (at +0xa100, +0xa500 and +0xa560), declared as separate objects.
+// Part of the large game state block that holds the progress values.
+typedef struct Unk_020b6ee0 {
+    u8 mUnk_0000[0xa120];
+    s32 mUnk_a120;
+    s32 mUnk_a124;
+    s32 mUnk_a128;
+    s32 mUnk_a12c;
+    u8 mUnk_a130[0xa530 - 0xa130];
+    s32 mUnk_a530;
+    u8 mUnk_a534[0xa560 - 0xa534];
+    s32 mUnk_a560;
+    s32 mUnk_a564;
+    u8 mUnk_a568[0xa56c - 0xa568];
+    u8 mUnk_a56c;
+    u8 mUnk_a56d;
+    u8 mUnk_a56e;
+    u8 mUnk_a56f;
+} Unk_020b6ee0;
+extern Unk_020b6ee0 data_020b6ee0;
+
+typedef struct Unk_020c1bdc {
+    u8 mUnk_00[0xe];
+    u8 mUnk_0e;
+} Unk_020c1bdc;
+extern Unk_020c1bdc data_020c1bdc;
+
+typedef struct Unk_020c1cfc {
+    u8 mUnk_00[0x17];
+    u8 mUnk_17;
+} Unk_020c1cfc;
+extern Unk_020c1cfc data_020c1cfc;
+
+typedef struct Unk_020c17c0 {
+    u8 mUnk_00[0xe];
+    u8 mUnk_0e;
+    u8 mUnk_0f;
+} Unk_020c17c0;
+extern Unk_020c17c0 data_020c17c0;
+
+typedef struct Unk_020c1440 {
+    u8 mUnk_00[0xc];
+    u8 mUnk_0c;
+    u8 mUnk_0d;
+    u8 mUnk_0e;
+    u8 mUnk_0f;
+} Unk_020c1440;
+extern Unk_020c1440 data_020c1440;
+
+typedef struct Unk_020c0fe0 {
+    u8 mUnk_00[0x28];
+    s32 mUnk_28;
+} Unk_020c0fe0;
+extern Unk_020c0fe0 data_020c0fe0;
+
+typedef struct Unk_020b10f8 {
+    s32 mUnk_00;
+    s32 mUnk_04[5];
+    s32 mUnk_18;
+    s32 mUnk_1c;
+    s32 mUnk_20;
+    s32 mUnk_24;
+    s32 mUnk_28;
+} Unk_020b10f8;
+extern Unk_020b10f8 data_020b10f8;
+
+typedef struct Unk_020c8254 {
+    u8 mUnk_00[8];
+    u8 mUnk_08;
+} Unk_020c8254;
+extern Unk_020c8254 data_020c8254;
+
+typedef struct Unk_020c8214 {
+    u8 mUnk_00[0x24];
+    s32 mUnk_24;
+} Unk_020c8214;
+extern Unk_020c8214 data_020c8214;
 
 #ifdef __cplusplus
 }

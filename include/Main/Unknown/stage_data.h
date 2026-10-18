@@ -29,7 +29,11 @@ typedef struct StageInfo {
 typedef struct StageRec {
     u8 mUnk_000[0x178];
     StageInfo mInfo;
-    u8 mUnk_19e[0x92];
+    u8 mUnk_19e[0x1e4 - 0x19e];
+    s32 mUnk_1e4;
+    s32 mUnk_1e8;
+    s32 mUnk_1ec;
+    u8 mUnk_1f0[0x40];
 } StageRec;
 
 extern StageRec data_020b1990[];
