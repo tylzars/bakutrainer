@@ -6,11 +6,14 @@
 extern "C" {
 #endif
 
+// clz exists only in ARM code; Thumb files (the compiler defines __thumb for them) get the declarations below.
+#ifndef __thumb
 static inline u32 CountLeadingZeros(u32 x) {
     u32 result;
     asm { clz result, x }
     return result;
 }
+#endif
 
 u32 func_0204873c(u32 x);
 void func_02048780(u16 *table, u16 poly);

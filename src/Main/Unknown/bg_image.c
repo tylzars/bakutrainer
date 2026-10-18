@@ -1,6 +1,7 @@
 #include <nitro/mi.h>
 #include <nitro/os.h>
 #include <Main/Unknown/bg_image.h>
+#include <nitro/math.h>
 #include <Main/Unknown/functions.h>
 #include <Main/Unknown/screen_fade.h>
 #include <Main/Unknown/system_init.h>

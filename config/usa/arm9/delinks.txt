@@ -393,3 +393,7 @@ src/Main/Unknown/screen_fade.c:
 // provisional: may be the same file as game_math.c (contiguous, no boundary evidence)
 src/Main/Unknown/random_angle.c:
     .text       start:0x0201fd68 end:0x0201ffd4
+
+// provisional: both ends (card code before it, no microphone calls after it)
+src/Main/Unknown/mic_input.c:
+    .text       start:0x02020ff4 end:0x02021498

@@ -1,4 +1,5 @@
 #include <Main/Unknown/functions.h>
+#include <Main/Unknown/mic_input.h>
 #include <Main/Unknown/random_angle.h>
 #include <Main/Unknown/screen_fade.h>
 #include <Main/Unknown/game_math.h>

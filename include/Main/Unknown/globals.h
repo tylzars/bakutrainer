@@ -1,6 +1,7 @@
 #pragma once
 
 #include "types.h"
+#include <nitro/mic.h>
 #include <nitro/fs.h>
 #include <Main/Unknown/stage_data.h>
 #include <Main/Unknown/move_object.h>
@@ -79,7 +80,17 @@ typedef struct SystemState {
     Unk_VramBank mUnk_0ac;
     u8 mUnk_0b8[9];
     u8 mUnk_0c1;
-    u8 mUnk_0c2[0x230 - 0xc2];
+    u8 mUnk_0c2[2];
+    void *mUnk_0c4;
+    u8 *mUnk_0c8;
+    u16 mUnk_0cc;
+    u8 mUnk_0ce[2];
+    MICAutoParam mUnk_0d0;
+    u16 mUnk_0ec[16][8];
+    u32 mUnk_1ec[8];
+    u32 mUnk_20c[8];
+    u8 mUnk_22c;
+    u8 mUnk_22d[3];
     s32 mUnk_230;
     s32 mUnk_234;
     s32 mUnk_238;
@@ -160,7 +171,8 @@ typedef struct SystemState {
     u16 mUnk_32c;
     u8 mUnk_32e;
     u8 mUnk_32f;
-    u8 mUnk_330[0x334 - 0x330];
+    u16 mUnk_330;
+    u8 mUnk_332[2];
     s32 mUnk_334;
     u8 mUnk_338[0x340 - 0x338];
     u16 mUnk_340[4];

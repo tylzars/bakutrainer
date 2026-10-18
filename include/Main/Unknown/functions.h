@@ -35,11 +35,6 @@ void func_02020ba0(void);
 u32 func_02020bac(u32 mask);
 void func_02020e18(u16 a, int b);
 int func_02020e3c(u8 *a, u8 *b);
-void func_02020ff4(int a, int b);
-void func_02021054(int a);
-void func_02021074(int a, int b);
-int func_020213e8(u32 a);
-void func_02021458(void);
 void func_020215fc(int x, int y, const void *font, const char *text, int align, int width, int height, int mode);
 int func_02021e08(u16 id, int index);
 const u8 *func_02021e18(u16 block, int id);
@@ -154,6 +149,7 @@ void func_02033df4(int a);
 void func_02033e38(int a, int b, int c);
 void func_02033fc8(void);
 void func_02034768(int a, int b, int c);
+u32 func_02034918(u32 x);
 void func_02034954(void);
 void func_02034a08(void);
 void func_02034a44(void);
@@ -179,7 +175,6 @@ void func_02039b70(void);
 void func_02039ba8(void);
 void func_02039d24(void);
 void func_0204028c(u32 a);
-u32 func_0204873c(u32 x);
 
 #ifdef __cplusplus
 }

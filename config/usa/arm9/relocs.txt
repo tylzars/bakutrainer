@@ -5099,6 +5099,7 @@ from:0x020210b4 kind:load to:0x020c18bc add:0x80 module:main
 from:0x020210b8 kind:load to:0x020c18bc add:0xc0 module:main
 from:0x020210bc kind:load to:0x020c18bc add:0x480 module:main
 from:0x020210c0 kind:load to:0x020c18bc add:0xd0 module:main
+from:0x020210c8 kind:load to:0x0204341c module:main
 from:0x020210ce kind:thumb_call_arm to:0x02043454 module:main
 from:0x020210d8 kind:thumb_call_arm to:0x02034918 module:main
 from:0x020210e4 kind:thumb_call_arm to:0x02034918 module:main
@@ -5142,6 +5143,7 @@ from:0x020213b8 kind:thumb_call to:0x020212b4 module:main
 from:0x020213c8 kind:thumb_call to:0x020211d8 module:main
 from:0x020213d4 kind:load to:0x020c18bc add:0x400 module:main
 from:0x020213dc kind:load to:0x020c18bc add:0x1ec module:main
+from:0x020213e0 kind:load to:0x02050210 module:main
 from:0x020213e4 kind:load to:0x020c18bc add:0x20c module:main
 from:0x020213ec kind:thumb_call to:0x02021390 module:main
 from:0x020213f2 kind:thumb_call to:0x02021380 module:main
