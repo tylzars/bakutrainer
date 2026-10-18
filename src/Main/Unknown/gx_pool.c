@@ -3,6 +3,7 @@
 #include <Main/Unknown/bg_image.h>
 #include <Main/Unknown/system_init.h>
 #include <Main/Unknown/file_stream.h>
+#include <Main/Unknown/camera.h>
 #include <nitro/gx.h>
 #include <nitro/mi.h>
 #include <nitro/os.h>
@@ -162,7 +163,7 @@ void func_02022370(void) {
         func_0201c4f0(&data_020c31dc.mUnk_0c);
         func_0201eb74(10);
         func_0201eb74(11);
-        data_020c6144.mUnk_4a = 0xff;
+        data_020c5e44.mUnk_300.mUnk_4a = 0xff;
         *(vu16 *) 0x04000304 &= ~0xc;
     }
 }

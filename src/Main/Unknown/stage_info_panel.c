@@ -16,6 +16,7 @@
 #include <Main/Unknown/stage_data.h>
 #include <Main/Unknown/stage_info_panel.h>
 #include <Main/Unknown/text_draw.h>
+#include <Main/Unknown/camera.h>
 
 #define GAUGE_MAX 0x31
 
@@ -716,7 +717,7 @@ void func_020126a0(int stage) {
             x = 0x39 - alpha;
             func_0202cf08(0xda, x, 0x12, 0x8c, 1);
             func_020215fc(x, 0x12, data_0201a61c, func_0200f9f0(0x10), 0, 0xf0, 0x10, 1);
-            data_020c6144.mUnk_4c = 1;
+            data_020c5e44.mUnk_300.mUnk_4c = 1;
             func_0202cf08(0x800017, 0, 0, 0x64, 1);
             for (i = 0, y = 0x54; i < 3; i++, y += 0x16) {
                 id = data_020b6ee0.mUnk_1000[i];
@@ -920,9 +921,9 @@ void func_020126a0(int stage) {
                 break;
             case 0xe:
                 data_020b6ee0.mUnk_a8e4 = -1;
-                data_020b6ee0.mUnk_a574.mUnk_0c.x = data_020c5e44.mUnk_b0.x;
-                data_020b6ee0.mUnk_a574.mUnk_0c.y = data_020c5e44.mUnk_b0.y;
-                data_020b6ee0.mUnk_a574.mUnk_0c.z = data_020c5e44.mUnk_b0.z;
+                data_020b6ee0.mUnk_a574.mUnk_0c.x = data_020c5e44.mUnk_000.mUnk_b0.x;
+                data_020b6ee0.mUnk_a574.mUnk_0c.y = data_020c5e44.mUnk_000.mUnk_b0.y;
+                data_020b6ee0.mUnk_a574.mUnk_0c.z = data_020c5e44.mUnk_000.mUnk_b0.z;
                 fade->mUnk_3c = 0x28;
                 break;
             case 0xf: {

@@ -332,10 +332,7 @@ extern const u32 data_0204e0f0[];
 extern const u32 data_0204e0e8[];
 extern const u32 data_0204e144[];
 
-// Camera and projection state (the ARM render code also addresses it), declared 0x120 bytes: it ends with the
-// eight vectors at 0xc0, and the scene code reaches the two camera positions further on as mUnk_0c0[43] and
-// mUnk_0c0[46], past the declared end. The declared size is what orders the stores to mUnk_a4/mUnk_b0 before
-// later loads from other objects.
+// Camera state: the first 0xc0 bytes of the camera object (positions, targets, angles and flags).
 typedef struct CameraState {
     u8 mUnk_000[0x28];
     void (*mUnk_28)(void);
@@ -364,15 +361,20 @@ typedef struct CameraState {
     VecFx32 mUnk_b0;
     u8 mUnk_bc;
     u8 mUnk_bd[3];
-    // The game code's view of the camera module's object ends at 0x120: the vectors further in (0x2c4 and 0x2e8)
-    // are reached as mUnk_0c0[43] and mUnk_0c0[46], past this array's end. The bytes show that view size (the
-    // accesses anchor like members of this object, and a larger declared size changes four functions).
-    VecFx32 mUnk_0c0[8];
 } CameraState;
-extern CameraState data_020c5e44;
 
-// Camera view settings after the camera state: 0x14/0x16/0x18 are angles, 0x30 and 0x38/0x3c are flags, 0x44 a
-// register value.
+// The camera object's block at 0xc0. The camera code passes its address to func_0202733c; the scene code keeps a
+// pointer to it and moves the two camera positions at 0x204 and 0x228.
+typedef struct Unk_020c5f04 {
+    u8 mUnk_000[0x204];
+    VecFx32 mUnk_204;
+    u8 mUnk_210[0x228 - 0x210];
+    VecFx32 mUnk_228;
+    u8 mUnk_234[0x240 - 0x234];
+} Unk_020c5f04;
+
+// Camera view settings at 0x300 of the camera object: 0x14/0x16/0x18 are angles, 0x30 and 0x38/0x3c are flags, 0x44
+// a register value, 0x4a the projection set up last, 0x4b/0x4c the polygon alpha and id the model code last wrote.
 typedef struct Unk_020c6144 {
     u8 mUnk_00[0x10];
     u8 mUnk_10;
@@ -398,7 +400,14 @@ typedef struct Unk_020c6144 {
     u8 mUnk_5b;
     u8 mUnk_5c[0x68 - 0x5c];
 } Unk_020c6144;
-extern Unk_020c6144 data_020c6144;
+
+// The camera object (0x368 bytes). The ARM camera and model code reaches every part of it from its start
+// (0x310 and 0x34a as bytes of this object, 0x314..0x318 and 0x340..0x356 as halfwords through 0x300).
+typedef struct Unk_020c5e44 {
+    CameraState mUnk_000;
+    Unk_020c5f04 mUnk_0c0;
+    Unk_020c6144 mUnk_300;
+} Unk_020c5e44;
 
 // Tables in the code area and state objects the field and page screens read.
 extern const u16 data_0204e138[];

@@ -23,6 +23,7 @@
 #include <Main/Unknown/sprite_slots.h>
 #include <Main/Unknown/stage_progress.h>
 #include <Main/Unknown/text_draw.h>
+#include <Main/Unknown/camera_state.h>
 
 void func_02015d4c(void) {
     data_020b6ee0.mUnk_a146 = 0;

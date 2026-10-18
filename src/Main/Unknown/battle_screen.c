@@ -16,6 +16,7 @@
 #include <Main/Unknown/sound_control.h>
 #include <Main/Unknown/state_flow.h>
 #include <Main/Unknown/text_draw.h>
+#include <Main/Unknown/camera_state.h>
 #include <Main/clib.h>
 #include <nitro/fx.h>
 #include <nitro/os.h>
