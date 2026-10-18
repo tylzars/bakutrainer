@@ -27,7 +27,8 @@ Lessons for getting functions to match exactly. Compiler and flags: see `compile
  A unit's `.text` range starts at its first
    function and ends on a 4-byte boundary after the padding (`tools/check_units.py` checks both). Shared types go in
    `include/`, library declarations in `libs/<name>/include/`; each function has one declaration, with the
-   definition's types (`tools/check_signatures.py`).
+   definition's types (`tools/check_signatures.py`), and every call has a declaration in scope: the build's
+   `-w off` hides an undeclared call, `tools/check_protos.py` lists them.
 5. `ninja report`, then rename the original symbols to the names your code uses:
    `python3 tools/sync_symbols.py build/usa/<path>.o main --write`. It finds each matching function by its bytes and
    reads every referenced address from the original code (ARM and Thumb calls); identical candidates are settled with
