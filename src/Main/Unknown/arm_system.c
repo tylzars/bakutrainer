@@ -1,5 +1,6 @@
 #include <Main/clib.h>
 #include <Main/Unknown/functions.h>
+#include <Main/Unknown/system_init.h>
 #include <Main/Unknown/globals.h>
 #include <Main/Unknown/arm_system.h>
 
@@ -39,7 +40,7 @@ BOOL func_020010b4(u32 timeout) {
 }
 
 void func_02001120(void) {
-    data_020c18bc.mUnk_2a6 &= ~2;
+    data_020c18bc.mUnk_2a6_1 = 0;
     data_020c18bc.mUnk_2a3 = 0x10;
     if (func_020350f8() != 5 && func_020350f8() != 0) {
         func_020350a0();

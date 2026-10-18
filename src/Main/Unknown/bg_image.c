@@ -2,6 +2,7 @@
 #include <nitro/os.h>
 #include <Main/Unknown/bg_image.h>
 #include <Main/Unknown/functions.h>
+#include <Main/Unknown/system_init.h>
 #include <Main/Unknown/globals.h>
 
 u32 func_0201db58(int layer) {

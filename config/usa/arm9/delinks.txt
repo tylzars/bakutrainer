@@ -371,7 +371,7 @@ src/Main/Unknown/stage_map_menu.c:
 
 // provisional: may be the same file as stage_map_menu.c (one string pool 0x02063a9c-0x02063ab8 spans both)
 src/Main/Unknown/system_init.c:
-    .text       start:0x0201b7e0 end:0x0201bb40
+    .text       start:0x0201b7e0 end:0x0201c580
 
 // provisional: may share func_0201c7b8's file
 src/Main/Unknown/file_stream.c:
