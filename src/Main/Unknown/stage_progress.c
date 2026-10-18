@@ -662,3 +662,42 @@ int func_02015260(void) {
     }
     return -1;
 }
+
+int func_02015294(int stage) {
+    int i;
+
+    if (stage < 0) {
+        OS_Terminate();
+    }
+    for (i = stage + 1; i < data_020b6ee0.mUnk_a8ee; i++) {
+        if (data_020b1990[i].mUnk_22d == 0) {
+            return i;
+        }
+    }
+    return func_02015260();
+}
+
+int func_020152d4(void) {
+    int i;
+
+    for (i = data_020b6ee0.mUnk_a8ee - 1; i >= 0; i--) {
+        if (data_020b1990[i].mUnk_22d == 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+int func_0201530c(int stage) {
+    int i;
+
+    if (stage < 0) {
+        OS_Terminate();
+    }
+    for (i = stage - 1; i >= 0; i--) {
+        if (data_020b1990[i].mUnk_22d == 0) {
+            return i;
+        }
+    }
+    return func_020152d4();
+}

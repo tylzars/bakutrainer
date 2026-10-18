@@ -12,8 +12,6 @@ extern "C" {
 void func_0200b898(int x, int y, const char *fmt, ...);
 void func_0200b8dc(int x, int y, const char *fmt, ...);
 void func_0200e474(void);
-int func_02015294(int stage);
-int func_0201530c(int stage);
 int func_020186f0(u8 stage);
 void func_02018840(StageRec *rec, int kind, int index);
 void func_0201944c(void);
@@ -21,6 +19,7 @@ void func_0201b7e0(u32 a);
 void func_0201bb30(void);
 void func_0201bb40(int n);
 void func_0201c41c(void);
+void *func_0201c430(u32 size);
 void func_0201c4f0(void *p);
 int func_0201db94(int which);
 void func_0201dde0(int a, int b);

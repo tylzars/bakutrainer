@@ -33,6 +33,9 @@ StageRec *func_02015190(int index);
 int func_020151cc(int stage);
 void func_020151f8(void);
 int func_02015260(void);
+int func_02015294(int stage);
+int func_020152d4(void);
+int func_0201530c(int stage);
 
 extern const u8 data_020500d4[3];
 

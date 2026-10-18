@@ -348,7 +348,7 @@ src/Main/Unknown/stage_select.c:
 // provisional: a new unit starts by func_02014ac8 (its table at 0x020500d4 breaks the size order of the
 // .rodata before it); the end is provisional
 src/Main/Unknown/stage_progress.c:
-    .text       start:0x020145bc end:0x02015294
+    .text       start:0x020145bc end:0x02015340
 
 // one file: the .bss 0x020b1078-0x020b13b0 follows this compiler's size order for a single file, and its anchor
 // pool words (data_020b1084 reached as 0x020b1078+0xc, ...) only come out with all users in one file
@@ -358,3 +358,8 @@ src/Main/Unknown/game_system.c:
 // provisional: the start (func_02015d4c may belong to the file before); continues past 0x02016624
 src/Main/Unknown/stage_camera.c:
     .text       start:0x02015d4c end:0x02016624
+
+// .rodata 0x020500d8-0x02050164, strings 0x02063a5c-0x02063a90, .bss 0x020b13c8-0x020b1524 (defined here); the end
+// is provisional (func_02015d48 and func_02015d4c may meet in either file)
+src/Main/Unknown/three_in_row.c:
+    .text       start:0x02015340 end:0x02015d4c
