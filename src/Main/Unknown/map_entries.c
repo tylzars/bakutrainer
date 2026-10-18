@@ -502,6 +502,7 @@ u32 func_02032368(u32 flags, int x, int z, int w, int h) {
         int base;
         int t;
         int k;
+        MapState *st = &data_020c3e44;
 
         if (data_020c3e44.mUnk_00 != data_020c5e44.mUnk_300.mUnk_44) {
             base = (data_020c3e44.mUnk_10 * 5 * 256) / 256 - 256;
@@ -514,9 +515,7 @@ u32 func_02032368(u32 flags, int x, int z, int w, int h) {
                 v = func_0201fab0(0, 0x400, base, t);
                 r = ((u32) data_020c5e44.mUnk_300.mUnk_44 >> 6) * 41 >> 15;
                 v = v * r / 1024;
-                // Stored through the object's address as words (the same words as mUnk_04[k]): with a member store the
-                // compiler keeps data_020c5e44.mUnk_300.mUnk_44 in a register; the code reloads it.
-                ((u32 *) &data_020c3e44)[1 + k++] = v * v;
+                st->mUnk_04[k++] = v * v;
             }
             data_020c3e44.mUnk_00 = data_020c5e44.mUnk_300.mUnk_44;
         }
