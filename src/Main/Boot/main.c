@@ -14,13 +14,13 @@ void main(void) {
     GameFlow *flow = &data_020b1194;
     int i;
 
-    data_020c1cbc.mUnk_6c = 0;
+    data_020c18bc.mUnk_46c = 0;
     if (*(vu16 *) 0x027ffc40 != 2) {
-        data_020c1b5c.mUnk_00[7] = 0;
+        data_020c18bc.mUnk_2a7 = 0;
         func_0201b7e0(0xfa);
         func_0201eb20();
     }
-    data_020c1cbc.mUnk_6c |= 0x10820000;
+    data_020c18bc.mUnk_46c |= 0x10820000;
     func_0201f880(3);
     func_02010d34();
     if (*(vu16 *) 0x027ffc40 != 2) {
@@ -28,9 +28,9 @@ void main(void) {
         func_02010c94();
         func_02020348();
     }
-    data_020c1bbc.mUnk_10 = 0x40;
-    data_020c1d3c.mUnk_13 = 1;
-    data_020c1d3c.mUnk_14 = 1;
+    data_020c18bc.mUnk_310 = 0x40;
+    data_020c18bc.mUnk_493 = 1;
+    data_020c18bc.mUnk_494 = 1;
     func_0202f00c();
     func_02010388(0, 0x80);
     func_0200fa24();
@@ -38,7 +38,7 @@ void main(void) {
     func_0200dacc();
     func_020143f4();
     func_0200e474();
-    func_0202de60(data_020c14b4, data_0201abec[2]);
+    func_0202de60(&data_020b6ee0.mUnk_a5d4, data_0201abec[2]);
     data_020b6ee0.mUnk_a91b = 0;
     func_0200dbac();
     data_020b6ee0.mUnk_a91a = 1;

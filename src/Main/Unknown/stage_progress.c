@@ -382,8 +382,8 @@ static void func_02014ebc(int index, int stage);
 void func_02014d8c(int a) {
     memset(data_020b1990, 0, 0x5550);
     memset(data_020b1524, 0, 0x72);
-    data_020c17c0.mUnk_0e = 0;
-    data_020c17c0.mUnk_0f = data_020c17c0.mUnk_0e;
+    data_020b6ee0.mUnk_a8ee = 0;
+    data_020b6ee0.mUnk_a8ef = data_020b6ee0.mUnk_a8ee;
     func_02014de4(1, 3);
     func_02014de4(1, 4);
     func_02014de4(1, 5);
@@ -400,17 +400,17 @@ int func_02014de4(int kind, int index) {
     }
     switch (kind) {
         case 0:
-            if (data_020c17c0.mUnk_0e >= STAGE_MAX) {
+            if (data_020b6ee0.mUnk_a8ee >= STAGE_MAX) {
                 OS_Terminate();
             }
-            slot = data_020c17c0.mUnk_0e++;
+            slot = data_020b6ee0.mUnk_a8ee++;
             func_02014e4c(slot, index);
             break;
         case 1:
-            if (data_020c17c0.mUnk_0f >= 3) {
+            if (data_020b6ee0.mUnk_a8ef >= 3) {
                 OS_Terminate();
             }
-            slot = data_020c17c0.mUnk_0f++;
+            slot = data_020b6ee0.mUnk_a8ef++;
             func_02014ebc(slot, index);
             break;
         default:
@@ -428,7 +428,7 @@ static void func_02014e4c(int index, int stage) {
     if (index >= STAGE_MAX) {
         OS_Terminate();
     }
-    if (index >= data_020c17c0.mUnk_0e) {
+    if (index >= data_020b6ee0.mUnk_a8ee) {
         OS_Terminate();
     }
     rec = &data_020b1990[index];
@@ -446,7 +446,7 @@ static void func_02014ebc(int index, int stage) {
     if (index >= 3) {
         OS_Terminate();
     }
-    if (index >= data_020c17c0.mUnk_0f) {
+    if (index >= data_020b6ee0.mUnk_a8ef) {
         OS_Terminate();
     }
     info = &data_020b1524[index];
@@ -471,7 +471,7 @@ int func_02014f14(int kind, int index) {
     }
     switch (kind) {
         case 0:
-            n = data_020c17c0.mUnk_0e;
+            n = data_020b6ee0.mUnk_a8ee;
             for (i = 0; i < n; i++) {
                 v = data_020b1990[i].mInfo.mUnk_13;
                 if (v == index) {
@@ -483,7 +483,7 @@ int func_02014f14(int kind, int index) {
             }
             break;
         case 1:
-            n = data_020c17c0.mUnk_0f;
+            n = data_020b6ee0.mUnk_a8ef;
             for (i = 0; i < n; i++) {
                 v = data_020b1524[i].mUnk_13;
                 if (v == index) {
@@ -593,7 +593,7 @@ int func_02015114(int a, int b) {
         rec->mUnk_22d = 0;
     }
     if (b != -1) {
-        if (b >= data_020c17c0.mUnk_0e) {
+        if (b >= data_020b6ee0.mUnk_a8ee) {
             OS_Terminate();
         }
         data_020b6ee0.mUnk_c60[a] = b;
@@ -643,7 +643,7 @@ void func_020151f8(void) {
     for (i = 0; i < 3; i++) {
         stage = data_020500d4[i];
         if (func_02015190(stage) == 0) {
-            for (j = 0; j < data_020c17c0.mUnk_0e; j++) {
+            for (j = 0; j < data_020b6ee0.mUnk_a8ee; j++) {
                 if (data_020b1990[j].mUnk_22d == 0) {
                     func_02015114(stage, j);
                 }
@@ -655,7 +655,7 @@ void func_020151f8(void) {
 int func_02015260(void) {
     int i;
 
-    for (i = 0; i < data_020c17c0.mUnk_0e; i++) {
+    for (i = 0; i < data_020b6ee0.mUnk_a8ee; i++) {
         if (data_020b1990[i].mUnk_22d == 0) {
             return i;
         }

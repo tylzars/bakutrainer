@@ -164,15 +164,15 @@ void func_0200d8bc(void) {
                 } else {
                     strcpy(buf, s->mText);
                 }
-                saved = data_020c1bbc.mUnk_08;
-                data_020c1bbc.mUnk_08 = s->mUnk_158;
+                saved = data_020c18bc.mUnk_308;
+                data_020c18bc.mUnk_308 = s->mUnk_158;
                 if (s->mUnk_140 != 0) {
                     func_02025db4(s->mUnk_134, pt);
                     func_020215fc(pt[0] + sx, pt[1] + sy, s->mUnk_30, buf, textObj, 0x100, 0x18, s->mUnk_15c);
                 } else {
                     func_020215fc(sx, sy, s->mUnk_30, buf, textObj, 0x100, 0x18, s->mUnk_15c);
                 }
-                data_020c1bbc.mUnk_08 = saved;
+                data_020c18bc.mUnk_308 = saved;
             } else {
                 s->mKind = 0;
             }
@@ -305,7 +305,7 @@ void func_0200dc08(int id, u16 *outId, u16 *outVal, u16 *outOpt1, u16 *outZ1, u1
 
 void func_0200dd5c(const char *path, int b) {
     func_0202f638(path, b);
-    while (func_0202f8d0() == 1 && data_020c18bc.mUnk_12 == 0 && !data_020c1b5c.mUnk_0c_0) {
+    while (func_0202f8d0() == 1 && data_020c18bc.mUnk_12 == 0 && !data_020c18bc.mUnk_2ac_0) {
         func_0201bb30();
     }
     func_0202fb4c();

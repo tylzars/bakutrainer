@@ -330,31 +330,12 @@ src/Main/Unknown/move_object.c:
 src/Main/Unknown/stage_scene.c:
     .text       start:0x0200c65c end:0x0200d6c8
 
-src/Main/Unknown/state_flow.c:
-    .text       start:0x0200f9c8 end:0x0200fb68
-
 src/Main/Unknown/slide_transition.c:
     .text       start:0x0200de68 end:0x0200f374
 
 // provisional: the end may lie past 0x0200f9c8 (the language-table lookups after it)
 src/Main/Unknown/language_menu.c:
     .text       start:0x0200f374 end:0x0200f9c8
-
-// provisional: one file by the shared prompt state object only
-src/Main/Unknown/prompt_screen.c:
-    .text       start:0x0200fb68 end:0x02010388
-
-// provisional: the start; func_02010388 shares the sound state object and calls func_020103c0
-src/Main/Unknown/sound_control.c:
-    .text       start:0x02010388 end:0x02010648
-
-// provisional: the end; the slot record helpers func_02010c94..func_02010d4c use the same block and header
-src/Main/Unknown/save_data.c:
-    .text       start:0x02010648 end:0x02010d64
-
-// provisional: no split evidence against save_data.c before it or the code after it
-src/Main/Unknown/save_slot_menu.c:
-    .text       start:0x02010d64 end:0x02011518
 
 // provisional: the end; the .rodata layout puts the 0x0204fedc table (used by func_02014260) in this unit
 src/Main/Unknown/stage_info_panel.c:
@@ -368,3 +349,8 @@ src/Main/Unknown/stage_select.c:
 // .rodata before it); the end is provisional
 src/Main/Unknown/stage_progress.c:
     .text       start:0x020145bc end:0x02015294
+
+// one file: the .bss 0x020b1078-0x020b13b0 follows this compiler's size order for a single file, and its anchor
+// pool words (data_020b1084 reached as 0x020b1078+0xc, ...) only come out with all users in one file
+src/Main/Unknown/game_system.c:
+    .text       start:0x0200f9c8 end:0x02011518

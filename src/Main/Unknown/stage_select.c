@@ -105,7 +105,7 @@ void func_0201364c(void) {
             func_0202cf08(data_020b1990[s].mInfo.mUnk_13 + 0x1089, x, y, 0x64, 2);
             func_0202cf08(0x1088, x, y, 0x66, 2);
             if (s == data_020b6ee0.mUnk_a8e4) {
-                sub = (data_020c1cbc.mUnk_5c >> 1) & 7;
+                sub = (data_020c18bc.mUnk_45c >> 1) & 7;
             } else {
                 sub = 0;
             }
@@ -115,8 +115,8 @@ void func_0201364c(void) {
         } else {
             func_0202cf08(0x1088, x, y, 0x66, 2);
         }
-        if (data_020c1b5c.mUnk_0c_1 == 1 &&
-            func_0201faf0(data_020c1b5c.mUnk_0e - x, data_020c1b5c.mUnk_0f - y + 0xc) < 0x10 &&
+        if (data_020c18bc.mUnk_2ac_1 == 1 &&
+            func_0201faf0(data_020c18bc.mUnk_2ae - x, data_020c18bc.mUnk_2af - y + 0xc) < 0x10 &&
             data_020b6ee0.mUnk_a8e4 != s) {
             if (s != -1) {
                 data_020b6ee0.mUnk_a8e4 = s;
@@ -132,13 +132,13 @@ void func_0201364c(void) {
         func_0202cf08(sel->mInfo.mUnk_13 + 0x1089, 0x32, 0x4e, 0x64, 2);
         func_0202cf08(0x1088, 0x32, 0x4e, 0x66, 2);
         if (data_020b13b0.mUnk_04 == data_020b6ee0.mUnk_a8e4) {
-            sub = (data_020c1cbc.mUnk_5c >> 1) & 7;
+            sub = (data_020c18bc.mUnk_45c >> 1) & 7;
         } else {
             sub = 0;
         }
         func_0202cf08(0x11be + sub, 0x32, 0x4e, 0x65, 2);
-        if (data_020c1b5c.mUnk_0c_1 == 1 &&
-            func_0201faf0(data_020c1b5c.mUnk_0e - 0x32, data_020c1b5c.mUnk_0f - 0x42) < 0x10 &&
+        if (data_020c18bc.mUnk_2ac_1 == 1 &&
+            func_0201faf0(data_020c18bc.mUnk_2ae - 0x32, data_020c18bc.mUnk_2af - 0x42) < 0x10 &&
             data_020b6ee0.mUnk_a8e4 != s) {
             if (s != -1) {
                 data_020b6ee0.mUnk_a8e4 = s;
@@ -273,7 +273,7 @@ void func_02013d48(StageInfo *info, s16 slot, u8 flag, int a, int b, int c, int 
 
     func_02013b48(info, slot, &icon, &name);
     if (flag == 1) {
-        func_0202cf08(func_0202db1c(data_020c14b4), b, c, 0x93, d);
+        func_0202cf08(func_0202db1c(&data_020b6ee0.mUnk_a5d4), b, c, 0x93, d);
     }
     if (!(e & 4)) {
         func_02020944(a, b, c, 0, 0, 0x10b4, 0, 0x167);
@@ -349,7 +349,7 @@ void func_02013f74(int stage, int *cursor, int x, int y, int mode, int flags) {
                     func_02020944(0x500 + i, xx, y, 0, 0, 0x10b4, 0, 0x167);
                 }
                 if (sel) {
-                    func_0202cf08(func_0202db1c(data_020c14b4), xx, y, 0x93, mode);
+                    func_0202cf08(func_0202db1c(&data_020b6ee0.mUnk_a5d4), xx, y, 0x93, mode);
                 }
             }
             if (func_0200bd80(0x80000000, 0x500 + i)) {
@@ -409,8 +409,8 @@ void func_02014190(void) {
     func_020220c8(0x10d0);
     func_020325b0(0xf87, 0, 0xf88, 0, 0, 0);
     data_020c5e44.mUnk_28 = func_0201418c;
-    data_020c6184.mUnk_14 = 0x640;
-    data_020c6144.mUnk_44 = 0x128e000;
+    data_020c5e44.mUnk_354 = 0x640;
+    data_020c5e44.mUnk_344 = 0x128e000;
     memset(&data_020b6ee0.mUnk_f9c, 0, 0x44);
     func_02031fc4(0, &data_020b6ee0.mUnk_f9c);
     data_020b6ee0.mUnk_fdf &= ~7;

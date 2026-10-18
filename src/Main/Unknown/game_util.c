@@ -142,7 +142,7 @@ void func_0200bbd0(int a, int b, int c, int d, int e, int f, int g, const char *
                    int m, int n, int o, int p, const u8 *q) {
     if (*q != 0) {
         if (m == 1) {
-            g += (*q == 2 && ((data_020c1cbc.mUnk_5c / 10) & 1) == 0) ? 2 : 0;
+            g += (*q == 2 && ((data_020c18bc.mUnk_45c / 10) & 1) == 0) ? 2 : 0;
         } else {
             g += 4;
         }
@@ -154,7 +154,7 @@ void func_0200bc50(int a, int b, int c, int d, int e, int f, int g, const char *
                    int m, int n, int o, int p) {
     int mode = func_02020878() ? 2 : 1;
     int g2 = g;
-    if (o == 0 && data_020c14a0.mUnk_10 != 0 && p == 0) {
+    if (o == 0 && data_020b6ee0.mUnk_a5d0 != 0 && p == 0) {
         g2 = g + (data_020c2660.mUnk_04 == f + 0x40000000);
     }
     if (n == 0 && (p != 1 || data_020c2660.mUnk_04 == f + 0x40000000)) {
@@ -180,7 +180,7 @@ void func_0200bc50(int a, int b, int c, int d, int e, int f, int g, const char *
 }
 
 int func_0200bd80(u32 mask, u32 id) {
-    if (data_020c14a0.mUnk_10 == 0) {
+    if (data_020b6ee0.mUnk_a5d0 == 0) {
         return 0;
     }
     if ((mask & data_020c2660.mUnk_04) && (u16) data_020c2660.mUnk_04 == id) {
@@ -231,10 +231,10 @@ static inline void G3_LightColor(u32 num, u16 color) {
 void func_0200be50(u32 num, s8 x, s8 y, s8 z, u16 color) {
     G3_LoadMtx43(&data_020c3e80);
     reg_G3X_MTX_MODE = 2;
-    data_020c6184.mUnk_1b = 0;
+    data_020c5e44.mUnk_35b = 0;
     G3_LightVector(num, x << 5, y << 5, z << 5);
     G3_LightColor(num, color);
-    data_020c6184.mUnk_1b |= 1 << num;
+    data_020c5e44.mUnk_35b |= 1 << num;
 }
 
 void func_0200bec0(VecFx32 *out, int a, int b, int scale) {
@@ -249,9 +249,9 @@ void func_0200bec0(VecFx32 *out, int a, int b, int scale) {
 }
 
 void func_0200bf38(u32 value) {
-    data_020c6144.mUnk_14 = (value << 16) / 360;
-    data_020c6144.mUnk_16 = data_020c6144.mUnk_14;
-    data_020c6144.mUnk_18 = data_020c6144.mUnk_16;
+    data_020c5e44.mUnk_314 = (value << 16) / 360;
+    data_020c5e44.mUnk_316 = data_020c5e44.mUnk_314;
+    data_020c5e44.mUnk_318 = data_020c5e44.mUnk_316;
 }
 
 u32 func_0200bf54(int n) {

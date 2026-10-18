@@ -89,7 +89,7 @@ u8 func_0200f588(void) {
     u8 buf[0x20];
     u8 i;
     buf[0] = 0;
-    i = data_020c1bbc.mUnk_16++;
+    i = data_020c18bc.mUnk_316++;
     return buf[i];
 }
 

@@ -21,7 +21,7 @@ void func_0201bb30(void);
 void func_0201bb40(int n);
 void func_0201c41c(void);
 void func_0201c4f0(void *p);
-u16 func_0201db94(int which);
+int func_0201db94(int which);
 void func_0201dde0(int a, int b);
 void func_0201ddec(int a, int b, int c, int d);
 void func_0201eb20(void);

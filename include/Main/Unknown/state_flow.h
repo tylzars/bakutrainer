@@ -6,25 +6,6 @@
 extern "C" {
 #endif
 
-// Secondary state record kept beside the main loop state.
-typedef struct StateFlowAux {
-    u8 mUnk_00[0x14];
-    s32 mUnk_14;
-} StateFlowAux;
-
-// Text block the language-dependent string lookups index into.
-typedef struct TextBase {
-    s32 mUnk_00;
-    s32 mUnk_04;
-    s32 mUnk_08;
-    s32 mLanguage;
-    s32 mUnk_10;
-    s32 mUnk_14;
-} TextBase;
-
-extern StateFlowAux data_020b1214;
-extern TextBase data_020b1078;
-
 u16 func_0200f9c8(int index);
 const char *func_0200f9f0(int id);
 const char *func_0200fa10(int id, int index);

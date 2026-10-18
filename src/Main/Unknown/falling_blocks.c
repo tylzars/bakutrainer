@@ -433,7 +433,7 @@ BOOL func_02003b3c(Pair *pr) {
             func_02003338(&pr->mPiece[1], cell[1], cell[0], 1, &data_02064828.mUnk_895c);
             if (pr->mDir == 3 || pr->mDir == 1) {
                 pr->mUnk_234 = 1;
-                pr->mUnk_238 = data_020c1cbc.mUnk_5c;
+                pr->mUnk_238 = data_020c18bc.mUnk_45c;
                 pr->mUnk_240 = 0;
             } else {
                 func_02003338(&pr->mPiece[0], cell[3], cell[2], 1, &data_02064828.mUnk_8954);
@@ -451,7 +451,7 @@ BOOL func_02003b3c(Pair *pr) {
             if (pr->mUnk_234 == 0) {
                 if (pr->mDir == 3 || pr->mDir == 1) {
                     pr->mUnk_234 = 1;
-                    pr->mUnk_238 = data_020c1cbc.mUnk_5c;
+                    pr->mUnk_238 = data_020c18bc.mUnk_45c;
                     pr->mUnk_240 = 0;
                     pr->mPiece[0] = pr->mPiece[1];
                     pr->mPos = partner;
@@ -465,7 +465,7 @@ BOOL func_02003b3c(Pair *pr) {
                 }
             } else {
                 data_02064828.mUnk_8950 = result;
-                if (data_020c1cbc.mUnk_5c - pr->mUnk_238 > 1) {
+                if (data_020c18bc.mUnk_45c - pr->mUnk_238 > 1) {
                     func_0202f110(0x57, 0x4b, 0, 0x40, 0xffff, 0);
                 }
                 return TRUE;

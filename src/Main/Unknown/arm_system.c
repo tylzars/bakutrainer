@@ -7,12 +7,12 @@
 
 void func_02001000(void) {
     func_0201c4f0(data_020c66dc);
-    func_0201c4f0(data_020c1b30);
-    memset(data_020c1b0c, 0, 0x2c);
+    func_0201c4f0(data_020c18bc.mUnk_250.mUnk_24);
+    memset(&data_020c18bc.mUnk_250, 0, 0x2c);
     data_020c18bc.mUnk_2a2 = 0;
     data_020c18bc.mUnk_2a8 = 0;
-    data_020c1abc.mUnk_96 = 0;
-    data_020c1abc.mUnk_92 = 0;
+    data_020c18bc.mUnk_296 = 0;
+    data_020c18bc.mUnk_292 = 0;
     memset(data_020c67e0, 0, 0xfe);
     memset(data_020c68e0, 0, 0x1fc);
     memset(data_020c66e0, 0, 0x40);
@@ -52,7 +52,7 @@ void func_02001120(void) {
 void func_02001170(void) {
     switch (func_0203946c()) {
         case 1:
-            func_0203947c(4, data_020c1abc.mUnk_94 + 1, data_020c66d4.mUnk_0);
+            func_0203947c(4, data_020c18bc.mUnk_294 + 1, data_020c66d4.mUnk_0);
             break;
         case 4:
         case 5:

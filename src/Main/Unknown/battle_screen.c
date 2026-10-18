@@ -627,7 +627,7 @@ void func_02008090(StageInfo *info) {
     *func_0201fc08(func_020079cc(info), numBuf) = 0;
     func_020215fc(116, 170, data_0201a694, numBuf, 0, 250, 10, 1);
     if (func_020150c0(info)) {
-        func_0202cf08(0xf57 + (data_020c1cbc.mUnk_5c % 60 <= 3), 130, 187, 140, 1);
+        func_0202cf08(0xf57 + (data_020c18bc.mUnk_45c % 60 <= 3), 130, 187, 140, 1);
     }
     sprintf(textBuf, "+%d", func_020077d0(info));
     func_020215fc(190, 164, data_0201a68a, textBuf, 0, 250, 10, 1);
@@ -989,7 +989,7 @@ void func_02008994(int side) {
             }
             if (j == data_02098d84.mState.mUnk_0e[i]) {
                 if (i == side && data_020b6ee0.mUnk_ff6 == 0x4000) {
-                    func_0202cf08(((data_020c1cbc.mUnk_5c >> 2) & 7) + 0x11be + (i == 1) * 8, x, y, 251, 2);
+                    func_0202cf08(((data_020c18bc.mUnk_45c >> 2) & 7) + 0x11be + (i == 1) * 8, x, y, 251, 2);
                 }
                 if (data_020b6ee0.mUnk_a6d8[i].mUnk_de == 0) {
                     func_0202cf08(func_0202db1c(&data_020b6ee0.mUnk_a6d8[i]), x, y, 240, 2);
@@ -1266,7 +1266,7 @@ void func_02009728(void) {
                                 }
                             }
                             if (hit == 1) {
-                                func_0202cf08(func_0201fb74(data_020c1cbc.mUnk_5c & 31, 31, 0, 8) + 0x11ad, x + 22,
+                                func_0202cf08(func_0201fb74(data_020c18bc.mUnk_45c & 31, 31, 0, 8) + 0x11ad, x + 22,
                                               y - 5, 230, 2);
                             }
                         }
@@ -1378,7 +1378,7 @@ void func_02009728(void) {
                     data_02098d84.mState.mUnk_0e[j] = 0;
                 }
             }
-            a = j == data_02098d84.mState.mUnk_06 ? (data_020c1cbc.mUnk_5c >> 2) & 7 : 0;
+            a = j == data_02098d84.mState.mUnk_06 ? (data_020c18bc.mUnk_45c >> 2) & 7 : 0;
             yi = j == 0 ? s : s + 3;
             hi = j == 1 ? 1 : 0;
             func_0202cf08(a + (hi * 8 + 0x11be), xs[j == 0 ? s : s + 3], ys[yi], 251, 2);
