@@ -28,6 +28,9 @@ typedef struct DrawParams {
     u8 mUnk_43_5 : 3;
 } DrawParams;
 
+// Fills a DrawParams (an ARM routine of the 3D code).
+void func_02023f58(DrawParams *p, int x, int y, int z, int a, u16 b, u8 c, u8 d, int flags);
+
 void func_0200b898(int x, int y, const char *format, ...);
 void func_0200b8dc(int x, int y, const char *format, ...);
 void func_0200b920(int line, const char *format, ...);

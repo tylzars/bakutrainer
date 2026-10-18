@@ -5,6 +5,7 @@
 #include <Main/Unknown/move_object.h>
 #include <nitro/fx.h>
 #include <Main/Unknown/falling_blocks.h>
+#include <Main/Unknown/stage_camera.h>
 #include <Main/Unknown/move_object.h>
 
 #ifdef __cplusplus
@@ -285,12 +286,13 @@ extern const u8 data_0201a676[];
 // Part of data_020b6ee0 the stage info panel works on through a pointer: a position, two values and two fade
 // counters.
 typedef struct Unk_020c1454 {
-    u8 mUnk_00[0xc];
+    VecFx32 mUnk_00;
     VecFx32 mUnk_0c;
     u8 mUnk_18[0x2c - 0x18];
     s32 mUnk_2c;
     s32 mUnk_30;
-    u8 mUnk_34[0x3c - 0x34];
+    s32 mUnk_34;
+    u8 mUnk_38[0x3c - 0x38];
     s32 mUnk_3c;
     s32 mUnk_40;
 } Unk_020c1454;
@@ -300,7 +302,10 @@ typedef struct Unk_020b6ee0 {
     u16 mUnk_0000;
     u16 mUnk_0002;
     u8 mUnk_0004;
-    u8 mUnk_0005[0xc60 - 0x5];
+    u8 mUnk_0005[3];
+    Unk_020b6ee8 mUnk_0008[8];
+    u8 mUnk_0c48;
+    u8 mUnk_0c49[0xc60 - 0xc49];
     s32 mUnk_c60[3];
     s32 mUnk_c6c[3];
     u8 mUnk_c78;
@@ -338,7 +343,12 @@ typedef struct Unk_020b6ee0 {
     s32 mUnk_1000[3];
     s16 mUnk_100c;
     s16 mUnk_100e[3];
-    u8 mUnk_1014[0xa0fc - 0x1014];
+    Unk_020b7ef4 mUnk_1014[48];
+    u8 mUnk_5a54;
+    u8 mUnk_5a55[3];
+    Unk_020bc938 mUnk_5a58[32];
+    u8 mUnk_8ad8;
+    u8 mUnk_8ad9[0xa0fc - 0x8ad9];
     s32 mUnk_a0fc;
     s32 mUnk_a100;
     s32 mUnk_a104;

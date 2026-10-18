@@ -3653,6 +3653,7 @@ from:0x02015fd8 kind:thumb_call to:0x020215fc module:main
 from:0x02015ff0 kind:load to:0x020b6ee0 add:0xc40 module:main
 from:0x02015ff4 kind:load to:0x020b6ee0 add:0x8 module:main
 from:0x02016000 kind:load to:0x02063a90 module:main
+from:0x02016004 kind:load to:0x0201a61c module:main
 from:0x02016042 kind:thumb_call_arm to:0x0203f81c module:main
 from:0x02016072 kind:thumb_call to:0x0201faf0 module:main
 from:0x02016086 kind:thumb_call_arm to:0x02048b50 module:main

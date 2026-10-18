@@ -31,7 +31,9 @@ typedef struct StageInfo {
 typedef struct StageRec {
     u8 mUnk_000[0x134];
     u32 mUnk_134;
-    u8 mUnk_138[0x178 - 0x138];
+    u8 mUnk_138[0x158 - 0x138];
+    VecFx32 mUnk_158;
+    u8 mUnk_164[0x178 - 0x164];
     StageInfo mInfo;
     u8 mUnk_19e[2];
     VecFx32 mUnk_1a0;
@@ -43,12 +45,14 @@ typedef struct StageRec {
     s32 mUnk_1e4;
     s32 mUnk_1e8;
     s32 mUnk_1ec;
-    u8 mUnk_1f0[0x2c];
+    u8 mUnk_1f0[0x20];
+    VecFx32 mUnk_210;
     float mUnk_21c;
     s32 mUnk_220;
-    u8 mUnk_224[2];
+    u16 mUnk_224;
     s8 mUnk_226;
-    u8 mUnk_227[0x22d - 0x227];
+    u8 mUnk_227[5];
+    u8 mUnk_22c;
     u8 mUnk_22d;
     u8 mUnk_22e;
     u8 mUnk_22f;
