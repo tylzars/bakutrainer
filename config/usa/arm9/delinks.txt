@@ -308,8 +308,15 @@ src/Main/Unknown/field_objects.c:
 src/Main/Unknown/page_viewer.c:
     .text       start:0x02006fc0 end:0x020071a8
 
-src/Main/Unknown/popup_slots.c:
-    .text       start:0x0200ce24 end:0x0200d6c8
-
 src/Main/Unknown/sprite_slots.c:
     .text       start:0x0200d6c8 end:0x0200de68
+
+// provisional: game_util.c may start before 0x0200b994 (with the helpers from 0x0200b898)
+src/Main/Unknown/game_util.c:
+    .text       start:0x0200b994 end:0x0200c034
+
+src/Main/Unknown/move_object.c:
+    .text       start:0x0200c034 end:0x0200c65c
+
+src/Main/Unknown/stage_scene.c:
+    .text       start:0x0200c65c end:0x0200d6c8

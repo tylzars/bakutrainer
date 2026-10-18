@@ -466,6 +466,7 @@ func_0201a600 kind:function(thumb,size=0x8) addr:0x0201a600
 data_0201a61c kind:data(any) addr:0x0201a61c
 data_0201a64e kind:data(any) addr:0x0201a64e
 data_0201a680 kind:data(any) addr:0x0201a680
+data_0201a6c6 kind:data(any) addr:0x0201a6c6
 data_0201aa60 kind:data(any) addr:0x0201aa60
 data_0201ab04 kind:data(any) addr:0x0201ab04
 data_0201abbc kind:data(any) addr:0x0201abbc
@@ -1570,6 +1571,8 @@ data_0204e110 kind:data(any) addr:0x0204e110
 data_0204e124 kind:data(any) addr:0x0204e124
 data_0204e138 kind:data(byte[12]) addr:0x0204e138
 data_0204e144 kind:data(any) addr:0x0204e144
+data_0204e1c0 kind:data(byte[12]) addr:0x0204e1c0
+data_0204e1cc kind:data(word[6]) addr:0x0204e1cc
 data_0204e824 kind:data(byte[25]) addr:0x0204e824
 data_0204e840 kind:data(word[25]) addr:0x0204e840
 data_0204e8a4 kind:data(word[25]) addr:0x0204e8a4
@@ -1606,7 +1609,7 @@ data_0205eebc kind:data(any) addr:0x0205eebc
 data_0205f03c kind:data(any) addr:0x0205f03c
 data_0205f33c kind:data(any) addr:0x0205f33c
 data_0205f34c kind:data(any) addr:0x0205f34c
-data_0205f400 kind:data(any) addr:0x0205f400
+FX_SinCosTable_ kind:data(any) addr:0x0205f400
 FX_AtanIdxTable_ kind:data(any) addr:0x02063400
 data_02063504 kind:data(any) addr:0x02063504
 data_020637d8 kind:data(any) addr:0x020637d8

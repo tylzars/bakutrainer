@@ -15,8 +15,8 @@ typedef struct Pos2 {
 
 // Extent of the playing field in 8 x 8 cells.
 typedef struct FieldInfo {
-    Pos3 mUnk_00;
-    Pos3 mUnk_0c;
+    VecFx32 mUnk_00;
+    VecFx32 mUnk_0c;
     s32 mUnk_18;
     s32 mUnk_1c;
     s32 mUnk_20;
@@ -55,7 +55,7 @@ typedef struct FieldObjects {
     u8 mUnk_148[0x40];
     StageInfo mStage;
     u8 mPad_1ae[2];
-    Pos3 mUnk_1b0;
+    VecFx32 mUnk_1b0;
     u8 mUnk_1bc[0x1c];
     u32 mUnk_1d8;
     u8 mUnk_1dc[0xc];
@@ -75,7 +75,7 @@ typedef struct FieldObjects {
     s32 mUnk_268;
     s32 mUnk_26c;
     s32 mUnk_270;
-    Pos3 mUnk_274;
+    VecFx32 mUnk_274;
     FieldInfo mInfo;
     FieldObject mGrid[4][8][8];
     FieldObject mList[128];

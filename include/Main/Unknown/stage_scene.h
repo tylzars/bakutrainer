@@ -1,6 +1,10 @@
 #pragma once
 
 #include "types.h"
+#include <nitro/fx.h>
+#include <Main/Unknown/game_util.h>
+#include <Main/Unknown/move_object.h>
+#include <Main/Unknown/stage_data.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -27,15 +31,26 @@ typedef struct PopupPos {
     s32 y;
 } PopupPos;
 
-// The work block that data_02063940 points to; only the members the code touches are named.
-typedef struct PopupWork {
-    u8 mUnk_000[0x364];
-    u32 mUnk_364;
-    u8 mUnk_368[0x3b0 - 0x368];
-    s32 mUnk_3b0;
-    u8 mUnk_3b4[0x5b0 - 0x3b4];
-    s32 mUnk_5b0;
-    u8 mUnk_5b4[0x610 - 0x5b4];
+// The stage scene object (data_02063940 points to it): the stage settings, two models, the draw parameters, the
+// scene's vectors and counters, and the timed popup slots.
+typedef struct Scene {
+    u8 mUnk_000[0x178];
+    StageInfo mStage;
+    u8 mUnk_19e[0x230 - 0x19e];
+    Model mUnk_230;
+    DrawParams mUnk_3a8;
+    Model mUnk_3ec;
+    u8 mUnk_564[0x5a8 - 0x564];
+    VecFx32 mUnk_5a8;
+    VecFx32 mUnk_5b4;
+    VecFx32 mUnk_5c0;
+    VecFx32 mUnk_5cc;
+    VecFx32 mUnk_5d8;
+    VecFx32 mUnk_5e4;
+    VecFx32 mUnk_5f0;
+    VecFx32 mUnk_5fc;
+    u32 mUnk_608;
+    s32 mUnk_60c;
     u32 mUnk_610;
     s32 mUnk_614;
     s32 mUnk_618;
@@ -44,7 +59,7 @@ typedef struct PopupWork {
     s32 mUnk_624;
     s32 mUnk_628;
     s32 mUnk_62c;
-    s32 mUnk_630;
+    u32 mUnk_630;
     s32 mUnk_634;
     s32 mUnk_638;
     s32 mUnk_63c;
@@ -63,10 +78,21 @@ typedef struct PopupWork {
     u16 mUnk_7d4;
     u16 mUnk_7d6;
     PopupPos mPos;
-} PopupWork;
+} Scene;
 
-extern PopupWork *data_02063940;
+extern Scene *data_02063940;
+extern const u16 data_0204e1c0[];
+extern const s32 data_0204e1cc[][2];
 
+void func_0200c65c(int index, VecFx32 *out);
+void func_0200c688(int n);
+void func_0200c6ac(void);
+void func_0200c7a4(void);
+void func_0200ca14(void);
+void func_0200cbe8(void);
+void func_0200cd1c(void);
+void func_0200cd2c(void);
+void func_0200cdc4(void);
 void func_0200ce24(void);
 void func_0200ceac(void);
 void func_0200d014(int slot, int type, int index);

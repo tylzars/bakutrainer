@@ -1,6 +1,7 @@
 #pragma once
 
 #include "types.h"
+#include <nitro/fx.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -140,13 +141,6 @@ extern const u32 data_0204e0f0[];
 extern const u32 data_0204e0e8[];
 extern const u32 data_0204e144[];
 
-// A position or vector of three fixed-point coordinates.
-typedef struct Pos3 {
-    s32 mX;
-    s32 mY;
-    s32 mZ;
-} Pos3;
-
 // Camera and projection state (the ARM render code also addresses it).
 typedef struct CameraState {
     u8 mUnk_000[0x28];
@@ -154,13 +148,13 @@ typedef struct CameraState {
     u8 mUnk_2c[0x7f - 0x2c];
     u8 mUnk_7f;
     u8 mUnk_80[0xa4 - 0x80];
-    Pos3 mUnk_a4;
-    Pos3 mUnk_b0;
+    VecFx32 mUnk_a4;
+    VecFx32 mUnk_b0;
     u8 mUnk_bc;
     u8 mUnk_bd[0x2c4 - 0xbd];
-    Pos3 mUnk_2c4;
+    VecFx32 mUnk_2c4;
     u8 mUnk_2d0[0x2e8 - 0x2d0];
-    Pos3 mUnk_2e8;
+    VecFx32 mUnk_2e8;
     u8 mUnk_2f4[0x310 - 0x2f4];
     u8 mUnk_310;
     u8 mUnk_311[3];
@@ -210,6 +204,63 @@ typedef struct Unk_020c1780 {
     u8 mUnk_1a;
 } Unk_020c1780;
 extern Unk_020c1780 data_020c1780;
+
+// State objects of the 3D view and input, the light matrix, and a font table (some may be members of a larger
+// object).
+// Input state read by the button helpers: member 0x10 is a flag byte.
+typedef struct Unk_020c14a0 {
+    u8 mUnk_00[0x10];
+    u8 mUnk_10;
+} Unk_020c14a0;
+extern Unk_020c14a0 data_020c14a0;
+
+// Screen state: members 0x14/0x16/0x18 are angles, 0x30 and 0x38/0x3c are flags, 0x44 a register value.
+typedef struct Unk_020c6144 {
+    u8 mUnk_00[0x10];
+    u8 mUnk_10;
+    u8 mUnk_11[3];
+    u16 mUnk_14;
+    u16 mUnk_16;
+    u16 mUnk_18;
+    u8 mUnk_1a[0x30 - 0x1a];
+    u16 mUnk_30;
+    u8 mUnk_32[2];
+    s32 mUnk_34;
+    s32 mUnk_38;
+    s32 mUnk_3c;
+    u8 mUnk_40[4];
+    u32 mUnk_44;
+} Unk_020c6144;
+extern Unk_020c6144 data_020c6144;
+
+typedef struct Unk_020c6184 {
+    u16 mUnk_00;
+    u8 mUnk_02[0x14 - 2];
+    u16 mUnk_14;
+    u8 mUnk_16[0x1b - 0x16];
+    u8 mUnk_1b;
+} Unk_020c6184;
+extern Unk_020c6184 data_020c6184;
+
+typedef struct Unk_020c5ea4 {
+    u8 mUnk_00[0x1f];
+    u8 mUnk_1f;
+} Unk_020c5ea4;
+extern Unk_020c5ea4 data_020c5ea4;
+
+// Camera block: two position vectors the scene moves.
+typedef struct Unk_020c5f04 {
+    u8 mUnk_000[0x204];
+    VecFx32 mUnk_204;
+    u8 mUnk_210[0x228 - 0x210];
+    VecFx32 mUnk_228;
+    u8 mUnk_234[0x240 - 0x234];
+} Unk_020c5f04;
+extern Unk_020c5f04 data_020c5f04;
+
+extern MtxFx43 data_020c3e80;
+
+extern const u8 data_0201a6c6[];
 
 #ifdef __cplusplus
 }
