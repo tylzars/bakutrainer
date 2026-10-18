@@ -436,10 +436,10 @@ src/Main/Unknown/texture_blocks.c:
 src/Main/Unknown/wave_player.c:
     .text       start:0x0202ea50 end:0x0202f500
 
-// provisional: ARM code on data_020c661c (the object after the wave player's); the allocator pair at the start
-// (only referenced from far away) is placed by address; the file continues past 0x0202f638
+// provisional: movie playback with its audio stream (ARM, on data_020c661c); the allocator pair at the start
+// (only referenced from far away) is placed by address; func_0202fcc4 after it uses other objects
 src/Main/Unknown/stream_audio.c:
-    .text       start:0x0202f500 end:0x0202f638
+    .text       start:0x0202f500 end:0x0202fcc4
 
 // one file: its own-section .bss ascend (0x020c1818.. -> FSFile -> SystemState) and the JPEG and start-up code reach
 // the same objects through one section base; the .rodata own sections ascend as one file's; the data block

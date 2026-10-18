@@ -10,6 +10,7 @@
 #include <Main/Unknown/model.h>
 #include <Main/Unknown/engine_asm.h>
 #include <Main/Unknown/texture_blocks.h>
+#include <Main/Unknown/stream_audio.h>
 
 void func_0200d6c8(void) {
     u32 i;
