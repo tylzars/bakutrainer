@@ -466,6 +466,11 @@ src/Main/Unknown/map_floor.c:
 src/Main/Unknown/map_entries.c:
     .text       start:0x020312b8 end:0x02034768
 
+// provisional: the music tracker player on data_020c6b14 (defined here); func_02035108 before this range and the
+// missed ARM code after it (the tick at 0x02036198 and on) use the same object and belong here once decompiled
+src/Main/Unknown/tracker_player.c:
+    .text       start:0x020359d0 end:0x02036198
+
 // one file: its own-section .bss ascend (0x020c1818.. -> FSFile -> SystemState) and the JPEG and start-up code reach
 // the same objects through one section base; the .rodata own sections ascend as one file's; the data block
 // 0x0201a608-0x0201b7e0 before it has no known owner

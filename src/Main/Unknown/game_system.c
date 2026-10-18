@@ -24,6 +24,7 @@
 #include <Main/Unknown/model.h>
 #include <Main/Unknown/texture_blocks.h>
 #include <Main/Unknown/wave_player.h>
+#include <Main/Unknown/tracker_player.h>
 #include <Main/clib.h>
 
 // Objects of this file: save menu, settings, sound control, prompt, main loop and model viewer state.
@@ -320,7 +321,7 @@ void func_0201004c(void) {
         func_0202eeec();
         func_02010500(1);
         do {
-            if (func_0201f794(3, 3) == 1 && data_020c8254.mUnk_08 == 0 && (data_020c18bc.mUnk_12 & 8)) {
+            if (func_0201f794(3, 3) == 1 && data_020c6b14.mUnk_1748 == 0 && (data_020c18bc.mUnk_12 & 8)) {
                 running = 0;
             }
             switch (data_020b1124.mUnk_64) {
@@ -472,7 +473,7 @@ void func_02010388(u32 a, s32 b) {
     if (a >= 9) {
         OS_Terminate();
     }
-    data_020c8214.mUnk_10 |= 2;
+    data_020c6b14.mUnk_1710 |= 2;
     ctl->mUnk_14 = 0;
     ctl->mUnk_18 = 0;
     ctl->mUnk_08 = b;
@@ -487,11 +488,11 @@ void func_020103c0(void) {
     SoundCtl *ctl = &data_020b10b4;
     u8 volume;
 
-    if (data_020c8254.mUnk_08 != 0) {
+    if (data_020c6b14.mUnk_1748 != 0) {
         return;
     }
-    volume = data_020c8214.mUnk_24 == 1 ? func_02038694() : ctl->mUnk_0c;
-    if (data_020c8214.mUnk_24 == 0 && ctl->mUnk_18 != 0) {
+    volume = data_020c6b14.mUnk_1724 == 1 ? func_02038694() : ctl->mUnk_0c;
+    if (data_020c6b14.mUnk_1724 == 0 && ctl->mUnk_18 != 0) {
         ctl->mUnk_18 = 0;
     }
     switch (ctl->mUnk_00) {

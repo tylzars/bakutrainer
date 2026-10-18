@@ -908,20 +908,6 @@ typedef struct Unk_020b6ee0 {
 } Unk_020b6ee0;
 extern Unk_020b6ee0 data_020b6ee0;
 
-typedef struct Unk_020c8254 {
-    u8 mUnk_00[8];
-    u8 mUnk_08;
-} Unk_020c8254;
-extern Unk_020c8254 data_020c8254;
-
-typedef struct Unk_020c8214 {
-    u8 mUnk_00[0x10];
-    u32 mUnk_10;
-    u8 mUnk_14[0x24 - 0x14];
-    s32 mUnk_24;
-} Unk_020c8214;
-extern Unk_020c8214 data_020c8214;
-
 // Rows of 16 bytes (0x49 of them); the first word is passed on by func_0201033c.
 typedef struct Unk_0204e96c {
     s32 mUnk_00;
