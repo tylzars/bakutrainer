@@ -3,6 +3,7 @@
 #include <Main/Unknown/globals.h>
 #include <Main/Unknown/random_angle.h>
 #include <Main/Unknown/texture_blocks.h>
+#include <Main/Unknown/wave_player.h>
 #include <nitro/mi.h>
 #include <nitro/os.h>
 

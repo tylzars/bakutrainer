@@ -12,6 +12,7 @@
 #include <Main/Unknown/sound_control.h>
 #include <Main/Unknown/state_flow.h>
 #include <Main/Unknown/globals.h>
+#include <Main/Unknown/wave_player.h>
 #include <nitro/init.h>
 
 void main(void) {

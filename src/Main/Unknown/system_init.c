@@ -31,6 +31,7 @@
 #include <Main/Unknown/model.h>
 #include <Main/Unknown/engine_asm.h>
 #include <Main/Unknown/texture_blocks.h>
+#include <Main/Unknown/wave_player.h>
 
 #define EZ10_MAGIC 0x30315a45
 #define HW_DISPCNT 0x04000000
@@ -371,14 +372,14 @@ void func_0201bb40(int flags) {
                 int found = 0;
                 func_0202ad34();
                 func_0202ad54();
-                if (data_020c660c.mUnk_04 == 1 && data_020c660c.mUnk_08 == 0) {
+                if (data_020c648c.mUnk_184 == 1 && data_020c648c.mUnk_188 == 0) {
                     found = 1;
-                    func_0202f2e8(data_020c660c.mUnk_0c);
+                    func_0202f2e8(data_020c648c.mUnk_18c);
                 }
                 func_02043e88(0xc, 0, 0);
                 if (found == 1) {
-                    func_0202f290(data_020c660c.mUnk_0c, data_020c660c.mUnk_0c->mUnk_60,
-                                  data_020c660c.mUnk_0c->mUnk_4c);
+                    func_0202f290(data_020c648c.mUnk_18c, data_020c648c.mUnk_18c->mUnk_60,
+                                  data_020c648c.mUnk_18c->mUnk_4c);
                 }
                 func_0202ad38();
                 if (save & 4) {

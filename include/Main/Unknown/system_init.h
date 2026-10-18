@@ -110,21 +110,6 @@ typedef struct Unk_020c267c {
 } Unk_020c267c;
 extern Unk_020c267c data_020c267c;
 
-typedef struct Unk_020c660c_Obj {
-    u8 mUnk_00[0x4c];
-    u32 mUnk_4c;
-    u8 mUnk_50[0x10];
-    char mUnk_60[1];
-} Unk_020c660c_Obj;
-
-typedef struct Unk_020c660c {
-    u32 mUnk_00;
-    s32 mUnk_04;
-    s32 mUnk_08;
-    Unk_020c660c_Obj *mUnk_0c;
-} Unk_020c660c;
-extern Unk_020c660c data_020c660c;
-
 extern u16 data_020c9e04;
 extern void *data_020c9e10;
 extern u16 *data_020c9e14;

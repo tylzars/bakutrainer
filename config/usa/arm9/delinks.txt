@@ -431,6 +431,11 @@ src/Main/Unknown/script_records.c:
 src/Main/Unknown/texture_blocks.c:
     .text       start:0x0202ad34 end:0x0202db1c
 
+// provisional: the wave player on data_020c648c (16 channels and the channel count at 0x180); func_0202ea50 (ARM)
+// claims its channels; the Thumb code after 0x0202f110 uses the same object, up to the ARM code at 0x0202f500
+src/Main/Unknown/wave_player.c:
+    .text       start:0x0202ea50 end:0x0202f110
+
 // one file: its own-section .bss ascend (0x020c1818.. -> FSFile -> SystemState) and the JPEG and start-up code reach
 // the same objects through one section base; the .rodata own sections ascend as one file's; the data block
 // 0x0201a608-0x0201b7e0 before it has no known owner

@@ -23,6 +23,7 @@
 #include <Main/Unknown/camera.h>
 #include <Main/Unknown/model.h>
 #include <Main/Unknown/texture_blocks.h>
+#include <Main/Unknown/wave_player.h>
 
 #define TABLE_ENTRY_COUNT 100
 
