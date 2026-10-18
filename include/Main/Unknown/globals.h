@@ -2,6 +2,7 @@
 
 #include "types.h"
 #include <Main/Unknown/stage_data.h>
+#include <Main/Unknown/move_object.h>
 #include <nitro/fx.h>
 
 #ifdef __cplusplus
@@ -483,22 +484,15 @@ extern Unk_020b10d8 data_020b10d8;
 extern StageInfo data_020b10d4;
 extern s32 data_020b1090[];
 extern s32 data_020b1094[];
-typedef struct Unk_020b132c {
-    u8 mUnk_00[0x34];
-    s32 mUnk_34;
-    u8 mUnk_38[0x40];
-    s32 mUnk_78;
-} Unk_020b132c;
-extern Unk_020b132c data_020b132c;
-typedef struct Unk_020b136c {
-    u8 mUnk_00[0x30];
-    u16 mUnk_30;
-    u8 mUnk_32[10];
-    u16 mUnk_3c;
-} Unk_020b136c;
-extern Unk_020b136c data_020b136c;
-extern volatile s32 data_020b13ac;
-extern u8 data_020b122c[];
+// The model viewer's state: the model, the index of the model shown, its rotation and a toggle.
+typedef struct Unk_020b122c {
+    Model mModel;
+    s32 mUnk_178;
+    u16 mUnk_17c;
+    u8 mUnk_17e[2];
+    s32 mUnk_180;
+} Unk_020b122c;
+extern Unk_020b122c data_020b122c;
 
 #ifdef __cplusplus
 }
