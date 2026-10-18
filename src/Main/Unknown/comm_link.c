@@ -15,6 +15,7 @@
 #include <Main/Unknown/engine_asm.h>
 #include <Main/Unknown/system_init.h>
 #include <Main/Unknown/file_loader.h>
+#include <Main/Unknown/wireless_helper.h>
 
 // The link keeps COMM_SLOTS received records of COMM_RECORD_SIZE bytes, indexed by slot.
 #define COMM_SLOTS 16

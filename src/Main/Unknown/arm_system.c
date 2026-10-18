@@ -4,6 +4,7 @@
 #include <Main/Unknown/globals.h>
 #include <Main/Unknown/arm_system.h>
 #include <Main/Unknown/comm_link.h>
+#include <Main/Unknown/wireless_helper.h>
 
 #pragma thumb off
 

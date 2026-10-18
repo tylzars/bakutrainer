@@ -95,7 +95,7 @@ typedef struct SystemState {
     u32 mUnk_20c[8];
     u8 mUnk_22c;
     u8 mUnk_22d[3];
-    s32 mUnk_230;
+    void (*mUnk_230)(u16);
     s32 mUnk_234;
     s32 mUnk_238;
     s32 mUnk_23c;

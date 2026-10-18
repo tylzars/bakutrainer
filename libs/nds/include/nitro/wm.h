@@ -103,9 +103,13 @@ typedef struct {
 typedef struct {
     /* 00 */ void *mUnk_00;
     /* 04 */ u16 mUnk_04;
-    /* 06 */ u8 mUnk_06[0xe];
+    /* 06 */ u8 mUnk_06[6];
+    /* 0c */ u16 mUnk_0c;
+    /* 0e */ u16 mUnk_0e;
+    /* 10 */ u16 mUnk_10;
+    /* 12 */ u16 mUnk_12;
     /* 14 */ u16 mUnk_14;
-    /* 16 */ u8 mUnk_16[2];
+    /* 16 */ u16 mUnk_16;
     /* 18 */ u16 mUnk_18;
     /* 1a */ u8 mUnk_1a[0x18];
     /* 32 */ u16 mUnk_32;

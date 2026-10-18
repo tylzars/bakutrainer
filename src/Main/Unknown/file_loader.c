@@ -8,6 +8,7 @@
 #include <Main/Unknown/qrk_decode.h>
 #include <Main/Unknown/align_util.h>
 #include <Main/Unknown/comm_link.h>
+#include <Main/Unknown/wireless_helper.h>
 #include <nitro/mi.h>
 #include <nitro/os.h>
 
