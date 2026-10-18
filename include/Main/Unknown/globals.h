@@ -344,7 +344,8 @@ typedef struct Unk_020b6ee0 {
     s32 mUnk_c60[3];
     s32 mUnk_c6c[3];
     u8 mUnk_c78;
-    u8 mUnk_c79[0xc94 - 0xc79];
+    u8 mUnk_c79;
+    u8 mUnk_c7a[0xc94 - 0xc7a];
     s32 mUnk_c94;
     s32 mUnk_c98;
     s32 mUnk_c9c;
@@ -432,7 +433,7 @@ typedef struct Unk_020b6ee0 {
     u8 mUnk_a5a8[0xa5d4 - 0xa5a8];
     Sprite mUnk_a5d4;
     Sprite mUnk_a6d8[2];
-    u8 mUnk_a8e0[4];
+    s32 mUnk_a8e0;
     s32 mUnk_a8e4;
     s32 mUnk_a8e8;
     u8 mUnk_a8ec[2];

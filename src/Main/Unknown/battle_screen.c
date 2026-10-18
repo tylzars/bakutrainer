@@ -1,5 +1,6 @@
 #include <Main/Unknown/battle_screen.h>
 #include <Main/Unknown/functions.h>
+#include <Main/Unknown/stage_select.h>
 #include <stdio.h>
 #include <Main/Unknown/game_util.h>
 #include <Main/Unknown/globals.h>

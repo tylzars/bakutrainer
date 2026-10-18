@@ -1972,7 +1972,6 @@ data_020b1194 kind:bss addr:0x020b1194
 data_020b1214 kind:bss addr:0x020b1214
 data_020b122c kind:bss addr:0x020b122c
 data_020b13b0 kind:bss addr:0x020b13b0
-data_020b13b8 kind:bss addr:0x020b13b8
 data_020b13bc kind:bss addr:0x020b13bc
 data_020b13c8 kind:bss addr:0x020b13c8
 data_020b13d4 kind:bss addr:0x020b13d4
