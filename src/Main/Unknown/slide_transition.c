@@ -1,4 +1,5 @@
 #include <Main/Unknown/functions.h>
+#include <Main/Unknown/game_math.h>
 #include <Main/Unknown/bg_image.h>
 #include <Main/Unknown/stage_select.h>
 #include <Main/Unknown/state_flow.h>

@@ -4909,6 +4909,8 @@ from:0x0201fbce kind:thumb_call_arm to:0x0204d8c8 module:main
 from:0x0201fbda kind:thumb_call to:0x0201fca8 module:main
 from:0x0201fbf2 kind:thumb_call_arm to:0x0203f81c module:main
 from:0x0201fc00 kind:thumb_call to:0x0201fca8 module:main
+from:0x0201fc10 kind:load to:0x0201fc15 module:main
+from:0x0201fc9c kind:load to:0x02050244 module:main
 from:0x0201fcb8 kind:thumb_call to:0x0201fd40 module:main
 from:0x0201fd7c kind:load to:0x020c18bc add:0x400 module:main
 from:0x0201fd8e kind:thumb_call to:0x0201fd68 module:main

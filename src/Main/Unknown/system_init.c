@@ -8,6 +8,7 @@
 #include <nitro/tp.h>
 #include <stdio.h>
 #include <Main/Unknown/functions.h>
+#include <Main/Unknown/game_math.h>
 #include <Main/Unknown/file_stream.h>
 #include <Main/Unknown/game_util.h>
 #include <Main/Unknown/globals.h>

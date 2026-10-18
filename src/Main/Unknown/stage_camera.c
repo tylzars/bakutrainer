@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <Main/clib.h>
 #include <Main/Unknown/functions.h>
+#include <Main/Unknown/game_math.h>
 #include <Main/Unknown/bg_image.h>
 #include <Main/Unknown/state_flow.h>
 #include <Main/Unknown/stage_info_panel.h>

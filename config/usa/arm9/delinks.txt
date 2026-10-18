@@ -380,3 +380,7 @@ src/Main/Unknown/file_stream.c:
 // provisional
 src/Main/Unknown/bg_image.c:
     .text       start:0x0201db58 end:0x0201e178
+
+// provisional: both ends (the ARM list helpers func_0201fa08/func_0201fa5c come before it)
+src/Main/Unknown/game_math.c:
+    .text       start:0x0201fab0 end:0x0201fd68
