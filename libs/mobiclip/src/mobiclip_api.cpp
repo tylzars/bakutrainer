@@ -2,7 +2,6 @@
 #include <nitro/fs.h>
 #include <nitro/init.h>
 #include <nitro/mi.h>
-#include <Main/Unknown/functions.h>
 
 // Reads the file header and sets the player up; n is the number of pictures the decoder cycles through.
 int func_02039dd8(Player *p, Reader *r, u32 n) {

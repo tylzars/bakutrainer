@@ -2,8 +2,7 @@
 #include <nitro/fs.h>
 #include <nitro/init.h>
 #include <nitro/mi.h>
-#include <Main/Unknown/functions.h>
-#include <Main/Unknown/stream_audio.h>
+#include <Main/Video/stream_audio.h>
 
 void *Player::operator new(unsigned long size) {
     return func_0202f500(size);

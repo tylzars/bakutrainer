@@ -1,8 +1,8 @@
 #include <Main/clib.h>
-#include <Main/Unknown/system_init.h>
+#include <Main/System/system_init.h>
 #include <Main/Unknown/arm_system.h>
-#include <Main/Unknown/comm_link.h>
-#include <Main/Unknown/wireless_helper.h>
+#include <Main/Link/comm_link.h>
+#include <Main/Link/wireless_helper.h>
 
 #pragma thumb off
 

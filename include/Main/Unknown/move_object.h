@@ -1,7 +1,7 @@
 #pragma once
 
 #include "types.h"
-#include <Main/Unknown/falling_blocks.h>
+#include <Main/Minigame/falling_blocks.h>
 
 #ifdef __cplusplus
 extern "C" {

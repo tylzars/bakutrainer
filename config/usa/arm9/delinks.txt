@@ -293,31 +293,31 @@ src/Main/Unknown/arm_system.c:
 src/Main/Boot/main.c:
     .text       start:0x02003000 end:0x02003194
 
-src/Main/Unknown/falling_blocks.c:
+src/Main/Minigame/falling_blocks.c:
     .text       start:0x02003194 end:0x0200494c
 
-src/Main/Unknown/result_screen.c:
+src/Main/Scene/result_screen.c:
     .text       start:0x0200494c end:0x020054a4
 
-src/Main/Unknown/mode_select.c:
+src/Main/Scene/mode_select.c:
     .text       start:0x020054a4 end:0x02005c10
 
-src/Main/Unknown/field_objects.c:
+src/Main/Scene/field_objects.c:
     .text       start:0x02005c10 end:0x02006fc0
 
-src/Main/Unknown/page_viewer.c:
+src/Main/Scene/page_viewer.c:
     .text       start:0x02006fc0 end:0x020071a8
 
-src/Main/Unknown/sprite_slots.c:
+src/Main/Graphics/sprite_slots.c:
     .text       start:0x0200d6c8 end:0x0200de68
 
 // .bss data_02098d80..data_020990e0 (ascending sizes: one file); the 0x34-byte data_02099770 after the 0x690-byte
 // data_020990e0 starts the next file
-src/Main/Unknown/battle_screen.c:
+src/Main/Scene/battle_screen.c:
     .text       start:0x020071a8 end:0x0200a384
 
 // provisional: may be two files
-src/Main/Unknown/stage_minigame.c:
+src/Main/Minigame/stage_minigame.c:
     .text       start:0x0200a384 end:0x0200b898
 
 // provisional: the start; nothing before 0x0200b898 calls the helpers, func_0200b994 calls func_0200b928
@@ -327,79 +327,79 @@ src/Main/Unknown/game_util.c:
 src/Main/Unknown/move_object.c:
     .text       start:0x0200c034 end:0x0200c65c
 
-src/Main/Unknown/stage_scene.c:
+src/Main/Scene/stage_scene.c:
     .text       start:0x0200c65c end:0x0200d6c8
 
-src/Main/Unknown/slide_transition.c:
+src/Main/Scene/slide_transition.c:
     .text       start:0x0200de68 end:0x0200f374
 
 // provisional: the end may lie past 0x0200f9c8 (the language-table lookups after it)
-src/Main/Unknown/language_menu.c:
+src/Main/Scene/language_menu.c:
     .text       start:0x0200f374 end:0x0200f9c8
 
 // provisional: the end; the .rodata layout puts the 0x0204fedc table (used by func_02014260) in this unit
-src/Main/Unknown/stage_info_panel.c:
+src/Main/Scene/stage_info_panel.c:
     .text       start:0x02011518 end:0x0201353c
 
 // provisional: the end (the lookup helpers func_020144a4..func_0201456c show no file break)
-src/Main/Unknown/stage_select.c:
+src/Main/Scene/stage_select.c:
     .text       start:0x0201353c end:0x020145bc
 
 // provisional: a new unit starts by func_02014ac8 (its table at 0x020500d4 breaks the size order of the
 // .rodata before it); the end is provisional
-src/Main/Unknown/stage_progress.c:
+src/Main/Scene/stage_progress.c:
     .text       start:0x020145bc end:0x02015340
 
 // one file: the .bss 0x020b1078-0x020b13b0 follows this compiler's size order for a single file, and its anchor
 // pool words (data_020b1084 reached as 0x020b1078+0xc, ...) only come out with all users in one file
-src/Main/Unknown/game_system.c:
+src/Main/System/game_system.c:
     .text       start:0x0200f9c8 end:0x02011518
 
 // provisional: the start (func_02015d4c may belong to the file before); the end is where the next file's "%d"
 // (0x02063aa0, func_02019fa0) starts
-src/Main/Unknown/stage_camera.c:
+src/Main/Scene/stage_camera.c:
     .text       start:0x02015d4c end:0x02019fa0
 
 // .rodata 0x020500d8-0x02050164, strings 0x02063a5c-0x02063a90, .bss 0x020b13c8-0x020b1524 (defined here); the end
 // is provisional (func_02015d48 and func_02015d4c may meet in either file)
-src/Main/Unknown/three_in_row.c:
+src/Main/Minigame/three_in_row.c:
     .text       start:0x02015340 end:0x02015d4c
 
 // provisional: the data block 0x0201a608-0x0201b7e0 (script_data.s) follows
-src/Main/Unknown/stage_map_menu.c:
+src/Main/Scene/stage_map_menu.c:
     .text       start:0x02019fa0 end:0x0201a608
 
 // provisional: both ends (the ARM list helpers func_0201fa08/func_0201fa5c come before it)
-src/Main/Unknown/game_math.c:
+src/Main/System/game_math.c:
     .text       start:0x0201fab0 end:0x0201fd68
 
 // provisional: may be the same file as game_math.c (contiguous, no boundary evidence)
-src/Main/Unknown/random_angle.c:
+src/Main/System/random_angle.c:
     .text       start:0x0201fd68 end:0x0201ffd4
 
 // provisional: both ends (card code before it, no microphone calls after it)
-src/Main/Unknown/mic_input.c:
+src/Main/Input/mic_input.c:
     .text       start:0x02020ff4 end:0x02021498
 
 // provisional: the message functions from 0x02021e94 use this file's readers and follow with no gap; gx_pool.c
 // starts at 0x02021fb0
-src/Main/Unknown/text_draw.c:
+src/Main/Graphics/text_draw.c:
     .text       start:0x02021498 end:0x02021fb0
 
 // provisional: may include random_angle.c's func_0201fed4/ff80/ffa0 (same SystemState block fields)
-src/Main/Unknown/save_blocks.c:
+src/Main/Save/save_blocks.c:
     .text       start:0x0201ffd4 end:0x02020878
 
 // provisional: func_02020878/func_02020890 may be save_blocks.c's tail
-src/Main/Unknown/touch_buttons.c:
+src/Main/Input/touch_buttons.c:
     .text       start:0x02020878 end:0x02020ee0
 
 // backup memory access, called only from save_blocks.c
-src/Main/Unknown/backup_access.c:
+src/Main/Save/backup_access.c:
     .text       start:0x02020ee0 end:0x02020ff4
 
 // provisional: probably continues with func_020225dc (same pool objects)
-src/Main/Unknown/gx_pool.c:
+src/Main/Graphics/gx_pool.c:
     .text       start:0x02021fb0 end:0x020223e8
 
 // provisional: may belong to gx_pool.c
@@ -408,94 +408,94 @@ src/Main/Unknown/angle_blend.c:
 
 // provisional: the pool allocator and hash lookups of the graphics pools (data_020c31dc, like gx_pool.c);
 // func_020232f0/func_02023478 work on the animation tracks and may belong with the model code after it
-src/Main/Unknown/vram_cache.c:
+src/Main/Graphics/vram_cache.c:
     .text       start:0x020225dc end:0x0202350c
 
 // provisional: the .rodata 0x02050898-0x020508d8 of the ARM pose code, the ARM render code and func_02025f58 ascends
 // by size as one file's, and the Thumb code after it follows with no gap and calls both ways
-src/Main/Unknown/model.c:
+src/Main/Graphics/model.c:
     .text       start:0x0202350c end:0x02027398
 
 // hand-written: shared literal pools, branches into other routines and register interfaces tie it together;
 // it may be split at 0x020280dc, 0x02028150, 0x02028250, 0x02028928, 0x02028d48 or 0x02028df4
-src/Main/Unknown/engine_asm.s:
+src/Main/System/engine_asm.s:
     .text       start:0x02027398 end:0x02028e5c
 
 // the script reader on data_020c61ac; it ends with func_0202a1ec (last pool word at 0x0202ad30), where the ARM run
 // of texture_blocks.c starts
-src/Main/Unknown/script_records.c:
+src/Main/Script/script_records.c:
     .text       start:0x02028e5c end:0x0202ad34
 
 // provisional: the ARM run 0x0202ad34-0x0202db1c (block heaps, texture blocks and sprites of data_020c267c), which
 // ends where Thumb code resumes; the empty routines at the start touch no object and are placed by address
-src/Main/Unknown/texture_blocks.c:
+src/Main/Graphics/texture_blocks.c:
     .text       start:0x0202ad34 end:0x0202db1c
 
 // provisional: the Thumb sprite script player after texture_blocks.c's ARM run, up to the padding before ARM code
-src/Main/Unknown/sprite_script.c:
+src/Main/Graphics/sprite_script.c:
     .text       start:0x0202db1c end:0x0202de94
 
 // provisional: the ARM file cache and loader on data_020c6470 (defined here), up to the wave player's func_0202ea50
-src/Main/Unknown/file_loader.c:
+src/Main/System/file_loader.c:
     .text       start:0x0202de94 end:0x0202ea50
 
 // provisional: the wave player on data_020c648c (16 channels and the channel count at 0x180); func_0202ea50 (ARM)
 // claims its channels; the wave stream (from 0x0202f110) uses the same object; ARM code resumes at 0x0202f500
-src/Main/Unknown/wave_player.c:
+src/Main/Sound/wave_player.c:
     .text       start:0x0202ea50 end:0x0202f500
 
 // provisional: movie playback with its audio stream (ARM, on data_020c661c); the allocator pair at the start
 // (only referenced from far away) is placed by address; func_0202fcc4 after it uses other objects
-src/Main/Unknown/stream_audio.c:
+src/Main/Video/stream_audio.c:
     .text       start:0x0202f500 end:0x0202fcc4
 
 // provisional: the "QRK" unpacker (range-coded LZ, its three tables in .data); starts where the movie code ends
 // (func_0202fcc4 touches none of its objects); the end is the last function reached only from inside the run
-src/Main/Unknown/qrk_decode.c:
+src/Main/System/qrk_decode.c:
     .text       start:0x0202fcc4 end:0x02030830
     .data       start:0x02063ab8 end:0x02063b58
 
 // provisional: the floor heights of the stage map (chunks 0x5528/0x552a/0x552b); starts where the QRK unpacker
 // ends and ends where map_entries.c's ring quadtree begins
-src/Main/Unknown/map_floor.c:
+src/Main/Map/map_floor.c:
     .text       start:0x02030830 end:0x020312b8
 
 // provisional: the stage data file's chunks and entries, the placed objects, the visible cells and the camera
 // projection, blends and modes (data_020c3e44, which holds the camera object); it starts with the ring quadtree of
 // chunk 0x5540, whose rings func_02031c70 walks (func_0203129c before it also reads what func_02031824 writes)
-src/Main/Unknown/map_entries.c:
+src/Main/Map/map_entries.c:
     .text       start:0x020312b8 end:0x02034918
 
 // provisional: rounding helpers (32, 4, 2) used by several files; no tie to either neighbour
-src/Main/Unknown/align_util.c:
+src/Main/System/align_util.c:
     .text       start:0x02034918 end:0x02034954
 
 // provisional: the wireless link's per-frame step, record exchange and error screen (data_020c66d4..data_020c68e0,
 // data_020c18bc.mUnk_250/mUnk_288) and the error screen's strings; func_02035108 after it is the tracker's
-src/Main/Unknown/comm_link.c:
+src/Main/Link/comm_link.c:
     .text       start:0x02034954 end:0x02035108
     .data       start:0x02063b58 end:0x02063c9c
 
 // provisional: the music tracker player on data_020c6b14 (defined here): from its song loader (the code before it
 // uses other objects) up to the wireless helpers at 0x020386a4, with the tick's wave table and strings in .data
-src/Main/Unknown/tracker_player.c:
+src/Main/Sound/tracker_player.c:
     .text       start:0x02035108 end:0x020386a4
     .data       start:0x02063c9c end:0x02063cc8
 
 // provisional: the wireless helper state machine on data_020c8380 and the WM buffers (data_020c83e0..data_020c95e0)
 // with its state-name tables and debug strings, then (Thumb) the link indicator and shutdown on data_020c9e00, up to
 // the SDK at 0x02039dd8; its rodata 0x02052444-0x02052458 sits in the code area and is not delinked with it
-src/Main/Unknown/wireless_helper.c:
+src/Main/Link/wireless_helper.c:
     .text       start:0x020386a4 end:0x02039dd8
     .data       start:0x02063cc8 end:0x02064448
 
 // the fonts, the model and sprite scripts and their pointer tables: data between the stage map menu and the
 // start-up code, in the order the scripts were written (assembler: the compiler cannot place const data in .text
 // or keep objects of different sizes in source order)
-src/Main/Unknown/script_data.s:
+src/Main/Graphics/script_data.s:
     .text       start:0x0201a608 end:0x0201b7e0
 
 // one file: its own-section .bss ascend (0x020c1818.. -> FSFile -> SystemState) and the JPEG and start-up code reach
 // the same objects through one section base; the .rodata own sections ascend as one file's
-src/Main/Unknown/system_init.c:
+src/Main/System/system_init.c:
     .text       start:0x0201b7e0 end:0x0201fab0

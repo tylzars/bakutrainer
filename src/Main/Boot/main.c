@@ -1,19 +1,19 @@
 #include <nitro/os.h>
-#include <Main/Unknown/bg_image.h>
-#include <Main/Unknown/save_blocks.h>
-#include <Main/Unknown/screen_fade.h>
-#include <Main/Unknown/system_init.h>
-#include <Main/Unknown/stage_progress.h>
-#include <Main/Unknown/stage_select.h>
-#include <Main/Unknown/prompt_screen.h>
-#include <Main/Unknown/sprite_slots.h>
-#include <Main/Unknown/save_data.h>
-#include <Main/Unknown/sound_control.h>
-#include <Main/Unknown/state_flow.h>
-#include <Main/Unknown/wave_player.h>
-#include <Main/Unknown/sprite_script.h>
-#include <Main/Unknown/script_data.h>
-#include <Main/Unknown/slide_transition.h>
+#include <Main/System/bg_image.h>
+#include <Main/Save/save_blocks.h>
+#include <Main/System/screen_fade.h>
+#include <Main/System/system_init.h>
+#include <Main/Scene/stage_progress.h>
+#include <Main/Scene/stage_select.h>
+#include <Main/System/prompt_screen.h>
+#include <Main/Graphics/sprite_slots.h>
+#include <Main/System/save_data.h>
+#include <Main/System/sound_control.h>
+#include <Main/System/state_flow.h>
+#include <Main/Sound/wave_player.h>
+#include <Main/Graphics/sprite_script.h>
+#include <Main/Graphics/script_data.h>
+#include <Main/Scene/slide_transition.h>
 #include <nitro/init.h>
 
 extern StateFunc data_0204e8a4[STATE_COUNT];
