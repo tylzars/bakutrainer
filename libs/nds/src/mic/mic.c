@@ -213,13 +213,8 @@ void func_020436b8(u32 result, void *arg) {
 }
 
 // Waits while a request is still pending (spins on micWork.busy).
-// clang-format off
-asm void func_020436c8(void) {
-    ldr ip, =micWork+4
-loop:
-    ldr r0, [ip]
-    cmp r0, #1
-    beq loop
-    bx lr
+void func_020436c8(void) {
+    vu32 *busy = &micWork.busy;
+    while (*busy == 1) {
+    }
 }
-// clang-format on

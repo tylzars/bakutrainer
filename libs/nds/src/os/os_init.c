@@ -5,18 +5,15 @@
 #include <nitro/pm.h>
 #include <nitro/pxi.h>
 
-// Waits for the display's vertical counter to read 0, with the interrupt
-// master enable (IME) cleared meanwhile and restored afterwards.
-asm void OSi_WaitVCount0(void) {
-    mov ip, #0x4000000
-    ldr r1, [ip, #0x208]
-    str ip, [ip, #0x208]
-L1:
-    ldrh r0, [ip, #6]
-    cmp r0, #0
-    bne L1
-    str r1, [ip, #0x208]
-    bx lr
+// Waits for the display's vertical counter to read 0, with the interrupt master enable (IME) cleared meanwhile and
+// restored afterwards; the base address is written to IME, which clears its enable bit.
+void OSi_WaitVCount0(void) {
+    vu8 *io = (vu8 *) 0x04000000;
+    u32 ime = *(vu32 *) (io + 0x208);
+    *(vu32 *) (io + 0x208) = (u32) io;
+    while (*(vu16 *) (io + 6) != 0) {
+    }
+    *(vu32 *) (io + 0x208) = ime;
 }
 
 void OS_Init(void) {

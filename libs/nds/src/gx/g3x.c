@@ -166,45 +166,14 @@ int func_0203cf5c(VecFx32 *pos, fx32 *w) {
     return 0;
 }
 
-// GXi_NopClearFifo128_: r0 points at a write-only FIFO port. Writes 32 groups of
-// four zero words (128 words in all) to the same address with 4-register
-// block stores, then returns.
-asm void GXi_NopClearFifo128_(volatile void *fifo) {
-    mov r1, #0
-    mov r2, #0
-    mov r3, #0
-    mov ip, #0
-    stmia r0, {r1, r2, r3, ip}
-    stmia r0, {r1, r2, r3, ip}
-    stmia r0, {r1, r2, r3, ip}
-    stmia r0, {r1, r2, r3, ip}
-    stmia r0, {r1, r2, r3, ip}
-    stmia r0, {r1, r2, r3, ip}
-    stmia r0, {r1, r2, r3, ip}
-    stmia r0, {r1, r2, r3, ip}
-    stmia r0, {r1, r2, r3, ip}
-    stmia r0, {r1, r2, r3, ip}
-    stmia r0, {r1, r2, r3, ip}
-    stmia r0, {r1, r2, r3, ip}
-    stmia r0, {r1, r2, r3, ip}
-    stmia r0, {r1, r2, r3, ip}
-    stmia r0, {r1, r2, r3, ip}
-    stmia r0, {r1, r2, r3, ip}
-    stmia r0, {r1, r2, r3, ip}
-    stmia r0, {r1, r2, r3, ip}
-    stmia r0, {r1, r2, r3, ip}
-    stmia r0, {r1, r2, r3, ip}
-    stmia r0, {r1, r2, r3, ip}
-    stmia r0, {r1, r2, r3, ip}
-    stmia r0, {r1, r2, r3, ip}
-    stmia r0, {r1, r2, r3, ip}
-    stmia r0, {r1, r2, r3, ip}
-    stmia r0, {r1, r2, r3, ip}
-    stmia r0, {r1, r2, r3, ip}
-    stmia r0, {r1, r2, r3, ip}
-    stmia r0, {r1, r2, r3, ip}
-    stmia r0, {r1, r2, r3, ip}
-    stmia r0, {r1, r2, r3, ip}
-    stmia r0, {r1, r2, r3, ip}
-    bx lr
+// Writes 32 groups of four zero words (128 words in all) to the same write-only FIFO port.
+void GXi_NopClearFifo128_(volatile void *fifo) {
+    typedef struct {
+        u32 w[4];
+    } Words4;
+    Words4 zero = {0, 0, 0, 0};
+    int i;
+    for (i = 0; i < 32; i++) {
+        *(volatile Words4 *) fifo = zero;
+    }
 }
