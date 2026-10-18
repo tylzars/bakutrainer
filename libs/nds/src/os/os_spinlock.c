@@ -107,10 +107,13 @@ s32 OS_UnlockCartridge(u16 lockID) {
 // Jumps straight to OS_UnlockCartridge with the argument unchanged.
 // Not compiled: jumps on through r1. The compiler turns a final call into a jump only when it calls a named
 // function, and then always as `ldr ip, =f; bx ip` (`b f` without interworking); any other call saves lr.
+// clang-format off
 asm s32 OS_UnLockCartridge(u16 lockID) {
     ldr r1, =OS_UnlockCartridge
     bx r1
 }
+
+// clang-format on
 
 s32 OS_TryLockCartridge(u16 lockID) {
     return OSi_DoTryLockByWord(lockID, OS_CARTRIDGE_LOCK, func_0203d7b8, TRUE);
@@ -151,6 +154,7 @@ u16 OS_ReadOwnerOfLockWord(OSLockWord *lockp) {
 // are empty. The compares feed two consecutive conditional branches, reusing
 // their flags.
 // Not compiled: clz has no C expression.
+// clang-format off
 asm int OS_GetLockID(void) {
     ldr r3, =0x27fffb0
     ldr r1, [r3, #0]
@@ -182,3 +186,4 @@ Ltake:
     str r2, [r3, #0]
     bx lr
 }
+// clang-format on

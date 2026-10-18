@@ -34,6 +34,7 @@ __declspec(align(32)) static char sExceptionContext[0x80];
 // word is non-zero; the trailing restore of r0-r3, sp (through ip) and lr and
 // the return are never reached.
 // Not compiled: reads the processor mode from CPSR with mrs, which C has no expression for.
+// clang-format off
 asm void OSi_ExceptionHandler(void) {
     ldr ip, =sExceptionState
     ldr ip, [ip]
@@ -76,6 +77,7 @@ Lnop:
     mov sp, ip
     bx lr
 }
+// clang-format on
 
 // func_0203eec8: saves r0 and lr, runs the register capture (func_0203eedc)
 // and the hook launcher (func_0203ef6c), then returns.
@@ -83,6 +85,7 @@ Lnop:
 // saves r0 only as an interrupt function, which saves every register among r0-r7 it writes (the calls
 // here write r1-r3 too), and a compiled function that saved lr returns by loading it into pc. It also
 // passes the handler's r0 and ip on to func_0203eedc, which no C call does.
+// clang-format off
 asm void func_0203eec8(void) {
     stmfd sp!, {r0, lr}
     bl func_0203eedc
@@ -90,6 +93,7 @@ asm void func_0203eec8(void) {
     ldmfd sp!, {r0, lr}
     bx lr
 }
+// clang-format on
 
 // func_0203eedc: captures the faulting context into the block at
 // sExceptionContext. r0 is the entry sp's low bit as set by the handler, ip
@@ -101,6 +105,7 @@ asm void func_0203eec8(void) {
 // grab that mode's sp (+0x38), lr (+0x3c) and SPSR (+0x7c), and restores the
 // original CPSR.
 // Not compiled: reads CPSR and SPSR with mrs and changes mode with msr, which C has no expression for.
+// clang-format off
 asm void func_0203eedc(void) {
     ldr r1, =sExceptionContext
     mrs r2, cpsr
@@ -138,6 +143,7 @@ asm void func_0203eedc(void) {
     msr cpsr_fsxc, r0           // back to the handler's mode
     bx lr
 }
+// clang-format on
 
 // func_0203ef6c: if the third word of sExceptionState is non-zero, calls it
 // in system mode with IRQ masked (CPSR 0x9f): switches mode but keeps the
@@ -148,6 +154,7 @@ asm void func_0203eedc(void) {
 // After that function returns, calls func_0203eda0, restores system mode's sp
 // and the caller's CPSR and returns.
 // Not compiled: switches to system mode and back with mrs/msr, which C has no expression for.
+// clang-format off
 asm void func_0203ef6c(void) {
     stmfd sp!, {r3, lr}
     ldr r0, =sExceptionState
@@ -176,3 +183,4 @@ Lret:
     msr cpsr_fsxc, r2
     ldmfd sp!, {r3, pc}
 }
+// clang-format on

@@ -213,8 +213,8 @@ void OS_InitThread(void) {
     *(void **) 0x27fffa0 = &data_020ca70c.ti.isNeedRescheduling;
     OS_SetSwitchThreadCallback(NULL);
     OS_CreateThread(&data_020ca70c.ti.idleThread, (void (*)(void *)) OSi_IdleThreadProc, NULL,
-                    data_020ca70c.ti.idleStack + sizeof(data_020ca70c.ti.idleStack),
-                    sizeof(data_020ca70c.ti.idleStack), 0x1f);
+                    data_020ca70c.ti.idleStack + sizeof(data_020ca70c.ti.idleStack), sizeof(data_020ca70c.ti.idleStack),
+                    0x1f);
     data_020ca70c.ti.idleThread.priority = 0x20;
     data_020ca70c.ti.idleThread.state = OS_THREAD_STATE_READY;
 }
@@ -431,6 +431,7 @@ void OS_SetThreadDestructor(OSThread *thread, void (*destructor)(void *)) {
 // flag-setting instruction in its own block only when it deletes that instruction as a repeat of the one ending
 // the block's single predecessor (branch merge pass), after which that block never gains a predecessor, or right
 // after a call to a float or double compare helper.
+// clang-format off
 asm void OS_InitContext(OSContext *context, u32 newpc, u32 newsp) {
     add r1, r1, #4
     str r1, [r0, #0x40]
@@ -472,6 +473,7 @@ store:
     str r1, [r0, #0x3c]
     bx lr
 }
+// clang-format on
 
 // r0 points at a context record. First saves the divider and square-root
 // registers into the tail of the record (+0x48), then stores CPSR at +0, the
@@ -481,6 +483,7 @@ store:
 // OS_LoadContext resumes at that address minus 4, i.e. at the 'bx lr', with
 // r0 = 1, so the caller sees a second return of 1.
 // Not compiled: reads CPSR with mrs and changes mode with msr, which C has no expression for.
+// clang-format off
 asm u32 OS_SaveContext(OSContext *context) {
     stmfd sp!, {r0, lr}
     add r0, r0, #0x48
@@ -501,6 +504,7 @@ asm u32 OS_SaveContext(OSContext *context) {
     mov r0, #0
     bx lr
 }
+// clang-format on
 
 // r0 points at a context record produced by OS_SaveContext. Restores the
 // divider and square-root registers from +0x48, enters supervisor mode with
@@ -509,6 +513,7 @@ asm u32 OS_SaveContext(OSContext *context) {
 // lr from +4..+0x3c, and returns to lr - 4 with CPSR restored from SPSR.
 // Not compiled: writes CPSR and SPSR with msr, which C has no expression for, and returns with
 // `subs pc, lr, #4`.
+// clang-format off
 asm void OS_LoadContext(OSContext *context) {
     stmfd sp!, {r0, lr}
     add r0, r0, #0x48
@@ -527,3 +532,4 @@ asm void OS_LoadContext(OSContext *context) {
     mov r0, r0
     subs pc, lr, #4
 }
+// clang-format on

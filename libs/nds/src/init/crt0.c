@@ -20,6 +20,7 @@ extern char data_027e0021[];
 // table), and finally jumps to main with lr = 0xffff0000 and sp lowered to an 8-byte boundary.
 // Not compiled: sets the processor modes with msr and keeps the caches coherent with CP15 mcr instructions,
 // which C has no expression for.
+// clang-format off
 asm void Entry(void) {
     mov ip, #0x4000000
     str ip, [ip, #0x208]            // master interrupt enable off
@@ -107,12 +108,14 @@ L_ex1:
 L_ex2:
     bx r1
 }
+// clang-format on
 
 // Fills size bytes at dst (r1, word aligned) with the word in r0, a word at a time.
 // Not compiled: stores with `stmia r1!, {r0}` (one register, base written back).
 // The compiler writes back an ldm/stm base only in push/pop on sp and in struct copies and fills, whose
 // registers are always r0-r3 (r0-r1 for a two-word fill); the pass that merges loads or stores into one ldm/stm
 // never adds writeback.
+// clang-format off
 asm void func_02000954(u32 val, u32 *dst, u32 size) {
     add ip, r1, r2                  // end address
 L_loop:
@@ -125,6 +128,7 @@ L_nx:
     blt L_loop
     bx lr
 }
+// clang-format on
 
 // Expands a backwards-packed stream. r0 points just past the packed data; the word pair before
 // it holds the packed length/header-size (top byte = header bytes) and the growth in size. Reads
@@ -134,6 +138,7 @@ L_nx:
 // line from the packed data's lower bound up to the output end, drains the write buffer,
 // invalidates the instruction line and cleans and invalidates the data line.
 // Not compiled: the cache maintenance is CP15 mcr instructions, which C has no expression for.
+// clang-format off
 asm void func_02000970(void *end) {
     cmp r0, #0
     beq L_ret
@@ -187,12 +192,14 @@ L_cache:
 L_ret:
     bx lr
 }
+// clang-format on
 
 // Walks the table at BuildInfo (start, end, source pointer). Each entry is (dest, copy length,
 // zero length): copies the words from the source stream to dest, zero-fills the following
 // words, then for every 32-byte line of the whole area drains the write buffer, invalidates the
 // instruction line and cleans and invalidates the data line. Ends by jumping to AutoloadCallback.
 // Not compiled: the cache maintenance is CP15 mcr instructions, which C has no expression for.
+// clang-format off
 asm void func_02000a1c(void) {
     ldr r0, =BuildInfo
     ldr r1, [r0, #0]                // table cursor
@@ -241,10 +248,10 @@ L_fl:
 L_fin:
     b AutoloadCallback
 }
+// clang-format on
 
 // Empty hook: returns immediately.
-void AutoloadCallback(void) {
-}
+void AutoloadCallback(void) {}
 
 // Cache and protection setup: clears control-register bits 0xf9005 (among them MPU, caches, TCMs),
 // invalidates both caches and drains the write buffer, programs the eight protection regions, the
@@ -252,6 +259,7 @@ void AutoloadCallback(void) {
 // then sets control-register bits 0x5707d (MPU, caches, write buffer, both TCMs, high exception
 // vectors, round-robin replacement).
 // Not compiled: CP15 mrc/mcr instructions, which C has no expression for.
+// clang-format off
 asm void func_02000ab0(void) {
     mrc p15, 0, r0, c1, c0, 0
     ldr r1, =0xf9005
@@ -300,11 +308,10 @@ asm void func_02000ab0(void) {
     mcr p15, 0, r0, c1, c0, 0       // enable MPU, caches and TCMs
     bx lr
 }
+// clang-format on
 
 // Empty hook: returns immediately.
-void func_02000b98(void) {
-}
+void func_02000b98(void) {}
 
 // Empty hook, called with the address of a library tag string: returns immediately.
-void func_02000b9c(const void *tag) {
-}
+void func_02000b9c(const void *tag) {}

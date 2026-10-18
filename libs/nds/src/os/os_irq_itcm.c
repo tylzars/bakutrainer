@@ -16,6 +16,7 @@
 // (table base, return address).
 // Not compiled: clz has no C expression; and the lr it pushes is popped by func_01ff8068 when a
 // handler has run.
+// clang-format off
 asm void func_01ff8000(void) {
     stmfd sp!, {lr}
     mov ip, #0x4000000
@@ -47,6 +48,7 @@ Lfind:
     ldr lr, =func_01ff8068
     bx r0
 }
+// clang-format on
 
 // func_01ff8068: runs after an interrupt handler returns. First, if the word
 // at data_027e0060 is non-zero, walks a chain of records from it: for each it
@@ -70,6 +72,7 @@ Lfind:
 // word popped from the stack. Four literal words follow the routine.
 // Not compiled: changes mode with msr and reads SPSR with mrs, which C has no expression for; and it
 // returns through the lr that func_01ff8000 pushed.
+// clang-format off
 asm void func_01ff8068(void) {
     ldr ip, =data_027e0060
     mov r3, #0
@@ -177,3 +180,4 @@ Lnohook:
     stmda sp!, {r0, r1, r2, r3, ip, lr}
     ldmfd sp!, {pc}
 }
+// clang-format on
