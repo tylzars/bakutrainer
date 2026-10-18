@@ -16,6 +16,7 @@
 #include <Main/Unknown/text_draw.h>
 #include <Main/Unknown/model.h>
 #include <Main/Unknown/texture_blocks.h>
+#include <Main/Unknown/wave_player.h>
 #include <nitro/os.h>
 #include <stdio.h>
 
@@ -368,7 +369,7 @@ typedef struct Unk_020ae458 {
 static Unk_020ae458 data_020ae458;
 
 void func_0200e3ec(void) {
-    func_0202f2e8(data_020ae464);
+    func_0202f2e8(&data_020ae464);
     data_020ae458.mUnk_00 = data_020b1084.mUnk_04;
     data_020ae458.mUnk_04 = data_020b1084.mUnk_08;
     func_02020ff4(0x400, data_020b1084.mUnk_04);
@@ -384,7 +385,7 @@ void func_0200e424(int a) {
             func_02014430(1);
         }
     }
-    func_0202f290(data_020ae464, "BAK_strm_Title.raw", 0x5654);
+    func_0202f290(&data_020ae464, "BAK_strm_Title.raw", 0x5654);
 }
 
 void func_0200e474(void) {
@@ -419,7 +420,7 @@ void func_0200e4c4(void) {
     data_020b6ee0.mUnk_a91a = 0;
     data_020b6ee0.mUnk_a91b = 0;
     func_020104c0(0, 0x80);
-    func_0202f290(data_020ae464, "BAK_strm_Title.raw", 0x5654);
+    func_0202f290(&data_020ae464, "BAK_strm_Title.raw", 0x5654);
     for (i = 0; i < 3; i++) {
         Unk_RecordBuf *buf = func_0201ffbc();
         func_02020140(i, buf, 0xfba);
@@ -468,16 +469,16 @@ void func_0200e5b0(void) {
         func_02022370();
         func_0202c1c4();
         func_0201dde0(0xdaa, 1);
-        func_0202f410(data_020ae464);
+        func_0202f410(&data_020ae464);
         func_0200dd5c("BAK_Intro.mods", 2);
         s->mUnk_34 = 0x4b0;
         func_0201f450(1, 0, 0x100, 0x100);
         func_0200e484();
-        func_0202f470(data_020ae464);
+        func_0202f470(&data_020ae464);
         return;
     }
     if (s->mUnk_24 != 6 && s->mUnk_28 != 6) {
-        func_0202f31c(data_020ae464);
+        func_0202f31c(&data_020ae464);
     }
     if (s->mUnk_24 == 1 && s->mUnk_28 < 0) {
         if (data_020c18bc.mUnk_10 != 0 || data_020c18bc.mUnk_2ac_1) {
@@ -686,9 +687,9 @@ void func_0200e5b0(void) {
             if (func_0200bd80(0x20000000, 0x101)) {
                 if (data_020ae504.mUnk_1b4 != data_020b1084.mLanguage) {
                     data_020b1084.mLanguage = data_020ae504.mUnk_1b4;
-                    func_0202f2e8(data_020ae464);
+                    func_0202f2e8(&data_020ae464);
                     func_02014430(1);
-                    func_0202f290(data_020ae464, "BAK_strm_Title.raw", 0x5654);
+                    func_0202f290(&data_020ae464, "BAK_strm_Title.raw", 0x5654);
                 }
                 func_0200e3d0(5, 1);
                 return;
@@ -763,6 +764,6 @@ void func_0200e5b0(void) {
 }
 
 void func_0200f360(void) {
-    func_0202f2e8(data_020ae464);
+    func_0202f2e8(&data_020ae464);
     func_020102f8();
 }

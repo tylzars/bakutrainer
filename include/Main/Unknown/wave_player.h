@@ -1,6 +1,7 @@
 #pragma once
 
 #include "types.h"
+#include <nitro/fs.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -48,13 +49,17 @@ typedef struct WaveChannel {
     /* 14 */ u32 mUnk_14;
 } WaveChannel; /* 18 */
 
-// Object func_0202f290 and func_0202f2e8 work on (a name at 0x60).
-typedef struct Unk_WaveStream {
-    u8 mUnk_00[0x4c];
-    u32 mUnk_4c;
-    u8 mUnk_50[0x10];
-    char mUnk_60[1];
-} Unk_WaveStream;
+// A wave stream read from a file in four chunks (a ring of mChunk * 4 bytes) and played through a wave channel.
+typedef struct WaveStream {
+    /* 00 */ FSFile mFile;
+    /* 48 */ u32 mChunk;
+    /* 4c */ u32 mRate;
+    /* 50 */ u8 *mBuffer;
+    /* 54 */ s32 mCurrent;
+    /* 58 */ u32 mPause;
+    /* 5c */ u32 mFrame;
+    /* 60 */ char mName[0x40];
+} WaveStream;
 
 typedef struct WavePlayer {
     /* 000 */ WaveChannel mUnk_000[WAVE_CHANNEL_COUNT];
@@ -63,10 +68,12 @@ typedef struct WavePlayer {
     /* 182 */ u8 mUnk_182[2];
     /* 184 */ s32 mUnk_184;
     /* 188 */ s32 mUnk_188;
-    /* 18c */ Unk_WaveStream *mUnk_18c;
+    /* 18c */ WaveStream *mUnk_18c;
 } WavePlayer; /* 190 */
 
 extern WavePlayer data_020c648c;
+// The title screen's music stream (its .bss sits right after slide_transition.c's own objects).
+extern WaveStream data_020ae464;
 
 // Claims a channel from the set of channel bits `mask`: the first slot in the mask that is not in use, or, when
 // `steal` is set and none is free, the first slot in the mask (releasing it first). Returns the slot number, or
@@ -90,6 +97,14 @@ void func_0202efe4(u32 index);
 void func_0202f00c(void);
 void func_0202f05c(void);
 void func_0202f084(void);
+void func_0202f110(int a, int b, int c, int d, int e, int f);
+void func_0202f200(void);
+void func_0202f240(int id, int volume);
+void func_0202f290(WaveStream *stream, const char *name, u32 rate);
+void func_0202f2e8(WaveStream *stream);
+void func_0202f31c(WaveStream *stream);
+void func_0202f410(WaveStream *stream);
+void func_0202f470(WaveStream *stream);
 
 #ifdef __cplusplus
 }

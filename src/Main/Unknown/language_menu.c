@@ -12,6 +12,7 @@
 #include <Main/Unknown/script_records.h>
 #include <Main/Unknown/model.h>
 #include <Main/Unknown/texture_blocks.h>
+#include <Main/Unknown/wave_player.h>
 #include <Main/clib.h>
 #include <nitro/os.h>
 #include <stdio.h>

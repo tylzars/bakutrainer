@@ -641,7 +641,6 @@ typedef struct Unk_020c61ac {
     };
 } Unk_020c61ac;
 
-extern u8 data_020ae464[];
 extern Unk_020c61ac data_020c61ac;
 extern const u16 data_0204e208[];
 extern const u16 data_0204e210[];

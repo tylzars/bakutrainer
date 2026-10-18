@@ -18,6 +18,7 @@
 #include <Main/Unknown/text_draw.h>
 #include <Main/Unknown/camera.h>
 #include <Main/Unknown/texture_blocks.h>
+#include <Main/Unknown/wave_player.h>
 
 #define GAUGE_MAX 0x31
 

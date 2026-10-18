@@ -11,6 +11,7 @@
 #include <Main/Unknown/mode_select.h>
 #include <Main/Unknown/text_draw.h>
 #include <Main/Unknown/model.h>
+#include <Main/Unknown/wave_player.h>
 #include <nitro/os.h>
 #include <stdio.h>
 

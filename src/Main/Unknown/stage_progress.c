@@ -11,6 +11,7 @@
 #include <Main/Unknown/stage_progress.h>
 #include <Main/Unknown/sprite_slots.h>
 #include <Main/Unknown/text_draw.h>
+#include <Main/Unknown/wave_player.h>
 #include <Main/clib.h>
 
 const u8 data_020500d4[3] = {1, 0, 2};

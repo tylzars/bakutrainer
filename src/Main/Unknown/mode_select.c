@@ -12,6 +12,7 @@
 #include <Main/Unknown/text_draw.h>
 #include <Main/Unknown/model.h>
 #include <Main/Unknown/texture_blocks.h>
+#include <Main/Unknown/wave_player.h>
 #include <stdio.h>
 
 u32 data_0206391c = 1800;

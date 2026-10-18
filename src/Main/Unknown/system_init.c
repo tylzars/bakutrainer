@@ -378,8 +378,7 @@ void func_0201bb40(int flags) {
                 }
                 func_02043e88(0xc, 0, 0);
                 if (found == 1) {
-                    func_0202f290(data_020c648c.mUnk_18c, data_020c648c.mUnk_18c->mUnk_60,
-                                  data_020c648c.mUnk_18c->mUnk_4c);
+                    func_0202f290(data_020c648c.mUnk_18c, data_020c648c.mUnk_18c->mName, data_020c648c.mUnk_18c->mRate);
                 }
                 func_0202ad38();
                 if (save & 4) {

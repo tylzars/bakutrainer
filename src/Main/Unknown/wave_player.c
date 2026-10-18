@@ -1,3 +1,5 @@
+#include <Main/clib.h>
+#include <nitro/fs.h>
 #include <nitro/os.h>
 #include <nitro/snd.h>
 #include <Main/Unknown/functions.h>
@@ -319,4 +321,177 @@ void func_0202f084(void) {
         func_0202ed90(mask);
         data_020c648c.mUnk_180 = data_020c648c.mUnk_181;
     }
+}
+
+#define WAVE_STREAM_ID 0x4d2
+#define WAVE_STREAM_KEY 0x400004d2
+
+void func_0202f110(int a, int b, int c, int d, int e, int f) {
+    u32 i;
+    u32 bit;
+    u32 index;
+    if (c == 0) {
+        func_0202eb64(a, b, c, d, e, (WaveLoop *) f);
+        return;
+    }
+    if (func_0202ee1c(a) == 0) {
+        func_0202eb64(a, b, c, d, e, (WaveLoop *) f);
+        for (i = 0; i < data_020c648c.mUnk_180; i++) {
+            WaveChannel *ch = &data_020c648c.mUnk_000[i];
+            if (a == ch->mId && ch->mUnk_0d_2 == 1) {
+                ch->mUnk_0c = 2;
+            }
+        }
+        return;
+    }
+    for (i = 0; i < data_020c648c.mUnk_180; i++) {
+        WaveChannel *ch = &data_020c648c.mUnk_000[i];
+        if (a == ch->mId && ch->mUnk_0d_2 == 1) {
+            index = i;
+            data_020c648c.mUnk_000[index].mUnk_0c = 2;
+            bit = 1 << i;
+            func_02040220(bit, d);
+            if (b != data_020c648c.mUnk_000[index].mUnk_14) {
+                if (data_020c648c.mUnk_000[index].mUnk_0d_1 == 1) {
+                    b = ((u32) b * 0x30) >> 8;
+                }
+                func_020401f8(bit, ((u32) b * 0x145) >> 8, 0);
+                data_020c648c.mUnk_000[index].mUnk_14 = b;
+            }
+            return;
+        }
+    }
+}
+
+void func_0202f200(void) {
+    u32 mask = 0;
+    u32 i;
+    for (i = 0; i < data_020c648c.mUnk_180; i++) {
+        WaveChannel *ch = &data_020c648c.mUnk_000[i];
+        if (ch->mUnk_0c == 1) {
+            mask |= 1 << i;
+        } else if (ch->mUnk_0c == 2) {
+            ch->mUnk_0c = 1;
+        }
+    }
+    func_0202ed90(mask);
+}
+
+void func_0202f240(int id, int volume) {
+    int i;
+    u32 mask = 0;
+    u32 timer = 0;
+    for (i = 0; i < (u32) data_020c648c.mUnk_180; i++) {
+        WaveChannel *ch = &data_020c648c.mUnk_000[i];
+        if (ch->mActive == 1 && id == ch->mId) {
+            mask |= 1 << i;
+            timer = ch->mTimer;
+        }
+    }
+    func_020401d8(mask, (timer * (u32) volume) >> 8);
+}
+
+void func_0202f290(WaveStream *stream, const char *name, u32 rate) {
+    if (data_020c648c.mUnk_184 != 0) {
+        OS_Terminate();
+    }
+    data_020c648c.mUnk_184 = 1;
+    data_020c648c.mUnk_18c = stream;
+    if (func_02042490(&stream->mFile, name) != 1) {
+        OS_Terminate();
+    }
+    strcpy(stream->mName, name);
+    stream->mRate = rate;
+    stream->mChunk = stream->mRate * 2;
+    stream->mBuffer = func_0201c430(stream->mChunk * 4);
+    stream->mCurrent = -1;
+    stream->mPause = 0;
+    stream->mFrame = 0;
+}
+
+void func_0202f2e8(WaveStream *stream) {
+    if (data_020c648c.mUnk_184 != 1) {
+        OS_Terminate();
+    }
+    func_0202edd0(WAVE_STREAM_KEY);
+    func_020424d8(&stream->mFile);
+    func_0201c4f0(&stream->mBuffer);
+    data_020c648c.mUnk_184 = 0;
+}
+
+void func_0202f31c(WaveStream *stream) {
+    if (data_020c648c.mUnk_184 != 1) {
+        OS_Terminate();
+    }
+    if (stream->mPause != 1) {
+        if (stream->mPause == 0) {
+            if (stream->mCurrent == -1) {
+                stream->mCurrent = 0;
+                func_020425f4(&stream->mFile, 0, 0);
+                func_020425e4(&stream->mFile, stream->mBuffer + stream->mCurrent * stream->mChunk, stream->mChunk);
+                func_0202eb18(WAVE_STREAM_ID, 0, 100, 1, 0x40, 0xfffe, 0, stream->mBuffer, stream->mRate,
+                              stream->mChunk * 4, 1);
+            } else {
+                s32 next = (stream->mCurrent + 1) % 4;
+                u32 cur = (((stream->mRate << 8) / 60 * stream->mFrame >> 8) / stream->mChunk) & 3;
+                if (next != cur) {
+                    u32 got;
+                    stream->mCurrent = next;
+                    got = func_020425e4(&stream->mFile, stream->mBuffer + stream->mCurrent * stream->mChunk,
+                                        stream->mChunk);
+                    if (got < stream->mChunk) {
+                        func_020425f4(&stream->mFile, 0, 0);
+                        func_020425e4(&stream->mFile, stream->mBuffer + got + stream->mCurrent * stream->mChunk,
+                                      stream->mChunk - got);
+                    }
+                }
+            }
+            stream->mFrame++;
+        } else {
+            func_0202f470(stream);
+        }
+    }
+}
+
+void func_0202f410(WaveStream *stream) {
+    int index;
+    u32 i;
+    if (data_020c648c.mUnk_184 != 1) {
+        OS_Terminate();
+    }
+    if (stream->mPause == 0) {
+        func_0202ee28(WAVE_STREAM_KEY, &index);
+        stream->mPause = 1;
+        func_020401d8(1 << index, 0);
+        func_020401f8(1 << index, 0, 0);
+        i = 0;
+        while (SND_RecvCommandReply(i) != 0) {
+        }
+        SND_FlushCommand(2);
+        data_020c648c.mUnk_188 = 1;
+    }
+}
+
+void func_0202f470(WaveStream *stream) {
+    int index;
+    u32 i;
+    if (data_020c648c.mUnk_184 != 1) {
+        OS_Terminate();
+    }
+    if (stream->mPause == 0) {
+        return;
+    }
+    if (stream->mPause < 0x3c) {
+        stream->mPause++;
+        return;
+    }
+    func_0202ee28(WAVE_STREAM_KEY, &index);
+    stream->mPause = 0;
+    func_020401d8(1 << index, data_020c648c.mUnk_000[index].mTimer);
+    func_020401f8(1 << index, (data_020c648c.mUnk_000[index].mUnk_14 * 0x145) >> 8, 0);
+    i = 0;
+    while (SND_RecvCommandReply(i) != 0) {
+    }
+    SND_FlushCommand(2);
+    data_020c648c.mUnk_188 = 0;
 }
