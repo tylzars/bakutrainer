@@ -8,6 +8,7 @@
 #include <Main/Unknown/sprite_slots.h>
 #include <Main/Unknown/text_draw.h>
 #include <Main/Unknown/model.h>
+#include <Main/Unknown/engine_asm.h>
 
 void func_0200d6c8(void) {
     u32 i;

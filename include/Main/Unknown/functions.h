@@ -20,14 +20,6 @@ void func_020220c8(int a);
 void func_02022120(void);
 void func_0202224c(void);
 void func_02022370(void);
-void func_02027fc2(const char *msg);
-void func_02028150(const void *src, void *dst, u32 skip, u32 size);
-u32 func_02028250(u32 x);
-void func_0202875c(const void *src, void *dst);
-void func_02028928(u16 *data, const u8 *table, u32 count);
-void func_02028980(s16 *block, int comp, s16 *maxcode, u8 *valptr, u16 *mincode, u8 *huffval, s16 *dc,
-                   const u8 *zigzag);
-void func_02028b8c(u8 *blocks, u16 *out, u8 *clamp);
 void func_020292f4(const char *text);
 char *func_0202938c(char *dst, const char *src);
 u8 func_0202a188(void);

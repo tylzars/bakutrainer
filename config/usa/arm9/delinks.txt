@@ -416,6 +416,11 @@ src/Main/Unknown/vram_cache.c:
 src/Main/Unknown/model.c:
     .text       start:0x0202350c end:0x02027398
 
+// hand-written: shared literal pools, branches into other routines and register interfaces tie it together;
+// it may be split at 0x020280dc, 0x02028150, 0x02028250, 0x02028928, 0x02028d48 or 0x02028df4
+src/Main/Unknown/engine_asm.s:
+    .text       start:0x02027398 end:0x02028e5c
+
 // provisional: the record store on data_020c61ac; the file continues past 0x02029250 (func_0202938c is called from
 // here, the same object's pool words recur up to about 0x0202ad30)
 src/Main/Unknown/script_records.c:

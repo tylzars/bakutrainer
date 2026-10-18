@@ -29,6 +29,7 @@
 #include <Main/Unknown/system_init.h>
 #include <Main/Unknown/camera.h>
 #include <Main/Unknown/model.h>
+#include <Main/Unknown/engine_asm.h>
 
 #define EZ10_MAGIC 0x30315a45
 #define HW_DISPCNT 0x04000000
