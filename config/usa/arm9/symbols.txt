@@ -1573,6 +1573,7 @@ data_0204e138 kind:data(byte[12]) addr:0x0204e138
 data_0204e144 kind:data(any) addr:0x0204e144
 data_0204e1c0 kind:data(byte[12]) addr:0x0204e1c0
 data_0204e1cc kind:data(word[6]) addr:0x0204e1cc
+data_0204e378 kind:data(any) addr:0x0204e378
 data_0204e804 kind:data(byte[14]) addr:0x0204e804
 data_0204e824 kind:data(byte[25]) addr:0x0204e824
 data_0204e840 kind:data(word[25]) addr:0x0204e840

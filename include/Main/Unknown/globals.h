@@ -130,7 +130,13 @@ typedef struct Unk_020c2660 {
 } Unk_020c2660;
 extern Unk_020c2660 data_020c2660;
 
-extern u32 data_020b1084;
+// Language and two more settings words (the first is saved under the key "LANGUAGE").
+typedef struct Unk_020b1084 {
+    u32 mLanguage;
+    u32 mUnk_04;
+    u32 mUnk_08;
+} Unk_020b1084;
+extern Unk_020b1084 data_020b1084;
 
 // Word tables and constant blocks in the code area.
 extern const u32 data_0201abbc[];
@@ -266,6 +272,44 @@ extern Unk_020c5f04 data_020c5f04;
 extern MtxFx43 data_020c3e80;
 
 extern const u8 data_0201a6c6[];
+
+// Objects and tables of the slide transition and title code.
+typedef struct Unk_RecordBuf {
+    u8 mUnk_00[0x10];
+    s32 mUnk_10;
+    s32 mUnk_14;
+    s32 mUnk_18;
+} Unk_RecordBuf;
+
+typedef struct Unk_020ae44c {
+    u8 mUnk_00[0xc];
+    u32 mUnk_0c;
+    u32 mUnk_10;
+} Unk_020ae44c;
+
+typedef struct Unk_0204e378 {
+    s32 mUnk_00;
+    s32 mUnk_04;
+    s32 mUnk_08;
+    s32 mUnk_0c;
+} Unk_0204e378;
+
+typedef struct Unk_020c642c {
+    u8 mUnk_00[0x40];
+    s32 mUnk_40;
+} Unk_020c642c;
+
+typedef struct Unk_020c61ac {
+    u8 mUnk_00[0x20];
+    u16 mUnk_20;
+} Unk_020c61ac;
+
+extern Unk_020ae44c data_020ae44c;
+extern u8 data_020ae464[];
+extern s32 data_020ae6ec;
+extern Unk_020c642c data_020c642c;
+extern Unk_020c61ac data_020c61ac;
+extern const Unk_0204e378 data_0204e378[];
 
 #ifdef __cplusplus
 }

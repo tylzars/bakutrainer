@@ -167,9 +167,9 @@ void func_02005a8c(int a, int b) {
     data_0206d444.mUnk_18 = b;
     if (a == 0) {
         if (b == 1) {
-            func_0202f110(data_020b1084 + data_0204e0f0[func_0201fd68() % 3], 100, 0, 64, 0xffff, 0);
+            func_0202f110(data_020b1084.mLanguage + data_0204e0f0[func_0201fd68() % 3], 100, 0, 64, 0xffff, 0);
         } else if (b == 0) {
-            func_0202f110(data_020b1084 + data_0204e0e8[func_0201fd68() & 1], 100, 0, 64, 0xffff, 0);
+            func_0202f110(data_020b1084.mLanguage + data_0204e0e8[func_0201fd68() & 1], 100, 0, 64, 0xffff, 0);
         }
     }
 }
@@ -198,7 +198,7 @@ int func_02005b1c(int mode) {
                     return 0;
                 }
             }
-            func_0202cf08(data_020b1084 + 0xe77, (data_0206d444.mUnk_10 >> 8) + 128, 96, 10, mode);
+            func_0202cf08(data_020b1084.mLanguage + 0xe77, (data_0206d444.mUnk_10 >> 8) + 128, 96, 10, mode);
             return 1;
         case 2: {
             int id = data_0206d444.mUnk_18 == 1 ? 0xec5 : 0xe7d;
@@ -214,7 +214,7 @@ int func_02005b1c(int mode) {
             } else {
                 return 0;
             }
-            func_0202cf08(id + data_020b1084, (data_0206d444.mUnk_10 >> 8) + 128, 96, 10, mode);
+            func_0202cf08(id + data_020b1084.mLanguage, (data_0206d444.mUnk_10 >> 8) + 128, 96, 10, mode);
             return 1;
         }
         default:

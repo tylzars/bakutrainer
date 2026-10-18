@@ -66,17 +66,30 @@ typedef struct SlotCounters {
     s32 mUnk_08;
 } SlotCounters;
 
-// State block; only the members func_0200dd90 touches are named.
+// Three words read from a record (func_0200e4c4).
+typedef struct Unk_020ae504_Rec {
+    s32 mUnk_00;
+    s32 mUnk_04;
+    s32 mUnk_08;
+} Unk_020ae504_Rec;
+
+// State block; only the members the code touches are named.
 typedef struct Unk_020ae504 {
-    u8 mUnk_00[0x24];
+    Unk_020ae504_Rec mUnk_00[3];
     u32 mUnk_24;
-    u8 mUnk_28[0x38 - 0x28];
+    s32 mUnk_28;
+    s32 mUnk_2c;
+    s32 mUnk_30;
+    s32 mUnk_34;
     s8 mUnk_38;
-    u8 mUnk_39[0x1b8 - 0x39];
+    u8 mUnk_39[3];
+    u8 mUnk_3c[0x1b8 - 0x3c];
     u8 mUnk_1b8;
     u8 mUnk_1b9[3];
     s32 mUnk_1bc[8];
     s32 mUnk_1dc;
+    s32 mUnk_1e0;
+    s32 mUnk_1e4;
 } Unk_020ae504;
 
 extern SlotCounters data_020abfc0;
