@@ -2,6 +2,7 @@
 
 #include "types.h"
 #include <nitro/fx.h>
+#include <Main/Unknown/game_util.h>
 
 // Per-stage settings; the table of records has 0x230 bytes per stage.
 typedef struct StageInfo {
@@ -38,12 +39,17 @@ typedef struct StageRec {
     u8 mUnk_164[0x178 - 0x164];
     StageInfo mInfo;
     u8 mUnk_19e[2];
-    VecFx32 mUnk_1a0;
-    u8 mUnk_1ac[0x1d8 - 0x1ac];
-    u16 mUnk_1d8;
-    u16 mUnk_1da;
-    u16 mUnk_1dc;
-    u8 mUnk_1de[0x1e4 - 0x1de];
+    union {
+        DrawParams mDraw;
+        struct {
+            VecFx32 mUnk_1a0;
+            u8 mUnk_1ac[0x1d8 - 0x1ac];
+            u16 mUnk_1d8;
+            u16 mUnk_1da;
+            u16 mUnk_1dc;
+            u8 mUnk_1de[0x1e4 - 0x1de];
+        };
+    };
     s32 mUnk_1e4;
     s32 mUnk_1e8;
     s32 mUnk_1ec;

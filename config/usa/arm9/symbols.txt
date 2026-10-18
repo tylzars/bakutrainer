@@ -1623,6 +1623,9 @@ data_020500d4 kind:data(byte[3]) addr:0x020500d4
 data_020500d8 kind:data(byte[9]) addr:0x020500d8
 data_020500e4 kind:data(byte[20]) addr:0x020500e4
 data_020500f8 kind:data(byte[108]) addr:0x020500f8
+data_02050164 kind:data(byte[48]) addr:0x02050164
+data_02050194 kind:data(byte[48]) addr:0x02050194
+data_020501c4 kind:data(byte[48]) addr:0x020501c4
 func_02052468 kind:function(arm,size=0x4) addr:0x02052468
 func_02052478 kind:function(arm,size=0x28) addr:0x02052478
 func_020524a8 kind:function(arm,size=0x148) addr:0x020524a8

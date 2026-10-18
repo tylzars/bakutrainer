@@ -358,7 +358,7 @@ src/Main/Unknown/game_system.c:
 // provisional: the start (func_02015d4c may belong to the file before); continues past 0x020182b8 (its strings are
 // shared with func_02018770 under -str reuse)
 src/Main/Unknown/stage_camera.c:
-    .text       start:0x02015d4c end:0x020182b8
+    .text       start:0x02015d4c end:0x02018cd4
 
 // .rodata 0x020500d8-0x02050164, strings 0x02063a5c-0x02063a90, .bss 0x020b13c8-0x020b1524 (defined here); the end
 // is provisional (func_02015d48 and func_02015d4c may meet in either file)

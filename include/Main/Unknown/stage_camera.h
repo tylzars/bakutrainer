@@ -100,6 +100,16 @@ void func_02016db4(Unk_020b1598 *followers, int index, u16 angle);
 void func_02017298(Unk_020b1598 *followers);
 int func_0201750c(int index, int *sel);
 void func_020175e8(int index, int *sel, int flags);
+int func_020182b8(int row, int column);
+void func_020182cc(void);
+void func_02018558(void);
+void func_020186cc(void);
+int func_020186f0(u8 stage);
+void func_020186fc(int stage);
+void func_02018770(StageRec *rec, int kind, int amount);
+void func_02018840(StageRec *rec, int kind, int index);
+void func_0201896c(void);
+int func_02018ccc(const u16 *a, const u16 *b);
 #ifdef __cplusplus
 }
 #endif

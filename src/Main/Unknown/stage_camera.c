@@ -2,10 +2,18 @@
 #include <stdio.h>
 #include <Main/clib.h>
 #include <Main/Unknown/functions.h>
+#include <Main/Unknown/stage_info_panel.h>
+#include <Main/Unknown/mode_select.h>
+#include <nitro/mi.h>
+#include <Main/Unknown/prompt_screen.h>
+#include <Main/Unknown/sound_control.h>
 #include <Main/Unknown/globals.h>
 #include <Main/Unknown/game_util.h>
 #include <Main/Unknown/stage_data.h>
 #include <Main/Unknown/stage_camera.h>
+#include <Main/Unknown/three_in_row.h>
+#include <Main/Unknown/stage_select.h>
+#include <Main/Unknown/sprite_slots.h>
 #include <Main/Unknown/stage_progress.h>
 
 void func_02015d4c(void) {
@@ -940,6 +948,350 @@ void func_020175e8(int index, int *sel, int flags) {
     rec->mUnk_220 -= rec->mUnk_220 / 2 < 1 ? 1 : rec->mUnk_220 / 2;
     rec->mUnk_1a0 = old;
     rec->mUnk_1d8 = angle;
-    data_020b6ee0.mUnk_8f94 |= 1;
+    data_020b6ee0.mUnk_8e60.mModel.mUnk_134 |= 1;
 }
 #pragma thumb on
+
+static const u16 data_02050164[4][6] = {
+    {0, 1, 2, 3, 4, 5},
+    {6, 7, 8, 9, 10, 11},
+    {12, 13, 14, 15, 16, 17},
+    {18, 19, 20, 21, 22, 23},
+};
+
+static const u16 data_02050194[24] = {
+    2528, 2628, 2739, 2827, 2935, 3061, 608,  3216, 708,  792,  909,  1048,
+    1188, 1288, 1397, 1481, 1596, 1732, 1866, 1966, 2075, 2161, 2269, 2395,
+};
+
+static const u16 data_020501c4[24] = {
+    2527, 2627, 2738, 2826, 2934, 3060, 607,  3215, 707,  791,  908,  1047,
+    1187, 1287, 1396, 1480, 1595, 1731, 1865, 1965, 2074, 2160, 2268, 2394,
+};
+
+int func_020182b8(int row, int column) {
+    return func_02021e44(0xd61, column + row * 2);
+}
+
+void func_020182cc(void) {
+    int stage;
+    Unk_020bfd40 *obj;
+    u8 resumed;
+    StageRec *rec;
+    int row;
+
+    stage = data_020b6ee0.mUnk_a8e4;
+    obj = &data_020b6ee0.mUnk_8e60;
+    resumed = stage != -1;
+    if (stage == -1) {
+        stage = 0;
+    }
+    data_020b6ee0.mUnk_a8e4 = stage;
+    {
+        BOOL ok = 0;
+        if (data_020b6ee0.mUnk_a8e4 >= 0 && data_020b6ee0.mUnk_a8e4 < STAGE_MAX) {
+            ok = 1;
+        }
+        if (ok == 0) {
+            OS_Terminate();
+        }
+    }
+    rec = &data_020b1990[data_020b6ee0.mUnk_a8e4];
+    if (resumed == 1) {
+        if (rec->mInfo.mUnk_11 > 12) {
+            OS_Terminate();
+        }
+        if (rec->mInfo.mUnk_10 >= 6) {
+            OS_Terminate();
+        }
+        row = (rec->mInfo.mUnk_11 - 1) / 3;
+        if (row > 4) {
+            OS_Terminate();
+        }
+        data_020b6ee0.mUnk_a8f2 = data_02050164[row][rec->mInfo.mUnk_10];
+        if (data_020b6ee0.mUnk_a8f2 >= 24) {
+            OS_Terminate();
+        }
+    }
+    func_0201eb20();
+    func_0202c1c4();
+    func_0201dde0(rec->mInfo.mUnk_13 + 0xdb3, 2);
+    func_0202bdd8(0x10cb, 0x10ca, 0x10cc, 0, 1);
+    func_0202bdd8(0x10cb, 0x10ca, 0x10cc, 0, 2);
+    func_02020854(0);
+    func_02021fb0(0x1c7, 0x1c6, 0x180, 0x10);
+    func_020325b0(data_020501c4[data_020b6ee0.mUnk_a8f2], 0, data_02050194[data_020b6ee0.mUnk_a8f2], 0, 0, 0);
+    data_020c5e44.mUnk_28 = func_02015d48;
+    data_020c5e44.mUnk_354 = 0x640;
+    data_020c5e44.mUnk_344 = 0x186a000;
+    func_020104c0(3, 0x4c);
+    MI_CpuFill8(&rec->mDraw, 0, 0x44);
+    func_02031fc4(0, &rec->mUnk_1a0);
+    rec->mDraw.mUnk_43 = 2;
+    rec->mDraw.mUnk_28 = 2 << 19;
+    rec->mUnk_220 = 0;
+    rec->mUnk_224 = 0;
+    func_020271ec(rec, 0, 0, 0, data_0201ab04[rec->mInfo.mUnk_13]);
+    rec->mUnk_158 = rec->mUnk_1a0;
+    func_020271ec(&data_020b6ee0.mUnk_8e60, 0, 0, 0, data_0201aba0[5]);
+    data_020b6ee0.mUnk_8e60.mDraw = rec->mDraw;
+    data_020b6ee0.mUnk_8e60.mDraw.mUnk_2c = -1;
+    data_020b6ee0.mUnk_8e60.mDraw.mUnk_30 = -1;
+    data_020b6ee0.mUnk_8e60.mDraw.mUnk_34 = -1;
+    data_020b6ee0.mUnk_8e60.mDraw.mUnk_3c = 0;
+    data_020b6ee0.mUnk_8e60.mDraw.mUnk_3a = data_020b6ee0.mUnk_8e60.mDraw.mUnk_3c;
+    data_020c5e44.mUnk_bc = 4;
+    func_02031fc4(0, &data_020c5e44.mUnk_98);
+    data_020c5e44.mUnk_80 = data_020c5e44.mUnk_98;
+    data_020c5e44.mUnk_80.y += 0x6d6000;
+    func_02015d4c();
+    func_02016624();
+    obj->mUnk_1bc = func_020182b8(rec->mInfo.mUnk_11 - 1, 2) * 60000 / 1000;
+    obj->mUnk_1c0 = 0;
+    func_02005a8c(1, 0);
+}
+
+void func_02018558(void) {
+    int stage = data_020b6ee0.mUnk_a8e4;
+    Unk_020bfd40 *obj = &data_020b6ee0.mUnk_8e60;
+    StageRec *rec = &data_020b1990[stage];
+    VecFx32 pos;
+    u8 mode;
+    int busy;
+
+    if (stage >= STAGE_MAX) {
+        OS_Terminate();
+    }
+    func_0201168c(data_020b6ee0.mUnk_a8e4, obj->mUnk_1c0, data_0206d448, obj->mUnk_1bc, 2);
+    func_02015d58(stage);
+    rec->mUnk_158 = rec->mUnk_1a0;
+    func_0200ba94(&rec->mUnk_1a0, 0x70800, 0x800);
+    func_0202733c(rec, &rec->mUnk_1a0, 0);
+    func_020105f4(rec);
+    func_02025db4(&rec->mUnk_1a0, &rec->mUnk_1f0);
+    func_020262a0(&data_020b6ee0.mUnk_8e60);
+    if (data_020b6ee0.mUnk_8e60.mModel.mUnk_142 != 1) {
+        data_020b6ee0.mUnk_8e60.mDraw.mPos = rec->mUnk_1a0;
+        func_02024b5c(data_020b6ee0.mUnk_8e60.mModel.mUnk_170, &data_020b6ee0.mUnk_8e60.mDraw, &data_020b6ee0.mUnk_8e60,
+                      0);
+    } else {
+        func_020271c8();
+    }
+    pos.x = data_020c5e44.mUnk_98.x;
+    pos.z = data_020c5e44.mUnk_98.z;
+    pos.y = -0x19000;
+    func_0200ba08(data_020b6ee0.mUnk_a8f2 + 0xfbe, &pos, (data_020c18bc.mUnk_45c >> 1) % 100, 0, 0x3000, 0);
+    func_02033614(data_020c5e44.mUnk_98.x, data_020c5e44.mUnk_98.z);
+    func_02016ae8(stage);
+    func_02015f34();
+    func_02016008(stage);
+    func_020164e0(stage);
+    mode = func_02005bf8();
+    if (mode != 0) {
+        busy = func_02005b1c(1);
+        if (mode == 2 && busy == 0) {
+            func_020059b4(func_02005c04(), obj->mUnk_1c0);
+        }
+        return;
+    }
+    func_020175e8(stage, &data_020b6ee0.mUnk_a8e4, 2);
+    func_020186fc(stage);
+}
+
+void func_020186cc(void) {
+    func_020102f8();
+    func_0202dec4(data_020501c4[data_020b6ee0.mUnk_a8f2]);
+    func_0201eb20();
+}
+
+int func_020186f0(u8 stage) {
+    return func_020182b8(stage, 3);
+}
+
+void func_020186fc(int stage) {
+    Unk_020bfd40 *obj = &data_020b6ee0.mUnk_8e60;
+    StageRec *rec = &data_020b1990[stage];
+
+    if (stage < 0 || stage >= STAGE_MAX) {
+        OS_Terminate();
+    }
+    obj->mUnk_1bc--;
+    func_020059cc(obj->mUnk_1c0);
+    if (obj->mUnk_1bc <= 0 || data_020b6ee0.mUnk_8ad9 == 0) {
+        func_02005a8c(0, obj->mUnk_1c0 >= func_020182b8(rec->mInfo.mUnk_11 - 1, 3));
+    }
+}
+
+void func_02018770(StageRec *rec, int kind, int amount) {
+    char buf[32];
+    ObjSlot *slot;
+
+    if (kind == 0xf49) {
+        func_02011624(amount, buf);
+    } else if (amount > 0) {
+        sprintf(buf, "+%d", amount < 0 ? -amount : amount);
+    } else {
+        sprintf(buf, "-%d", amount < 0 ? -amount : amount);
+    }
+    slot = func_0200d88c(func_0200d7cc(kind, 0, 30, 0, -15, 0, -256, 110, 1, 0));
+    slot->mUnk_134 = rec->mUnk_1a0;
+    slot->mUnk_140 = 1;
+    slot = func_0200d88c(func_0200d838(buf, 2, data_0201a61c, 30, 0, 0, 0, -256, 100, 1, 0));
+    slot->mUnk_134 = rec->mUnk_1a0;
+    slot->mUnk_140 = 1;
+}
+
+void func_02018840(StageRec *rec, int kind, int index) {
+    Unk_020bfd40 *obj = &data_020b6ee0.mUnk_8e60;
+    int time, score;
+    time = 0;
+    score = 0;
+
+    switch ((u32) kind) {
+        case 0xf:
+            if (index < 0 || index >= data_020b6ee0.mUnk_5a54) {
+                OS_Terminate();
+            }
+            time = -data_020b6ee0.mUnk_1014[index].mUnk_183 * 100;
+            data_020b6ee0.mUnk_8e60.mModel.mUnk_134 |= 1;
+            break;
+        case 0x14:
+            time = -100;
+            data_020b6ee0.mUnk_8e60.mModel.mUnk_134 |= 4;
+            break;
+        case 5:
+            time = -100;
+            data_020b6ee0.mUnk_8e60.mModel.mUnk_134 |= 1;
+            break;
+        case 0x1e:
+            if (index < 0 || index >= data_020b6ee0.mUnk_8ad8) {
+                OS_Terminate();
+            }
+            if (data_020b6ee0.mUnk_5a58[index].mUnk_181[1] == 0) {
+                data_020b6ee0.mUnk_8ad9--;
+                score = data_020b6ee0.mUnk_5a58[index].mUnk_181[0] * 100;
+            } else {
+                time = data_020b6ee0.mUnk_5a58[index].mUnk_181[0] * 300;
+            }
+            break;
+    }
+    if (time != 0 || score != 0) {
+        func_02025db4(&rec->mUnk_1a0, &rec->mUnk_1f0);
+    }
+    if (time != 0) {
+        obj->mUnk_1bc += time;
+        func_02018770(rec, 0xf49, time);
+    } else if (score != 0) {
+        if (score <= 0) {
+            OS_Terminate();
+        }
+        func_020059d0(&obj->mUnk_1c0, score, 0);
+        func_02018770(rec, 0xf48, score);
+    }
+}
+
+void func_0201896c(void) {
+    Unk_020c1454 *panel = &data_020b6ee0.mUnk_a574;
+    DrawParams params;
+    VecFx32 offset;
+    int i;
+    StageRec *rec;
+    int dx;
+    int dz;
+
+    func_0201eb20();
+    MI_CpuFill8(&params, 0, 0x44);
+    func_0202c1c4();
+    func_0202bdd8(0x10cb, 0x10ca, 0x10cc, 0, 1);
+    func_0202bdd8(0x10cb, 0x10ca, 0x10cc, 2, 2);
+    func_02020854(0);
+    func_02021fb0(0x1c7, 0x1c6, 0x180, 0x10);
+    func_020325b0(0x1db, 0, 0x1dc, 0, 0, 0);
+    data_020c5e44.mUnk_28 = func_02015d48;
+    data_020c5e44.mUnk_354 = 0x640;
+    func_020104e0(6, 0x4c, 3);
+    data_020c5e44.mUnk_344 = 0x186a000;
+    func_02031fc4(0, &offset);
+    func_02033df4(0x18);
+    data_020c5e44.mUnk_bc = 0;
+    if (data_020b6ee0.mUnk_a147 == 0) {
+        func_02031fc4(0, &data_020c5e44.mUnk_b0);
+        func_02031fc4(0, &data_020b6ee0.mUnk_a574.mUnk_0c);
+        data_020c5e44.mUnk_a4 = data_020c5e44.mUnk_b0;
+        data_020c5e44.mUnk_a4.y += 0xcb2000;
+        data_020c5e44.mUnk_a4.z += 0x32000;
+        data_020b6ee0.mUnk_a574.mUnk_34 = 0x80;
+    } else {
+        data_020b6ee0.mUnk_a147 = 0;
+    }
+    params.mUnk_43 = 2;
+    params.mUnk_28 = 2 << 19;
+    rec = data_020b1990;
+    for (i = 0; i < data_020b6ee0.mUnk_a8ee; i++, rec++) {
+        func_020271ec(rec, 0, 0, 0, data_0201ab04[rec->mInfo.mUnk_13]);
+        rec->mDraw = params;
+        rec->mUnk_1d8 = func_0201fd68();
+        rec->mUnk_220 = 0;
+        rec->mUnk_224 = 0;
+        if (rec->mUnk_1e8 == -1) {
+            func_02031fc4(0, &rec->mUnk_1a0);
+            rec->mUnk_220 = 0x6000;
+        } else {
+            rec->mUnk_1a0.x = offset.x + rec->mUnk_1e4;
+            rec->mUnk_1a0.z = offset.z + rec->mUnk_1ec;
+        }
+        rec->mUnk_1a0.y = offset.y + 0x32000;
+        rec->mUnk_1a0.y =
+            func_02030830(rec->mUnk_1a0.x, rec->mUnk_1a0.z, rec->mUnk_1a0.y + 0xc800, 0, 0, 0, 0) + 0x32000;
+        rec->mUnk_158 = rec->mUnk_1a0;
+    }
+    if (data_020b6ee0.mUnk_a8e4 == -1) {
+        data_020b6ee0.mUnk_a146 = 0;
+    } else {
+        data_020b6ee0.mUnk_a146 = 1;
+        {
+            BOOL ok = 0;
+            if (data_020b6ee0.mUnk_a8e4 >= 0 && data_020b6ee0.mUnk_a8e4 < STAGE_MAX) {
+                ok = 1;
+            }
+            if (ok == 0) {
+                OS_Terminate();
+            }
+        }
+        rec = &data_020b1990[data_020b6ee0.mUnk_a8e4];
+        dx = rec->mUnk_1a0.x - data_020c5e44.mUnk_b0.x;
+        dz = rec->mUnk_1a0.z - data_020c5e44.mUnk_b0.z;
+        data_020c5e44.mUnk_b0.x += dx;
+        data_020c5e44.mUnk_b0.z += dz;
+        data_020c5e44.mUnk_a4.x += dx;
+        data_020c5e44.mUnk_a4.z += dz;
+    }
+    func_020151f8();
+    func_020196b4();
+    func_020198f0();
+    panel->mUnk_3c = 0x28;
+    data_020b6ee0.mUnk_a8e0 = -1;
+    data_020b6ee0.mUnk_a5d0 = 1;
+    func_020271ec(&data_020b6ee0.mUnk_9c64, 0, 0, 2, data_0201aba0[3]);
+    data_020b6ee0.mUnk_a10c = -1;
+    func_02011518(data_020b6ee0.mUnk_a8e4, 2);
+    data_020b6ee0.mUnk_a14b = 0;
+    func_020271ec(&data_020b6ee0.mUnk_8e60, 0, 0, 0, data_0201aba0[5]);
+    func_02023f58(&data_020b6ee0.mUnk_8e60.mDraw, 0, 0, 0, 6 << 18, 0, 2, 0, 0x100);
+    if (data_020b6ee0.mUnk_a14a == 1) {
+        data_020b6ee0.mUnk_a14a = 0;
+        data_020b6ee0.mUnk_9c64.mUnk_134 |= 1;
+        if (data_020b6ee0.mUnk_a8e4 != -1) {
+            data_020b6ee0.mUnk_8e60.mModel.mUnk_134 |= 4;
+        }
+    }
+    if (data_020b6ee0.mUnk_a14c == 1) {
+        func_02014430(0);
+        data_020b6ee0.mUnk_a14c = 0;
+    }
+    func_0200c164(&data_020b6ee0.mUnk_9de8);
+}
+
+int func_02018ccc(const u16 *a, const u16 *b) {
+    return *b - *a;
+}

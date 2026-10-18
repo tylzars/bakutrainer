@@ -51,7 +51,7 @@ int func_0200d78c(int kind, int a, int b, int c, int d, int e, int f, int g) {
     return 0;
 }
 
-int func_0200d7cc(int a, int b, int duration, int c, int d, int e, int f, int g, int h) {
+int func_0200d7cc(int a, int b, int duration, int c, int d, int e, int f, int g, int h, int i) {
     ObjSlot *s;
     if (duration == 0) {
         OS_Terminate();
@@ -143,7 +143,7 @@ void func_0200d8bc(void) {
             }
             if (done == 0) {
                 if (s->mUnk_140 != 0) {
-                    func_02025db4(s->mUnk_134, pt);
+                    func_02025db4(&s->mUnk_134, pt);
                     func_0202cf08(obj + s->mUnk_0c, pt[0] + sx, pt[1] + sy, s->mUnk_158, s->mUnk_15c);
                 } else {
                     func_0202cf08(obj + s->mUnk_0c, sx, sy, s->mUnk_158, s->mUnk_15c);
@@ -167,7 +167,7 @@ void func_0200d8bc(void) {
                 saved = data_020c18bc.mUnk_308;
                 data_020c18bc.mUnk_308 = s->mUnk_158;
                 if (s->mUnk_140 != 0) {
-                    func_02025db4(s->mUnk_134, pt);
+                    func_02025db4(&s->mUnk_134, pt);
                     func_020215fc(pt[0] + sx, pt[1] + sy, s->mUnk_30, buf, textObj, 0x100, 0x18, s->mUnk_15c);
                 } else {
                     func_020215fc(sx, sy, s->mUnk_30, buf, textObj, 0x100, 0x18, s->mUnk_15c);

@@ -205,7 +205,9 @@ typedef struct CameraState {
     u16 mUnk_5e;
     u8 mUnk_60[0x7f - 0x60];
     u8 mUnk_7f;
-    u8 mUnk_80[0xa4 - 0x80];
+    VecFx32 mUnk_80;
+    u8 mUnk_8c[0x98 - 0x8c];
+    VecFx32 mUnk_98;
     VecFx32 mUnk_a4;
     VecFx32 mUnk_b0;
     u8 mUnk_bc;
@@ -313,6 +315,14 @@ typedef struct Unk_020c1454 {
     s32 mUnk_40;
 } Unk_020c1454;
 
+// The stage's character: its model, the draw parameters and the countdown (time left, then the count).
+typedef struct Unk_020bfd40 {
+    Model mModel;
+    DrawParams mDraw;
+    s32 mUnk_1bc;
+    u32 mUnk_1c0;
+} Unk_020bfd40;
+
 // Large block of game state shared by several screens; only the members the code touches are named.
 typedef struct Unk_020b6ee0 {
     u16 mUnk_0000;
@@ -377,9 +387,12 @@ typedef struct Unk_020b6ee0 {
     u8 mUnk_8ada[2];
     Unk_020bf9bc mUnk_8adc[32];
     u8 mUnk_8e5c;
-    u8 mUnk_8e5d[0x8f94 - 0x8e5d];
-    u32 mUnk_8f94;
-    u8 mUnk_8f98[0xa0fc - 0x8f98];
+    u8 mUnk_8e5d[3];
+    Unk_020bfd40 mUnk_8e60;
+    u8 mUnk_9024[0x9c64 - 0x9024];
+    Model mUnk_9c64;
+    u8 mUnk_9ddc[0x9de8 - 0x9ddc];
+    MoveObj mUnk_9de8;
     s32 mUnk_a0fc;
     s32 mUnk_a100;
     s32 mUnk_a104;

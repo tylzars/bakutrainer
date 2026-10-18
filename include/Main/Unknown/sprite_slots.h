@@ -33,7 +33,7 @@ typedef struct ObjSlot {
     u8 mUnk_10c[2];
     u8 mUnk_10e;
     u8 mUnk_10f[0x134 - 0x10f];
-    u8 mUnk_134[0xc];
+    VecFx32 mUnk_134;
     u8 mUnk_140;
     u8 mUnk_141[3];
     s32 mX;
@@ -103,7 +103,7 @@ void func_0200d6c8(void);
 ObjSlot *func_0200d6ec(int kind, int a, int x, int y, int vx, int vy, int life, int h);
 int func_0200d76c(int kind, int a, int b, int c, int d);
 int func_0200d78c(int kind, int a, int b, int c, int d, int e, int f, int g);
-int func_0200d7cc(int a, int b, int duration, int c, int d, int e, int f, int g, int h);
+int func_0200d7cc(int a, int b, int duration, int c, int d, int e, int f, int g, int h, int i);
 int func_0200d838(const char *text, int a, const void *font, int b, int x, int y, int c, int d, int e, int f, int g);
 ObjSlot *func_0200d88c(int id);
 void func_0200d8bc(void);
