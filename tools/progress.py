@@ -8,6 +8,11 @@
                        (used by .githooks/pre-push)
 
 Both read build/<ver>/report.json, so run `ninja report` first.
+
+Every percentage is a share of one fixed size: the bytes of the code sections in config/ (kind:code sections of every
+module's delinks.txt). objdiff's own total only covers bytes that have a symbol, so it grows whenever a merge names
+bytes for the first time (a missed function, a table in .text) and the percentage would drop although nothing got
+worse. Measured against the fixed size, progress only moves when matched bytes do.
 """
 import argparse
 import csv
@@ -15,7 +20,7 @@ import json
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from project import VERSION  # noqa: E402  (tools/project.py)
+from project import VERSION, module_paths, modules  # noqa: E402  (tools/project.py)
 
 ROOT = Path(__file__).resolve().parent.parent
 HISTORY = ROOT / "progress" / "history.csv"
@@ -34,6 +39,22 @@ SERIES = [
     ("fuzzy_match_percent", "Overall accuracy", "#eb6834", "#d95926"),
     ("complete_code", "Linked code", "#1baf7a", "#199e70"),
 ]
+
+
+def image_code() -> int:
+    """Bytes of every module's code sections (the section lines at the top of its delinks.txt with kind:code)."""
+    total = 0
+    for module in modules():
+        delinks = module_paths(module)[0] / "delinks.txt"
+        if not delinks.is_file():
+            continue
+        for line in delinks.read_text().splitlines():
+            if line.strip() and not line[0].isspace():
+                break  # the first unit: the section list is over
+            f = dict(w.split(":", 1) for w in line.split()[1:] if ":" in w)
+            if f.get("kind") == "code":
+                total += int(f["end"], 16) - int(f["start"], 16)
+    return total
 
 
 def read_report(ver: str) -> dict:
@@ -58,10 +79,15 @@ def same(a: dict, b: dict) -> bool:
     return all(a[k] == b[k] for k in FIELDS[1:])
 
 
+IMAGE_CODE = image_code()
+
+
 def pct(row: dict, key: str) -> float:
+    """A share of the fixed code size. objdiff's fuzzy percentage is over its own total, so it is turned back into
+    credited bytes first (bytes without a symbol carry no credit either way)."""
     if key == "fuzzy_match_percent":
-        return row[key]
-    return 100 * row[key] / row["total_code"] if row["total_code"] else 0.0
+        return row[key] * row["total_code"] / IMAGE_CODE if IMAGE_CODE else 0.0
+    return 100 * row[key] / IMAGE_CODE if IMAGE_CODE else 0.0
 
 
 def nice_ceiling(v: float) -> float:
@@ -191,14 +217,14 @@ def readme_section(rows: list[dict]) -> str:
         "",
         "| Measure | Progress |",
         "|---|---|",
-        f"| Matched code | {pct(r, 'matched_code'):.2f}% ({r['matched_code']:,} / {r['total_code']:,} bytes) |",
+        f"| Matched code | {pct(r, 'matched_code'):.2f}% ({r['matched_code']:,} / {IMAGE_CODE:,} bytes) |",
         f"| Linked code (complete units) | {pct(r, 'complete_code'):.2f}% ({r['complete_code']:,} bytes) |",
-        f"| Overall accuracy (fuzzy) | {r['fuzzy_match_percent']:.2f}% |",
+        f"| Overall accuracy (fuzzy) | {pct(r, 'fuzzy_match_percent'):.2f}% |",
         f"| Matched functions | {fn} |",
         "",
         *([("All code is linked from this repository's source and the ROM matches byte for byte. See "
             "[docs/decompiling.md](docs/decompiling.md) for functions objdiff scores below 100% with identical "
-            "code."), ""] if r["complete_code"] == r["total_code"] else []),
+            "code."), ""] if r["complete_code"] == IMAGE_CODE else []),
         f"_Last updated {r['date'][:10]}. Full history: [`progress/history.csv`](progress/history.csv)._",
         END,
     ])
@@ -233,7 +259,7 @@ def main() -> None:
     else:
         text = text.rstrip() + "\n\n## Progress\n" + readme_section(rows) + "\n"
     README.write_text(text)
-    print(f"matched {pct(rows[-1], 'matched_code'):.2f}%, overall {rows[-1]['fuzzy_match_percent']:.2f}%, "
+    print(f"matched {pct(rows[-1], 'matched_code'):.2f}%, overall {pct(rows[-1], 'fuzzy_match_percent'):.2f}%, "
           f"linked {pct(rows[-1], 'complete_code'):.2f}% ({len(rows)} points)")
 
 
