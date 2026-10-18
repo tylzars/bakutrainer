@@ -762,6 +762,9 @@ Link order and linking:
 - `dsd check symbols` keeps a few unfixable mismatches (a local destructor node another unit references; labels
   inside asm bodies that emit no symbol). Document them.
 - Probes mask call targets and string addresses: a wrong file name or wrong callee "matches".
+- A Thumb `bl` from a function into its own body (a far branch to a shared exit block) gets a relocation from
+  `dsd init`, but the compiler resolves it without one: the delinked original then has a relocation the compiled
+  object never has (99.99%). Remove such relocations from relocs.txt (source and target inside one function).
 
 ### 1.16 Thumb code
 
