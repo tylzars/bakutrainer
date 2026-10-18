@@ -36,13 +36,12 @@ docs/decompiling.md, "Setting up a new game": routines in `.rodata`).
 | Range | Contents | Evidence |
 |---|---|---|
 | 0x0204df1c-0x0204e054 | Exception index: 26 entries {function, size, info} for C runtime functions | the entries point at function starts and give their sizes; four functions dsd had missed or cut short were fixed from it |
-| 0x0204e054-0x02052468 | Tables, among them the script command keywords (`LET`, `SPR`, `GOTO`, `IF`, `MUSIC`, `FADE`, ...) | no relocation points into this range yet (open) |
+| 0x0204e054-0x02052468 | Tables, among them the script command keywords (`LET`, `SPR`, `GOTO`, `IF`, `MUSIC`, `FADE`, ...) | relocations from game code (pool words in the decompiled units) |
 | 0x0205eeac-0x020638fc | Data referenced from game, glue and library code | relocations |
 
 ## Open
 
 - 0x0204df14-0x0204df1c: two words (0x6009ff20, 0) before the exception index.
-- 0x0204e054-0x02052468: which code reads these tables (no relocation reaches them).
 - Function boundaries in the library range where dsd's functions cover only part of a file's bytes (FS, CARD, WM),
   and the code at 0x020481bc-0x0204873c that dsd didn't analyse.
 - Unit (file) boundaries for game code.
