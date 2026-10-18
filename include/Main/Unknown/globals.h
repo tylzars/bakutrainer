@@ -337,7 +337,9 @@ extern const u32 data_0204e144[];
 
 // Camera state: the first 0xc0 bytes of the camera object (positions, targets, angles and flags).
 typedef struct CameraState {
-    u8 mUnk_000[0x28];
+    u8 mUnk_000[0x24];
+    u16 mUnk_24;
+    u16 mUnk_26;
     void (*mUnk_28)(void);
     u8 mUnk_2c[0x34 - 0x2c];
     u16 *mUnk_34;
@@ -351,18 +353,24 @@ typedef struct CameraState {
     s32 mUnk_54;
     u8 mUnk_58[0x5e - 0x58];
     u16 mUnk_5e;
-    u8 mUnk_60[4];
+    u8 mUnk_60;
+    u8 mUnk_61;
+    u8 mUnk_62[2];
     u32 mUnk_64;
     u8 mUnk_68[4];
     u16 *mUnk_6c;
     u16 *mUnk_70;
     u16 mUnk_74;
-    u8 mUnk_76[2];
+    u16 mUnk_76;
     u16 mUnk_78;
-    u8 mUnk_7a[0x7f - 0x7a];
+    u16 mUnk_7a;
+    u16 mUnk_7c;
+    u8 mUnk_7e;
     u8 mUnk_7f;
     VecFx32 mUnk_80;
-    u8 mUnk_8c[0x98 - 0x8c];
+    s32 mUnk_8c;
+    s32 mUnk_90;
+    s32 mUnk_94;
     VecFx32 mUnk_98;
     VecFx32 mUnk_a4;
     VecFx32 mUnk_b0;
@@ -377,7 +385,8 @@ typedef struct Unk_020c5f04 {
     VecFx32 mUnk_1ec;
     u8 mUnk_1f8[0x204 - 0x1f8];
     VecFx32 mUnk_204;
-    u8 mUnk_210[0x228 - 0x210];
+    u8 mUnk_210[0x21c - 0x210];
+    VecFx32 mUnk_21c;
     VecFx32 mUnk_228;
     u8 mUnk_234[0x240 - 0x234];
 } Unk_020c5f04;
@@ -412,9 +421,13 @@ typedef struct Unk_020c6144 {
     u8 mUnk_4d[3];
     u16 *mUnk_50;
     u16 mUnk_54;
-    u8 mUnk_56[0x5b - 0x56];
+    u16 mUnk_56;
+    u8 mUnk_58[0x5a - 0x58];
+    u8 mUnk_5a;
     u8 mUnk_5b;
-    u8 mUnk_5c[0x68 - 0x5c];
+    u8 mUnk_5c;
+    u8 mUnk_5d[0x64 - 0x5d];
+    s32 mUnk_64;
 } Unk_020c6144;
 
 // The camera object (0x368 bytes). The ARM camera and model code reaches every part of it from its start

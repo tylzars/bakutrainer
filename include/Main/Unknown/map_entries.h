@@ -41,6 +41,18 @@ u16 *func_02032898(void);
 u16 *func_020321ac(int a, int b, u32 *count);
 // Stores up to `max` polygon keys matching (a, b) in out; returns how many.
 u32 func_02032244(int a, int b, u16 *out, u32 max);
+// Allocates the table of count pairs and clears its fill count.
+void func_020322b8(u16 count);
+// The distance from the camera's map position to the rectangle (x, z, w, h) in cells, 0 when it lies inside.
+u32 func_020322f4(int x, int z, int w, int h);
+// Classifies how far the rectangle is from the camera: the low bits of flags plus a limit class.
+u32 func_02032368(u32 flags, int x, int z, int w, int h);
+// Maps key through the sorted pair table (sorting it first when needed); key itself when it has no entry.
+u32 func_0203249c(u32 key);
+void func_020325b0(u16 a, u16 b, u16 c, u16 d, u16 e, u16 f);
+void func_020325d0(u16 a, u16 b, u16 c, u16 count);
+// Frees the map buffers and clears the records.
+void func_02032850(void);
 // Clears the 20 records of data_020c3e44 (and the camera's halfwords at 0x24/0x26 when a == 1).
 void func_02032b88(int a);
 
