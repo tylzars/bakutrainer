@@ -1,6 +1,7 @@
 #pragma once
 
 #include "types.h"
+#include <nitro/pm.h>
 #include <nitro/mic.h>
 #include <nitro/fs.h>
 #include <Main/Unknown/stage_data.h>
@@ -722,14 +723,12 @@ extern Unk_020c2560 data_020c2560;
 extern u32 data_0201aba0[7];
 
 // Objects of the system start-up code.
-typedef struct Unk_020c1818 {
-    u32 mUnk_00;
-    void *mUnk_04;
-    u8 mUnk_08[8];
-    void (*mUnk_10)(void);
-    s32 mUnk_14;
-} Unk_020c1818;
-extern Unk_020c1818 data_020c1818;
+// JPEG reader state and the start-up code's arena start (defined in system_init.c's unit).
+extern u8 data_020c1818;
+extern void *data_020c181c;
+extern u8 *data_020c1820;
+extern u32 data_020c1824;
+extern PMCallbackInfo data_020c1828;
 extern FSFile data_020c1874;
 
 #ifdef __cplusplus

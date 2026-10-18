@@ -10,9 +10,7 @@
 #include <Main/Unknown/functions.h>
 #include <Main/Unknown/touch_buttons.h>
 #include <Main/Unknown/random_angle.h>
-#include <Main/Unknown/screen_fade.h>
 #include <Main/Unknown/game_math.h>
-#include <Main/Unknown/file_stream.h>
 #include <Main/Unknown/game_util.h>
 #include <Main/Unknown/globals.h>
 #include <Main/Unknown/prompt_screen.h>
@@ -23,6 +21,11 @@
 #include <nitro/wm.h>
 #include <Main/Unknown/arm_system.h>
 #include <Main/clib.h>
+#include <nitro/math.h>
+#include <Main/Unknown/save_blocks.h>
+#include <Main/Unknown/bg_image.h>
+#include <Main/Unknown/screen_fade.h>
+#include <Main/Unknown/file_stream.h>
 #include <Main/Unknown/system_init.h>
 
 #define EZ10_MAGIC 0x30315a45
@@ -76,8 +79,8 @@ void func_0201b7ec(u32 a, int b, int c) {
     OS_InitTick();
     RTC_Init();
     OS_InitAlarm();
-    data_020c1818.mUnk_04 = OS_GetArenaLo(0);
-    OS_SetArenaLo(0, OS_InitAlloc(0, data_020c1818.mUnk_04, OS_GetArenaHi(0), 2));
+    data_020c181c = OS_GetArenaLo(0);
+    OS_SetArenaLo(0, OS_InitAlloc(0, data_020c181c, OS_GetArenaHi(0), 2));
     if (func_0202ad40() == 1) {
         heapEnd = 0x100000;
     } else {
@@ -151,9 +154,9 @@ void func_0201b7ec(u32 a, int b, int c) {
     data_020c18bc.mUnk_340[3] = 0x1800;
     func_02043828();
     func_020443ac(1);
-    data_020c1818.mUnk_10 = func_0201c1d0;
-    data_020c1818.mUnk_14 = 0;
-    func_0204445c((PMCallbackInfo *) &data_020c1818.mUnk_10);
+    data_020c1828.func = func_0201c1d0;
+    data_020c1828.arg = 0;
+    func_0204445c(&data_020c1828);
     func_020402f0();
     *(vu16 *) 0x04000304 &= ~0xc;
     data_020c18bc.mUnk_24c = func_02034a60;
@@ -449,7 +452,7 @@ void func_0201bb40(int flags) {
     }
 }
 
-void func_0201c1d0(void) {
+void func_0201c1d0(void *arg) {
     data_020c18bc.mUnk_492 = 0xb4;
     data_020c18bc.mUnk_495 = 0;
 }
@@ -1153,5 +1156,1346 @@ void func_0201c7b8(int flags) {
             }
         }
     }
+}
+#pragma thumb on
+
+void func_0201d9a8(int offset) {
+    if ((data_020c18bc.mUnk_46c & 0x200) == 0) {
+        func_020425f4(&data_020c1874, offset, 0);
+    } else {
+        data_020c18bc.mUnk_250.mUnk_00 = offset;
+    }
+}
+
+void func_0201d9d4(void *dst, u32 size) {
+    int remaining;
+    int state;
+    int i;
+    int j;
+    u32 len;
+    u32 sum;
+    u8 *cmd = data_020c67e0;
+
+    if ((data_020c18bc.mUnk_46c & 0x200) == 0) {
+        func_020425e4(&data_020c1874, dst, size);
+        return;
+    }
+restart:
+    state = 0;
+    i = 0;
+    remaining = size;
+    if (size > 0xfb800) {
+        OS_Terminate();
+    }
+    for (; remaining > 0; remaining -= 0x1f7) {
+        data_020c18bc.mUnk_250.mUnk_24[i >> 3] &= ~(1 << (i & 7));
+        i++;
+    }
+    data_020c18bc.mUnk_250.mUnk_24[i >> 3] |= 1 << (i & 7);
+    data_020c18bc.mUnk_250.mUnk_08 = size;
+    data_020c18bc.mUnk_250.mUnk_04 = size;
+    data_020c18bc.mUnk_250.mUnk_0c = dst;
+    data_020c18bc.mUnk_46c |= 3 << 18;
+    remaining = size;
+    while (data_020c18bc.mUnk_250.mUnk_08 != 0 && (s8) data_020c18bc.mUnk_2a4[1] >= 0) {
+        if (data_020c18bc.mUnk_250.mUnk_08 != remaining) {
+            remaining = data_020c18bc.mUnk_250.mUnk_08;
+            state = 5;
+        } else if (state-- == 0) {
+            i = 0;
+            while (data_020c18bc.mUnk_250.mUnk_24[i >> 3] & (1 << (i & 7))) {
+                i++;
+            }
+            j = i;
+            sum = 0;
+            while (!(data_020c18bc.mUnk_250.mUnk_24[j >> 3] & (1 << (j & 7)))) {
+                j++;
+                sum += 0x1f7;
+            }
+            len = (j - i) * 0x1f7;
+            if (len >= data_020c18bc.mUnk_250.mUnk_04) {
+                len = data_020c18bc.mUnk_250.mUnk_04;
+            }
+            cmd[0] = 0x51;
+            func_02034ce0(data_020c18bc.mUnk_250.mUnk_00 + 0x1f7 * i, cmd + 6);
+            func_02034ce0(len, cmd + 2);
+            state = 5;
+            if (func_02034cf0(cmd + 6) > data_020c18bc.mUnk_250.mUnk_00 + data_020c18bc.mUnk_250.mUnk_04) {
+                goto restart;
+            }
+        }
+        func_0201bb30();
+    }
+    data_020c18bc.mUnk_250.mUnk_00 += size;
+    data_020c18bc.mUnk_46c &= 0xfff3ffff;
+}
+
+u32 func_0201db58(int layer) {
+    u16 control;
+
+    if (layer != 1 && layer != 2) {
+        OS_Terminate();
+    }
+    if (layer & 1) {
+        control = *(vu16 *) 0x0400000e;
+    } else {
+        control = *(vu16 *) 0x0400100e;
+    }
+    if ((control & 0x84) == 0x84) {
+        return 0x8000;
+    }
+    return 0x100;
+}
+
+int func_0201db94(int layer) {
+    if (layer != 1 && layer != 2) {
+        OS_Terminate();
+    }
+    if (layer & 1) {
+        return data_02050200[*(vu16 *) 0x0400000e >> 14];
+    }
+    return data_02050200[*(vu16 *) 0x0400100e >> 14];
+}
+
+int func_0201dbd4(int layer) {
+    int n = func_0201db94(layer);
+
+    if (func_0201db58(layer) == 0x8000) {
+        n <<= 1;
+    }
+    return n;
+}
+
+#pragma thumb off
+void func_0201dbf4(u16 *src, u32 dst, u32 width, u32 stride, u8 *lut) {
+    u32 row = 16;
+    int i;
+    u16 *out;
+
+    if (lut == NULL) {
+        do {
+            MIi_CpuCopy16(src, (void *) dst, width * 2);
+            src += 0x200;
+            dst += stride * 2;
+        } while (--row != 0);
+        return;
+    }
+    out = (u16 *) ((dst & 0xfff00000) + ((dst & 0xfffff) >> 1));
+    do {
+        for (i = 0; i < width / 2; i++) {
+            u8 lo = lut[src[0] - 0x8000];
+            u8 hi = lut[src[1] - 0x8000];
+            src += 2;
+            *out++ = lo | (hi << 8);
+        }
+        src += 0x200 - width;
+        out += stride - width;
+    } while (--row != 0);
+}
+#pragma thumb on
+
+void func_0201dcc0(u16 *src, u32 layers, u32 row, u32 width, u32 total, u8 *lut) {
+    u32 half;
+    int n;
+
+    switch (layers & 3) {
+        case 1:
+            n = func_0201db94(layers);
+            func_0201dbf4(src, 0x06000000 + row * n * 2, width, n, lut);
+            break;
+        case 2:
+            n = func_0201db94(layers);
+            func_0201dbf4(src, 0x06200000 + row * n * 2, width, n, lut);
+            break;
+        case 3:
+            half = total >> 1;
+            if (row < half) {
+                n = func_0201db94(1);
+                func_0201dbf4(src, 0x06000000 + row * n * 2, width, n, lut);
+            } else {
+                n = func_0201db94(2);
+                func_0201dbf4(src, 0x06200000 + (row - half) * n * 2, width, n, lut);
+            }
+            break;
+    }
+}
+
+void func_0201dd74(u8 *src, u32 dst, u32 width, u32 rows) {
+    int layer;
+    int step;
+
+    if (dst == 0x06000000) {
+        layer = 1;
+    } else {
+        layer = 2;
+    }
+    if (func_0201db58(layer) == 0x8000) {
+        width += width;
+    }
+    if (func_0204873c(width) == 1) {
+        MIi_CpuCopy16(src, (void *) dst, width * rows);
+        return;
+    }
+    step = func_0201dbd4(layer);
+    while (rows != 0) {
+        MIi_CpuCopy16(src, (void *) dst, width);
+        src += width;
+        dst += step;
+        rows--;
+    }
+}
+
+void func_0201dde0(int id, int target) {
+    func_0201ddec(id, target, 0, 0);
+}
+
+void func_0201ddec(int id, int target, int x, int flags) {
+    int found;
+    void *buf;
+
+    found = func_0202e988(id);
+    if (found > 0) {
+        func_0201de48((u8 *) found, target, x, flags);
+    } else {
+        buf = (void *) func_0202e86c(id);
+        func_0201de48(buf, target, x, flags);
+        func_0201c4f0(&buf);
+    }
+    if (target == 3) {
+        data_020c18bc.mUnk_49c[1] = id;
+        data_020c18bc.mUnk_49c[0] = data_020c18bc.mUnk_49c[1];
+    } else if (target == 1) {
+        data_020c18bc.mUnk_49c[0] = id;
+    } else if (target == 2) {
+        data_020c18bc.mUnk_49c[1] = id;
+    }
+}
+
+void func_0201de48(u8 *data, int target, int x, int flags) {
+    void *tmp = NULL;
+    void *rgb = NULL;
+    u32 w;
+    u32 h;
+    u32 h2;
+    u32 magic;
+    u32 mode;
+    u32 size;
+    u32 count;
+    u32 n;
+    u32 i;
+    u32 j;
+    int indexed = 0;
+    u8 *pix;
+    u8 *src;
+    u8 *pal;
+    u16 *out;
+    u16 *top;
+    u16 *bottom;
+    u16 color;
+
+    magic = *(u32 *) data;
+    if (magic == 0xe0ffd8ff) {
+        func_0201e518(data, &w, &h);
+        data_020c18bc.mUnk_2cc = w;
+        data_020c18bc.mUnk_2ce = h;
+        data_020c18bc.mUnk_2d0 = 0x8000;
+        h2 = h;
+        if ((target & 3) == 3 && h >= 0x180) {
+            h2 >>= 1;
+        }
+        if (x == 0) {
+            if (!(flags & 2)) {
+                func_0201f450(target, 1, w, h2);
+            }
+        } else {
+            if (!(flags & 2)) {
+                func_0201f450(target, 0, w, h2);
+            }
+            tmp = func_0201eee4(x, target);
+        }
+        if (target & 1) {
+            func_0201e56c(data, target, tmp);
+        }
+        if (target & 2) {
+            func_0201e56c(data, 2, tmp);
+        }
+        func_0201c4f0(&tmp);
+    } else {
+        if (magic == 0x6177686d) {
+            w = (data[8] << 8) + data[9];
+            h = (data[10] << 8) + data[11];
+            h2 = h;
+            count = (data[12] << 8) + data[13];
+        } else {
+            w = *(u16 *) (data + 0xc);
+            h = *(u16 *) (data + 0xe);
+            h2 = h;
+            if (*(u16 *) (data + 0x10) != 0xf) {
+                OS_Terminate();
+            }
+            count = 0;
+            indexed = 1;
+        }
+        data_020c18bc.mUnk_2cc = w;
+        data_020c18bc.mUnk_2ce = h;
+        mode = target & 3;
+        if (mode == 3 && h >= 0x180) {
+            h2 = h >> 1;
+        }
+        if (count != 0) {
+            if (!(flags & 1)) {
+                data_020c18bc.mUnk_2d0 = 0x100;
+                if (!(flags & 2)) {
+                    func_0201f450(target, 0, w, h2);
+                }
+                pix = func_0201f5bc(data + 0x20, count, 0, target);
+                DC_StoreRange(pix, w * h + 0x320);
+                size = h2 * w;
+            } else {
+                pal = data + 0x20;
+                src = pal + count * 3;
+                data_020c18bc.mUnk_2d0 = 0x8000;
+                if (!(flags & 2)) {
+                    func_0201f450(target, 1, w, h2);
+                }
+                DC_StoreRange(data, w * h + 0x320);
+                size = h2 * w * 2;
+                rgb = func_0201c430(h * w * 2);
+                out = rgb;
+                for (n = h * w; n != 0; n--) {
+                    u8 *c = pal + *src * 3;
+
+                    color = (c[0] >> 3) | ((c[1] >> 3) << 5) | ((c[2] >> 3) << 10);
+                    *out++ = color + 0x8000;
+                    src++;
+                }
+                pix = rgb;
+            }
+        } else {
+            top = (u16 *) (data + 0x12);
+            pal = data + 0x20;
+            data_020c18bc.mUnk_2d0 = 0x8000;
+            if (!(flags & 2)) {
+                func_0201f450(target, 1, w, h2);
+            }
+            DC_StoreRange(data, w * h * 3 + 0x20);
+            pix = pal;
+            if (indexed == 0) {
+                out = (u16 *) pal;
+                for (n = h * w; n != 0; n--) {
+                    color = (pal[0] >> 3) | ((pal[1] >> 3) << 5) | ((pal[2] >> 3) << 10);
+                    *out++ = color + 0x8000;
+                    pal += 3;
+                }
+            } else {
+                bottom = top + (h - 1) * w;
+                pix = (u8 *) top;
+                for (i = 0; i < h / 2; i++) {
+                    for (j = 0; j < w; j++) {
+                        u16 a = bottom[j];
+                        u16 b = top[j];
+
+                        top[j] = a + 0x8000;
+                        bottom[j] = b + 0x8000;
+                    }
+                    top += w;
+                    bottom -= w;
+                }
+            }
+            size = h2 * w * 2;
+        }
+        switch (mode) {
+            case 1:
+                func_0201dd74(pix, 0x06000000, w, h);
+                break;
+            case 2:
+                func_0201dd74(pix, 0x06200000, w, h);
+                break;
+            case 3:
+                func_0201dd74(pix, 0x06000000, w, h2);
+                if (h < 0x180) {
+                    size = 0;
+                }
+                func_0201dd74(pix + size, 0x06200000, w, h2);
+                break;
+        }
+    }
+    func_0201c4f0(&rgb);
+}
+
+// JPEG reader state (the asm block decoder func_02028980 uses it too): the count of buffered bits, the read
+// pointer (just past the marker of the current segment) and the bit buffer; data_020c181c is the arena start and
+// data_020c1828 the sleep callback node the start-up code keeps. This definition order gives the original .bss
+// layout 1818, 181c, 1820, 1824, 1828 (ties in size keep definition order except that the first goes last).
+u8 data_020c1818;
+u32 data_020c1824;
+u8 *data_020c1820;
+void *data_020c181c;
+PMCallbackInfo data_020c1828;
+
+// VRAM control register of each bank (word address; data_020502ac holds the bit offset of the bank's byte).
+const u32 data_02050220[9] = {
+    0x04000240, 0x04000240, 0x04000240, 0x04000240, 0x04000244, 0x04000244, 0x04000244, 0x04000248, 0x04000248,
+};
+
+// VRAM address of each use, taken when the caller passes -1.
+const u32 data_02050270[13] = {
+    0x06800000, 0x00000000, 0x06000000, 0x06400000, 0x00000000, 0x00000000, 0x06200000,
+    0x06600000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+};
+
+// Blocks per MCU and quantisation table of each colour component (4:2:0 Y, Cb, Cr).
+const u8 data_020502a4[4] = {4, 1, 1, 0};
+
+const u8 data_020502a8[4] = {0, 1, 1, 0};
+
+const u8 data_020502ac[9] = {0, 8, 16, 24, 0, 8, 16, 0, 8};
+
+// Zigzag order of the 64 coefficients of a block.
+const u8 data_020502b8[64] = {
+    0,  1,  8,  16, 9,  2,  3,  10, 17, 24, 32, 25, 18, 11, 4,  5,  12, 19, 26, 33, 40, 48,
+    41, 34, 27, 20, 13, 6,  7,  14, 21, 28, 35, 42, 49, 56, 57, 50, 43, 36, 29, 22, 15, 23,
+    30, 37, 44, 51, 58, 59, 52, 45, 38, 31, 39, 46, 53, 60, 61, 54, 47, 55, 62, 63,
+};
+
+// Inverse DCT scale factors (4.12 fixed point) applied to the quantisation tables.
+const u16 data_020502f8[64] = {
+    0x4000, 0x58c5, 0x539f, 0x4b42, 0x4000, 0x3249, 0x22a3, 0x11a8, 0x58c5, 0x7b21, 0x73fc, 0x6862, 0x58c5,
+    0x45bf, 0x300b, 0x187e, 0x539f, 0x73fc, 0x6d41, 0x6254, 0x539f, 0x41b3, 0x2d41, 0x1712, 0x4b42, 0x6862,
+    0x6254, 0x587e, 0x4b42, 0x3b21, 0x28ba, 0x14c3, 0x4000, 0x58c5, 0x539f, 0x4b42, 0x4000, 0x3249, 0x22a3,
+    0x11a8, 0x3249, 0x45bf, 0x41b3, 0x3b21, 0x3249, 0x2782, 0x1b37, 0x0de0, 0x22a3, 0x300b, 0x2d41, 0x28ba,
+    0x22a3, 0x1b37, 0x12bf, 0x098e, 0x11a8, 0x187e, 0x1712, 0x14c3, 0x11a8, 0x0de0, 0x098e, 0x04df,
+};
+
+// VRAM bank records, each bank's LCDC record first; a record with size 0 ends the table.
+const Unk_02050478 data_02050478[] = {
+    {0, 128, 0, 0, 0x06800000, 0, 0},  {0, 128, 2, 0, 0x06000000, 1, 0},  {0, 128, 2, 0, 0x06020000, 1, 1},
+    {0, 128, 2, 0, 0x06040000, 1, 2},  {0, 128, 2, 0, 0x06060000, 1, 3},  {0, 128, 3, 0, 0x06400000, 2, 0},
+    {0, 128, 3, 0, 0x06420000, 2, 1},  {0, 128, 10, 0, 0x00000000, 3, 0}, {0, 128, 10, 0, 0x00020000, 3, 1},
+    {0, 128, 10, 0, 0x00040000, 3, 2}, {0, 128, 10, 0, 0x00060000, 3, 3}, {1, 128, 0, 0, 0x06820000, 0, 0},
+    {1, 128, 2, 0, 0x06000000, 1, 0},  {1, 128, 2, 0, 0x06020000, 1, 1},  {1, 128, 2, 0, 0x06040000, 1, 2},
+    {1, 128, 2, 0, 0x06060000, 1, 3},  {1, 128, 3, 0, 0x06400000, 2, 0},  {1, 128, 3, 0, 0x06420000, 2, 1},
+    {1, 128, 10, 0, 0x00000000, 3, 0}, {1, 128, 10, 0, 0x00020000, 3, 1}, {1, 128, 10, 0, 0x00040000, 3, 2},
+    {1, 128, 10, 0, 0x00060000, 3, 3}, {2, 128, 0, 0, 0x06840000, 0, 0},  {2, 128, 2, 0, 0x06000000, 1, 0},
+    {2, 128, 2, 0, 0x06020000, 1, 1},  {2, 128, 2, 0, 0x06040000, 1, 2},  {2, 128, 2, 0, 0x06060000, 1, 3},
+    {2, 128, 1, 0, 0x06000000, 2, 0},  {2, 128, 1, 0, 0x06020000, 2, 1},  {2, 128, 10, 0, 0x00000000, 3, 0},
+    {2, 128, 10, 0, 0x00020000, 3, 1}, {2, 128, 10, 0, 0x00040000, 3, 2}, {2, 128, 10, 0, 0x00060000, 3, 3},
+    {2, 128, 6, 0, 0x06200000, 4, 0},  {3, 128, 0, 0, 0x06860000, 0, 0},  {3, 128, 2, 0, 0x06000000, 1, 0},
+    {3, 128, 2, 0, 0x06020000, 1, 1},  {3, 128, 2, 0, 0x06040000, 1, 2},  {3, 128, 2, 0, 0x06060000, 1, 3},
+    {3, 128, 1, 0, 0x06000000, 2, 0},  {3, 128, 1, 0, 0x06020000, 2, 1},  {3, 128, 10, 0, 0x00000000, 3, 0},
+    {3, 128, 10, 0, 0x00020000, 3, 1}, {3, 128, 10, 0, 0x00040000, 3, 2}, {3, 128, 10, 0, 0x00060000, 3, 3},
+    {3, 128, 7, 0, 0x06600000, 4, 0},  {4, 64, 0, 0, 0x06880000, 0, 0},   {4, 64, 2, 0, 0x06000000, 1, 0},
+    {4, 64, 3, 0, 0x06400000, 2, 0},   {4, 64, 11, 0, 0x00000000, 3, 0},  {4, 32, 12, 0, 0x00000000, 4, 0},
+    {5, 16, 0, 0, 0x06890000, 0, 0},   {5, 16, 2, 0, 0x06000000, 1, 0},   {5, 16, 2, 0, 0x06004000, 1, 1},
+    {5, 16, 2, 0, 0x06010000, 1, 2},   {5, 16, 2, 0, 0x06014000, 1, 3},   {5, 16, 3, 0, 0x06400000, 2, 0},
+    {5, 16, 3, 0, 0x06404000, 2, 1},   {5, 16, 3, 0, 0x06410000, 2, 2},   {5, 16, 3, 0, 0x06414000, 2, 3},
+    {5, 16, 11, 0, 0x00000000, 3, 0},  {5, 16, 11, 0, 0x00010000, 3, 1},  {5, 16, 11, 0, 0x00014000, 3, 2},
+    {5, 16, 11, 0, 0x00018000, 3, 3},  {5, 16, 12, 0, 0x00000000, 4, 1},  {5, 16, 5, 0, 0x00000000, 5, 0},
+    {6, 16, 0, 0, 0x06894000, 0, 0},   {6, 16, 2, 0, 0x06000000, 1, 0},   {6, 16, 2, 0, 0x06004000, 1, 1},
+    {6, 16, 2, 0, 0x06010000, 1, 2},   {6, 16, 2, 0, 0x06014000, 1, 3},   {6, 16, 3, 0, 0x06400000, 2, 0},
+    {6, 16, 3, 0, 0x06404000, 2, 1},   {6, 16, 3, 0, 0x06410000, 2, 2},   {6, 16, 3, 0, 0x06414000, 2, 3},
+    {6, 16, 11, 0, 0x00000000, 3, 0},  {6, 16, 11, 0, 0x00010000, 3, 1},  {6, 16, 11, 0, 0x00014000, 3, 2},
+    {6, 16, 11, 0, 0x00018000, 3, 3},  {6, 16, 12, 0, 0x00000000, 4, 1},  {6, 16, 5, 0, 0x00000000, 5, 0},
+    {7, 32, 0, 0, 0x06898000, 0, 0},   {7, 32, 6, 0, 0x06200000, 1, 0},   {8, 16, 0, 0, 0x068a0000, 0, 0},
+    {8, 16, 6, 0, 0x06208000, 1, 0},   {8, 16, 7, 0, 0x06600000, 2, 0},   {8, 16, 9, 0, 0x00000000, 3, 0},
+    {0, 0, 0, 0, 0x00000000, 0, 0},
+};
+
+#pragma thumb off
+u8 *func_0201e178(void) {
+    u8 *p = data_020c1820;
+
+    return p + (p[0] << 8) + p[1] + 2;
+}
+
+// Inverse DCT of one 8x8 block: dequantised columns into an s16 workspace, then rows through the clamp table.
+void func_0201e19c(s16 *in, s16 *quant, u8 *out, u8 *clamp) {
+    s16 work[64];
+    s16 *ws = work;
+    int n;
+    int a0, a1, a2, a3;
+    int b0, b1, b2, b3;
+    int e0, e1, e2, e3;
+    int z5, c10, c11, c12, c13;
+
+    for (n = 8; n > 0; n--) {
+        if ((in[8] || in[16] || in[24] || in[32] || in[40] || in[48] || in[56]) == 0) {
+            ws[0] = ws[8] = ws[16] = ws[24] = ws[32] = ws[40] = ws[48] = ws[56] = in[0] * quant[0];
+            in++;
+            quant++;
+            ws++;
+            continue;
+        }
+        a0 = in[0] * quant[0];
+        a1 = in[16] * quant[16];
+        a2 = in[32] * quant[32];
+        a3 = in[48] * quant[48];
+        c10 = a0 + a2;
+        c11 = a0 - a2;
+        c13 = a1 + a3;
+        c12 = (((a1 - a3) * 362) >> 8) - c13;
+        e0 = c10 + c13;
+        e3 = c10 - c13;
+        e1 = c11 + c12;
+        e2 = c11 - c12;
+
+        b0 = in[8] * quant[8];
+        b1 = in[24] * quant[24];
+        b2 = in[40] * quant[40];
+        b3 = in[56] * quant[56];
+        a0 = b2 + b1;
+        a1 = b2 - b1;
+        a2 = b0 + b3;
+        a3 = b0 - b3;
+        b3 = a2 + a0;
+        c11 = ((a2 - a0) * 362) >> 8;
+        z5 = ((a1 + a3) * 473) >> 8;
+        c10 = ((a3 * 277) >> 8) - z5;
+        c12 = ((a1 * -669) >> 8) + z5;
+        b2 = c12 - b3;
+        b1 = c11 - b2;
+        b0 = c10 + b1;
+
+        ws[0] = e0 + b3;
+        ws[56] = e0 - b3;
+        ws[8] = e1 + b2;
+        ws[48] = e1 - b2;
+        ws[16] = e2 + b1;
+        ws[40] = e2 - b1;
+        ws[32] = e3 + b0;
+        ws[24] = e3 - b0;
+        in++;
+        quant++;
+        ws++;
+    }
+
+    ws = work;
+    for (n = 0; n < 8; n++) {
+        c10 = ws[0] + ws[4];
+        c11 = ws[0] - ws[4];
+        c13 = ws[2] + ws[6];
+        c12 = (((ws[2] - ws[6]) * 362) >> 8) - c13;
+        e0 = c10 + c13;
+        e3 = c10 - c13;
+        e1 = c11 + c12;
+        e2 = c11 - c12;
+
+        a0 = ws[5] + ws[3];
+        a1 = ws[5] - ws[3];
+        a2 = ws[1] + ws[7];
+        a3 = ws[1] - ws[7];
+        b3 = a2 + a0;
+        c11 = ((a2 - a0) * 362) >> 8;
+        z5 = ((a1 + a3) * 473) >> 8;
+        c10 = ((a3 * 277) >> 8) - z5;
+        c12 = ((a1 * -669) >> 8) + z5;
+        b2 = c12 - b3;
+        b1 = c11 - b2;
+        b0 = c10 + b1;
+
+        out[0] = clamp[(e0 + b3) >> 5];
+        out[7] = clamp[(e0 - b3) >> 5];
+        out[1] = clamp[(e1 + b2) >> 5];
+        out[6] = clamp[(e1 - b2) >> 5];
+        out[2] = clamp[(e2 + b1) >> 5];
+        out[5] = clamp[(e2 - b1) >> 5];
+        out[4] = clamp[(e3 + b0) >> 5];
+        out[3] = clamp[(e3 - b0) >> 5];
+        ws += 8;
+        out += 8;
+    }
+}
+
+void func_0201e518(u8 *data, u32 *width, u32 *height) {
+    data += 4;
+    while (data[-1] != 0xc0) {
+        data += (data[0] << 8) + data[1] + 2;
+    }
+    *height = (data[3] << 8) + data[4];
+    *width = (data[5] << 8) + data[6];
+}
+
+void func_0201e56c(u8 *data, int target, void *lut) {
+    s16 quant[2][64];
+    u8 bits[4][32];
+    u8 huffval[4][256];
+    u8 valptr[4][32];
+    s16 maxcode[4][32];
+    u16 mincode[4][32];
+    s16 dc[3];
+    u8 *buf;
+    s16 *block;
+    u16 *out;
+    u8 *mcu;
+    u8 *huffsize;
+    u16 *huffcode;
+    u16 height;
+    u32 y;
+    u16 width;
+    u32 ncomp;
+    u32 x;
+    u32 c;
+    u32 n;
+    u32 i;
+    u32 l;
+    u32 k;
+    u32 len;
+    u32 total;
+    u32 t;
+    u32 code;
+    u32 si;
+    u8 *q;
+    u8 *blk;
+    u32 marker;
+
+    ncomp = 0;
+    height = 0;
+    width = 0;
+    data_020c1820 = data + 4;
+    buf = func_0201c430(0x300);
+    huffsize = buf;
+    huffcode = (u16 *) (buf + 0x100);
+    block = func_0201c430(0x80);
+    while (data_020c1820[-1] != 0xda) {
+        switch (data_020c1820[-1]) {
+            case 0xdb:
+                q = data_020c1820;
+                len = q[1] + (q[0] << 8);
+                q += 2;
+                len -= 2;
+                while (len != 0) {
+                    s16 *table = quant[*q++];
+
+                    for (k = 0; k < 64; k++) {
+                        table[data_020502b8[k]] = *q++;
+                    }
+                    len -= 65;
+                }
+                break;
+            case 0xc4:
+                q = data_020c1820;
+                len = q[1] + (q[0] << 8);
+                q += 2;
+                len -= 2;
+                while (len != 0) {
+                    c = *q++;
+                    total = 0;
+                    t = (c & 1) + (c >> 3);
+                    for (l = 1; l <= 16; l++) {
+                        bits[t][l] = *q++;
+                        total += bits[t][l];
+                    }
+                    for (i = 0; i < total; i++) {
+                        huffval[t][i] = *q++;
+                    }
+                    len -= total + 17;
+                    k = 0;
+                    for (l = 1; l <= 16; l++) {
+                        n = bits[t][l];
+                        while (n--) {
+                            huffsize[k++] = l;
+                        }
+                    }
+                    huffsize[k] = 0;
+                    code = 0;
+                    si = huffsize[0];
+                    k = 0;
+                    while (huffsize[k] != 0) {
+                        while (huffsize[k] == si) {
+                            huffcode[k++] = code++;
+                        }
+                        code <<= 1;
+                        si++;
+                    }
+                    k = 0;
+                    for (l = 1; l <= 16; l++) {
+                        if (bits[t][l] == 0) {
+                            maxcode[t][l] = -1;
+                        } else {
+                            valptr[t][l] = k;
+                            mincode[t][l] = huffcode[k];
+                            k += bits[t][l] - 1;
+                            maxcode[t][l] = huffcode[k];
+                            k++;
+                        }
+                    }
+                }
+                break;
+            case 0xc0:
+                height = (data_020c1820[3] << 8) + data_020c1820[4];
+                if (height > 192 && !(target & 1)) {
+                    goto end;
+                }
+                width = (data_020c1820[5] << 8) + data_020c1820[6];
+                ncomp = data_020c1820[7];
+                break;
+        }
+        data_020c1820 = func_0201e178();
+    }
+    out = func_0201c430(0x4000);
+    if (width > 0x200) {
+        OS_Terminate();
+    }
+    for (t = 0; t < (ncomp == 1 ? 1 : 2); t++) {
+        for (k = 0; k < 64; k++) {
+            quant[t][k] = (quant[t][k] * data_020502f8[k]) >> 12;
+        }
+    }
+    mcu = func_0201c430(0x1c0);
+    y = 0;
+    for (i = 0; i < 0x100; i++) {
+        buf[i] = 0;
+        buf[i + 0x100] = i;
+        buf[i + 0x200] = 0xff;
+    }
+    data_020c1820 += data_020c1820[1];
+    data_020c1818 = 0;
+    data_020c1824 = 0;
+    dc[0] = dc[1] = dc[2] = 0;
+    for (; y < height; y += 16) {
+        for (x = 0; x < width; x += 16) {
+            blk = mcu;
+            for (c = 0; c < ncomp; c++) {
+                for (n = 0; n < data_020502a4[c]; n++) {
+                    func_02028980(block, c, maxcode[0], valptr[0], mincode[0], huffval[0], dc, data_020502b8);
+                    func_0201e19c(block, quant[data_020502a8[c]], blk, buf + 0x180);
+                    blk += 64;
+                }
+            }
+            func_02028b8c(mcu, out + x, buf + 0x100);
+        }
+        func_0203e4a4();
+        func_0201dcc0(out, target, y, width, height, lut);
+    }
+end:
+    func_0201c4f0(&out);
+    func_0201c4f0(&mcu);
+    func_0201c4f0(&buf);
+    func_0201c4f0(&block);
+}
+#pragma thumb on
+
+void func_0201eb20(void) {
+    u32 i;
+
+    for (i = 0; i < 9; i++) {
+        data_020c18bc.mUnk_0b8[i] = 0xff;
+        *(vu8 *) (data_02050220[i] + (data_020502ac[i] / 8)) = 0;
+    }
+    data_020c18bc.mUnk_0c1 = 1;
+    data_020c18bc.mUnk_49c[0] = data_020c18bc.mUnk_49c[1] = 0xffff;
+}
+
+void func_0201eb74(int type) {
+    u32 i;
+
+    if (type == 2) {
+        data_020c18bc.mUnk_49c[0] = 0xffff;
+    } else if (type == 6) {
+        data_020c18bc.mUnk_49c[1] = 0xffff;
+    }
+    for (i = 0; i < 9; i++) {
+        if (data_020c18bc.mUnk_0b8[i] != 0xff && type == data_02050478[data_020c18bc.mUnk_0b8[i]].mUnk_2) {
+            *(vu8 *) (data_02050220[i] + (data_020502ac[i] / 8)) = 0;
+            data_020c18bc.mUnk_0b8[i] = 0xff;
+        }
+    }
+    data_020c18bc.mUnk_0c1 = 1;
+}
+
+void func_0201ebf4(int type, int size, int addr) {
+    if (type == 10) {
+        data_020c18bc.mUnk_070.mUnk_2c = 0;
+    } else if (type == 11) {
+        data_020c18bc.mUnk_040.mUnk_2c = 0;
+    }
+    func_0201eb74(type);
+    func_0201ec2c(type, size, addr);
+}
+
+void func_0201ec2c(int type, u32 size, u32 addr) {
+    const Unk_02050478 *rec;
+    u32 used = 0;
+    int i;
+    int best;
+    u32 j;
+    u32 n;
+    u32 k;
+    u32 h;
+    u32 bank;
+    u32 kb;
+    s32 bestRem;
+    u32 bestN;
+    u32 s0;
+    u32 s1;
+    u32 s2;
+    u32 s3;
+    u32 s4;
+    s32 rem[5];
+    u32 list[5];
+    u32 addrs[5];
+
+    if (addr == -1) {
+        addr = data_02050270[type];
+    }
+    for (i = 0; i < 9; i++) {
+        if (data_020c18bc.mUnk_0b8[i] != 0xff) {
+            used |= 1 << i;
+        }
+    }
+    j = 0;
+    best = -1;
+    for (; data_02050478[j].mUnk_1 != 0; j++) {
+        if (type == data_02050478[j].mUnk_2 && !((1 << data_02050478[j].mUnk_0) & used) &&
+            addr == data_02050478[j].mUnk_4 && data_02050478[j].mUnk_1 >= size) {
+            if (best == -1 || data_02050478[j].mUnk_1 < data_02050478[best].mUnk_1) {
+                best = j;
+            }
+        }
+    }
+    if (best != -1 && size == data_02050478[best].mUnk_1) {
+        n = 1;
+        list[1] = best;
+    } else {
+        rem[0] = size;
+        n = 0;
+        list[0] = 0xff;
+        bestRem = 0x7fffffff;
+        addrs[0] = addr;
+        j = 0;
+        bestN = 0;
+        for (;;) {
+            for (; (rec = &data_02050478[j])->mUnk_1 != 0; j++) {
+                if (type == rec->mUnk_2) {
+                    u32 bit = 1 << rec->mUnk_0;
+
+                    if (!(used & bit) && rec->mUnk_4 == addrs[n]) {
+                        rem[n + 1] = rem[n] - rec->mUnk_1;
+                        addrs[n + 1] = rec->mUnk_4 + (rec->mUnk_1 << 10);
+                        list[n + 1] = j;
+                        n++;
+                        used |= bit;
+                        if (rem[n] < 0 && -rem[n] < bestRem) {
+                            bestRem = -rem[n];
+                            s0 = list[0];
+                            bestN = n;
+                            s1 = list[1];
+                            s2 = list[2];
+                            s3 = list[3];
+                            s4 = list[4];
+                        }
+                        if (rem[n] == 0 || n >= 4) {
+                            break;
+                        }
+                    }
+                }
+            }
+            if (n == 0) {
+                if (best != -1) {
+                    list[1] = best;
+                    n = 1;
+                }
+                break;
+            }
+            if (rem[n] == 0) {
+                break;
+            }
+            j = list[n--];
+            used &= ~(1 << data_02050478[j].mUnk_0);
+            j++;
+        }
+    }
+    if (n == 0) {
+        list[0] = s0;
+        n = bestN;
+        list[1] = s1;
+        list[2] = s2;
+        list[3] = s3;
+        list[4] = s4;
+    }
+    if (n == 0) {
+        OS_Terminate();
+    }
+    while (n != 0) {
+        k = list[n--];
+        for (h = k; data_02050478[h].mUnk_2 != 0; h--) {
+        }
+        bank = data_02050478[k].mUnk_0;
+        *(vu8 *) (data_02050220[bank] + data_020502ac[bank] / 8) = 0x80;
+        kb = data_02050478[h].mUnk_1;
+        MI_DmaFill32(3, (void *) data_02050478[h].mUnk_4, 0, kb << 10);
+        *(vu8 *) (data_02050220[bank] + data_020502ac[bank] / 8) =
+            (data_02050478[k].mUnk_9 << 3) + 0x80 + data_02050478[k].mUnk_8;
+        data_020c18bc.mUnk_0b8[bank] = k;
+        if (type == 10) {
+            data_020c18bc.mUnk_070.mUnk_2c += kb >> 4;
+        } else if (type == 11) {
+            data_020c18bc.mUnk_040.mUnk_2c += kb >> 4;
+        }
+    }
+    data_020c18bc.mUnk_0c1 = 1;
+}
+
+#pragma thumb off
+u16 func_0201eea4(u8 (*pal)[3], int c0, int c1, int c2, int index) {
+    u8 *p = pal[index];
+    int d1 = p[1] - c1;
+    int d2 = p[2] - c2;
+    int d0 = pal[index][0] - c0;
+
+    return d2 * d2 + d1 * d1 + d0 * d0;
+}
+
+void *func_0201eee4(int id, int target) {
+    u8 *cube;
+    u32 r;
+    u32 g;
+    u16 d;
+    u32 b;
+    u8 *p;
+    u32 idx;
+    u32 head;
+    u32 tail;
+    u8 *n;
+    u8 *src;
+    u8(*pal)[3];
+    int cell;
+    u32 i;
+    u16 *dist;
+    Unk_ColorQueue *queue;
+
+    src = func_0202ded8(id);
+    pal = func_0201c430(0x300);
+    cube = func_0201c430(0x8000);
+    dist = func_0201c430(0x10000);
+    queue = func_0201c430(0x8000);
+    tail = 0;
+    head = 0;
+    func_0201f5bc(src, 0x100, 0, target);
+    MIi_CpuClear16(0xffff, dist, 0x10000);
+    for (i = 0; i < 0x100; i++) {
+        p = pal[i];
+        p[0] = src[0] >> 3;
+        p[1] = src[1] >> 3;
+        p[2] = src[2] >> 3;
+        src += 3;
+        queue[tail].mUnk_0 = p[0];
+        queue[tail].mUnk_1 = p[1];
+        queue[tail].mUnk_2 = p[2];
+        queue[tail++].mUnk_3 = i;
+        cube[p[0] + ((p[2] << 10) + (p[1] << 5))] = i;
+        dist[p[0] + ((p[2] << 10) + (p[1] << 5))] = 0;
+    }
+    while (head != tail) {
+        r = queue[head].mUnk_0;
+        g = queue[head].mUnk_1;
+        b = queue[head].mUnk_2;
+        idx = queue[head].mUnk_3;
+        head = (head + 1) & 0x1fff;
+        cell = r + ((b << 10) + (g << 5));
+        // Offers the entry idx to each neighbouring cell: the cell takes it when it is nearer to the cell's colour
+        // than the entry the cell has, and joins the queue.
+        if (r != 0) {
+            n = cube + cell - 1;
+            if (idx != *n) {
+                d = func_0201eea4(pal, r - 1, g, b, idx);
+                if (dist[cell - 1] > d) {
+                    *n = idx;
+                    dist[cell - 1] = d;
+                    queue[tail].mUnk_0 = r - 1;
+                    queue[tail].mUnk_1 = g;
+                    queue[tail].mUnk_2 = b;
+                    queue[tail].mUnk_3 = idx;
+                    tail = (tail + 1) & 0x1fff;
+                }
+            }
+        }
+        if (r < 31) {
+            n = cube + cell + 1;
+            if (idx != *n) {
+                d = func_0201eea4(pal, r + 1, g, b, idx);
+                if (dist[cell + 1] > d) {
+                    *n = idx;
+                    dist[cell + 1] = d;
+                    queue[tail].mUnk_0 = r + 1;
+                    queue[tail].mUnk_1 = g;
+                    queue[tail].mUnk_2 = b;
+                    queue[tail].mUnk_3 = idx;
+                    tail = (tail + 1) & 0x1fff;
+                }
+            }
+        }
+        if (g != 0) {
+            n = cube + cell - 32;
+            if (idx != *n) {
+                d = func_0201eea4(pal, r, g - 1, b, idx);
+                if (dist[cell - 32] > d) {
+                    *n = idx;
+                    dist[cell - 32] = d;
+                    queue[tail].mUnk_0 = r;
+                    queue[tail].mUnk_1 = g - 1;
+                    queue[tail].mUnk_2 = b;
+                    queue[tail].mUnk_3 = idx;
+                    tail = (tail + 1) & 0x1fff;
+                }
+            }
+        }
+        if (g < 31) {
+            n = cube + cell + 32;
+            if (idx != *n) {
+                d = func_0201eea4(pal, r, g + 1, b, idx);
+                if (dist[cell + 32] > d) {
+                    *n = idx;
+                    dist[cell + 32] = d;
+                    queue[tail].mUnk_0 = r;
+                    queue[tail].mUnk_1 = g + 1;
+                    queue[tail].mUnk_2 = b;
+                    queue[tail].mUnk_3 = idx;
+                    tail = (tail + 1) & 0x1fff;
+                }
+            }
+        }
+        if (b != 0) {
+            n = cube + cell - 0x400;
+            if (idx != *n) {
+                d = func_0201eea4(pal, r, g, b - 1, idx);
+                if (dist[cell - 0x400] > d) {
+                    *n = idx;
+                    dist[cell - 0x400] = d;
+                    queue[tail].mUnk_0 = r;
+                    queue[tail].mUnk_1 = g;
+                    queue[tail].mUnk_2 = b - 1;
+                    queue[tail].mUnk_3 = idx;
+                    tail = (tail + 1) & 0x1fff;
+                }
+            }
+        }
+        if (b < 31) {
+            n = cube + cell + 0x400;
+            if (idx != *n) {
+                d = func_0201eea4(pal, r, g, b + 1, idx);
+                if (dist[cell + 0x400] > d) {
+                    *n = idx;
+                    dist[cell + 0x400] = d;
+                    queue[tail].mUnk_0 = r;
+                    queue[tail].mUnk_1 = g;
+                    queue[tail].mUnk_2 = b + 1;
+                    queue[tail].mUnk_3 = idx;
+                    tail = (tail + 1) & 0x1fff;
+                }
+            }
+        }
+    }
+    func_0201c4f0(&pal);
+    func_0201c4f0(&dist);
+    func_0201c4f0(&queue);
+    return cube;
+}
+#pragma thumb on
+
+void func_0201f450(int a, int b, u32 c, u32 d) {
+    u32 cls = 0;
+    u32 size = 0x80;
+    u32 rows;
+    if (c > 0x80 || d > 0x80) {
+        cls = 1;
+        size = 0x100;
+        if (c > 0x100 || d > 0x100) {
+            cls = 2;
+            size = 0x200;
+            if (c > 0x200 || d > 0x100) {
+                cls = 3;
+            }
+        }
+    }
+    rows = (size * d) >> 10;
+    if (a & 1) {
+        *(vu32 *) 0x04000000 =
+            (data_020c267c.mUnk_018[0].mUnk_578[3] << 31) + (data_020c267c.mUnk_018[0].mUnk_568[0xf] << 20) + 0x11833;
+        data_020c18bc.mUnk_474[0] &= ~4;
+        data_020c18bc.mUnk_2d4 = 0;
+        data_020c18bc.mUnk_2d8 = 0;
+        data_020c18bc.mUnk_2e4 = 0x100;
+        data_020c18bc.mUnk_2e6 = 0x100;
+        *(vu16 *) 0x04000030 = 0x100;
+        *(vu16 *) 0x04000036 = 0x100;
+        *(vu16 *) 0x04000032 = 0;
+        *(vu16 *) 0x04000034 = 0;
+        *(vu32 *) 0x04000038 = 0;
+        *(vu32 *) 0x0400003c = 0;
+        switch (b) {
+            case 0:
+                func_0201ebf4(2, rows, -1);
+                *(vu16 *) 0x0400000e = (cls << 14) + 0x80;
+                break;
+            case 1:
+                func_0201ebf4(2, rows * 2, -1);
+                *(vu16 *) 0x0400000e = (cls << 14) + 0x84;
+                break;
+            default:
+                OS_Terminate();
+                break;
+        }
+        MIi_CpuClear16(0, (void *) 0x05000000, 0x200);
+    }
+    if (a & 2) {
+        *(vu32 *) 0x04001000 =
+            (data_020c267c.mUnk_018[1].mUnk_578[3] << 31) + (data_020c267c.mUnk_018[1].mUnk_568[0xf] << 20) + 0x11813;
+        data_020c18bc.mUnk_474[0] &= ~8;
+        data_020c18bc.mUnk_2dc = 0;
+        data_020c18bc.mUnk_2e0 = 0;
+        *(vu16 *) 0x04001030 = 0x100;
+        *(vu16 *) 0x04001036 = 0x100;
+        *(vu16 *) 0x04001032 = 0;
+        *(vu16 *) 0x04001034 = 0;
+        *(vu32 *) 0x04001038 = 0;
+        *(vu32 *) 0x0400103c = 0;
+        switch (b) {
+            case 0:
+                func_0201ebf4(6, rows, -1);
+                *(vu16 *) 0x0400100e = (cls << 14) + 0x80;
+                break;
+            case 1:
+                func_0201ebf4(6, rows * 2, -1);
+                *(vu16 *) 0x0400100e = (cls << 14) + 0x84;
+                break;
+        }
+        MIi_CpuClear16(0, (void *) 0x05000400, 0x200);
+    }
+}
+
+u8 *func_0201f5bc(u8 *palette, u32 count, int a, int target) {
+    u8 *start = palette;
+    u32 i;
+    u16 *dst;
+    u8 r;
+    u8 g;
+    u8 b;
+
+    if (target & 1) {
+        dst = (u16 *) 0x05000000 + a;
+        for (i = 0; i < count; i++) {
+            r = palette[0] >> 3;
+            g = palette[1] >> 3;
+            b = palette[2] >> 3;
+            *dst = r + (g << 5) + (b << 10);
+            dst++;
+            palette += 3;
+        }
+    }
+    if (target & 2) {
+        palette = start;
+        dst = (u16 *) 0x05000400 + a;
+        for (i = 0; i < count; i++) {
+            r = palette[0] >> 3;
+            g = palette[1] >> 3;
+            b = palette[2] >> 3;
+            *dst = r + (g << 5) + (b << 10);
+            dst++;
+            palette += 3;
+        }
+    }
+    return palette;
+}
+
+void func_0201f648(void) {
+    vu16 *regs[2] = {(vu16 *) 0x0400006c, (vu16 *) 0x0400106c};
+    int i;
+
+    for (i = 0; i < 2; i++) {
+        if (data_020c18bc.mUnk_490[i] == 1) {
+            u32 level = *regs[i] & 0x1f;
+            if (level != 0) {
+                *regs[i] = 0x8000 | (level - 1);
+            } else {
+                *regs[i] = 0;
+                data_020c18bc.mUnk_490[i] = 3;
+            }
+        } else if (data_020c18bc.mUnk_490[i] == 2) {
+            u32 level = *regs[i] & 0x1f;
+            if (level < 0x10) {
+                *regs[i] = 0x8000 | (level + 1);
+            } else {
+                *regs[i] = 0x8011;
+                data_020c18bc.mUnk_490[i] = 0;
+            }
+        }
+    }
+}
+
+void func_0201f6d0(int a, int b, int c, int d, u16 e) {
+    int phase = 0;
+    int touched = 0;
+    u32 frames = 0;
+    u32 step = 0;
+
+    func_0201f880(3);
+    func_0201dde0(d, 3);
+    func_0202c1c4();
+    func_0202bdd8(b, c, a, 0, 1);
+    func_02020854(1);
+    while (func_0201f910(&frames, &touched, 0x3c, 0x78, 3) == 0) {
+        if (phase == 0) {
+            if ((data_020c18bc.mUnk_45c & 3) == 0) {
+                step++;
+                if (step == 10) {
+                    phase = 1;
+                }
+            }
+        } else {
+            step++;
+            if (step >= 0x19) {
+                step = 10;
+            }
+        }
+        func_0201bb30();
+        func_0202cf08(e + step, 0x2c, 0x5d, 0, 1);
+    }
+    data_020c18bc.mUnk_46c |= 0x40000;
+    func_0201f858(3);
+    data_020c18bc.mUnk_46c &= ~0x40000;
+}
+
+int func_0201f794(int a, int b) {
+    if ((a & 1) && data_020c18bc.mUnk_490[0] != b) {
+        return 0;
+    }
+    if ((a & 2) && data_020c18bc.mUnk_490[1] != b) {
+        return 0;
+    }
+    return 1;
+}
+
+int func_0201f7c0(int a, int b) {
+    if (a & b) {
+        return 1;
+    }
+    return 0;
+}
+
+void func_0201f7cc(int a) {
+    if (func_0201f7c0(a, 1) == 1) {
+        data_020c18bc.mUnk_490[0] = 2;
+    }
+    if (func_0201f7c0(a, 2) == 1) {
+        data_020c18bc.mUnk_490[1] = 2;
+    }
+}
+
+void func_0201f7f8(int a) {
+    if (func_0201f7c0(a, 1) == 1) {
+        if (data_020c18bc.mUnk_490[0] != 3) {
+            data_020c18bc.mUnk_490[0] = 1;
+        }
+    }
+    if (func_0201f7c0(a, 2) == 1) {
+        if (data_020c18bc.mUnk_490[1] != 3) {
+            data_020c18bc.mUnk_490[1] = 1;
+        }
+    }
+}
+
+void func_0201f830(int a) {
+    func_0201f7f8(a);
+    while (func_0201f794(a, 3) != 1) {
+        func_0201bb30();
+    }
+}
+
+void func_0201f858(int a) {
+    while (func_0201f794(a, 0) != 1) {
+        func_0201f7cc(a);
+        func_0201bb30();
+    }
+}
+
+void func_0201f880(int a) {
+    if (func_0201f7c0(a, 1) == 1) {
+        data_020c18bc.mUnk_490[0] = 0;
+        *(vu16 *) 0x0400006c = 0x8011;
+        func_0202ae34(1);
+    }
+    if (func_0201f7c0(a, 2) == 1) {
+        data_020c18bc.mUnk_490[1] = 0;
+        *(vu16 *) 0x0400106c = 0x8011;
+        func_0202ae34(2);
+    }
+}
+
+void func_0201f8d0(int a) {
+    if (func_0201f7c0(a, 1) == 1) {
+        data_020c18bc.mUnk_490[0] = 3;
+        *(vu16 *) 0x0400006c = 0;
+    }
+    if (func_0201f7c0(a, 2) == 1) {
+        data_020c18bc.mUnk_490[1] = 3;
+        *(vu16 *) 0x0400106c = 0;
+    }
+}
+
+int func_0201f910(u32 *frames, int *touched, u32 minFrames, u32 maxFrames, int layers) {
+    if ((data_020c18bc.mUnk_10 & 9) || func_02020e3c(0, 0) == 1) {
+        *touched = 1;
+    }
+    if (!(data_020c18bc.mUnk_10 & 9) && func_02020e3c(0, 0) == 0 && *frames > minFrames && *touched == 1) {
+        return 1;
+    }
+    if (*frames >= maxFrames) {
+        return 1;
+    }
+    if (func_0201f794(layers, 3) == 1) {
+        (*frames)++;
+    }
+    return 0;
+}
+
+void func_0201f980(int a, int b, int c, int d, int e) {
+    u32 frames = 0;
+    int touched = 0;
+
+    func_0201f858(e);
+    func_0201dde0(a, e);
+    func_0201f7f8(e);
+    while (func_0201f910(&frames, &touched, b, c, e) == 0) {
+        func_0201bb30();
+    }
+    if (d != 0) {
+        if (d == 2) {
+            func_0201f858(e);
+        }
+    } else {
+        func_0201f880(e);
+    }
+    if (e & 1) {
+        func_0201eb74(2);
+    }
+    if (e & 2) {
+        func_0201eb74(6);
+    }
+}
+
+#pragma thumb off
+// Moves an entry to the end of the list.
+void func_0201fa08(IndexNode16 *list, u32 index) {
+    IndexNode16 *node = &list[index];
+    list[node->mNext].mPrev = node->mPrev;
+    list[node->mPrev].mNext = node->mNext;
+    node->mNext = 0;
+    node->mPrev = list[0].mPrev;
+    list[0].mPrev = index;
+    list[node->mPrev].mNext = index;
+}
+#pragma thumb on
+
+#pragma thumb off
+// Moves an entry to the end of the list.
+void func_0201fa5c(IndexNode *list, u32 index) {
+    IndexNode *node = &list[index];
+    list[node->mNext].mPrev = node->mPrev;
+    list[node->mPrev].mNext = node->mNext;
+    node->mNext = 0;
+    node->mPrev = list[0].mPrev;
+    list[0].mPrev = index;
+    list[node->mPrev].mNext = index;
 }
 #pragma thumb on

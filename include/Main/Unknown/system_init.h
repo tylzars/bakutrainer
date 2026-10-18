@@ -11,7 +11,7 @@ void func_0201b7e0(u32 a);
 void func_0201b7ec(u32 a, int b, int c);
 void func_0201bb30(void);
 void func_0201bb40(int flags);
-void func_0201c1d0(void);
+void func_0201c1d0(void *arg);
 void func_0201c1e0(void);
 void func_0201c32c(void);
 void func_0201c41c(void);

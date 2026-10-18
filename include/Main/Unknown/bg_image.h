@@ -19,6 +19,31 @@ void func_0201de48(u8 *data, int target, int x, int flags);
 
 // Sizes by layer mode (read by func_0201db94).
 extern const u16 data_02050200[4];
+
+// JPEG decoding: the marker scan, the inverse DCT of one block and the decoder of one image.
+u8 *func_0201e178(void);
+void func_0201e19c(s16 *in, s16 *quant, u8 *out, u8 *clamp);
+void func_0201e518(u8 *data, u32 *width, u32 *height);
+void func_0201e56c(u8 *data, int target, void *lut);
+
+// VRAM bank mapping: banks in use, freeing the banks of one use and mapping banks for one.
+void func_0201eb20(void);
+void func_0201eb74(int type);
+void func_0201ebf4(int layer, int a, int b);
+void func_0201ec2c(int type, u32 size, u32 addr);
+
+// Entry of the colour fill queue: a 5-bit colour (three components) and the palette index that reached it.
+typedef struct Unk_ColorQueue {
+    u8 mUnk_0;
+    u8 mUnk_1;
+    u8 mUnk_2;
+    u8 mUnk_3;
+} Unk_ColorQueue;
+
+// Nearest-palette lookup over the 15-bit colour cube.
+u16 func_0201eea4(u8 (*pal)[3], int c0, int c1, int c2, int index);
+void *func_0201eee4(int x, int target);
+
 #ifdef __cplusplus
 }
 #endif

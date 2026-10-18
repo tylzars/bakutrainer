@@ -4803,10 +4803,15 @@ from:0x0201eaf4 kind:arm_call_thumb to:0x0201c4f0 module:main
 from:0x0201eafc kind:arm_call_thumb to:0x0201c4f0 module:main
 from:0x0201eb0c kind:load to:0x020c1818 module:main
 from:0x0201eb5c kind:load to:0x020c18bc module:main
+from:0x0201eb60 kind:load to:0x02050220 module:main
+from:0x0201eb64 kind:load to:0x020502ac module:main
 from:0x0201eb68 kind:load to:0x020c18bc add:0xc0 module:main
 from:0x0201eb70 kind:load to:0x020c18bc add:0x480 module:main
 from:0x0201ebdc kind:load to:0x020c18bc add:0x480 module:main
 from:0x0201ebe0 kind:load to:0x020c18bc module:main
+from:0x0201ebe4 kind:load to:0x02050220 module:main
+from:0x0201ebe8 kind:load to:0x020502ac module:main
+from:0x0201ebec kind:load to:0x02050478 module:main
 from:0x0201ebf0 kind:load to:0x020c18bc add:0xc0 module:main
 from:0x0201ec14 kind:thumb_call to:0x0201eb74 module:main
 from:0x0201ec1e kind:thumb_call to:0x0201ec2c module:main
