@@ -340,8 +340,10 @@ typedef struct CameraState {
     u8 mUnk_000[0x24];
     u16 mUnk_24;
     u16 mUnk_26;
-    void (*mUnk_28)(void);
-    u8 mUnk_2c[0x34 - 0x2c];
+    void (*mUnk_28)();
+    u8 **mUnk_2c;
+    u8 mUnk_30;
+    u8 mUnk_31[3];
     u16 *mUnk_34;
     s32 mUnk_38;
     s32 mUnk_3c;
@@ -357,7 +359,7 @@ typedef struct CameraState {
     u8 mUnk_61;
     u8 mUnk_62[2];
     u32 mUnk_64;
-    u8 mUnk_68[4];
+    u32 mUnk_68;
     u16 *mUnk_6c;
     u16 *mUnk_70;
     u16 mUnk_74;
@@ -366,7 +368,12 @@ typedef struct CameraState {
     u16 mUnk_7a;
     u16 mUnk_7c;
     u8 mUnk_7e;
-    u8 mUnk_7f;
+    u8 mUnk_7f_0 : 1;
+    u8 mUnk_7f_1 : 1;
+    u8 mUnk_7f_2 : 1;
+    u8 mUnk_7f_3 : 1;
+    u8 mUnk_7f_4 : 1;
+    u8 mUnk_7f_5 : 3;
     VecFx32 mUnk_80;
     s32 mUnk_8c;
     s32 mUnk_90;
@@ -426,7 +433,8 @@ typedef struct Unk_020c6144 {
     u8 mUnk_5a;
     u8 mUnk_5b;
     u8 mUnk_5c;
-    u8 mUnk_5d[0x64 - 0x5d];
+    u8 mUnk_5d[3];
+    s32 mUnk_60;
     s32 mUnk_64;
 } Unk_020c6144;
 

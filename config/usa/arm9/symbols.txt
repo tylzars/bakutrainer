@@ -2083,12 +2083,8 @@ data_020c31dc kind:bss addr:0x020c31dc
 data_020c3244 kind:bss addr:0x020c3244
 data_020c3e44 kind:bss addr:0x020c3e44
 data_020c3e80 kind:bss addr:0x020c3e80
-data_020c3ea4 kind:bss addr:0x020c3ea4
 data_020c3eb0 kind:bss addr:0x020c3eb0
-data_020c3ec4 kind:bss addr:0x020c3ec4
-data_020c3ed4 kind:bss addr:0x020c3ed4
 data_020c3ee0 kind:bss addr:0x020c3ee0
-data_020c3f28 kind:bss addr:0x020c3f28
 data_020c5e44 kind:bss addr:0x020c5e44
 data_020c6144 kind:bss addr:0x020c6144
 data_020c61ac kind:bss addr:0x020c61ac

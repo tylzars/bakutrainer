@@ -18,6 +18,45 @@ typedef struct MapEntry {
     u16 mUnk_0c[2];
 } MapEntry;
 
+#define MAP_RECORDS 20
+
+// One object of a stage's object list (chunk entries of 4 + 2 * n bytes): the index of its entry in chunk 0x5513, a
+// group byte, the number n of halfwords and the halfwords.
+typedef struct MapObjDef {
+    u16 mUnk_00;
+    u8 mUnk_02;
+    u8 mUnk_03;
+    u16 mUnk_04[1];
+} MapObjDef;
+
+// The state of one placed object (0x190 bytes): its definition, a model/animation object at 4, the animation shown
+// and the flags at 0x176.
+typedef struct MapRecord {
+    MapObjDef *mUnk_00;
+    u8 mUnk_04[0x150 - 4];
+    u16 mUnk_150;
+    u16 mUnk_152;
+    u8 mUnk_154[0x174 - 0x154];
+    u16 mUnk_174;
+    u16 mUnk_176_0 : 4;
+    u16 mUnk_176_4 : 1;
+    u16 mUnk_176_5 : 2;
+    u16 mUnk_176_7 : 1;
+    u16 mUnk_176_8 : 1;
+    u16 mUnk_176_9 : 1;
+    u16 mUnk_176_10 : 1;
+    u16 mUnk_176_11 : 1;
+    u16 mUnk_176_12 : 1;
+    u16 mUnk_176_13 : 3;
+    u8 mUnk_178[4];
+    VecFx32 mUnk_17c;
+    u16 mUnk_188;
+    u8 mUnk_18a;
+    u8 mUnk_18b;
+    u8 mUnk_18c;
+    u8 mUnk_18d[3];
+} MapRecord;
+
 // The chunk of the stage data file whose key is id; 0 when the file has no such chunk.
 u16 *func_02031eb8(u32 id);
 
@@ -55,6 +94,24 @@ void func_020325d0(u16 a, u16 b, u16 c, u16 count);
 void func_02032850(void);
 // Clears the 20 records of data_020c3e44 (and the camera's halfwords at 0x24/0x26 when a == 1).
 void func_02032b88(int a);
+// Runs the actions of one placed object's definition and starts the animation they pick.
+void func_020328b0(MapRecord *rec);
+// Places (or finds) the object of each definition of a list and draws it.
+void func_020329d0(u8 *objs);
+// Marks the grid cell next to (x0, z0) on the way to (x1, z1); 0 when no cell on the way is marked.
+int func_02032bb8(int x0, int z0, int w, int x1, int z1);
+// Collects the visible cells around the grid cell of (px, pz).
+void func_02032d50(u32 px, u32 pz);
+// Collects the cell blocks of chunk 0x5512 in view of the camera, starting from the cell under (x, z).
+void func_0203315c(int x, int z);
+// Moves the camera a step towards its goal and sets up the projection.
+void func_02033488(void);
+// The camera's field of view angle.
+u16 func_020334ec(void);
+// Sets up the projection with the far distance scaled by 8 when a is 1.
+void func_020334f8(int a);
+// Sets up the projection and view matrices from the camera.
+void func_02033520(void);
 
 #ifdef __cplusplus
 }

@@ -344,7 +344,7 @@ void func_0200659c(void) {
     data_020c5e44.mUnk_300.mUnk_38 = 0;
     data_020c5e44.mUnk_300.mUnk_40 = 0;
     data_020c5e44.mUnk_300.mUnk_3c = 0;
-    data_020c5e44.mUnk_000.mUnk_7f &= ~2;
+    data_020c5e44.mUnk_000.mUnk_7f_1 = 0;
     func_02033df4(0x12);
     data_020c5e44.mUnk_300.mUnk_14 = data_020c5e44.mUnk_300.mUnk_18;
     data_020c5e44.mUnk_300.mUnk_10 = 0;

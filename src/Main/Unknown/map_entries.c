@@ -1,5 +1,6 @@
 #include <nitro/os.h>
 #include <nitro/gx.h>
+#include <nitro/mi.h>
 #include <Main/Unknown/functions.h>
 #include <Main/Unknown/map_entries.h>
 #include <Main/Unknown/camera.h>
@@ -7,6 +8,9 @@
 #include <Main/Unknown/engine_asm.h>
 #include <Main/Unknown/game_math.h>
 #include <Main/Unknown/system_init.h>
+#include <Main/Unknown/game_util.h>
+#include <Main/Unknown/model.h>
+#include <Main/clib.h>
 
 // The stage data file starts with MAP_FILE_MAGIC and MAP_FILE_VERSION, followed by chunks of 16 * n bytes whose
 // first halfword is the chunk key (high byte MAP_CHUNK_TAG) and second halfword n; the first chunk follows a
@@ -64,9 +68,38 @@ typedef struct MapPair {
     u16 mUnk_2;
 } MapPair;
 
+// One cell of the grid (mUnk_30 in MapState, 4 bytes per cell): a direction to the target and, in mUnk_3, how the cell
+// was reached (0 = not visited).
+typedef struct MapCell {
+    s8 mUnk_0;
+    s8 mUnk_1;
+    s8 mUnk_2;
+    u8 mUnk_3;
+} MapCell;
+
+// One area of chunk 0x5530: its size in cells, the position of its first cell and w * h halfwords, one per cell
+// (the low ten bits name an object, the top four bits tell which neighbours are connected).
+typedef struct MapArea {
+    u8 mUnk_00;
+    u8 mUnk_01;
+    u16 mUnk_02;
+    u16 mUnk_04;
+    u16 mUnk_06[1];
+} MapArea;
+
+// A visible cell found by func_02032d50: the key of its object and its position.
+typedef struct MapMarker {
+    u16 mUnk_00;
+    u16 mUnk_02;
+    s32 mUnk_04;
+    s32 mUnk_08;
+} MapMarker;
+
 // The map object's .bss block: two bit sets, indexed by cell number (mUnk_24) and by position in a rectangle
-// (mUnk_28), the squared distance limits, the sorted pair table with its search step and the buffers the map code
-// allocates.
+// (mUnk_28), the squared distance limits, the sorted pair table with its search step, the buffers the map code
+// allocates, the view matrices (0x3c, 0x6c with its translation at 0x90, and 0x9c, reached through data_020c3e80,
+// data_020c3eb0 and data_020c3ee0) and the placed objects. The 20 records end at 0x2024, 0x24 bytes past the camera
+// object at 0x020c5e44 (data_020c3e44 + 0x2000); no code found reaches the camera object below its 0x24.
 typedef struct MapState {
     s32 mUnk_00;
     u32 mUnk_04[3];
@@ -82,12 +115,18 @@ typedef struct MapState {
     u8 mUnk_22[2];
     u32 *mUnk_24;
     u32 *mUnk_28;
-    void *mUnk_2c;
-    void *mUnk_30;
+    MapMarker *mUnk_2c;
+    MapCell *mUnk_30;
     u16 mUnk_34;
-    u8 mUnk_36[2];
+    u16 mUnk_36;
     u16 mUnk_38;
     u8 mUnk_3a[2];
+    u8 mUnk_3c[0x90 - 0x3c];
+    VecFx32 mUnk_90;
+    u8 mUnk_9c[0xdc - 0x9c];
+    s32 mUnk_dc;
+    s32 mUnk_e0;
+    MapRecord mUnk_e4[MAP_RECORDS];
 } MapState;
 
 extern MapState data_020c3e44;
@@ -697,7 +736,7 @@ void func_020325d0(u16 a, u16 b, u16 c, u16 count) {
     func_020322b8(count);
     data_020c5e44.mUnk_300.mUnk_5a = 0;
     data_020c5e44.mUnk_300.mUnk_5c = 0;
-    data_020c5e44.mUnk_000.mUnk_7f &= ~2;
+    data_020c5e44.mUnk_000.mUnk_7f_1 = 0;
     data_020c18bc.mUnk_46c &= ~0x10000;
 }
 
@@ -720,4 +759,615 @@ u16 *func_02032898(void) {
         OS_Terminate();
     }
     return cells;
+}
+
+// Runs the actions of the object's definition: each halfword (kind in the top bit, a 6-bit action and a 6-bit
+// animation) may call the camera's callback and picks the animation to show; starts it when it changed.
+void func_020328b0(MapRecord *rec) {
+    u16 anim = 0x3f;
+    int kind = 0;
+    int i = 0;
+
+    for (; i < rec->mUnk_00->mUnk_03; i++) {
+        int v = rec->mUnk_00->mUnk_04[i];
+        int a = v & 0x3f;
+        u16 b = (v >> 6) & 0x3f;
+
+        if (v >> 15) {
+            if (data_020c5e44.mUnk_000.mUnk_28 == NULL) {
+                OS_Terminate();
+            }
+            data_020c5e44.mUnk_000.mUnk_28(a, rec, (u16) (b + data_020c5e44.mUnk_000.mUnk_26));
+        }
+        if (a == 0x3f || (data_020c5e44.mUnk_000.mUnk_68 & (1 << a))) {
+            anim = b;
+            kind = (rec->mUnk_00->mUnk_04[i] >> 12) & 7;
+        }
+    }
+    if (anim != 0x3f) {
+        anim += data_020c5e44.mUnk_000.mUnk_26;
+    } else {
+        anim = 0;
+    }
+    if (rec->mUnk_150 != anim) {
+        if (rec->mUnk_176_10 == 1 || rec->mUnk_150 == 0) {
+            func_02027230(rec->mUnk_04, rec->mUnk_174, anim, 2, 0);
+        }
+    }
+    if (rec->mUnk_176_10 == 1) {
+        switch (kind) {
+            case 1:
+                rec->mUnk_152--;
+                rec->mUnk_176_9 = 1;
+                rec->mUnk_176_7 = 1;
+                break;
+            case 2:
+                rec->mUnk_18a = 1;
+                break;
+            case 3:
+                break;
+        }
+    }
+}
+
+// Handles the object definition list at objs: for each definition, finds the object already placed for it or places
+// a new one from its map entry, and runs the definition's actions.
+void func_020329d0(u8 *p) {
+    int n = *p++;
+    MapRecord *rec;
+    MapRecord *fresh = NULL;
+    int i;
+
+    while (n-- != 0) {
+        MapObjDef *def = (MapObjDef *) p;
+
+        for (i = 0; i < MAP_RECORDS; i++) {
+            rec = &data_020c3e44.mUnk_e4[i];
+            if (rec->mUnk_00 == def) {
+                break;
+            }
+        }
+        if (i == MAP_RECORDS) {
+            u8 *entries = (u8 *) func_02031eb8(0x5513) + 0xa;
+            MapRecord *r;
+            int off;
+
+            r = data_020c3e44.mUnk_e4;
+            for (i = 0; i < MAP_RECORDS; i++, r++) {
+                if (r->mUnk_00 == NULL) {
+                    fresh = r;
+                    break;
+                }
+            }
+            if (i == MAP_RECORDS) {
+                return;
+            }
+            fresh->mUnk_00 = def;
+            fresh->mUnk_174 = def->mUnk_02 + data_020c5e44.mUnk_000.mUnk_24;
+            rec = fresh;
+            fresh->mUnk_176_10 = 0;
+            fresh->mUnk_176_4 = 0;
+            fresh->mUnk_176_9 = 0;
+            fresh->mUnk_176_12 = 0;
+            off = fresh->mUnk_00->mUnk_00 * 16;
+            fresh->mUnk_17c.x = func_02031f98((MapEntry *) (entries + off));
+            fresh->mUnk_17c.y = func_02031fa4((MapEntry *) (entries + off));
+            fresh->mUnk_17c.z = func_02031fb0((MapEntry *) (entries + off));
+            fresh->mUnk_188 = func_02031fbc((MapEntry *) (entries + off));
+            fresh->mUnk_18a = 0;
+            fresh->mUnk_18c = 0;
+            fresh->mUnk_18b = 0;
+            fresh->mUnk_150 = 0;
+        }
+        if (rec->mUnk_18a == 0 && rec->mUnk_18b == 0) {
+            DrawParams dp;
+            int flags = 0;
+
+            dp.mUnk_43_4 = 0;
+            dp.mUnk_43_3 = dp.mUnk_43_4;
+            dp.mUnk_38 = rec->mUnk_188;
+            dp.mUnk_3c = 0;
+            dp.mUnk_3a = dp.mUnk_3c;
+            dp.mUnk_43 = 0;
+            dp.mPos = rec->mUnk_17c;
+            dp.mUnk_30 = -1;
+            dp.mUnk_34 = -1;
+            dp.mUnk_2c = -1;
+            if (rec->mUnk_18c != 0) {
+                flags = (rec->mUnk_18c << 27) | 2;
+            }
+            func_020328b0(rec);
+            if (rec->mUnk_18a == 0) {
+                data_020c5e44.mUnk_300.mUnk_60++;
+                func_0202733c(rec->mUnk_04, &dp, flags);
+            }
+        }
+        p += def->mUnk_03 * 2 + 4;
+    }
+}
+
+// Clears the 20 records (and the camera's halfwords at 0x24 and 0x26 when a == 1).
+void func_02032b88(int a) {
+    int i;
+
+    for (i = 0; i < MAP_RECORDS; i++) {
+        data_020c3e44.mUnk_e4[i].mUnk_00 = NULL;
+    }
+    if (a == 1) {
+        data_020c5e44.mUnk_000.mUnk_24 = 0;
+        data_020c5e44.mUnk_000.mUnk_26 = 0;
+    }
+}
+
+// Marks the cell next to (x0, z0) on the way to (x1, z1) in the grid of stride w; 1 when it did, 0 when no cell on
+// the way is marked.
+int func_02032bb8(int x0, int z0, int w, int x1, int z1) {
+    int dx = x1 - x0;
+    int dz = z1 - z0;
+    int stepx;
+    int stepz;
+    int px;
+    int nx;
+    int nz;
+    int pz;
+    int k;
+    int fx;
+    int fz;
+    u8 kind;
+    MapCell *c;
+    MapCell *cur;
+
+    if (abs(dx) > abs(dz)) {
+        stepx = dx;
+        stepz = 0;
+    } else if (abs(dx) < abs(dz)) {
+        stepx = 0;
+        stepz = dz;
+    } else {
+        stepz = 0;
+        stepx = 0;
+    }
+    // The results of the next abs calls are not used; the calls stay because abs is an ordinary function.
+    if (abs(dx) < abs(dz)) {
+        abs(dx * 2);
+        abs(dz);
+    } else if (abs(dx) > abs(dz)) {
+        abs(dx);
+        abs(dz * 2);
+    }
+    k = 1;
+    px = x0 + (dx != 0 ? dx >> 31 | 1 : 0);
+    pz = z0 + (dz != 0 ? dz >> 31 | 1 : 0);
+    c = data_020c3e44.mUnk_30 + (px + pz * w);
+    kind = c->mUnk_3;
+    if (kind == 0) {
+        k = 2;
+        fx = px;
+        fz = pz;
+        nx = x0 + (stepx != 0 ? stepx >> 31 | 1 : 0);
+        nz = z0 + (stepz != 0 ? stepz >> 31 | 1 : 0);
+        c = data_020c3e44.mUnk_30 + (nx + nz * w);
+        kind = c->mUnk_3;
+        if (kind == 0) {
+            return 0;
+        }
+    }
+    cur = data_020c3e44.mUnk_30 + (x0 + z0 * w);
+    if (kind > 1) {
+        int sign = c->mUnk_0 * (z0 - z1) - c->mUnk_1 * (x0 - x1) != 0
+                       ? (c->mUnk_0 * (z0 - z1) - c->mUnk_1 * (x0 - x1)) >> 31 | 1
+                       : 0;
+
+        k = 2;
+        if (sign != c->mUnk_2) {
+            return 0;
+        }
+        cur->mUnk_0 = c->mUnk_0;
+        cur->mUnk_1 = c->mUnk_1;
+        cur->mUnk_2 = c->mUnk_2;
+    } else if (k == 2) {
+        cur->mUnk_0 = fx - x1;
+        cur->mUnk_1 = fz - z1;
+        cur->mUnk_2 = (z0 - z1) * cur->mUnk_0 - (x0 - x1) * cur->mUnk_1 != 0
+                          ? ((z0 - z1) * cur->mUnk_0 - (x0 - x1) * cur->mUnk_1) >> 31 | 1
+                          : 0;
+    }
+    cur->mUnk_3 = k;
+    return 1;
+}
+
+// Row and column steps to the four neighbours: direction j steps by (sMapDirs[j], sMapDirs[j + 1]).
+static const s8 sMapDirs[5] = {-1, 0, 1, 0, -1};
+
+// Walks the cells of the area of chunk 0x5530 that holds the grid cell of (px, pz), outward from that cell. Each cell
+// the box test finds inside the view is listed with its position; the grid of func_02032bb8 records how it was reached.
+void func_02032d50(u32 px, u32 pz) {
+    u16 saved = data_020c3e44.mUnk_36;
+    MapArea *area;
+    int left;
+    int cx;
+    int cz;
+    u32 scale;
+    int w;
+    int h;
+    int x0;
+    int z0;
+    int shift;
+    int head;
+    int tail;
+    u32 idx0;
+    u32 result;
+    s16 box[6];
+    u16 queue[256];
+    u32 q;
+    u32 row;
+    u32 col;
+    u16 v;
+    u32 m;
+    int j;
+    u32 x;
+    u32 z;
+    u32 i;
+    int n;
+
+    if (!data_020c5e44.mUnk_000.mUnk_7f_3) {
+        return;
+    }
+    area = (MapArea *) func_02031eb8(0x5530);
+    if (area == NULL) {
+        OS_Terminate();
+    }
+    scale = data_020c5e44.mUnk_000.mUnk_64;
+    cx = px / scale;
+    cz = pz / scale;
+    n = *(u8 *) area;
+    area = (MapArea *) ((u8 *) area + 2);
+    left = n - 1;
+    if (n != 0) {
+        do {
+            w = area->mUnk_00;
+            h = area->mUnk_01;
+            x0 = area->mUnk_02;
+            z0 = area->mUnk_04;
+            if (cx >= x0 && cx < x0 + w && cz >= z0 && cz < z0 + h) {
+                cx -= x0;
+                cz -= z0;
+                break;
+            }
+            area = (MapArea *) ((u8 *) area + w * h * 2 + 6);
+        } while (left-- != 0);
+    }
+    if (left < 0) {
+        return;
+    }
+    head = 0;
+    tail = 0;
+    shift = 32 - func_02028250(w);
+    if (w * h >= 10000) {
+        OS_Terminate();
+    }
+    reg_G3X_POLYGON_ATTR = 0x10c0;
+    reg_G3X_MTX_MODE = 2;
+    G3_LoadMtx43(&data_020c3e80);
+    reg_G3X_MTX_STORE = 0x1e;
+    box[0] = 0;
+    box[1] = -0x1000;
+    box[2] = 0;
+    box[3] = 0x1000;
+    box[4] = 0x2000;
+    box[5] = 0x1000;
+    MIi_CpuClearFast(0, data_020c3e44.mUnk_28, 0x400);
+    MIi_CpuClearFast(0, data_020c3e44.mUnk_30, 0x9c40);
+    data_020c3e44.mUnk_30[cx + cz * w].mUnk_3 = 1;
+    idx0 = cx + (cz << shift);
+    data_020c3e44.mUnk_28[idx0 >> 5] |= 1 << (idx0 & 0x1f);
+    queue[tail++] = idx0;
+    while (tail != head) {
+        q = queue[head];
+        head = (u8) (head + 1);
+        row = q >> shift;
+        col = q & ((1 << shift) - 1);
+        v = area->mUnk_06[col + row * w];
+        x = data_020c5e44.mUnk_000.mUnk_64 * (x0 + col);
+        z = data_020c5e44.mUnk_000.mUnk_64 * (z0 + row);
+        if ((v & 0x3ff) == 0) {
+            data_020c5e44.mUnk_000.mUnk_7f_2 = 1;
+            data_020c3e44.mUnk_dc = x;
+            data_020c3e44.mUnk_e0 = z;
+        } else {
+            data_020c3e44.mUnk_2c[data_020c3e44.mUnk_36].mUnk_04 = x;
+            data_020c3e44.mUnk_2c[data_020c3e44.mUnk_36].mUnk_08 = z;
+            data_020c3e44.mUnk_2c[data_020c3e44.mUnk_36].mUnk_00 =
+                func_0203249c(v & 0x3ff) + data_020c5e44.mUnk_000.mUnk_7c - 1;
+            data_020c3e44.mUnk_36++;
+            if (data_020c3e44.mUnk_36 >= 0x180) {
+                OS_Terminate();
+            }
+        }
+        m = v & 0xf000;
+        j = 0;
+        while (m != 0) {
+            if (m & 0x8000) {
+                u32 nc = col + sMapDirs[j + 1];
+                u32 nr = row + sMapDirs[j];
+                u32 idx = nc + (nr << shift);
+
+                u32 bit = 1 << (idx & 0x1f);
+                u32 word = data_020c3e44.mUnk_28[idx >> 5];
+
+                if (!(bit & word)) {
+                    data_020c3e44.mUnk_28[idx >> 5] = word | bit;
+                    *(vu32 *) 0x04000450 = 0x1e;
+                    PutTrans(data_020c5e44.mUnk_000.mUnk_64 * (nc + x0), 0, data_020c5e44.mUnk_000.mUnk_64 * (nr + z0));
+                    PutScale(data_020c5e44.mUnk_000.mUnk_64, data_020c5e44.mUnk_000.mUnk_64 << 4,
+                             data_020c5e44.mUnk_000.mUnk_64);
+                    reg_G3X_BEGIN_VTXS = 0;
+                    reg_G3X_END_VTXS = 0;
+                    reg_G3X_BOX_TEST = *(u32 *) &box[0];
+                    reg_G3X_BOX_TEST = *(u32 *) &box[2];
+                    reg_G3X_BOX_TEST = *(u32 *) &box[4];
+                    while (G3X_GetBoxTestResult(&result) != 0) {
+                    }
+                    if (result != 0 && func_02032bb8(nc, nr, w, cx, cz) != 0) {
+                        data_020c3e44.mUnk_30[nc + nr * w].mUnk_3 = 1;
+                        queue[tail] = idx;
+                        tail++;
+                    }
+                }
+            }
+            m = (m << 1) & 0xf000;
+            j++;
+        }
+    }
+    if (!data_020c5e44.mUnk_000.mUnk_7f_2) {
+        if (data_020c5e44.mUnk_000.mUnk_7e == 1) {
+            data_020c5e44.mUnk_000.mUnk_7f_3 = 0;
+            data_020c3e44.mUnk_36 = saved;
+        } else {
+            data_020c5e44.mUnk_000.mUnk_7f_4 = 0;
+            data_020c5e44.mUnk_000.mUnk_30 = 0;
+            MIi_CpuClearFast(0, data_020c3e44.mUnk_24, data_020c3e44.mUnk_34);
+            for (i = saved; i < data_020c3e44.mUnk_36; i++) {
+                data_020c3e44.mUnk_2c[i - saved] = data_020c3e44.mUnk_2c[i];
+            }
+            data_020c3e44.mUnk_36 -= saved;
+        }
+    }
+}
+
+// One record of chunk 0x5512 (the offsets of the records are in the table at Unk_020c6144.mUnk_50): the key, the
+// size of the cell block in cells (mUnk_02 wide, mUnk_03 deep, mUnk_04 high), its position as three 32-bit values
+// split into halfwords (x, z, y) and the number of cells it lists; the list of cell numbers follows the 0x14-byte
+// header at halfword 0x14.
+typedef struct MapCellRec {
+    u16 mUnk_00;
+    u8 mUnk_02;
+    u8 mUnk_03;
+    u8 mUnk_04;
+    u8 mUnk_05;
+    u16 mUnk_06[2];
+    u16 mUnk_0a[2];
+    u16 mUnk_0e[2];
+    u8 mUnk_12;
+    u8 mUnk_13;
+} MapCellRec;
+
+// Collects the cell blocks of chunk 0x5512 that the camera sees, starting from the cell under (x, z): each block
+// within the view distance is box-tested, kept in the table at MapState.mUnk_2c (with its class) when visible and its
+// listed cells that are not marked yet are marked in the first bit set and queued for the same treatment.
+void func_0203315c(int x, int z) {
+    u32 mask = 0x7fff;
+    int n;
+    u8 m;
+    u16 list[256];
+    u32 result;
+    u16 box[6];
+    int cx;
+    int cz;
+    u16 *cells;
+    u16 *chunk;
+    u16 v;
+    u16 cols;
+    u16 rows;
+    u32 b1;
+    u32 b2;
+
+    reg_G3X_POLYGON_ATTR = 0x10c0;
+    n = 0;
+    m = 0;
+    reg_G3X_MTX_MODE = 2;
+    G3_LoadMtx43(&data_020c3e80);
+    reg_G3X_MTX_STORE = 0x1e;
+    box[0] = 0;
+    box[1] = 0;
+    box[2] = 0;
+    box[3] = 1;
+    box[4] = 1;
+    box[5] = 1;
+    cx = (u32) x / data_020c5e44.mUnk_000.mUnk_64;
+    cz = (u32) z / data_020c5e44.mUnk_000.mUnk_64;
+    cols = data_020c5e44.mUnk_000.mUnk_78;
+    rows = data_020c5e44.mUnk_000.mUnk_7a;
+    if (!(cz < rows && cx < cols)) {
+        return;
+    }
+    cells = func_02032898();
+    chunk = func_02031eb8(0x5512);
+    if (chunk == 0) {
+        OS_Terminate();
+    }
+    v = cells[cx + cz * data_020c5e44.mUnk_000.mUnk_78];
+    if (v & 0x8000) {
+        v &= 0x7fff;
+        data_020c5e44.mUnk_000.mUnk_7f_3 = 1;
+    }
+    if (v != 0) {
+        data_020c3e44.mUnk_24[v >> 5] |= 1 << (v & 0x1f);
+        list[0] = v;
+        n++;
+        data_020c5e44.mUnk_000.mUnk_7f_4 = 1;
+    }
+    if (n == 0) {
+        return;
+    }
+    b1 = *(u32 *) &box[2];
+    b2 = *(u32 *) &box[4];
+    while (n != m) {
+        u16 idx = list[m] & 0x7fff;
+        u16 *offs;
+        MapCellRec *rec;
+        u16 *p;
+        int px, pz, py;
+        u32 r;
+        u32 i;
+        u32 listlen;
+        u32 g;
+        int sx, sy, sz;
+
+        m++;
+        offs = data_020c5e44.mUnk_300.mUnk_50;
+        rec = (MapCellRec *) (chunk + offs[idx]);
+        listlen =
+            (u32) ((offs[idx + 1] - offs[idx]) * 2 - ((u8 *) (rec + 1) - (u8 *) rec) - (rec->mUnk_12 - 1) * 2) >> 1;
+        if (chunk[offs[idx]] == 0) {
+            OS_Terminate();
+        }
+        if (rec->mUnk_02 == 0) {
+            OS_Terminate();
+        }
+        if (rec->mUnk_03 == 0) {
+            OS_Terminate();
+        }
+        if (rec->mUnk_04 == 0) {
+            OS_Terminate();
+        }
+        px = rec->mUnk_06[0] + (rec->mUnk_06[1] << 16);
+        pz = rec->mUnk_0a[0] + (rec->mUnk_0a[1] << 16);
+        py = rec->mUnk_0e[0] + (rec->mUnk_0e[1] << 16);
+        r = (u32) data_020c5e44.mUnk_300.mUnk_44 >> 9;
+        if (func_020322f4(px, pz, rec->mUnk_02, rec->mUnk_03) > r * r) {
+            continue;
+        }
+        *(vu32 *) 0x04000450 = 0x1e;
+        PutTrans(px, py, pz);
+        PutScale(rec->mUnk_02 * data_020c5e44.mUnk_000.mUnk_64, rec->mUnk_04 * data_020c5e44.mUnk_000.mUnk_64,
+                 rec->mUnk_03 * data_020c5e44.mUnk_000.mUnk_64);
+        reg_G3X_BEGIN_VTXS = 0;
+        reg_G3X_END_VTXS = 0;
+        reg_G3X_BOX_TEST = *(u32 *) &box[0];
+        reg_G3X_BOX_TEST = b1;
+        reg_G3X_BOX_TEST = b2;
+        while (G3X_GetBoxTestResult(&result) != 0) {
+        }
+        if (result != 0 && rec->mUnk_12 > 1) {
+            data_020c5e44.mUnk_000.mUnk_2c[data_020c5e44.mUnk_000.mUnk_30++] = &rec->mUnk_13;
+        }
+        if (result == 0 && data_020c3e44.mUnk_36 != 0) {
+            continue;
+        }
+        if (result != 0) {
+            u32 k = func_02032368(rec->mUnk_00, px, pz, rec->mUnk_02, rec->mUnk_03);
+
+            data_020c3e44.mUnk_2c[data_020c3e44.mUnk_36].mUnk_04 = px;
+            data_020c3e44.mUnk_2c[data_020c3e44.mUnk_36].mUnk_08 = pz;
+            data_020c3e44.mUnk_2c[data_020c3e44.mUnk_36].mUnk_00 =
+                data_020c5e44.mUnk_000.mUnk_7c - 1 + func_0203249c(k);
+            data_020c3e44.mUnk_36++;
+            if (data_020c3e44.mUnk_36 >= 0x180) {
+                OS_Terminate();
+            }
+        }
+        p = (u16 *) rec + (rec->mUnk_12 - 1);
+        for (i = 0; i < listlen; i++, p++) {
+            u16 c = p[10] & mask;
+            u32 bit;
+
+            if (c & 0x8000) {
+                continue;
+            }
+            if (c == 0) {
+                OS_Terminate();
+            }
+            if (c > 0x3ff) {
+                OS_Terminate();
+            }
+            bit = 1 << (c & 0x1f);
+            if (data_020c3e44.mUnk_24[c >> 5] & bit) {
+                continue;
+            }
+            data_020c3e44.mUnk_24[c >> 5] |= bit;
+            list[n] = c;
+            n = (u8) (n + 1);
+            if (n == m) {
+                OS_Terminate();
+            }
+        }
+        mask = 0xffff;
+    }
+}
+
+// Moves the camera's target and position a step (1 / 2^mUnk_bc of the way) towards their goals and redraws the
+// projection.
+void func_02033488(void) {
+    u8 s = data_020c5e44.mUnk_000.mUnk_bc;
+
+    data_020c5e44.mUnk_000.mUnk_98.x += (data_020c5e44.mUnk_000.mUnk_b0.x - data_020c5e44.mUnk_000.mUnk_98.x) >> s;
+    data_020c5e44.mUnk_000.mUnk_98.y += (data_020c5e44.mUnk_000.mUnk_b0.y - data_020c5e44.mUnk_000.mUnk_98.y) >> s;
+    data_020c5e44.mUnk_000.mUnk_98.z += (data_020c5e44.mUnk_000.mUnk_b0.z - data_020c5e44.mUnk_000.mUnk_98.z) >> s;
+    data_020c5e44.mUnk_000.mUnk_80.x += (data_020c5e44.mUnk_000.mUnk_a4.x - data_020c5e44.mUnk_000.mUnk_80.x) >> s;
+    data_020c5e44.mUnk_000.mUnk_80.y += (data_020c5e44.mUnk_000.mUnk_a4.y - data_020c5e44.mUnk_000.mUnk_80.y) >> s;
+    data_020c5e44.mUnk_000.mUnk_80.z += (data_020c5e44.mUnk_000.mUnk_a4.z - data_020c5e44.mUnk_000.mUnk_80.z) >> s;
+    func_02033b8c();
+    func_02033520();
+}
+
+// The camera's field of view angle.
+u16 func_020334ec(void) {
+    return data_020c5e44.mUnk_300.mUnk_14;
+}
+
+// Sets the projection with the far distance scaled by 8 when a is 1, then restores it.
+void func_020334f8(int a) {
+    s32 saved = data_020c5e44.mUnk_300.mUnk_44;
+    int sh;
+
+    if (a == 1) {
+        sh = 3;
+    } else {
+        sh = 0;
+    }
+    data_020c5e44.mUnk_300.mUnk_44 <<= sh;
+    func_02033520();
+    data_020c5e44.mUnk_300.mUnk_44 = saved;
+}
+
+// Sets up the projection (from the field of view angle and the far distance) and the view matrix from the camera
+// position and target, once a map is loaded, and keeps the view matrix's rotation and the negated translation
+// derived from it.
+void func_02033520(void) {
+    int a = func_020334ec();
+
+    if (data_020c5e44.mUnk_000.mUnk_74 != 0) {
+        int i;
+
+        func_0203cbe0();
+        if (data_020c5e44.mUnk_000.mUnk_80.x == data_020c5e44.mUnk_000.mUnk_98.x &&
+            data_020c5e44.mUnk_000.mUnk_80.y == data_020c5e44.mUnk_000.mUnk_98.y &&
+            data_020c5e44.mUnk_000.mUnk_80.z == data_020c5e44.mUnk_000.mUnk_98.z) {
+            data_020c5e44.mUnk_000.mUnk_80.y += 0xc800;
+        }
+        i = (a >> 4) * 2;
+        func_0203d030(FX_SinCosTable_[i], FX_SinCosTable_[i + 1], 0x1555, 0x400, data_020c5e44.mUnk_300.mUnk_44, 0x1000,
+                      1, &data_020c3ee0);
+        *(vu32 *) 0x040004c8 = 0x20000000;
+        func_0203d0f0(&data_020c5e44.mUnk_000.mUnk_80, (VecFx32 *) &data_020c5e44.mUnk_000.mUnk_8c,
+                      &data_020c5e44.mUnk_000.mUnk_98, 1, &data_020c3e80);
+        func_0203b8bc((MtxFx33 *) &data_020c3e80, (MtxFx33 *) &data_020c3eb0);
+        func_0203b9b0((VecFx32 *) &data_020c3e80._[9], (MtxFx33 *) &data_020c3eb0, &data_020c3e44.mUnk_90);
+        data_020c3e44.mUnk_90.x = -data_020c3e44.mUnk_90.x;
+        data_020c3e44.mUnk_90.y = -data_020c3e44.mUnk_90.y;
+        data_020c3e44.mUnk_90.z = -data_020c3e44.mUnk_90.z;
+        reg_G3X_MTX_MODE = 2;
+        data_020c5e44.mUnk_300.mUnk_4a = 0;
+    }
 }
