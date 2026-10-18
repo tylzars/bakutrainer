@@ -5,6 +5,7 @@
 #include <Main/Unknown/random_angle.h>
 #include <Main/Unknown/system_init.h>
 #include <Main/Unknown/save_blocks.h>
+#include <Main/Unknown/text_draw.h>
 #include <Main/clib.h>
 #include <nitro/os.h>
 #include <nitro/math.h>

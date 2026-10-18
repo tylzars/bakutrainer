@@ -381,6 +381,11 @@ src/Main/Unknown/random_angle.c:
 src/Main/Unknown/mic_input.c:
     .text       start:0x02020ff4 end:0x02021498
 
+// provisional: the message functions from 0x02021e94 use this file's readers and follow with no gap; gx_pool.c
+// starts at 0x02021fb0
+src/Main/Unknown/text_draw.c:
+    .text       start:0x02021498 end:0x02021fb0
+
 // provisional: may include random_angle.c's func_0201fed4/ff80/ffa0 (same SystemState block fields)
 src/Main/Unknown/save_blocks.c:
     .text       start:0x0201ffd4 end:0x02020878

@@ -15,6 +15,7 @@
 #include <Main/Unknown/field_objects.h>
 #include <stdio.h>
 #include <Main/Unknown/mode_select.h>
+#include <Main/Unknown/text_draw.h>
 
 s32 func_02005c10(int a, int b) {
     return func_02021e44(0xda0, b + a * 7);

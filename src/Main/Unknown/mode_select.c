@@ -9,6 +9,7 @@
 #include <Main/Unknown/globals.h>
 #include <Main/Unknown/mode_select.h>
 #include <Main/Unknown/field_objects.h>
+#include <Main/Unknown/text_draw.h>
 #include <stdio.h>
 
 u32 data_0206391c = 1800;

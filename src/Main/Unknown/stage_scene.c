@@ -12,6 +12,7 @@
 #include <Main/Unknown/move_object.h>
 #include <Main/Unknown/stage_scene.h>
 #include <Main/Unknown/sprite_slots.h>
+#include <Main/Unknown/text_draw.h>
 #include <Main/clib.h>
 #include <nitro/fx.h>
 #include <nitro/gx.h>

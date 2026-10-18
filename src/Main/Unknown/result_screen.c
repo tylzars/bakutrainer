@@ -12,6 +12,7 @@
 #include <Main/Unknown/globals.h>
 #include <Main/Unknown/result_screen.h>
 #include <Main/Unknown/mode_select.h>
+#include <Main/Unknown/text_draw.h>
 #include <stdio.h>
 #include <stdlib.h>
 

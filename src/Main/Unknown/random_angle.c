@@ -5,6 +5,7 @@
 #include <nitro/fx.h>
 #include <nitro/os.h>
 #include <Main/Unknown/screen_fade.h>
+#include <Main/Unknown/text_draw.h>
 
 #define ANGLE_HALF 0x8000
 #define ANGLE_FULL 0x10000

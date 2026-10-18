@@ -8,6 +8,7 @@
 #include <Main/Unknown/sound_control.h>
 #include <Main/Unknown/globals.h>
 #include <Main/Unknown/language_menu.h>
+#include <Main/Unknown/text_draw.h>
 #include <Main/clib.h>
 #include <nitro/os.h>
 #include <stdio.h>

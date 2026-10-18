@@ -13,6 +13,7 @@
 #include <Main/Unknown/sprite_slots.h>
 #include <Main/Unknown/slide_transition.h>
 #include <Main/Unknown/game_util.h>
+#include <Main/Unknown/text_draw.h>
 #include <nitro/os.h>
 #include <stdio.h>
 

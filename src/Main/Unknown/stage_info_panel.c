@@ -15,6 +15,7 @@
 #include <Main/Unknown/globals.h>
 #include <Main/Unknown/stage_data.h>
 #include <Main/Unknown/stage_info_panel.h>
+#include <Main/Unknown/text_draw.h>
 
 #define GAUGE_MAX 0x31
 

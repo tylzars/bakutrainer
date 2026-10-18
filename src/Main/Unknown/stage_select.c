@@ -19,6 +19,7 @@
 #include <Main/Unknown/stage_data.h>
 #include <Main/Unknown/stage_info_panel.h>
 #include <Main/Unknown/stage_select.h>
+#include <Main/Unknown/text_draw.h>
 
 #define TABLE_ENTRY_COUNT 100
 

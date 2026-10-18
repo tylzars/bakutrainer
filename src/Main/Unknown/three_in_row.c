@@ -9,6 +9,7 @@
 #include <Main/Unknown/globals.h>
 #include <Main/Unknown/prompt_screen.h>
 #include <Main/Unknown/three_in_row.h>
+#include <Main/Unknown/text_draw.h>
 
 u8 data_020b13c8[SHAPE_COUNT];
 Unk_020b13d4 data_020b13d4;
