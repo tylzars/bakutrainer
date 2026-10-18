@@ -6,6 +6,19 @@
 extern "C" {
 #endif
 
+// The link's message state and its 32-byte aligned buffers.
+typedef struct StateC {
+    u16 mUnk_0;
+    u16 mUnk_2;
+    u16 *mUnk_4;
+    u8 *mUnk_8;
+} StateC;
+extern StateC data_020c66d4;
+extern u8 data_020c67e0[] __attribute__((aligned(32)));
+extern u8 data_020c68e0[] __attribute__((aligned(32)));
+extern u32 data_020c66e0[] __attribute__((aligned(32)));
+extern u8 data_020c6720[] __attribute__((aligned(32)));
+
 // State block of the link; the halfword at 0x0c is written by func_020350e8 and returned by func_020350f8.
 typedef struct Unk_020c6adc {
     u8 mUnk_00[0xc];

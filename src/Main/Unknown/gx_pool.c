@@ -1,10 +1,9 @@
-#include <Main/Unknown/globals.h>
-#include <Main/Unknown/functions.h>
 #include <Main/Unknown/bg_image.h>
 #include <Main/Unknown/system_init.h>
 #include <Main/Unknown/file_stream.h>
 #include <Main/Unknown/map_entries.h>
 #include <Main/Unknown/file_loader.h>
+#include <Main/Unknown/gx_pool.h>
 #include <nitro/gx.h>
 #include <nitro/mi.h>
 #include <nitro/os.h>

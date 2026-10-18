@@ -1,7 +1,6 @@
 #include <nitro/os.h>
 #include <nitro/gx.h>
 #include <stdlib.h>
-#include <Main/Unknown/functions.h>
 #include <Main/Unknown/random_angle.h>
 #include <Main/Unknown/game_math.h>
 #include <Main/Unknown/system_init.h>
@@ -11,7 +10,6 @@
 #include <Main/Unknown/sprite_slots.h>
 #include <Main/Unknown/prompt_screen.h>
 #include <Main/Unknown/sound_control.h>
-#include <Main/Unknown/globals.h>
 #include <Main/Unknown/field_objects.h>
 #include <stdio.h>
 #include <Main/Unknown/mode_select.h>
@@ -19,6 +17,11 @@
 #include <Main/Unknown/model.h>
 #include <Main/Unknown/wave_player.h>
 #include <Main/Unknown/map_entries.h>
+#include <Main/Unknown/script_data.h>
+#include <Main/Unknown/state_flow.h>
+
+extern const u16 data_0204e138[];
+extern const u32 data_0204e144[];
 
 s32 func_02005c10(int a, int b) {
     return func_02021e44(0xda0, b + a * 7);

@@ -1,4 +1,3 @@
-#include <Main/Unknown/functions.h>
 #include <Main/Unknown/screen_fade.h>
 #include <Main/Unknown/stage_progress.h>
 #include <Main/Unknown/stage_select.h>
@@ -9,15 +8,20 @@
 #include <Main/Unknown/sound_control.h>
 #include <Main/Unknown/language_menu.h>
 #include <Main/Unknown/state_flow.h>
-#include <Main/Unknown/globals.h>
 #include <Main/Unknown/result_screen.h>
 #include <Main/Unknown/mode_select.h>
 #include <Main/Unknown/text_draw.h>
 #include <Main/Unknown/model.h>
 #include <Main/Unknown/texture_blocks.h>
 #include <Main/Unknown/sprite_script.h>
+#include <Main/Unknown/script_data.h>
+#include <Main/Unknown/touch_buttons.h>
+#include <Main/Unknown/system_init.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+extern const u32 data_0204e0cc[];
+extern const u32 data_0204e0d4[];
 
 void func_0200494c(void) {
     func_02014bf0();

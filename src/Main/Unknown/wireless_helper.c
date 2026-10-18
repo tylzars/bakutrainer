@@ -3,7 +3,6 @@
 #include <nitro/wm.h>
 #include <nitro/fx.h>
 #include <Main/clib.h>
-#include <Main/Unknown/globals.h>
 #include <Main/Unknown/texture_blocks.h>
 #include <Main/Unknown/screen_fade.h>
 #include <Main/Unknown/comm_link.h>

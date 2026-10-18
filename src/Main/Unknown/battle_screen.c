@@ -1,5 +1,4 @@
 #include <Main/Unknown/battle_screen.h>
-#include <Main/Unknown/functions.h>
 #include <Main/Unknown/touch_buttons.h>
 #include <Main/Unknown/save_blocks.h>
 #include <Main/Unknown/random_angle.h>
@@ -10,7 +9,6 @@
 #include <Main/Unknown/stage_select.h>
 #include <stdio.h>
 #include <Main/Unknown/game_util.h>
-#include <Main/Unknown/globals.h>
 #include <Main/Unknown/language_menu.h>
 #include <Main/Unknown/prompt_screen.h>
 #include <Main/Unknown/sound_control.h>
@@ -22,6 +20,9 @@
 #include <Main/Unknown/wave_player.h>
 #include <Main/Unknown/sprite_script.h>
 #include <Main/Unknown/map_entries.h>
+#include <Main/Unknown/script_data.h>
+#include <Main/Unknown/system_init.h>
+#include <Main/Unknown/gx_pool.h>
 #include <Main/clib.h>
 #include <nitro/fx.h>
 #include <nitro/os.h>

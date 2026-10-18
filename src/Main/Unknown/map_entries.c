@@ -1,7 +1,6 @@
 #include <nitro/os.h>
 #include <nitro/gx.h>
 #include <nitro/mi.h>
-#include <Main/Unknown/functions.h>
 #include <Main/Unknown/map_entries.h>
 #include <Main/Unknown/random_angle.h>
 #include <Main/Unknown/engine_asm.h>
@@ -11,6 +10,7 @@
 #include <Main/Unknown/model.h>
 #include <Main/Unknown/vram_cache.h>
 #include <Main/Unknown/align_util.h>
+#include <Main/Unknown/file_loader.h>
 #include <Main/clib.h>
 
 // The stage data file starts with MAP_FILE_MAGIC and MAP_FILE_VERSION, followed by chunks of 16 * n bytes whose

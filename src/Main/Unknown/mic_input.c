@@ -1,5 +1,3 @@
-#include <Main/Unknown/functions.h>
-#include <Main/Unknown/globals.h>
 #include <Main/Unknown/mic_input.h>
 #include <Main/Unknown/game_math.h>
 #include <Main/Unknown/system_init.h>

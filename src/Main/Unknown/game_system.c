@@ -1,7 +1,5 @@
 #include <nitro/os.h>
 #include <Main/Unknown/state_flow.h>
-#include <Main/Unknown/globals.h>
-#include <Main/Unknown/functions.h>
 #include <Main/Unknown/touch_buttons.h>
 #include <Main/Unknown/save_blocks.h>
 #include <Main/Unknown/mic_input.h>
@@ -26,9 +24,36 @@
 #include <Main/Unknown/wave_player.h>
 #include <Main/Unknown/tracker_player.h>
 #include <Main/Unknown/map_entries.h>
+#include <Main/Unknown/script_data.h>
+#include <Main/Unknown/gx_pool.h>
 #include <Main/clib.h>
 
+// Rows of 16 bytes (0x49 of them); the first word is passed on by func_0201033c.
+typedef struct Unk_0204e96c {
+    s32 mUnk_00;
+    s32 mUnk_04;
+    s32 mUnk_08;
+    s32 mUnk_0c;
+} Unk_0204e96c;
+extern const Unk_0204e96c data_0204e96c[];
+
 // Objects of this file: save menu, settings, sound control, prompt, main loop and model viewer state.
+// State of the save and load menu: the selection depth and the page toggle.
+typedef struct Unk_020b1078 {
+    s32 mUnk_00;
+    s32 mUnk_04;
+    s32 mUnk_08;
+} Unk_020b1078;
+
+// The model viewer's state: the model, the index of the model shown, its rotation and a toggle.
+typedef struct Unk_020b122c {
+    Model mModel;
+    s32 mUnk_178;
+    u16 mUnk_17c;
+    u8 mUnk_17e[2];
+    s32 mUnk_180;
+} Unk_020b122c;
+
 Unk_020b1078 data_020b1078;
 Unk_020b1084 data_020b1084;
 s32 data_020b1094[8];

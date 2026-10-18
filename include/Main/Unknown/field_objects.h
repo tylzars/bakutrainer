@@ -1,7 +1,6 @@
 #pragma once
 
 #include "types.h"
-#include <Main/Unknown/globals.h>
 #include <Main/Unknown/stage_data.h>
 
 #ifdef __cplusplus

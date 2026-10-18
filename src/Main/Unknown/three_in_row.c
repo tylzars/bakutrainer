@@ -1,17 +1,16 @@
 #include <nitro/os.h>
 #include <Main/clib.h>
-#include <Main/Unknown/functions.h>
 #include <Main/Unknown/save_blocks.h>
 #include <Main/Unknown/random_angle.h>
 #include <Main/Unknown/screen_fade.h>
 #include <Main/Unknown/system_init.h>
 #include <Main/Unknown/bg_image.h>
-#include <Main/Unknown/globals.h>
 #include <Main/Unknown/prompt_screen.h>
 #include <Main/Unknown/three_in_row.h>
 #include <Main/Unknown/text_draw.h>
 #include <Main/Unknown/texture_blocks.h>
 #include <Main/Unknown/sprite_script.h>
+#include <Main/Unknown/script_data.h>
 
 u8 data_020b13c8[SHAPE_COUNT];
 Unk_020b13d4 data_020b13d4;

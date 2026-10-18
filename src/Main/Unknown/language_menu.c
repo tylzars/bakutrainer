@@ -1,4 +1,3 @@
-#include <Main/Unknown/functions.h>
 #include <Main/Unknown/touch_buttons.h>
 #include <Main/Unknown/game_math.h>
 #include <Main/Unknown/bg_image.h>
@@ -6,16 +5,25 @@
 #include <Main/Unknown/state_flow.h>
 #include <Main/Unknown/prompt_screen.h>
 #include <Main/Unknown/sound_control.h>
-#include <Main/Unknown/globals.h>
 #include <Main/Unknown/language_menu.h>
 #include <Main/Unknown/text_draw.h>
 #include <Main/Unknown/script_records.h>
 #include <Main/Unknown/model.h>
 #include <Main/Unknown/texture_blocks.h>
 #include <Main/Unknown/wave_player.h>
+#include <Main/Unknown/script_data.h>
+#include <Main/Unknown/system_init.h>
 #include <Main/clib.h>
 #include <nitro/os.h>
 #include <stdio.h>
+
+typedef struct Unk_0204e378 {
+    s32 mUnk_00;
+    s32 mUnk_04;
+    s32 mUnk_08;
+    s32 mUnk_0c;
+} Unk_0204e378;
+extern const Unk_0204e378 data_0204e378[];
 
 Unk_020ae6ec data_020ae6ec;
 LangMenu data_020ae870;

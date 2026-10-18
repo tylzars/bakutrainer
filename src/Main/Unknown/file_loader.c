@@ -1,5 +1,3 @@
-#include <Main/Unknown/functions.h>
-#include <Main/Unknown/globals.h>
 #include <Main/Unknown/system_init.h>
 #include <Main/Unknown/file_stream.h>
 #include <Main/Unknown/engine_asm.h>

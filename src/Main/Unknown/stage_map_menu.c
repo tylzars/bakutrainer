@@ -7,13 +7,11 @@
 #include <nitro/snd.h>
 #include <nitro/tp.h>
 #include <stdio.h>
-#include <Main/Unknown/functions.h>
 #include <Main/Unknown/save_blocks.h>
 #include <Main/Unknown/screen_fade.h>
 #include <Main/Unknown/bg_image.h>
 #include <Main/Unknown/system_init.h>
 #include <Main/Unknown/game_util.h>
-#include <Main/Unknown/globals.h>
 #include <Main/Unknown/prompt_screen.h>
 #include <Main/Unknown/stage_camera.h>
 #include <Main/Unknown/stage_select.h>
@@ -26,6 +24,7 @@
 #include <Main/Unknown/sprite_script.h>
 #include <Main/Unknown/map_entries.h>
 #include <Main/Unknown/map_floor.h>
+#include <Main/Unknown/script_data.h>
 
 void func_02019fa0(void) {
     static int prevSel = -1;

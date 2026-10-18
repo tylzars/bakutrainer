@@ -1,9 +1,8 @@
 #include <Main/Unknown/touch_buttons.h>
-#include <Main/Unknown/functions.h>
-#include <Main/Unknown/globals.h>
 #include <Main/Unknown/random_angle.h>
 #include <Main/Unknown/texture_blocks.h>
 #include <Main/Unknown/wave_player.h>
+#include <Main/Unknown/system_init.h>
 #include <nitro/mi.h>
 #include <nitro/os.h>
 

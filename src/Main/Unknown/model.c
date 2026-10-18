@@ -5,10 +5,8 @@
 #include <nitro/os.h>
 #include <Main/clib.h>
 #include <Main/Unknown/angle_blend.h>
-#include <Main/Unknown/functions.h>
 #include <Main/Unknown/game_math.h>
 #include <Main/Unknown/game_util.h>
-#include <Main/Unknown/globals.h>
 #include <Main/Unknown/model.h>
 #include <Main/Unknown/move_object.h>
 #include <Main/Unknown/random_angle.h>
@@ -19,6 +17,11 @@
 #include <Main/Unknown/file_loader.h>
 #include <Main/Unknown/map_entries.h>
 #include <Main/Unknown/align_util.h>
+
+// Matrices of the model code: the working matrix and the matrix of each pose node (0xc00
+// bytes up to the next object).
+extern MtxFx43 data_020c31ac;
+extern MtxFx43 data_020c3244[64];
 
 typedef struct Unk_PoseChannel {
     u16 mUnk_0;

@@ -6,6 +6,50 @@
 extern "C" {
 #endif
 
+// A point of the touch trail (two bytes) that func_02020e3c appends (see Unk_020c2560).
+typedef struct Unk_TouchPoint {
+    u8 mUnk_0;
+    u8 mUnk_1;
+} Unk_TouchPoint;
+
+typedef struct Unk_TouchButton {
+    s16 mUnk_0;
+    s16 mUnk_2;
+    s16 mUnk_4;
+    s16 mUnk_6;
+    u16 mUnk_8;
+    u16 mUnk_a;
+    u16 mUnk_c;
+    u16 mUnk_e;
+} Unk_TouchButton;
+
+typedef struct Unk_020c1d60 {
+    Unk_TouchButton mUnk_000[0x80];
+} Unk_020c1d60;
+extern Unk_020c1d60 data_020c1d60;
+
+// The touch state that follows the trail.
+typedef struct Unk_020c2660 {
+    u8 mUnk_00[4];
+    u32 mUnk_04;
+    u32 mUnk_08;
+    u32 mUnk_0c;
+    u16 mUnk_10;
+    u16 mUnk_12;
+    u8 mUnk_14;
+    u8 mUnk_15;
+    u16 mUnk_16;
+    u8 mUnk_18;
+} Unk_020c2660;
+
+// The touch trail (the points func_02020e3c appends; their count is mUnk_100.mUnk_10, wrapping at 0x80) and the
+// touch state that follows it form one object.
+typedef struct Unk_020c2560 {
+    Unk_TouchPoint mUnk_000[0x80];
+    Unk_020c2660 mUnk_100;
+} Unk_020c2560;
+extern Unk_020c2560 data_020c2560;
+
 int func_02020878(void);
 int func_02020890(void);
 void func_020208dc(int flags, u16 a, u16 b, u16 c);

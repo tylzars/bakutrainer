@@ -1,6 +1,6 @@
 #include <nitro/os.h>
+#include <nitro/snd.h>
 #include <stdio.h>
-#include <Main/Unknown/functions.h>
 #include <Main/Unknown/touch_buttons.h>
 #include <Main/Unknown/mic_input.h>
 #include <Main/Unknown/random_angle.h>
@@ -12,7 +12,6 @@
 #include <Main/Unknown/sprite_slots.h>
 #include <Main/Unknown/mode_select.h>
 #include <Main/Unknown/state_flow.h>
-#include <Main/Unknown/globals.h>
 #include <Main/Unknown/stage_data.h>
 #include <Main/Unknown/stage_info_panel.h>
 #include <Main/Unknown/text_draw.h>
@@ -20,6 +19,8 @@
 #include <Main/Unknown/texture_blocks.h>
 #include <Main/Unknown/wave_player.h>
 #include <Main/Unknown/map_floor.h>
+#include <Main/Unknown/script_data.h>
+#include <Main/Unknown/system_init.h>
 
 #define GAUGE_MAX 0x31
 

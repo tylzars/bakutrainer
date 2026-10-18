@@ -1,8 +1,6 @@
 #include <nitro/mi.h>
 #include <nitro/os.h>
 #include <nitro/snd.h>
-#include <Main/Unknown/functions.h>
-#include <Main/Unknown/globals.h>
 #include <Main/Unknown/system_init.h>
 #include <Main/Unknown/file_loader.h>
 #include <Main/Unknown/wave_player.h>

@@ -1,5 +1,4 @@
 #include <nitro/os.h>
-#include <Main/Unknown/functions.h>
 #include <Main/Unknown/bg_image.h>
 #include <Main/Unknown/save_blocks.h>
 #include <Main/Unknown/screen_fade.h>
@@ -11,10 +10,14 @@
 #include <Main/Unknown/save_data.h>
 #include <Main/Unknown/sound_control.h>
 #include <Main/Unknown/state_flow.h>
-#include <Main/Unknown/globals.h>
 #include <Main/Unknown/wave_player.h>
 #include <Main/Unknown/sprite_script.h>
+#include <Main/Unknown/script_data.h>
+#include <Main/Unknown/slide_transition.h>
 #include <nitro/init.h>
+
+extern StateFunc data_0204e8a4[STATE_COUNT];
+extern u8 data_0204e824[STATE_COUNT];
 
 void main(void) {
     GameFlow *flow = &data_020b1194;

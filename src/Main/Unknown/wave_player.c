@@ -2,10 +2,9 @@
 #include <nitro/fs.h>
 #include <nitro/os.h>
 #include <nitro/snd.h>
-#include <Main/Unknown/functions.h>
-#include <Main/Unknown/globals.h>
 #include <Main/Unknown/wave_player.h>
 #include <Main/Unknown/file_loader.h>
+#include <Main/Unknown/system_init.h>
 
 WavePlayer data_020c648c;
 

@@ -2,7 +2,8 @@
 
 #include "types.h"
 #include <nitro/fx.h>
-#include <Main/Unknown/globals.h>
+#include <Main/Unknown/move_object.h>
+#include <Main/Unknown/game_util.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -80,6 +81,149 @@ typedef struct MapMarker {
     s32 mUnk_04;
     s32 mUnk_08;
 } MapMarker;
+
+// A point of a ring of the stage data file's chunk 0x5540 as func_020312b8 unpacks it: x and z, a bottom height
+// (mUnk_08) and a top height (mUnk_0a, 0 when the ring has none).
+typedef struct MapRingPoint {
+    s32 x;
+    s32 z;
+    s16 mUnk_08;
+    s16 mUnk_0a;
+} MapRingPoint;
+
+// An object drawn with a model: the model and its draw parameters.
+typedef struct CameraTarget {
+    Model mModel;
+    DrawParams mDraw;
+} CameraTarget;
+
+// An animation track of the camera: a base position, a timestamp at 0xc, the model id, frame and frame
+// count, and flags.
+typedef struct CameraTrack {
+    VecFx32 mUnk_00;
+    u32 mUnk_0c;
+    u16 mUnk_10;
+    u16 mUnk_12;
+    u16 mUnk_14;
+    u8 mUnk_16_0 : 1;
+    u8 mUnk_16_1 : 1;
+    u8 mUnk_16_2 : 1;
+    u8 mUnk_16_3 : 1;
+    u8 mUnk_16_4 : 1;
+    u8 mUnk_16_5 : 1;
+    u8 mUnk_16_6 : 2;
+} CameraTrack;
+
+// The camera's block at 0x9c. The camera code passes its address to func_0202733c; the scene code keeps a
+// pointer to it and moves the two camera positions at 0x204 and 0x228.
+typedef struct Unk_020c5f04 {
+    Model mModel;
+    DrawParams mDraw;
+    CameraTrack mUnk_1bc;
+    CameraTrack mUnk_1d4;
+    CameraTrack mUnk_1ec;
+    VecFx32 mUnk_204;
+    u8 mUnk_210[0x21c - 0x210];
+    VecFx32 mUnk_21c;
+    VecFx32 mUnk_228;
+    VecFx32 mUnk_234;
+} Unk_020c5f04;
+
+// Camera view settings at 0x2dc of the camera: 0x14/0x16/0x18 are angles, 0x30 and 0x38/0x3c are flags, 0x44
+// a register value, 0x4a the projection set up last, 0x4b/0x4c the polygon alpha and id the model code last wrote.
+typedef struct Unk_020c6144 {
+    VecFx32 mUnk_00;
+    u8 mUnk_0c;
+    u8 mUnk_0d;
+    u8 mUnk_0e;
+    u8 mUnk_0f;
+    u8 mUnk_10;
+    u8 mUnk_11[3];
+    u16 mUnk_14;
+    u16 mUnk_16;
+    u16 mUnk_18;
+    u8 mUnk_1a[2];
+    CameraTarget *mUnk_1c;
+    CameraTarget *mUnk_20;
+    s32 mUnk_24;
+    s32 mUnk_28;
+    s32 mUnk_2c;
+    u16 mUnk_30;
+    u8 mUnk_32;
+    u8 mUnk_33;
+    u8 mUnk_34[0x38 - 0x34];
+    s32 mUnk_38;
+    s32 mUnk_3c;
+    u16 mUnk_40;
+    u8 mUnk_42[2];
+    s32 mUnk_44;
+    u8 mUnk_48[2];
+    u8 mUnk_4a;
+    u8 mUnk_4b;
+    u8 mUnk_4c;
+    u8 mUnk_4d;
+    u8 mUnk_4e;
+    u8 mUnk_4f;
+    u16 *mUnk_50;
+    u16 mUnk_54;
+    u16 mUnk_56;
+    u8 mUnk_58[0x5a - 0x58];
+    u8 mUnk_5a;
+    u8 mUnk_5b;
+    u8 mUnk_5c;
+    u8 mUnk_5d[3];
+    s32 mUnk_60;
+    const u16 *mUnk_64;
+} Unk_020c6144;
+
+// The camera (0x344 bytes at 0x2024 of the map object data_020c3e44): positions, targets, angles and flags, the
+// block at 0x9c and the view settings at 0x2dc. The ARM camera and model code reaches its bytes through the map
+// object + 0x2000 (0x2310 and 0x234a) and its halfwords through the map object + 0x2300 (0x2314..0x2318 and
+// 0x2340..0x2356).
+typedef struct CameraState {
+    u16 mUnk_00;
+    u16 mUnk_02;
+    void (*mUnk_04)();
+    u8 **mUnk_08;
+    u8 mUnk_0c;
+    u8 mUnk_0d[3];
+    u16 *mUnk_10;
+    MapRingPoint mUnk_14;
+    MapRingPoint mUnk_20;
+    MapRingPoint mUnk_2c;
+    u16 mUnk_38;
+    u16 mUnk_3a;
+    u8 mUnk_3c;
+    u8 mUnk_3d;
+    u8 mUnk_3e[2];
+    u32 mUnk_40;
+    u32 mUnk_44;
+    u16 *mUnk_48;
+    u16 *mUnk_4c;
+    u16 mUnk_50;
+    u16 mUnk_52;
+    u16 mUnk_54;
+    u16 mUnk_56;
+    u16 mUnk_58;
+    u8 mUnk_5a;
+    u8 mUnk_5b_0 : 1;
+    u8 mUnk_5b_1 : 1;
+    u8 mUnk_5b_2 : 1;
+    u8 mUnk_5b_3 : 1;
+    u8 mUnk_5b_4 : 1;
+    u8 mUnk_5b_5 : 3;
+    VecFx32 mUnk_5c;
+    s32 mUnk_68;
+    s32 mUnk_6c;
+    s32 mUnk_70;
+    VecFx32 mUnk_74;
+    VecFx32 mUnk_80;
+    VecFx32 mUnk_8c;
+    u8 mUnk_98;
+    u8 mUnk_99[3];
+    Unk_020c5f04 mUnk_9c;
+    Unk_020c6144 mUnk_2dc;
+} CameraState;
 
 // The map object (0x2368 bytes of .bss, up to data_020c61ac): two bit sets, indexed by cell number (mUnk_24) and by
 // position in a rectangle (mUnk_28), the squared distance limits, the sorted pair table with its search step, the

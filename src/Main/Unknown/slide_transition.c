@@ -1,4 +1,3 @@
-#include <Main/Unknown/functions.h>
 #include <Main/Unknown/save_blocks.h>
 #include <Main/Unknown/mic_input.h>
 #include <Main/Unknown/random_angle.h>
@@ -9,7 +8,6 @@
 #include <Main/Unknown/state_flow.h>
 #include <Main/Unknown/prompt_screen.h>
 #include <Main/Unknown/sound_control.h>
-#include <Main/Unknown/globals.h>
 #include <Main/Unknown/sprite_slots.h>
 #include <Main/Unknown/slide_transition.h>
 #include <Main/Unknown/game_util.h>
@@ -17,8 +15,20 @@
 #include <Main/Unknown/model.h>
 #include <Main/Unknown/texture_blocks.h>
 #include <Main/Unknown/wave_player.h>
+#include <Main/Unknown/script_data.h>
+#include <Main/Unknown/touch_buttons.h>
+#include <Main/Unknown/system_init.h>
+#include <Main/Unknown/gx_pool.h>
 #include <nitro/os.h>
 #include <stdio.h>
+
+// The record buffer func_0201ffbc returns.
+typedef struct Unk_RecordBuf {
+    u8 mUnk_00[0x10];
+    s32 mUnk_10;
+    s32 mUnk_14;
+    s32 mUnk_18;
+} Unk_RecordBuf;
 
 #define SLIDE_STEP 0x1e00
 #define SLIDE_STEP_SMALL 0x780

@@ -1,6 +1,4 @@
-#include <Main/Unknown/functions.h>
 #include <Main/Unknown/system_init.h>
-#include <Main/Unknown/globals.h>
 #include <Main/Unknown/screen_fade.h>
 #include <nitro/math.h>
 #include <nitro/os.h>

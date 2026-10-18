@@ -3,8 +3,6 @@
 #include <nitro/mi.h>
 #include <nitro/wm.h>
 #include <Main/clib.h>
-#include <Main/Unknown/functions.h>
-#include <Main/Unknown/globals.h>
 #include <Main/Unknown/comm_link.h>
 #include <Main/Unknown/bg_image.h>
 #include <Main/Unknown/screen_fade.h>
@@ -16,6 +14,7 @@
 #include <Main/Unknown/system_init.h>
 #include <Main/Unknown/file_loader.h>
 #include <Main/Unknown/wireless_helper.h>
+#include <Main/Unknown/gx_pool.h>
 
 // The link keeps COMM_SLOTS received records of COMM_RECORD_SIZE bytes, indexed by slot.
 #define COMM_SLOTS 16

@@ -1,7 +1,5 @@
 #include <Main/clib.h>
-#include <Main/Unknown/functions.h>
 #include <Main/Unknown/system_init.h>
-#include <Main/Unknown/globals.h>
 #include <Main/Unknown/arm_system.h>
 #include <Main/Unknown/comm_link.h>
 #include <Main/Unknown/wireless_helper.h>

@@ -1,4 +1,3 @@
-#include <Main/Unknown/functions.h>
 #include <Main/clib.h>
 #include <Main/Unknown/game_math.h>
 #include <Main/Unknown/engine_asm.h>

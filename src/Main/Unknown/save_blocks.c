@@ -1,7 +1,5 @@
-#include <Main/Unknown/functions.h>
 #include <Main/Unknown/touch_buttons.h>
 #include <Main/Unknown/backup_access.h>
-#include <Main/Unknown/globals.h>
 #include <Main/Unknown/random_angle.h>
 #include <Main/Unknown/system_init.h>
 #include <Main/Unknown/save_blocks.h>

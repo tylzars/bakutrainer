@@ -1,4 +1,3 @@
-#include <Main/Unknown/functions.h>
 #include <Main/Unknown/save_blocks.h>
 #include <Main/Unknown/screen_fade.h>
 #include <Main/Unknown/bg_image.h>
@@ -7,8 +6,8 @@
 #include <Main/Unknown/game_util.h>
 #include <Main/Unknown/sound_control.h>
 #include <Main/Unknown/state_flow.h>
-#include <Main/Unknown/globals.h>
 #include <Main/Unknown/page_viewer.h>
+#include <Main/Unknown/texture_blocks.h>
 
 PageViewState data_02098d74;
 

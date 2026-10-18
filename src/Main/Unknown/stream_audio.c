@@ -7,7 +7,6 @@
 #include <nitro/gx.h>
 #include <nitro/pm.h>
 #include <Main/Unknown/bg_image.h>
-#include <Main/Unknown/globals.h>
 #include <Main/Unknown/screen_fade.h>
 #include <mobiclip.h>
 #pragma thumb off

@@ -1,5 +1,5 @@
 #include <Main/Unknown/backup_access.h>
-#include <Main/Unknown/globals.h>
+#include <Main/Unknown/system_init.h>
 #include <nitro/card.h>
 #include <nitro/os.h>
 

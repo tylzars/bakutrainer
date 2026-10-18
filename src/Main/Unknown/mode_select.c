@@ -1,4 +1,3 @@
-#include <Main/Unknown/functions.h>
 #include <Main/Unknown/random_angle.h>
 #include <Main/Unknown/stage_minigame.h>
 #include <Main/Unknown/stage_info_panel.h>
@@ -6,14 +5,21 @@
 #include <Main/Unknown/stage_scene.h>
 #include <Main/Unknown/prompt_screen.h>
 #include <Main/Unknown/state_flow.h>
-#include <Main/Unknown/globals.h>
 #include <Main/Unknown/mode_select.h>
 #include <Main/Unknown/field_objects.h>
 #include <Main/Unknown/text_draw.h>
 #include <Main/Unknown/model.h>
 #include <Main/Unknown/texture_blocks.h>
 #include <Main/Unknown/wave_player.h>
+#include <Main/Unknown/script_data.h>
+#include <Main/Unknown/system_init.h>
 #include <stdio.h>
+
+extern const u32 data_0204e0e8[];
+extern const u32 data_0204e0f0[];
+extern const s32 data_0204e0fc[];
+extern const s32 data_0204e110[];
+extern const s32 data_0204e124[];
 
 u32 data_0206391c = 1800;
 

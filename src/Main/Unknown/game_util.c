@@ -1,15 +1,15 @@
-#include <Main/Unknown/functions.h>
 #include <Main/Unknown/touch_buttons.h>
 #include <Main/Unknown/random_angle.h>
 #include <Main/Unknown/game_math.h>
 #include <Main/Unknown/state_flow.h>
 #include <Main/Unknown/game_util.h>
-#include <Main/Unknown/globals.h>
 #include <Main/Unknown/text_draw.h>
 #include <Main/Unknown/model.h>
 #include <Main/Unknown/wave_player.h>
 #include <Main/Unknown/sprite_script.h>
 #include <Main/Unknown/map_entries.h>
+#include <Main/Unknown/script_data.h>
+#include <Main/Unknown/system_init.h>
 #include <Main/clib.h>
 #include <nitro/fx.h>
 #include <nitro/gx.h>

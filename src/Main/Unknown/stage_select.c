@@ -1,6 +1,5 @@
 #include <nitro/os.h>
 #include <Main/clib.h>
-#include <Main/Unknown/functions.h>
 #include <Main/Unknown/touch_buttons.h>
 #include <Main/Unknown/save_blocks.h>
 #include <Main/Unknown/screen_fade.h>
@@ -15,7 +14,6 @@
 #include <Main/Unknown/battle_screen.h>
 #include <Main/Unknown/prompt_screen.h>
 #include <Main/Unknown/language_menu.h>
-#include <Main/Unknown/globals.h>
 #include <Main/Unknown/stage_data.h>
 #include <Main/Unknown/stage_info_panel.h>
 #include <Main/Unknown/stage_select.h>
@@ -25,6 +23,8 @@
 #include <Main/Unknown/wave_player.h>
 #include <Main/Unknown/sprite_script.h>
 #include <Main/Unknown/map_entries.h>
+#include <Main/Unknown/script_data.h>
+#include <Main/Unknown/gx_pool.h>
 
 #define TABLE_ENTRY_COUNT 100
 

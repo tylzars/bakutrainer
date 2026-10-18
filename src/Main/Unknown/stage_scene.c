@@ -1,4 +1,3 @@
-#include <Main/Unknown/functions.h>
 #include <Main/Unknown/touch_buttons.h>
 #include <Main/Unknown/random_angle.h>
 #include <Main/Unknown/screen_fade.h>
@@ -7,7 +6,6 @@
 #include <Main/Unknown/stage_info_panel.h>
 #include <Main/Unknown/sound_control.h>
 #include <Main/Unknown/game_util.h>
-#include <Main/Unknown/globals.h>
 #include <Main/Unknown/mode_select.h>
 #include <Main/Unknown/move_object.h>
 #include <Main/Unknown/stage_scene.h>
@@ -17,6 +15,9 @@
 #include <Main/Unknown/wave_player.h>
 #include <Main/Unknown/sprite_script.h>
 #include <Main/Unknown/map_entries.h>
+#include <Main/Unknown/script_data.h>
+#include <Main/Unknown/state_flow.h>
+#include <Main/Unknown/gx_pool.h>
 #include <Main/clib.h>
 #include <nitro/fx.h>
 #include <nitro/gx.h>

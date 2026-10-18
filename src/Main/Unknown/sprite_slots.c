@@ -1,10 +1,8 @@
 #include <Main/clib.h>
 #include <nitro/os.h>
-#include <Main/Unknown/functions.h>
 #include <Main/Unknown/screen_fade.h>
 #include <Main/Unknown/game_math.h>
 #include <Main/Unknown/system_init.h>
-#include <Main/Unknown/globals.h>
 #include <Main/Unknown/sprite_slots.h>
 #include <Main/Unknown/text_draw.h>
 #include <Main/Unknown/model.h>
@@ -12,6 +10,7 @@
 #include <Main/Unknown/texture_blocks.h>
 #include <Main/Unknown/stream_audio.h>
 #include <Main/Unknown/sprite_script.h>
+#include <Main/Unknown/script_data.h>
 
 void func_0200d6c8(void) {
     u32 i;

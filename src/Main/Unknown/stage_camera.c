@@ -1,7 +1,6 @@
 #include <nitro/os.h>
 #include <stdio.h>
 #include <Main/clib.h>
-#include <Main/Unknown/functions.h>
 #include <Main/Unknown/save_blocks.h>
 #include <Main/Unknown/random_angle.h>
 #include <Main/Unknown/screen_fade.h>
@@ -13,7 +12,6 @@
 #include <nitro/mi.h>
 #include <Main/Unknown/prompt_screen.h>
 #include <Main/Unknown/sound_control.h>
-#include <Main/Unknown/globals.h>
 #include <Main/Unknown/game_util.h>
 #include <Main/Unknown/stage_data.h>
 #include <Main/Unknown/stage_camera.h>
@@ -30,6 +28,10 @@
 #include <Main/Unknown/file_loader.h>
 #include <Main/Unknown/map_entries.h>
 #include <Main/Unknown/map_floor.h>
+#include <Main/Unknown/script_data.h>
+#include <Main/Unknown/touch_buttons.h>
+#include <Main/Unknown/system_init.h>
+#include <Main/Unknown/gx_pool.h>
 
 void func_02015d4c(void) {
     data_020b6ee0.mUnk_a146 = 0;

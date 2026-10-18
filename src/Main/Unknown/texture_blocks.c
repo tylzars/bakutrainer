@@ -1,8 +1,6 @@
 #include <Main/clib.h>
-#include <Main/Unknown/globals.h>
 #include <Main/Unknown/system_init.h>
 #include <Main/Unknown/bg_image.h>
-#include <Main/Unknown/functions.h>
 #include <Main/Unknown/vram_cache.h>
 #include <Main/Unknown/model.h>
 #include <nitro/fx.h>
@@ -12,6 +10,7 @@
 #include <Main/Unknown/screen_fade.h>
 #include <Main/Unknown/texture_blocks.h>
 #include <Main/Unknown/file_loader.h>
+#include <Main/Unknown/wireless_helper.h>
 
 // Block counts by texture size code, used by func_0202b32c.
 const u16 data_02050978[16] = {

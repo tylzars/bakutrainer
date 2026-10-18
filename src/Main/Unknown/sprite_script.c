@@ -1,8 +1,8 @@
 #include <nitro/mi.h>
-#include <Main/Unknown/globals.h>
 #include <Main/Unknown/falling_blocks.h>
 #include <Main/Unknown/texture_blocks.h>
 #include <Main/Unknown/sprite_script.h>
+#include <Main/Unknown/system_init.h>
 
 // Commands of a sprite script: a 16-bit word above 0xfff0 is a command, any other word is a frame to show.
 #define SPRITE_CMD_SET_SPEED 0xffff

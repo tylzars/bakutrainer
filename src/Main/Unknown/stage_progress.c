@@ -1,8 +1,6 @@
 #include <nitro/os.h>
-#include <Main/Unknown/functions.h>
 #include <Main/Unknown/random_angle.h>
 #include <Main/Unknown/stage_select.h>
-#include <Main/Unknown/globals.h>
 #include <Main/Unknown/stage_data.h>
 #include <Main/Unknown/state_flow.h>
 #include <Main/Unknown/prompt_screen.h>

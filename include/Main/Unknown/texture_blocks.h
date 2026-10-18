@@ -1,12 +1,28 @@
 #pragma once
 
 #include "types.h"
-#include <Main/Unknown/globals.h>
 #include <Main/Unknown/system_init.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+// Header of one texture block (func_0202ae84 fills it).
+typedef struct TexInfo {
+    u32 mUnk_00;
+    u32 mUnk_04;
+    s16 mUnk_08;
+    s16 mUnk_0a;
+    s16 mUnk_0c;
+    s16 mUnk_0e;
+    u8 mUnk_10;
+    u8 mUnk_11;
+    s8 mUnk_12;
+    u8 mUnk_13;
+    u8 mUnk_14;
+    u8 mUnk_15;
+    u8 mUnk_16[2];
+} TexInfo;
 
 // Width and height in pixels of each texture size code (index = size code, [0] = width, [1] = height).
 extern const u16 data_02050978[16];

@@ -7,12 +7,10 @@
 #include <nitro/snd.h>
 #include <nitro/tp.h>
 #include <stdio.h>
-#include <Main/Unknown/functions.h>
 #include <Main/Unknown/touch_buttons.h>
 #include <Main/Unknown/random_angle.h>
 #include <Main/Unknown/game_math.h>
 #include <Main/Unknown/game_util.h>
-#include <Main/Unknown/globals.h>
 #include <Main/Unknown/prompt_screen.h>
 #include <Main/Unknown/stage_camera.h>
 #include <Main/Unknown/stage_select.h>
@@ -36,6 +34,14 @@
 #include <Main/Unknown/file_loader.h>
 #include <Main/Unknown/tracker_player.h>
 #include <Main/Unknown/comm_link.h>
+#include <Main/Unknown/wireless_helper.h>
+
+// JPEG reader state and the start-up code's arena start (defined at the end of this file).
+extern u8 data_020c1818;
+extern void *data_020c181c;
+extern u8 *data_020c1820;
+extern u32 data_020c1824;
+extern PMCallbackInfo data_020c1828;
 
 #define EZ10_MAGIC 0x30315a45
 #define HW_DISPCNT 0x04000000
