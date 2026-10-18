@@ -4,3 +4,5 @@ BuildInfo
 # original image has it.
 data_02000c04
 data_020011dc
+# Unreferenced routine between the two soft-float files; without it everything after it moves down 8 bytes.
+func_0204cd40

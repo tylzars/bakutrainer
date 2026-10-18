@@ -1530,6 +1530,7 @@ _dmul kind:function(arm,size=0x364) addr:0x0204c3f4
 _drsb kind:function(arm,size=0x18,unknown) addr:0x0204c758
 _dsub kind:function(arm,size=0x3b4) addr:0x0204c770
 _fadd kind:function(arm,size=0x21c) addr:0x0204cb24
+.L_0204cb30 kind:label(arm) addr:0x0204cb30
 func_0204cd40 kind:function(arm,size=0x8) addr:0x0204cd40
 _dls kind:function(arm,size=0x9c) addr:0x0204cd48
 _deq kind:function(arm,size=0x8c) addr:0x0204cde4
@@ -1544,6 +1545,7 @@ _fflt kind:function(arm,size=0x48) addr:0x0204d40c
 _fmul kind:function(arm,size=0x1e0) addr:0x0204d454
 _frsb kind:function(arm,size=0xc,unknown) addr:0x0204d634
 _fsub kind:function(arm,size=0x278) addr:0x0204d640
+.L_0204d64c kind:label(arm) addr:0x0204d64c
 _ll_mod kind:function(arm,size=0x10) addr:0x0204d8b8
 _ll_sdiv kind:function(arm,size=0x1b0) addr:0x0204d8c8
 _ll_udiv kind:function(arm,size=0xc) addr:0x0204da78

@@ -798,3 +798,8 @@ literal-order problems (wrong strings behind masked addresses).
 ## objdiff below 100% with identical code
 
 See 1.15 above for the known causes. The ROM check is the proof; record each such function and its cause here.
+
+| Function | Score | Cause |
+|---|---|---|
+| `BuildInfo`, `data_02000bc4`, `data_02000bec` (build_info.s) | 40% | data objects in `.text`: objdiff compares them as code |
+| `_fdiv` (rt_soft_float_b.s) | 83.87% | its 256-byte reciprocal table sits inside the routine; the assembled object marks it as data (`$d`), the delinked original decodes it as instructions. `dsd delink -M` would emit `$d` there but lowers other units, so it is not used |

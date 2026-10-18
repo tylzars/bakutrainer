@@ -246,6 +246,18 @@ libs/msl/src/msl_fpclassify.c:
 libs/msl/src/alloc.c:
     .text       start:0x0204bfac end:0x0204bfc4
 
+libs/msl/src/rt_soft_float_a.s:
+    .text       start:0x0204bfc4 end:0x0204cd40
+
+libs/msl/src/rt_float_nan.c:
+    .text       start:0x0204cd40 end:0x0204cd48
+
+libs/msl/src/rt_soft_float_b.s:
+    .text       start:0x0204cd48 end:0x0204dae0
+
+libs/msl/src/rt_div32.s:
+    .text       start:0x0204dae0 end:0x0204ded0
+
 libs/msl/src/rt_global_ctors.cpp:
     .text       start:0x0204ded0 end:0x0204df14
 
