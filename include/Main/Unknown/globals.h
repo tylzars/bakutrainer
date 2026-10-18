@@ -47,14 +47,19 @@ extern u8 data_020c68e0[];
 extern u8 data_020c66e0[];
 extern u8 data_020c6720[];
 
-// Main loop state: frame counter, current/previous/requested state numbers.
+// Main loop state: frame counter, current/previous/requested state numbers, the queue of requested states and a
+// table of per-state handler words.
+#define QUEUE_SIZE 0x1c
+#define HANDLER_COUNT 24
 typedef struct GameFlow {
     u32 mFrame;
     u32 mState;
     u32 mPrevState;
     u32 mNextState;
     s32 mUnk_10;
-    u8 mUnk_14[0x94 - 0x14];
+    u32 mQueueCount;
+    u8 mQueue[QUEUE_SIZE];
+    u32 mHandlers[HANDLER_COUNT];
     s32 mUnk_94;
 } GameFlow;
 

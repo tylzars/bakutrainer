@@ -17,13 +17,11 @@ int func_0200b88c(u8 stage);
 int func_0200b928(s32 *p, s32 target, int steps);
 int func_0200b960(VecFx32 *p, VecFx32 target, int steps);
 void func_0200e474(void);
-void func_0200f848(u32 value);
+// Takes two arguments (it reads r0 and r1), but one caller passes only the first and leaves r1 as it is, so the
+// declaration carries no prototype.
+void func_0200f848();
 void func_0200f898(void);
 int func_0200f95c(void);
-const char *func_0200f9f0(int id);
-void func_0200fa24(void);
-void func_0200fa80(int a);
-void func_0200fab0(void);
 void func_0201004c(void);
 void func_020102f8(void);
 void func_0201033c(int a, int b);
@@ -82,6 +80,7 @@ int func_02020978(int id, int x, int y, int a, int b, int c);
 void func_02020e18(u16 a, int b);
 void func_020215fc(int x, int y, const void *font, const char *text, int align, int width, int height, int mode);
 int func_02021e08(u16 id, int index);
+const char *func_02021e18(int block, int id);
 int func_02021e44(u16 id, int index);
 void func_02021fb0(int a, int b, int c, int d);
 void func_020220c8(int a);
