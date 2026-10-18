@@ -44,6 +44,7 @@
 #define reg_G3X_BEGIN_VTXS (*(vu32 *) 0x04000500)
 #define reg_G3X_END_VTXS (*(vu32 *) 0x04000504)
 #define reg_G3X_VIEWPORT (*(vu32 *) 0x04000580)
+#define reg_G3X_BOX_TEST (*(vu32 *) 0x040005c0)
 #define reg_G3X_POS_TEST (*(vu32 *) 0x040005c4)
 #define reg_G3X_GXSTAT (*(vu32 *) 0x04000600)
 

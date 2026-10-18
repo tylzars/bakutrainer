@@ -25,6 +25,7 @@
 #include <Main/Unknown/texture_blocks.h>
 #include <Main/Unknown/wave_player.h>
 #include <Main/Unknown/sprite_script.h>
+#include <Main/Unknown/map_entries.h>
 
 void func_02019fa0(void) {
     static int prevSel = -1;

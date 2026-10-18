@@ -17,6 +17,7 @@
 #include <Main/Unknown/model.h>
 #include <Main/Unknown/wave_player.h>
 #include <Main/Unknown/sprite_script.h>
+#include <Main/Unknown/map_entries.h>
 #include <Main/clib.h>
 #include <nitro/fx.h>
 #include <nitro/gx.h>
