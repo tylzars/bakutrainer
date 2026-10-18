@@ -55,6 +55,15 @@ void func_0202c548(u32 i, Unk_020c2694 *half);
 u32 func_0202c5c0(u32 key, u32 val, Unk_020c2694 *half);
 u32 func_0202c5fc(u32 index, u32 key, u32 val, Unk_020c2694 *half);
 s32 func_0202c778(u16 *keys, int a, u32 n, int engine);
+s32 func_0202ca80(u16 *ids, int flag, u32 count, int mode);
+void func_0202cce0(u32 obj, u32 rec, u8 *out);
+u8 func_0202cdac(int layer);
+u32 func_0202cde4(int angle, int sx, int sy, u32 flags);
+void func_0202cf08(int id, int x, int y, int w, int mode);
+void func_0202cf38(int id, int x, int y, int w, int angle, int sx, int sy, int mode);
+int func_0202d7a0(u32 flags, int index, s32 *out);
+int func_0202d828(int obj, int a, s32 *rect);
+void func_0202d908(int a);
 
 #ifdef __cplusplus
 }

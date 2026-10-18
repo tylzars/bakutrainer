@@ -1,6 +1,7 @@
 #include <Main/Unknown/functions.h>
 #include <Main/Unknown/globals.h>
 #include <Main/Unknown/text_draw.h>
+#include <Main/Unknown/texture_blocks.h>
 #include <nitro/os.h>
 #include <nitro/fx.h>
 

@@ -4,6 +4,7 @@
 #include <Main/Unknown/bg_image.h>
 #include <Main/Unknown/functions.h>
 #include <Main/Unknown/vram_cache.h>
+#include <nitro/fx.h>
 #include <nitro/mi.h>
 #include <nitro/os.h>
 #include <Main/Unknown/engine_asm.h>
@@ -692,6 +693,290 @@ s32 func_0202c778(u16 *keys, int a, u32 n, int engine) {
         half->mUnk_115[idx] = half->mUnk_518[node2].mUnk_6 & 0xf;
     }
     return slot;
+}
+
+#define VRAM_PLTT_BG 0x5000200
+
+// Hardware OAM entry (8 bytes), and a rotation/scale matrix as stored in a half's matrix list.
+typedef struct Oam {
+    u16 mUnk_0;
+    u16 mUnk_2;
+    u16 mUnk_4;
+    u16 mUnk_6;
+} Oam;
+
+typedef struct Mat4 {
+    s16 mUnk_0;
+    s16 mUnk_2;
+    s16 mUnk_4;
+    s16 mUnk_6;
+} Mat4;
+
+// Slot list of a half: the keys of the palettes in VRAM, most recently used first. For count keys (a key below
+// the preloaded block count comes from the list at ids, which advances; any other key is the first key plus its
+// position and is read from the block data) it finds or loads each palette and returns the last slot. With flag
+// 0 the slots are also appended to the half's record, and a record that repeats the run before it is removed again.
+s32 func_0202ca80(u16 *ids, int flag, u32 count, int mode) {
+    Unk_020c2694 *half = &data_020c267c.mUnk_018[mode == 2];
+    int base = half->mUnk_516;
+    int s;
+    u32 i;
+    s32 ret;
+
+    if (flag == 0 && half->mUnk_57b == 1) {
+        ret = func_0202c778(ids, flag, count, mode);
+    } else {
+        for (i = 0; i < count; i++) {
+            u32 key;
+            u32 miss;
+
+            key = *ids;
+            if (key < data_020c267c.mUnk_014) {
+                ids++;
+            } else {
+                key = (u16) (key + i);
+            }
+            miss = 1;
+            for (s = 0; s < 16; s++) {
+                u32 k = half->mUnk_534[s].mUnk_0;
+                if (key == k) {
+                    miss = 0;
+                    break;
+                }
+                if (k == 0xffff) {
+                    break;
+                }
+            }
+            if (s >= count) {
+                u32 keep;
+                u32 *p;
+                if (s >= 15) {
+                    s = 15;
+                }
+                keep = half->mUnk_534[s].mUnk_2 & 0xff;
+                for (p = (u32 *) &half->mUnk_534[s]; s > 0; s--) {
+                    *p = p[-1];
+                    p--;
+                }
+                half->mUnk_534[0].mUnk_2 = keep;
+                s = 0;
+            }
+            half->mUnk_534[s].mUnk_0 = key;
+            if (miss == 1) {
+                u32 pal = (mode == 2) ? 0x400 : 0;
+                if (key < data_020c267c.mUnk_014) {
+                    func_0201c6b0(data_020c267c.mUnk_b24, key * 32, VRAM_PLTT_BG + pal + half->mUnk_534[s].mUnk_2 * 32,
+                                  0x20);
+                } else {
+                    func_0201c6b0(0, (u32) data_020c267c.mUnk_008 + i * 32,
+                                  VRAM_PLTT_BG + pal + half->mUnk_534[s].mUnk_2 * 32, 0x20);
+                }
+            }
+            ret = half->mUnk_534[s].mUnk_2;
+            if (flag == 0) {
+                if (half->mUnk_516 >= 0x400) {
+                    OS_Terminate();
+                }
+                half->mUnk_115[half->mUnk_516++] = ret;
+            }
+        }
+    }
+    if (flag == 0) {
+        int d = half->mUnk_516 - base;
+        if (base >= d) {
+            if (memcmp(&half->mUnk_115[base - d], &half->mUnk_115[base], d) == 0) {
+                half->mUnk_516 = base;
+            }
+        }
+    }
+    return ret;
+}
+
+// Fills out (8 bytes) for a sprite record: the point func_0202d7a0 gives for type 3 (or 0, 0), the record's two
+// 9-bit values, the width and height of its rect and of its size code.
+void func_0202cce0(u32 obj, u32 rec, u8 *out) {
+    s32 pt[2];
+    s32 rect[4];
+
+    func_0202d828(obj, 0, rect);
+    if (func_0202d7a0((u16) obj, 3, pt) == 1) {
+        out[0] = pt[0];
+        out[1] = pt[1];
+    } else {
+        out[1] = 0;
+        out[0] = 0;
+    }
+    out[6] = rect[2] - rect[0] + 1;
+    out[7] = rect[3] - rect[1] + 1;
+    out[2] = rec & 0x1ff;
+    out[3] = (rec << 14) >> 23;
+    out[4] = data_02050998[(rec << 7) >> 28][0];
+    out[5] = data_02050998[(rec << 7) >> 28][1];
+}
+
+// The record count (mUnk_576) of the half for a layer; layer 3 is invalid.
+u8 func_0202cdac(int layer) {
+    if (layer == 3) {
+        OS_Terminate();
+    }
+    return data_020c267c.mUnk_018[(layer & 1) == 0].mUnk_576;
+}
+
+// Finds or appends the matrix for an angle and two scales (16.12 fixed point, as four halfwords) in the half's
+// matrix list and returns its index.
+u32 func_0202cde4(int angle, int sx, int sy, u32 flags) {
+    Unk_020c2694 *half = &data_020c267c.mUnk_018[(flags & 2) != 0];
+    int ix = 0x10000 / sx;
+    int iy = ix;
+    s32 idx;
+    s16 m[4];
+    u32 *p;
+    u32 *w;
+    u32 j;
+
+    if (sx != sy) {
+        iy = 0x10000 / sy;
+    }
+    idx = ((angle << 8) >> 4) << 1;
+    m[0] = (ix * FX_SinCosTable_[idx + 1]) >> 12;
+    m[1] = (ix * FX_SinCosTable_[idx]) >> 12;
+    m[2] = (iy * -FX_SinCosTable_[idx]) >> 12;
+    m[3] = (iy * FX_SinCosTable_[idx + 1]) >> 12;
+    w = (u32 *) m;
+    p = (u32 *) half->mUnk_010;
+    for (j = 0; j < half->mUnk_576; j++) {
+        if (p[0] == w[0] && p[1] == w[1]) {
+            return j;
+        }
+        p += 2;
+    }
+    p[0] = w[0];
+    p[1] = w[1];
+    return ++half->mUnk_576 - 1;
+}
+
+// Draws sprite id at x, y with width w on a layer, unrotated and at full scale (0x100).
+void func_0202cf08(int id, int x, int y, int w, int mode) {
+    func_0202cf38(id, x, y, w, 0, 0x100, 0x100, mode);
+}
+
+// Looks up the point of type index in the object's record and flips it for the flip flags in bits 16 and 17 of
+// flags; returns whether it exists.
+int func_0202d7a0(u32 flags, int index, s32 *out) {
+    u32 *hdr = func_0202adc0(flags);
+    u32 i;
+    u32 count = hdr[0] & 0xff;
+    u32 *rec = hdr + 1;
+
+    for (i = 0; i < count; i++) {
+        s32 w = *rec++;
+        if (index == (w >> 18)) {
+            out[0] = (w << 23) >> 23;
+            out[1] = (w << 14) >> 23;
+            if (flags & 0x10000) {
+                out[0] = -out[0];
+            }
+            if (flags & 0x20000) {
+                out[1] = -out[1];
+            }
+            return 1;
+        }
+    }
+    return 0;
+}
+
+// Looks up the rect of type a in the object's record, flipped for bits 16 and 17 of obj; returns whether it exists.
+int func_0202d828(int obj, int a, s32 *rect) {
+    u32 *hdr = func_0202adc0((u16) obj);
+    u32 i = 0;
+    u32 w = hdr[0];
+    u32 b0 = w & 0xff;
+    u32 *rec = hdr + (b0 + 1);
+    u32 count = (w >> 8) & 0xff;
+
+    for (; i < count; i++) {
+        s32 lo = rec[0];
+        s32 hi = rec[1];
+        rec += 2;
+        if (((lo >> 18) & 0x1f) == a) {
+            s32 t;
+            rect[0] = (lo << 23) >> 23;
+            rect[2] = (hi << 23) >> 23;
+            if (obj & 0x10000) {
+                t = rect[0];
+                rect[0] = -rect[2];
+                rect[2] = -t;
+            }
+            rect[1] = (lo << 14) >> 23;
+            rect[3] = (hi << 14) >> 23;
+            if (obj & 0x20000) {
+                t = rect[1];
+                rect[1] = -rect[3];
+                rect[3] = -t;
+            }
+            return 1;
+        }
+    }
+    return 0;
+}
+
+// Writes a layer's queued sprites into OAM ordered by their sort key, hides the rest, copies the matrices to the
+// OAM parameter slots and empties the queues.
+void func_0202d908(int layer) {
+    int sub = (layer == 2);
+    u32 bit = (layer == 1) ? 1 : 2;
+    u32 other = (layer == 1) ? 0x40000 : 0x80000;
+    Unk_020c2694 *half = &data_020c267c.mUnk_018[sub];
+    Oam *oam;
+    u16 *affine;
+    int n;
+    int i;
+    u8 hist[256];
+
+    if (bit != (data_020c18bc.mUnk_46c & (bit | other))) {
+        return;
+    }
+    n = 0;
+    oam = (layer == 1) ? (Oam *) 0x7000000 : (Oam *) 0x7000400;
+    if (half->mUnk_57a != 0) {
+        u16 *src = (u16 *) half->mUnk_000;
+
+        MI_CpuClearFast(hist, 0x100);
+        n = half->mUnk_57a;
+        for (i = 0; i < n; i++) {
+            hist[((u8 *) half->mUnk_530)[i]]++;
+        }
+        n = hist[0];
+        for (i = 1; i < 256; i++) {
+            n += hist[i];
+            hist[i] = n;
+        }
+        for (i = 0; i < half->mUnk_57a; i++) {
+            u8 key = ((u8 *) half->mUnk_530)[i];
+            u8 v = --hist[key];
+
+            ((u16 *) oam)[v * 4] = src[0];
+            ((u16 *) oam)[v * 4 + 1] = src[1];
+            ((u16 *) oam)[v * 4 + 2] = src[2];
+            src += 4;
+        }
+    }
+    i = func_0202adf0(layer);
+    for (; n < i; n++) {
+        oam[n].mUnk_0 = 0x200;
+    }
+    affine = (layer == 1) ? (u16 *) 0x7000006 : (u16 *) 0x7000406;
+    for (i = 0; i < half->mUnk_576; i++) {
+        affine[0] = ((Mat4 *) half->mUnk_010)[i].mUnk_0;
+        affine[4] = ((Mat4 *) half->mUnk_010)[i].mUnk_2;
+        affine[8] = ((Mat4 *) half->mUnk_010)[i].mUnk_4;
+        affine[12] = ((Mat4 *) half->mUnk_010)[i].mUnk_6;
+        affine += 16;
+    }
+    half->mUnk_57a = 0;
+    half->mUnk_576 = 0;
+    half->mUnk_114 = 1;
+    half->mUnk_516 = 1;
 }
 
 #pragma thumb on

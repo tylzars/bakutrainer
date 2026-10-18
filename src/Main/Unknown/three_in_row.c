@@ -10,6 +10,7 @@
 #include <Main/Unknown/prompt_screen.h>
 #include <Main/Unknown/three_in_row.h>
 #include <Main/Unknown/text_draw.h>
+#include <Main/Unknown/texture_blocks.h>
 
 u8 data_020b13c8[SHAPE_COUNT];
 Unk_020b13d4 data_020b13d4;

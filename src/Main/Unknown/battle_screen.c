@@ -19,6 +19,7 @@
 #include <Main/Unknown/camera_state.h>
 #include <Main/Unknown/vram_cache.h>
 #include <Main/Unknown/model.h>
+#include <Main/Unknown/texture_blocks.h>
 #include <Main/clib.h>
 #include <nitro/fx.h>
 #include <nitro/os.h>

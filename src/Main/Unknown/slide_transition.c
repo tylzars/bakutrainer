@@ -15,6 +15,7 @@
 #include <Main/Unknown/game_util.h>
 #include <Main/Unknown/text_draw.h>
 #include <Main/Unknown/model.h>
+#include <Main/Unknown/texture_blocks.h>
 #include <nitro/os.h>
 #include <stdio.h>
 

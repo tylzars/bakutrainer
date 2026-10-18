@@ -6066,6 +6066,8 @@ from:0x0202ccd4 kind:load to:0x020c267c module:main
 from:0x0202ccdc kind:load to:0x020c267c add:0xb00 module:main
 from:0x0202ccfc kind:arm_call to:0x0202d828 module:main
 from:0x0202cd10 kind:arm_call to:0x0202d7a0 module:main
+from:0x0202cda4 kind:load to:0x02050998 module:main
+from:0x0202cda8 kind:load to:0x02050998 add:0x1 module:main
 from:0x0202cdbc kind:arm_call to:0x0203f81c module:main
 from:0x0202cde0 kind:load to:0x020c2c0a module:main
 from:0x0202ce18 kind:arm_call to:0x0204dae0 module:main

@@ -17,6 +17,7 @@
 #include <Main/Unknown/stage_info_panel.h>
 #include <Main/Unknown/text_draw.h>
 #include <Main/Unknown/camera.h>
+#include <Main/Unknown/texture_blocks.h>
 
 #define GAUGE_MAX 0x31
 

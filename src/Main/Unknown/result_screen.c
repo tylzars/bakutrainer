@@ -14,6 +14,7 @@
 #include <Main/Unknown/mode_select.h>
 #include <Main/Unknown/text_draw.h>
 #include <Main/Unknown/model.h>
+#include <Main/Unknown/texture_blocks.h>
 #include <stdio.h>
 #include <stdlib.h>
 

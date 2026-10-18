@@ -22,6 +22,7 @@
 #include <Main/Unknown/text_draw.h>
 #include <Main/Unknown/camera.h>
 #include <Main/Unknown/model.h>
+#include <Main/Unknown/texture_blocks.h>
 
 void func_02019fa0(void) {
     static int prevSel = -1;

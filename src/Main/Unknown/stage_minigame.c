@@ -18,6 +18,7 @@
 #include <Main/Unknown/state_flow.h>
 #include <Main/Unknown/text_draw.h>
 #include <Main/Unknown/model.h>
+#include <Main/Unknown/texture_blocks.h>
 #include <Main/clib.h>
 #include <nitro/fx.h>
 #include <nitro/os.h>
