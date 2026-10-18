@@ -1,6 +1,7 @@
 #include <nitro/os.h>
 #include <Main/clib.h>
 #include <Main/Unknown/functions.h>
+#include <Main/Unknown/stage_progress.h>
 #include <Main/Unknown/sound_control.h>
 #include <Main/Unknown/save_data.h>
 #include <Main/Unknown/game_util.h>

@@ -3447,6 +3447,7 @@ from:0x02014ace kind:thumb_call_arm to:0x0203f81c module:main
 from:0x02014ade kind:thumb_call to:0x0201456c module:main
 from:0x02014ae6 kind:thumb_call to:0x02014de4 module:main
 from:0x02014af4 kind:load to:0x020c17c0 module:main
+from:0x02014af8 kind:load to:0x020500d4 module:main
 from:0x02014b14 kind:thumb_call to:0x02015190 module:main
 from:0x02014b26 kind:thumb_call to:0x020150a0 module:main
 from:0x02014b42 kind:thumb_call to:0x02014ffc module:main

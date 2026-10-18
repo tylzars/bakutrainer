@@ -1,6 +1,7 @@
 #include <Main/Unknown/stage_minigame.h>
 #include <Main/Unknown/battle_screen.h>
 #include <Main/Unknown/functions.h>
+#include <Main/Unknown/stage_progress.h>
 #include <Main/Unknown/stage_select.h>
 #include <Main/Unknown/game_util.h>
 #include <Main/Unknown/globals.h>

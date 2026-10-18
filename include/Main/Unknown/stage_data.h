@@ -5,7 +5,8 @@
 
 // Per-stage settings; the table of records has 0x230 bytes per stage.
 typedef struct StageInfo {
-    u8 mUnk_00[4];
+    s16 mUnk_00;
+    s16 mUnk_02;
     s16 mUnk_04;
     s16 mUnk_06;
     s16 mUnk_08;
@@ -45,7 +46,10 @@ typedef struct StageRec {
     u8 mUnk_1f0[0x2c];
     float mUnk_21c;
     s32 mUnk_220;
-    u8 mUnk_224[0x22e - 0x224];
+    u8 mUnk_224[2];
+    s8 mUnk_226;
+    u8 mUnk_227[0x22d - 0x227];
+    u8 mUnk_22d;
     u8 mUnk_22e;
     u8 mUnk_22f;
 } StageRec;
