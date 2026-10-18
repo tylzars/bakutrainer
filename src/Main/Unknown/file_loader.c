@@ -5,6 +5,7 @@
 #include <Main/Unknown/engine_asm.h>
 #include <Main/Unknown/vram_cache.h>
 #include <Main/Unknown/file_loader.h>
+#include <Main/Unknown/qrk_decode.h>
 #include <nitro/mi.h>
 #include <nitro/os.h>
 

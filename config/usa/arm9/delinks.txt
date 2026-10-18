@@ -449,6 +449,12 @@ src/Main/Unknown/wave_player.c:
 src/Main/Unknown/stream_audio.c:
     .text       start:0x0202f500 end:0x0202fcc4
 
+// provisional: the "QRK" unpacker (range-coded LZ, its three tables in .data); starts where the movie code ends
+// (func_0202fcc4 touches none of its objects); the end is the last function reached only from inside the run
+src/Main/Unknown/qrk_decode.c:
+    .text       start:0x0202fcc4 end:0x02030830
+    .data       start:0x02063ab8 end:0x02063b58
+
 // provisional: the stage data file's chunks and entries (data_020c3e44 and the camera object); the Thumb run and
 // the users of data_020c3e44 continue past 0x020328b0; the start is the end of the ARM code before it
 src/Main/Unknown/map_entries.c:
