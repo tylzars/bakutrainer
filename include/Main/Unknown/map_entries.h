@@ -58,6 +58,68 @@ typedef struct MapRecord {
     u8 mUnk_18d[3];
 } MapRecord;
 
+// An entry of the sorted table at MapState.mUnk_1c: a key and the value it maps to.
+typedef struct MapPair {
+    u16 mUnk_0;
+    u16 mUnk_2;
+} MapPair;
+
+// One cell of the grid (mUnk_30 in MapState, 4 bytes per cell): a direction to the target and, in mUnk_3, how the cell
+// was reached (0 = not visited).
+typedef struct MapCell {
+    s8 mUnk_0;
+    s8 mUnk_1;
+    s8 mUnk_2;
+    u8 mUnk_3;
+} MapCell;
+
+// A visible cell found by func_02032d50: the key of its object and its position.
+typedef struct MapMarker {
+    u16 mUnk_00;
+    u16 mUnk_02;
+    s32 mUnk_04;
+    s32 mUnk_08;
+} MapMarker;
+
+// The map object (0x2368 bytes of .bss, up to data_020c61ac): two bit sets, indexed by cell number (mUnk_24) and by
+// position in a rectangle (mUnk_28), the squared distance limits, the sorted pair table with its search step, the
+// buffers the map code allocates, the view matrices (0x6c computed from 0x3c, with its translation at 0x90, and the
+// projection at 0x9c), the placed objects and, right after the 20 records, the camera. Every file reaches the
+// camera as a part of this object: the compiler then counts each camera access as lying past the declared end
+// (pool anchor offset plus member offset exceeds the object's size), which keeps those loads and stores in the
+// original order against other stores.
+typedef struct MapState {
+    s32 mUnk_00;
+    u32 mUnk_04[3];
+    u8 mUnk_10;
+    u8 mUnk_11[3];
+    u16 mUnk_14;
+    u16 mUnk_16;
+    u16 mUnk_18;
+    u8 mUnk_1a[2];
+    MapPair *mUnk_1c;
+    u8 mUnk_20;
+    u8 mUnk_21;
+    u8 mUnk_22[2];
+    u32 *mUnk_24;
+    u32 *mUnk_28;
+    MapMarker *mUnk_2c;
+    MapCell *mUnk_30;
+    u16 mUnk_34;
+    u16 mUnk_36;
+    u16 mUnk_38;
+    u8 mUnk_3a[2];
+    MtxFx43 mUnk_3c;
+    MtxFx43 mUnk_6c;
+    MtxFx44 mUnk_9c;
+    s32 mUnk_dc;
+    s32 mUnk_e0;
+    MapRecord mUnk_e4[MAP_RECORDS];
+    CameraState mUnk_2024;
+} MapState;
+
+extern MapState data_020c3e44;
+
 // The chunk of the stage data file whose key is id; 0 when the file has no such chunk.
 u16 *func_02031eb8(u32 id);
 
@@ -102,7 +164,7 @@ void func_020325b0(u16 a, u16 b, u16 c, u16 d, u16 e, u16 f);
 void func_020325d0(u16 a, u16 b, u16 c, u16 count);
 // Frees the map buffers and clears the records.
 void func_02032850(void);
-// Clears the 20 records of data_020c3e44 (and the camera's halfwords at 0x24/0x26 when a == 1).
+// Clears the 20 records of data_020c3e44 (and the camera's halfwords mUnk_00/mUnk_02 when a == 1).
 void func_02032b88(int a);
 // Runs the actions of one placed object's definition and starts the animation they pick.
 void func_020328b0(MapRecord *rec);

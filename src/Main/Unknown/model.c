@@ -5,7 +5,6 @@
 #include <nitro/os.h>
 #include <Main/clib.h>
 #include <Main/Unknown/angle_blend.h>
-#include <Main/Unknown/camera.h>
 #include <Main/Unknown/functions.h>
 #include <Main/Unknown/game_math.h>
 #include <Main/Unknown/game_util.h>
@@ -307,7 +306,7 @@ sibling:
 void func_02023f0c(VecFx32 *out, int node) {
     MtxFx43 m;
 
-    func_0203bdec(&data_020c3244[node], &data_020c3eb0, &m);
+    func_0203bdec(&data_020c3244[node], &data_020c3e44.mUnk_6c, &m);
     out->x = m._[9];
     out->y = m._[10];
     out->z = m._[11];
@@ -338,42 +337,42 @@ void func_02023f58(DrawParams *p, int x, int y, int z, int a, u16 b, u8 c, u8 d,
 }
 
 void func_02023ff0(void) {
-    if (data_020c5e44.mUnk_300.mUnk_4a != 1) {
+    if (data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_4a != 1) {
         VecFx32 pos = {0, 0, 0x1000};
         VecFx32 target = {0, 0, 0};
         VecFx32 up = {0, 0x1000, 0};
 
-        func_0203d0f0(&pos, &up, &target, TRUE, &data_020c3e80);
-        func_0203ba60(&data_020c3e80, &data_020c3eb0);
-        func_0203d08c(0, 0x3000, 0, 0x4000, 0x4000, -0x4000, 0x1000, TRUE, &data_020c3ee0);
+        func_0203d0f0(&pos, &up, &target, TRUE, &data_020c3e44.mUnk_3c);
+        func_0203ba60(&data_020c3e44.mUnk_3c, &data_020c3e44.mUnk_6c);
+        func_0203d08c(0, 0x3000, 0, 0x4000, 0x4000, -0x4000, 0x1000, TRUE, &data_020c3e44.mUnk_9c);
         reg_G3X_MTX_MODE = 3;
         reg_G3X_MTX_IDENTITY = 0;
         reg_G3X_MTX_MODE = 2;
         reg_G3X_MTX_PUSH = 0;
-        data_020c5e44.mUnk_300.mUnk_4a = 1;
+        data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_4a = 1;
     }
 }
 
 void func_020240ec(void) {
-    if (data_020c5e44.mUnk_300.mUnk_4a != 2) {
+    if (data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_4a != 2) {
         VecFx32 pos = {0, 0, 0x1000};
         VecFx32 target = {0, 0, 0};
         VecFx32 up = {0, 0x1000, 0};
 
         func_0203d0f0(&pos, &up, &target, TRUE, NULL);
-        func_0203d08c(0, 0xc0, 0, 0x100, 0x400, 0xc8000, 0x1000, TRUE, &data_020c3ee0);
+        func_0203d08c(0, 0xc0, 0, 0x100, 0x400, 0xc8000, 0x1000, TRUE, &data_020c3e44.mUnk_9c);
         reg_G3X_MTX_MODE = 3;
         reg_G3X_MTX_IDENTITY = 0;
         reg_G3X_MTX_MODE = 2;
         reg_G3X_MTX_PUSH = 0;
-        data_020c5e44.mUnk_300.mUnk_4b = 0x1f;
-        data_020c5e44.mUnk_300.mUnk_4c = 0;
+        data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_4b = 0x1f;
+        data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_4c = 0;
         reg_G3X_POLYGON_ATTR = 0x1f00c1;
         reg_G3X_TEXIMAGE_PARAM = 0x20000000;
         reg_G3X_DIF_AMB = 0x7fff0000;
         reg_G3X_SPE_EMI = 0;
         reg_G3X_LIGHT_COLOR = 0x7fff;
-        data_020c5e44.mUnk_300.mUnk_4a = 2;
+        data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_4a = 2;
     }
 }
 
@@ -448,9 +447,9 @@ void func_020243c0(int id, fx32 x, fx32 y, fx32 z, u16 angle, fx32 sx, fx32 sy, 
         return;
     }
     func_020240ec();
-    if (data_020c5e44.mUnk_300.mUnk_4b != alpha) {
-        reg_G3X_POLYGON_ATTR = (data_020c5e44.mUnk_300.mUnk_4c << 24) | 0xc1 | (alpha << 16);
-        data_020c5e44.mUnk_300.mUnk_4b = alpha;
+    if (data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_4b != alpha) {
+        reg_G3X_POLYGON_ATTR = (data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_4c << 24) | 0xc1 | (alpha << 16);
+        data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_4b = alpha;
     }
     hdr = func_0202adc0(id);
     w = hdr[0];
@@ -695,11 +694,11 @@ void func_02024b5c(u32 id, void *params, void *obj, int flags) {
     data_020c31dc.mUnk_42 = 0xff;
     data_020c31dc.mUnk_4a = 0;
     if (p->mUnk_43 >= 4) {
-        if (data_020c5e44.mUnk_300.mUnk_4a != 1) {
+        if (data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_4a != 1) {
             func_02023ff0();
         }
         angOfs = 0x8000;
-    } else if (data_020c5e44.mUnk_300.mUnk_4a != 0) {
+    } else if (data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_4a != 0) {
         func_020334f8(0);
     }
     mode = p->mUnk_43;
@@ -749,13 +748,13 @@ void func_02024b5c(u32 id, void *params, void *obj, int flags) {
                     m._[9] = p->mPos.x;
                     m._[10] = p->mPos.y;
                     m._[11] = p->mPos.z;
-                    func_0203bdec(&m, &data_020c3e80, &data_020c31ac);
+                    func_0203bdec(&m, &data_020c3e44.mUnk_3c, &data_020c31ac);
                     break;
                 case 2:
                     m._[9] = p->mPos.x;
                     m._[10] = p->mPos.y;
                     m._[11] = p->mPos.z;
-                    func_0203bdec(&m, &data_020c3e80, &data_020c31ac);
+                    func_0203bdec(&m, &data_020c3e44.mUnk_3c, &data_020c31ac);
                     func_0203ba2c(&data_020c31ac, &data_020c31ac, p->mUnk_28, p->mUnk_28, p->mUnk_28);
                     if (p->mUnk_42 != -1 && p->mUnk_28 != 0x1000) {
                         data_020c31dc.mUnk_42 = p->mUnk_42;
@@ -793,8 +792,8 @@ void func_02024b5c(u32 id, void *params, void *obj, int flags) {
                 m._[9] = p->mPos.x;
                 m._[10] = p->mPos.y;
                 m._[11] = p->mPos.z;
-                func_0203bdec(&m, &data_020c3e80, &data_020c31ac);
-                if (data_020c5e44.mUnk_300.mUnk_4a == 1) {
+                func_0203bdec(&m, &data_020c3e44.mUnk_3c, &data_020c31ac);
+                if (data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_4a == 1) {
                     func_0203ba2c(&data_020c31ac, &data_020c31ac, 0x80, 0x80, 0x80);
                 }
                 model->mUnk_172_0 = 0;
@@ -998,11 +997,11 @@ void func_02024b5c(u32 id, void *params, void *obj, int flags) {
         }
         if (flags & 4) {
             cur += 0x38;
-            PutPolygonAttr(data_020c5e44.mUnk_300.mUnk_5b, 3, 1, 0, alpha, 0);
+            PutPolygonAttr(data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_5b, 3, 1, 0, alpha, 0);
             PutMaterial(dif | (((flags & 0x10) ? 0x7fff : amb) << 16), spe | (emi << 16));
             DC_StoreRange(cur, mesh->mUnk_34);
             func_01ff831c(3, cur, mesh->mUnk_34);
-            PutPolygonAttr(data_020c5e44.mUnk_300.mUnk_5b, 3, 3, 8, alpha, 0);
+            PutPolygonAttr(data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_5b, 3, 3, 8, alpha, 0);
             if (flags & 0x10) {
                 amb = 0x7fff;
             }
@@ -1019,7 +1018,8 @@ void func_02024b5c(u32 id, void *params, void *obj, int flags) {
             }
             PutMaterial(dif | (amb << 16) | 0x8000, spe | (emi << 16));
             cur += 0x38;
-            PutPolygonAttr(data_020c5e44.mUnk_300.mUnk_5b, (flags & 8) ? 2 : 0, cull, polyId, alpha, polyFlags);
+            PutPolygonAttr(data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_5b, (flags & 8) ? 2 : 0, cull, polyId, alpha,
+                           polyFlags);
             DC_StoreRange(cur, mesh->mUnk_34);
             func_01ff831c(3, cur, mesh->mUnk_34);
         }
@@ -1038,7 +1038,7 @@ void func_02025dc4(const VecFx32 *pos, s32 *out, int steps) {
     fx32 w;
     s32 x, y, z;
     reg_G3X_MTX_MODE = 1;
-    G3_LoadMtx43(&data_020c3e80);
+    G3_LoadMtx43(&data_020c3e44.mUnk_3c);
     z = pos->z;
     y = pos->y;
     x = pos->x;
@@ -1678,7 +1678,7 @@ int func_02026718(Model *m) {
                     }
                     m->mUnk_172_0 = 1;
                     break;
-                // Set data_020c5e44.mUnk_0c0.mUnk_1ec from entry `id` (func_0203204c), or clear it for id -1.
+                // Set data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1ec from entry `id` (func_0203204c), or clear it for id -1.
                 case 24: {
                     u16 id;
                     void *entry;
@@ -1698,13 +1698,13 @@ int func_02026718(Model *m) {
                         if (entry == NULL) {
                             OS_Terminate();
                         }
-                        data_020c5e44.mUnk_0c0.mUnk_1ec.mUnk_00.x = func_02031f98(entry);
-                        data_020c5e44.mUnk_0c0.mUnk_1ec.mUnk_00.y = func_02031fa4(entry);
-                        data_020c5e44.mUnk_0c0.mUnk_1ec.mUnk_00.z = func_02031fb0(entry);
+                        data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1ec.mUnk_00.x = func_02031f98(entry);
+                        data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1ec.mUnk_00.y = func_02031fa4(entry);
+                        data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1ec.mUnk_00.z = func_02031fb0(entry);
                     } else {
-                        data_020c5e44.mUnk_0c0.mUnk_1ec.mUnk_00.x = 0;
-                        data_020c5e44.mUnk_0c0.mUnk_1ec.mUnk_00.y = 0;
-                        data_020c5e44.mUnk_0c0.mUnk_1ec.mUnk_00.z = 0;
+                        data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1ec.mUnk_00.x = 0;
+                        data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1ec.mUnk_00.y = 0;
+                        data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1ec.mUnk_00.z = 0;
                     }
                     break;
                 }

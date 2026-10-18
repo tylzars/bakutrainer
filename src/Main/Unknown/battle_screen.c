@@ -16,7 +16,6 @@
 #include <Main/Unknown/sound_control.h>
 #include <Main/Unknown/state_flow.h>
 #include <Main/Unknown/text_draw.h>
-#include <Main/Unknown/camera_state.h>
 #include <Main/Unknown/vram_cache.h>
 #include <Main/Unknown/model.h>
 #include <Main/Unknown/texture_blocks.h>
@@ -86,14 +85,14 @@ void func_020072a8(void) {
 }
 
 void func_02007370(void) {
-    func_02031fc4(0, &data_020c5e44.mUnk_b0);
-    func_02031fc4(1, &data_020c5e44.mUnk_a4);
+    func_02031fc4(0, &data_020c3e44.mUnk_2024.mUnk_8c);
+    func_02031fc4(1, &data_020c3e44.mUnk_2024.mUnk_80);
     func_02033488();
 }
 
 void func_02007390(void) {
-    func_02031fc4(0, &data_020c5e44.mUnk_b0);
-    func_02031fc4(2, &data_020c5e44.mUnk_a4);
+    func_02031fc4(0, &data_020c3e44.mUnk_2024.mUnk_8c);
+    func_02031fc4(2, &data_020c3e44.mUnk_2024.mUnk_80);
     func_02033488();
 }
 
@@ -110,13 +109,13 @@ void func_020073b0(void) {
                       data_020b6ee0.mModel[0].mUnk_14c.mUnk_4, 0, &a, &b, &c, 1);
     }
     func_02023478(data_020b6ee0.mModel[0].mUnk_004, NULL, &pos, 0, a, b, c, 2);
-    data_020c5e44.mUnk_b0.x = pos.x + data_020b6ee0.mUnk_f9c.x;
-    data_020c5e44.mUnk_b0.z = pos.z + data_020b6ee0.mUnk_f9c.z;
-    data_020c5e44.mUnk_b0.y = pos.y + data_020b6ee0.mUnk_f9c.y;
+    data_020c3e44.mUnk_2024.mUnk_8c.x = pos.x + data_020b6ee0.mUnk_f9c.x;
+    data_020c3e44.mUnk_2024.mUnk_8c.z = pos.z + data_020b6ee0.mUnk_f9c.z;
+    data_020c3e44.mUnk_2024.mUnk_8c.y = pos.y + data_020b6ee0.mUnk_f9c.y;
     func_02023478(data_020b6ee0.mModel[0].mUnk_004, &v[1], &pos, 0, a, b, c, 1);
-    data_020c5e44.mUnk_a4.x = pos.x + data_020b6ee0.mUnk_f9c.x;
-    data_020c5e44.mUnk_a4.z = pos.z + data_020b6ee0.mUnk_f9c.z;
-    data_020c5e44.mUnk_a4.y = pos.y + data_020b6ee0.mUnk_f9c.y;
+    data_020c3e44.mUnk_2024.mUnk_80.x = pos.x + data_020b6ee0.mUnk_f9c.x;
+    data_020c3e44.mUnk_2024.mUnk_80.z = pos.z + data_020b6ee0.mUnk_f9c.z;
+    data_020c3e44.mUnk_2024.mUnk_80.y = pos.y + data_020b6ee0.mUnk_f9c.y;
     func_02033488();
     if ((v[1] >> 9) > 5 && (v[1] >> 9) < 0x78) {
         func_02033df4(v[1] >> 9);
@@ -181,10 +180,10 @@ void func_020074ac(void) {
     }
     func_020220c8(0x10d0);
     func_020325b0(a[sel], 0, b[sel], 0, 0, 0);
-    data_020c5e44.mUnk_28 = func_020071a8;
-    data_020c6144.mUnk_54 = 25 << 6;
-    data_020c6144.mUnk_44 = 0x128e000;
-    data_020c5e44.mUnk_bc = 1;
+    data_020c3e44.mUnk_2024.mUnk_04 = func_020071a8;
+    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_54 = 25 << 6;
+    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_44 = 0x128e000;
+    data_020c3e44.mUnk_2024.mUnk_98 = 1;
     memset(&data_020b6ee0.mUnk_f9c, 0, 0x44);
     data_020b6ee0.mUnk_fc8.x = -1;
     data_020b6ee0.mUnk_fc8.y = -1;
@@ -787,7 +786,7 @@ void func_02008288(void) {
         }
         if (data_020b6ee0.mModel[0].mUnk_00c != 2 || data_020b6ee0.mModel[0].mUnk_172_10 != 1) {
             func_020073b0();
-            func_02033614(data_020c5e44.mUnk_a4.x, data_020c5e44.mUnk_a4.z);
+            func_02033614(data_020c3e44.mUnk_2024.mUnk_80.x, data_020c3e44.mUnk_2024.mUnk_80.z);
             func_020071ac();
             func_020072a8();
         } else {
@@ -1190,7 +1189,7 @@ void func_02008994(int side) {
         } else {
             func_020073b0();
         }
-        func_02033614(data_020c5e44.mUnk_a4.x, data_020c5e44.mUnk_a4.z);
+        func_02033614(data_020c3e44.mUnk_2024.mUnk_80.x, data_020c3e44.mUnk_2024.mUnk_80.z);
     }
 }
 
@@ -1440,13 +1439,13 @@ void func_02009728(void) {
     }
     if (selecting == 0) {
         func_02007390();
-        data_020c5e44.mUnk_bc = 4;
+        data_020c3e44.mUnk_2024.mUnk_98 = 4;
         func_02007abc();
     } else {
         func_020073b0();
         func_020072a8();
     }
-    func_02033614(data_020c5e44.mUnk_a4.x, data_020c5e44.mUnk_a4.z);
+    func_02033614(data_020c3e44.mUnk_2024.mUnk_80.x, data_020c3e44.mUnk_2024.mUnk_80.z);
 }
 
 void func_02009fe8(void) {
@@ -1477,7 +1476,7 @@ void func_02009fe8(void) {
             }
         }
         func_02007370();
-        func_02033614(data_020c5e44.mUnk_a4.x, data_020c5e44.mUnk_a4.z);
+        func_02033614(data_020c3e44.mUnk_2024.mUnk_80.x, data_020c3e44.mUnk_2024.mUnk_80.z);
         func_0202cf08(0xec4, 128, 45, 100, 2);
         func_0202cf08(0x11cf, 127, 153, 200, 2);
         func_020215fc(127, 153, data_0201a61c, func_0200f9f0(69), 2, 240, 16, 2);

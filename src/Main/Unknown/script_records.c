@@ -1,6 +1,6 @@
 #include <Main/Unknown/functions.h>
 #include <Main/Unknown/globals.h>
-#include <Main/Unknown/camera.h>
+#include <Main/Unknown/map_entries.h>
 #include <Main/Unknown/model.h>
 #include <Main/Unknown/random_angle.h>
 #include <Main/Unknown/screen_fade.h>
@@ -1108,9 +1108,9 @@ Unk_EventRec *func_0202a1a4(void) {
 // Resets one camera byte and steps another through 0..0x1f.
 void func_0202a1cc(void) {
     func_020240ec();
-    data_020c5e44.mUnk_300.mUnk_4b = 0;
-    data_020c5e44.mUnk_300.mUnk_4c++;
-    data_020c5e44.mUnk_300.mUnk_4c &= 0x1f;
+    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_4b = 0;
+    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_4c++;
+    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_4c &= 0x1f;
 }
 
 // Runs one frame of the script engine: applies queued screen changes, moves and draws the command sprites, builds
@@ -1435,9 +1435,9 @@ void func_0202a1ec(int (*callback)(void)) {
             }
         } else if (data_020c61ac.mUnk_1b == 2) {
             if (data_020c61ac.mUnk_1c_2 == 1 || data_020c61ac.mUnk_1c_0 == 0) {
-                if (((data_020c5e44.mUnk_300.mUnk_0c != 0 && data_020c5e44.mUnk_300.mUnk_33 == 8 &&
+                if (((data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_0c != 0 && data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_33 == 8 &&
                       (data_020c18bc.mUnk_46c & 0x80)) ||
-                     (data_020c5e44.mUnk_300.mUnk_0e != 0 && (data_020c18bc.mUnk_46c & 0x80))) &&
+                     (data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_0e != 0 && (data_020c18bc.mUnk_46c & 0x80))) &&
                     !(data_020c18bc.mUnk_46c & 0x08000000)) {
                     continue;
                 }

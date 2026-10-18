@@ -20,7 +20,6 @@
 #include <Main/Unknown/state_flow.h>
 #include <Main/Unknown/stage_map_menu.h>
 #include <Main/Unknown/text_draw.h>
-#include <Main/Unknown/camera.h>
 #include <Main/Unknown/model.h>
 #include <Main/Unknown/texture_blocks.h>
 #include <Main/Unknown/wave_player.h>
@@ -39,7 +38,7 @@ void func_02019fa0(void) {
     Unk_020c1454 *q = &data_020b6ee0.mUnk_a574;
 
     func_02019b3c(&data_020c180c, &data_020c1800);
-    func_02033614(data_020c5e44.mUnk_000.mUnk_98.x, data_020c5e44.mUnk_000.mUnk_98.z);
+    func_02033614(data_020c3e44.mUnk_2024.mUnk_74.x, data_020c3e44.mUnk_2024.mUnk_74.z);
     prevSel = data_020b6ee0.mUnk_a534;
     data_020b6ee0.mUnk_a534 = -1;
     for (i = 0; i < MAP_NODE_COUNT; i++) {

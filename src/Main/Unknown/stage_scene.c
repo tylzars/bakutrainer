@@ -13,7 +13,6 @@
 #include <Main/Unknown/stage_scene.h>
 #include <Main/Unknown/sprite_slots.h>
 #include <Main/Unknown/text_draw.h>
-#include <Main/Unknown/camera.h>
 #include <Main/Unknown/model.h>
 #include <Main/Unknown/wave_player.h>
 #include <Main/Unknown/sprite_script.h>
@@ -38,11 +37,11 @@ void func_0200c688(int n) {
 }
 
 void func_0200c6ac(void) {
-    data_020c5e44.mUnk_300.mUnk_44 = 0x030d4000;
-    data_020c5e44.mUnk_300.mUnk_54 = 0x640;
+    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_44 = 0x030d4000;
+    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_54 = 0x640;
     func_02033e38(1, 1, 1);
     func_02033e38(8, 0, 1);
-    data_020c5e44.mUnk_300.mUnk_30 = 1;
+    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_30 = 1;
     func_0200c65c(1, &data_02063940->mUnk_5b4);
     func_0200c65c(0, &data_02063940->mUnk_5c0);
     func_0200c65c(2, &data_02063940->mUnk_5cc);
@@ -52,17 +51,17 @@ void func_0200c6ac(void) {
     memset(&data_02063940->mUnk_5fc, 0, 12);
     data_02063940->mUnk_608 = 0;
     data_02063940->mUnk_60c = 0;
-    data_020c5e44.mUnk_300.mUnk_38 = 0;
-    data_020c5e44.mUnk_300.mUnk_40 = 0;
-    data_020c5e44.mUnk_300.mUnk_3c = 0;
-    data_020c5e44.mUnk_000.mUnk_7f_1 = 0;
+    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_38 = 0;
+    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_40 = 0;
+    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_3c = 0;
+    data_020c3e44.mUnk_2024.mUnk_5b_1 = 0;
     func_02033df4(25);
-    data_020c5e44.mUnk_300.mUnk_14 = data_020c5e44.mUnk_300.mUnk_18;
-    data_020c5e44.mUnk_300.mUnk_10 = 0;
+    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_14 = data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_18;
+    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_10 = 0;
 }
 
 void func_0200c7a4(void) {
-    Unk_020c5f04 *cam = &data_020c5e44.mUnk_0c0;
+    Unk_020c5f04 *cam = &data_020c3e44.mUnk_2024.mUnk_9c;
     VecFx32 a;
     VecFx32 b;
     a.x = func_0201fbe4(data_02063940->mUnk_618, 0, data_02063940->mUnk_614, data_02063940->mUnk_5cc.x >> 8,
@@ -206,7 +205,7 @@ void func_0200cd1c(void) {
 void func_0200cd2c(void) {
     func_0201168c(data_020b6ee0.mUnk_a8e4, data_02063940->mUnk_610, data_0206d448, data_02063940->mUnk_618, 2);
     func_0200cdc4();
-    func_02033614(data_020c5e44.mUnk_0c0.mUnk_228.x, data_020c5e44.mUnk_0c0.mUnk_228.z);
+    func_02033614(data_020c3e44.mUnk_2024.mUnk_9c.mUnk_228.x, data_020c3e44.mUnk_2024.mUnk_9c.mUnk_228.z);
     func_0202733c(&data_02063940->mUnk_230, &data_02063940->mUnk_3a8, 0xb0000002);
     func_020105f4(&data_02063940->mUnk_230);
     func_02024368(&data_02063940->mUnk_3ec, 255, 0, 0x1000, 0, 0);

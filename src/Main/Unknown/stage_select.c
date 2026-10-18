@@ -20,7 +20,6 @@
 #include <Main/Unknown/stage_info_panel.h>
 #include <Main/Unknown/stage_select.h>
 #include <Main/Unknown/text_draw.h>
-#include <Main/Unknown/camera.h>
 #include <Main/Unknown/model.h>
 #include <Main/Unknown/texture_blocks.h>
 #include <Main/Unknown/wave_player.h>
@@ -421,9 +420,9 @@ void func_02014190(void) {
     func_02020854(1);
     func_020220c8(0x10d0);
     func_020325b0(0xf87, 0, 0xf88, 0, 0, 0);
-    data_020c5e44.mUnk_000.mUnk_28 = func_0201418c;
-    data_020c5e44.mUnk_300.mUnk_54 = 0x640;
-    data_020c5e44.mUnk_300.mUnk_44 = 0x128e000;
+    data_020c3e44.mUnk_2024.mUnk_04 = func_0201418c;
+    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_54 = 0x640;
+    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_44 = 0x128e000;
     memset(&data_020b6ee0.mUnk_f9c, 0, 0x44);
     func_02031fc4(0, &data_020b6ee0.mUnk_f9c);
     data_020b6ee0.mUnk_fdf &= ~7;
@@ -437,7 +436,7 @@ void func_02014260(void) {
     u16 keys;
 
     func_020073b0();
-    func_02033614(data_020c5e44.mUnk_000.mUnk_a4.x, data_020c5e44.mUnk_000.mUnk_a4.z);
+    func_02033614(data_020c3e44.mUnk_2024.mUnk_80.x, data_020c3e44.mUnk_2024.mUnk_80.z);
     func_020072a8();
     func_0200b8dc(10, 10, "t:%i a:%i", data_020b13b0.mUnk_00, data_020b13b0.mUnk_01);
     keys = data_020c18bc.mUnk_12;

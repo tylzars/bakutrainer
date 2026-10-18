@@ -27,7 +27,7 @@
 #include <Main/Unknown/screen_fade.h>
 #include <Main/Unknown/file_stream.h>
 #include <Main/Unknown/system_init.h>
-#include <Main/Unknown/camera.h>
+#include <Main/Unknown/map_entries.h>
 #include <Main/Unknown/model.h>
 #include <Main/Unknown/engine_asm.h>
 #include <Main/Unknown/texture_blocks.h>
@@ -74,7 +74,7 @@ void func_0201b7ec(u32 a, int b, int c) {
     REG_IME = 1;
     data_020c18bc.mUnk_2c8 = 0;
     data_020c18bc.mUnk_470 = 0;
-    data_020c5e44.mUnk_000.mUnk_74 = 0;
+    data_020c3e44.mUnk_2024.mUnk_50 = 0;
     data_020c18bc.mUnk_47e = a;
     data_020c18bc.mUnk_30e = 0x20;
     data_020c18bc.mUnk_310 = 10;
@@ -220,7 +220,7 @@ void func_0201bb40(int flags) {
         }
         *(vu32 *) HW_DISPCNT &= ~DISPCNT_FORCED_BLANK;
     }
-    data_020c5e44.mUnk_000.mUnk_6c = 0;
+    data_020c3e44.mUnk_2024.mUnk_48 = 0;
     func_0201fda4();
     single = flags & 1;
     if (single == 0 && (data_020c18bc.mUnk_46c & 0x20000)) {
@@ -231,7 +231,7 @@ void func_0201bb40(int flags) {
     if ((data_020c18bc.mUnk_46c & 0x10000080) == 0x10000080) {
         if (func_02035058() == 0) {
             func_020248fc();
-            if (data_020c5e44.mUnk_300.mUnk_4a == 0 && !(data_020c18bc.mUnk_46c & 0x10000)) {
+            if (data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_4a == 0 && !(data_020c18bc.mUnk_46c & 0x10000)) {
                 *(vu32 *) HW_SWAP_BUFFERS = 3;
             } else {
                 *(vu32 *) HW_SWAP_BUFFERS = 1;

@@ -1,7 +1,6 @@
 #include <nitro/os.h>
 #include <Main/Unknown/map_floor.h>
 #include <Main/Unknown/map_entries.h>
-#include <Main/Unknown/camera.h>
 #include <Main/Unknown/random_angle.h>
 #include <Main/Unknown/game_math.h>
 
@@ -90,9 +89,9 @@ int func_02030830(fx32 x, fx32 z, fx32 y, int a, u32 mask, u8 *out, VecFx32 *vec
         OS_Terminate();
     }
 
-    gx = x / (s32) data_020c5e44.mUnk_000.mUnk_64;
-    gz = z / (s32) data_020c5e44.mUnk_000.mUnk_64;
-    if (gx >= data_020c5e44.mUnk_000.mUnk_78 || gz >= data_020c5e44.mUnk_000.mUnk_7a) {
+    gx = x / (s32) data_020c3e44.mUnk_2024.mUnk_40;
+    gz = z / (s32) data_020c3e44.mUnk_2024.mUnk_40;
+    if (gx >= data_020c3e44.mUnk_2024.mUnk_54 || gz >= data_020c3e44.mUnk_2024.mUnk_56) {
         if (out != NULL) {
             *out = 0;
         }
@@ -104,7 +103,7 @@ int func_02030830(fx32 x, fx32 z, fx32 y, int a, u32 mask, u8 *out, VecFx32 *vec
         return 0;
     }
 
-    entry = lists + grid[data_020c5e44.mUnk_000.mUnk_78 * gz + gx];
+    entry = lists + grid[data_020c3e44.mUnk_2024.mUnk_54 * gz + gx];
     normp = normals;
     attrp = attrs;
     do {
@@ -342,6 +341,6 @@ int func_02031270(fx32 x, fx32 z, fx32 y, int a, u32 mask, u8 *out) {
 #pragma thumb on
 
 u32 func_0203129c(void) {
-    return func_0201feb0(data_020c5e44.mUnk_000.mUnk_38.x - data_020c5e44.mUnk_000.mUnk_44.x,
-                         data_020c5e44.mUnk_000.mUnk_38.z - data_020c5e44.mUnk_000.mUnk_44.z);
+    return func_0201feb0(data_020c3e44.mUnk_2024.mUnk_14.x - data_020c3e44.mUnk_2024.mUnk_20.x,
+                         data_020c3e44.mUnk_2024.mUnk_14.z - data_020c3e44.mUnk_2024.mUnk_20.z);
 }

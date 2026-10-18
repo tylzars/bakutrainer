@@ -59,7 +59,7 @@ typedef struct MapFloorRegion {
 int func_02030830(fx32 x, fx32 z, fx32 y, int a, u32 mask, u8 *out, VecFx32 *vec);
 // func_02030830 without the normal.
 int func_02031270(fx32 x, fx32 z, fx32 y, int a, u32 mask, u8 *out);
-// func_0201feb0 of the camera's point mUnk_38 relative to its point mUnk_44.
+// func_0201feb0 of the camera's point mUnk_14 relative to its point mUnk_20.
 u32 func_0203129c(void);
 
 #ifdef __cplusplus

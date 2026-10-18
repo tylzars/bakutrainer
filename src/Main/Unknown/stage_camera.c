@@ -23,7 +23,6 @@
 #include <Main/Unknown/sprite_slots.h>
 #include <Main/Unknown/stage_progress.h>
 #include <Main/Unknown/text_draw.h>
-#include <Main/Unknown/camera_state.h>
 #include <Main/Unknown/vram_cache.h>
 #include <Main/Unknown/model.h>
 #include <Main/Unknown/texture_blocks.h>
@@ -44,15 +43,15 @@ void func_02015d58(int stage) {
     if (stage < 0 || stage >= STAGE_MAX) {
         OS_Terminate();
     }
-    data_020c5e44.mUnk_b0.x = rec->mUnk_158.x;
-    data_020c5e44.mUnk_b0.z = rec->mUnk_158.z;
-    data_020c5e44.mUnk_b0.y = rec->mUnk_158.y;
-    data_020c5e44.mUnk_a4.x = rec->mUnk_1a0.x - 400 * FX_SinCosTable_[(rec->mUnk_224 >> 4) * 2];
-    data_020c5e44.mUnk_a4.z = rec->mUnk_1a0.z + 400 * FX_SinCosTable_[(rec->mUnk_224 >> 4) * 2 + 1];
+    data_020c3e44.mUnk_2024.mUnk_8c.x = rec->mUnk_158.x;
+    data_020c3e44.mUnk_2024.mUnk_8c.z = rec->mUnk_158.z;
+    data_020c3e44.mUnk_2024.mUnk_8c.y = rec->mUnk_158.y;
+    data_020c3e44.mUnk_2024.mUnk_80.x = rec->mUnk_1a0.x - 400 * FX_SinCosTable_[(rec->mUnk_224 >> 4) * 2];
+    data_020c3e44.mUnk_2024.mUnk_80.z = rec->mUnk_1a0.z + 400 * FX_SinCosTable_[(rec->mUnk_224 >> 4) * 2 + 1];
     dist = rec->mUnk_1a0.y + func_0201fb74(angle, 0xc00, 0x320000, 0x4b0000);
-    data_020c5e44.mUnk_a4.y = dist;
+    data_020c3e44.mUnk_2024.mUnk_80.y = dist;
     if (dist > 0x5dc000) {
-        data_020c5e44.mUnk_a4.y = 0x5dc000;
+        data_020c3e44.mUnk_2024.mUnk_80.y = 0x5dc000;
     }
     func_02033488();
 }
@@ -63,12 +62,12 @@ void func_02015e08(int stage) {
     if (stage < 0 || stage >= STAGE_MAX) {
         OS_Terminate();
     }
-    data_020c5e44.mUnk_b0.x = rec->mUnk_158.x;
-    data_020c5e44.mUnk_b0.z = rec->mUnk_158.z;
-    data_020c5e44.mUnk_b0.y = rec->mUnk_158.y;
-    data_020c5e44.mUnk_a4.x = rec->mUnk_1a0.x - 300 * FX_SinCosTable_[(rec->mUnk_224 >> 4) * 2];
-    data_020c5e44.mUnk_a4.z = rec->mUnk_1a0.z + 300 * FX_SinCosTable_[(rec->mUnk_224 >> 4) * 2 + 1];
-    data_020c5e44.mUnk_a4.y = rec->mUnk_1a0.y + 0x64000;
+    data_020c3e44.mUnk_2024.mUnk_8c.x = rec->mUnk_158.x;
+    data_020c3e44.mUnk_2024.mUnk_8c.z = rec->mUnk_158.z;
+    data_020c3e44.mUnk_2024.mUnk_8c.y = rec->mUnk_158.y;
+    data_020c3e44.mUnk_2024.mUnk_80.x = rec->mUnk_1a0.x - 300 * FX_SinCosTable_[(rec->mUnk_224 >> 4) * 2];
+    data_020c3e44.mUnk_2024.mUnk_80.z = rec->mUnk_1a0.z + 300 * FX_SinCosTable_[(rec->mUnk_224 >> 4) * 2 + 1];
+    data_020c3e44.mUnk_2024.mUnk_80.y = rec->mUnk_1a0.y + 0x64000;
     func_02033488();
 }
 
@@ -87,8 +86,8 @@ void func_02015e94(int stage) {
     data_020b6ee0.mUnk_a574.mUnk_00.x = data_020b6ee0.mUnk_a574.mUnk_0c.x - 600 * FX_SinCosTable_[0];
     data_020b6ee0.mUnk_a574.mUnk_00.z = data_020b6ee0.mUnk_a574.mUnk_0c.z + 600 * FX_SinCosTable_[1];
     data_020b6ee0.mUnk_a574.mUnk_00.y = data_020b6ee0.mUnk_a574.mUnk_0c.y + 0x3e8000;
-    func_0200b960(&data_020c5e44.mUnk_b0, data_020b6ee0.mUnk_a574.mUnk_0c, data_020b6ee0.mUnk_a574.mUnk_34);
-    func_0200b960(&data_020c5e44.mUnk_a4, data_020b6ee0.mUnk_a574.mUnk_00, data_020b6ee0.mUnk_a574.mUnk_34);
+    func_0200b960(&data_020c3e44.mUnk_2024.mUnk_8c, data_020b6ee0.mUnk_a574.mUnk_0c, data_020b6ee0.mUnk_a574.mUnk_34);
+    func_0200b960(&data_020c3e44.mUnk_2024.mUnk_80, data_020b6ee0.mUnk_a574.mUnk_00, data_020b6ee0.mUnk_a574.mUnk_34);
     func_02033488();
 }
 
@@ -526,8 +525,9 @@ void func_02016db4(Unk_020b1598 *followers, int index, u16 angle) {
         pos.y = 512.0f * f->mUnk_00.y;
         pos.z = 512.0f * f->mUnk_00.z;
         if (func_02031824(&pos, f->mUnk_20, 0x6e, 0, 0x13, 0)) {
-            if ((data_020c5e44.mUnk_5e & 0x10) && data_020b6ee0.mUnk_0c5a != 0 &&
-                data_020b6ee0.mUnk_8adc[f->mUnk_36].mUnk_18 == 0 && data_020b6ee0.mUnk_0c4c == data_020c5e44.mUnk_34 &&
+            if ((data_020c3e44.mUnk_2024.mUnk_3a & 0x10) && data_020b6ee0.mUnk_0c5a != 0 &&
+                data_020b6ee0.mUnk_8adc[f->mUnk_36].mUnk_18 == 0 &&
+                data_020b6ee0.mUnk_0c4c == data_020c3e44.mUnk_2024.mUnk_10 &&
                 data_020b6ee0.mUnk_0008[data_020b6ee0.mUnk_0c58].mUnk_186 > 0) {
                 data_020b6ee0.mUnk_0008[data_020b6ee0.mUnk_0c58].mModel.mUnk_134 |= 1;
                 data_020b6ee0.mUnk_0008[data_020b6ee0.mUnk_0c58].mUnk_186--;
@@ -543,8 +543,9 @@ void func_02016db4(Unk_020b1598 *followers, int index, u16 angle) {
             }
             {
                 u32 cam = func_0203129c();
-                int cross = func_0201febc(data_020c5e44.mUnk_38.x, data_020c5e44.mUnk_38.z, data_020c5e44.mUnk_44.x,
-                                          data_020c5e44.mUnk_44.z, f->mUnk_00.x, f->mUnk_00.z);
+                int cross = func_0201febc(data_020c3e44.mUnk_2024.mUnk_14.x, data_020c3e44.mUnk_2024.mUnk_14.z,
+                                          data_020c3e44.mUnk_2024.mUnk_20.x, data_020c3e44.mUnk_2024.mUnk_20.z,
+                                          f->mUnk_00.x, f->mUnk_00.z);
                 f->mUnk_00 = f->mUnk_0c;
                 f->mUnk_24 = cam + (((cross != 0) ? ((cross >> 31) | 1) : 0) << 14);
                 f->mUnk_22 = f->mUnk_24;
@@ -878,10 +879,11 @@ void func_020175e8(int index, int *sel, int flags) {
         if (func_02031824(&rec->mUnk_1a0, 400, 200, 0, 0x400, 0)) {
             s32 oz = old.z / 512;
             s32 ox = old.x / 512;
-            if (func_0201febc(data_020c5e44.mUnk_38.x, data_020c5e44.mUnk_38.z, data_020c5e44.mUnk_44.x,
-                              data_020c5e44.mUnk_44.z, ox, oz) > 0) {
-                if (func_0201fe14(func_0201feb0(data_020c5e44.mUnk_50.x - ox, data_020c5e44.mUnk_50.z - oz),
-                                  rec->mUnk_1d8) < 0x4000) {
+            if (func_0201febc(data_020c3e44.mUnk_2024.mUnk_14.x, data_020c3e44.mUnk_2024.mUnk_14.z,
+                              data_020c3e44.mUnk_2024.mUnk_20.x, data_020c3e44.mUnk_2024.mUnk_20.z, ox, oz) > 0) {
+                if (func_0201fe14(
+                        func_0201feb0(data_020c3e44.mUnk_2024.mUnk_2c.x - ox, data_020c3e44.mUnk_2024.mUnk_2c.z - oz),
+                        rec->mUnk_1d8) < 0x4000) {
                     mask |= 0x400;
                 }
             }
@@ -893,8 +895,9 @@ void func_020175e8(int index, int *sel, int flags) {
     }
     base = func_0203129c();
     func_0202f110(0x30, 100, 0, 0x40, 0xffff, 0);
-    turn = func_0201febc(data_020c5e44.mUnk_38.x, data_020c5e44.mUnk_38.z, data_020c5e44.mUnk_44.x,
-                         data_020c5e44.mUnk_44.z, old.x / 512, old.z / 512);
+    turn =
+        func_0201febc(data_020c3e44.mUnk_2024.mUnk_14.x, data_020c3e44.mUnk_2024.mUnk_14.z,
+                      data_020c3e44.mUnk_2024.mUnk_20.x, data_020c3e44.mUnk_2024.mUnk_20.z, old.x / 512, old.z / 512);
     turn = turn != 0 ? (turn >> 31) | 1 : 0;
     turn = -(turn * 0x4000);
     if (!(res & 0x10000000)) {
@@ -902,9 +905,9 @@ void func_020175e8(int index, int *sel, int flags) {
     } else {
         angle = base - turn;
     }
-    if (data_020c5e44.mUnk_5e & 0x10) {
-        s32 cx = data_020c5e44.mUnk_50.x;
-        s32 cz = data_020c5e44.mUnk_50.z;
+    if (data_020c3e44.mUnk_2024.mUnk_3a & 0x10) {
+        s32 cx = data_020c3e44.mUnk_2024.mUnk_2c.x;
+        s32 cz = data_020c3e44.mUnk_2024.mUnk_2c.z;
         int j;
         u32 best;
         int near;
@@ -921,10 +924,10 @@ void func_020175e8(int index, int *sel, int flags) {
         data_020b6ee0.mUnk_0c50 = data_020b6ee0.mUnk_0008[near].mUnk_178;
         data_020b6ee0.mUnk_0c54 = data_020b6ee0.mUnk_0008[near].mUnk_17c;
         data_020b6ee0.mUnk_0c58 = near;
-        data_020b6ee0.mUnk_0c4c = data_020c5e44.mUnk_34;
+        data_020b6ee0.mUnk_0c4c = data_020c3e44.mUnk_2024.mUnk_10;
     }
-    if (data_020c5e44.mUnk_5e & 2) {
-        void *key = func_02031c70(data_020c5e44.mUnk_34);
+    if (data_020c3e44.mUnk_2024.mUnk_3a & 2) {
+        void *key = func_02031c70(data_020c3e44.mUnk_2024.mUnk_10);
         int count = data_020b6ee0.mUnk_0c48;
         s32 dmg;
 
@@ -954,7 +957,7 @@ void func_020175e8(int index, int *sel, int flags) {
         dmg = abs(rec->mUnk_220 * cosIdx((u16) func_0201fe14(angle, rec->mUnk_1d8)) / 4096 >> 12);
         data_020b6ee0.mUnk_0008[i].mUnk_186 -= dmg;
         if (data_020b6ee0.mUnk_0008[i].mUnk_186 < 0) {
-            func_02031c98(data_020c5e44.mUnk_34, 0, 0);
+            func_02031c98(data_020c3e44.mUnk_2024.mUnk_10, 0, 0);
             data_020b6ee0.mUnk_0008[i].mModel.mUnk_134 |= 2;
             func_0202f110(0xda, 100, 0, 0x40, 0xffff, 0);
         } else {
@@ -1037,9 +1040,9 @@ void func_020182cc(void) {
     func_02020854(0);
     func_02021fb0(0x1c7, 0x1c6, 0x180, 0x10);
     func_020325b0(data_020501c4[data_020b6ee0.mUnk_a8f2], 0, data_02050194[data_020b6ee0.mUnk_a8f2], 0, 0, 0);
-    data_020c5e44.mUnk_28 = func_02015d48;
-    data_020c6144.mUnk_54 = 0x640;
-    data_020c6144.mUnk_44 = 0x186a000;
+    data_020c3e44.mUnk_2024.mUnk_04 = func_02015d48;
+    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_54 = 0x640;
+    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_44 = 0x186a000;
     func_020104c0(3, 0x4c);
     MI_CpuFill8(&rec->mDraw, 0, 0x44);
     func_02031fc4(0, &rec->mUnk_1a0);
@@ -1056,10 +1059,10 @@ void func_020182cc(void) {
     data_020b6ee0.mUnk_8e60.mDraw.mUnk_34 = -1;
     data_020b6ee0.mUnk_8e60.mDraw.mUnk_3c = 0;
     data_020b6ee0.mUnk_8e60.mDraw.mUnk_3a = data_020b6ee0.mUnk_8e60.mDraw.mUnk_3c;
-    data_020c5e44.mUnk_bc = 4;
-    func_02031fc4(0, &data_020c5e44.mUnk_98);
-    data_020c5e44.mUnk_80 = data_020c5e44.mUnk_98;
-    data_020c5e44.mUnk_80.y += 0x6d6000;
+    data_020c3e44.mUnk_2024.mUnk_98 = 4;
+    func_02031fc4(0, &data_020c3e44.mUnk_2024.mUnk_74);
+    data_020c3e44.mUnk_2024.mUnk_5c = data_020c3e44.mUnk_2024.mUnk_74;
+    data_020c3e44.mUnk_2024.mUnk_5c.y += 0x6d6000;
     func_02015d4c();
     func_02016624();
     obj->mUnk_1bc = func_020182b8(rec->mInfo.mUnk_11 - 1, 2) * 60000 / 1000;
@@ -1093,11 +1096,11 @@ void func_02018558(void) {
     } else {
         func_020271c8();
     }
-    pos.x = data_020c5e44.mUnk_98.x;
-    pos.z = data_020c5e44.mUnk_98.z;
+    pos.x = data_020c3e44.mUnk_2024.mUnk_74.x;
+    pos.z = data_020c3e44.mUnk_2024.mUnk_74.z;
     pos.y = -0x19000;
     func_0200ba08(data_020b6ee0.mUnk_a8f2 + 0xfbe, &pos, (data_020c18bc.mUnk_45c >> 1) % 100, 0, 0x3000, 0);
-    func_02033614(data_020c5e44.mUnk_98.x, data_020c5e44.mUnk_98.z);
+    func_02033614(data_020c3e44.mUnk_2024.mUnk_74.x, data_020c3e44.mUnk_2024.mUnk_74.z);
     func_02016ae8(stage);
     func_02015f34();
     func_02016008(stage);
@@ -1223,19 +1226,19 @@ void func_0201896c(void) {
     func_02020854(0);
     func_02021fb0(0x1c7, 0x1c6, 0x180, 0x10);
     func_020325b0(0x1db, 0, 0x1dc, 0, 0, 0);
-    data_020c5e44.mUnk_28 = func_02015d48;
-    data_020c6144.mUnk_54 = 0x640;
+    data_020c3e44.mUnk_2024.mUnk_04 = func_02015d48;
+    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_54 = 0x640;
     func_020104e0(6, 0x4c, 3);
-    data_020c6144.mUnk_44 = 0x186a000;
+    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_44 = 0x186a000;
     func_02031fc4(0, &offset);
     func_02033df4(0x18);
-    data_020c5e44.mUnk_bc = 0;
+    data_020c3e44.mUnk_2024.mUnk_98 = 0;
     if (data_020b6ee0.mUnk_a147 == 0) {
-        func_02031fc4(0, &data_020c5e44.mUnk_b0);
+        func_02031fc4(0, &data_020c3e44.mUnk_2024.mUnk_8c);
         func_02031fc4(0, &data_020b6ee0.mUnk_a574.mUnk_0c);
-        data_020c5e44.mUnk_a4 = data_020c5e44.mUnk_b0;
-        data_020c5e44.mUnk_a4.y += 0xcb2000;
-        data_020c5e44.mUnk_a4.z += 0x32000;
+        data_020c3e44.mUnk_2024.mUnk_80 = data_020c3e44.mUnk_2024.mUnk_8c;
+        data_020c3e44.mUnk_2024.mUnk_80.y += 0xcb2000;
+        data_020c3e44.mUnk_2024.mUnk_80.z += 0x32000;
         data_020b6ee0.mUnk_a574.mUnk_34 = 0x80;
     } else {
         data_020b6ee0.mUnk_a147 = 0;
@@ -1275,12 +1278,12 @@ void func_0201896c(void) {
             }
         }
         rec = &data_020b1990[data_020b6ee0.mUnk_a8e4];
-        dx = rec->mUnk_1a0.x - data_020c5e44.mUnk_b0.x;
-        dz = rec->mUnk_1a0.z - data_020c5e44.mUnk_b0.z;
-        data_020c5e44.mUnk_b0.x += dx;
-        data_020c5e44.mUnk_b0.z += dz;
-        data_020c5e44.mUnk_a4.x += dx;
-        data_020c5e44.mUnk_a4.z += dz;
+        dx = rec->mUnk_1a0.x - data_020c3e44.mUnk_2024.mUnk_8c.x;
+        dz = rec->mUnk_1a0.z - data_020c3e44.mUnk_2024.mUnk_8c.z;
+        data_020c3e44.mUnk_2024.mUnk_8c.x += dx;
+        data_020c3e44.mUnk_2024.mUnk_8c.z += dz;
+        data_020c3e44.mUnk_2024.mUnk_80.x += dx;
+        data_020c3e44.mUnk_2024.mUnk_80.z += dz;
     }
     func_020151f8();
     func_020196b4();
@@ -1439,7 +1442,7 @@ void func_02018cd4(void) {
     func_02023f58(&view, view.mPos.x, view.mPos.y, view.mPos.z, 0x1000, 0, 0, 0, 0x100);
     func_0202733c(&data_020b6ee0.mUnk_9c64, &view, 0);
     func_02019788();
-    func_02033614(data_020c5e44.mUnk_98.x, data_020c5e44.mUnk_98.z);
+    func_02033614(data_020c3e44.mUnk_2024.mUnk_74.x, data_020c3e44.mUnk_2024.mUnk_74.z);
     if (data_020b6ee0.mUnk_a8e0 != data_020b6ee0.mUnk_a8e4) {
         if (data_020b6ee0.mUnk_a8e4 == -1) {
             data_020b6ee0.mUnk_a146 = 0;
@@ -1483,7 +1486,7 @@ void func_02018cd4(void) {
         }
     }
     func_020126a0(data_020b6ee0.mUnk_a8e4);
-    data_020c5e44.mUnk_bc = 4;
+    data_020c3e44.mUnk_2024.mUnk_98 = 4;
 }
 
 void func_020192d4(void) {
@@ -1854,8 +1857,8 @@ void func_02019b3c(VecFx32 *a, VecFx32 *b) {
         data_020b6ee0.mUnk_a574.mUnk_00.y = data_020b6ee0.mUnk_a574.mUnk_0c.y - data_020b6ee0.mUnk_a574.mUnk_00.y;
         data_020b6ee0.mUnk_a574.mUnk_00.z = data_020b6ee0.mUnk_a574.mUnk_0c.z - data_020b6ee0.mUnk_a574.mUnk_00.z;
     }
-    func_0200b960(&data_020c5e44.mUnk_80, data_020b6ee0.mUnk_a574.mUnk_00, data_020b6ee0.mUnk_a574.mUnk_34);
-    func_0200b960(&data_020c5e44.mUnk_98, data_020b6ee0.mUnk_a574.mUnk_0c, data_020b6ee0.mUnk_a574.mUnk_34);
+    func_0200b960(&data_020c3e44.mUnk_2024.mUnk_5c, data_020b6ee0.mUnk_a574.mUnk_00, data_020b6ee0.mUnk_a574.mUnk_34);
+    func_0200b960(&data_020c3e44.mUnk_2024.mUnk_74, data_020b6ee0.mUnk_a574.mUnk_0c, data_020b6ee0.mUnk_a574.mUnk_34);
     func_02033b8c();
     func_02033520();
     func_02025db4(p, out1);
@@ -1922,15 +1925,15 @@ void func_02019df8(void) {
     func_0200bdcc(2, 0x10);
     func_02021fb0(0x1c7, 0x1c6, 0x100, 0x10);
     func_020325b0(0xdda, 0, 0xddb, 0, 0, 0);
-    data_020c5e44.mUnk_28 = func_02019b38;
-    data_020c6144.mUnk_54 = 0x640;
-    data_020c6144.mUnk_44 = 0x9c4000;
+    data_020c3e44.mUnk_2024.mUnk_04 = func_02019b38;
+    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_54 = 0x640;
+    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_44 = 0x9c4000;
     func_02031fc4(0, &data_020c180c);
     func_02031fc4(1, &data_020c1800);
-    func_02031fc4(0, &data_020c5e44.mUnk_80);
-    func_02031fc4(0, &data_020c5e44.mUnk_98);
-    data_020c5e44.mUnk_80.z += 0x352000;
-    data_020c5e44.mUnk_98.y += 0x32000;
+    func_02031fc4(0, &data_020c3e44.mUnk_2024.mUnk_5c);
+    func_02031fc4(0, &data_020c3e44.mUnk_2024.mUnk_74);
+    data_020c3e44.mUnk_2024.mUnk_5c.z += 0x352000;
+    data_020c3e44.mUnk_2024.mUnk_74.y += 0x32000;
     data_020b6ee0.mUnk_a574.mUnk_34 = 0x80;
     func_0200bf38(8);
     memset(p, 0, 0x44);
