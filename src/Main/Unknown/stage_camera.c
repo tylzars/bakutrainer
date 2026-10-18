@@ -24,6 +24,7 @@
 #include <Main/Unknown/stage_progress.h>
 #include <Main/Unknown/text_draw.h>
 #include <Main/Unknown/camera_state.h>
+#include <Main/Unknown/vram_cache.h>
 
 void func_02015d4c(void) {
     data_020b6ee0.mUnk_a146 = 0;
@@ -1371,7 +1372,7 @@ void func_02018cd4(void) {
                     func_0202601c(data_020b6ee0.mUnk_ca8, &data_020b6ee0.mUnk_ca6, 2, 1, &data_020b6ee0.mUnk_c94,
                                   &data_020b6ee0.mUnk_c98, &data_020b6ee0.mUnk_c9c, 1);
                     func_02023478(data_020b6ee0.mUnk_ca8, data_020b6ee0.mUnk_ca0, &data_020b6ee0.mUnk_c88,
-                                  (int) &data_020b6ee0.mUnk_c7c, data_020b6ee0.mUnk_c94, data_020b6ee0.mUnk_c94,
+                                  &data_020b6ee0.mUnk_c7c, data_020b6ee0.mUnk_c94, data_020b6ee0.mUnk_c94,
                                   data_020b6ee0.mUnk_c9c, 0);
                     params.mUnk_3a += data_020b6ee0.mUnk_ca0[0];
                     params.mUnk_38 += data_020b6ee0.mUnk_ca0[1];

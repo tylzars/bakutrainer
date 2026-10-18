@@ -198,7 +198,8 @@ typedef struct SystemState {
     u8 *mUnk_34c;
     u32 mUnk_350;
     u16 mUnk_354;
-    u8 mUnk_356[0x42c - 0x356];
+    u8 mUnk_356[0x390 - 0x356];
+    u32 mUnk_390[(0x42c - 0x390) / 4];
     s32 mUnk_42c;
     u8 mUnk_430[0x450 - 0x430];
     u32 mUnk_450;
@@ -442,6 +443,23 @@ typedef struct Unk_020c642c {
     u8 mUnk_00[0x40];
     s32 mUnk_40;
 } Unk_020c642c;
+
+// Header of one texture block (func_0202ae84 fills it).
+typedef struct TexInfo {
+    u32 mUnk_00;
+    u32 mUnk_04;
+    s16 mUnk_08;
+    s16 mUnk_0a;
+    s16 mUnk_0c;
+    u16 mUnk_0e;
+    u8 mUnk_10;
+    u8 mUnk_11;
+    s8 mUnk_12;
+    u8 mUnk_13;
+    u8 mUnk_14;
+    u8 mUnk_15;
+    u8 mUnk_16[2];
+} TexInfo;
 
 typedef struct Unk_EventRec {
     s16 mUnk_00;

@@ -24,21 +24,6 @@ u32 func_0201c550(void);
 u32 func_0201c564(void);
 
 // Objects of the per-frame system code.
-typedef struct Unk_020c321c {
-    u8 mUnk_00[6];
-    u8 mUnk_06;
-    u8 mUnk_07[0x14 - 7];
-    u16 mUnk_14;
-    u16 mUnk_16;
-    u16 mUnk_18;
-    u16 mUnk_1a;
-    u8 mUnk_1c[2];
-    u16 mUnk_1e;
-    u16 mUnk_20;
-    u16 mUnk_22;
-    u16 mUnk_24;
-} Unk_020c321c;
-extern Unk_020c321c data_020c321c;
 
 // The two halves of the file cache block (0x580 bytes each): an offset table and the data it indexes.
 typedef struct Unk_020c2694 {
@@ -94,7 +79,7 @@ extern void *data_020c9e10;
 extern u16 *data_020c9e14;
 extern u8 *data_020c9e1c;
 extern WMDataSharing data_020c9e60;
-void func_0201c580(u16 file, u32 src, u32 dst, u32 size, u32 unpackedSize, u8 mode, u8 flag);
+void func_0201c580(u32 file, u32 src, u32 dst, u32 size, u32 unpackedSize, u8 mode, u8 flag);
 void func_0201c6b0(u16 file, u32 src, u32 dst, u32 size);
 u32 func_0201c704(u32 size);
 void func_0201c78c(void);
@@ -121,7 +106,9 @@ typedef struct Unk_020c1834 {
 } Unk_020c1834;
 
 typedef struct Unk_PoolNode {
-    u8 mUnk_00[0xa];
+    u32 mUnk_00;
+    u32 mUnk_04;
+    u16 mUnk_08;
     u16 mUnk_0a;
     u16 mUnk_0c;
     u8 mUnk_0e[2];
@@ -129,7 +116,8 @@ typedef struct Unk_PoolNode {
 
 typedef struct Unk_PoolSlot {
     s32 mUnk_00;
-    s32 mUnk_04;
+    u16 mUnk_04;
+    u16 mUnk_06;
 } Unk_PoolSlot;
 
 typedef struct Unk_PoolRange {
@@ -139,6 +127,36 @@ typedef struct Unk_PoolRange {
     u16 mUnk_6;
 } Unk_PoolRange;
 
+// An animation track: its data, the current and next frame, the blend between them and the mode.
+typedef struct Unk_AnimTrack {
+    void *mUnk_00;
+    u32 mUnk_04;
+    u32 mUnk_08;
+    u8 mUnk_0c;
+    u8 mUnk_0d;
+    u8 mUnk_0e[2];
+} Unk_AnimTrack;
+
+// A node of a model's pose tree: mUnk_0 is its first child and mUnk_1 its next sibling (0xff = none); scale (s8),
+// angles (s8, << 8), position (s16, << 5), its matrix stack slot (-1 = none) and flags.
+typedef struct Unk_PoseNode {
+    u8 mUnk_0;
+    u8 mUnk_1;
+    s8 mUnk_2;
+    s8 mUnk_3;
+    s8 mUnk_4;
+    s8 mUnk_5;
+    s8 mUnk_6;
+    s8 mUnk_7;
+    s16 mUnk_8;
+    s16 mUnk_a;
+    s16 mUnk_c;
+    s8 mUnk_e;
+    u8 mUnk_f;
+} Unk_PoseNode;
+
+// The graphics pools (texture blocks at 0x00, palette blocks at 0x0c: slots, hash entries and block ranges) and the
+// model animation state.
 typedef struct Unk_020c31dc {
     Unk_PoolNode *mUnk_00;
     Unk_PoolSlot *mUnk_04;
@@ -146,10 +164,33 @@ typedef struct Unk_020c31dc {
     Unk_PoolNode *mUnk_0c;
     Unk_PoolSlot *mUnk_10;
     Unk_PoolRange *mUnk_14;
-    u8 mUnk_18[0x4c - 0x18];
+    Unk_AnimTrack mUnk_18[2];
+    Unk_PoseNode *mUnk_38;
+    u16 mUnk_3c;
+    u16 mUnk_3e;
+    s16 mUnk_40;
+    u8 mUnk_42;
+    u8 mUnk_43;
+    u8 mUnk_44;
+    u8 mUnk_45;
+    u8 mUnk_46;
+    u8 mUnk_47;
+    u8 mUnk_48;
+    u8 mUnk_49;
+    u8 mUnk_4a;
+    u8 mUnk_4b;
     u32 mUnk_4c;
     u32 mUnk_50;
     u16 mUnk_54;
+    u16 mUnk_56;
+    u16 mUnk_58;
+    u16 mUnk_5a;
+    u8 mUnk_5c[2];
+    u16 mUnk_5e;
+    u16 mUnk_60;
+    u16 mUnk_62;
+    u16 mUnk_64;
+    u8 mUnk_66[2];
 } Unk_020c31dc;
 
 extern Unk_020c1834 data_020c1834;

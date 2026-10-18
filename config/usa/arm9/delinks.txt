@@ -406,6 +406,11 @@ src/Main/Unknown/gx_pool.c:
 src/Main/Unknown/angle_blend.c:
     .text       start:0x020223e8 end:0x020225dc
 
+// provisional: the pool allocator and hash lookups of the graphics pools (data_020c31dc, like gx_pool.c);
+// func_020232f0/func_02023478 work on the animation tracks and may belong with the model code after it
+src/Main/Unknown/vram_cache.c:
+    .text       start:0x020225dc end:0x0202350c
+
 // one file: its own-section .bss ascend (0x020c1818.. -> FSFile -> SystemState) and the JPEG and start-up code reach
 // the same objects through one section base; the .rodata own sections ascend as one file's; the data block
 // 0x0201a608-0x0201b7e0 before it has no known owner

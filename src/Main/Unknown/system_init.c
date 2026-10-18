@@ -614,11 +614,11 @@ int func_0201c4f0(void *handle) {
 }
 
 u16 func_0201c538(void) {
-    return data_020c321c.mUnk_18;
+    return data_020c31dc.mUnk_58;
 }
 
 u16 func_0201c544(void) {
-    return data_020c321c.mUnk_1a;
+    return data_020c31dc.mUnk_5a;
 }
 
 u32 func_0201c550(void) {
@@ -632,7 +632,7 @@ u32 func_0201c564(void) {
 #pragma thumb off
 // Queues a transfer for func_0201c7b8: grows the queue's byte count, waits for the queue to drain when it is full
 // (terminating when it stays full), and appends the entry.
-void func_0201c580(u16 file, u32 src, u32 dst, u32 size, u32 unpackedSize, u8 mode, u8 flag) {
+void func_0201c580(u32 file, u32 src, u32 dst, u32 size, u32 unpackedSize, u8 mode, u8 flag) {
     Unk_LoadEntry entry;
     int limit;
     if (unpackedSize == 0) {
