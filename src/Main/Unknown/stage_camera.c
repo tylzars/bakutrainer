@@ -542,8 +542,8 @@ void func_02016db4(Unk_020b1598 *followers, int index, u16 angle) {
             }
             {
                 u32 cam = func_0203129c();
-                int cross = func_0201febc(data_020c5e44.mUnk_38, data_020c5e44.mUnk_3c, data_020c5e44.mUnk_44,
-                                          data_020c5e44.mUnk_48, f->mUnk_00.x, f->mUnk_00.z);
+                int cross = func_0201febc(data_020c5e44.mUnk_38.x, data_020c5e44.mUnk_38.z, data_020c5e44.mUnk_44.x,
+                                          data_020c5e44.mUnk_44.z, f->mUnk_00.x, f->mUnk_00.z);
                 f->mUnk_00 = f->mUnk_0c;
                 f->mUnk_24 = cam + (((cross != 0) ? ((cross >> 31) | 1) : 0) << 14);
                 f->mUnk_22 = f->mUnk_24;
@@ -877,9 +877,9 @@ void func_020175e8(int index, int *sel, int flags) {
         if (func_02031824(&rec->mUnk_1a0, 400, 200, 0, 0x400, 0)) {
             s32 oz = old.z / 512;
             s32 ox = old.x / 512;
-            if (func_0201febc(data_020c5e44.mUnk_38, data_020c5e44.mUnk_3c, data_020c5e44.mUnk_44,
-                              data_020c5e44.mUnk_48, ox, oz) > 0) {
-                if (func_0201fe14(func_0201feb0(data_020c5e44.mUnk_50 - ox, data_020c5e44.mUnk_54 - oz),
+            if (func_0201febc(data_020c5e44.mUnk_38.x, data_020c5e44.mUnk_38.z, data_020c5e44.mUnk_44.x,
+                              data_020c5e44.mUnk_44.z, ox, oz) > 0) {
+                if (func_0201fe14(func_0201feb0(data_020c5e44.mUnk_50.x - ox, data_020c5e44.mUnk_50.z - oz),
                                   rec->mUnk_1d8) < 0x4000) {
                     mask |= 0x400;
                 }
@@ -892,8 +892,8 @@ void func_020175e8(int index, int *sel, int flags) {
     }
     base = func_0203129c();
     func_0202f110(0x30, 100, 0, 0x40, 0xffff, 0);
-    turn = func_0201febc(data_020c5e44.mUnk_38, data_020c5e44.mUnk_3c, data_020c5e44.mUnk_44, data_020c5e44.mUnk_48,
-                         old.x / 512, old.z / 512);
+    turn = func_0201febc(data_020c5e44.mUnk_38.x, data_020c5e44.mUnk_38.z, data_020c5e44.mUnk_44.x,
+                         data_020c5e44.mUnk_44.z, old.x / 512, old.z / 512);
     turn = turn != 0 ? (turn >> 31) | 1 : 0;
     turn = -(turn * 0x4000);
     if (!(res & 0x10000000)) {
@@ -902,8 +902,8 @@ void func_020175e8(int index, int *sel, int flags) {
         angle = base - turn;
     }
     if (data_020c5e44.mUnk_5e & 0x10) {
-        s32 cx = data_020c5e44.mUnk_50;
-        s32 cz = data_020c5e44.mUnk_54;
+        s32 cx = data_020c5e44.mUnk_50.x;
+        s32 cz = data_020c5e44.mUnk_50.z;
         int j;
         u32 best;
         int near;

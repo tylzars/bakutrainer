@@ -336,6 +336,15 @@ extern const u32 data_0204e0e8[];
 extern const u32 data_0204e144[];
 
 // Camera state: the first 0xc0 bytes of the camera object (positions, targets, angles and flags).
+// A point of a ring of the stage data file's chunk 0x5540 as func_020312b8 unpacks it: x and z, a bottom height
+// (mUnk_08) and a top height (mUnk_0a, 0 when the ring has none).
+typedef struct MapRingPoint {
+    s32 x;
+    s32 z;
+    s16 mUnk_08;
+    s16 mUnk_0a;
+} MapRingPoint;
+
 typedef struct CameraState {
     u8 mUnk_000[0x24];
     u16 mUnk_24;
@@ -345,15 +354,10 @@ typedef struct CameraState {
     u8 mUnk_30;
     u8 mUnk_31[3];
     u16 *mUnk_34;
-    s32 mUnk_38;
-    s32 mUnk_3c;
-    u8 mUnk_40[4];
-    s32 mUnk_44;
-    s32 mUnk_48;
-    u8 mUnk_4c[4];
-    s32 mUnk_50;
-    s32 mUnk_54;
-    u8 mUnk_58[0x5e - 0x58];
+    MapRingPoint mUnk_38;
+    MapRingPoint mUnk_44;
+    MapRingPoint mUnk_50;
+    u16 mUnk_5c;
     u16 mUnk_5e;
     u8 mUnk_60;
     u8 mUnk_61;

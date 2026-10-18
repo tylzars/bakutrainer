@@ -31,6 +31,12 @@
 
 #define MAP_VIEWPORT_FULL 0xbfff0000
 
+// func_020312b8: the count bits and the top-height flag of a ring's format byte; the most rings and points it unpacks.
+#define MAP_RING_POINTS 0x1f
+#define MAP_RING_TOP 0x20
+#define MAP_RING_MAX 0x80
+#define MAP_RING_MAX_POINTS 0x100
+
 static inline void PutTrans(fx32 x, fx32 y, fx32 z) {
     reg_G3X_MTX_TRANS = x;
     reg_G3X_MTX_TRANS = y;
@@ -67,6 +73,18 @@ typedef struct MapPair {
     u16 mUnk_0;
     u16 mUnk_2;
 } MapPair;
+
+// A leaf of the quadtree of chunk 0x5540 (an inner node holds the offsets of its four children instead, and its
+// first halfword is never 0): mUnk_02 set means the cell has no rings, mUnk_03 is the number of rings, mUnk_04 the
+// shift applied to the point coordinates and mUnk_06 the base height. The rings follow the leaf.
+typedef struct MapRingLeaf {
+    u16 mUnk_00;
+    u8 mUnk_02;
+    u8 mUnk_03;
+    u8 mUnk_04;
+    u8 mUnk_05;
+    s16 mUnk_06;
+} MapRingLeaf;
 
 // One cell of the grid (mUnk_30 in MapState, 4 bytes per cell): a direction to the target and, in mUnk_3, how the cell
 // was reached (0 = not visited).
@@ -135,6 +153,299 @@ static int func_02031cc8(int x, int z);
 static void func_02031fec(u16 group, u16 key, VecFx32 *out);
 static MapEntry *func_02032074(u8 group, u8 key, u8 *count);
 static MapEntry *func_0203219c(void);
+
+#pragma thumb off
+
+// Finds the quadtree leaf of chunk 0x5540 under pos and unpacks its rings: for each ring its address goes to rings,
+// its key to keys and its point count to counts (followed by a 0), and its points to out, scaled down by shift. A
+// ring is a halfword key, a byte holding the point count (MAP_RING_POINTS) and the point format, a byte, the offset
+// of the next ring of the same group (see func_02031c70) and the points: x and z offsets from the leaf's corner
+// (bytes, or halfwords at the next even address with bit 7 set), with bit 6 a bottom height above the leaf's base
+// height and with MAP_RING_TOP a top height above the bottom.
+static void func_020312b8(VecFx32 *pos, MapRingPoint *out, u8 *counts, u16 *keys, u16 **rings, int shift) {
+    int total;
+    int n;
+    int npts;
+    int h;
+    u16 *base;
+    int w;
+    int i;
+    MapRingLeaf *leaf;
+    u16 *node;
+    int z0;
+    int x0;
+    u8 *p;
+
+    base = func_02031eb8(0x5540);
+    x0 = 0;
+    w = data_020c5e44.mUnk_000.mUnk_78 * data_020c5e44.mUnk_000.mUnk_64;
+    h = data_020c5e44.mUnk_000.mUnk_7a * data_020c5e44.mUnk_000.mUnk_64;
+    node = base;
+    z0 = 0;
+    total = 0;
+    n = 0;
+
+    if (base == NULL) {
+        OS_Terminate();
+    }
+    while (node[0] != 0) {
+        int idx = 0;
+        w >>= 1;
+        h >>= 1;
+        if (pos->z > z0 + h) {
+            z0 += h;
+            idx = 2;
+        }
+        if (pos->x > x0 + w) {
+            x0 += w;
+            idx++;
+        }
+        node = base + node[idx];
+    }
+    leaf = (MapRingLeaf *) node;
+    if (leaf->mUnk_02 != 0) {
+        return;
+    }
+    p = (u8 *) (leaf + 1);
+    i = leaf->mUnk_03;
+    while (i-- != 0) {
+        npts = p[2] & MAP_RING_POINTS;
+        if (++n >= MAP_RING_MAX) {
+            OS_Terminate();
+        }
+        *rings++ = (u16 *) p;
+        *keys++ = *(u16 *) p;
+        counts[0] = npts;
+        *++counts = 0;
+        total += npts;
+        if (total > MAP_RING_MAX_POINTS) {
+            OS_Terminate();
+        }
+        switch ((p[2] >> 6) + ((p[2] & MAP_RING_TOP) >> 3)) {
+            case 0:
+                p += 6;
+                while (npts-- != 0) {
+                    out->x = (x0 + (((s8 *) p)[0] << leaf->mUnk_04)) >> shift;
+                    out->z = (z0 + (((s8 *) p)[1] << leaf->mUnk_04)) >> shift;
+                    out->mUnk_08 = leaf->mUnk_06 >> shift;
+                    out->mUnk_0a = 0;
+                    p += 2;
+                    out++;
+                }
+                break;
+            case 1:
+                p += 6;
+                while (npts-- != 0) {
+                    out->x = (x0 + (((s8 *) p)[0] << leaf->mUnk_04)) >> shift;
+                    out->z = (z0 + (((s8 *) p)[1] << leaf->mUnk_04)) >> shift;
+                    out->mUnk_08 = ((leaf->mUnk_06 + p[2]) << leaf->mUnk_04) >> shift;
+                    out->mUnk_0a = 0;
+                    p += 3;
+                    out++;
+                }
+                break;
+            case 2:
+                p = func_02034940(p + 6);
+                while (npts-- != 0) {
+                    out->x = (x0 + (((s16 *) p)[0] << leaf->mUnk_04)) >> shift;
+                    out->z = (z0 + (((s16 *) p)[1] << leaf->mUnk_04)) >> shift;
+                    out->mUnk_08 = leaf->mUnk_06 >> shift;
+                    out->mUnk_0a = 0;
+                    p += 4;
+                    out++;
+                }
+                break;
+            case 3:
+                p = func_02034940(p + 6);
+                while (npts-- != 0) {
+                    out->x = (x0 + (((s16 *) p)[0] << leaf->mUnk_04)) >> shift;
+                    out->z = (z0 + (((s16 *) p)[1] << leaf->mUnk_04)) >> shift;
+                    out->mUnk_08 = ((leaf->mUnk_06 + ((u16 *) p)[2]) << leaf->mUnk_04) >> shift;
+                    out->mUnk_0a = 0;
+                    p += 6;
+                    out++;
+                }
+                break;
+            case 4:
+                p += 6;
+                while (npts-- != 0) {
+                    out->x = (x0 + (((s8 *) p)[0] << leaf->mUnk_04)) >> shift;
+                    out->z = (z0 + (((s8 *) p)[1] << leaf->mUnk_04)) >> shift;
+                    out->mUnk_08 = leaf->mUnk_06 >> shift;
+                    out->mUnk_0a = out->mUnk_08 + ((((s8 *) p)[2] << leaf->mUnk_04) >> shift);
+                    p += 3;
+                    out++;
+                }
+                break;
+            case 5:
+                p += 6;
+                while (npts-- != 0) {
+                    out->x = (x0 + (((s8 *) p)[0] << leaf->mUnk_04)) >> shift;
+                    out->z = (z0 + (((s8 *) p)[1] << leaf->mUnk_04)) >> shift;
+                    out->mUnk_08 = ((leaf->mUnk_06 + p[2]) << leaf->mUnk_04) >> shift;
+                    out->mUnk_0a = out->mUnk_08 + ((p[3] << leaf->mUnk_04) >> shift);
+                    p += 4;
+                    out++;
+                }
+                break;
+            case 6:
+                p = func_02034940(p + 6);
+                while (npts-- != 0) {
+                    out->x = (x0 + (((s16 *) p)[0] << leaf->mUnk_04)) >> shift;
+                    out->z = (z0 + (((s16 *) p)[1] << leaf->mUnk_04)) >> shift;
+                    out->mUnk_08 = leaf->mUnk_06 >> shift;
+                    out->mUnk_0a = out->mUnk_08 + ((((s16 *) p)[2] << leaf->mUnk_04) >> shift);
+                    p += 6;
+                    out++;
+                }
+                break;
+            case 7:
+                p = func_02034940(p + 6);
+                while (npts-- != 0) {
+                    out->x = (x0 + (((s16 *) p)[0] << leaf->mUnk_04)) >> shift;
+                    out->z = (z0 + (((s16 *) p)[1] << leaf->mUnk_04)) >> shift;
+                    out->mUnk_08 = ((leaf->mUnk_06 + ((u16 *) p)[2]) << leaf->mUnk_04) >> shift;
+                    out->mUnk_0a = out->mUnk_08 + ((((u16 *) p)[3] << leaf->mUnk_04) >> shift);
+                    p += 8;
+                    out++;
+                }
+                break;
+        }
+    }
+}
+
+// Collects the ring segments of the quadtree leaf under pos whose key has a bit of any and none of none, and keeps
+// those whose nearest point to pos lies within half of radius (squared distances, in units of 512) and, when the
+// segment has a top height, whose height range overlaps pos.y + bottom .. pos.y + top. The camera object records the
+// nearest one: its ring (mUnk_34), its two ends (mUnk_38, mUnk_44), the nearest point (mUnk_50), the squared
+// distance (mUnk_5c) and the ring's key (mUnk_5e). Returns 0 when nothing was found, else the MAP_RING_* result.
+u32 func_02031824(VecFx32 *pos, int radius, int top, int bottom, u16 any, u16 none) {
+    MapRingPoint pts[MAP_RING_MAX_POINTS];
+    u8 counts[MAP_RING_MAX];
+    u16 keys[MAP_RING_MAX];
+    u16 *rings[MAP_RING_MAX];
+    MapRingPoint nearest;
+    int limit;
+    s32 pz;
+    s32 px;
+    int i;
+    int base;
+    u8 hits;
+    u8 tie;
+    u32 result;
+    int atEnd;
+    u32 best;
+    s16 y;
+    int k;
+
+    hits = 0;
+    limit = radius * radius / 4;
+    tie = hits;
+    atEnd = hits;
+    result = hits;
+    best = hits - 1;
+    counts[0] = 0;
+    func_020312b8(pos, pts, counts, keys, rings, 9);
+    i = 0;
+    px = pos->x;
+    pz = pos->z;
+    y = pos->y >> 9;
+    base = 0;
+    while (counts[i] != 0) {
+        if ((keys[i] & any) != 0 && (keys[i] & none) == 0) {
+            for (k = 0; k < counts[i] - 1; k++) {
+                int t;
+                int sh;
+                s32 dx;
+                s32 dz;
+                MapRingPoint *next;
+                MapRingPoint *cur;
+                int len2;
+                int end;
+                s32 ax;
+                s32 az;
+                s16 dh;
+                s16 dh2;
+                u32 dist;
+                int frac;
+                int j;
+
+                j = base + k;
+                end = 0;
+                cur = &pts[j];
+                next = &pts[j + 1];
+                dx = next->x - cur->x;
+                ax = (px >> 9) - cur->x;
+                dh = next->mUnk_08 - cur->mUnk_08;
+                az = (pz >> 9) - cur->z;
+                dz = next->z - cur->z;
+                dh2 = next->mUnk_0a - cur->mUnk_0a;
+                t = ax * dx + az * dz;
+
+                if (t <= 0) {
+                    nearest.x = cur->x;
+                    nearest.z = cur->z;
+                    nearest.mUnk_08 = cur->mUnk_08;
+                    nearest.mUnk_0a = cur->mUnk_0a;
+                    end = 1;
+                } else {
+                    len2 = dx * dx + dz * dz;
+                    if (len2 <= t) {
+                        nearest.x = next->x;
+                        nearest.mUnk_08 = next->mUnk_08;
+                        nearest.z = next->z;
+                        nearest.mUnk_0a = next->mUnk_0a;
+                        end = 1;
+                    } else {
+                        sh = func_02028250(t) - 1;
+                        if (sh < 9) {
+                            frac = (t << sh) / (len2 >> (9 - sh));
+                            sh = 9;
+                        } else {
+                            frac = (t << sh) / len2;
+                        }
+                        nearest.x = cur->x + ((frac * dx) >> sh);
+                        nearest.mUnk_08 = cur->mUnk_08 + ((frac * dh) >> sh);
+                        nearest.z = cur->z + ((frac * dz) >> sh);
+                        nearest.mUnk_0a = cur->mUnk_0a + ((frac * dh2) >> sh);
+                    }
+                }
+                dist = func_0201fae4(nearest.x - (px >> 9), nearest.z - (pz >> 9));
+                if (dist < limit) {
+                    if (nearest.mUnk_0a == 0 || (bottom + y < nearest.mUnk_0a && top + y > nearest.mUnk_08)) {
+                        atEnd |= end;
+                        hits++;
+                        if (dist < best) {
+                            best = dist;
+                            data_020c5e44.mUnk_000.mUnk_34 = rings[i];
+                            result = (i << 8) + k + MAP_RING_HIT;
+                            data_020c5e44.mUnk_000.mUnk_5c = dist;
+                            data_020c5e44.mUnk_000.mUnk_5e = keys[i];
+                            data_020c5e44.mUnk_000.mUnk_38 = *cur;
+                            data_020c5e44.mUnk_000.mUnk_44 = *next;
+                            data_020c5e44.mUnk_000.mUnk_50 = nearest;
+                        } else if (dist == best) {
+                            tie = 1;
+                        }
+                    }
+                }
+            }
+        }
+        base += counts[i++];
+    }
+    if (atEnd != 0) {
+        result |= MAP_RING_AT_END;
+    }
+    if (hits > 1) {
+        result |= MAP_RING_SEVERAL;
+    }
+    if (tie != 0) {
+        result |= MAP_RING_TIE;
+    }
+    return result;
+}
+
+#pragma thumb on
 
 // Returns the lowest address among the nodes of the ring of chunk 0x5540 that p belongs to (each node's halfword at
 // 4 is the offset of the next node).

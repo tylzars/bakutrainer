@@ -75,6 +75,15 @@ typedef struct CameraTrack {
 // The chunk of the stage data file whose key is id; 0 when the file has no such chunk.
 u16 *func_02031eb8(u32 id);
 
+// func_02031824's result: MAP_RING_HIT when a segment was found (the low bits hold its ring << 8 | segment), with
+// MAP_RING_SEVERAL (more than one segment in range), MAP_RING_AT_END (a nearest point was a segment end) and
+// MAP_RING_TIE (another segment was as near as the nearest).
+#define MAP_RING_HIT 0x80000000
+#define MAP_RING_SEVERAL 0x40000000
+#define MAP_RING_AT_END 0x20000000
+#define MAP_RING_TIE 0x10000000
+
+u32 func_02031824(VecFx32 *pos, int radius, int top, int bottom, u16 any, u16 none);
 void *func_02031c70(void *p);
 int func_02031c98(u16 *entry, u16 mask, u16 bits);
 int func_02031d0c(VecFx32 *pos, int a, int b, int c);
