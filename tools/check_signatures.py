@@ -79,6 +79,8 @@ def main():
                 ret, name, params = m.group(1), m.group(2), m.group(3)
                 if name in KW or ret.strip() in KW:
                     continue
+                if not params.strip() and m.group(4) != "{" and f.suffix in (".c", ".h"):
+                    continue  # a C declaration without a prototype says nothing about the parameters
                 ret = re.sub(r"\b(extern|static|inline|asm)\b", "", ret)
                 ret = re.sub(r"\s*\*\s*", "*", re.sub(r"\s+", " ", ret)).strip()
                 sig = canon(f"{ret} ({norm_params(params)})")
