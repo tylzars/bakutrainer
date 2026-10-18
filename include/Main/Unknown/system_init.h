@@ -32,15 +32,51 @@ typedef struct Unk_PoolRange {
     u16 mUnk_6;
 } Unk_PoolRange;
 
-// The two halves of the file cache block (0x580 bytes each): an offset table and the data it indexes.
+// A slot of the second table of a half: a link to its entry and a value.
+typedef struct Unk_SlotPair {
+    u16 mUnk_0;
+    u16 mUnk_2;
+} Unk_SlotPair;
+
+// Entry of a half's hash table (16 bytes): the key at +8 (-1 = never used, -2 = removed) and the number of
+// search paths that pass through the entry.
+typedef struct Unk_HashEntry {
+    u8 mUnk_0[8];
+    s32 mUnk_8;
+    u8 mUnk_c[2];
+    u16 mUnk_e;
+} Unk_HashEntry;
+
+// Entry of the chain table of a half (8 bytes): a word and five link bytes.
+typedef struct Unk_ChainEntry {
+    u16 mUnk_0;
+    u8 mUnk_2;
+    u8 mUnk_3;
+    u8 mUnk_4;
+    u8 mUnk_5;
+    u8 mUnk_6;
+    u8 mUnk_7;
+} Unk_ChainEntry;
+
+// The two halves of the file cache block (0x580 bytes each): tables for one display engine's cached blocks.
 typedef struct Unk_020c2694 {
-    u8 mUnk_000[0xc];
+    void *mUnk_000;
+    Unk_PoolRange *mUnk_004;
+    Unk_HashEntry *mUnk_008;
     Unk_PoolRange *mUnk_00c;
-    u8 mUnk_010[4];
+    void *mUnk_010;
     u16 mUnk_014[0x80];
     u8 mUnk_114;
-    u8 mUnk_115[0x568 - 0x115];
-    u8 mUnk_568[0x10];
+    u8 mUnk_115[0x516 - 0x115];
+    u16 mUnk_516;
+    Unk_ChainEntry *mUnk_518;
+    u8 mUnk_51c[0x10];
+    void *mUnk_52c;
+    void *mUnk_530;
+    Unk_SlotPair mUnk_534[0x10];
+    u16 mUnk_574;
+    u8 mUnk_576;
+    u8 mUnk_577;
     u16 mUnk_578;
     u8 mUnk_57a;
     u8 mUnk_57b;
@@ -55,7 +91,10 @@ typedef struct Unk_020c267c {
     void *mUnk_004;
     u8 mUnk_008[4];
     u32 mUnk_00c;
-    u8 mUnk_010[7];
+    u8 mUnk_010[2];
+    u16 mUnk_012;
+    u16 mUnk_014;
+    u8 mUnk_016;
     u8 mUnk_017;
     Unk_020c2694 mUnk_018[2];
     u8 mUnk_b18[4];

@@ -429,7 +429,7 @@ src/Main/Unknown/script_records.c:
 // provisional: start of the ARM run 0x0202ad34-0x0202db1c (block heaps and texture blocks of data_020c267c); the
 // empty routines at the start touch no object and are placed by address
 src/Main/Unknown/texture_blocks.c:
-    .text       start:0x0202ad34 end:0x0202b19c
+    .text       start:0x0202ad34 end:0x0202c2f0
 
 // one file: its own-section .bss ascend (0x020c1818.. -> FSFile -> SystemState) and the JPEG and start-up code reach
 // the same objects through one section base; the .rodata own sections ascend as one file's; the data block

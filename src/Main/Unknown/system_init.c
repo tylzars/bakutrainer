@@ -116,8 +116,8 @@ void func_0201b7ec(u32 a, int b, int c) {
     MIi_CpuClearFast(0, (void *) 0x05000000, 0x400);
     MIi_CpuClearFast(0xc0, (void *) 0x07000400, 0x400);
     MIi_CpuClearFast(0, (void *) 0x05000400, 0x400);
-    data_020c267c.mUnk_018[0].mUnk_568[0xf] = 0;
-    data_020c267c.mUnk_018[1].mUnk_568[0xf] = 0;
+    data_020c267c.mUnk_018[0].mUnk_577 = 0;
+    data_020c267c.mUnk_018[1].mUnk_577 = 0;
     data_020c18bc.mUnk_45c = 0;
     data_020c18bc.mUnk_490[0] = data_020c18bc.mUnk_490[1] = 3;
     *(vu16 *) 0x0400106c = *(vu16 *) 0x0400006c = 0;
@@ -2215,7 +2215,7 @@ void func_0201f450(int a, int b, u32 c, u32 d) {
     rows = (size * d) >> 10;
     if (a & 1) {
         *(vu32 *) 0x04000000 =
-            (data_020c267c.mUnk_018[0].mUnk_57b << 31) + (data_020c267c.mUnk_018[0].mUnk_568[0xf] << 20) + 0x11833;
+            (data_020c267c.mUnk_018[0].mUnk_57b << 31) + (data_020c267c.mUnk_018[0].mUnk_577 << 20) + 0x11833;
         data_020c18bc.mUnk_474[0] &= ~4;
         data_020c18bc.mUnk_2d4 = 0;
         data_020c18bc.mUnk_2d8 = 0;
@@ -2244,7 +2244,7 @@ void func_0201f450(int a, int b, u32 c, u32 d) {
     }
     if (a & 2) {
         *(vu32 *) 0x04001000 =
-            (data_020c267c.mUnk_018[1].mUnk_57b << 31) + (data_020c267c.mUnk_018[1].mUnk_568[0xf] << 20) + 0x11813;
+            (data_020c267c.mUnk_018[1].mUnk_57b << 31) + (data_020c267c.mUnk_018[1].mUnk_577 << 20) + 0x11813;
         data_020c18bc.mUnk_474[0] &= ~8;
         data_020c18bc.mUnk_2dc = 0;
         data_020c18bc.mUnk_2e0 = 0;

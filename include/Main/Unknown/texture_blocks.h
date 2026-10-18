@@ -8,6 +8,7 @@ extern "C" {
 #endif
 
 // Width and height in pixels of each texture size code (index = size code, [0] = width, [1] = height).
+extern const u16 data_02050978[16];
 extern const u8 data_02050998[16][2];
 
 // One texture record of a block: a packed word (two signed 9-bit values, a 3-bit and a 4-bit code, a 7-bit
@@ -40,6 +41,13 @@ u32 func_0202adf0(int layer);
 void func_0202ae34(int layer);
 void func_0202ae84(u32 index, TexInfo *out, u32 sub);
 u16 func_0202afb0(u32 index, int layer);
+void func_0202b19c(int layer, u32 key);
+u16 func_0202b26c(u32 index, int layer);
+u32 func_0202b32c(u32 index, int mode);
+void func_0202bb30(int layer);
+void func_0202bdd8(int a, int b, int c, u32 d, int e);
+void func_0202c1c4(void);
+void func_0202c1d4(int a);
 
 #ifdef __cplusplus
 }
