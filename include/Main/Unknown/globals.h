@@ -395,13 +395,13 @@ typedef struct Unk_020c5f04 {
     u8 mUnk_210[0x21c - 0x210];
     VecFx32 mUnk_21c;
     VecFx32 mUnk_228;
-    u8 mUnk_234[0x240 - 0x234];
+    VecFx32 mUnk_234;
 } Unk_020c5f04;
 
 // Camera view settings at 0x300 of the camera object: 0x14/0x16/0x18 are angles, 0x30 and 0x38/0x3c are flags, 0x44
 // a register value, 0x4a the projection set up last, 0x4b/0x4c the polygon alpha and id the model code last wrote.
 typedef struct Unk_020c6144 {
-    u8 mUnk_00[0xc];
+    VecFx32 mUnk_00;
     u8 mUnk_0c;
     u8 mUnk_0d;
     u8 mUnk_0e;
@@ -425,7 +425,9 @@ typedef struct Unk_020c6144 {
     u8 mUnk_4a;
     u8 mUnk_4b;
     u8 mUnk_4c;
-    u8 mUnk_4d[3];
+    u8 mUnk_4d;
+    u8 mUnk_4e;
+    u8 mUnk_4f;
     u16 *mUnk_50;
     u16 mUnk_54;
     u16 mUnk_56;

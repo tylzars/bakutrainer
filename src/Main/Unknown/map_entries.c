@@ -1371,3 +1371,306 @@ void func_02033520(void) {
         data_020c5e44.mUnk_300.mUnk_4a = 0;
     }
 }
+
+// Rebuilds the visible cells and objects for a camera at (x, z), then draws the markers of the stage (filtered by
+// mUnk_38 when its top bit is set) and the camera's own model.
+#pragma thumb off
+void func_02033614(s32 x, s32 z) {
+    u32 i;
+    s32 a;
+    s32 b;
+    DrawParams marker;
+    DrawParams camera;
+
+    data_020c5e44.mUnk_000.mUnk_2c = func_0201c430(0x80);
+    data_020c5e44.mUnk_000.mUnk_30 = 0;
+    if (data_020c5e44.mUnk_300.mUnk_42[0] != 0) {
+        a = data_020c5e44.mUnk_300.mUnk_38;
+        b = data_020c5e44.mUnk_300.mUnk_3c;
+    } else {
+        a = data_020c5e44.mUnk_300.mUnk_38 * 0xc800;
+        b = data_020c5e44.mUnk_300.mUnk_3c * 0xc800;
+    }
+    func_02034768(a, b, data_020c5e44.mUnk_300.mUnk_40);
+    func_02034904();
+    data_020c5e44.mUnk_000.mUnk_68 = 0;
+    data_020c5e44.mUnk_000.mUnk_7f_4 = 0;
+    data_020c5e44.mUnk_000.mUnk_7f_3 = 0;
+    data_020c5e44.mUnk_000.mUnk_7f_2 = 0;
+    data_020c3e44.mUnk_36 = 0;
+    MIi_CpuClearFast(0, data_020c3e44.mUnk_24, data_020c3e44.mUnk_34);
+    func_0203315c(x, z);
+    func_02032d50(x, z);
+    if (data_020c5e44.mUnk_000.mUnk_7f_2 == 1 && data_020c5e44.mUnk_000.mUnk_7f_4 == 0) {
+        func_0203315c(data_020c3e44.mUnk_dc, data_020c3e44.mUnk_e0);
+    }
+    data_020c5e44.mUnk_000.mUnk_7e = (data_020c5e44.mUnk_000.mUnk_7f_3 << 1) + data_020c5e44.mUnk_000.mUnk_7f_4;
+    data_020c5e44.mUnk_300.mUnk_60 = 0;
+    if (data_020c5e44.mUnk_300.mUnk_5c == 0) {
+        for (i = 0; i < data_020c5e44.mUnk_000.mUnk_30; i++) {
+            func_020329d0(data_020c5e44.mUnk_000.mUnk_2c[i]);
+        }
+    }
+    func_0201c4f0(&data_020c5e44.mUnk_000.mUnk_2c);
+    marker.mUnk_43_4 = 0;
+    marker.mUnk_43_3 = marker.mUnk_43_4;
+    marker.mUnk_43 = 0;
+    marker.mPos.y = 0;
+    marker.mUnk_38 = 0;
+    marker.mUnk_3a = 0;
+    marker.mUnk_3c = 0;
+    marker.mUnk_3e = 0xff;
+    {
+        s32 v = -(data_020c5e44.mUnk_300.mUnk_5a == 0);
+        marker.mUnk_2c = v;
+        marker.mUnk_30 = v;
+        marker.mUnk_34 = v;
+    }
+    for (i = 0; i < data_020c3e44.mUnk_36; i++) {
+        if ((data_020c3e44.mUnk_38 & 0x8000) == 0 ||
+            (data_020c3e44.mUnk_38 & ~0x8000) + data_020c5e44.mUnk_000.mUnk_7c == data_020c3e44.mUnk_2c[i].mUnk_00) {
+            MapMarker *m = &data_020c3e44.mUnk_2c[i];
+            marker.mPos.x = m->mUnk_04;
+            marker.mPos.z = m->mUnk_08;
+            func_020248e8(m->mUnk_00 & 0x7fff, &marker, data_020c5e44.mUnk_000.mUnk_7f_0 == 1 ? 0x10 : 0);
+            if (*(vu16 *) 0x04000604 > data_020c5e44.mUnk_300.mUnk_54) {
+                break;
+            }
+        }
+    }
+    if (data_020c5e44.mUnk_000.mUnk_76 == 0) {
+        return;
+    }
+    func_020334ec();
+    func_020334f8(1);
+    camera.mPos.x = data_020c5e44.mUnk_000.mUnk_80.x;
+    camera.mPos.y = data_020c5e44.mUnk_000.mUnk_80.y;
+    camera.mUnk_43_3 = 0;
+    camera.mUnk_43_4 = 0;
+    camera.mUnk_43 = 0;
+    camera.mPos.z = data_020c5e44.mUnk_000.mUnk_80.z;
+    camera.mUnk_38 = 0;
+    camera.mUnk_3c = 0;
+    camera.mUnk_3a = 0;
+    camera.mUnk_28 = 0x1000;
+    func_020248e8(data_020c5e44.mUnk_000.mUnk_76, &camera, data_020c5e44.mUnk_000.mUnk_7f_1 == 0);
+    func_020334f8(0);
+}
+
+// Moves the view angle a quarter of the way towards the direction from the camera to the look-at point (skipped
+// once when mUnk_34[0] is set).
+void func_02033b04(void) {
+    s32 dx;
+    s32 dz;
+    s32 diff;
+    VecFx32 *target;
+
+    if (data_020c5e44.mUnk_300.mUnk_34[0] != 0) {
+        data_020c5e44.mUnk_300.mUnk_34[0] = 0;
+        return;
+    }
+    target = &data_020c5e44.mUnk_000.mUnk_98;
+    dx = data_020c5e44.mUnk_000.mUnk_80.x - target->x;
+    dz = data_020c5e44.mUnk_000.mUnk_80.z - target->z;
+    diff = func_0201fe34(data_020c5e44.mUnk_300.mUnk_56, func_0201feb0(-dx >> 6, -dz >> 6));
+    data_020c5e44.mUnk_300.mUnk_56 += (u16) (diff / 4);
+}
+
+// One step of the view angle blend from mUnk_16 to mUnk_18 over mUnk_11[0] steps (mUnk_10 counts them); c points at
+// the blend counters from mUnk_0c on.
+void func_02033b8c(void) {
+    u8 *c = &data_020c5e44.mUnk_300.mUnk_0c;
+    if (c[4] == 0) {
+        return;
+    }
+    if (c[5] - 1 > 1) {
+        data_020c5e44.mUnk_300.mUnk_14 =
+            func_0201fb74(c[4], c[5] - 1, data_020c5e44.mUnk_300.mUnk_16, data_020c5e44.mUnk_300.mUnk_18);
+        c[4]++;
+        if (c[4] == c[5]) {
+            c[4] = 0;
+        }
+    } else {
+        data_020c5e44.mUnk_300.mUnk_14 = data_020c5e44.mUnk_300.mUnk_18;
+        c[4] = 0;
+    }
+}
+
+// Moves the look-at point towards pos: by a fraction of the distance to its goal when a divisor is set, otherwise
+// in mUnk_0d steps from the point where pos last moved far (squared distance beyond mUnk_30 squared) away.
+void func_0203393c(VecFx32 *pos) {
+    VecFx32 *from;
+    VecFx32 *cur;
+    u32 d;
+    int dx;
+    int dy;
+    int dz;
+
+    if (data_020c5e44.mUnk_300.mUnk_4e == 0) {
+        if (data_020c5e44.mUnk_300.mUnk_0d < 2) {
+            data_020c5e44.mUnk_000.mUnk_98.x = pos->x;
+            data_020c5e44.mUnk_000.mUnk_98.y = pos->y;
+            data_020c5e44.mUnk_000.mUnk_98.z = pos->z;
+            data_020c5e44.mUnk_300.mUnk_0c = 0;
+            return;
+        }
+        cur = &data_020c5e44.mUnk_300.mUnk_00;
+        dy = (cur->y - pos->y) >> 9;
+        dx = (cur->x - pos->x) >> 9;
+        dz = (cur->z - pos->z) >> 9;
+        d = dx * dx + dy * dy + dz * dz;
+        from = &data_020c5e44.mUnk_0c0.mUnk_234;
+        if (d > (data_020c5e44.mUnk_300.mUnk_30 * data_020c5e44.mUnk_300.mUnk_30 >> 18)) {
+            cur->x = pos->x;
+            cur->y = pos->y;
+            cur->z = pos->z;
+            from->x = data_020c5e44.mUnk_000.mUnk_98.x;
+            from->y = data_020c5e44.mUnk_000.mUnk_98.y;
+            from->z = data_020c5e44.mUnk_000.mUnk_98.z;
+            data_020c5e44.mUnk_300.mUnk_0c = 1;
+        }
+        if (data_020c5e44.mUnk_300.mUnk_0c == 0) {
+            return;
+        }
+        data_020c5e44.mUnk_000.mUnk_98.x =
+            func_0201fb74(data_020c5e44.mUnk_300.mUnk_0c, data_020c5e44.mUnk_300.mUnk_0d, from->x, cur->x);
+        data_020c5e44.mUnk_000.mUnk_98.y =
+            func_0201fb74(data_020c5e44.mUnk_300.mUnk_0c, data_020c5e44.mUnk_300.mUnk_0d, from->y, cur->y);
+        data_020c5e44.mUnk_000.mUnk_98.z =
+            func_0201fb74(data_020c5e44.mUnk_300.mUnk_0c, data_020c5e44.mUnk_300.mUnk_0d, from->z, cur->z);
+        data_020c5e44.mUnk_300.mUnk_0c++;
+        if (data_020c5e44.mUnk_300.mUnk_0c >= data_020c5e44.mUnk_300.mUnk_0d) {
+            data_020c5e44.mUnk_300.mUnk_0c = 0;
+        }
+    } else {
+        data_020c5e44.mUnk_000.mUnk_98.x +=
+            (data_020c5e44.mUnk_0c0.mUnk_228.x - data_020c5e44.mUnk_000.mUnk_98.x) / data_020c5e44.mUnk_300.mUnk_4e;
+        data_020c5e44.mUnk_000.mUnk_98.y +=
+            (data_020c5e44.mUnk_0c0.mUnk_228.y - data_020c5e44.mUnk_000.mUnk_98.y) / data_020c5e44.mUnk_300.mUnk_4e;
+        data_020c5e44.mUnk_000.mUnk_98.z +=
+            (data_020c5e44.mUnk_0c0.mUnk_228.z - data_020c5e44.mUnk_000.mUnk_98.z) / data_020c5e44.mUnk_300.mUnk_4e;
+    }
+}
+
+// The same for the camera position, with a goal and a start point of its own.
+void func_02033c0c(VecFx32 *pos) {
+    u8 *c;
+    int t;
+
+    if (data_020c5e44.mUnk_300.mUnk_4d == 0) {
+        c = &data_020c5e44.mUnk_300.mUnk_0c;
+        func_02033b8c();
+        if (c[3] < 2) {
+            data_020c5e44.mUnk_000.mUnk_80.x = pos->x;
+            data_020c5e44.mUnk_000.mUnk_80.y = pos->y;
+            data_020c5e44.mUnk_000.mUnk_80.z = pos->z;
+            data_020c5e44.mUnk_300.mUnk_0f = 0;
+            return;
+        }
+        if (c[2] != 0) {
+            t = c[3] - 1;
+            if (t > 1) {
+                data_020c5e44.mUnk_000.mUnk_80.x = func_0201fb74(c[2], t, data_020c5e44.mUnk_0c0.mUnk_21c.x, pos->x);
+                data_020c5e44.mUnk_000.mUnk_80.y = func_0201fb74(c[2], t, data_020c5e44.mUnk_0c0.mUnk_21c.y, pos->y);
+                data_020c5e44.mUnk_000.mUnk_80.z = func_0201fb74(c[2], t, data_020c5e44.mUnk_0c0.mUnk_21c.z, pos->z);
+                c[2]++;
+                if (c[2] == c[3]) {
+                    c[2] = 0;
+                }
+            } else {
+                data_020c5e44.mUnk_000.mUnk_80.x = pos->x;
+                data_020c5e44.mUnk_000.mUnk_80.y = pos->y;
+                data_020c5e44.mUnk_000.mUnk_80.z = pos->z;
+                c[2] = 0;
+            }
+        } else if (data_020c5e44.mUnk_000.mUnk_80.x != pos->x || data_020c5e44.mUnk_000.mUnk_80.y != pos->y ||
+                   data_020c5e44.mUnk_000.mUnk_80.z != pos->z) {
+            data_020c5e44.mUnk_0c0.mUnk_21c.x = data_020c5e44.mUnk_000.mUnk_80.x;
+            data_020c5e44.mUnk_0c0.mUnk_21c.y = data_020c5e44.mUnk_000.mUnk_80.y;
+            data_020c5e44.mUnk_0c0.mUnk_21c.z = data_020c5e44.mUnk_000.mUnk_80.z;
+            data_020c5e44.mUnk_300.mUnk_0e = 1;
+        } else {
+            data_020c5e44.mUnk_0c0.mUnk_204.x = pos->x;
+            data_020c5e44.mUnk_0c0.mUnk_204.y = pos->y;
+            data_020c5e44.mUnk_0c0.mUnk_204.z = pos->z;
+        }
+    } else {
+        data_020c5e44.mUnk_000.mUnk_80.x +=
+            (data_020c5e44.mUnk_0c0.mUnk_204.x - data_020c5e44.mUnk_000.mUnk_80.x) / data_020c5e44.mUnk_300.mUnk_4d;
+        data_020c5e44.mUnk_000.mUnk_80.y +=
+            (data_020c5e44.mUnk_0c0.mUnk_204.y - data_020c5e44.mUnk_000.mUnk_80.y) / data_020c5e44.mUnk_300.mUnk_4d;
+        data_020c5e44.mUnk_000.mUnk_80.z +=
+            (data_020c5e44.mUnk_0c0.mUnk_204.z - data_020c5e44.mUnk_000.mUnk_80.z) / data_020c5e44.mUnk_300.mUnk_4d;
+    }
+}
+
+// Starts the view angle blend towards a, given in degrees (stored as a 16-bit angle).
+void func_02033df4(int a) {
+    data_020c5e44.mUnk_300.mUnk_16 = data_020c5e44.mUnk_300.mUnk_14;
+    data_020c5e44.mUnk_300.mUnk_18 = ((u32) a << 16) / 360;
+    data_020c5e44.mUnk_300.mUnk_10 = 1;
+}
+
+// Sets the goal of the position blend (a 1 or 2) or the look-at blend (a 7 or 8) to entry b of chunk 0x5513 (-1:
+// the current point) and clears its state; c is stored as the step count.
+void func_02033e38(int a, int b, int c) {
+    VecFx32 *dst = NULL;
+    VecFx32 *src;
+    MapEntry *e;
+
+    switch (a) {
+        case 1:
+        case 2:
+            dst = &data_020c5e44.mUnk_0c0.mUnk_204;
+            src = &data_020c5e44.mUnk_000.mUnk_80;
+            data_020c5e44.mUnk_300.mUnk_4d = 0;
+            data_020c5e44.mUnk_300.mUnk_32 = a;
+            data_020c5e44.mUnk_300.mUnk_0f = c;
+            data_020c5e44.mUnk_300.mUnk_0e = 0;
+            break;
+        case 7:
+        case 8:
+            dst = &data_020c5e44.mUnk_0c0.mUnk_228;
+            src = &data_020c5e44.mUnk_000.mUnk_98;
+            data_020c5e44.mUnk_300.mUnk_4e = 0;
+            data_020c5e44.mUnk_300.mUnk_33 = a;
+            data_020c5e44.mUnk_300.mUnk_0d = c;
+            data_020c5e44.mUnk_300.mUnk_0c = 0;
+            break;
+        default:
+            OS_Terminate();
+            break;
+    }
+    if (b != -1) {
+        e = func_0203204c(b, 0);
+        if (e == NULL) {
+            OS_Terminate();
+        }
+        dst->x = func_02031f98(e);
+        dst->y = func_02031fa4(e);
+        dst->z = func_02031fb0(e);
+    } else {
+        dst->x = src->x;
+        dst->y = src->y;
+        dst->z = src->z;
+    }
+}
+
+// Advances an animation track by the frames passed since its last update (1 when it has no timer).
+void func_02033f38(CameraTrack *t, s32 *whole, s32 *next, s32 *rest) {
+    int step;
+
+    if (t->mUnk_16_5 == 0) {
+        if (t->mUnk_16_1 != 1) {
+            step = 1;
+        } else {
+            step = data_020c18bc.mUnk_45c - t->mUnk_0c;
+            t->mUnk_0c = data_020c18bc.mUnk_45c;
+        }
+    } else {
+        step = 0;
+        t->mUnk_0c = data_020c18bc.mUnk_45c;
+    }
+    func_0202601c(t->mUnk_10, &t->mUnk_12, t->mUnk_14, step, whole, next, rest, t->mUnk_16_2);
+}
+#pragma thumb on

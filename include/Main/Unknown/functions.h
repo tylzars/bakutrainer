@@ -24,10 +24,6 @@ int func_02030830(fx32 x, fx32 z, fx32 y, int a, u32 mask, u8 *out, VecFx32 *vec
 int func_02031270(int a, int b, int c, int d, int e, int f);
 u32 func_0203129c(void);
 u32 func_02031824(VecFx32 *pos, int radius, int a, int b, u16 c, u16 d);
-void func_02033614(s32 x, s32 z);
-void func_02033b8c(void);
-void func_02033df4(int a);
-void func_02033e38(int a, int b, int c);
 void func_02033fc8(void);
 void func_02034768(int a, int b, int c);
 void func_020348ac(int r, int g, int b, int z);
