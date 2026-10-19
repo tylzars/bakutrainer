@@ -12,6 +12,7 @@ void func_020243c0();
 u16 func_02021498(const u8 **text) {
     u32 first;
     u32 lead;
+    s32 mask;
     u32 value;
     u32 count;
     u32 num;
@@ -57,11 +58,13 @@ u16 func_02021498(const u8 **text) {
     }
     if (lead & 0x40) {
         do {
+            mask = 0x40;
             acc <<= 6;
             (*text)++;
             count++;
             acc += **text & 0x3f;
-        } while (lead & (0x40 >> count));
+            mask >>= count;
+        } while (lead & mask);
     }
     acc += (lead & (0x3f >> count)) << (6 * count);
     (*text)++;
@@ -93,14 +96,14 @@ void func_020215fc(int x, int y, const void *font, const char *text, int align, 
     func_02021624(x, y, (const FontRange *const *) &f, 0, (const u8 *) text, 0, align, width, height, mode);
 }
 
-int func_02021624(int x, int y, const FontRange *const *fonts, int fontIndex, const u8 *text, int angle, u32 flags,
+int func_02021624(int x, int y, const FontRange *const *fonts, u8 fontIndex, const u8 *text, int angle, u32 flags,
                   u32 width, int height, int mode) {
     u8 widths[0x400];
     u16 chars[0x400];
     u16 glyphs[0x400];
     s32 rect[4];
-    int pal;
     int odd;
+    u8 spaceW;
     u32 breakW;
     int lineX;
     unsigned long i;
@@ -119,12 +122,6 @@ int func_02021624(int x, int y, const FontRange *const *fonts, int fontIndex, co
     const s16 *sinp;
     u32 hilite;
     u32 alt;
-    u32 rot;
-    u32 limit;
-    u32 bounds;
-    u32 single;
-    int skipped;
-    u32 drawn;
     u32 lineH;
     u32 maxW;
     int result;
@@ -145,8 +142,7 @@ int func_02021624(int x, int y, const FontRange *const *fonts, int fontIndex, co
     glyphHigh = 0;
 
     ok = 1;
-    rot = flags & TEXT_ROTATE;
-    if (rot) {
+    if (flags & TEXT_ROTATE) {
         if ((data_020c18bc.mUnk_46c & 0x80) == 0) {
             ok = 0;
         }
@@ -157,11 +153,10 @@ int func_02021624(int x, int y, const FontRange *const *fonts, int fontIndex, co
     if (mode != 1 && mode != 2) {
         OS_Terminate();
     }
-    if (mode != 1 && rot) {
+    if (mode != 1 && (flags & TEXT_ROTATE)) {
         OS_Terminate();
     }
-    bounds = flags & TEXT_BOUNDS;
-    if (bounds) {
+    if (flags & TEXT_BOUNDS) {
         data_020c18bc.mUnk_2fe = 0x7fff;
         data_020c18bc.mUnk_302 = -0x7fff;
         data_020c18bc.mUnk_2fc = 0x7fff;
@@ -259,14 +254,13 @@ int func_02021624(int x, int y, const FontRange *const *fonts, int fontIndex, co
         n++;
     }
 
-    single = flags & TEXT_SINGLE_LINE;
-    if (single) {
+    if (flags & TEXT_SINGLE_LINE) {
         maxW = 0x100;
     } else {
         maxW = 0x1000;
     }
-    limit = flags & TEXT_LIMIT;
     while (chars[k] != 0 && maxW > result) {
+        spaceW = lineH;
         if (func_020215f0(chars[k]) > 0x20) {
             func_0202d828(glyphs[k], 0, rect);
             if (dirMode) {
@@ -276,15 +270,15 @@ int func_02021624(int x, int y, const FontRange *const *fonts, int fontIndex, co
             }
         } else {
             spaces++;
-            widths[k] = lineH;
+            widths[k] = spaceW;
         }
-        if (!limit || k < data_020c18bc.mUnk_30c + spaces) {
+        if (!(flags & TEXT_LIMIT) || k < data_020c18bc.mUnk_30c + spaces) {
             result += widths[k];
         }
         k++;
     }
 
-    skipped = 0;
+    spaces = 0;
     if (chars[0] != 0) {
         punct = flags & TEXT_NO_BREAK_PUNCT;
         align = flags & TEXT_ALIGN_MASK;
@@ -341,10 +335,11 @@ int func_02021624(int x, int y, const FontRange *const *fonts, int fontIndex, co
             if (breakW == 0) {
                 breakW = width;
             }
-            drawn = 0;
-            while (drawn < breakW) {
+            lineW = 0;
+            while (lineW < breakW) {
                 int px;
                 int py;
+                int pal;
                 if (chars[i] == 0) {
                     break;
                 }
@@ -365,8 +360,8 @@ int func_02021624(int x, int y, const FontRange *const *fonts, int fontIndex, co
                         }
                         pal = data_020c18bc.mUnk_308;
                         odd = i & 1;
-                        if (!(limit && i >= data_020c18bc.mUnk_30c + skipped)) {
-                            if (rot) {
+                        if (!((flags & TEXT_LIMIT) && i >= data_020c18bc.mUnk_30c + spaces)) {
+                            if (flags & TEXT_ROTATE) {
                                 int dx = px - x;
                                 int dy = py - y;
                                 int cs = *cosp;
@@ -385,10 +380,10 @@ int func_02021624(int x, int y, const FontRange *const *fonts, int fontIndex, co
                                 }
                                 func_0202cf08((glyphHigh + 0x100000) | glyphs[i], px, py, 0, mode);
                             } else {
-                                func_0202cf08(glyphHigh + (glyphs[i] + (hilite ? 0x40000 : 0)), px, py, odd + pal,
+                                func_0202cf08(glyphHigh + (glyphs[i] + (hilite ? 0x40000 : 0)), px, py, pal + odd,
                                               mode);
                             }
-                            if (bounds) {
+                            if (flags & TEXT_BOUNDS) {
                                 func_0202d828(glyphHigh + glyphs[i], 0, rect);
                                 if (px + rect[0] < data_020c18bc.mUnk_2fc) {
                                     data_020c18bc.mUnk_2fc = px + rect[0];
@@ -408,15 +403,15 @@ int func_02021624(int x, int y, const FontRange *const *fonts, int fontIndex, co
                         }
                     }
                 } else {
-                    skipped++;
+                    spaces++;
                 }
                 lineX += widths[i];
-                drawn += widths[i];
+                lineW += widths[i];
                 i++;
             }
             while (func_020215f0(chars[i]) == 0x20 || chars[i] == 1 || chars[i] == data_020c18bc.mUnk_310) {
                 i++;
-                skipped++;
+                spaces++;
             }
             if (!window ||
                 (lineNo >= data_020c18bc.mUnk_313 && lineNo < data_020c18bc.mUnk_313 + data_020c18bc.mUnk_314)) {
@@ -431,16 +426,13 @@ int func_02021624(int x, int y, const FontRange *const *fonts, int fontIndex, co
                 }
             }
             lineNo++;
-        } while (!single && chars[i] != 0);
+        } while (!(flags & TEXT_SINGLE_LINE) && chars[i] != 0);
     }
     data_020c18bc.mUnk_315 = lineNo;
     if (flags & TEXT_RETURN_HEIGHT) {
         return y - height - startY;
     }
-    if (flags & TEXT_NO_WIDTH) {
-        result = 0;
-    }
-    return result;
+    return (flags & TEXT_NO_WIDTH) ? 0 : result;
 }
 
 const u8 *func_02021dd8(u16 block, int id) {
