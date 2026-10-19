@@ -237,7 +237,7 @@ int func_02021624(int x, int y, const FontRange *const *fonts, int fontIndex, co
         }
         fr = font;
         if (func_020215f0(*q) != 0x20) {
-            c = *q;
+            c = *(const u16 *) q;
             for (;;) {
                 if (c >= fr->mFirst && c <= fr->mLast) {
                     glyphs[n] = fr->mGlyph + (*q - fr->mFirst);
@@ -296,17 +296,16 @@ int func_02021624(int x, int y, const FontRange *const *fonts, int fontIndex, co
         alt = flags & TEXT_ALT_DRAW;
         do {
             u8 nl;
-            u32 cnt;
             int brk;
-            lineW = 0;
-            breakW = 0;
-            cnt = 0;
+            maxW = 0;
+            lineW = maxW;
+            breakW = maxW;
             nl = data_020c18bc.mUnk_310;
-            while ((c = chars[i + cnt]) > 1 && lineW < width) {
+            while ((c = chars[i + maxW]) > 1 && lineW < width) {
                 brk = 0;
                 if (c == 0x20) {
                     if (punct) {
-                        u32 next = chars[i + cnt + 1];
+                        u32 next = chars[i + maxW + 1];
                         if (next != '?' && next != '!' && next != ':' && next != ';') {
                             brk = 1;
                         }
@@ -317,13 +316,13 @@ int func_02021624(int x, int y, const FontRange *const *fonts, int fontIndex, co
                 if (nl == c) {
                     break;
                 }
-                if (brk == 1 || (cnt != 0 && chars[i + cnt - 1] == '-')) {
+                if (brk == 1 || (maxW != 0 && chars[i + maxW - 1] == '-')) {
                     breakW = lineW;
-                    lineW += widths[i + cnt];
+                    lineW += widths[i + maxW];
                 } else {
-                    lineW += widths[i + cnt];
+                    lineW += widths[i + maxW];
                 }
-                cnt++;
+                maxW++;
             }
             if (lineW < width) {
                 breakW = lineW;
@@ -386,7 +385,7 @@ int func_02021624(int x, int y, const FontRange *const *fonts, int fontIndex, co
                                 }
                                 func_0202cf08((glyphHigh + 0x100000) | glyphs[i], px, py, 0, mode);
                             } else {
-                                func_0202cf08(glyphHigh + (glyphs[i] + (hilite ? 0x40000 : 0)), px, py, pal + odd,
+                                func_0202cf08(glyphHigh + (glyphs[i] + (hilite ? 0x40000 : 0)), px, py, odd + pal,
                                               mode);
                             }
                             if (bounds) {

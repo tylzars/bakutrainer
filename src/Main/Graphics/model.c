@@ -685,7 +685,7 @@ void func_02024b5c(u32 id, void *params, void *obj, int flags) {
     int pltt0;
     int rot;
     s32 hw, hh;
-    int idx;
+    long idx;
     u16 dif, amb, spe, emi;
     u32 se;
     u8 *cur;
@@ -934,9 +934,9 @@ void func_02024b5c(u32 id, void *params, void *obj, int flags) {
                 if (rot != 0) {
                     hw = (width << 16) / 2;
                     hh = (height << 16) / 2;
-                    idx = rot >> 4;
+                    idx = (rot >> 4) * 2;
                     PutTrans(hw, hh, 0);
-                    func_0203d13c(FX_SinCosTable_[idx * 2], FX_SinCosTable_[idx * 2 + 1]);
+                    func_0203d13c(FX_SinCosTable_[idx], FX_SinCosTable_[idx + 1]);
                     PutTrans(-hw, -hh, 0);
                 }
                 tsx = func_02024a64((const AnimKey16 *) keys[0], (const u8 *) track, frame);
