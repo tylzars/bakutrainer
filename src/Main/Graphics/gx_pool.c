@@ -79,7 +79,6 @@ void func_020220c8(int a) {
 }
 
 void func_02022120(void) {
-    int j;
     int i;
     if (data_020c18bc.mUnk_46c & POOL_FLAG) {
         func_0201c4f0(&data_020c31dc.mUnk_04);
@@ -98,8 +97,8 @@ void func_02022120(void) {
         data_020c31dc.mUnk_00[i].mUnk_0a = i + 1;
     }
     data_020c31dc.mUnk_00[i].mUnk_0a = data_020c31dc.mUnk_00[1].mUnk_0a;
-    for (j = 0; j < 0x400; j++) {
-        data_020c31dc.mUnk_04[j].mUnk_00 = -1;
+    for (i = 0; i < 0x400; i++) {
+        data_020c31dc.mUnk_04[i].mUnk_00 = -1;
     }
     data_020c31dc.mUnk_08 = func_0201c430((data_020c31dc.mUnk_62 + 2) * 8);
     data_020c31dc.mUnk_08[0].mUnk_0 = (data_020c18bc.mUnk_070.mUnk_2c << 14) / 512;
@@ -117,7 +116,6 @@ void func_02022120(void) {
 }
 
 void func_0202224c(void) {
-    int j;
     int i;
     if (data_020c18bc.mUnk_46c & POOL_FLAG) {
         func_0201c4f0(&data_020c31dc.mUnk_10);
@@ -136,8 +134,8 @@ void func_0202224c(void) {
         data_020c31dc.mUnk_0c[i].mUnk_0a = i + 1;
     }
     data_020c31dc.mUnk_0c[i].mUnk_0a = data_020c31dc.mUnk_0c[1].mUnk_0a;
-    for (j = 0; j < 0x100; j++) {
-        data_020c31dc.mUnk_10[j].mUnk_00 = -1;
+    for (i = 0; i < 0x100; i++) {
+        data_020c31dc.mUnk_10[i].mUnk_00 = -1;
     }
     data_020c31dc.mUnk_14 = func_0201c430((data_020c31dc.mUnk_64 + 2) * 8);
     data_020c31dc.mUnk_14[0].mUnk_0 = (data_020c18bc.mUnk_040.mUnk_2c << 14) / 32;

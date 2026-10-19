@@ -57,8 +57,8 @@ u16 func_02021498(const u8 **text) {
     }
     if (lead & 0x40) {
         do {
-            (*text)++;
             acc <<= 6;
+            (*text)++;
             count++;
             acc += **text & 0x3f;
         } while (lead & (0x40 >> count));
@@ -130,7 +130,7 @@ int func_02021624(int x, int y, const FontRange *const *fonts, int fontIndex, co
     int result;
     u32 lineW;
     int n;
-    int k;
+    u32 k;
     u16 *q;
     const FontRange *fr;
     BOOL ok;
@@ -266,23 +266,23 @@ int func_02021624(int x, int y, const FontRange *const *fonts, int fontIndex, co
         maxW = 0x1000;
     }
     limit = flags & TEXT_LIMIT;
-    n = 0;
-    while (chars[n] != 0 && maxW > result) {
-        if (func_020215f0(chars[n]) > 0x20) {
-            func_0202d828(glyphs[n], 0, rect);
+    k = 0;
+    while (chars[k] != 0 && maxW > result) {
+        if (func_020215f0(chars[k]) > 0x20) {
+            func_0202d828(glyphs[k], 0, rect);
             if (dirMode) {
-                widths[n] = rect[3];
+                widths[k] = rect[3];
             } else {
-                widths[n] = rect[2];
+                widths[k] = rect[2];
             }
         } else {
             spaces++;
-            widths[n] = lineH;
+            widths[k] = lineH;
         }
-        if (!limit || n < data_020c18bc.mUnk_30c + spaces) {
-            result += widths[n];
+        if (!limit || k < data_020c18bc.mUnk_30c + spaces) {
+            result += widths[k];
         }
-        n++;
+        k++;
     }
 
     skipped = 0;

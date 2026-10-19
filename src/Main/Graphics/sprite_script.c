@@ -83,15 +83,16 @@ int func_0202db1c(void *obj) {
             if (op > 0xfff0) {
                 switch (op) {
                     case SPRITE_CMD_SET_SPEED:
-                        o->mUnk_00 = p + 2;
-                        dur = p[1];
+                        o->mUnk_00++;
+                        dur = *o->mUnk_00++;
                         o->mUnk_dc = 1;
                         o->mUnk_da = 1;
                         break;
                     case SPRITE_CMD_SET_STATE:
-                        o->mUnk_00 = p + 2;
-                        if (p[1] != 0xffff) {
-                            o->mUnk_d8 = p[1];
+                        o->mUnk_00++;
+                        op = *o->mUnk_00++;
+                        if (op != 0xffff) {
+                            o->mUnk_d8 = op;
                         }
                         o->mUnk_0c = 0;
                         o->mUnk_df = 0;
@@ -108,7 +109,7 @@ int func_0202db1c(void *obj) {
                         break;
                     case SPRITE_CMD_ADD_STATE:
                         o->mUnk_10 |= 1 << p[1];
-                        o->mUnk_18[p[1]] = (const u16 *) ((u8 *) o->mUnk_00 + (s16) p[2] + 4);
+                        o->mUnk_18[o->mUnk_00[1]] = (const u16 *) ((u8 *) o->mUnk_00 + (s16) o->mUnk_00[2] + 4);
                         o->mUnk_98[o->mUnk_00[1]] = o->mUnk_00[3];
                         o->mUnk_00 += 4;
                         break;
@@ -124,16 +125,17 @@ int func_0202db1c(void *obj) {
                         o->mUnk_00 += 2;
                         break;
                     case SPRITE_CMD_REQUEST_STATE:
-                        o->mUnk_00 = p + 2;
-                        if (p[1] != 0xffff) {
-                            pend |= 1 << p[1];
+                        o->mUnk_00++;
+                        op = *o->mUnk_00++;
+                        if (op != 0xffff) {
+                            pend |= 1 << op;
                         }
                         o->mUnk_14 = pend;
                         o->mUnk_d8 = 0;
                         goto next;
                     case SPRITE_CMD_SET_RETURN:
                         o->mUnk_0c |= 1 << p[1];
-                        o->mUnk_08 = (const u16 *) ((u8 *) o->mUnk_00 + (s16) p[2] + 4);
+                        o->mUnk_08 = (const u16 *) ((u8 *) o->mUnk_00 + (s16) o->mUnk_00[2] + 4);
                         o->mUnk_00 += 3;
                         break;
                     case SPRITE_CMD_SET_FRAME_HIGH:
@@ -164,8 +166,7 @@ int func_0202db1c(void *obj) {
                 }
             } else {
                 o->mUnk_dc -= o->mUnk_da;
-                o->mUnk_00 = p + 1;
-                o->mUnk_04 = op | (o->mUnk_df << 16);
+                o->mUnk_04 = *o->mUnk_00++ | (o->mUnk_df << 16);
             }
         }
         o->mUnk_da = dur;

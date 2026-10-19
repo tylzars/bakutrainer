@@ -79,9 +79,9 @@ u32 func_020227b4(u32 i) {
 // Finds a free block of at least `size` bytes (counted in 512-byte units) in the first pool, evicting slots until
 // one fits, and splits it.
 u32 func_0202283c(Unk_PoolRange *n, u32 size, u32 slot) {
-    u32 p;
-    u32 q;
+    unsigned long q;
     int found;
+    u32 p;
     u32 spare;
     u32 next;
     u32 addr;
@@ -182,18 +182,19 @@ u32 func_020229b4(u32 kind, u32 key, u32 size, u32 srcSize) {
                 off = key - func_0201c538();
                 func_0202ae84(off >> 6, &info, off & 0x3f);
                 flag = (info.mUnk_12 != 1 && info.mUnk_12 != 4) ? 0xff : 0;
-                if (data_020c267c.mUnk_b2e != 2) {
-                    kind = info.mUnk_00 << 5;
+                if (data_020c267c.mUnk_b2e == 2) {
+                    kind = (info.mUnk_00 << 7) + info.mUnk_13;
                 } else {
-                    kind = info.mUnk_13 + (info.mUnk_00 << 7);
+                    kind = info.mUnk_00 << 5;
                 }
                 bits = info.mUnk_0c;
                 shift = 32 - CountLeadingZeros(~bits & (bits - 1));
                 func_0201c580(func_0202ad68(), kind, data_020c31dc.mUnk_00[slot].mUnk_00 | 0xa0000000, size, 0, shift,
                               flag);
             } else if (kind == 2) {
-                func_0201c580(data_020c18bc.mUnk_42c, key - func_0201c550(),
-                              data_020c31dc.mUnk_00[slot].mUnk_00 | 0xa0000000, srcSize, size, 0, 0);
+                off = key - func_0201c550();
+                func_0201c580(data_020c18bc.mUnk_42c, off, data_020c31dc.mUnk_00[slot].mUnk_00 | 0xa0000000, srcSize,
+                              size, 0, 0);
             } else {
                 func_0201c580(data_020c31dc.mUnk_54, kind, data_020c31dc.mUnk_00[slot].mUnk_00 | 0xa0000000, srcSize,
                               size, 0, 0);
@@ -273,9 +274,9 @@ u32 func_02022eb4(u32 i) {
 
 // Same as func_0202283c for the second pool (counted in 32-byte units).
 u32 func_02022f40(Unk_PoolRange *n, u32 size, u32 slot) {
-    u32 p;
-    u32 q;
+    unsigned long q;
     int found;
+    u32 p;
     u32 spare;
     u32 next;
     u32 addr;

@@ -188,15 +188,19 @@ u16 func_0202afb0(u32 index, int layer) {
 // free if no path goes through it, removed otherwise.
 void func_0202b19c(int layer, u32 key) {
     Unk_020c2694 *half = &data_020c267c.mUnk_018[layer == 2];
-    u32 idx = key & 0x3ff;
+    unsigned long idx = key & 0x3ff;
     u32 step = data_02050378[(key >> 10) & 0x7f];
     Unk_HashEntry *e;
 
     for (;;) {
         e = &half->mUnk_008[idx];
         if (key == e->mUnk_8) {
-            e->mUnk_8 = e->mUnk_e == 0 ? -1 : -2;
-            return;
+            if (e->mUnk_e == 0) {
+                e->mUnk_8 = -1;
+            } else {
+                e->mUnk_8 = -2;
+            }
+            break;
         }
         if (e->mUnk_e == 0) {
             OS_Terminate();
@@ -270,6 +274,7 @@ u16 func_0202b35c(u32 code, u32 key, u32 sub, u32 mode, u32 count, int layer) {
     u32 *map;
     int loaded = 0;
     s32 freePos = -1;
+    u32 k;
 
     if (data_020c267c.mUnk_000 != 0 && data_020c267c.mUnk_017 == 1) {
         if (data_020c267c.mUnk_00c == ((key << 2) | (sub << 25))) {
@@ -322,23 +327,26 @@ u16 func_0202b35c(u32 code, u32 key, u32 sub, u32 mode, u32 count, int layer) {
                 OS_Terminate();
             }
             if (mode == 0) {
-                vals = &half->mUnk_115[half->mUnk_516 - count];
-                map = half->mUnk_008[pos].mUnk_0;
+                u8 *cur;
+                u32 *words;
+
+                cur = &half->mUnk_115[half->mUnk_516 - count];
+                words = half->mUnk_008[pos].mUnk_0;
                 for (i = 0; i < count; i++) {
-                    val = (map[(i * 4) >> 5] >> ((i * 4) & 0x1f)) & 0xf;
-                    if (val != *vals++) {
+                    val = (words[(i * 4) >> 5] >> ((i * 4) & 0x1f)) & 0xf;
+                    if (val != *cur++) {
                         u8 buf[16];
                         u32 addr = (layer == 1 ? 0x6400000 : 0x6600000) +
                                    ((half->mUnk_004[entry].mUnk_6 * (1 << half->mUnk_577)) << 5);
                         int size = func_0202b32c(code, mode);
 
-                        vals = &half->mUnk_115[half->mUnk_516 - count];
+                        cur = &half->mUnk_115[half->mUnk_516 - count];
                         for (i = 0; i < count; i++) {
                             u32 w = (i * 4) >> 5;
                             u32 sh = (i * 4) & 0x1f;
 
-                            buf[(map[w] >> sh) & 0xf] = *vals;
-                            map[w] = (map[w] & ~(0xf << sh)) | (*vals++ << sh);
+                            buf[(words[w] >> sh) & 0xf] = *cur;
+                            words[w] = (words[w] & ~(0xf << sh)) | (*cur++ << sh);
                         }
                         func_02028928((u16 *) addr, buf, size / 2);
                         break;
@@ -374,9 +382,9 @@ u16 func_0202b35c(u32 code, u32 key, u32 sub, u32 mode, u32 count, int layer) {
             if (mode == 0) {
                 vals = &half->mUnk_115[half->mUnk_516 - count];
                 map = half->mUnk_008[pos].mUnk_0;
-                for (n = 0; n < count; n++) {
-                    u32 w = (n * 4) >> 5;
-                    u32 sh = (n * 4) & 0x1f;
+                for (k = 0; k < count; k++) {
+                    u32 w = (k * 4) >> 5;
+                    u32 sh = (k * 4) & 0x1f;
 
                     map[w] = (map[w] & ~(0xf << sh)) | (*vals++ << sh);
                 }
@@ -414,10 +422,9 @@ u16 func_0202b35c(u32 code, u32 key, u32 sub, u32 mode, u32 count, int layer) {
         rest -= n;
         if (mode == 0) {
             half->mUnk_014[half->mUnk_114] = half->mUnk_516 - count;
-            val = half->mUnk_114++;
             func_0201c580(data_020c267c.mUnk_b26, key,
                           (layer == 1 ? 0x6400000 : 0x6600000) + ((blk * (1 << half->mUnk_577)) << 5),
-                          (n * (1 << half->mUnk_577)) << 5, 0, 0, (val << 1) | (layer == 2));
+                          (n * (1 << half->mUnk_577)) << 5, 0, 0, (half->mUnk_114++ << 1) | (layer == 2));
         } else {
             func_0201c6b0(data_020c267c.mUnk_b26, key,
                           (layer == 1 ? 0x6400000 : 0x6600000) + ((blk * (1 << half->mUnk_577)) << 5),
@@ -650,12 +657,12 @@ void func_0202c1d4(int a) {
 // source and destination are the same.
 void func_0202c2f0(void *dst, const void *src, u32 w, u32 h, BOOL mode) {
     u32 *d = dst;
+    u32(*d8)[2] = dst;
     const u32 *s = src;
     u32 n = 0;
     u32 y;
     u32 x;
     u32 k;
-    u32 base = 0;
 
     if (dst == src) {
         OS_Terminate();
@@ -663,22 +670,21 @@ void func_0202c2f0(void *dst, const void *src, u32 w, u32 h, BOOL mode) {
     for (y = 0; y < h; y++) {
         for (x = 0; x < w; x++) {
             if (mode == 1) {
-                u32 *p = d + (base * 8 + x);
+                u32 *p = d + (y * w * 8 + x);
                 for (k = 0; k < 8; k++) {
                     *p = s[n++];
                     p += w;
                 }
             } else {
-                u32 *p = d + (base * 8 + x) * 2;
+                u32(*p)[2] = d8 + (y * w * 8 + x);
                 for (k = 0; k < 8; k++) {
-                    p[0] = s[n];
-                    p[1] = s[n + 1];
+                    p[0][0] = s[n];
+                    p[0][1] = s[n + 1];
                     n += 2;
-                    p += w * 2;
+                    p += w;
                 }
             }
         }
-        base += w;
     }
 }
 
@@ -820,14 +826,11 @@ s32 func_0202c778(u16 *keys, int a, u32 n, int engine) {
     int min;
     u16 list[16];
     u32 mask = 0xffff;
-    int s;
-    u32 k;
-    u32 j;
+    int j;
     u32 idx;
     s32 slot;
     u32 node;
     u32 i;
-    u32 m;
     u32 avail;
     u32 key;
 
@@ -852,8 +855,8 @@ s32 func_0202c778(u16 *keys, int a, u32 n, int engine) {
         slot = 31 - func_02028250(mask);
     } else {
         MI_CpuClear32(count, 16);
-        for (m = 0; m < n; m++) {
-            node = half->mUnk_52c[list[m]];
+        for (i = 0; i < n; i++) {
+            node = half->mUnk_52c[list[i]];
             while (node != 0xff) {
                 count[half->mUnk_518[node].mUnk_6 >> 4]++;
                 node = half->mUnk_518[node].mUnk_3;
@@ -862,12 +865,12 @@ s32 func_0202c778(u16 *keys, int a, u32 n, int engine) {
         for (;;) {
             slot = -1;
             min = 32;
-            for (s = 0; s < 16; s++) {
-                int need = n - count[s];
-                if (need <= half->mUnk_51c[s]) {
+            for (j = 0; j < 16; j++) {
+                int need = n - count[j];
+                if (need <= half->mUnk_51c[j]) {
                     if (need < min) {
                         min = need;
-                        slot = s;
+                        slot = j;
                     }
                 }
             }
@@ -887,10 +890,10 @@ s32 func_0202c778(u16 *keys, int a, u32 n, int engine) {
             half->mUnk_51c[half->mUnk_518[node].mUnk_6 >> 4]++;
         }
     }
-    for (k = 0; k < n; k++) {
-        node2 = func_0202c5c0(list[k], slot, half);
+    for (i = 0; i < n; i++) {
+        node2 = func_0202c5c0(list[i], slot, half);
         if (node2 == 0xff) {
-            node2 = func_0202c5fc(k, list[k], slot, half);
+            node2 = func_0202c5fc(i, list[i], slot, half);
         }
         if (half->mUnk_516 >= 0x400) {
             OS_Terminate();
