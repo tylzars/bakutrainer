@@ -34,12 +34,12 @@ int func_02015340(u8 *boards, ShapeRec *recs) {
 
     memcpy(boards, data_020500e4, GRID_BYTES);
     memcpy(boards + GRID_BYTES, boards, (GRID_PIECES - 1) * GRID_BYTES);
-    for (i = 0; i < SHAPE_COUNT; i++) {
+    for (j = 0; j < SHAPE_COUNT; j++) {
         int sum = 0;
-        for (j = 0; j < SHAPE_CELLS; j++) {
-            sum += data_020500f8[i][j];
+        for (y = 0; y < SHAPE_CELLS; y++) {
+            sum += data_020500f8[j][y];
         }
-        data_020b13c8[i] = sum;
+        data_020b13c8[j] = sum;
     }
     placed = 0;
     cur = boards;
@@ -48,26 +48,27 @@ int func_02015340(u8 *boards, ShapeRec *recs) {
         t = data_020500f8[r];
         for (y = 0; y < 4; y++) {
             for (x = 0; x < 3; x++) {
-                board = boards + placed * GRID_BYTES + y * 4 + x;
-                if (!((boards[placed * GRID_BYTES + y * 4 + x] & t[0]) | (board[1] & t[1]) | (board[2] & t[2]) |
-                      (board[4] & t[3]) | (board[5] & t[4]) | (board[6] & t[5]) | (board[8] & t[6]) |
-                      (board[9] & t[7]) | (board[10] & t[8]))) {
+                i = placed * GRID_BYTES + y * 4 + x;
+                board = boards + i;
+                if (!((board[0] & t[0]) | (board[1] & t[1]) | (board[2] & t[2]) | (board[4] & t[3]) |
+                      (board[5] & t[4]) | (board[6] & t[5]) | (board[8] & t[6]) | (board[9] & t[7]) |
+                      (board[10] & t[8]))) {
                     recs[placed].mUnk_00 = x * 32 + 0x54;
                     recs[placed].mUnk_02 = y * 32 + 0x20;
                     recs[placed].mUnk_04 = r;
                     recs[placed].mUnk_06 = data_020b13c8[r];
-                    memcpy(boards + placed * GRID_BYTES + GRID_BYTES, cur, GRID_BYTES);
+                    memcpy(boards + (placed * GRID_BYTES + GRID_BYTES), cur, GRID_BYTES);
                     for (k = 0; k < SHAPE_CELLS; k++) {
                         if (t[k] != 0) {
-                            board[data_020500d8[k] + GRID_BYTES] = (placed << 4) | CELL_FREE;
+                            board[data_020500d8[k] + GRID_BYTES] = (placed << 4) + CELL_FREE;
                         }
                     }
                     n = 0;
-                    for (j = 0; j < 4; j++) {
-                        for (k = 0; k < 3; k++) {
-                            u8 *p = boards + placed * GRID_BYTES + GRID_BYTES + j * 4 + k;
+                    for (k = 0; k < 4; k++) {
+                        for (j = 0; j < 3; j++) {
+                            u8 *p = boards + ((placed + 1) * GRID_BYTES + k * 4 + j);
                             n += *p & 0xf;
-                            if (*p == 0 && p[1] != 0 && p[4] != 0 && (k == 0 || p[-1] != 0) && (j == 0 || p[-4] != 0)) {
+                            if (*p == 0 && p[1] != 0 && p[4] != 0 && (j == 0 || p[-1] != 0) && (k == 0 || p[-4] != 0)) {
                                 goto reject;
                             }
                         }
@@ -144,37 +145,53 @@ int func_020156c4(u8 *board, int player, ShapeRec *recs, int x, int y) {
     u8 c0;
     u8 c1;
     u8 c2;
+    int h0;
+    int h1;
+    int h2;
 
     for (row = 0; row < 4; row++) {
         for (col = 0; col < 3; col++) {
             p = board + (col + row * 4);
             c0 = p[0];
-            if ((c0 & 0xf) != player || !(c0 >> 4 == hi || recs[c0 >> 4].mUnk_06 != 0)) {
+            h0 = c0 >> 4;
+            if ((c0 & 0xf) != player || (h0 != hi && recs[h0].mUnk_06 == 0)) {
                 continue;
             }
             c1 = p[1];
             c2 = p[2];
-            if (col == 0 && (c1 & 0xf) == player && (c2 & 0xf) == player &&
-                (c1 >> 4 == hi || recs[c1 >> 4].mUnk_06 != 0) && (c2 >> 4 == hi || recs[c2 >> 4].mUnk_06 != 0)) {
-                return SCORE_WIN;
+            if (col == 0 && (c1 & 0xf) == player && (c2 & 0xf) == player) {
+                h1 = c1 >> 4;
+                h2 = c2 >> 4;
+                if ((h1 == hi || recs[h1].mUnk_06 != 0) && (h2 == hi || recs[h2].mUnk_06 != 0)) {
+                    return SCORE_WIN;
+                }
             }
             c1 = p[4];
             c2 = p[8];
-            if (row < 2 && (c1 & 0xf) == player && (c2 & 0xf) == player &&
-                (c1 >> 4 == hi || recs[c1 >> 4].mUnk_06 != 0) && (c2 >> 4 == hi || recs[c2 >> 4].mUnk_06 != 0)) {
-                return SCORE_WIN;
+            if (row < 2 && (c1 & 0xf) == player && (c2 & 0xf) == player) {
+                h1 = c1 >> 4;
+                h2 = c2 >> 4;
+                if ((h1 == hi || recs[h1].mUnk_06 != 0) && (h2 == hi || recs[h2].mUnk_06 != 0)) {
+                    return SCORE_WIN;
+                }
             }
             c1 = p[5];
             c2 = p[10];
-            if (col == 0 && row < 2 && (c1 & 0xf) == player && (c2 & 0xf) == player &&
-                (c1 >> 4 == hi || recs[c1 >> 4].mUnk_06 != 0) && (c2 >> 4 == hi || recs[c2 >> 4].mUnk_06 != 0)) {
-                return SCORE_WIN;
+            if (col == 0 && row < 2 && (c1 & 0xf) == player && (c2 & 0xf) == player) {
+                h1 = c1 >> 4;
+                h2 = c2 >> 4;
+                if ((h1 == hi || recs[h1].mUnk_06 != 0) && (h2 == hi || recs[h2].mUnk_06 != 0)) {
+                    return SCORE_WIN;
+                }
             }
             c1 = p[-3];
             c2 = p[-6];
-            if (col == 0 && row >= 2 && (c1 & 0xf) == player && (c2 & 0xf) == player &&
-                (c1 >> 4 == hi || recs[c1 >> 4].mUnk_06 != 0) && (c2 >> 4 == hi || recs[c2 >> 4].mUnk_06 != 0)) {
-                return SCORE_WIN;
+            if (col == 0 && row >= 2 && (c1 & 0xf) == player && (c2 & 0xf) == player) {
+                h1 = c1 >> 4;
+                h2 = c2 >> 4;
+                if ((h1 == hi || recs[h1].mUnk_06 != 0) && (h2 == hi || recs[h2].mUnk_06 != 0)) {
+                    return SCORE_WIN;
+                }
             }
         }
     }
@@ -185,12 +202,12 @@ int func_020156c4(u8 *board, int player, ShapeRec *recs, int x, int y) {
 }
 
 int func_02015850(ShapeRec *recs, u8 *board, int player, u32 depth) {
-    int best = SCORE_NONE;
-    int bestPos;
-    int other;
     int x, y;
+    int bestPos;
     int pos;
     int score;
+    int other;
+    int best = SCORE_NONE;
 
     if (player == CELL_HUMAN) {
         other = CELL_COMPUTER;
@@ -226,10 +243,7 @@ int func_02015850(ShapeRec *recs, u8 *board, int player, u32 depth) {
         }
         data_020b13d4.mUnk_01 = bestPos;
     }
-    if (best == SCORE_NONE) {
-        best = 0;
-    }
-    return best;
+    return best == SCORE_NONE ? 0 : best;
 }
 
 void func_02015960(void) {
@@ -291,13 +305,13 @@ void func_020159ac(void) {
         }
     }
     for (y = 0; y < 4; y++) {
-        for (x = 0; x < 3; x++) {
+        for (x = 0, i = 0x54; x < 3; x++, i += 32) {
             switch (s->mUnk_40[y * 4 + x] & 0xf) {
                 case 2:
-                    func_0202cf08(0xf9d, x * 32 + 0x54, y * 32 + 0x20, 4, 2);
+                    func_0202cf08(0xf9d, i, y * 32 + 0x20, 4, 2);
                     break;
                 case 3:
-                    func_0202cf08(0xf9c, x * 32 + 0x54, y * 32 + 0x20, 4, 2);
+                    func_0202cf08(0xf9c, i, y * 32 + 0x20, 4, 2);
                     break;
             }
         }

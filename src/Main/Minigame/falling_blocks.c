@@ -696,10 +696,10 @@ void func_02004254(void) {
     }
 }
 
+// Advances the sprites while any are active, otherwise the cells of the board.
 void func_02004304(void) {
-    int g, k;
+    int i, k;
     if (data_02064828.mCount != 0) {
-        int i;
         for (i = 0; i < PIECE_LIST_SIZE; i++) {
             if (data_02064828.mList[i].mType != 0 && func_02003430(&data_02064828.mList[i])) {
                 func_020032b4(&data_02064828.mList[i], 0);
@@ -713,23 +713,22 @@ void func_02004304(void) {
             }
         }
     } else {
-        for (g = 0; g < BOARD_COLS; g++) {
-            u8 row = g;
+        for (i = 0; i < BOARD_COLS; i++) {
             for (k = BOARD_ROWS - 1; k >= 0; k--) {
-                if (data_02064828.mGrid[g][k].mType != 0) {
-                    Piece *c = &data_02064828.mGrid[g][k];
+                if (data_02064828.mGrid[i][k].mType != 0) {
+                    Piece *c = &data_02064828.mGrid[i][k];
                     if (c->mUnk_110 > 0) {
                         if (c->mSprite.mUnk_de != 0) {
                             c->mUnk_110 = 0;
                         }
                         if (c->mSprite.mUnk_04 == data_02064828.mUnk_8974) {
-                            func_020040e8(row, k);
+                            func_020040e8(i, k);
                         } else if (c->mUnk_110 == 0) {
-                            func_02003f08(row, k);
+                            func_02003f08(i, k);
                             data_02064828.mUnk_430c--;
                         }
                     } else if (data_02064828.mUnk_430c == 0) {
-                        func_0200400c(row, k);
+                        func_0200400c(i, k);
                     }
                 }
             }
