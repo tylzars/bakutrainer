@@ -23,8 +23,8 @@ naming them right once.
 - Locals and parameters use `camelCase`; `i`/`j`/`k` are fine for loop counters.
 - Library functions keep their library's own naming (`OS_GetLockID`, `NNS_G3dDraw`). Decide per library, once, how
   unnamed library functions are named (for example type first: `FileOpen`, `HeapAlloc`).
-- Constants are `#define`s in `UPPER_SNAKE`; a `#define` keeps the literal's value and type exactly (suffix included,
-  `0x8000u`). Naming never changes a variable's or member's type to an enum type: the compiler treats enum-typed
+- Constants are `#define`s in `UPPER_SNAKE`; a `#define` holds a plain number and keeps the literal's value and type
+  exactly (suffix included, `0x8000u`). It never stands for an object, a member, a register access or an expression. Naming never changes a variable's or member's type to an enum type: the compiler treats enum-typed
   values differently and the output would move (where the original needs an enum-typed local, the matching source
   already has one).
 - A constant names a value of a set: the values one member, parameter or return value takes. All the set's names
