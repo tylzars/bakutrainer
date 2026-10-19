@@ -65,7 +65,7 @@ void func_02004964(void) {
     for (i = 0; i < 8; i++) {
         data_0206d1d4.mUnk_48[i] = 0;
     }
-    func_0200f848(data_0204e0cc[data_020b10fc.mUnk_0c]);
+    func_0200f848(data_0204e0cc[data_020b10fc.mUnk_0c], 0);
     func_0202de60(data_0206d23c, data_0201abec[3]);
     func_0202de60(data_0206d340, data_0201abec[4]);
     func_020104c0(data_020b10fc.mUnk_0c == 1 ? 7 : 8, 102);
@@ -239,8 +239,6 @@ void func_02004aa8(void) {
 void func_02005194(void) {
     s32 old;
     s32 prev;
-    s32 cur;
-    s32 diff;
     u32 whole;
     if (data_0206d1d4.mUnk_04 >= 0) {
         if (data_0206d1d4.mUnk_04 == 2) {

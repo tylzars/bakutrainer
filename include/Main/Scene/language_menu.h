@@ -73,9 +73,7 @@ void func_0200f5c4(void);
 void func_0200f660(void);
 void func_0200f750(void);
 void func_0200f758(void);
-// Takes two arguments (it reads r0 and r1), but one caller passes only the first and leaves r1 as it is, so the
-// declaration carries no prototype.
-void func_0200f848();
+void func_0200f848(u32 a, int b);
 void func_0200f898(void);
 int func_0200f95c(void);
 u16 func_0200f97c(void);

@@ -390,6 +390,8 @@ from:0x02004a84 kind:load to:0x020b6ee0 add:0xa880 module:main
 from:0x02004a88 kind:load to:0x020b1b1b module:main
 from:0x02004a90 kind:load to:0x0206d1d4 module:main
 from:0x02004a94 kind:load to:0x020b1990 module:main
+from:0x02004a98 kind:load to:0x0204e0cc module:main
+from:0x02004a9c kind:load to:0x0201abec module:main
 from:0x02004aa0 kind:load to:0x0206d23c module:main
 from:0x02004aa4 kind:load to:0x0206d340 module:main
 from:0x02004ab8 kind:thumb_call to:0x02011890 module:main

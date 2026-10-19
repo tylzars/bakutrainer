@@ -1006,7 +1006,8 @@ void func_02008994(int side) {
             }
             if (j == data_02098d84.mState.mUnk_0e[i]) {
                 if (i == side && data_020b6ee0.mUnk_ff6 == 0x4000) {
-                    func_0202cf08(((data_020c18bc.mUnk_45c >> 2) & 7) + 0x11be + (i == 1) * 8, x, y, 251, 2);
+                    int frame = (data_020c18bc.mUnk_45c >> 2) & 7;
+                    func_0202cf08(frame + 0x11be + (i == 1) * 8, x, y, 251, 2);
                 }
                 if (data_020b6ee0.mUnk_a6d8[i].mUnk_de == 0) {
                     func_0202cf08(func_0202db1c(&data_020b6ee0.mUnk_a6d8[i]), x, y, 240, 2);
