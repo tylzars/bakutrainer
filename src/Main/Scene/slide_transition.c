@@ -377,6 +377,8 @@ typedef struct Unk_020ae458 {
 } Unk_020ae458;
 
 static Unk_020ae458 data_020ae458;
+WaveStream data_020ae464;
+Unk_020ae504 data_020ae504;
 
 void func_0200e3ec(void) {
     func_0202f2e8(&data_020ae464);
@@ -445,8 +447,8 @@ void func_0200e4c4(void) {
 }
 
 static const s16 data_0204e1e4[1] = {0};
-static const u32 data_0204e1e8[1] = {0xdce};
 static const u32 data_0204e1ec[1] = {0xdd1};
+static const u32 data_0204e1e8[1] = {0xdce};
 static const s16 data_0204e1f0[4] = {140, 70, -22, 0};
 
 typedef struct Unk_0204e1f8 {
@@ -458,8 +460,8 @@ static const Unk_0204e1f8 data_0204e1f8[2] = {{0, 3}, {0, 7}};
 
 void func_0200e5b0(void) {
     static s32 data_020ae454;
-    static s32 data_020ae44c;
     static s32 data_020ae450;
+    static s32 data_020ae44c;
     Unk_020ae504 *s = &data_020ae504;
     DrawParams params;
     char text[0x40];

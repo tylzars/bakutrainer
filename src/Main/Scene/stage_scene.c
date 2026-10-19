@@ -209,7 +209,7 @@ void func_0200cd1c(void) {
 }
 
 void func_0200cd2c(void) {
-    func_0201168c(data_020b6ee0.mUnk_a8e4, data_02063940->mUnk_610, data_0206d448, data_02063940->mUnk_618, 2);
+    func_0201168c(data_020b6ee0.mUnk_a8e4, data_02063940->mUnk_610, data_0206d448.mUnk_00, data_02063940->mUnk_618, 2);
     func_0200cdc4();
     func_02033614(data_020c3e44.mUnk_2024.mUnk_9c.mUnk_228.x, data_020c3e44.mUnk_2024.mUnk_9c.mUnk_228.z);
     func_0202733c(&data_02063940->mUnk_230, &data_02063940->mUnk_3a8, 0xb0000002);

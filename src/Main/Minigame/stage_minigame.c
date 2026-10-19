@@ -663,7 +663,7 @@ void func_0200b278(void) {
 }
 
 void func_0200b53c(void) {
-    func_0201168c(data_020b6ee0.mUnk_a8e4, data_020997a4.mUnk_0008, data_0206d448, data_020997a4.mUnk_0004, 2);
+    func_0201168c(data_020b6ee0.mUnk_a8e4, data_020997a4.mUnk_0008, data_0206d448.mUnk_00, data_020997a4.mUnk_0004, 2);
     func_0200aa68(data_020997a4.mInfo.mUnk_10 + 0xd28, 256, 0, 0x1000, 0x1000, 0, 255, 256);
     func_0200aa68(data_020997a4.mInfo.mUnk_13 + 0xd31, data_020997a4.mUnk_01ac >> 8, data_020997a4.mUnk_01b0 >> 8, 0,
                   0x6000, data_020997a4.mUnk_0230, 255, 0);

@@ -10,17 +10,15 @@ extern "C" {
 typedef struct ModeSelectState {
     s32 mUnk_00;
     s32 mUnk_04;
-    s32 mUnk_08;
-    u8 mUnk_0c;
-    u8 mPad_0d[3];
+    u8 mUnk_08;
+    u8 mPad_09[3];
+    s32 mUnk_0c;
     s32 mUnk_10;
     s32 mUnk_14;
-    s32 mUnk_18;
 } ModeSelectState;
 
-extern ModeSelectState data_0206d444;
-// The word after it, which the board screen reads through its own symbol.
-extern s32 data_0206d448;
+extern s32 data_0206d444;
+extern ModeSelectState data_0206d448;
 extern u32 data_0206391c;
 
 void func_020054a4(int mode);

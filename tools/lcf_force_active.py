@@ -17,8 +17,14 @@ source.
 It also applies <config-dir>/lcf_edits.txt (one edit per line, `#` comments), for what dsd's per-unit ranges can't say:
   place <stub>.o <function> <unit>.o   the stub unit's line becomes OBJECT(<function>, <unit>.o): one function of a
                                        unit placed apart from the rest of it
+  place <stub>.o .text <unit>.o        the stub unit's line becomes <unit>.o(.text): all the code of a unit whose
+                                       data sits elsewhere in link order (its delinks entry has no .text range)
   org <unit>.o <address>               sets the location counter to <address> before the unit's .text line: zero
                                        fill the link lays down before a unit placed at a fixed address
+  reserve <unit>.o <section> <symbol> <size>
+                                       after the unit's <section> line, defines <symbol> at the location counter
+                                       and advances it by <size>: zero space the linker script itself lays down
+                                       (several reserves after one unit follow each other in file order)
   alias <symbol> <base> <offset>       defines <symbol> = <base> + <offset>, for names other units use for a point
                                        inside an object of a linked unit (a field of a singleton instance)
   inner <symbol> <size>                aliases every symbols.txt name inside <symbol>'s <size> bytes to <symbol> +
@@ -78,6 +84,7 @@ for ln in (args.config_dir / "symbols.txt").read_text().splitlines():
     if m := re.match(r"(\S+) kind:\S+ addr:(0x[0-9a-fA-F]+)", ln):
         main_syms.setdefault(m.group(1), int(m.group(2), 16))
 edits = args.config_dir / "lcf_edits.txt"
+reserved = {}  # (unit, section) -> the last lines a reserve edit inserted after that unit's line
 if edits.exists():
     for line in edits.read_text().splitlines():
         words = line.split("#", 1)[0].split()
@@ -88,13 +95,22 @@ if edits.exists():
             old = f"        {stub}(.text)\n"
             if old not in lcf:
                 raise SystemExit(f"lcf_edits: no line for {stub} in the LCF")
-            lcf = lcf.replace(old, f"        OBJECT({func}, {unit})\n", 1)
+            new = f"        {unit}(.text)\n" if func == ".text" else f"        OBJECT({func}, {unit})\n"
+            lcf = lcf.replace(old, new, 1)
         elif words[0] == "org":
             unit, address = words[1:]
             old = f"        {unit}(.text)\n"
             if old not in lcf:
                 raise SystemExit(f"lcf_edits: no line for {unit} in the LCF")
             lcf = lcf.replace(old, f"        . = {address};\n{old}", 1)
+        elif words[0] == "reserve":
+            unit, section, name, size = words[1:]
+            anchor = reserved.get((unit, section), f"        {unit}({section})\n")
+            if anchor not in lcf:
+                raise SystemExit(f"lcf_edits: no {section} line for {unit} in the LCF")
+            line = f"        {name} = .;\n        . = . + {size};\n"
+            lcf = lcf.replace(anchor, anchor + line, 1)
+            reserved[(unit, section)] = line
         elif words[0] == "alias":
             name, base, offset = words[1:]
             aliases.append((base in main_syms, f"    {name} = {base} + {offset};"))

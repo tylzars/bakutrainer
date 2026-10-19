@@ -1,11 +1,22 @@
-# place / org / alias / inner edits for the linker script, see tools/lcf_force_active.py.
+# place / org / reserve / alias / inner edits for the linker script, see tools/lcf_force_active.py.
 # Register read through a symbol by the cartridge code (scheduling).
 alias data_04000300 0x04000300 0
 # Names other units use for members of the thread system block (os_thread.c defines it as one object).
 inner data_020ca70c 0x27c
 # The zero fill before the game code: the image puts arm_system's code at 0x02001000 and main at 0x02003000 with
 # nothing referencing the bytes between (0x02000c04-0x02001000 and 0x020011dc-0x02003000).
-org arm_system.o 0x02001000
+org arm_system_slot.o 0x02001000
 org main.o 0x02003000
+# arm_system.c's code sits at 0x02001000 while its .bss (the link buffers) follows stream_audio.c's in link order:
+# its code goes in the slot the stub unit holds.
+place arm_system_slot.o .text arm_system.o
 # The start of the data TCM block, which the code uses as the interrupt handler table's address and as the TCM base.
 alias SDK_AUTOLOAD_DTCM_START DTCM_DATA_START 0
+# The autoload list that BuildInfo points at: in the image, the ITCM code (0x3c0) and the DTCM data (0x60) follow the
+# static data, then the list with one 12-byte entry per block.
+alias data_02064c40 ARM9_BSS_START 0x420
+alias data_02064c58 ARM9_BSS_START 0x438
+# The end of the static data: a zero 20-byte slot (the overlay table's signature) and the overlay signature list the
+# image footer points at (empty: the game has no overlays); the 32-byte alignment of the .data end follows.
+reserve float_digits.o .data data_020647fc 0x14
+reserve float_digits.o .data OverlaySignatures 0

@@ -2114,59 +2114,16 @@ data_02064628 kind:data(any) addr:0x02064628
 @491 kind:data(any) addr:0x020647ec local
 @492 kind:data(any) addr:0x020647f0 local
 @493 kind:data(any) addr:0x020647f4 local
-@494 kind:data(any) addr:0x020647f8 local
-data_020647fc kind:data(any) addr:0x020647fc
-OverlaySignatures kind:data(any) addr:0x02064810
+@494 kind:data(byte[4]) addr:0x020647f8 local
 ARM9_BSS_START kind:bss addr:0x02064820
-data_02064824 kind:bss addr:0x02064824
-data_02064828 kind:bss addr:0x02064828
-data_02064830 kind:bss addr:0x02064830
-data_020649bc kind:bss addr:0x020649bc
-data_020649c8 kind:bss addr:0x020649c8
+data_02064828 kind:bss(size=0x8998) addr:0x02064828
 data_02064c40 kind:bss addr:0x02064c40
 data_02064c58 kind:bss addr:0x02064c58
-data_02068aa8 kind:bss addr:0x02068aa8
-data_0206ce28 kind:bss addr:0x0206ce28
 data_0206d1c0 kind:bss addr:0x0206d1c0
 data_0206d1d4 kind:bss addr:0x0206d1d4
-data_0206d210 kind:bss addr:0x0206d210
-data_0206d23c kind:bss addr:0x0206d23c
-data_0206d2d4 kind:bss addr:0x0206d2d4
-data_0206d314 kind:bss addr:0x0206d314
-data_0206d340 kind:bss addr:0x0206d340
-data_0206d414 kind:bss addr:0x0206d414
 data_0206d444 kind:bss addr:0x0206d444
 data_0206d448 kind:bss addr:0x0206d448
 data_0206d460 kind:bss addr:0x0206d460
-data_0206d464 kind:bss addr:0x0206d464
-data_0206d468 kind:bss addr:0x0206d468
-data_0206d470 kind:bss addr:0x0206d470
-data_0206d560 kind:bss addr:0x0206d560
-data_0206d5e0 kind:bss addr:0x0206d5e0
-data_0206d5e8 kind:bss addr:0x0206d5e8
-data_0206d610 kind:bss addr:0x0206d610
-data_0206d620 kind:bss addr:0x0206d620
-data_0206d640 kind:bss addr:0x0206d640
-data_0206d660 kind:bss addr:0x0206d660
-data_0206d6a8 kind:bss addr:0x0206d6a8
-data_0206d6ac kind:bss addr:0x0206d6ac
-data_0206d6c0 kind:bss addr:0x0206d6c0
-data_0206d6d0 kind:bss addr:0x0206d6d0
-data_0206d6d4 kind:bss addr:0x0206d6d4
-data_0206d6e0 kind:bss addr:0x0206d6e0
-data_0206d714 kind:bss addr:0x0206d714
-data_0206d715 kind:bss addr:0x0206d715
-data_02070107 kind:bss addr:0x02070107
-data_02080227 kind:bss addr:0x02080227
-data_02089b14 kind:bss addr:0x02089b14
-data_020901fd kind:bss addr:0x020901fd
-data_0209210b kind:bss addr:0x0209210b
-data_02097d14 kind:bss addr:0x02097d14
-data_02098082 kind:bss addr:0x02098082
-data_02098ce0 kind:bss addr:0x02098ce0
-data_02098d14 kind:bss addr:0x02098d14
-data_02098d40 kind:bss addr:0x02098d40
-data_02098d60 kind:bss addr:0x02098d60
 data_02098d74 kind:bss addr:0x02098d74
 data_02098d80 kind:bss addr:0x02098d80
 data_02098d84 kind:bss addr:0x02098d84
@@ -2205,10 +2162,6 @@ data_020ae454$1704 kind:bss addr:0x020ae454 local
 data_020ae458 kind:bss addr:0x020ae458 local
 data_020ae464 kind:bss addr:0x020ae464
 data_020ae504 kind:bss addr:0x020ae504
-data_020ae524 kind:bss addr:0x020ae524
-data_020ae540 kind:bss addr:0x020ae540
-data_020ae684 kind:bss addr:0x020ae684
-data_020ae6a4 kind:bss addr:0x020ae6a4
 data_020ae6ec kind:bss addr:0x020ae6ec
 data_020ae6f4 kind:bss addr:0x020ae6f4
 data_020ae870 kind:bss addr:0x020ae870

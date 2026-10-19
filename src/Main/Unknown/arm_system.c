@@ -4,6 +4,12 @@
 #include <Main/Link/comm_link.h>
 #include <Main/Link/wireless_helper.h>
 
+StateC data_020c66d4[1];
+u32 data_020c66e0[16] __attribute__((aligned(32)));
+u8 data_020c6720[0xc0] __attribute__((aligned(32)));
+u8 data_020c67e0[0x100] __attribute__((aligned(32)));
+u8 data_020c68e0[0x1fc] __attribute__((aligned(32)));
+
 #pragma thumb off
 
 void func_02001000(void) {

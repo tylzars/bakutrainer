@@ -6,9 +6,6 @@ func_0204cd40
 data_02052458
 # C runtime function nothing calls (operator delete).
 _ZdlPv
-# Zero-filled objects at the end of .data after the decimal conversion strings: nothing references them.
-data_020647fc
-OverlaySignatures
 # Interrupt handler table at the start of data TCM: the code reaches it through SDK_AUTOLOAD_DTCM_START.
 data_027e0000
 # Work areas in the card pull-out, wireless command and cartridge start-up units that no linked code uses.

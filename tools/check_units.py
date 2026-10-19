@@ -3,7 +3,8 @@
 
 For each unit: the range starts at a function and is 4-byte aligned at both ends, no function runs past its end,
 bytes after the last function are zero padding, units don't overlap, and the compiled object defines exactly the
-original functions in the range (labels excepted). Every module with a delinks.txt (main, ITCM, DTCM, overlays). Run
+original functions in the range (labels excepted; a stub unit named by an lcf_edits.txt `place` edit is checked
+against the object of the unit it places). Every module with a delinks.txt (main, ITCM, DTCM, overlays). Run
 `ninja report` first so the objects exist. Exit status 1 on any problem.
 
   check_units.py
@@ -31,6 +32,14 @@ def check_module(module):
     funcs = sorted((int(m.group(3), 16), int(m.group(2), 16), m.group(1)) for m in SYM.finditer(text))
     labels = set(re.findall(r"^(\S+) kind:label", text, re.M))
     data_starts = {int(m.group(2), 16): m.group(1) for m in re.finditer(r"^(\S+) kind:data\S* addr:(0x[0-9a-f]+)", text, re.M)}
+    # `place <stub>.o <function or .text> <unit>.o` edits: the stub's range is compiled in <unit>
+    placed = {}
+    edits = cfg / "lcf_edits.txt"
+    for line in edits.read_text().splitlines() if edits.is_file() else ():
+        words = line.split("#", 1)[0].split()
+        if len(words) == 4 and words[0] == "place":
+            placed[words[1].removesuffix(".o")] = (words[2], words[3].removesuffix(".o"))
+    sources = re.findall(r"^(\S+\.(?:c|cpp|s)):$", (cfg / "delinks.txt").read_text(), re.M)
     units = []
     for m in re.finditer(r"^(\S+\.(?:c|cpp|s)):\n((?:    .*\n?)+)", (cfg / "delinks.txt").read_text(), re.M):
         t = re.search(r"\.text\s+start:(0x[0-9a-f]+) end:(0x[0-9a-f]+)", m.group(2))
@@ -60,6 +69,10 @@ def check_module(module):
         if i + 1 < len(units) and units[i + 1][0] < end:
             probs.append(f"overlaps {units[i + 1][2]}")
         obj = BUILD / re.sub(r"\.(c|cpp|s)$", ".o", src)
+        place = placed.get(Path(src).stem)
+        if place:
+            unit_src = next(u for u in sources if Path(u).stem == place[1])
+            obj = BUILD / re.sub(r"\.(c|cpp|s)$", ".o", unit_src)
         if obj.exists():
             # every defined function symbol, whatever its binding (inline C++ functions get an unusual one)
             with open(obj, "rb") as f:
@@ -68,6 +81,8 @@ def check_module(module):
                 defined = {sym.name for sym in elf.get_section_by_name(".symtab").iter_symbols()
                            if sym["st_info"]["type"] == kind and sym["st_shndx"] != "SHN_UNDEF"
                            and not sym.name.startswith(("$", "@", "."))}
+            if place and place[0] != ".text":
+                defined &= {place[0]}  # one function placed from a unit defining others
             # a data-only unit holds every data symbol in its range
             names = {f[2] for f in orig} | ({n for a, n in data_starts.items() if start <= a < end} if data_only else set())
             if missing := sorted(names - defined - labels):

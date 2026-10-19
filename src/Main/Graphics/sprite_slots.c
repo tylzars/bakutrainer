@@ -4,6 +4,7 @@
 #include <Main/System/game_math.h>
 #include <Main/System/system_init.h>
 #include <Main/Graphics/sprite_slots.h>
+#include <Main/Scene/slide_transition.h>
 #include <Main/Graphics/text_draw.h>
 #include <Main/Graphics/model.h>
 #include <Main/System/engine_asm.h>

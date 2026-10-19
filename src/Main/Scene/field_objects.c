@@ -23,6 +23,8 @@
 static const u16 data_0204e138[6] = {0xd67, 0xd6f, 0xd77, 0xd7f, 0xd87, 0xd8f};
 static const u32 data_0204e144[5] = {0, 0xd97, 0xd9b, 0xd9d, 0xd9e};
 
+FieldObjects data_0206d460;
+
 s32 func_02005c10(int a, int b) {
     return func_02021e44(0xda0, b + a * 7);
 }
@@ -480,7 +482,8 @@ void func_020067ac(void) {
 }
 
 void func_02006b1c(void) {
-    func_0201168c(data_020b6ee0.mUnk_a8e4, data_0206d460.mUnk_008 >> 8, data_0206d448, data_0206d460.mUnk_004, 2);
+    func_0201168c(data_020b6ee0.mUnk_a8e4, data_0206d460.mUnk_008 >> 8, data_0206d448.mUnk_00, data_0206d460.mUnk_004,
+                  2);
     func_02033614(data_020c3e44.mUnk_2024.mUnk_9c.mUnk_228.x, data_020c3e44.mUnk_2024.mUnk_9c.mUnk_228.z);
     func_0202733c(&data_0206d460.mUnk_010, &data_0206d460.mUnk_1b0, 0);
     func_02005cb4();

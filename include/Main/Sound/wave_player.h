@@ -72,8 +72,6 @@ typedef struct WavePlayer {
 } WavePlayer; /* 190 */
 
 extern WavePlayer data_020c648c;
-// The title screen's music stream (its .bss sits right after slide_transition.c's own objects).
-extern WaveStream data_020ae464;
 
 // Claims a channel from the set of channel bits `mask`: the first slot in the mask that is not in use, or, when
 // `steal` is set and none is free, the first slot in the mask (releasing it first). Returns the slot number, or

@@ -733,7 +733,13 @@ Link order and linking:
   the first definition; mwld prefers multidef over weak. To make the original's (delinked) copy win: demote compiled
   multidef to weak (14), promote delinked weak to multidef, and put delinked objects first.
 - A function placed apart from its unit (e.g. `main` right after start-up code): a stub unit holds its slot and a
-  linker-script edit puts `OBJECT(main, Game.o)` there.
+  linker-script edit puts `OBJECT(main, Game.o)` there. A unit whose whole code sits apart from its data (arm_system.c)
+  gets a stub that holds the code's slot and `place <stub>.o .text <unit>.o` (config/usa/arm9/lcf_edits.txt); the
+  unit's delinks entry then has no `.text` range. Zero space the linker itself lays down (the fill before a unit at a
+  fixed address, the overlay-signature slot at the end of `.data`) is an `org` or `reserve` edit, not an object.
+- [dsd] Once interior symbols of an object are removed, relocations into it must be written `to:<base> add:<off>`.
+- [dsd] The ROM build rewrites BuildInfo's autoload words, so only `ninja check` verifies the aliases that define
+  them; the ARM9 footer's overlay-signature offset comes from the linked `OverlaySignatures` symbol.
 - [dsd] dsd reads any address-looking word as a pointer: a data blob (font bitmap) word recorded as a relocation into
   an overlay becomes 0 when the target is renamed away. Delete such lines from relocs; check relocations into a newly
   linked range when the ROM differs by one word.

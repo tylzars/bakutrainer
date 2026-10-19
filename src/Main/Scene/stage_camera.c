@@ -1086,7 +1086,7 @@ void func_02018558(void) {
     if (stage >= STAGE_MAX) {
         OS_Terminate();
     }
-    func_0201168c(data_020b6ee0.mUnk_a8e4, obj->mUnk_1c0, data_0206d448, obj->mUnk_1bc, 2);
+    func_0201168c(data_020b6ee0.mUnk_a8e4, obj->mUnk_1c0, data_0206d448.mUnk_00, obj->mUnk_1bc, 2);
     func_02015d58(stage);
     rec->mUnk_158 = rec->mUnk_1a0;
     func_0200ba94(&rec->mUnk_1a0, 0x70800, 0x800);

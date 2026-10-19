@@ -489,7 +489,7 @@ libs/mobiclip/src/mobiclip_convert.cpp:
     .bss        start:0x020ca680 end:0x020ca6a4
 
 // provisional: no evidence yet for where these files begin and end
-src/Main/Unknown/arm_system.c:
+src/Main/Unknown/arm_system_slot.c:
     complete
     .text       start:0x02001000 end:0x020011dc
 
@@ -502,25 +502,28 @@ src/Main/Minigame/falling_blocks.c:
     .text       start:0x02003194 end:0x0200494c
     .rodata     start:0x0204e054 end:0x0204e0cc
     .data       start:0x02063900 end:0x02063908
-    .bss        start:0x02064820 end:0x02064824
+    .bss        start:0x02064820 end:0x0206d1c0
 
 src/Main/Scene/result_screen.c:
     complete
     .text       start:0x0200494c end:0x020054a4
     .rodata     start:0x0204e0cc end:0x0204e0e8
     .data       start:0x02063908 end:0x0206391c
+    .bss        start:0x0206d1c0 end:0x0206d444
 
 src/Main/Scene/mode_select.c:
     complete
     .text       start:0x020054a4 end:0x02005c10
     .rodata     start:0x0204e0e8 end:0x0204e138
     .data       start:0x0206391c end:0x02063924
+    .bss        start:0x0206d444 end:0x0206d460
 
 src/Main/Scene/field_objects.c:
     complete
     .text       start:0x02005c10 end:0x02006fc0
     .rodata     start:0x0204e138 end:0x0204e158
     .data       start:0x02063924 end:0x0206392c
+    .bss        start:0x0206d460 end:0x02098d74
 
 src/Main/Scene/page_viewer.c:
     complete
@@ -570,7 +573,7 @@ src/Main/Scene/slide_transition.c:
     .text       start:0x0200de68 end:0x0200f374
     .rodata     start:0x0204e1e4 end:0x0204e208
     .data       start:0x02063954 end:0x02063988
-    .bss        start:0x020ae44c end:0x020ae464
+    .bss        start:0x020ae44c end:0x020ae6ec
 
 // provisional: the end may lie past 0x0200f9c8 (the language-table lookups after it)
 src/Main/Scene/language_menu.c:
@@ -720,6 +723,12 @@ src/Main/Map/map_entries.c:
 src/Main/System/align_util.c:
     complete
     .text       start:0x02034918 end:0x02034954
+
+// the link buffers data_020c66d4..data_020c68e0 (ascending sizes; arm_system.c is the one file using all five);
+// the unit's code sits apart from it, in arm_system_slot.c's place (lcf_edits.txt)
+src/Main/Unknown/arm_system.c:
+    complete
+    .bss        start:0x020c66d4 end:0x020c6adc
 
 // provisional: the wireless link's per-frame step, record exchange and error screen (data_020c66d4..data_020c68e0,
 // data_020c18bc.mUnk_250/mUnk_288) and the error screen's strings; func_02035108 after it is the tracker's

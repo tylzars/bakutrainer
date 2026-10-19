@@ -4,6 +4,7 @@
 #include <nitro/wm.h>
 #include <Main/clib.h>
 #include <Main/Link/comm_link.h>
+#include <Main/Unknown/arm_system.h>
 #include <Main/System/bg_image.h>
 #include <Main/System/screen_fade.h>
 #include <Main/Save/save_blocks.h>

@@ -15,10 +15,13 @@
 #include <Main/System/system_init.h>
 #include <stdio.h>
 
+ModeSelectState data_0206d448;
+s32 data_0206d444;
+
 static const u32 data_0204e0e8[2] = {0xe9, 0xf0};
 static const u32 data_0204e0f0[3] = {0xf7, 0xfe, 0x105};
-static const s32 data_0204e110[5] = {41, 40, 42, 43, 44};
 static const s32 data_0204e0fc[5] = {14, 15, 16, 17, 4};
+static const s32 data_0204e110[5] = {41, 40, 42, 43, 44};
 static const s32 data_0204e124[5] = {0x301, 0x300, 0x302, 0x304, 0x303};
 
 u32 data_0206391c = 1800;
@@ -35,34 +38,34 @@ void func_020054a4(int mode) {
     data_020b10fc.mUnk_04 = mode;
     switch (mode) {
         case 0:
-            data_0206d444.mUnk_04 = func_0200d6b0(stage);
+            data_0206d448.mUnk_00 = func_0200d6b0(stage);
             break;
         case 1:
-            data_0206d444.mUnk_04 = func_0200b88c(stage);
+            data_0206d448.mUnk_00 = func_0200b88c(stage);
             break;
         case 2:
-            data_0206d444.mUnk_04 = func_02006fb4(stage);
+            data_0206d448.mUnk_00 = func_02006fb4(stage);
             break;
         case 3:
-            data_0206d444.mUnk_04 = func_02004940(stage);
+            data_0206d448.mUnk_00 = func_02004940(stage);
             break;
         case 4:
-            data_0206d444.mUnk_04 = func_020186f0(stage);
+            data_0206d448.mUnk_00 = func_020186f0(stage);
             break;
         default:
-            data_0206d444.mUnk_04 = 0;
+            data_0206d448.mUnk_00 = 0;
             break;
     }
-    data_0206d444.mUnk_08 = data_020b10fc.mUnk_14[data_020b10fc.mUnk_04];
+    data_0206d448.mUnk_04 = data_020b10fc.mUnk_14[data_020b10fc.mUnk_04];
 }
 
 void func_02005548(void) {
     func_0200c5d8(0, 0x10d1, data_020b1990[data_020b6ee0.mUnk_a8e4].mInfo.mUnk_13 + 0xdb3, 32, 16, 130, 2);
     func_02024208();
-    if (data_0206d444.mUnk_00 == 0) {
+    if (data_0206d444 == 0) {
         func_020054a4(4);
     } else {
-        data_0206d444.mUnk_00 = 0;
+        data_0206d444 = 0;
     }
 }
 
@@ -93,10 +96,10 @@ void func_020055a8(void) {
     }
     func_020215fc(99, 108, data_0201a64e, func_0200f9f0(data_020b10fc.mUnk_04 + 31), 0, 200, 16, 1);
     func_020215fc(106, 129, data_0201a61c, func_0200f9f0(28), 0, 200, 16, 1);
-    sprintf(text, "%d", data_0206d444.mUnk_04);
+    sprintf(text, "%d", data_0206d448.mUnk_00);
     func_020215fc(215, 129, data_0201a61c, text, 0, 200, 16, 1);
     func_020215fc(106, 144, data_0201a61c, func_0200f9f0(29), 0, 200, 16, 1);
-    sprintf(text, "%d", data_0206d444.mUnk_08);
+    sprintf(text, "%d", data_0206d448.mUnk_04);
     func_020215fc(215, 144, data_0201a61c, text, 0, 200, 16, 1);
     func_0200bb14(153, 181, 50 << 4, 0x11de, 0, 0, 0x167, 1);
     func_020215fc(153, 181, data_0201a61c, func_0200f9f0(30), 2, 200, 16, 1);
@@ -130,7 +133,7 @@ void func_02005898(void) {
         }
     }
     if (func_0200bd80(0x20000000, 0x320)) {
-        data_0206d444.mUnk_00 = 1;
+        data_0206d444 = 1;
         func_0201033c(data_0204e110[data_020b10fc.mUnk_04], 13);
     }
     func_020055a8();
@@ -177,10 +180,10 @@ int func_02005a00(u32 value) {
 }
 
 void func_02005a8c(int a, int b) {
-    data_0206d444.mUnk_0c = a == 1 ? 1 : 2;
-    data_0206d444.mUnk_10 = 6 << 14;
-    data_0206d444.mUnk_14 = 120;
-    data_0206d444.mUnk_18 = b;
+    data_0206d448.mUnk_08 = a == 1 ? 1 : 2;
+    data_0206d448.mUnk_0c = 6 << 14;
+    data_0206d448.mUnk_10 = 120;
+    data_0206d448.mUnk_14 = b;
     if (a == 0) {
         if (b == 1) {
             func_0202f110(data_020b1084.mLanguage + data_0204e0f0[func_0201fd68() % 3], 100, 0, 64, 0xffff, 0);
@@ -192,45 +195,45 @@ void func_02005a8c(int a, int b) {
 
 int func_02005b1c(int mode) {
     s32 v;
-    switch (data_0206d444.mUnk_0c) {
+    switch (data_0206d448.mUnk_08) {
         case 1:
-            if (data_0206d444.mUnk_14 != 0) {
-                v = data_0206d444.mUnk_10 - (30 << 8);
+            if (data_0206d448.mUnk_10 != 0) {
+                v = data_0206d448.mUnk_0c - (30 << 8);
                 if (v < 0) {
                     v = 0;
                 }
-                data_0206d444.mUnk_10 = v;
+                data_0206d448.mUnk_0c = v;
                 if (v == 0) {
-                    data_0206d444.mUnk_14--;
+                    data_0206d448.mUnk_10--;
                 }
             } else {
-                v = data_0206d444.mUnk_10 - (30 << 8);
+                v = data_0206d448.mUnk_0c - (30 << 8);
                 if (v < -65536) {
                     v = -65536;
                 }
-                data_0206d444.mUnk_10 = v;
+                data_0206d448.mUnk_0c = v;
                 if (v == -65536) {
-                    data_0206d444.mUnk_0c = 0;
+                    data_0206d448.mUnk_08 = 0;
                     return 0;
                 }
             }
-            func_0202cf08(data_020b1084.mLanguage + 0xe77, (data_0206d444.mUnk_10 >> 8) + 128, 96, 10, mode);
+            func_0202cf08(data_020b1084.mLanguage + 0xe77, (data_0206d448.mUnk_0c >> 8) + 128, 96, 10, mode);
             return 1;
         case 2: {
-            int id = data_0206d444.mUnk_18 == 1 ? 0xec5 : 0xe7d;
-            if (data_0206d444.mUnk_14 != 0) {
-                v = data_0206d444.mUnk_10 - (30 << 8);
+            int id = data_0206d448.mUnk_14 == 1 ? 0xec5 : 0xe7d;
+            if (data_0206d448.mUnk_10 != 0) {
+                v = data_0206d448.mUnk_0c - (30 << 8);
                 if (v < 0) {
                     v = 0;
                 }
-                data_0206d444.mUnk_10 = v;
+                data_0206d448.mUnk_0c = v;
                 if (v == 0) {
-                    data_0206d444.mUnk_14--;
+                    data_0206d448.mUnk_10--;
                 }
             } else {
                 return 0;
             }
-            func_0202cf08(id + data_020b1084.mLanguage, (data_0206d444.mUnk_10 >> 8) + 128, 96, 10, mode);
+            func_0202cf08(id + data_020b1084.mLanguage, (data_0206d448.mUnk_0c >> 8) + 128, 96, 10, mode);
             return 1;
         }
         default:
@@ -239,9 +242,9 @@ int func_02005b1c(int mode) {
 }
 
 u8 func_02005bf8(void) {
-    return data_0206d444.mUnk_0c;
+    return data_0206d448.mUnk_08;
 }
 
 s32 func_02005c04(void) {
-    return data_0206d444.mUnk_18;
+    return data_0206d448.mUnk_14;
 }
