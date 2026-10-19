@@ -6,9 +6,11 @@ void func_0204882c(fx16 *sinTable, u32 nShift) {
     u32 i;
     u32 count;
     s32 angle;
+    u32 step;
 
     count = (n >> 1) + (n >> 2);
-    for (i = 0, angle = 0; i < count; i++, angle += 0x10000u >> nShift) {
+    step = 0x10000u >> nShift;
+    for (i = 0, angle = 0; i < count; i++, angle += step) {
         sinTable[i] = FX_SinCosTable_[(angle >> 4) * 2];
     }
 }
@@ -73,11 +75,11 @@ void func_02048880(fx32 *data, u32 nShift, const fx16 *sinTable) {
                     u32 j = i + m;
                     fx32 x = data[j];
                     fx32 y = data[j + 1];
-                    fx32 re = data[i];
                     fx32 p = FX_Mul(cs, x + y);
-                    fx32 im = data[i + 1];
                     fx32 tr = p - FX_Mul(csMinusSn, y);
                     fx32 ti = p - FX_Mul(csPlusSn, x);
+                    fx32 re = data[i];
+                    fx32 im = data[i + 1];
                     data[i] = re + tr;
                     data[i + 1] = im + ti;
                     data[j] = re - tr;
