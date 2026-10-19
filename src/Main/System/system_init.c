@@ -1550,7 +1550,7 @@ void func_0201de48(u8 *data, int target, int x, u16 flags) {
             if (indexed == 0) {
                 out = (u16 *) pal;
                 for (i = w * h; i != 0; i--) {
-                    *out++ = (u16)((pal[0] >> 3) | ((pal[1] >> 3) << 5) | ((pal[2] >> 3) << 10)) + 0x8000;
+                    *out++ = (u16) ((pal[0] >> 3) | ((pal[1] >> 3) << 5) | ((pal[2] >> 3) << 10)) + 0x8000;
                     pal += 3;
                 }
             } else {
