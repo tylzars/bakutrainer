@@ -633,6 +633,7 @@ src/Main/Scene/stage_map_menu.c:
 // provisional: the message functions from 0x02021e94 use this file's readers and follow with no gap; gx_pool.c
 // starts at 0x02021fb0
 src/Main/Graphics/text_draw.c:
+    complete
     .text       start:0x02021498 end:0x02021fb0
 
 // provisional: probably continues with func_020225dc (same pool objects)
