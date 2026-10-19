@@ -8,6 +8,7 @@ libs/nds/src/init/secure_area.s:
     .text       start:0x02000000 end:0x02000800
 
 libs/nds/src/init/crt0.c:
+    complete
     .text       start:0x02000800 end:0x02000ba0
 
 libs/nds/src/init/build_info.s:
@@ -15,29 +16,37 @@ libs/nds/src/init/build_info.s:
 
 // provisional: split between the matrix files
 libs/nds/src/fx/fx_mtx33.c:
+    complete
     .text       start:0x0203b8bc end:0x0203ba2c
 
 // provisional: split between the matrix files
 libs/nds/src/fx/fx_mtx43.c:
+    complete
     .text       start:0x0203ba2c end:0x0203c1c8
 
 // provisional: split between the matrix files
 libs/nds/src/fx/fx_mtx44.c:
+    complete
     .text       start:0x0203c1c8 end:0x0203c51c
 
 libs/nds/src/fx/fx_cp.c:
+    complete
     .text       start:0x0203c51c end:0x0203c5e0
 
 libs/nds/src/fx/fx_vec.c:
+    complete
     .text       start:0x0203c5e0 end:0x0203c7b8
 
 libs/nds/src/fx/fx_trig.c:
+    complete
     .text       start:0x0203c7b8 end:0x0203c960
 
 libs/nds/src/gx/gx.c:
+    complete
     .text       start:0x0203c960 end:0x0203ca80
 
 libs/nds/src/gx/g3c.c:
+    complete
     .text       start:0x0203ca80 end:0x0203cad4
 
 libs/nds/src/gx/g3x.c:
@@ -45,10 +54,12 @@ libs/nds/src/gx/g3x.c:
 
 // provisional: file name and its end
 libs/nds/src/gx/g3_util.c:
+    complete
     .text       start:0x0203d030 end:0x0203d178
 
 // provisional: own file or the end of the previous one
 libs/nds/src/gx/gx_fifo.c:
+    complete
     .text       start:0x0203d178 end:0x0203d1b8
 
 libs/nds/src/os/os_irqtable.c:
@@ -58,16 +69,21 @@ libs/nds/src/os/os_interrupt.c:
     .text       start:0x0203d468 end:0x0203d554
 
 libs/nds/src/os/os_spinlock.c:
+    complete
     .text       start:0x0203d554 end:0x0203d8c0
+    .bss        start:0x020ca708 end:0x020ca70c
 
 libs/nds/src/os/os_thread.c:
     .text       start:0x0203d8c0 end:0x0203e25c
 
 // provisional: the mutex functions at the end may be a file of their own
 libs/nds/src/os/os_message.c:
+    complete
     .text       start:0x0203e25c end:0x0203e4a4
+    .data       start:0x020644b8 end:0x020644bc
 
 libs/nds/src/os/os_cache.c:
+    complete
     .text       start:0x0203e4a4 end:0x0203e594
 
 // provisional: split from os_arena.c
@@ -79,9 +95,12 @@ libs/nds/src/os/os_arena.c:
     .text       start:0x0203e5fc end:0x0203e948
 
 libs/nds/src/os/os_alloc.c:
+    complete
     .text       start:0x0203e948 end:0x0203ed7c
+    .bss        start:0x020ca990 end:0x020ca9b4
 
 libs/nds/src/os/os_protection.c:
+    complete
     .text       start:0x0203ed7c end:0x0203edd4
 
 libs/nds/src/os/os_exception.c:
@@ -89,81 +108,115 @@ libs/nds/src/os/os_exception.c:
 
 // provisional: which file the two timer-register functions belong to
 libs/nds/src/os/os_timer.c:
+    complete
     .text       start:0x0203efe8 end:0x0203f03c
+    .bss        start:0x020caa60 end:0x020caa64
 
 libs/nds/src/os/os_tick.c:
+    complete
     .text       start:0x0203f03c end:0x0203f1cc
+    .bss        start:0x020caa64 end:0x020caa74
 
 libs/nds/src/os/os_alarm.c:
+    complete
     .text       start:0x0203f1cc end:0x0203f5cc
+    .bss        start:0x020caa74 end:0x020caa80
 
 libs/nds/src/os/os_valarm.c:
+    complete
     .text       start:0x0203f5cc end:0x0203f614
+    .bss        start:0x020caa80 end:0x020caa94
 
 libs/nds/src/os/os_system.c:
+    complete
     .text       start:0x0203f614 end:0x0203f6a4
 
 // provisional: whether func_0203f6a4 starts this file
 libs/nds/src/os/os_reset.c:
+    complete
     .text       start:0x0203f6a4 end:0x0203f748
+    .bss        start:0x020caa94 end:0x020caa98
 
 libs/nds/src/os/os_owner.c:
+    complete
     .text       start:0x0203f748 end:0x0203f7e8
 
 // provisional: file name
 libs/nds/src/os/os_irqowner.c:
+    complete
     .text       start:0x0203f7e8 end:0x0203f81c
+    .bss        start:0x020caa98 end:0x020caab0
 
 libs/nds/src/os/os_terminate.c:
+    complete
     .text       start:0x0203f81c end:0x0203f838
 
 libs/nds/src/mi/mi_wram.c:
+    complete
     .text       start:0x0203f838 end:0x0203f848
 
 libs/nds/src/mi/mi_dma.c:
+    complete
     .text       start:0x0203f848 end:0x0203fc4c
 
 libs/nds/src/mi/mi_memory.c:
+    complete
     .text       start:0x0203fc4c end:0x02040038
 
 libs/nds/src/mi/mi_swap.c:
+    complete
     .text       start:0x02040038 end:0x02040040
 
 libs/nds/src/mi/mi_dma_card.c:
+    complete
     .text       start:0x02040040 end:0x020400b4
 
 // provisional: file name
 libs/nds/src/mi/mi_init.c:
+    complete
     .text       start:0x020400b4 end:0x020400cc
 
 libs/nds/src/snd/snd_cmdwrap.c:
+    complete
     .text       start:0x020400cc end:0x020402f0
 
 libs/nds/src/snd/snd_main.c:
+    complete
     .text       start:0x020402f0 end:0x02040328
+    .bss        start:0x020caab0 end:0x020caacc
 
 libs/nds/src/snd/snd_command.c:
     .text       start:0x02040328 end:0x020409cc
 
 // provisional: split from snd_work.c
 libs/nds/src/snd/snd_alarm.c:
+    complete
     .text       start:0x020409cc end:0x02040a90
+    .bss        start:0x020cc5c0 end:0x020cc620
 
 // provisional: split from snd_alarm.c
 libs/nds/src/snd/snd_work.c:
+    complete
     .text       start:0x02040a90 end:0x02040b60
+    .bss        start:0x020cc620 end:0x020cc624
 
 libs/nds/src/snd/snd_util.c:
+    complete
     .text       start:0x02040b60 end:0x02040bd0
+    .rodata     start:0x02063504 end:0x020637d8
 
 libs/nds/src/pxi/pxi.c:
+    complete
     .text       start:0x02040bd0 end:0x02040eec
+    .bss        start:0x020cc624 end:0x020cc6a8
 
 // the divider and square-root register save/restore pair between the file system and touch panel code
 libs/nds/src/cp/cp_context.c:
+    complete
     .text       start:0x02042898 end:0x02042914
 
 libs/nds/src/tp/tp.c:
+    complete
     .text       start:0x02042914 end:0x020431ec
 
 libs/nds/src/mic/mic.c:
@@ -171,50 +224,72 @@ libs/nds/src/mic/mic.c:
 
 // provisional: func_02044474 at the end may belong to rtc.c
 libs/nds/src/pm/pm.c:
+    complete
     .text       start:0x020436e0 end:0x02044500
+    .data       start:0x020644c4 end:0x020644c8
 
 libs/nds/src/rtc/rtc.c:
+    complete
     .text       start:0x02044500 end:0x02044c20
 
 libs/nds/src/ctrdg/ctrdg_init.c:
+    complete
     .text       start:0x02047f3c end:0x02048254
+    .bss        start:0x020cdbe4 end:0x020cdbec
 
 libs/nds/src/ctrdg/ctrdg.c:
+    complete
     .text       start:0x02048254 end:0x0204873c
 
 libs/nds/src/card/card_common.c:
     .text       start:0x02044c20 end:0x02046018
 
 libs/nds/src/card/card_pullout.c:
+    complete
     .text       start:0x02046018 end:0x020461e4
+    .bss        start:0x020cd0e0 end:0x020cd0e8
 
 // provisional: the split from fs_archive.c at 0x02041a78 is inferred from the handler table's end
 libs/nds/src/fs/fs_command.c:
+    complete
     .text       start:0x02040eec end:0x02041a78
+    .rodata     start:0x020637d8 end:0x020637fc
+    .data       start:0x020644bc end:0x020644c0
 
 libs/nds/src/fs/fs_archive.c:
+    complete
     .text       start:0x02041a78 end:0x020421d0
+    .bss        start:0x020cc6a8 end:0x020cc6b8
 
 libs/nds/src/fs/fs_file.c:
+    complete
     .text       start:0x020421d0 end:0x02042660
+    .bss        start:0x020cc6b8 end:0x020cc6bc
 
 libs/nds/src/fs/fs_rom.c:
+    complete
     .text       start:0x02042660 end:0x02042898
+    .data       start:0x020644c0 end:0x020644c4
+    .bss        start:0x020cc6bc end:0x020cc730
 
 // provisional: the C runtime's file splits follow function contiguity; the ROM shows no object edges inside it
 libs/nds/src/math/math_util.c:
+    complete
     .text       start:0x0204873c end:0x02048780
 
 libs/nds/src/math/math_crc.c:
+    complete
     .text       start:0x02048780 end:0x0204882c
 
 libs/nds/src/math/math_fft.c:
+    complete
     .text       start:0x0204882c end:0x02048b3c
 
 libs/msl/src/free_ptr.c:
     .text       start:0x02048b3c end:0x02048b50
 
 libs/msl/src/abs.c:
+    complete
     .text       start:0x02048b50 end:0x02048b5c
 
 libs/msl/src/mbstring.c:
@@ -230,12 +305,15 @@ libs/msl/src/qsort.c:
     .text       start:0x0204aedc end:0x0204b040
 
 libs/msl/src/string.c:
+    complete
     .text       start:0x0204b040 end:0x0204b1b0
 
 libs/msl/src/s_copysign.c:
+    complete
     .text       start:0x0204b1b0 end:0x0204b1d8
 
 libs/msl/src/s_fabs.c:
+    complete
     .text       start:0x0204b1d8 end:0x0204b1f8
 
 libs/msl/src/s_frexp.c:
@@ -248,6 +326,7 @@ libs/msl/src/float_digits.c:
     .text       start:0x0204b500 end:0x0204bf28
 
 libs/msl/src/msl_fpclassify.c:
+    complete
     .text       start:0x0204bf28 end:0x0204bfac
 
 libs/msl/src/alloc.c:
@@ -257,6 +336,7 @@ libs/msl/src/rt_soft_float_a.s:
     .text       start:0x0204bfc4 end:0x0204cd40
 
 libs/msl/src/rt_float_nan.c:
+    complete
     .text       start:0x0204cd40 end:0x0204cd48
 
 libs/msl/src/rt_soft_float_b.s:
@@ -271,12 +351,15 @@ libs/msl/src/rt_global_ctors.cpp:
 // provisional: starts with func_020461e4 (stores a command callback in the WM work area; called only from the
 // WM code after it) where card_pullout.c ends; the wm_command/wm_api split is inferred
 libs/nds/src/wm/wm_command.c:
+    complete
     .text       start:0x020461e4 end:0x02046478
 
 libs/nds/src/wm/wm_api.c:
+    complete
     .text       start:0x02046478 end:0x02047be4
 
 libs/nds/src/wm/wm_worker.c:
+    complete
     .text       start:0x02047be4 end:0x02047f3c
 
 libs/mobiclip/src/mobiclip_api.cpp:
@@ -286,7 +369,9 @@ libs/mobiclip/src/mobiclip_player.cpp:
     .text       start:0x0203a054 end:0x0203af68
 
 libs/mobiclip/src/mobiclip_convert.cpp:
+    complete
     .text       start:0x0203af68 end:0x0203b8bc
+    .bss        start:0x020ca680 end:0x020ca6a4
 
 // provisional: no evidence yet for where these files begin and end
 src/Main/Unknown/arm_system.c:

@@ -1315,12 +1315,12 @@ OSi_DoTryLockByWord kind:function(arm,size=0x6c) addr:0x0203d700
 OS_UnlockCartridge kind:function(arm,size=0x20) addr:0x0203d76c
 OS_UnLockCartridge kind:function(arm,size=0xc) addr:0x0203d78c
 OS_TryLockCartridge kind:function(arm,size=0x20) addr:0x0203d798
-func_0203d7b8 kind:function(arm,size=0x18) addr:0x0203d7b8
-func_0203d7d0 kind:function(arm,size=0x18) addr:0x0203d7d0
+func_0203d7b8 kind:function(arm,size=0x18) addr:0x0203d7b8 local
+func_0203d7d0 kind:function(arm,size=0x18) addr:0x0203d7d0 local
 OS_LockCard kind:function(arm,size=0x1c) addr:0x0203d7e8
 OS_UnlockCard kind:function(arm,size=0x1c) addr:0x0203d804
-func_0203d820 kind:function(arm,size=0x18) addr:0x0203d820
-func_0203d838 kind:function(arm,size=0x18) addr:0x0203d838
+func_0203d820 kind:function(arm,size=0x18) addr:0x0203d820 local
+func_0203d838 kind:function(arm,size=0x18) addr:0x0203d838 local
 OS_ReadOwnerOfLockWord kind:function(arm,size=0x8) addr:0x0203d850
 OS_GetLockID kind:function(arm,size=0x68) addr:0x0203d858
 OSi_GetUnusedThreadId kind:function(arm,size=0x18) addr:0x0203d8c0
@@ -1923,8 +1923,8 @@ data_0205f33c kind:data(any) addr:0x0205f33c
 data_0205f34c kind:data(any) addr:0x0205f34c
 FX_SinCosTable_ kind:data(any) addr:0x0205f400
 FX_AtanIdxTable_ kind:data(any) addr:0x02063400
-data_02063504 kind:data(any) addr:0x02063504
-data_020637d8 kind:data(any) addr:0x020637d8
+data_02063504 kind:data(any) addr:0x02063504 local
+data_020637d8 kind:data(any) addr:0x020637d8 local
 data_020637fc kind:data(any) addr:0x020637fc
 ARM9_CTOR_END kind:data(any) addr:0x02063900
 data_02063908 kind:data(any) addr:0x02063908
@@ -2066,10 +2066,10 @@ _ZTV6Reader kind:data(any) addr:0x0206447c
 data_020644a0 kind:data(any) addr:0x020644a0
 data_020644a4 kind:data(any) addr:0x020644a4
 data_020644a8 kind:data(any) addr:0x020644a8
-data_020644b8 kind:data(any) addr:0x020644b8
-data_020644bc kind:data(any) addr:0x020644bc
-data_020644c0 kind:data(any) addr:0x020644c0
-data_020644c4 kind:data(any) addr:0x020644c4
+data_020644b8 kind:data(any) addr:0x020644b8 local
+data_020644bc kind:data(any) addr:0x020644bc local
+data_020644c0 kind:data(any) addr:0x020644c0 local
+pmWaitFunc kind:data(any) addr:0x020644c4
 data_020644c8 kind:data(any) addr:0x020644c8
 data_020644cc kind:data(any) addr:0x020644cc
 data_020644d0 kind:data(any) addr:0x020644d0
@@ -2306,40 +2306,41 @@ data_020ca6b0 kind:bss addr:0x020ca6b0
 data_020ca6d8 kind:bss addr:0x020ca6d8
 data_020ca6dc kind:bss addr:0x020ca6dc
 data_020ca6e0 kind:bss addr:0x020ca6e0
-data_020ca708 kind:bss addr:0x020ca708
+lockInitialized$248 kind:bss addr:0x020ca708 local
 data_020ca70c kind:bss addr:0x020ca70c
 data_020ca730 kind:bss addr:0x020ca730
 data_020ca734 kind:bss addr:0x020ca734
 data_020ca740 kind:bss addr:0x020ca740
 data_020ca800 kind:bss addr:0x020ca800
 data_020ca988 kind:bss addr:0x020ca988
-data_020ca990 kind:bss addr:0x020ca990
+sHeapTable kind:bss addr:0x020ca990 local
 data_020ca9b4 kind:bss addr:0x020ca9b4
 data_020ca9b8 kind:bss addr:0x020ca9b8
 data_020ca9bc kind:bss addr:0x020ca9bc
 data_020ca9e0 kind:bss addr:0x020ca9e0
-data_020caa60 kind:bss addr:0x020caa60
-data_020caa64 kind:bss addr:0x020caa64
-data_020caa74 kind:bss addr:0x020caa74
-data_020caa80 kind:bss addr:0x020caa80
-data_020caa94 kind:bss addr:0x020caa94
-data_020caa98 kind:bss addr:0x020caa98
-data_020caa9c kind:bss addr:0x020caa9c
-data_020caab0 kind:bss addr:0x020caab0
-data_020caab4 kind:bss addr:0x020caab4
+sTimerReserved kind:bss addr:0x020caa60 local
+sTickState kind:bss addr:0x020caa64 local
+sAlarmQueue kind:bss addr:0x020caa74 local
+sVAlarmState kind:bss addr:0x020caa80 local
+sResetState kind:bss addr:0x020caa94 local
+sIrqOwnerMask kind:bss addr:0x020caa98 local
+sIrqOwnerTable kind:bss addr:0x020caa9c local
+sndInitialized kind:bss addr:0x020caab0 local
+sndMutex kind:bss addr:0x020caab4 local
+data_020caacc kind:bss addr:0x020caacc
 data_020caae0 kind:bss addr:0x020caae0
 data_020cab04 kind:bss addr:0x020cab04
 data_020cab40 kind:bss addr:0x020cab40
 data_020cadc0 kind:bss addr:0x020cadc0
 data_020cbae0 kind:bss addr:0x020cbae0
 data_020cc5a8 kind:bss addr:0x020cc5a8
-data_020cc5c0 kind:bss addr:0x020cc5c0
+alarmTable kind:bss addr:0x020cc5c0 local
 SNDi_SharedWork kind:bss addr:0x020cc620
-data_020cc624 kind:bss addr:0x020cc624
-data_020cc628 kind:bss addr:0x020cc628
+pxiInitialized kind:bss addr:0x020cc624 local
+pxiCallback kind:bss addr:0x020cc628 local
 data_020cc6a8 kind:bss addr:0x020cc6a8
 data_020cc6ac kind:bss addr:0x020cc6ac
-data_020cc6b8 kind:bss addr:0x020cc6b8
+fs_initialized kind:bss addr:0x020cc6b8 local
 data_020cc6bc kind:bss addr:0x020cc6bc
 data_020cc6d4 kind:bss addr:0x020cc6d4
 tpWork kind:bss addr:0x020cc730
@@ -2353,12 +2354,14 @@ data_020ccaa0 kind:bss addr:0x020ccaa0
 data_020ccea0 kind:bss addr:0x020ccea0
 data_020ccec0 kind:bss addr:0x020ccec0
 data_020cd0e0 kind:bss addr:0x020cd0e0
+data_020cd0e8 kind:bss addr:0x020cd0e8
 data_020cd100 kind:bss addr:0x020cd100
 data_020cd108 kind:bss addr:0x020cd108
 data_020cdba0 kind:bss addr:0x020cdba0
 data_020cdbe0 kind:bss addr:0x020cdbe0
 data_020cdbe4 kind:bss addr:0x020cdbe4
 data_020cdbe8 kind:bss addr:0x020cdbe8
+data_020cdbec kind:bss addr:0x020cdbec
 data_020cdc00 kind:bss addr:0x020cdc00
 data_020cdc20 kind:bss addr:0x020cdc20
 data_020cdc24 kind:bss addr:0x020cdc24
