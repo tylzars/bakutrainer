@@ -1825,8 +1825,8 @@ data_0204e210 kind:data(short[2]) addr:0x0204e210
 data_0204e214 kind:data(word[1]) addr:0x0204e214
 data_0204e218 kind:data(word[12]) addr:0x0204e218
 data_0204e248 kind:data(short[64]) addr:0x0204e248
-data_0204e2c8 kind:data(short[88]) addr:0x0204e2c8
-data_0204e378 kind:data(any) addr:0x0204e378
+data_0204e2c8 kind:data(short[86]) addr:0x0204e2c8
+data_0204e374 kind:data(any) addr:0x0204e374
 data_0204e804 kind:data(byte[14]) addr:0x0204e804
 data_0204e812 kind:data(byte[18]) addr:0x0204e812
 data_0204e824 kind:data(byte[25]) addr:0x0204e824
@@ -1876,7 +1876,6 @@ data_020508a0 kind:data(any) addr:0x020508a0
 data_020508d8 kind:data(short[1]) addr:0x020508d8
 data_020508dc kind:data(byte[4]) addr:0x020508dc
 data_020508e0 kind:data(byte[150]) addr:0x020508e0
-data_02050976 kind:data(any) addr:0x02050976
 data_02050978 kind:data(short[16]) addr:0x02050978
 data_02050998 kind:data(byte[32]) addr:0x02050998
 data_020509b8 kind:data(any) addr:0x020509b8

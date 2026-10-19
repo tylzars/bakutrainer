@@ -297,15 +297,19 @@ src/Main/Boot/main.c:
 
 src/Main/Minigame/falling_blocks.c:
     .text       start:0x02003194 end:0x0200494c
+    .rodata     start:0x0204e054 end:0x0204e0cc
 
 src/Main/Scene/result_screen.c:
     .text       start:0x0200494c end:0x020054a4
+    .rodata     start:0x0204e0cc end:0x0204e0e8
 
 src/Main/Scene/mode_select.c:
     .text       start:0x020054a4 end:0x02005c10
+    .rodata     start:0x0204e0e8 end:0x0204e138
 
 src/Main/Scene/field_objects.c:
     .text       start:0x02005c10 end:0x02006fc0
+    .rodata     start:0x0204e138 end:0x0204e158
 
 src/Main/Scene/page_viewer.c:
     .text       start:0x02006fc0 end:0x020071a8
@@ -315,8 +319,10 @@ src/Main/Graphics/sprite_slots.c:
 
 // .bss data_02098d80..data_020990e0 (ascending sizes: one file); the 0x34-byte data_02099770 after the 0x690-byte
 // data_020990e0 starts the next file
+// provisional .rodata: same bytes, but the order of equal-size local initializers differs
 src/Main/Scene/battle_screen.c:
     .text       start:0x020071a8 end:0x0200a384
+    .rodata     start:0x0204e158 end:0x0204e1c0
 
 // provisional: may be two files
 src/Main/Minigame/stage_minigame.c:
@@ -331,13 +337,16 @@ src/Main/Unknown/move_object.c:
 
 src/Main/Scene/stage_scene.c:
     .text       start:0x0200c65c end:0x0200d6c8
+    .rodata     start:0x0204e1c0 end:0x0204e1e4
 
 src/Main/Scene/slide_transition.c:
     .text       start:0x0200de68 end:0x0200f374
+    .rodata     start:0x0204e1e4 end:0x0204e208
 
 // provisional: the end may lie past 0x0200f9c8 (the language-table lookups after it)
 src/Main/Scene/language_menu.c:
     .text       start:0x0200f374 end:0x0200f9c8
+    .rodata     start:0x0204e208 end:0x0204e804
 
 // provisional: the end; the .rodata layout puts the 0x0204fedc table (used by func_02014260) in this unit
 src/Main/Scene/stage_info_panel.c:
@@ -351,21 +360,25 @@ src/Main/Scene/stage_select.c:
 // .rodata before it); the end is provisional
 src/Main/Scene/stage_progress.c:
     .text       start:0x020145bc end:0x02015340
+    .rodata     start:0x020500d4 end:0x020500d8
 
 // one file: the .bss 0x020b1078-0x020b13b0 follows this compiler's size order for a single file, and its anchor
 // pool words (data_020b1084 reached as 0x020b1078+0xc, ...) only come out with all users in one file
 src/Main/System/game_system.c:
     .text       start:0x0200f9c8 end:0x02011518
+    .rodata     start:0x0204e804 end:0x0204fedc
 
 // provisional: the start (func_02015d4c may belong to the file before); the end is where the next file's "%d"
 // (0x02063aa0, func_02019fa0) starts
 src/Main/Scene/stage_camera.c:
     .text       start:0x02015d4c end:0x02019fa0
+    .rodata     start:0x02050164 end:0x020501f4
 
 // .rodata 0x020500d8-0x02050164, strings 0x02063a5c-0x02063a90, .bss 0x020b13c8-0x020b1524 (defined here); the end
 // is provisional (func_02015d48 and func_02015d4c may meet in either file)
 src/Main/Minigame/three_in_row.c:
     .text       start:0x02015340 end:0x02015d4c
+    .rodata     start:0x020500d8 end:0x02050164
 
 // provisional: the data block 0x0201a608-0x0201b7e0 (script_data.s) follows
 src/Main/Scene/stage_map_menu.c:
@@ -427,11 +440,13 @@ src/Main/System/engine_asm.s:
 // of texture_blocks.c starts
 src/Main/Script/script_records.c:
     .text       start:0x02028e5c end:0x0202ad34
+    .rodata     start:0x020508d8 end:0x02050978
 
 // provisional: the ARM run 0x0202ad34-0x0202db1c (block heaps, texture blocks and sprites of data_020c267c), which
 // ends where Thumb code resumes; the empty routines at the start touch no object and are placed by address
 src/Main/Graphics/texture_blocks.c:
     .text       start:0x0202ad34 end:0x0202db1c
+    .rodata     start:0x02050978 end:0x020509b8
 
 // provisional: the Thumb sprite script player after texture_blocks.c's ARM run, up to the padding before ARM code
 src/Main/Graphics/sprite_script.c:
@@ -467,6 +482,7 @@ src/Main/Map/map_floor.c:
 // chunk 0x5540, whose rings func_02031c70 walks (func_0203129c before it also reads what func_02031824 writes)
 src/Main/Map/map_entries.c:
     .text       start:0x020312b8 end:0x02034918
+    .rodata     start:0x020509b8 end:0x020509c0
 
 // provisional: rounding helpers (32, 4, 2) used by several files; no tie to either neighbour
 src/Main/System/align_util.c:
@@ -482,6 +498,7 @@ src/Main/Link/comm_link.c:
 // uses other objects) up to the wireless helpers at 0x020386a4, with the tick's wave table and strings in .data
 src/Main/Sound/tracker_player.c:
     .text       start:0x02035108 end:0x020386a4
+    .rodata     start:0x020509c0 end:0x02052444
     .data       start:0x02063c9c end:0x02063cc8
 
 // provisional: the wireless helper state machine on data_020c8380 and the WM buffers (data_020c83e0..data_020c95e0)
@@ -489,6 +506,7 @@ src/Main/Sound/tracker_player.c:
 // the SDK at 0x02039dd8; its rodata 0x02052444-0x02052458 sits in the code area and is not delinked with it
 src/Main/Link/wireless_helper.c:
     .text       start:0x020386a4 end:0x02039dd8
+    .rodata     start:0x02052444 end:0x02052458
     .data       start:0x02063cc8 end:0x02064448
 
 // the fonts, the model and sprite scripts and their pointer tables: data between the stage map menu and the

@@ -16,9 +16,6 @@
 #include <Main/Scene/slide_transition.h>
 #include <nitro/init.h>
 
-extern StateFunc data_0204e8a4[STATE_COUNT];
-extern u8 data_0204e824[STATE_COUNT];
-
 void main(void) {
     GameFlow *flow = &data_020b1194;
     int i;

@@ -62,6 +62,11 @@ extern Unk_020ae834 data_020ae834;
 extern LangMenu data_020ae870;
 extern const Unk_0204e218 data_0204e218[];
 extern const Unk_0204e248 data_0204e248[];
+extern const u16 data_0204e208[1];
+extern const u16 data_0204e20c[1];
+extern const u16 data_0204e210[1];
+extern const u32 data_0204e214[1];
+extern const u16 data_0204e2c8[86];
 
 void func_0200f374(void);
 int func_0200f468(void);

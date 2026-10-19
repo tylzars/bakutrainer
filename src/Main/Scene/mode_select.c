@@ -15,11 +15,11 @@
 #include <Main/System/system_init.h>
 #include <stdio.h>
 
-extern const u32 data_0204e0e8[];
-extern const u32 data_0204e0f0[];
-extern const s32 data_0204e0fc[];
-extern const s32 data_0204e110[];
-extern const s32 data_0204e124[];
+static const u32 data_0204e0e8[2] = {0xe9, 0xf0};
+static const u32 data_0204e0f0[3] = {0xf7, 0xfe, 0x105};
+static const s32 data_0204e110[5] = {41, 40, 42, 43, 44};
+static const s32 data_0204e0fc[5] = {14, 15, 16, 17, 4};
+static const s32 data_0204e124[5] = {0x301, 0x300, 0x302, 0x304, 0x303};
 
 u32 data_0206391c = 1800;
 

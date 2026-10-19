@@ -11,19 +11,19 @@
 #include <Main/Link/wireless_helper.h>
 
 // Names of the api ids.
-const char *const data_02063cc8[5] = {
+const char *data_02063cc8[5] = {
     "WM_APIID_UNKNOWN", "WM_APIID_INDICATION", "WM_APIID_PORT_SEND", "WM_APIID_PORT_RECV", "WM_APIID_READ_STATUS",
 };
 
 // Names of the link states, indexed by state.
-const char *const data_02063cdc[10] = {
+const char *data_02063cdc[10] = {
     "WH_SYSSTATE_STOP",         "WH_SYSSTATE_IDLE",        "WH_SYSSTATE_SCANNING",   "WH_SYSSTATE_BUSY",
     "WH_SYSSTATE_CONNECTED",    "WH_SYSSTATE_DATASHARING", "WH_SYSSTATE_KEYSHARING", "WH_SYSSTATE_MEASURECHANNEL",
     "WH_SYSSTATE_CONNECT_FAIL", "WH_SYSSTATE_ERROR",
 };
 
 // Names of the indication state codes, indexed by code.
-const char *const data_02064108[27] = {
+const char *data_02064108[27] = {
     "WM_STATECODE_PARENT_START",
     "N/A",
     "WM_STATECODE_BEACON_SENT",

@@ -20,8 +20,8 @@
 #include <Main/Graphics/script_data.h>
 #include <Main/System/state_flow.h>
 
-extern const u16 data_0204e138[];
-extern const u32 data_0204e144[];
+static const u16 data_0204e138[6] = {0xd67, 0xd6f, 0xd77, 0xd7f, 0xd87, 0xd8f};
+static const u32 data_0204e144[5] = {0, 0xd97, 0xd9b, 0xd9d, 0xd9e};
 
 s32 func_02005c10(int a, int b) {
     return func_02021e44(0xda0, b + a * 7);

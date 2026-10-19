@@ -20,8 +20,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-extern const u32 data_0204e0cc[];
-extern const u32 data_0204e0d4[];
+static const u32 data_0204e0cc[2] = {11, 0};
+static const u32 data_0204e0d4[5] = {0x11d4, 0x11d8, 0x11da, 0x11d6, 0x11dc};
 
 void func_0200494c(void) {
     func_02014bf0();

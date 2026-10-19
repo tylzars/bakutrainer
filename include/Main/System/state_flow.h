@@ -33,8 +33,10 @@ typedef void (*StateFunc)(void);
 
 extern GameFlow data_020b1194;
 
-extern StateFunc data_0204e840[STATE_COUNT];
-extern StateFunc data_0204e908[STATE_COUNT];
+extern const u8 data_0204e824[STATE_COUNT];
+extern const StateFunc data_0204e840[STATE_COUNT];
+extern const StateFunc data_0204e8a4[STATE_COUNT];
+extern const StateFunc data_0204e908[STATE_COUNT];
 
 typedef struct Unk_020b10fc {
     s32 mUnk_00;

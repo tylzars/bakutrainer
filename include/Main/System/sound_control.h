@@ -39,7 +39,7 @@ typedef struct SeOwner {
 } SeOwner;
 
 extern SoundCtl data_020b10b4;
-extern SeEntry data_0204edfc[];
+extern const SeEntry data_0204edfc[];
 
 void func_02010388(u32 a, s32 b);
 void func_020103c0(void);

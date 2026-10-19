@@ -37,6 +37,16 @@ typedef struct Unk_020b1124 {
 } Unk_020b1124;
 extern Unk_020b1124 data_020b1124;
 
+// A prompt (0x49 of them, indexed by the prompt number, state variable 0x14): the message shown, an id passed with
+// the word after it to func_0200f848 when it is not negative, and the prompt that follows (-1: none).
+// language_menu.c and game_system.c each hold a copy of the table.
+typedef struct Unk_0204e96c {
+    /* 00 */ s32 mUnk_00;
+    /* 04 */ s32 mUnk_04;
+    /* 08 */ s32 mUnk_08;
+    /* 0c */ s32 mUnk_0c;
+} Unk_0204e96c;
+
 int func_0200fb68(int *a, int *b);
 void func_0200fd90(void);
 void func_0200feb8(void);

@@ -14,12 +14,7 @@
 #include <Main/Sound/wave_player.h>
 #include <Main/Sound/tracker_player.h>
 #include <Main/Input/touch_buttons.h>
-
-extern const u16 data_0204e208[];
-extern const u16 data_0204e20c[];
-extern const u16 data_0204e210[];
-extern const u32 data_0204e214[];
-extern const u16 data_0204e2c8[];
+#include <Main/Scene/language_menu.h>
 
 // Finds the entry of the message block whose normalised text equals name and selects it.
 void func_02028e5c(const char *name) {
