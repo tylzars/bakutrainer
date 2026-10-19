@@ -1985,24 +1985,25 @@ void func_0201ebf4(int type, int size, int addr) {
 }
 
 void func_0201ec2c(int type, u32 size, u32 addr) {
-    const Unk_02050478 *rec;
-    u32 used = 0;
     int i;
-    int best;
-    u32 n;
-    u32 h;
+    const Unk_02050478 *rec;
     u32 bank;
+    u32 n;
+    s32 used = 0;
+    u32 h;
+    int cur;
+    u32 best;
     u32 kb;
     s32 bestRem;
     u32 bestN;
     u32 s0;
-    u32 s1;
-    u32 s2;
-    u32 s3;
-    u32 s4;
-    u32 k;
     s32 rem[5];
+    u32 s1;
+    int s2;
+    int s3;
+    u32 k;
     u32 list[5];
+    u32 s4;
     u32 addrs[5];
 
     if (addr == -1) {
@@ -2029,8 +2030,8 @@ void func_0201ec2c(int type, u32 size, u32 addr) {
     } else {
         addrs[0] = addr;
         rem[0] = size;
-        n = 0;
         list[0] = 0xff;
+        n = 0;
         k = 0;
         bestRem = 0x7fffffff;
         bestN = 0;
@@ -2040,7 +2041,8 @@ void func_0201ec2c(int type, u32 size, u32 addr) {
                     u32 bit = 1 << rec->mUnk_0;
 
                     if (!(used & bit) && rec->mUnk_4 == addrs[n]) {
-                        rem[n + 1] = rem[n] - rec->mUnk_1;
+                        cur = rem[n];
+                        rem[n + 1] = cur - rec->mUnk_1;
                         addrs[n + 1] = rec->mUnk_4 + (rec->mUnk_1 << 10);
                         list[n + 1] = k;
                         n++;
