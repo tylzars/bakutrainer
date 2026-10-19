@@ -940,6 +940,9 @@ void func_02010d4c(SaveRecord *rec) {
 #define ENTRY_BLOCK 0x236
 #define ENTRY_STRIDE 0x25
 
+// The grade (data_020b10d4.mUnk_11, 0x6d bytes on from data_020b1078) is written through data_020b1078's address,
+// past that object's end: an out-of-bounds store is ordered after every earlier store, which gives the instruction
+// order here.
 void func_02010d64(void) {
     func_0201c41c();
     func_0201eb20();
@@ -950,8 +953,8 @@ void func_02010d64(void) {
     func_02020854(1);
     func_020104c0(0, 0x80);
     data_020b1078.mUnk_00 = 0;
-    data_020b10d4.mUnk_11 = 1;
     data_020b1078.mUnk_04 = 0;
+    ((u8 *) &data_020b1078)[0x6d] = 1;
     data_020b1078.mUnk_08 = 0;
 }
 
@@ -960,7 +963,6 @@ void func_02010dc8(void) {
     int i;
     int rows;
     int last;
-    int y;
     int k;
     int j;
     int n;
@@ -991,12 +993,12 @@ void func_02010dc8(void) {
             data_020b10d4.mUnk_11 = grade;
         }
         func_0200b898(0x10, 0x10, "grade: %i", data_020b10d4.mUnk_11);
-        for (i = 0; i < 5; i++) {
-            func_0200b898(0x10, 0x1a + i * 10, "%s", func_0200f9f0(func_02014518(data_020b10d4.mUnk_1c[i], 3) + 0x8a));
+        for (k = 0; k < 5; k++) {
+            func_0200b898(0x10, 0x1a + k * 10, "%s", func_0200f9f0(func_02014518(data_020b10d4.mUnk_1c[k], 3) + 0x8a));
         }
-        for (i = 0; i < 5; i++) {
-            func_0200b898(0x88, 0x1a + i * 10, "%i %i", func_02014518(data_020b10d4.mUnk_1c[i], 4),
-                          func_02014518(data_020b10d4.mUnk_1c[i], 5));
+        for (k = 0; k < 5; k++) {
+            func_0200b898(0x88, 0x1a + k * 10, "%i %i", func_02014518(data_020b10d4.mUnk_1c[k], 4),
+                          func_02014518(data_020b10d4.mUnk_1c[k], 5));
         }
     } else {
         func_0200bc50(0xe9, 0x30, 0, 0, 0x8c, 0x200, 0xd7, "Save", 0, 2, 0, 0, 1, 0, 0, 0);
@@ -1019,7 +1021,6 @@ void func_02010dc8(void) {
         } else {
             start = 0;
         }
-        y = 0x1e + rows * 10;
         for (j = start; j < ENTRY_STRIDE; j++) {
             if (j != start) {
                 for (k = 0; k < data_020b1078.mUnk_04; k++) {
@@ -1033,20 +1034,20 @@ void func_02010dc8(void) {
             }
             n = data_020b1078.mUnk_04 * ENTRY_STRIDE + 2;
             if (func_02021e08(ENTRY_BLOCK, j + n) != 0) {
-                func_020215fc(0x14 + data_020b1078.mUnk_04 * 0x10, y,
-                              data_0201a6c6 + (j == data_020b1094[data_020b1078.mUnk_04] ? 2 : 1) * FONT_STRIDE,
+                func_020215fc(0x14 + data_020b1078.mUnk_04 * 0x10, 0x1e + rows * 10,
+                              j != data_020b1094[data_020b1078.mUnk_04] ? data_0201a6c6 + FONT_STRIDE
+                                                                        : data_0201a6c6 + 2 * FONT_STRIDE,
                               (const char *) func_02021e18(ENTRY_BLOCK, j + n), 0, 0xf0, 0xa, 2);
                 last = j;
-                y += 10;
                 rows++;
             }
         }
         if (data_020c18bc.mUnk_12 & 0x40) {
             if (data_020b1094[data_020b1078.mUnk_04] > start) {
                 do {
-                    data_020b1094[data_020b1078.mUnk_04]--;
-                    if (func_02021e08(ENTRY_BLOCK, data_020b1078.mUnk_04 * ENTRY_STRIDE + 2 +
-                                                       data_020b1094[data_020b1078.mUnk_04]) != 0) {
+                    s32 *p = &data_020b1094[data_020b1078.mUnk_04];
+                    (*p)--;
+                    if (func_02021e08(ENTRY_BLOCK, data_020b1078.mUnk_04 * ENTRY_STRIDE + 2 + *p) != 0) {
                         break;
                     }
                 } while (data_020b1094[data_020b1078.mUnk_04] > start);
@@ -1054,9 +1055,9 @@ void func_02010dc8(void) {
         } else if (data_020c18bc.mUnk_12 & 0x80) {
             if (data_020b1094[data_020b1078.mUnk_04] < last) {
                 do {
-                    data_020b1094[data_020b1078.mUnk_04]++;
-                    if (func_02021e08(ENTRY_BLOCK, data_020b1078.mUnk_04 * ENTRY_STRIDE + 2 +
-                                                       data_020b1094[data_020b1078.mUnk_04]) != 0) {
+                    s32 *p = &data_020b1094[data_020b1078.mUnk_04];
+                    (*p)++;
+                    if (func_02021e08(ENTRY_BLOCK, data_020b1078.mUnk_04 * ENTRY_STRIDE + 2 + *p) != 0) {
                         break;
                     }
                 } while (data_020b1094[data_020b1078.mUnk_04] < last);

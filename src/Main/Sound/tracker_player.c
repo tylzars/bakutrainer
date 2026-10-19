@@ -1456,28 +1456,26 @@ void func_02037cdc(TrackerChannel *c) {
 // Period with the vibrato offset from the channel's wave table added; steps the wave position.
 u16 func_02037d38(TrackerChannel *c) {
     u16 period = c->mUnk_04;
-    u8 pos;
 
     if (data_020c6b14.mUnk_174f & 1) {
         period += (c->mUnk_21 * c->mUnk_08[c->mUnk_1d]) >> 5;
     } else {
         period += (c->mUnk_21 * c->mUnk_08[c->mUnk_1d]) >> 7;
     }
-    pos = c->mUnk_1d + c->mUnk_20;
-    c->mUnk_1d = pos & 0x3f;
+    c->mUnk_1d += c->mUnk_20;
+    c->mUnk_1d &= 0x3f;
     return period;
 }
 
 // Volume with the tremolo offset added (capped at 64); steps the wave position.
 u8 func_02037dac(TrackerChannel *c) {
     u8 v = (u8) c->mUnk_24 + ((c->mUnk_23 * c->mUnk_0c[c->mUnk_1d]) >> 6);
-    u8 pos;
 
     if (v > 64) {
         v = 64;
     }
-    pos = c->mUnk_1d + c->mUnk_22;
-    c->mUnk_1d = pos & 0x3f;
+    c->mUnk_1d += c->mUnk_22;
+    c->mUnk_1d &= 0x3f;
     return v;
 }
 
