@@ -769,8 +769,6 @@ void func_0201c78c(void) {
 // removed from the queue instead.
 void func_0201c7b8(int flags) {
     int i;
-    u32 count;
-    u32 n;
     Unk_LoadEntry **list;
     Unk_LoadEntry *e;
     int j;
@@ -783,13 +781,15 @@ void func_0201c7b8(int flags) {
     u32 bits;
     int rest;
     u8 *dst;
-    u8 *src;
+    u32 lastDst;
     u32 part;
     u32 saved;
+    u32 count;
+    u8 *src;
     u8 *tmp;
     u32 hdr[4];
     u8 *tex;
-    u32 lastDst;
+    u32 n;
 
     busy = func_02035058();
     if (data_020c18bc.mUnk_480 == 0) {
@@ -866,18 +866,19 @@ void func_0201c7b8(int flags) {
     count = 0;
     for (i = 0; i < data_020c18bc.mUnk_480; i++) {
         u32 addr;
-        e = &data_020c18bc.mUnk_03c[i];
-        if (e->mUnk_08 == 0) {
+        if (data_020c18bc.mUnk_03c[i].mUnk_08 == 0) {
             continue;
         }
-        addr = e->mUnk_04;
+        addr = data_020c18bc.mUnk_03c[i].mUnk_04;
         if ((addr >> 28) == 11 || (addr >> 28) == 10 || (addr >= 0x06000000 && addr < 0x06400000)) {
             if ((flags & 2) && !busy) {
-                list[count++] = e;
+                list[count] = &data_020c18bc.mUnk_03c[i];
+                count++;
             }
         } else {
             if ((flags & 1) && !busy) {
-                list[count++] = e;
+                list[count] = &data_020c18bc.mUnk_03c[i];
+                count++;
             }
         }
     }
@@ -1164,8 +1165,10 @@ void func_0201c7b8(int flags) {
                 MI_DmaCopy32(3, src, (void *) e->mUnk_04, e->mUnk_08);
             }
             if (bits & 0x400) {
-                for (n = 0; n < data_020c18bc.mUnk_070.mUnk_2e; n++) {
-                    *data_020c18bc.mUnk_070.mUnk_00[n] = data_020c18bc.mUnk_070.mUnk_28[n];
+                u32 k;
+
+                for (k = 0; k < data_020c18bc.mUnk_070.mUnk_2e; k++) {
+                    *data_020c18bc.mUnk_070.mUnk_00[k] = data_020c18bc.mUnk_070.mUnk_28[k];
                 }
                 bits &= ~0x400;
             } else if (bits & 0x800) {
@@ -1410,7 +1413,7 @@ void func_0201dde0(int id, int target) {
     func_0201ddec(id, target, 0, 0);
 }
 
-void func_0201ddec(int id, int target, int x, int flags) {
+void func_0201ddec(int id, int target, int x, u16 flags) {
     int found;
     void *buf;
 
@@ -1432,45 +1435,47 @@ void func_0201ddec(int id, int target, int x, int flags) {
     }
 }
 
-void func_0201de48(u8 *data, int target, int x, int flags) {
+void func_0201de48(u8 *data, int target, int x, u16 flags) {
     void *tmp = NULL;
     void *rgb = NULL;
     u32 w;
     u32 h;
-    u32 h2;
     u32 magic;
-    u32 mode;
-    u32 size;
     u32 count;
     u32 n;
     u32 i;
     u32 j;
     int indexed = 0;
+    u16 *top;
+    u32 mode;
     u8 *pix;
+    u32 h2;
+    u32 size;
     u8 *src;
     u8 *pal;
     u16 *out;
-    u16 *top;
     u16 *bottom;
     u16 color;
 
     magic = *(u32 *) data;
     if (magic == 0xe0ffd8ff) {
+        u32 height;
+
         func_0201e518(data, &w, &h);
         data_020c18bc.mUnk_2cc = w;
         data_020c18bc.mUnk_2ce = h;
         data_020c18bc.mUnk_2d0 = 0x8000;
-        h2 = h;
+        height = h;
         if ((target & 3) == 3 && h >= 0x180) {
-            h2 >>= 1;
+            height >>= 1;
         }
         if (x == 0) {
             if (!(flags & 2)) {
-                func_0201f450(target, 1, w, h2);
+                func_0201f450(target, 1, w, height);
             }
         } else {
             if (!(flags & 2)) {
-                func_0201f450(target, 0, w, h2);
+                func_0201f450(target, 0, w, height);
             }
             tmp = func_0201eee4(x, target);
         }
@@ -1511,7 +1516,7 @@ void func_0201de48(u8 *data, int target, int x, int flags) {
                 }
                 pix = func_0201f5bc(data + 0x20, count, 0, target);
                 DC_StoreRange(pix, w * h + 0x320);
-                size = h2 * w;
+                size = w * h2;
             } else {
                 pal = data + 0x20;
                 src = pal + count * 3;
@@ -1520,14 +1525,16 @@ void func_0201de48(u8 *data, int target, int x, int flags) {
                     func_0201f450(target, 1, w, h2);
                 }
                 DC_StoreRange(data, w * h + 0x320);
-                size = h2 * w * 2;
-                rgb = func_0201c430(h * w * 2);
+                size = w * h2 * 2;
+                rgb = func_0201c430(w * h * 2);
                 out = rgb;
-                for (n = h * w; n != 0; n--) {
-                    u8 *c = pal + *src++ * 3;
+                for (n = w * h; n != 0; n--) {
+                    u8 *c;
+                    u16 *p = out++;
 
+                    c = pal + *src++ * 3;
                     color = (c[0] >> 3) | ((c[1] >> 3) << 5) | ((c[2] >> 3) << 10);
-                    *out++ = color + 0x8000;
+                    *p = color + 0x8000;
                 }
                 pix = rgb;
             }
@@ -1542,12 +1549,12 @@ void func_0201de48(u8 *data, int target, int x, int flags) {
             pix = pal;
             if (indexed == 0) {
                 out = (u16 *) pal;
-                for (n = h * w; n != 0; n--) {
-                    *out++ = ((pal[0] >> 3) | ((pal[1] >> 3) << 5) | ((pal[2] >> 3) << 10)) + 0x8000;
+                for (i = w * h; i != 0; i--) {
+                    *out++ = (u16)((pal[0] >> 3) | ((pal[1] >> 3) << 5) | ((pal[2] >> 3) << 10)) + 0x8000;
                     pal += 3;
                 }
             } else {
-                bottom = top + (h - 1) * w;
+                bottom = top + w * (h - 1);
                 pix = (u8 *) top;
                 for (i = 0; i < h / 2; i++) {
                     for (j = 0; j < w; j++) {
@@ -1561,7 +1568,7 @@ void func_0201de48(u8 *data, int target, int x, int flags) {
                     bottom -= w;
                 }
             }
-            size = h2 * w * 2;
+            size = w * h2 * 2;
         }
         switch (mode) {
             case 1:
@@ -1836,10 +1843,10 @@ void func_0201e56c(u8 *data, int target, void *lut) {
                 q += 2;
                 total -= 2;
                 while (total != 0) {
-                    s16 *table = quant[*q++];
-
+                    t = *q;
+                    q++;
                     for (i = 0; i < 64; i++) {
-                        table[data_020502b8[i]] = *q++;
+                        quant[t][data_020502b8[i]] = *q++;
                     }
                     total -= 65;
                 }
@@ -1850,15 +1857,15 @@ void func_0201e56c(u8 *data, int target, void *lut) {
                 blk += 2;
                 x -= 2;
                 while (x != 0) {
-                    c = *blk++;
+                    si = *blk++;
                     total = 0;
-                    t = (c & 1) + (c >> 3);
+                    t = (si & 1) + (si >> 3);
                     for (l = 1; l <= 16; l++) {
                         bits[t][l] = *blk++;
                         total += bits[t][l];
                     }
-                    for (i = 0; i < total; i++) {
-                        huffval[t][i] = *blk++;
+                    for (n = 0; n < total; n++) {
+                        huffval[t][n] = *blk++;
                     }
                     x -= total + 17;
                     k = 0;
@@ -1925,12 +1932,13 @@ void func_0201e56c(u8 *data, int target, void *lut) {
     dc[0] = dc[1] = dc[2] = 0;
     for (y = 0; y < height; y += 16) {
         for (x = 0; x < width; x += 16) {
-            blk = mcu;
+            u8 *dst = mcu;
+
             for (c = 0; c < ncomp; c++) {
                 for (n = 0; n < data_020502a4[c]; n++) {
                     func_02028980(block, c, maxcode[0], valptr[0], mincode[0], huffval[0], dc, data_020502b8);
-                    func_0201e19c(block, quant[data_020502a8[c]], blk, buf + 0x180);
-                    blk += 64;
+                    func_0201e19c(block, quant[data_020502a8[c]], dst, buf + 0x180);
+                    dst += 64;
                 }
             }
             func_02028b8c(mcu, out + x, buf + 0x100);

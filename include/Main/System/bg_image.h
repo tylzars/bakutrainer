@@ -15,8 +15,8 @@ void func_0201dbf4(u16 *src, u32 dst, u32 width, u32 stride, u8 *lut);
 void func_0201dcc0(u16 *src, u32 layers, u32 row, u32 width, u32 total, u8 *lut);
 void func_0201dd74(u8 *src, u32 dst, u32 width, u32 rows);
 void func_0201dde0(int id, int target);
-void func_0201ddec(int id, int target, int x, int flags);
-void func_0201de48(u8 *data, int target, int x, int flags);
+void func_0201ddec(int id, int target, int x, u16 flags);
+void func_0201de48(u8 *data, int target, int x, u16 flags);
 
 // JPEG decoding: the marker scan, the inverse DCT of one block and the decoder of one image.
 u8 *func_0201e178(void);
