@@ -167,13 +167,50 @@ int func_0203cf5c(VecFx32 *pos, fx32 *w) {
 }
 
 // Writes 32 groups of four zero words (128 words in all) to the same write-only FIFO port.
-void GXi_NopClearFifo128_(volatile void *fifo) {
-    typedef struct {
-        u32 w[4];
-    } Words4;
-    Words4 zero = {0, 0, 0, 0};
-    int i;
-    for (i = 0; i < 32; i++) {
-        *(volatile Words4 *) fifo = zero;
-    }
+// Not compiled: zeroes r1, r2, r3 and ip and stores them with 32 `stmia r0, {r1, r2, r3, ip}`. Four registers
+// holding 0 at once need four separate zero values, but the compiler loads a constant at each use and merges equal
+// constants of a straight-line block into one register before colouring (after colouring, a repeated constant
+// becomes a register copy), so every store gets the same register; combining stores into one stm needs four
+// different registers, and struct copies move data through r0-r3 only. Without optimisation nothing is merged, but
+// register variables then live in r4-r7 and stores are not combined.
+// clang-format off
+asm void GXi_NopClearFifo128_(volatile void *fifo) {
+    mov r1, #0
+    mov r2, #0
+    mov r3, #0
+    mov ip, #0
+    stmia r0, {r1, r2, r3, ip}
+    stmia r0, {r1, r2, r3, ip}
+    stmia r0, {r1, r2, r3, ip}
+    stmia r0, {r1, r2, r3, ip}
+    stmia r0, {r1, r2, r3, ip}
+    stmia r0, {r1, r2, r3, ip}
+    stmia r0, {r1, r2, r3, ip}
+    stmia r0, {r1, r2, r3, ip}
+    stmia r0, {r1, r2, r3, ip}
+    stmia r0, {r1, r2, r3, ip}
+    stmia r0, {r1, r2, r3, ip}
+    stmia r0, {r1, r2, r3, ip}
+    stmia r0, {r1, r2, r3, ip}
+    stmia r0, {r1, r2, r3, ip}
+    stmia r0, {r1, r2, r3, ip}
+    stmia r0, {r1, r2, r3, ip}
+    stmia r0, {r1, r2, r3, ip}
+    stmia r0, {r1, r2, r3, ip}
+    stmia r0, {r1, r2, r3, ip}
+    stmia r0, {r1, r2, r3, ip}
+    stmia r0, {r1, r2, r3, ip}
+    stmia r0, {r1, r2, r3, ip}
+    stmia r0, {r1, r2, r3, ip}
+    stmia r0, {r1, r2, r3, ip}
+    stmia r0, {r1, r2, r3, ip}
+    stmia r0, {r1, r2, r3, ip}
+    stmia r0, {r1, r2, r3, ip}
+    stmia r0, {r1, r2, r3, ip}
+    stmia r0, {r1, r2, r3, ip}
+    stmia r0, {r1, r2, r3, ip}
+    stmia r0, {r1, r2, r3, ip}
+    stmia r0, {r1, r2, r3, ip}
+    bx lr
 }
+// clang-format on

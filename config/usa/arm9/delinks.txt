@@ -54,6 +54,7 @@ libs/nds/src/gx/g3c.c:
     .text       start:0x0203ca80 end:0x0203cad4
 
 libs/nds/src/gx/g3x.c:
+    complete
     .text       start:0x0203cad4 end:0x0203d030
 
 // provisional: file name and its end
@@ -98,6 +99,7 @@ libs/nds/src/os/os_cache.c:
 
 // provisional: split from os_arena.c
 libs/nds/src/os/os_init.c:
+    complete
     .text       start:0x0203e594 end:0x0203e5fc
 
 // provisional: split from os_init.c
@@ -234,6 +236,7 @@ libs/nds/src/tp/tp.c:
     .text       start:0x02042914 end:0x020431ec
 
 libs/nds/src/mic/mic.c:
+    complete
     .text       start:0x020431ec end:0x020436e0
 
 // provisional: func_02044474 at the end may belong to rtc.c
