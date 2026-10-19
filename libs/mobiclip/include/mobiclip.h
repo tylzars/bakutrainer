@@ -190,8 +190,6 @@ int func_020583d4(Ctx *ctx);
 void func_0205e970(void *args);
 int func_02052468(Chan *ch);
 void func_02052e28(Chan *ch);
-int func_02052c78(Chan *ch);
-void func_02053834(Chan *ch);
 
 #ifdef __cplusplus
 }

@@ -3,20 +3,15 @@
 #include <nitro/os.h>
 #include <nitro/init.h>
 
-#define CARD_ROMCNT (*(vu32 *) 0x40001a4)
 #define CARD_ROMCNT_BUSY 0x80000000
 #define CARD_ROMCNT_DATA_READY 0x800000
 #define CARD_ROMDATA_ADDR 0x4100010
-#define CARD_ROMDATA (*(vu32 *) CARD_ROMDATA_ADDR)
 
-// 32 bytes holding the offset added to every ROM read address (CARD_ROM_BASE); the request follows it.
+// 32 bytes whose first word is the offset added to every ROM read address; the request follows them.
 u8 data_020ccea0[0x20];
 // Bytes of the ROM read request, 32-byte aligned (the ROM read code keeps its address in a register across calls).
 u8 data_020ccec0[sizeof(CardRomReq)] __attribute__((aligned(32)));
 CardHeader *data_020644c8 = (CardHeader *) 0x27ffe00;
-
-#define CARD_ROM_BASE (*(u32 *) data_020ccea0)
-#define CARD_ROM_REQ ((CardRomReq *) data_020ccec0)
 
 int func_0204574c(CardRomReq *r) {
     CardCommon *c = (CardCommon *) data_020cc880;
@@ -37,7 +32,7 @@ int func_0204574c(CardRomReq *r) {
 
 void func_020457d8(u32 a, u32 b) {
     volatile u8 *p;
-    while (CARD_ROMCNT & CARD_ROMCNT_BUSY) {
+    while (*(vu32 *) 0x40001a4 & CARD_ROMCNT_BUSY) {
     }
     p = (volatile u8 *) 0x40001a1;
     p[0] = 0xc0;
@@ -53,10 +48,10 @@ void func_020457d8(u32 a, u32 b) {
 
 void func_02045838(void) {
     CardCommon *c = (CardCommon *) data_020cc880;
-    CardRomReq *r = CARD_ROM_REQ;
+    CardRomReq *r = (CardRomReq *) data_020ccec0;
     func_02040040(c->dma, (const void *) CARD_ROMDATA_ADDR, (void *) c->dst, 0x200);
     func_020457d8((c->src >> 8) | 0xb7000000, c->src << 24);
-    CARD_ROMCNT = r->ctrl;
+    *(vu32 *) 0x40001a4 = r->ctrl;
 }
 
 void func_0204588c(void) {
@@ -174,12 +169,12 @@ void func_02045ae8(CardRomReq *r) {
         }
         func_020457d8((page >> 8) | 0xb7000000, page << 24);
         i = 0;
-        CARD_ROMCNT = r->ctrl;
+        *(vu32 *) 0x40001a4 = r->ctrl;
         n = 0;
         do {
-            st = CARD_ROMCNT;
+            st = *(vu32 *) 0x40001a4;
             if (st & CARD_ROMCNT_DATA_READY) {
-                u32 w = CARD_ROMDATA;
+                u32 w = *(vu32 *) CARD_ROMDATA_ADDR;
                 if (n < 0x200) {
                     dst[i] = w;
                     n += 4;
@@ -209,15 +204,15 @@ u32 func_02045bd8(void) {
     u32 ctrl;
     func_020457d8(0xb8000000, 0);
     ctrl = (data_020644c8->romctrl & ~0x7000000) | 0xa7000000;
-    CARD_ROMCNT = ctrl & ~0x1fff;
-    while (!(CARD_ROMCNT & CARD_ROMCNT_DATA_READY)) {
+    *(vu32 *) 0x40001a4 = ctrl & ~0x1fff;
+    while (!(*(vu32 *) 0x40001a4 & CARD_ROMCNT_DATA_READY)) {
     }
-    return CARD_ROMDATA;
+    return *(vu32 *) CARD_ROMDATA_ADDR;
 }
 
 void func_02045c34(CardCommon *unused) {
     CardCommon *c;
-    CardRomReq *r = CARD_ROM_REQ;
+    CardRomReq *r = (CardRomReq *) data_020ccec0;
     void (*fn)(void *);
     void *arg;
     u32 e;
@@ -243,7 +238,7 @@ void func_02045c34(CardCommon *unused) {
 
 #pragma optimize_for_size on
 void func_02045ccc(u32 dma, u32 src, void *dst, u32 len, void (*cb)(void *), void *cbarg, int async) {
-    CardRomReq *r = CARD_ROM_REQ;
+    CardRomReq *r = (CardRomReq *) data_020ccec0;
     CardCommon *c = (CardCommon *) data_020cc880;
     u32 e;
     func_02044e8c();
@@ -257,7 +252,7 @@ void func_02045ccc(u32 dma, u32 src, void *dst, u32 len, void (*cb)(void *), voi
     OS_RestoreInterrupts(e);
     c->dma = dma;
     c->dst = (u32) dst;
-    c->src = src + CARD_ROM_BASE;
+    c->src = src + *(u32 *) data_020ccea0;
     c->len = len;
     if (dma <= 3) {
         MI_StopDma(dma);
@@ -291,7 +286,7 @@ void func_02045dc4(void) {
     c->dma = -1;
     c->callback = NULL;
     c->cbArg = NULL;
-    CARD_ROM_BASE = 0;
+    *(u32 *) data_020ccea0 = 0;
     func_02044d6c();
     ((CardRomReq *) (data_020ccea0 + sizeof data_020ccea0))->func = func_02045e34();
     func_02046018();

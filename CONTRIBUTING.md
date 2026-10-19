@@ -44,7 +44,7 @@ naming them right once.
 - Every name must be traceable to this repository: the code's behaviour, the game's strings, the SDK headers it
   already has.
 - Library functions keep their library's own public API names (NitroSDK `OS_*`, `MI_*`, ...); those names come from
-  the SDK's interface, not from this ROM, so they are only given where the function's identity is certain.
+  the SDK interface, not from this ROM, so they are only given where the function's identity is certain.
 - Anything not yet understood keeps an address-based name: functions `func_<addr>` / `func_ovNNN_<addr>`, data
   `data_<addr>`, members `mUnk_<offset>`, virtual slots `vfunc_<offset>`.
 - Annotate struct members and vtables with their offsets: `/* 2c */ u8 mState;`.

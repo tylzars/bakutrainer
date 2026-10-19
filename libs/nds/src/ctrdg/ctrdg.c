@@ -4,8 +4,6 @@
 #include <nitro/svc.h>
 #include <nitro/ctrdg.h>
 
-extern u32 data_020cdbe4;
-extern CTRDGState data_020cdbe8;
 extern vu16 data_04000300;
 
 // The cartridge header as read into the buffer.

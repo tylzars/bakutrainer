@@ -42,6 +42,9 @@ typedef struct CTRDGState {
     /* 02 */ u16 id;
 } CTRDGState;
 
+// ctrdg_init.c
+extern CTRDGState data_020cdbe8;
+
 // Cartridge information block in main memory, filled from the cartridge header.
 typedef struct {
     /* 00 */ u16 mUnk_00;

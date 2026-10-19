@@ -740,7 +740,7 @@ src/Main/Sound/tracker_player.c:
 
 // provisional: the wireless helper state machine on data_020c8380 and the WM buffers (data_020c83e0..data_020c95e0)
 // with its state-name tables and debug strings, then (Thumb) the link indicator and shutdown on data_020c9e00, up to
-// the SDK at 0x02039dd8; its rodata 0x02052444-0x02052458 sits in the code area and is not delinked with it
+// the SDK at 0x02039dd8
 src/Main/Link/wireless_helper.c:
     .text       start:0x020386a4 end:0x02039dd8
     .rodata     start:0x02052444 end:0x02052458
