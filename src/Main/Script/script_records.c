@@ -296,7 +296,7 @@ int func_02029298(u8 **text) {
                 u8 d;
                 u8 *p;
                 k++;
-                p = start + k;
+                p = start + (int) k;
                 d = func_0202903c(*p);
                 if (d == 0 || d == ' ') {
                     *text = p;

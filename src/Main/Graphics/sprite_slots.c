@@ -294,11 +294,11 @@ void func_0200dc08(int id, u16 *outId, u16 *outVal, u16 *outOpt1, u16 *outZ1, u1
             break;
         case 0xd8f:
             *outVal = 0xd90;
+            zero = 0;
             *outZ1 = zero;
             *outZ2 = zero;
             break;
         default:
-            zero = 0;
             func_02027fc2("Map inconnue\002");
             break;
     }

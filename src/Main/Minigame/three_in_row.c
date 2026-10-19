@@ -30,7 +30,6 @@ int func_02015340(u8 *boards, ShapeRec *recs) {
     u32 r;
     u8 *board;
     const u8 *t;
-    u8 *cur;
 
     memcpy(boards, data_020500e4, GRID_BYTES);
     memcpy(boards + GRID_BYTES, boards, (GRID_PIECES - 1) * GRID_BYTES);
@@ -42,7 +41,6 @@ int func_02015340(u8 *boards, ShapeRec *recs) {
         data_020b13c8[j] = sum;
     }
     placed = 0;
-    cur = boards;
     do {
         r = func_0201fd84(0, SHAPE_COUNT - 1);
         t = data_020500f8[r];
@@ -57,7 +55,8 @@ int func_02015340(u8 *boards, ShapeRec *recs) {
                     recs[placed].mUnk_02 = y * 32 + 0x20;
                     recs[placed].mUnk_04 = r;
                     recs[placed].mUnk_06 = data_020b13c8[r];
-                    memcpy(boards + (placed * GRID_BYTES + GRID_BYTES), cur, GRID_BYTES);
+                    memcpy(boards + (placed * GRID_BYTES + GRID_BYTES), ((u8(*)[GRID_BYTES]) boards)[placed],
+                           GRID_BYTES);
                     for (k = 0; k < SHAPE_CELLS; k++) {
                         if (t[k] != 0) {
                             board[data_020500d8[k] + GRID_BYTES] = (placed << 4) + CELL_FREE;
@@ -74,7 +73,6 @@ int func_02015340(u8 *boards, ShapeRec *recs) {
                         }
                     }
                     placed++;
-                    cur += GRID_BYTES;
                 reject:
                     y = PIECE_GONE;
                     x = PIECE_GONE;
