@@ -103,10 +103,10 @@ int func_02021624(int x, int y, const FontRange *const *fonts, int fontIndex, co
     int odd;
     u32 breakW;
     int lineX;
-    u32 i;
+    unsigned long i;
     int spaces;
     int startY;
-    int lineNo;
+    u32 lineNo;
     int dirMode;
     int glyphHigh;
     const FontRange *font;
@@ -206,7 +206,7 @@ int func_02021624(int x, int y, const FontRange *const *fonts, int fontIndex, co
         if (*q == 0) {
             break;
         }
-        if (*q == data_020c18bc.mUnk_311[0]) {
+        if (data_020c18bc.mUnk_311[0] == *q) {
             if (q[1] >= '0' && q[1] <= '9') {
                 k = 1;
             }
@@ -266,7 +266,6 @@ int func_02021624(int x, int y, const FontRange *const *fonts, int fontIndex, co
         maxW = 0x1000;
     }
     limit = flags & TEXT_LIMIT;
-    k = 0;
     while (chars[k] != 0 && maxW > result) {
         if (func_020215f0(chars[k]) > 0x20) {
             func_0202d828(glyphs[k], 0, rect);
@@ -297,18 +296,17 @@ int func_02021624(int x, int y, const FontRange *const *fonts, int fontIndex, co
         alt = flags & TEXT_ALT_DRAW;
         do {
             u8 nl;
-            int cnt;
+            u32 cnt;
             int brk;
             lineW = 0;
             breakW = 0;
             cnt = 0;
             nl = data_020c18bc.mUnk_310;
-            n = i;
-            while ((c = chars[n]) > 1 && lineW < width) {
+            while ((c = chars[i + cnt]) > 1 && lineW < width) {
                 brk = 0;
                 if (c == 0x20) {
                     if (punct) {
-                        u32 next = chars[n + 1];
+                        u32 next = chars[i + cnt + 1];
                         if (next != '?' && next != '!' && next != ':' && next != ';') {
                             brk = 1;
                         }
@@ -319,13 +317,12 @@ int func_02021624(int x, int y, const FontRange *const *fonts, int fontIndex, co
                 if (nl == c) {
                     break;
                 }
-                if (brk == 1 || (cnt != 0 && chars[n - 1] == '-')) {
+                if (brk == 1 || (cnt != 0 && chars[i + cnt - 1] == '-')) {
                     breakW = lineW;
-                    lineW += widths[n];
+                    lineW += widths[i + cnt];
                 } else {
-                    lineW += widths[n];
+                    lineW += widths[i + cnt];
                 }
-                n++;
                 cnt++;
             }
             if (lineW < width) {
@@ -352,7 +349,7 @@ int func_02021624(int x, int y, const FontRange *const *fonts, int fontIndex, co
                 if (chars[i] == 0) {
                     break;
                 }
-                if (func_020215f0(chars[i]) != 0x20 && nl != chars[i] && !nodraw) {
+                if (func_020215f0(chars[i]) != 0x20 && data_020c18bc.mUnk_310 != chars[i] && !nodraw) {
                     if (!(window && (lineNo < data_020c18bc.mUnk_313 ||
                                      lineNo >= data_020c18bc.mUnk_313 + data_020c18bc.mUnk_314))) {
                         if (dirMode != 0) {
@@ -377,7 +374,7 @@ int func_02021624(int x, int y, const FontRange *const *fonts, int fontIndex, co
                                 int ns = -*sinp;
                                 attr = data_020c18bc.mUnk_30a[1];
                                 px = x + ((dx * cs - dy * ns) >> 12);
-                                py = y + ((ns * dx + dy * cs) >> 12);
+                                py = y + ((dx * ns + dy * cs) >> 12);
                                 if (hilite) {
                                     attr = 0x1f;
                                 }

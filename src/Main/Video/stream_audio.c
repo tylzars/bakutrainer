@@ -100,8 +100,8 @@ void func_0202f638(const char *path, int b) {
         {
             OSTick tick = OS_GetTick();
             u32 d = func_02039f28(data_020c661c.mPlayer);
-            u64 period = 0xf4240000000ULL / d;
-            period = (period * 0x82ea >> 6) / 1000;
+            u64 step = 0xf4240000000ULL / d;
+            u32 period = (step * 0x82ea >> 6) / 1000;
             OS_SetPeriodicAlarm(&data_020c661c.mAlarm, tick + 5, period, func_0202f614, 0);
         }
     }
