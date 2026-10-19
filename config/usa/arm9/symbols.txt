@@ -1860,9 +1860,10 @@ data_02050194 kind:data(byte[48]) addr:0x02050194
 data_020501c4 kind:data(byte[48]) addr:0x020501c4
 data_020501f4 kind:data(any) addr:0x020501f4
 data_02050200 kind:data(byte[8]) addr:0x02050200
+data_02050208 kind:data(byte[8]) addr:0x02050208
 data_02050210 kind:data(byte[16]) addr:0x02050210
 data_02050220 kind:data(word[9]) addr:0x02050220
-@315 kind:data(word[11]) addr:0x02050244 local
+data_02050244 kind:data(word[11]) addr:0x02050244
 data_02050270 kind:data(word[13]) addr:0x02050270
 data_020502a4 kind:data(byte[4]) addr:0x020502a4
 data_020502a8 kind:data(byte[4]) addr:0x020502a8

@@ -1,3 +1,4 @@
+// Side header of system_init.c: its backup memory reads and writes.
 #pragma once
 
 #include "types.h"

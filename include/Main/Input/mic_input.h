@@ -1,3 +1,4 @@
+// Side header of system_init.c: its microphone capture and loudness analysis.
 #pragma once
 
 #include "types.h"
@@ -25,8 +26,6 @@ u32 func_02021380(u32 index);
 void func_02021390(void);
 int func_020213e8(u32 a);
 void func_02021458(void);
-
-extern const u16 data_02050210[8];
 
 #ifdef __cplusplus
 }

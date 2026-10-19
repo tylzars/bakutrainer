@@ -1,3 +1,4 @@
+// Side header of system_init.c: its touch buttons and touch trail.
 #pragma once
 
 #include "types.h"

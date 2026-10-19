@@ -1,42 +1,42 @@
 #include <nitro/os.h>
 #include <nitro/fs.h>
+#include <nitro/card.h>
 #include <nitro/gx.h>
 #include <nitro/mi.h>
+#include <nitro/mic.h>
 #include <nitro/pm.h>
 #include <nitro/rtc.h>
 #include <nitro/snd.h>
 #include <nitro/tp.h>
-#include <stdio.h>
 #include <Main/Input/touch_buttons.h>
+#include <Main/Input/mic_input.h>
 #include <Main/System/random_angle.h>
 #include <Main/System/game_math.h>
-#include <Main/Unknown/game_util.h>
-#include <Main/System/prompt_screen.h>
-#include <Main/Scene/stage_camera.h>
-#include <Main/Scene/stage_info_panel.h>
-#include <Main/System/state_flow.h>
 #include <nitro/fx.h>
 #include <nitro/wm.h>
 #include <Main/Unknown/arm_system.h>
 #include <Main/clib.h>
 #include <nitro/math.h>
 #include <Main/Save/save_blocks.h>
+#include <Main/Save/backup_access.h>
 #include <Main/System/bg_image.h>
 #include <Main/System/screen_fade.h>
 #include <Main/System/file_stream.h>
 #include <Main/System/system_init.h>
 #include <Main/Map/map_entries.h>
 #include <Main/Graphics/model.h>
+#include <Main/Graphics/text_draw.h>
 #include <Main/System/engine_asm.h>
 #include <Main/Graphics/texture_blocks.h>
 #include <Main/Sound/wave_player.h>
 #include <Main/Video/stream_audio.h>
 #include <Main/System/file_loader.h>
+#include <Main/System/align_util.h>
 #include <Main/Sound/tracker_player.h>
 #include <Main/Link/comm_link.h>
 #include <Main/Link/wireless_helper.h>
 
-// JPEG reader state and the start-up code's arena start (defined at the end of this file).
+// JPEG reader state and the start-up code's arena start (defined below, with the JPEG tables).
 extern u8 data_020c1818;
 extern void *data_020c181c;
 extern u8 *data_020c1820;
@@ -64,6 +64,51 @@ extern PMCallbackInfo data_020c1828;
 #define LID_CLOSED 0x8000
 #define DISPCNT_FORCED_BLANK 0x80
 #define DISPCNT_WINDOWS 0x6000
+#define POWCNT1_SWAP_LCDS 0x8000
+#define MATH_BUSY 0x8000
+
+// Upper end of the range func_0201fb24 and func_0201fb5c move a value in.
+#define LEVEL_FULL 0x4000
+
+// Half and full turn of an angle.
+#define ANGLE_HALF 0x8000
+#define ANGLE_FULL 0x10000
+
+// Store kinds accepted by func_0202002c: blocks of 0x200 bytes and blocks of 0x2000 bytes.
+#define SAVE_STORE_SMALL 0x901
+#define SAVE_STORE_LARGE 0xd01
+#define SMALL_BLOCK_SIZE 0x200
+#define LARGE_BLOCK_SIZE 0x2000
+#define CRC_POLY 0xa001
+
+// Results of func_02020140.
+#define BLOCK_CRC_OK 1
+#define BLOCK_ID_OK 2
+#define BLOCK_INTACT 3
+
+// Marks of a field in the ordering list built by func_02020354.
+#define ORDER_END (-1)
+#define ORDER_USED (-2)
+
+#define SYSTEM_BACKUP_READY 0x4000
+
+#define TOUCH_BUTTON_COUNT 0x80
+// Flag bits of a button id: a polygon hit area, and "insert before the existing buttons".
+#define TOUCH_SHAPE 0x8000
+#define TOUCH_ADD_FRONT 0x10000
+#define TOUCH_NONE 0xffff
+#define TOUCH_DOWN 0x40000000
+#define TOUCH_PRESSED 0x80000000
+#define TOUCH_RELEASED 0x20000000
+#define TOUCH_REPEAT 0x10000000
+#define TOUCH_QUICK 0x08000000
+#define TOUCH_QUICK_FRAMES 0xe
+#define SYSTEM_TOUCH_LOCK 0x80000000
+#define SYSTEM_TOUCH_QUIET 0x04000000
+
+#define SAMPLE_SHIFT 12
+#define POWER_SHIFT 22
+#define MAX_SHIFT 9
 
 void func_0201b7e0(u32 a) {
     func_0201b7ec(a, 0, 0);
@@ -1259,6 +1304,10 @@ u32 func_0201db58(int layer) {
     return 0x100;
 }
 
+// Width and height of a bitmap background for each screen size (control register bits 14-15).
+const u16 data_02050200[4] = {0x80, 0x100, 0x200, 0x200};
+const u16 data_02050208[4] = {0x80, 0x100, 0x100, 0x200};
+
 int func_0201db94(int layer) {
     if (layer != 1 && layer != 2) {
         OS_Terminate();
@@ -1535,12 +1584,10 @@ void func_0201de48(u8 *data, int target, int x, int flags) {
 
 // JPEG reader state (the asm block decoder func_02028980 uses it too): the count of buffered bits, the read
 // pointer (just past the marker of the current segment) and the bit buffer; data_020c181c is the arena start and
-// data_020c1828 the sleep callback node the start-up code keeps. The compiler sorts the file's objects by size and
-// orders equal sizes by the whole list: this definition order gives the original .bss layout 1818, 181c, 1820,
-// 1824, 1828, and defining data_020502a8 before data_020502a4 places data_020502a4 first.
+// data_020c1828 the sleep callback node the start-up code keeps.
 u8 data_020c1818;
-u8 *data_020c1820;
 void *data_020c181c;
+u8 *data_020c1820;
 u32 data_020c1824;
 PMCallbackInfo data_020c1828;
 
@@ -1555,10 +1602,15 @@ const u32 data_02050270[13] = {
     0x06600000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 };
 
-// Quantisation table and blocks per MCU of each colour component (4:2:0 Y, Cb, Cr).
+// Blocks per MCU and quantisation table of each colour component (4:2:0 Y, Cb, Cr).
+const u8 data_020502a4[4] = {4, 1, 1, 0};
+
 const u8 data_020502a8[4] = {0, 1, 1, 0};
 
-const u8 data_020502a4[4] = {4, 1, 1, 0};
+// Low and high bound of each of the four microphone bands. Defined here, after data_020502a8: the compiler sorts
+// the file's constant objects by size and orders equal sizes by the definition list, and this place gives the
+// original .rodata layout (with the microphone code or in address order, data_02050200 or data_020502a4 move).
+const u16 data_02050210[8] = {90, 150, 150, 200, 200, 300, 300, 400};
 
 const u8 data_020502ac[9] = {0, 8, 16, 24, 0, 8, 16, 0, 8};
 
@@ -1576,6 +1628,16 @@ const u16 data_020502f8[64] = {
     0x6254, 0x587e, 0x4b42, 0x3b21, 0x28ba, 0x14c3, 0x4000, 0x58c5, 0x539f, 0x4b42, 0x4000, 0x3249, 0x22a3,
     0x11a8, 0x3249, 0x45bf, 0x41b3, 0x3b21, 0x3249, 0x2782, 0x1b37, 0x0de0, 0x22a3, 0x300b, 0x2d41, 0x28ba,
     0x22a3, 0x1b37, 0x12bf, 0x098e, 0x11a8, 0x187e, 0x1712, 0x14c3, 0x11a8, 0x0de0, 0x098e, 0x04df,
+};
+
+// Hash steps of the graphics pools and the file cache: 1 and the odd primes up to 719.
+const u16 data_02050378[128] = {
+    1,   3,   5,   7,   11,  13,  17,  19,  23,  29,  31,  37,  41,  43,  47,  53,  59,  61,  67,  71,  73,  79,
+    83,  89,  97,  101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193,
+    197, 199, 211, 223, 227, 229, 233, 239, 241, 251, 257, 263, 269, 271, 277, 281, 283, 293, 307, 311, 313, 317,
+    331, 337, 347, 349, 353, 359, 367, 373, 379, 383, 389, 397, 401, 409, 419, 421, 431, 433, 439, 443, 449, 457,
+    461, 463, 467, 479, 487, 491, 499, 503, 509, 521, 523, 541, 547, 557, 563, 569, 571, 577, 587, 593, 599, 601,
+    607, 613, 617, 619, 631, 641, 643, 647, 653, 659, 661, 673, 677, 683, 691, 701, 709, 719,
 };
 
 // VRAM bank records, each bank's LCDC record first; a record with size 0 ends the table.
@@ -2207,15 +2269,15 @@ void *func_0201eee4(int id, int target) {
 
 void func_0201f450(int a, int b, u32 c, u32 d) {
     u32 cls = 0;
-    u32 size = 0x80;
+    u32 size = data_02050200[0];
     u32 rows;
-    if (c > 0x80 || d > 0x80) {
+    if (c > data_02050200[0] || d > data_02050208[0]) {
         cls = 1;
-        size = 0x100;
-        if (c > 0x100 || d > 0x100) {
+        size = data_02050200[1];
+        if (c > data_02050200[1] || d > data_02050208[1]) {
             cls = 2;
-            size = 0x200;
-            if (c > 0x200 || d > 0x100) {
+            size = data_02050200[2];
+            if (c > data_02050200[2] || d > data_02050208[2]) {
                 cls = 3;
             }
         }
@@ -2513,3 +2575,1168 @@ void func_0201fa5c(IndexNode *list, u32 index) {
     list[node->mPrev].mNext = index;
 }
 #pragma thumb on
+
+// Quadratic Bezier with the weights in 1/1024 steps: a at t = 0, b at t = 1024, c as the control point.
+int func_0201fab0(int a, int b, int c, int t) {
+    int u = 1024 - t;
+    int x = a * u + c * 2 * t;
+    int y = u * x + b * t * t;
+    return y / 1024 / 1024;
+}
+
+u32 func_0201fae4(int x, int y) {
+    return x * x + y * y;
+}
+
+u32 func_0201faf0(int x, int y) {
+    return func_0201fccc(func_0201fae4(x, y));
+}
+
+s64 func_0201fafc(int x, int y) {
+    return (s64) x * x + (s64) y * y;
+}
+
+// Moves *value toward 0 (speed < 0) or LEVEL_FULL (speed > 0) by 1/|speed| of the distance when it is farther than
+// 2 * |speed| away; otherwise it lands on the step directly.
+void func_0201fb24(u16 *value, int speed) {
+    int target;
+    int diff;
+    if (speed > 0) {
+        target = LEVEL_FULL;
+    } else {
+        target = 0;
+        speed = -speed;
+    }
+    diff = target - *value;
+    if (abs(diff) > speed * 2) {
+        diff = diff / speed;
+    }
+    *value += diff;
+}
+
+void func_0201fb5c(u16 *p, int add) {
+    if (*p < LEVEL_FULL) {
+        int sum = *p + add;
+        if (sum < LEVEL_FULL) {
+            *p = sum;
+        } else {
+            *p = LEVEL_FULL;
+        }
+    }
+}
+
+// Linear map of a from [0, b] to [c, d].
+int func_0201fb74(int a, int b, int c, int d) {
+    int r;
+    int bitsRange;
+    int bitsA;
+    if (a == 0) {
+        return c;
+    }
+    if (a == b) {
+        return d;
+    }
+    bitsRange = 32 - func_02028250(abs(d - c));
+    bitsA = 32 - func_02028250(a);
+    if (bitsRange + bitsA > 30) {
+        r = (s64) a * ((s64) d - c) / b;
+    } else {
+        r = func_0201fca8((d - c) * a, b);
+    }
+    return c + r;
+}
+
+// Linear map of v from [a, b] to [c, d].
+int func_0201fbe4(int v, int a, int b, int c, int d) {
+    if (a == b) {
+        OS_Terminate();
+    }
+    return c + func_0201fca8((v - a) * (d - c), b - a);
+}
+
+char *func_0201fc08(int value, char *buf) {
+    return func_0201fc14(value, buf, 0);
+}
+
+// Writes value in decimal to buf, with separator after the digit of each thousands place unless it is 0.
+char *func_0201fc14(int value, char *buf, char separator) {
+    int pow10[11] = {1000000000, 100000000, 10000000, 1000000, 100000, 10000, 1000, 100, 10, 1, 0};
+    char *start = buf;
+    int *p = pow10;
+    u32 v = value;
+    if (value < 0) {
+        *buf++ = '-';
+        v = -value;
+    }
+    while (*p > v) {
+        p++;
+    }
+    if (*p == 0) {
+        *start = '0';
+        return start + 1;
+    }
+    do {
+        int c = '0';
+        while (v >= *p) {
+            v -= *p;
+            c++;
+        }
+        *buf++ = c;
+        if (separator != 0 && (*p == 1000 || *p == 1000000 || *p == 1000000000)) {
+            *buf++ = separator;
+        }
+        p++;
+    } while (*p != 0);
+    return buf;
+}
+
+// a / b rounded to nearest, saturated to 0x0fffffff (negated when a < 0) when b is 0.
+int func_0201fca8(int a, int b) {
+    int r;
+    if (b == 0) {
+        return 0x0fffffff ^ (a >> 31);
+    }
+    r = func_0201fd40(a * 2, b);
+    return (r + (r >> 31) + 1) >> 1;
+}
+
+u32 func_0201fccc(u32 value) {
+    *(volatile u16 *) 0x040002b0 = 0;
+    *(volatile u32 *) 0x040002b8 = value;
+    while (*(volatile u16 *) 0x040002b0 & MATH_BUSY) {
+    }
+    return *(volatile u32 *) 0x040002b4;
+}
+
+u32 func_0201fcec(u64 value) {
+    *(volatile u16 *) 0x040002b0 = 1;
+    *(volatile u64 *) 0x040002b8 = value;
+    while (*(volatile u16 *) 0x040002b0 & MATH_BUSY) {
+    }
+    return *(volatile u32 *) 0x040002b4;
+}
+
+u32 func_0201fd10(u32 numerator, u32 denominator, u32 *remainder) {
+    *(volatile u16 *) 0x04000280 = 0;
+    *(volatile u32 *) 0x04000290 = numerator;
+    *(volatile u64 *) 0x04000298 = denominator;
+    while (*(volatile u16 *) 0x04000280 & MATH_BUSY) {
+    }
+    *remainder = *(volatile u32 *) 0x040002a8;
+    return *(volatile u32 *) 0x040002a0;
+}
+
+s32 func_0201fd40(s32 numerator, s32 denominator) {
+    *(volatile u16 *) 0x04000280 = 0;
+    *(volatile u32 *) 0x04000290 = numerator;
+    *(volatile u64 *) 0x04000298 = (u32) denominator;
+    while (*(volatile u16 *) 0x04000280 & MATH_BUSY) {
+    }
+    return *(volatile u32 *) 0x040002a0;
+}
+
+// Advances the generator state: add a constant, rotate right by 3.
+u32 func_0201fd68(void) {
+    u32 s = data_020c18bc.mUnk_478 + 0x5cfae23d;
+    s = (s >> 3) + (s << 29);
+    data_020c18bc.mUnk_478 = s;
+    return s;
+}
+
+// Random value between lo and hi. When lo == hi nothing is computed and lo is still in r0; adding `return lo;`
+// changes the code.
+u32 func_0201fd84(u32 lo, u32 hi) {
+    if (lo != hi) {
+        return func_0201fb74((u16) func_0201fd68(), ANGLE_FULL, lo, hi);
+    }
+}
+
+// Mixes the current scanline into the generator state.
+void func_0201fda4(void) {
+    data_020c18bc.mUnk_478 += *(vu16 *) 0x04000006;
+}
+
+// Reads the bits lo..hi (inclusive, bit 0 = lowest bit of the first byte) of a byte array.
+u32 func_0201fdbc(const void *data, u32 lo, u32 hi) {
+    const u8 *base = (const u8 *) data;
+    u32 result = 0;
+    u32 shift = 0;
+    const u8 *last = base + hi / 8;
+    u32 pos = lo;
+    while (pos <= hi) {
+        const u8 *p = base + pos / 8;
+        u32 n;
+        if (p != last) {
+            n = 8 - (pos & 7);
+        } else {
+            n = hi - pos + 1;
+        }
+        result |= (((int) *p >> (pos & 7)) & (u8) ((1 << n) - 1)) << shift;
+        pos += n;
+        shift += n;
+    }
+    return result;
+}
+
+// Shortest distance between two angles.
+u32 func_0201fe14(u32 a, u32 b) {
+    int d;
+    if (a < b) {
+        u32 t = a;
+        a = b;
+        b = t;
+    }
+    d = a - b;
+    if (d > ANGLE_HALF) {
+        b += ANGLE_FULL;
+        d = b - a;
+    }
+    return d;
+}
+
+// Shortest signed distance from b to a.
+int func_0201fe34(u32 a, u32 b) {
+    int d;
+    int sign;
+    if (a < b) {
+        u32 t = a;
+        a = b;
+        b = t;
+        sign = 1;
+    } else {
+        sign = -1;
+    }
+    d = a - b;
+    if (d > ANGLE_HALF) {
+        b += ANGLE_FULL;
+        d = b - a;
+        sign = -sign;
+    }
+    if (sign > 0) {
+        return d;
+    }
+    return -d;
+}
+
+// 1 when the short way from b to a runs upward.
+int func_0201fe6c(u16 a, u16 b) {
+    u32 d;
+    int up;
+    if (b < a) {
+        d = a - b;
+        up = 1;
+    } else {
+        d = b - a;
+        up = 0;
+    }
+    if (d > ANGLE_FULL - d) {
+        up ^= 1;
+    }
+    return up;
+}
+
+// Moves b toward a by half the shortest distance.
+u32 func_0201fe8c(u16 a, u16 b) {
+    u32 d = func_0201fe14(a, b);
+    int up = func_0201fe6c(a, b);
+    return (u16) (b + (up * 2 - 1) * (d >> 1));
+}
+
+u32 func_0201feb0(s32 x, s32 y) {
+    return FX_Atan2Idx(x, -y);
+}
+
+// Cross product of the vectors b->a and b->c.
+int func_0201febc(int ax, int ay, int bx, int by, int cx, int cy) {
+    return (ax - bx) * (cy - by) - (cx - bx) * (ay - by);
+}
+
+void func_0201fed4(int a) {
+    u32 elapsed;
+    u32 flag;
+    u32 limit;
+    if (data_020c18bc.mUnk_32e == 0) {
+        return;
+    }
+    if (data_020c18bc.mUnk_32e == 4 && (a & 1) == 0) {
+        return;
+    }
+    elapsed = data_020c18bc.mUnk_45c - data_020c18bc.mUnk_324;
+    flag = 0;
+    limit = data_020c18bc.mUnk_457;
+    if (limit == 0) {
+        limit = 180;
+    }
+    while (func_0201f910(&elapsed, &flag, 60, limit, 3) == 0) {
+        func_0201bb30();
+    }
+    data_020c18bc.mUnk_450 |= 4;
+    while (data_020c18bc.mUnk_32e == 3 || data_020c18bc.mUnk_32e == 10 || data_020c18bc.mUnk_32e == 4) {
+        func_0201bb30();
+    }
+    data_020c18bc.mUnk_32f = data_020c18bc.mUnk_32e;
+    data_020c18bc.mUnk_32e = 0;
+    data_020c18bc.mUnk_46c &= 0xfff7ffff;
+}
+
+int func_0201ff80(u32 id) {
+    return data_020c18bc.mUnk_328 / func_02021e44(id, data_020c18bc.mUnk_32c + 1);
+}
+
+int func_0201ffa0(void) {
+    int d = data_020c18bc.mUnk_32c - data_020c18bc.mUnk_32a;
+    if (!(data_020c18bc.mUnk_32a < data_020c18bc.mUnk_32c)) {
+        OS_Terminate();
+    }
+    return d + 1;
+}
+
+void *func_0201ffbc(void) {
+    return func_0201c430(func_0201ffa0() * 4);
+}
+
+void func_0201ffcc(void *p) {
+    func_0201c4f0(p);
+}
+
+// Returns the 16-bit tag of a block: the table bytes at 2 * index and 2 * index + 1, each taken modulo the table's
+// length.
+u16 func_0201ffd4(int id, u32 index) {
+    const u8 *table = func_02021e18(id, data_020c18bc.mUnk_32c + 2);
+    u32 count = func_02021f0c(id, data_020c18bc.mUnk_32c + 2, 0);
+    if (count < 2) {
+        OS_Terminate();
+    }
+    return (table[(index * 2) % count] << 8) + table[(index * 2 + 1) % count];
+}
+
+// Sets up the block store for set a: kind, first and last field, status callback and the value for mUnk_454
+// (-1 leaves it). Reads every block and rewrites the ones that do not read back intact, then waits for the store.
+void func_0202002c(u32 a, int b, u16 c, int d, void (*fn)(u32), int e) {
+    u32 count = func_02021e44(a, d + 1);
+    u32 r;
+    u32 i;
+    if (b != SAVE_STORE_SMALL && b != SAVE_STORE_LARGE) {
+        OS_Terminate();
+    }
+    data_020c18bc.mUnk_31c = fn;
+    data_020c18bc.mUnk_32e = 0;
+    data_020c18bc.mUnk_32f = data_020c18bc.mUnk_32e;
+    data_020c18bc.mUnk_32a = c;
+    data_020c18bc.mUnk_32c = d;
+    data_020c18bc.mUnk_324 = 0;
+    if (e != -1) {
+        data_020c18bc.mUnk_454 = e;
+        fn(4);
+    }
+    func_02020ee0(b);
+    if (b == SAVE_STORE_SMALL) {
+        data_020c18bc.mUnk_328 = SMALL_BLOCK_SIZE;
+    } else {
+        data_020c18bc.mUnk_328 = LARGE_BLOCK_SIZE;
+    }
+    // Volatile read of the frame counter; the value is not used.
+    data_020c18bc.mUnk_45c;
+    for (i = 0; i < count; i++) {
+        r = func_02020140(i, 0, a);
+        if (r == BLOCK_ID_OK) {
+            data_020c18bc.mUnk_31c(1);
+        }
+        if (r != BLOCK_INTACT) {
+            if (data_020c18bc.mUnk_328 > SMALL_BLOCK_SIZE && r != BLOCK_ID_OK) {
+                data_020c18bc.mUnk_31c(6);
+            }
+            func_02020224(i, a);
+        }
+    }
+    func_0201fed4(1);
+    if (data_020c18bc.mUnk_32f == 1) {
+        data_020c18bc.mUnk_31c(2);
+        while (func_02020890() == 0) {
+            func_0201bb30();
+        }
+        data_020c18bc.mUnk_46c &= ~0xc0000;
+    }
+    data_020c18bc.mUnk_450 |= 4;
+}
+
+// Reads block index of set c. Bit 0 of the result: the checksum matches (the record is then unpacked into buf when
+// buf is not null); bit 1: the stored tag matches the block's tag.
+u32 func_02020140(u32 index, void *buf, int c) {
+    u16 table[256];
+    u16 crc;
+    int size = func_0201ff80(c);
+    u8 *data = func_0201c430(size);
+    u32 result = 0;
+    int check = func_0201ffd4(c, index);
+    if (index >= func_02021e44(c, data_020c18bc.mUnk_32c + 1)) {
+        OS_Terminate();
+    }
+    if (func_02020f9c(data, index * size, size) == 0) {
+        if (data_020c18bc.mUnk_320 != 0) {
+            memcpy(data, data_020c18bc.mUnk_320 + index * size, size);
+        } else {
+            data_020c18bc.mUnk_31c(10);
+        }
+    }
+    func_02048780(table, CRC_POLY);
+    crc = func_02048804(table, data + 4, size - 4);
+    if (crc == data[0] + (data[1] << 8)) {
+        if (buf != 0) {
+            func_0202062c(buf, (u32 *) (data + 4), c);
+        }
+        result |= BLOCK_CRC_OK;
+    }
+    if (data[2] == (check & 0xff) && data[3] == (check >> 8)) {
+        result |= BLOCK_ID_OK;
+    }
+    if (data_020c18bc.mUnk_32e != 1) {
+        func_0201fed4(0);
+    }
+    func_0201c4f0(&data);
+    return result;
+}
+
+// Writes a freshly allocated record to block index of set c and sets the block's bit in mUnk_458.
+void func_02020224(u32 index, int c) {
+    void *buf = func_0201c430(func_0201ffa0() * 4);
+    func_02020258(index, buf, c);
+    func_0201c4f0(&buf);
+    data_020c18bc.mUnk_458[0] |= 1 << index;
+}
+
+// Packs the record in buf into block index of set c with its checksum and tag and writes the block.
+void func_02020258(u32 index, void *buf, int c) {
+    u16 table[256];
+    u16 crc;
+    int size = func_0201ff80(c);
+    u8 *data = func_0201c430(size);
+    int payloadWritten = 1;
+    int check = func_0201ffd4(c, index);
+    int payload;
+    u32 offset;
+    int headWritten;
+    if (index >= func_02021e44(c, data_020c18bc.mUnk_32c + 1)) {
+        OS_Terminate();
+    }
+    memset(data, 0, size);
+    func_0202043c(buf, (u32 *) (data + 4), c);
+    func_02048780(table, CRC_POLY);
+    payload = size - 4;
+    crc = func_02048804(table, data + 4, payload);
+    memcpy(data, &crc, 2);
+    data[2] = check;
+    data[3] = check >> 8;
+    if (size > 4) {
+        payloadWritten = func_02020f38(data + 4, index * size + 4, payload);
+    }
+    offset = index * size;
+    headWritten = func_02020f38(data, offset, 4);
+    if (payloadWritten == 0 || headWritten == 0) {
+        if (data_020c18bc.mUnk_320 != 0) {
+            memcpy(data_020c18bc.mUnk_320 + offset, data, size);
+        } else {
+            data_020c18bc.mUnk_31c(4);
+        }
+    }
+    if (data_020c18bc.mUnk_32e != 1) {
+        func_0201fed4(1);
+    }
+    func_0201c4f0(&data);
+}
+
+// Clears mUnk_456.
+void func_02020348(void) {
+    data_020c18bc.mUnk_456 = 0;
+}
+
+#pragma thumb off
+// Fills order with 0..count-1, ends it with ORDER_END and sorts it by descending key (shell sort).
+void func_02020354(u32 *order, const u32 *key, int count) {
+    int gap;
+    u32 t;
+    int j;
+    int i;
+    int span;
+    int a;
+    for (i = 0; i < count; i++) {
+        order[i] = i;
+    }
+    order[i] = ORDER_END;
+    gap = (1 << (32 - func_02028250(count))) - 1;
+    for (; gap > 0; gap = (gap - 1) / 2) {
+        span = count - gap;
+        for (a = 0; a < span; a++) {
+            j = 0;
+            if (key[order[a]] < key[order[a + gap]]) {
+                do {
+                    t = order[a + j];
+                    order[a + j] = order[a + gap + j];
+                    order[a + gap + j] = t;
+                    j -= gap;
+                } while (a + j >= 0 && key[order[a + j]] < key[order[a + gap + j]]);
+            }
+        }
+    }
+}
+
+// Packs the field values into 32-bit words, mixed radix: each field's radix is its largest value plus one. Returns
+// the number of bytes written to out.
+int func_0202043c(const u32 *values, u32 *out, u32 id) {
+    int fields;
+    u32 *radix;
+    u32 *order;
+    int i;
+    int outCount;
+    u64 prod;
+    u64 old;
+    u32 acc;
+    fields = func_0201ffa0();
+    radix = func_0201c430(fields * 4);
+    order = func_0201c430((fields + 1) * 4);
+    for (i = 0; i < fields; i++) {
+        radix[i] = func_02021e44(id, data_020c18bc.mUnk_32a + i) + 1;
+    }
+    func_02020354(order, radix, fields);
+    outCount = 0;
+    while (1) {
+        i = 0;
+        acc = 0;
+        prod = 1;
+        if (order[0] != ORDER_END) {
+            do {
+                if (order[i] != ORDER_USED) {
+                    old = prod;
+                    prod = prod * radix[order[i]];
+                    if (prod - 1 > 0xffffffff) {
+                        prod = old;
+                    } else {
+                        if (values[order[i]] >= radix[order[i]]) {
+                            OS_Terminate();
+                        }
+                        acc = radix[order[i]] * acc + values[order[i]];
+                        order[i] = ORDER_USED;
+                        if (prod * 2 - 1 > 0xffffffff) {
+                            break;
+                        }
+                    }
+                }
+                i++;
+            } while (order[i] != ORDER_END);
+        }
+        if (prod == 1) {
+            break;
+        }
+        out[outCount] = acc;
+        outCount++;
+    }
+    func_0201c4f0(&radix);
+    func_0201c4f0(&order);
+    return outCount * 4;
+}
+
+// Unpacks the words written by func_0202043c back into the field values.
+void func_0202062c(u32 *out, u32 *packed, u32 id) {
+    int fields = func_0201ffa0();
+    u32 *radix = func_0201c430(fields * 4);
+    u32 *order = func_0201c430((fields + 1) * 4);
+    u32 list[32];
+    int i;
+    int w;
+    int n;
+    u64 prod;
+    for (i = 0; i < fields; i++) {
+        radix[i] = func_02021e44(id, data_020c18bc.mUnk_32a + i) + 1;
+    }
+    func_02020354(order, radix, fields);
+    for (w = 0;; w++) {
+        i = 0;
+        n = 0;
+        prod = 1;
+        if (order[0] != ORDER_END) {
+            do {
+                if (order[i] != ORDER_USED) {
+                    u32 f = order[i];
+                    u32 r = radix[f];
+                    u64 old = prod;
+                    prod = prod * r;
+                    if (prod - 1 > 0xffffffff) {
+                        prod = old;
+                    } else {
+                        order[i] = ORDER_USED;
+                        list[n] = f;
+                        n++;
+                        if (prod * 2 - 1 > 0xffffffff) {
+                            break;
+                        }
+                    }
+                }
+                i++;
+            } while (order[i] != ORDER_END);
+        }
+        if (n == 0) {
+            break;
+        }
+        while (n-- != 0) {
+            u32 f = list[n];
+            out[f] = packed[w] % radix[f];
+            packed[w] = packed[w] / radix[f];
+        }
+    }
+    func_0201c4f0(&radix);
+    func_0201c4f0(&order);
+}
+#pragma thumb on
+
+// Sets (a == 1) or clears the LCD swap bit of the power control register.
+void func_02020854(int a) {
+    if (a == 1) {
+        *(vu16 *) 0x04000304 |= POWCNT1_SWAP_LCDS;
+    } else {
+        *(vu16 *) 0x04000304 &= ~POWCNT1_SWAP_LCDS;
+    }
+}
+
+// Whether the display-swap bit of the power control register is set.
+int func_02020878(void) {
+    if (*(vu16 *) 0x04000304 & POWCNT1_SWAP_LCDS) {
+        return 1;
+    }
+    return 0;
+}
+
+int func_02020890(void) {
+    if (data_020c18bc.mUnk_490[0] == 3 && data_020c18bc.mUnk_490[1] == 3 &&
+        ((data_020c18bc.mUnk_12 & 1) || data_020c18bc.mUnk_2ac_0 == 1)) {
+        data_020c18bc.mUnk_12 &= ~1;
+        data_020c18bc.mUnk_2ac_0 = 0;
+        return 1;
+    }
+    return 0;
+}
+
+// Sets the sound ids and key mask of the newest button (or of the first one when ids are inserted in front).
+void func_020208dc(int flags, u16 a, u16 b, u16 c) {
+    int index;
+    if ((flags & TOUCH_ADD_FRONT) == 0) {
+        index = data_020c1d60.mUnk_800.mUnk_100.mUnk_08 - 1;
+    } else {
+        index = 0;
+    }
+    data_020c1d60.mUnk_000[index].mUnk_c = b;
+    data_020c1d60.mUnk_000[index].mUnk_a = a;
+    data_020c1d60.mUnk_000[index].mUnk_e = c;
+}
+
+void func_02020914(int a, int b, int c, int d, int e, int f, u16 g, u16 h, u16 i) {
+    func_02020944(a, b, c, d, e, f, g, h);
+    func_020208dc(a, g, h, i);
+}
+
+void func_02020944(int a, int b, int c, int d, int e, int f, u16 g, u16 h) {
+    if (!(data_020c18bc.mUnk_46c & SYSTEM_TOUCH_LOCK)) {
+        func_02020978(a, b, c, d, e, f);
+        func_020208dc(a, g, h, 0);
+    }
+}
+
+void func_02020978(int id, int x, int y, int a, int b, int c) {
+    s32 rect[4];
+    int index;
+    int shifting;
+    Unk_TouchButton *button;
+    if (data_020c1d60.mUnk_800.mUnk_100.mUnk_08 >= TOUCH_BUTTON_COUNT) {
+        OS_Terminate();
+    }
+    if (data_020c18bc.mUnk_46c & SYSTEM_TOUCH_LOCK) {
+        return;
+    }
+    shifting = id & TOUCH_ADD_FRONT;
+    if (shifting == 0) {
+        index = data_020c1d60.mUnk_800.mUnk_100.mUnk_08;
+    } else {
+        index = data_020c1d60.mUnk_800.mUnk_100.mUnk_08++;
+        while (index != 0) {
+            data_020c1d60.mUnk_000[index] = data_020c1d60.mUnk_000[index - 1];
+            index--;
+        }
+    }
+    button = &data_020c1d60.mUnk_000[index];
+    button->mUnk_c = 0;
+    button->mUnk_a = 0;
+    button->mUnk_e = 0;
+    if (c == -1) {
+        button->mUnk_2 = y;
+        button->mUnk_6 = b;
+        button->mUnk_0 = x;
+        button->mUnk_4 = a;
+    } else if (!(id & TOUCH_SHAPE)) {
+        if (func_0202d828(c, 0, rect) == 0) {
+            return;
+        }
+        button->mUnk_2 = y + rect[1];
+        button->mUnk_6 = y + rect[3];
+        button->mUnk_0 = x + rect[0];
+        button->mUnk_4 = x + rect[2];
+    } else {
+        button->mUnk_0 = x;
+        button->mUnk_2 = y;
+        button->mUnk_6 = c;
+    }
+    if (data_020c1d60.mUnk_800.mUnk_100.mUnk_16 != 0) {
+        int mode = func_02020878() == 1 ? 2 : 1;
+        func_0202cf08(data_020c1d60.mUnk_800.mUnk_100.mUnk_16, button->mUnk_0, button->mUnk_2, 0, mode);
+        func_0202cf08(data_020c1d60.mUnk_800.mUnk_100.mUnk_16, button->mUnk_4, button->mUnk_6, 0, mode);
+    }
+    button->mUnk_8 = id;
+    if (shifting == 0) {
+        data_020c1d60.mUnk_800.mUnk_100.mUnk_08++;
+    }
+}
+
+int func_02020a90(int x, int y, int shape) {
+    if (data_020c18bc.mUnk_2ac_1) {
+        return func_02020ab8(x, y, shape, data_020c18bc.mUnk_2ae, data_020c18bc.mUnk_2af);
+    }
+    return 0;
+}
+
+typedef struct TouchPoint {
+    s32 x;
+    s32 y;
+} TouchPoint;
+
+// Tests whether the point (px, py) lies inside the polygon the shape table describes, placed at (x, y).
+int func_02020ab8(int x, int y, int shape, int px, int py) {
+    int found = 1;
+    int next = 0;
+    int inside;
+    u32 i;
+    TouchPoint points[16];
+    s32 corner[2];
+    u32 count;
+    TouchPoint *p;
+    while (next == 0 || found == 1) {
+        count = 0;
+        inside = 0;
+        for (;;) {
+            found = func_0202d7a0(shape, next++ + 2, corner);
+            if (found != 1) {
+                break;
+            }
+            if (count != 0 && points[0].x == x + corner[0] && points[0].y == y + corner[1]) {
+                break;
+            }
+            points[count].x = x + corner[0];
+            points[count++].y = y + corner[1];
+        }
+        if (count != 0 && count <= 2) {
+            OS_Terminate();
+        }
+        if (count > 2) {
+            points[count] = points[0];
+            p = points;
+            for (i = 0; i < count; i++) {
+                inside = inside * 2 + ((func_0201febc(p[0].x, p[0].y, p[1].x, p[1].y, px, py) >> 31) & 1);
+                p++;
+            }
+            if (inside == (1 << count) - 1) {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+void func_02020ba0(void) {
+    data_020c1d60.mUnk_800.mUnk_100.mUnk_08 = 0;
+}
+
+// Polls the touch screen and the keys and returns the button state: the button id in the low half and the
+// TOUCH_* flags above it.
+u32 func_02020bac(u32 mask) {
+    u32 result = data_020c1d60.mUnk_800.mUnk_100.mUnk_12;
+    u32 wanted = result;
+    int hit = -1;
+    u8 pos[2];
+    u32 i;
+    if (mask != TOUCH_NONE && mask != result) {
+        wanted = mask;
+    }
+    if (func_02020e3c(&pos[1], &pos[0]) == 1) {
+        for (i = 0; i < data_020c1d60.mUnk_800.mUnk_100.mUnk_08; i++) {
+            Unk_TouchButton *button = &data_020c1d60.mUnk_000[i];
+            if (!(button->mUnk_8 & TOUCH_SHAPE)) {
+                if (pos[0] >= button->mUnk_2 && pos[0] <= button->mUnk_6 && pos[1] >= button->mUnk_0 &&
+                    pos[1] <= button->mUnk_4) {
+                    hit = i;
+                    data_020c1d60.mUnk_800.mUnk_100.mUnk_12 = data_020c1d60.mUnk_000[i].mUnk_8 & 0x7fff;
+                    break;
+                }
+            } else if (func_02020a90(button->mUnk_0, button->mUnk_2, button->mUnk_6)) {
+                hit = i;
+                data_020c1d60.mUnk_800.mUnk_100.mUnk_12 = data_020c1d60.mUnk_000[i].mUnk_8 & 0x7fff;
+                break;
+            }
+        }
+        if (i == data_020c1d60.mUnk_800.mUnk_100.mUnk_08) {
+            data_020c1d60.mUnk_800.mUnk_100.mUnk_12 = TOUCH_NONE;
+        }
+        result = data_020c1d60.mUnk_800.mUnk_100.mUnk_12 | TOUCH_DOWN;
+        if (data_020c1d60.mUnk_800.mUnk_100.mUnk_14 == 0 ||
+            (wanted != data_020c1d60.mUnk_800.mUnk_100.mUnk_12 && !(data_020c18bc.mUnk_46c & SYSTEM_TOUCH_QUIET))) {
+            result |= TOUCH_PRESSED;
+            if (wanted == data_020c1d60.mUnk_800.mUnk_100.mUnk_12) {
+                result |= TOUCH_REPEAT;
+                if (data_020c18bc.mUnk_45c - data_020c1d60.mUnk_800.mUnk_100.mUnk_0c < TOUCH_QUICK_FRAMES) {
+                    result |= TOUCH_QUICK;
+                }
+            }
+            if (data_020c1d60.mUnk_800.mUnk_100.mUnk_14 == 0) {
+                data_020c1d60.mUnk_800.mUnk_100.mUnk_0c = data_020c18bc.mUnk_45c;
+            }
+        }
+        data_020c1d60.mUnk_800.mUnk_100.mUnk_14 = 1;
+    } else {
+        if (data_020c1d60.mUnk_800.mUnk_100.mUnk_14 == 1) {
+            result |= TOUCH_RELEASED;
+            for (i = 0; i < data_020c1d60.mUnk_800.mUnk_100.mUnk_08; i++) {
+                if ((u16) result == data_020c1d60.mUnk_000[i].mUnk_8) {
+                    hit = i;
+                    break;
+                }
+            }
+        }
+        data_020c1d60.mUnk_800.mUnk_100.mUnk_14 = 0;
+    }
+    if ((result & (TOUCH_DOWN | TOUCH_PRESSED | TOUCH_RELEASED)) == 0) {
+        if ((u16) (data_020c18bc.mUnk_10 | data_020c18bc.mUnk_12 | data_020c18bc.mUnk_014) != 0) {
+            for (i = 0; i < data_020c1d60.mUnk_800.mUnk_100.mUnk_08; i++) {
+                u16 keys = data_020c1d60.mUnk_000[i].mUnk_e;
+                if (keys != 0) {
+                    if (data_020c18bc.mUnk_10 & keys) {
+                        result = (result & 0xffff0000) | data_020c1d60.mUnk_000[i].mUnk_8 | TOUCH_DOWN;
+                    }
+                    if (data_020c18bc.mUnk_12 & keys) {
+                        result = (result & 0xffff0000) | data_020c1d60.mUnk_000[i].mUnk_8 | TOUCH_PRESSED;
+                    }
+                    if (keys & data_020c18bc.mUnk_014) {
+                        result = (result & 0xffff0000) | data_020c1d60.mUnk_000[i].mUnk_8 | TOUCH_RELEASED;
+                    }
+                }
+            }
+        }
+    }
+    data_020c1d60.mUnk_800.mUnk_100.mUnk_08 = 0;
+    if (hit != -1 && (u16) result != TOUCH_NONE) {
+        if (result & TOUCH_RELEASED) {
+            if (data_020c1d60.mUnk_000[hit].mUnk_c != 0) {
+                func_0202eb64(data_020c1d60.mUnk_000[hit].mUnk_c, 100, 0, 0x40, TOUCH_NONE, 0);
+                if (data_020c1d60.mUnk_000[hit].mUnk_a != 0) {
+                    func_0202edd0(data_020c1d60.mUnk_000[hit].mUnk_a);
+                }
+            }
+        } else if (result & TOUCH_PRESSED) {
+            if (data_020c1d60.mUnk_000[hit].mUnk_a != 0) {
+                func_0202eb64(data_020c1d60.mUnk_000[hit].mUnk_a, 100, 0, 0x40, TOUCH_NONE, 0);
+            }
+        }
+    }
+    return result;
+}
+
+void func_02020df4(void) {
+    data_020c1d60.mUnk_800.mUnk_100.mUnk_18 = 0;
+    data_020c1d60.mUnk_800.mUnk_100.mUnk_10 = 0;
+    MIi_CpuClear16(0xffff, data_020c1d60.mUnk_800.mUnk_000, sizeof(data_020c1d60.mUnk_800.mUnk_000));
+}
+
+void func_02020e18(u16 a, int b) {
+    data_020c1d60.mUnk_800.mUnk_100.mUnk_12 = TOUCH_NONE;
+    data_020c1d60.mUnk_800.mUnk_100.mUnk_08 = 0;
+    data_020c1d60.mUnk_800.mUnk_100.mUnk_14 = 0;
+    data_020c1d60.mUnk_800.mUnk_100.mUnk_0c = 0;
+    data_020c1d60.mUnk_800.mUnk_100.mUnk_16 = a;
+    data_020c1d60.mUnk_800.mUnk_100.mUnk_04 = TOUCH_NONE;
+    func_02020df4();
+}
+
+int func_02020e3c(u8 *x, u8 *y) {
+    if (data_020c18bc.mUnk_2ac_1 == 0) {
+        if (x != 0) {
+            *x = 0xff;
+        }
+        if (y != 0) {
+            *y = 0xff;
+        }
+        if (data_020c1d60.mUnk_800.mUnk_100.mUnk_18 == 1) {
+            data_020c1d60.mUnk_800.mUnk_100.mUnk_00[2] = data_020c18bc.mUnk_2ae;
+            data_020c1d60.mUnk_800.mUnk_100.mUnk_00[3] = data_020c18bc.mUnk_2af;
+            data_020c1d60.mUnk_800.mUnk_100.mUnk_18 = 2;
+        } else if (data_020c1d60.mUnk_800.mUnk_100.mUnk_18 == 2) {
+            data_020c1d60.mUnk_800.mUnk_100.mUnk_18 = 3;
+        }
+        return 0;
+    }
+    if (data_020c1d60.mUnk_800.mUnk_100.mUnk_18 != 1) {
+        func_02020df4();
+        data_020c1d60.mUnk_800.mUnk_100.mUnk_00[0] = data_020c18bc.mUnk_2ae;
+        data_020c1d60.mUnk_800.mUnk_100.mUnk_00[1] = data_020c18bc.mUnk_2af;
+        data_020c1d60.mUnk_800.mUnk_100.mUnk_18 = 1;
+    }
+    {
+        u8 px = data_020c18bc.mUnk_2ae;
+        u32 n = data_020c1d60.mUnk_800.mUnk_100.mUnk_10;
+        data_020c1d60.mUnk_800.mUnk_000[n].mUnk_0 = px;
+        data_020c1d60.mUnk_800.mUnk_000[n].mUnk_1 = data_020c18bc.mUnk_2af;
+        data_020c1d60.mUnk_800.mUnk_100.mUnk_10 = (data_020c1d60.mUnk_800.mUnk_100.mUnk_10 + 1) & 0x7f;
+        if (x != 0) {
+            *x = px;
+        }
+    }
+    if (y != 0) {
+        *y = data_020c18bc.mUnk_2af;
+    }
+    return 1;
+}
+
+// Marks the backup memory as ready after taking the card lock id and checking the backup type.
+void func_02020ee0(u32 a) {
+    int ok;
+    if (!(data_020c18bc.mUnk_46c & SYSTEM_BACKUP_READY)) {
+        data_020c18bc.mUnk_456 = 0xb4;
+        func_02045dc4();
+        data_020c18bc.mUnk_330 = OS_GetLockID();
+        func_02044f54(data_020c18bc.mUnk_330);
+        ok = func_020455fc(a);
+        func_02044f64(data_020c18bc.mUnk_330);
+        if (ok != 0) {
+            data_020c18bc.mUnk_46c |= SYSTEM_BACKUP_READY;
+        }
+    }
+}
+
+// Writes size bytes from buf to the backup memory at address; returns 0 when the backup memory is not ready.
+int func_02020f38(const void *buf, u32 address, u32 size) {
+    int result;
+    if (!(data_020c18bc.mUnk_46c & SYSTEM_BACKUP_READY)) {
+        return 0;
+    }
+    data_020c18bc.mUnk_456 = 0xf0;
+    func_02044f54(data_020c18bc.mUnk_330);
+    result = func_02045500((u32) buf, (void *) address, size, 0, 0, 0, 8, 10, 2);
+    func_02044f64(data_020c18bc.mUnk_330);
+    return result;
+}
+
+int func_02020f9c(void *buf, u32 address, u32 size) {
+    int result;
+    if ((data_020c18bc.mUnk_46c & SYSTEM_BACKUP_READY) == 0) {
+        return 0;
+    }
+    func_02044f54(data_020c18bc.mUnk_330);
+    result = func_02045500(address, buf, size, 0, 0, 0, 6, 1, 0);
+    func_02044f64(data_020c18bc.mUnk_330);
+    return result;
+}
+
+void func_02020ff4(int size, int b) {
+    if (data_020c18bc.mUnk_46c & MIC_FLAG_ACTIVE) {
+        func_02021458();
+    }
+    data_020c18bc.mUnk_0cc = size;
+    data_020c18bc.mUnk_0c4 = func_0201c430(size + 0x1f);
+    data_020c18bc.mUnk_0c8 = func_0201c430(size);
+    MIC_Init();
+    func_02043d98(1);
+    func_02043de0(b);
+    data_020c18bc.mUnk_46c |= MIC_FLAG_ACTIVE;
+    func_02021194();
+}
+
+void func_02021054(int a) {
+    if ((data_020c18bc.mUnk_46c & MIC_FLAG_ACTIVE) == 0) {
+        OS_Terminate();
+    }
+    func_02043de0(a);
+}
+
+void func_02021074(int rate, int type) {
+    data_020c18bc.mUnk_0d0.buffer = (void *) func_02034918((u32) data_020c18bc.mUnk_0c4);
+    data_020c18bc.mUnk_0d0.size = data_020c18bc.mUnk_0cc;
+    data_020c18bc.mUnk_0d0.type = type;
+    data_020c18bc.mUnk_0d0.rate = rate;
+    data_020c18bc.mUnk_0d0.loop = 1;
+    data_020c18bc.mUnk_0d0.full = 0;
+    data_020c18bc.mUnk_492 = 0xb4;
+    data_020c18bc.mUnk_495 = 1;
+    if (MIC_StartAutoSampling(&data_020c18bc.mUnk_0d0) != 0) {
+        OS_Terminate();
+    }
+    func_02021194();
+}
+
+void func_020210c4(void) {
+    MIC_StopAutoSampling();
+}
+
+u32 func_020210cc(void) {
+    u32 pos = func_02043454();
+    if (pos >= func_02034918((u32) data_020c18bc.mUnk_0c4) &&
+        pos < func_02034918((u32) data_020c18bc.mUnk_0c4) + data_020c18bc.mUnk_0cc && data_020c18bc.mUnk_492 == 0) {
+        DC_InvalidateRange((void *) (pos & ~0x1f), 0x20);
+        return pos;
+    }
+    return 0;
+}
+
+void func_0202111c(u32 count) {
+    u32 i;
+    u32 pos;
+    u32 start;
+    if ((data_020c18bc.mUnk_46c & MIC_FLAG_ACTIVE) == 0) {
+        OS_Terminate();
+    }
+    pos = func_020210cc();
+    if (pos != 0) {
+        pos -= count;
+        start = func_02034918((u32) data_020c18bc.mUnk_0c4);
+        if (start == 0) {
+            OS_Terminate();
+        }
+        if (pos < start) {
+            pos += data_020c18bc.mUnk_0cc;
+        }
+        for (i = 0; i < count; i++) {
+            if ((pos & 0x1f) == 0) {
+                DC_InvalidateRange((void *) pos, 0x20);
+                if (pos >= start + data_020c18bc.mUnk_0cc) {
+                    pos = start;
+                }
+            }
+            data_020c18bc.mUnk_0c8[i] = *(u8 *) pos;
+            pos++;
+        }
+    }
+}
+
+void func_02021194(void) {
+    int j;
+    int i;
+    for (i = 0; i < MIC_HISTORY; i++) {
+        for (j = 0; j < MIC_MAX_BANDS; j++) {
+            data_020c18bc.mUnk_0ec[i][j] = 0;
+        }
+    }
+    MI_CpuClearFast(data_020c18bc.mUnk_20c, 0x20);
+    MI_CpuClearFast(data_020c18bc.mUnk_1ec, 0x20);
+}
+
+// Sums the spectrum over each band's range, stores the sums in the current history slot and totals each band over
+// the history.
+void func_020211d8(const u8 *spectrum, const u16 *ranges, u32 count, u32 *totals, u32 *sums) {
+    int i;
+    u32 j;
+    u32 lo;
+    u32 hi;
+    if (count >= MIC_MAX_BANDS) {
+        OS_Terminate();
+    }
+    if (data_020c18bc.mUnk_0d0.buffer == 0) {
+        OS_Terminate();
+    }
+    for (i = 0; i < count; i++) {
+        lo = func_02021364(ranges[0]);
+        hi = func_02021364(ranges[1]);
+        sums[i] = 0;
+        for (; lo < hi; lo++) {
+            sums[i] += spectrum[lo];
+        }
+        ranges += 2;
+    }
+    j = data_020c18bc.mUnk_45c & 0xf;
+    for (i = 0; i < count; i++) {
+        data_020c18bc.mUnk_0ec[j][i] = sums[i];
+    }
+    for (j = 0; j < count; j++) {
+        totals[j] = 0;
+        for (i = 0; i < MIC_HISTORY; i++) {
+            totals[j] += data_020c18bc.mUnk_0ec[i][j];
+        }
+    }
+}
+
+typedef struct Unk_Complex {
+    fx32 re;
+    fx32 im;
+} Unk_Complex;
+
+void func_020212b4(u8 *out, u32 nShift) {
+    u32 count = 1 << nShift;
+    fx16 sinTable[(3 << MAX_SHIFT) / 4];
+    Unk_Complex buf[1 << MAX_SHIFT];
+    u32 i;
+    if (nShift > MAX_SHIFT) {
+        OS_Terminate();
+    }
+    data_020c18bc.mUnk_22c = nShift;
+    func_0202111c(count);
+    for (i = 0; i < count; i++) {
+        buf[i].re = data_020c18bc.mUnk_0c8[i] << SAMPLE_SHIFT;
+        buf[i].im = 0;
+    }
+    func_0204882c(sinTable, nShift);
+    func_02048af8((fx32 *) buf, nShift, sinTable);
+    for (i = 1; i < count; i++) {
+        out[i - 1] = (buf[i].re * buf[i].re + buf[i].im * buf[i].im) >> POWER_SHIFT;
+    }
+}
+
+u32 func_02021364(u32 x) {
+    return (x << data_020c18bc.mUnk_22c) / data_020c18bc.mUnk_0d0.rate;
+}
+
+u32 func_02021380(u32 index) {
+    return data_020c18bc.mUnk_20c[index] >> 4;
+}
+
+void func_02021390(void) {
+    u8 spectrum[0x400];
+    if ((data_020c18bc.mUnk_46c & MIC_FLAG_ACTIVE) == 0) {
+        func_02020ff4(0x400, 1);
+        func_02021074(0x82e, 0);
+    }
+    func_020212b4(spectrum, 8);
+    func_020211d8(spectrum, data_02050210, 4, data_020c18bc.mUnk_20c, data_020c18bc.mUnk_1ec);
+}
+
+int func_020213e8(u32 a) {
+    int v0;
+    int v1;
+    int v2;
+    int v3;
+    u32 limit;
+    func_02021390();
+    v0 = func_02021380(0);
+    v1 = func_02021380(1);
+    v2 = func_02021380(2);
+    v3 = func_02021380(3);
+    if (v0 > a && 40 * v3 > v0 && v3 < v0 && v1 < v0 && abs(v1 - v2) < v1 / 2 && v0 > 2 * v3) {
+        limit = a * 6;
+        if (v0 >= limit) {
+            v0 = limit;
+        }
+        return func_0201fb74(v0, limit, 1, 7);
+    }
+    return 0;
+}
+
+void func_02021458(void) {
+    if (data_020c18bc.mUnk_46c & MIC_FLAG_ACTIVE) {
+        func_020210c4();
+        func_02043d98(0);
+        func_0201c4f0(&data_020c18bc.mUnk_0c4);
+        func_0201c4f0(&data_020c18bc.mUnk_0c8);
+        data_020c18bc.mUnk_46c &= ~MIC_FLAG_ACTIVE;
+    }
+}

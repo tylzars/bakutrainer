@@ -1,3 +1,4 @@
+// Side header of system_init.c: its save blocks (tags, checksums, packing).
 #pragma once
 
 #include "types.h"

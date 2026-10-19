@@ -469,6 +469,9 @@ extern Unk_020c31dc data_020c31dc;
 extern const u32 data_02050220[9];
 extern const u8 data_020502ac[9];
 extern const Unk_02050478 data_02050478[];
+
+// Hash steps of the graphics pools and the file cache: 1 and the odd primes up to 719.
+extern const u16 data_02050378[128];
 #ifdef __cplusplus
 }
 #endif

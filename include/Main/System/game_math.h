@@ -1,3 +1,4 @@
+// Side header of system_init.c: its math helpers (interpolation, square roots, division, number formatting).
 #pragma once
 
 #include "types.h"

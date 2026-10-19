@@ -506,40 +506,10 @@ src/Main/Scene/stage_map_menu.c:
     .text       start:0x02019fa0 end:0x0201a608
     .data       start:0x02063a9c end:0x02063aac
 
-// provisional: both ends (the ARM list helpers func_0201fa08/func_0201fa5c come before it)
-src/Main/System/game_math.c:
-    complete
-    .text       start:0x0201fab0 end:0x0201fd68
-    .rodata     start:0x02050244 end:0x02050270
-
-// provisional: may be the same file as game_math.c (contiguous, no boundary evidence)
-src/Main/System/random_angle.c:
-    complete
-    .text       start:0x0201fd68 end:0x0201ffd4
-
-// provisional: both ends (card code before it, no microphone calls after it)
-src/Main/Input/mic_input.c:
-    .text       start:0x02020ff4 end:0x02021498
-
 // provisional: the message functions from 0x02021e94 use this file's readers and follow with no gap; gx_pool.c
 // starts at 0x02021fb0
 src/Main/Graphics/text_draw.c:
     .text       start:0x02021498 end:0x02021fb0
-
-// provisional: may include random_angle.c's func_0201fed4/ff80/ffa0 (same SystemState block fields)
-src/Main/Save/save_blocks.c:
-    complete
-    .text       start:0x0201ffd4 end:0x02020878
-
-// provisional: func_02020878/func_02020890 may be save_blocks.c's tail
-src/Main/Input/touch_buttons.c:
-    complete
-    .text       start:0x02020878 end:0x02020ee0
-
-// backup memory access, called only from save_blocks.c
-src/Main/Save/backup_access.c:
-    complete
-    .text       start:0x02020ee0 end:0x02020ff4
 
 // provisional: probably continues with func_020225dc (same pool objects)
 src/Main/Graphics/gx_pool.c:
@@ -660,6 +630,13 @@ src/Main/Graphics/script_data.s:
     .text       start:0x0201a608 end:0x0201b7e0
 
 // one file: its own-section .bss ascend (0x020c1818.. -> FSFile -> SystemState) and the JPEG and start-up code reach
-// the same objects through one section base; the .rodata own sections ascend as one file's
+// the same objects through one section base; the .rodata own sections ascend as one file's. It runs on through the
+// math, angle, save block, touch, backup and microphone code: the shared .rodata run 0x020501f4-0x02050270 holds
+// func_0201fc14's initializer and the microphone band table 0x02050210, which only func_02021390 reads (the
+// compiler gives an unreferenced constant a section of its own). The end is provisional (no microphone calls after
+// it); "bank.bin" is its only string
 src/Main/System/system_init.c:
-    .text       start:0x0201b7e0 end:0x0201fab0
+    .text       start:0x0201b7e0 end:0x02021498
+    .rodata     start:0x020501f4 end:0x02050898
+    .data       start:0x02063aac end:0x02063ab8
+    .bss        start:0x020c1818 end:0x020c1834

@@ -1,3 +1,4 @@
+// Side header of system_init.c: random numbers, bit reads, angle helpers and the save store's block sizes.
 #pragma once
 
 #include "types.h"

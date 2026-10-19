@@ -8,9 +8,6 @@
 extern "C" {
 #endif
 
-// Hash steps of the graphics pools: the odd primes from 1 to 719.
-extern const u16 data_02050378[128];
-
 u32 func_020225dc(u32 i);
 u32 func_020227b4(u32 i);
 u32 func_0202283c(Unk_PoolRange *n, u32 size, u32 slot);

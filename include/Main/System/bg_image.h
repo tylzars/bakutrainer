@@ -1,3 +1,4 @@
+// Side header of system_init.c: display layers, JPEG decoding, VRAM bank mapping and palette lookup.
 #pragma once
 
 #include "types.h"
@@ -16,9 +17,6 @@ void func_0201dd74(u8 *src, u32 dst, u32 width, u32 rows);
 void func_0201dde0(int id, int target);
 void func_0201ddec(int id, int target, int x, int flags);
 void func_0201de48(u8 *data, int target, int x, int flags);
-
-// Sizes by layer mode (read by func_0201db94).
-extern const u16 data_02050200[4];
 
 // JPEG decoding: the marker scan, the inverse DCT of one block and the decoder of one image.
 u8 *func_0201e178(void);
