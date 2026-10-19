@@ -1801,8 +1801,8 @@ _ZdlPv kind:function(arm,size=0x14) addr:0x0204ded4
 func_0204dee8 kind:function(arm,size=0x2c) addr:0x0204dee8
 @ET@func_0204a5c8 kind:data(any) addr:0x0204df14 local
 data_0204e054 kind:data(byte[120]) addr:0x0204e054
-data_0204e0cc kind:data(any) addr:0x0204e0cc
-data_0204e0d4 kind:data(any) addr:0x0204e0d4
+data_0204e0cc kind:data(any) addr:0x0204e0cc local
+data_0204e0d4 kind:data(any) addr:0x0204e0d4 local
 data_0204e0e8 kind:data(any) addr:0x0204e0e8 local
 data_0204e0f0 kind:data(any) addr:0x0204e0f0 local
 data_0204e0fc kind:data(any) addr:0x0204e0fc local
@@ -1835,22 +1835,22 @@ data_0204e8a4 kind:data(word[25]) addr:0x0204e8a4
 data_0204e908 kind:data(word[25]) addr:0x0204e908
 data_0204e96c kind:data(any) addr:0x0204e96c
 data_0204edfc kind:data(any) addr:0x0204edfc
-data_0204fedc kind:data(byte[5]) addr:0x0204fedc
-data_0204fee2 kind:data(byte[6]) addr:0x0204fee2
-data_0204fee8 kind:data(byte[6]) addr:0x0204fee8
-data_0204fef0 kind:data(byte[12]) addr:0x0204fef0
-data_0204fefc kind:data(byte[12]) addr:0x0204fefc
-data_0204ff08 kind:data(byte[12]) addr:0x0204ff08
-data_0204ff14 kind:data(byte[14]) addr:0x0204ff14
-data_0204ff22 kind:data(byte[14]) addr:0x0204ff22
-data_0204ff30 kind:data(byte[16]) addr:0x0204ff30
-data_0204ff40 kind:data(byte[16]) addr:0x0204ff40
-data_0204ff50 kind:data(byte[32]) addr:0x0204ff50
-data_0204ff70 kind:data(byte[32]) addr:0x0204ff70
-data_0204ff90 kind:data(byte[48]) addr:0x0204ff90
-data_0204ffc0 kind:data(byte[48]) addr:0x0204ffc0
-data_0204fff0 kind:data(byte[72]) addr:0x0204fff0
-data_02050038 kind:data(byte[156]) addr:0x02050038
+@2610 kind:data(byte[5]) addr:0x0204fedc local
+data_0204fee2 kind:data(byte[6]) addr:0x0204fee2 local
+data_0204fee8 kind:data(byte[6]) addr:0x0204fee8 local
+data_0204fef0 kind:data(byte[12]) addr:0x0204fef0 local
+data_0204fefc kind:data(byte[12]) addr:0x0204fefc local
+data_0204ff08 kind:data(byte[12]) addr:0x0204ff08 local
+data_0204ff14 kind:data(byte[14]) addr:0x0204ff14 local
+data_0204ff22 kind:data(byte[14]) addr:0x0204ff22 local
+data_0204ff30 kind:data(byte[16]) addr:0x0204ff30 local
+data_0204ff40 kind:data(byte[16]) addr:0x0204ff40 local
+data_0204ff50 kind:data(byte[32]) addr:0x0204ff50 local
+data_0204ff70 kind:data(byte[32]) addr:0x0204ff70 local
+data_0204ff90 kind:data(byte[48]) addr:0x0204ff90 local
+data_0204ffc0 kind:data(byte[48]) addr:0x0204ffc0 local
+data_0204fff0 kind:data(byte[72]) addr:0x0204fff0 local
+data_02050038 kind:data(byte[156]) addr:0x02050038 local
 data_020500d4 kind:data(byte[3]) addr:0x020500d4
 data_020500d8 kind:data(byte[9]) addr:0x020500d8
 data_020500e4 kind:data(byte[20]) addr:0x020500e4
@@ -1928,9 +1928,9 @@ data_02063504 kind:data(any) addr:0x02063504 local
 data_020637d8 kind:data(any) addr:0x020637d8 local
 data_020637fc kind:data(any) addr:0x020637fc
 ARM9_CTOR_END kind:data(any) addr:0x02063900
-data_02063908 kind:data(any) addr:0x02063908
-data_0206390c kind:data(any) addr:0x0206390c
-data_02063914 kind:data(any) addr:0x02063914
+@1701 kind:data(any) addr:0x02063908 local
+@1702 kind:data(any) addr:0x0206390c local
+@1703 kind:data(any) addr:0x02063914 local
 data_0206391c kind:data(any) addr:0x0206391c
 @1506 kind:data(any) addr:0x02063920 local
 @2534 kind:data(any) addr:0x02063924 local
@@ -1957,12 +1957,12 @@ data_02063a04 kind:data(any) addr:0x02063a04
 data_02063a0c kind:data(any) addr:0x02063a0c
 data_02063a14 kind:data(any) addr:0x02063a14
 data_02063a1c kind:data(any) addr:0x02063a1c
-data_02063a2c kind:data(any) addr:0x02063a2c
-data_02063a38 kind:data(any) addr:0x02063a38
-data_02063a3c kind:data(any) addr:0x02063a3c
-data_02063a40 kind:data(any) addr:0x02063a40
-data_02063a48 kind:data(any) addr:0x02063a48
-data_02063a50 kind:data(any) addr:0x02063a50
+@3073 kind:data(any) addr:0x02063a2c local
+@3096 kind:data(any) addr:0x02063a38 local
+@3098 kind:data(any) addr:0x02063a3c local
+@3110 kind:data(any) addr:0x02063a40 local
+@3372 kind:data(any) addr:0x02063a48 local
+@3948 kind:data(any) addr:0x02063a50 local
 @1804 kind:data(any) addr:0x02063a5c local
 @1805 kind:data(any) addr:0x02063a78 local
 @1806 kind:data(any) addr:0x02063a80 local
@@ -1991,8 +1991,8 @@ data_02063b18 kind:data(any) addr:0x02063b18
 @1298 kind:data(any) addr:0x02063c60 local
 @1299 kind:data(any) addr:0x02063c80 local
 data_02063c9c kind:data(any) addr:0x02063c9c
-data_02063cbc kind:data(any) addr:0x02063cbc
-data_02063cc4 kind:data(any) addr:0x02063cc4
+@2936 kind:data(any) addr:0x02063cbc local
+@2937 kind:data(any) addr:0x02063cc4 local
 data_02063cc8 kind:data(word[5]) addr:0x02063cc8
 data_02063cdc kind:data(word[10]) addr:0x02063cdc
 data_02063d04 kind:data(any) addr:0x02063d04

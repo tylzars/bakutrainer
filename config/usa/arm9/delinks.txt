@@ -444,8 +444,10 @@ src/Main/Minigame/falling_blocks.c:
     .bss        start:0x02064820 end:0x02064824
 
 src/Main/Scene/result_screen.c:
+    complete
     .text       start:0x0200494c end:0x020054a4
     .rodata     start:0x0204e0cc end:0x0204e0e8
+    .data       start:0x02063908 end:0x0206391c
 
 src/Main/Scene/mode_select.c:
     complete
@@ -518,6 +520,7 @@ src/Main/Scene/language_menu.c:
 // its strings 0x02063a2c-0x02063a5c follow in creation order and its .bss is the stage selection state. The end is
 // provisional (the lookup helpers func_020144a4..func_0201456c show no file break)
 src/Main/Scene/stage_info_panel.c:
+    complete
     .text       start:0x02011518 end:0x020145bc
     .rodata     start:0x0204fedc end:0x020500d4
     .data       start:0x02063a2c end:0x02063a5c
@@ -661,9 +664,11 @@ src/Main/Link/comm_link.c:
 // provisional: the music tracker player on data_020c6b14 (defined here): from its song loader (the code before it
 // uses other objects) up to the wireless helpers at 0x020386a4, with the tick's wave table and strings in .data
 src/Main/Sound/tracker_player.c:
+    complete
     .text       start:0x02035108 end:0x020386a4
     .rodata     start:0x020509c0 end:0x02052444
     .data       start:0x02063c9c end:0x02063cc8
+    .bss        start:0x020c6b14 end:0x020c8380
 
 // provisional: the wireless helper state machine on data_020c8380 and the WM buffers (data_020c83e0..data_020c95e0)
 // with its state-name tables and debug strings, then (Thumb) the link indicator and shutdown on data_020c9e00, up to
