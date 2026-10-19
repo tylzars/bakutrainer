@@ -186,7 +186,7 @@ void func_0202397c(int from, int node) {
     u32 i;
     int ix, iy, iz;
     u16 ax, ay, az;
-    int step;
+    u32 step;
     VecFx32 *v;
 
     n = &data_020c31dc.mUnk_38[node];
@@ -242,11 +242,11 @@ void func_0202397c(int from, int node) {
     r00 = (cy * cz) >> 12;
     r01 = (-cy * sz) >> 12;
     r02 = -sy;
-    r10 = (cx * sz + (-a) * cz) >> 12;
+    r10 = ((-a) * cz + cx * sz) >> 12;
     r11 = (a * sz + cx * cz) >> 12;
     r12 = (-sx * cy) >> 12;
     r20 = (b * cz + sx * sz) >> 12;
-    r21 = (sx * cz + (-b) * sz) >> 12;
+    r21 = ((-b) * sz + sx * cz) >> 12;
     r22 = (cx * cy) >> 12;
     k0 = n->mUnk_2 * scale[0];
     k1 = n->mUnk_3 * scale[1];
@@ -711,6 +711,7 @@ void func_02024b5c(u32 id, void *params, void *obj, int flags) {
     if (mode != 3 && mode != 5) {
         ang = ((*res & 0xff000000) >> 16) - p->mUnk_38;
         if (mode != 1) {
+            sh0 = (*res & 0xff0000) >> 16;
             a0 = ang >> 4;
             a1 = (u16) (angOfs + p->mUnk_3a) >> 4;
             a2 = p->mUnk_3c >> 4;
@@ -722,7 +723,6 @@ void func_02024b5c(u32 id, void *params, void *obj, int flags) {
             sin1 = FX_SinCosTable_[a1 * 2];
             c2s0 = (cos2 * sin0) >> 12;
             s2s0 = (sin2 * sin0) >> 12;
-            sh0 = (*res & 0xff0000) >> 16;
             data_020c31dc.mUnk_44 = sh0;
             sx = 16 << sh0;
             if (sh0 != 0) {
