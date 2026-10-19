@@ -17,7 +17,7 @@ typedef struct IndexNode16 {
 void func_0201f450(int a, int b, u32 c, u32 d);
 u8 *func_0201f5bc(u8 *palette, u32 count, int a, int target);
 void func_0201f648(void);
-void func_0201f6d0(int a, int b, int c, int d, u16 e);
+void func_0201f6d0(int a, int b, int c, u16 d, u16 e);
 int func_0201f794(int a, int b);
 int func_0201f7c0(int a, int b);
 void func_0201f7cc(int a);

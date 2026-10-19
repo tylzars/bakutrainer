@@ -522,16 +522,14 @@ void func_0201c1e0(void) {
 void func_0201c32c(void) {
     u16 keys = (((*(vu16 *) HW_KEYINPUT) | (*(vu16 *) HW_SHARED_BUTTONS)) ^ 0x2fff) & 0x2fff;
     u16 held;
-    s32 prev;
     int i = 0;
     u16 repeat = 0;
-    u16 last;
+
     held = keys;
     data_020c18bc.mUnk_016 |= 0xffff ^ keys;
     held &= data_020c18bc.mUnk_016;
-    prev = data_020c18bc.mUnk_10;
-    data_020c18bc.mUnk_014 = prev & (held ^ prev);
-    data_020c18bc.mUnk_12 = held & (held ^ prev);
+    data_020c18bc.mUnk_12 = held & (held ^ data_020c18bc.mUnk_10);
+    data_020c18bc.mUnk_014 = data_020c18bc.mUnk_10 & (held ^ data_020c18bc.mUnk_10);
     data_020c18bc.mUnk_10 = held;
     for (; held != 0; held >>= 1) {
         if (held & 1) {
@@ -551,9 +549,8 @@ void func_0201c32c(void) {
             data_020c18bc.mUnk_004[i]--;
         }
     }
-    last = data_020c18bc.mUnk_018;
-    data_020c18bc.mUnk_01c = last & (repeat ^ last);
-    data_020c18bc.mUnk_01a = repeat & (repeat ^ last);
+    data_020c18bc.mUnk_01a = repeat & (repeat ^ data_020c18bc.mUnk_018);
+    data_020c18bc.mUnk_01c = data_020c18bc.mUnk_018 & (repeat ^ data_020c18bc.mUnk_018);
     data_020c18bc.mUnk_018 = repeat;
     if (data_020c18bc.mUnk_12 & 0xf00) {
         data_020c18bc.mUnk_02e = (1 + data_020c18bc.mUnk_02e) & 0xf;
@@ -1855,9 +1852,10 @@ void func_0201e56c(u8 *data, int target, void *lut) {
             quant[t][k] = (quant[t][k] * data_020502f8[k]) >> 12;
         }
     }
+    i = 0;
     mcu = func_0201c430(0x1c0);
     y = 0;
-    for (i = 0; i < 0x100; i++) {
+    for (; i < 0x100; i++) {
         buf[i] = 0;
         buf[i + 0x100] = i;
         buf[i + 0x200] = 0xff;
@@ -2052,9 +2050,8 @@ void func_0201ec2c(int type, u32 size, u32 addr) {
 
 #pragma thumb off
 u16 func_0201eea4(u8 (*pal)[3], int c0, int c1, int c2, int index) {
-    u8 *p = pal[index];
-    int d1 = p[1] - c1;
-    int d2 = p[2] - c2;
+    int d2 = pal[index][2] - c2;
+    int d1 = pal[index][1] - c1;
     int d0 = pal[index][0] - c0;
 
     return d2 * d2 + d1 * d1 + d0 * d0;
@@ -2337,7 +2334,7 @@ void func_0201f648(void) {
     }
 }
 
-void func_0201f6d0(int a, int b, int c, int d, u16 e) {
+void func_0201f6d0(int a, int b, int c, u16 d, u16 e) {
     int phase = 0;
     int touched = 0;
     u32 frames = 0;
