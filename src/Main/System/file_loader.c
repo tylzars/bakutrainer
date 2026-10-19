@@ -112,15 +112,14 @@ void func_0202e04c(FileCacheNode *nodes, u32 index) {
 // its path count, and a slot that has no path left and was marked removed (-2) becomes free again (-1). The key's own
 // slot becomes free if no path goes through it, removed otherwise. Its node moves to the end of the list.
 void func_0202e0a4(u32 key, FileCache *cache) {
-    u32 bits;
-    u32 step;
+    u32 n;
     u32 idx;
     FileCacheSlot *slots;
     FileCacheNode *nodes;
 
-    bits = cache->mUnk_18;
-    idx = (key << (32 - bits)) >> (32 - bits);
-    step = data_02050378[(key >> bits) & 0x7f];
+    n = cache->mUnk_18;
+    idx = (key << (32 - n)) >> (32 - n);
+    n = data_02050378[(key >> n) & 0x7f];
     slots = cache->mUnk_00;
     nodes = cache->mUnk_04;
     for (;;) {
@@ -144,7 +143,7 @@ void func_0202e0a4(u32 key, FileCache *cache) {
         if (slots[idx].mUnk_6 == 0 && slots[idx].mUnk_0 == -2) {
             slots[idx].mUnk_0 = -1;
         }
-        idx += step;
+        idx += n;
         idx = (idx << (32 - cache->mUnk_18)) >> (32 - cache->mUnk_18);
     }
 }

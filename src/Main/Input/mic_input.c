@@ -107,10 +107,11 @@ void func_02021194(void) {
     MI_CpuClearFast(data_020c18bc.mUnk_1ec, 0x20);
 }
 
+// Sums the spectrum over each band's range, stores the sums in the current history slot and totals each band over
+// the history.
 void func_020211d8(const u8 *spectrum, const u16 *ranges, u32 count, u32 *totals, u32 *sums) {
-    u32 i;
-    u32 slot;
-    int j;
+    int i;
+    u32 j;
     u32 lo;
     u32 hi;
     if (count >= MIC_MAX_BANDS) {
@@ -128,14 +129,14 @@ void func_020211d8(const u8 *spectrum, const u16 *ranges, u32 count, u32 *totals
         }
         ranges += 2;
     }
-    slot = data_020c18bc.mUnk_45c & 0xf;
+    j = data_020c18bc.mUnk_45c & 0xf;
     for (i = 0; i < count; i++) {
-        data_020c18bc.mUnk_0ec[slot][i] = sums[i];
+        data_020c18bc.mUnk_0ec[j][i] = sums[i];
     }
-    for (i = 0; i < count; i++) {
-        totals[i] = 0;
-        for (j = 0; j < MIC_HISTORY; j++) {
-            totals[i] += data_020c18bc.mUnk_0ec[j][i];
+    for (j = 0; j < count; j++) {
+        totals[j] = 0;
+        for (i = 0; i < MIC_HISTORY; i++) {
+            totals[j] += data_020c18bc.mUnk_0ec[i][j];
         }
     }
 }

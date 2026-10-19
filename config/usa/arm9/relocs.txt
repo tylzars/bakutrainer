@@ -6115,6 +6115,7 @@ from:0x0202afac kind:load to:0x02050998 add:0x1 module:main
 from:0x0202b198 kind:load to:0x020c267c add:0x18 module:main
 from:0x0202b218 kind:arm_call to:0x0203f81c module:main
 from:0x0202b264 kind:load to:0x020c267c add:0x18 module:main
+from:0x0202b268 kind:load to:0x02050378 module:main
 from:0x0202b2b0 kind:arm_call to:0x0203f81c module:main
 from:0x0202b2cc kind:arm_call to:0x0202b19c module:main
 from:0x0202b2e0 kind:arm_call to:0x0202afb0 module:main
@@ -6133,6 +6134,8 @@ from:0x0202b9f8 kind:arm_call to:0x0201c580 module:main
 from:0x0202ba34 kind:arm_call to:0x0201c6b0 module:main
 from:0x0202bb0c kind:load to:0x020c267c add:0x18 module:main
 from:0x0202bb10 kind:load to:0x020c267c module:main
+from:0x0202bb18 kind:load to:0x02050378 module:main
+from:0x0202bb24 kind:load to:0x02050978 module:main
 from:0x0202bb2c kind:load to:0x020c267c add:0xb00 module:main
 from:0x0202bb54 kind:arm_call to:0x0202ae34 module:main
 from:0x0202bc30 kind:arm_call_thumb to:0x0201c4f0 module:main

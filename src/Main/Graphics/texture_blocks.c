@@ -1260,7 +1260,7 @@ void func_0202cf38(int id, int x, int y, int w, int angle, int sx, int sy, int m
 
 // Looks up the point of type index in the object's record and flips it for the flip flags in bits 16 and 17 of
 // flags; returns whether it exists.
-int func_0202d7a0(u32 flags, int index, s32 *out) {
+int func_0202d7a0(u16 flags, int index, s32 *out) {
     u32 *hdr = func_0202adc0(flags);
     u32 i;
     u32 count = hdr[0] & 0xff;

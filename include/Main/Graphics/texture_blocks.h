@@ -78,7 +78,7 @@ u8 func_0202cdac(int layer);
 u32 func_0202cde4(int angle, int sx, int sy, u32 flags);
 void func_0202cf08(int id, int x, int y, int w, int mode);
 void func_0202cf38(int id, int x, int y, int w, int angle, int sx, int sy, int mode);
-int func_0202d7a0(u32 flags, int index, s32 *out);
+int func_0202d7a0(u16 flags, int index, s32 *out);
 int func_0202d828(int obj, int a, s32 *rect);
 void func_0202d908(int a);
 

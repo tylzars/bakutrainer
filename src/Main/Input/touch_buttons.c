@@ -131,34 +131,27 @@ typedef struct TouchPoint {
 
 // Tests whether the point (px, py) lies inside the polygon the shape table describes, placed at (x, y).
 int func_02020ab8(int x, int y, int shape, int px, int py) {
-    u32 i;
-    int inside;
-    u16 id;
-    TouchPoint points[16];
-    TouchPoint corner;
     int found = 1;
     int next = 0;
+    int inside;
+    u32 i;
+    TouchPoint points[16];
+    s32 corner[2];
     u32 count;
-    TouchPoint *base;
     TouchPoint *p;
     while (next == 0 || found == 1) {
         count = 0;
         inside = 0;
-        base = points;
-        p = base;
-        id = shape;
         for (;;) {
-            found = func_0202d7a0(id, next++ + 2, (s32 *) &corner);
+            found = func_0202d7a0(shape, next++ + 2, corner);
             if (found != 1) {
                 break;
             }
-            if (count != 0 && points[0].x == x + corner.x && points[0].y == y + corner.y) {
+            if (count != 0 && points[0].x == x + corner[0] && points[0].y == y + corner[1]) {
                 break;
             }
-            p->x = x + corner.x;
-            base[count].y = y + corner.y;
-            p++;
-            count++;
+            points[count].x = x + corner[0];
+            points[count++].y = y + corner[1];
         }
         if (count != 0 && count <= 2) {
             OS_Terminate();
