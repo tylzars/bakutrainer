@@ -1722,45 +1722,6 @@ void func_02033614(s32 x, s32 z) {
     func_020334f8(0);
 }
 
-// Moves the view angle a quarter of the way towards the direction from the camera to the look-at point (skipped
-// once when mUnk_34[0] is set).
-void func_02033b04(void) {
-    s32 dx;
-    s32 dz;
-    s32 diff;
-    VecFx32 *target;
-
-    if (data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_34[0] == 0) {
-        target = &data_020c3e44.mUnk_2024.mUnk_74;
-        dx = data_020c3e44.mUnk_2024.mUnk_5c.x - target->x;
-        dz = data_020c3e44.mUnk_2024.mUnk_5c.z - target->z;
-        diff = func_0201fe34(data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_56, func_0201feb0(-dx >> 6, -dz >> 6));
-        data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_56 += (u16) (diff / 4);
-    } else {
-        data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_34[0] = 0;
-    }
-}
-
-// One step of the view angle blend from mUnk_16 to mUnk_18 over mUnk_11[0] steps (mUnk_10 counts them); c points at
-// the blend counters from mUnk_0c on.
-void func_02033b8c(void) {
-    u8 *c = &data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_0c;
-    if (c[4] == 0) {
-        return;
-    }
-    if (c[5] - 1 > 1) {
-        data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_14 = func_0201fb74(
-            c[4], c[5] - 1, data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_16, data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_18);
-        c[4]++;
-        if (c[4] == c[5]) {
-            c[4] = 0;
-        }
-    } else {
-        data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_14 = data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_18;
-        c[4] = 0;
-    }
-}
-
 // Moves the look-at point towards pos: by a fraction of the distance to its goal when a divisor is set, otherwise
 // in mUnk_0d steps from the point where pos last moved far (squared distance beyond mUnk_30 squared) away.
 void func_0203393c(VecFx32 *pos) {
@@ -1817,6 +1778,45 @@ void func_0203393c(VecFx32 *pos) {
         data_020c3e44.mUnk_2024.mUnk_74.z +=
             (data_020c3e44.mUnk_2024.mUnk_9c.mUnk_228.z - data_020c3e44.mUnk_2024.mUnk_74.z) /
             data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_4e;
+    }
+}
+
+// Moves the view angle a quarter of the way towards the direction from the camera to the look-at point (skipped
+// once when mUnk_34[0] is set).
+void func_02033b04(void) {
+    s32 dx;
+    s32 dz;
+    s32 diff;
+    VecFx32 *target;
+
+    if (data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_34[0] == 0) {
+        target = &data_020c3e44.mUnk_2024.mUnk_74;
+        dx = data_020c3e44.mUnk_2024.mUnk_5c.x - target->x;
+        dz = data_020c3e44.mUnk_2024.mUnk_5c.z - target->z;
+        diff = func_0201fe34(data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_56, func_0201feb0(-dx >> 6, -dz >> 6));
+        data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_56 += (u16) (diff / 4);
+    } else {
+        data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_34[0] = 0;
+    }
+}
+
+// One step of the view angle blend from mUnk_16 to mUnk_18 over mUnk_11[0] steps (mUnk_10 counts them); c points at
+// the blend counters from mUnk_0c on.
+void func_02033b8c(void) {
+    u8 *c = &data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_0c;
+    if (c[4] == 0) {
+        return;
+    }
+    if (c[5] - 1 > 1) {
+        data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_14 = func_0201fb74(
+            c[4], c[5] - 1, data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_16, data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_18);
+        c[4]++;
+        if (c[4] == c[5]) {
+            c[4] = 0;
+        }
+    } else {
+        data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_14 = data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_18;
+        c[4] = 0;
     }
 }
 
