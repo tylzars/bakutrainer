@@ -619,6 +619,7 @@ from:0x02005ec8 kind:thumb_call to:0x020271ec module:main
 from:0x02005f50 kind:load to:0x0206d6e0 module:main
 from:0x02005f54 kind:load to:0x0206d714 module:main
 from:0x02005f58 kind:load to:0x0206d460 module:main
+from:0x02005f64 kind:load to:0x0201abbc module:main
 from:0x02005fb0 kind:thumb_call to:0x02005c54 module:main
 from:0x02005ff4 kind:thumb_call to:0x02005c54 module:main
 from:0x02006088 kind:thumb_call to:0x02005c54 module:main
@@ -745,8 +746,10 @@ from:0x02006aa8 kind:load to:0x020b1b08 module:main
 from:0x02006aac kind:load to:0x0206d5e8 module:main
 from:0x02006ab0 kind:load to:0x0206d5e0 module:main
 from:0x02006ab4 kind:load to:0x020b10fc module:main
+from:0x02006ac0 kind:load to:0x0204e138 module:main
 from:0x02006ac8 kind:load to:0x0206d6e0 module:main
 from:0x02006acc kind:load to:0x0206d660 module:main
+from:0x02006ad0 kind:load to:0x0201ab04 module:main
 from:0x02006ad4 kind:load to:0x0206d470 module:main
 from:0x02006ad8 kind:load to:0x0206d620 module:main
 from:0x02006adc kind:load to:0x020c3e44 add:0x22e8 module:main

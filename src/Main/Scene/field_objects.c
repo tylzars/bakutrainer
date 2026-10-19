@@ -93,15 +93,15 @@ void func_02005d94(u8 g) {
 }
 
 void func_02005de0(u8 g, u8 k) {
+    int a, b;
     s32 width = data_0206d460.mInfo.mUnk_28 - data_0206d460.mInfo.mUnk_1c;
     s32 height = data_0206d460.mInfo.mUnk_30 - data_0206d460.mInfo.mUnk_24;
     s32 cellW = width / 8;
     s32 cellH = height / 8;
-    int a, b, idx;
+    int idx;
     FieldObject *obj;
-    FieldObject *row = data_0206d460.mGrid[g][0];
     for (a = 0; a < 8; a++) {
-        obj = row;
+        obj = data_0206d460.mGrid[g][a];
         for (b = 0; b < 8; b++) {
             obj->mType = 1;
             obj->mUnk_04 = data_0206d460.mInfo.mUnk_1c + g * width + a * cellW + cellW / 2;
@@ -109,17 +109,20 @@ void func_02005de0(u8 g, u8 k) {
             obj->mUnk_0c = data_0206d460.mInfo.mUnk_24 + b * cellH + cellH / 2;
             obj->mUnk_1c0 = -1;
             obj->mUnk_1c2 = -1;
-            obj->mKind = data_0206d460.mUnk_2a8b4[k * 64 + a * 8 + b];
-            if (obj->mKind == 2) {
-                func_020271ec(obj->mUnk_48, 0, 0, 0, data_0201abbc[9]);
-                obj->mUnk_38 = -1;
-                obj->mUnk_34 = -1;
-                obj->mUnk_30 = -1;
-            } else if (obj->mKind == 3) {
-                func_020271ec(obj->mUnk_48, 0, 0, 0, data_0201abbc[10]);
-                obj->mUnk_38 = -1;
-                obj->mUnk_34 = -1;
-                obj->mUnk_30 = -1;
+            obj->mKind = data_0206d460.mUnk_2a8b4[k][a][b];
+            switch (obj->mKind) {
+                case 2:
+                    func_020271ec(obj->mUnk_48, 0, 0, 0, data_0201abbc[9]);
+                    obj->mUnk_38 = -1;
+                    obj->mUnk_34 = -1;
+                    obj->mUnk_30 = -1;
+                    break;
+                case 3:
+                    func_020271ec(obj->mUnk_48, 0, 0, 0, data_0201abbc[10]);
+                    obj->mUnk_38 = -1;
+                    obj->mUnk_34 = -1;
+                    obj->mUnk_30 = -1;
+                    break;
             }
             if (obj->mKind == 2) {
                 for (idx = 0; idx < 128; idx++) {
@@ -132,7 +135,6 @@ void func_02005de0(u8 g, u8 k) {
             }
             obj++;
         }
-        row += 8;
     }
 }
 
@@ -392,16 +394,15 @@ void func_020067ac(void) {
     s32 level = data_020b6ee0.mUnk_a8e4;
     u16 v[5];
     s32 i, j, k;
-    s32 stageNo;
     s8 value;
-    BOOL ok = 0;
+    BOOL ok;
     if (level < 0) {
         level = 0;
     }
     data_0206d460.mStage = data_020b1990[level].mInfo;
-    stageNo = data_0206d460.mStage.mUnk_11 - 1;
-    data_020b10fc.mUnk_08 = stageNo;
-    if (stageNo >= 0 && stageNo < 12) {
+    data_020b10fc.mUnk_08 = data_0206d460.mStage.mUnk_11 - 1;
+    ok = 0;
+    if (data_020b10fc.mUnk_08 >= 0 && data_020b10fc.mUnk_08 < 12) {
         ok = 1;
     }
     if (ok == 0) {
@@ -416,9 +417,9 @@ void func_020067ac(void) {
     func_0200659c();
     G3X_SetClearColor(0x7fff, 8, 0x7fff, 0, 0);
     {
-        s32 dz = (data_0206d460.mInfo.mUnk_00.z - data_0206d460.mUnk_274.z) / 512;
-        s32 dx = (data_0206d460.mInfo.mUnk_00.x - data_0206d460.mUnk_274.x) / 512;
-        data_0206d460.mUnk_26c = func_0201fcec((s64) dx * dx + (s64) dz * dz);
+        s64 dx = (data_0206d460.mInfo.mUnk_00.x - data_0206d460.mUnk_274.x) / 512;
+        s64 dz = (data_0206d460.mInfo.mUnk_00.z - data_0206d460.mUnk_274.z) / 512;
+        data_0206d460.mUnk_26c = func_0201fcec(dx * dx + dz * dz);
     }
     func_020271ec(&data_0206d460.mUnk_010, 0, 0, 0, data_0201ab04[data_0206d460.mStage.mUnk_13]);
     data_0206d460.mUnk_1e8 = 3 << 14;
@@ -447,7 +448,7 @@ void func_020067ac(void) {
     for (i = 0; i < 42; i++) {
         for (j = 0; j < 6; j++) {
             for (k = 0; k < 8; k++) {
-                data_0206d460.mUnk_2a8b4[i * 64 + k * 8 + j + 1] = func_02005c24(k, j + i * 6 + 2);
+                data_0206d460.mUnk_2a8b4[i][k][j + 1] = func_02005c24(k, j + (i * 6 + 2));
             }
         }
     }
@@ -465,7 +466,7 @@ void func_020067ac(void) {
         func_02005d94(i);
     }
     for (i = 0; i < 128; i++) {
-        data_0206d460.mList[i].mKind = i;
+        data_0206d460.mList[i].mKind = 0;
     }
     for (i = 2; i < 4; i++) {
         func_02005de0(i, data_0206d460.mUnk_2b8b4[func_0201fd84(0, data_0206d460.mUnk_2b8f4 - 2)]);

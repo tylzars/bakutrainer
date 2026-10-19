@@ -237,7 +237,7 @@ static inline void G3_LightColor(u32 num, u16 color) {
     *(vu32 *) 0x040004cc = (num << 30) | color;
 }
 
-void func_0200be50(u32 num, s8 x, s8 y, s8 z, u16 color) {
+void func_0200be50(u32 num, s8 x, s8 y, s8 z, u32 color) {
     G3_LoadMtx43(&data_020c3e44.mUnk_3c);
     reg_G3X_MTX_MODE = 2;
     data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_5b = 0;

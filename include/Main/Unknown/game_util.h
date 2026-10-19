@@ -56,7 +56,7 @@ int func_0200bdac(u32 a, u32 b, u32 c);
 void func_0200bdcc(int a, int b);
 u16 func_0200be10(u32 r, u32 g, u32 b);
 void func_0200be20(u32 num, int a, int b, u16 color);
-void func_0200be50(u32 num, s8 x, s8 y, s8 z, u16 color);
+void func_0200be50(u32 num, s8 x, s8 y, s8 z, u32 color);
 void func_0200bec0(VecFx32 *out, int a, int b, int scale);
 void func_0200bf38(u32 value);
 u32 func_0200bf54(int n);

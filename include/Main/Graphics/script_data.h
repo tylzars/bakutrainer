@@ -30,7 +30,7 @@ extern const u8 data_0201a6d0[];
 extern const u32 data_0201aa60[];
 extern const u32 data_0201ab04[];
 extern u32 data_0201aba0[7];
-extern const u32 data_0201abbc[];
+extern u32 data_0201abbc[];
 extern void *data_0201abec[];
 
 #ifdef __cplusplus

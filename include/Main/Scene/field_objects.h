@@ -78,7 +78,7 @@ typedef struct FieldObjects {
     FieldInfo mInfo;
     FieldObject mGrid[4][8][8];
     FieldObject mList[128];
-    u8 mUnk_2a8b4[0x1000];
+    u8 mUnk_2a8b4[64][8][8];
     u8 mUnk_2b8b4[0x40];
     u8 mUnk_2b8f4;
     u8 mUnk_2b8f5[3];

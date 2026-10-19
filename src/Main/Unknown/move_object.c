@@ -98,31 +98,35 @@ int func_0200c174(MoveObj *o, const Vec2i *pos) {
             o->mX = pos->x << 8;
             o->mY = pos->y << 8;
         } else if (o->mSpeed != 0) {
-            int oldX = o->mX;
-            int oldY = o->mY;
-            int dx = (o->mTargetX - o->mStartX) >> 8;
-            int dy = (o->mTargetY - o->mStartY) >> 8;
-            int dist = func_0201faf0(dx, dy);
-            int tx;
-            int ty;
+            int dx, dy;
+            int oldX, oldY;
+            int dist;
+            int tx, ty;
+            oldX = o->mX;
+            oldY = o->mY;
+            dx = (o->mTargetX - o->mStartX) >> 8;
+            dy = (o->mTargetY - o->mStartY) >> 8;
+            dist = func_0201faf0(dx, dy);
             o->mX = o->mStartX + (o->mProgress * dx) / (dist + 1);
-            o->mY = o->mStartY + (dy * o->mProgress) / (dist + 1);
+            o->mY = o->mStartY + (o->mProgress * dy) / (dist + 1);
             o->mProgress += o->mSpeed;
             tx = o->mTargetX;
-            if ((oldX - tx != 0 ? ((oldX - tx) >> 31) | 1 : 0) != (o->mX - tx != 0 ? ((o->mX - tx) >> 31) | 1 : 0)) {
+            if (((oldX - tx) != 0 ? (((oldX - tx) >> 31) | 1) : 0) !=
+                ((o->mX - tx) != 0 ? (((o->mX - tx) >> 31) | 1) : 0)) {
                 o->mX = tx;
             }
             ty = o->mTargetY;
-            if ((oldY - ty != 0 ? ((oldY - ty) >> 31) | 1 : 0) != (o->mY - ty != 0 ? ((o->mY - ty) >> 31) | 1 : 0)) {
+            if (((oldY - ty) != 0 ? (((oldY - ty) >> 31) | 1) : 0) !=
+                ((o->mY - ty) != 0 ? (((o->mY - ty) >> 31) | 1) : 0)) {
                 o->mY = ty;
             }
             if (o->mX == o->mTargetX && o->mY == o->mTargetY) {
                 if (o->mUnk_2b4 == 0) {
                     int same = 1;
-                    int n = o->mTrailEnd - o->mTrailStart;
                     int i;
-                    if (n > 0) {
-                        for (i = 0; i < n; i++) {
+                    dx = o->mTrailEnd - o->mTrailStart;
+                    if (dx > 0) {
+                        for (i = 0; i < dx; i++) {
                             if (o->mTargetX != o->mTrail[i].x || o->mTargetY != o->mTrail[i].y) {
                                 same = 0;
                                 break;
