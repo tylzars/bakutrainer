@@ -38,6 +38,14 @@ naming them right once.
   `Init<X>` runs once, `Setup<X>` can run again.
 - A name has to be supported by what this repository shows: what the code does, the game's own strings and file
   paths, and names already given. New names carry no address (symbols.txt keeps it).
+- No function-like or expression macros (`MIN`, `CLAMP`, `ASSERT`, register-cast wrappers): they claim how the
+  source was written, which the binary can't show. Write the expression out in place, even where its shape is what
+  matches (a comment may say so). Hardware registers use the SDK headers' names (`reg_G3X_*`), or the address cast in
+  place where there is none.
+- Every name must be traceable to this repository: the code's behaviour, the game's strings, the SDK headers it
+  already has.
+- Library functions keep their library's own public API names (NitroSDK `OS_*`, `MI_*`, ...); those names come from
+  the SDK's interface, not from this ROM, so they are only given where the function's identity is certain.
 - Anything not yet understood keeps an address-based name: functions `func_<addr>` / `func_ovNNN_<addr>`, data
   `data_<addr>`, members `mUnk_<offset>`, virtual slots `vfunc_<offset>`.
 - Annotate struct members and vtables with their offsets: `/* 2c */ u8 mState;`.
