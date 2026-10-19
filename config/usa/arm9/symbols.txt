@@ -1228,7 +1228,7 @@ _ZN6Reader4ReadEPvj kind:function(arm,size=0x70) addr:0x0203ae3c
 _ZN6Reader2v4EPhj kind:function(arm,size=0x7c) addr:0x0203aeac
 _ZN6Reader2v5Ev kind:function(arm,size=0x28) addr:0x0203af28
 _ZN6Reader5CloseEv kind:function(arm,size=0x14) addr:0x0203af50
-_ZN6ReaderD1Ev kind:function(arm,size=0x4) addr:0x0203af64
+_ZN6ReaderD1Ev kind:function(arm,size=0x4) addr:0x0203af64 weak
 func_0203af68 kind:function(arm,size=0x5c0) addr:0x0203af68
 func_0203b528 kind:function(arm,size=0xc) addr:0x0203b528
 func_0203b534 kind:function(arm,size=0x8) addr:0x0203b534
@@ -1799,7 +1799,7 @@ _u32_div_f kind:function(arm,size=0x1e4) addr:0x0204dcec
 func_0204ded0 kind:function(arm,size=0x4) addr:0x0204ded0
 _ZdlPv kind:function(arm,size=0x14) addr:0x0204ded4
 func_0204dee8 kind:function(arm,size=0x2c) addr:0x0204dee8
-data_0204df14 kind:data(any) addr:0x0204df14
+@ET@func_0204a5c8 kind:data(any) addr:0x0204df14 local
 data_0204e054 kind:data(byte[120]) addr:0x0204e054
 data_0204e0cc kind:data(any) addr:0x0204e0cc
 data_0204e0d4 kind:data(any) addr:0x0204e0d4
@@ -2085,38 +2085,39 @@ data_02064538 kind:data(any) addr:0x02064538
 data_02064548 kind:data(any) addr:0x02064548
 data_020645a0 kind:data(any) addr:0x020645a0
 data_02064628 kind:data(any) addr:0x02064628
-data_020646e8 kind:data(any) addr:0x020646e8
-data_020646f0 kind:data(any) addr:0x020646f0
-data_020646f8 kind:data(any) addr:0x020646f8
-data_02064700 kind:data(any) addr:0x02064700
-data_02064704 kind:data(any) addr:0x02064704
-data_02064708 kind:data(any) addr:0x02064708
-data_02064710 kind:data(any) addr:0x02064710
-data_02064718 kind:data(any) addr:0x02064718
-data_0206471c kind:data(any) addr:0x0206471c
-data_02064720 kind:data(any) addr:0x02064720
-data_02064724 kind:data(any) addr:0x02064724
-data_02064728 kind:data(any) addr:0x02064728
-data_02064758 kind:data(any) addr:0x02064758
-data_02064780 kind:data(any) addr:0x02064780
-data_02064798 kind:data(any) addr:0x02064798
-data_020647a8 kind:data(any) addr:0x020647a8
-data_020647b0 kind:data(any) addr:0x020647b0
-data_020647b8 kind:data(any) addr:0x020647b8
-data_020647c0 kind:data(any) addr:0x020647c0
-data_020647c8 kind:data(any) addr:0x020647c8
-data_020647cc kind:data(any) addr:0x020647cc
-data_020647d0 kind:data(any) addr:0x020647d0
-data_020647d4 kind:data(any) addr:0x020647d4
-data_020647d8 kind:data(any) addr:0x020647d8
-data_020647dc kind:data(any) addr:0x020647dc
-data_020647e0 kind:data(any) addr:0x020647e0
-data_020647e4 kind:data(any) addr:0x020647e4
-data_020647e8 kind:data(any) addr:0x020647e8
-data_020647ec kind:data(any) addr:0x020647ec
-data_020647f0 kind:data(any) addr:0x020647f0
-data_020647f4 kind:data(any) addr:0x020647f4
-data_020647f8 kind:data(any) addr:0x020647f8
+@1376 kind:data(any) addr:0x020646e8 local
+@1377 kind:data(any) addr:0x020646f0 local
+@1378 kind:data(any) addr:0x020646f8 local
+@1379 kind:data(any) addr:0x02064700 local
+@1380 kind:data(any) addr:0x02064704 local
+@1381 kind:data(any) addr:0x02064708 local
+@1382 kind:data(any) addr:0x02064710 local
+@1383 kind:data(any) addr:0x02064718 local
+@1384 kind:data(any) addr:0x0206471c local
+@1745 kind:data(any) addr:0x02064720 local
+@1746 kind:data(any) addr:0x02064724 local
+@474 kind:data(any) addr:0x02064728 local
+@475 kind:data(any) addr:0x02064758 local
+@476 kind:data(any) addr:0x02064780 local
+@477 kind:data(any) addr:0x02064798 local
+@478 kind:data(any) addr:0x020647a8 local
+@479 kind:data(any) addr:0x020647b0 local
+@480 kind:data(any) addr:0x020647b8 local
+@481 kind:data(any) addr:0x020647c0 local
+@482 kind:data(any) addr:0x020647c8 local
+@483 kind:data(any) addr:0x020647cc local
+@484 kind:data(any) addr:0x020647d0 local
+@485 kind:data(any) addr:0x020647d4 local
+@486 kind:data(any) addr:0x020647d8 local
+@487 kind:data(any) addr:0x020647dc local
+@488 kind:data(any) addr:0x020647e0 local
+@489 kind:data(any) addr:0x020647e4 local
+@490 kind:data(any) addr:0x020647e8 local
+@491 kind:data(any) addr:0x020647ec local
+@492 kind:data(any) addr:0x020647f0 local
+@493 kind:data(any) addr:0x020647f4 local
+@494 kind:data(any) addr:0x020647f8 local
+data_020647fc kind:data(any) addr:0x020647fc
 OverlaySignatures kind:data(any) addr:0x02064810
 ARM9_BSS_START kind:bss addr:0x02064820
 data_02064824 kind:bss addr:0x02064824
@@ -2300,18 +2301,13 @@ data_020c9e60 kind:bss addr:0x020c9e60
 data_020ca680 kind:bss addr:0x020ca680
 data_020ca6a4 kind:bss addr:0x020ca6a4
 data_020ca6a8 kind:bss addr:0x020ca6a8
-data_020ca6ac kind:bss addr:0x020ca6ac
-data_020ca6b0 kind:bss addr:0x020ca6b0
-data_020ca6d8 kind:bss addr:0x020ca6d8
-data_020ca6dc kind:bss addr:0x020ca6dc
-data_020ca6e0 kind:bss addr:0x020ca6e0
 lockInitialized$248 kind:bss addr:0x020ca708 local
 data_020ca70c kind:bss addr:0x020ca70c
 data_020ca730 kind:bss addr:0x020ca730
 data_020ca734 kind:bss addr:0x020ca734
 data_020ca740 kind:bss addr:0x020ca740
 data_020ca800 kind:bss addr:0x020ca800
-data_020ca988 kind:bss addr:0x020ca988
+sArenaState kind:bss addr:0x020ca988 local
 sHeapTable kind:bss addr:0x020ca990 local
 data_020ca9b4 kind:bss addr:0x020ca9b4
 data_020ca9b8 kind:bss addr:0x020ca9b8
@@ -2326,13 +2322,10 @@ sIrqOwnerMask kind:bss addr:0x020caa98 local
 sIrqOwnerTable kind:bss addr:0x020caa9c local
 sndInitialized kind:bss addr:0x020caab0 local
 sndMutex kind:bss addr:0x020caab4 local
-data_020caacc kind:bss addr:0x020caacc
-data_020caae0 kind:bss addr:0x020caae0
-data_020cab04 kind:bss addr:0x020cab04
-data_020cab40 kind:bss addr:0x020cab40
-data_020cadc0 kind:bss addr:0x020cadc0
-data_020cbae0 kind:bss addr:0x020cbae0
-data_020cc5a8 kind:bss addr:0x020cc5a8
+cmdFreeList kind:bss addr:0x020caae0 local
+cmdRing kind:bss addr:0x020cab04 local
+sharedWork kind:bss addr:0x020cab40 local
+cmdPool kind:bss addr:0x020cadc0 local
 alarmTable kind:bss addr:0x020cc5c0 local
 SNDi_SharedWork kind:bss addr:0x020cc620
 pxiInitialized kind:bss addr:0x020cc624 local
@@ -2349,7 +2342,7 @@ data_020cc7b8 kind:bss addr:0x020cc7b8
 data_020cc800 kind:bss addr:0x020cc800
 data_020cc820 kind:bss addr:0x020cc820
 data_020cc880 kind:bss addr:0x020cc880
-data_020ccaa0 kind:bss addr:0x020ccaa0
+data_020ccaa0 kind:bss addr:0x020ccaa0 local
 data_020ccea0 kind:bss addr:0x020ccea0
 data_020ccec0 kind:bss addr:0x020ccec0
 data_020cd0e0 kind:bss addr:0x020cd0e0

@@ -1,3 +1,5 @@
 # place / alias / inner edits for the linker script, see tools/lcf_force_active.py.
 # Register read through a symbol by the cartridge code (scheduling).
 alias data_04000300 0x04000300 0
+# Names other units use for members of the thread system block (os_thread.c defines it as one object).
+inner data_020ca70c 0x27c

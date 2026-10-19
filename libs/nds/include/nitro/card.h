@@ -104,6 +104,9 @@ typedef struct {
 } CardPullout;
 
 // card_common.c
+// Bytes of the CardCommon state (read and written as a CardCommon).
+extern u8 data_020cc880[];
+
 void func_02044c20(void (*task)(CardCommon *));
 void func_02044c5c(u32 id, u32 type);
 void func_02044ce0(u32 id, u32 type);
@@ -125,6 +128,8 @@ u32 func_020455e8(void);
 int func_020455fc(u32 id);
 int func_02045734(void);
 int func_02045740(void);
+
+// card_rom.c
 int func_0204574c(CardRomReq *r);
 void func_020457d8(u32 a, u32 b);
 void func_02045838(void);
@@ -137,6 +142,8 @@ void func_02045ccc(u32 dma, u32 src, void *dst, u32 len, void (*cb)(void *), voi
 void func_02045dc4(void);
 int func_02045e28(void);
 void (*func_02045e34(void))(CardRomReq *);
+
+// card_request.c
 void func_02045e40(int tag, u32 data, BOOL err);
 void func_02045e74(void *arg);
 int func_02045ec4(CardCommon *c, u32 cmd, int tries);

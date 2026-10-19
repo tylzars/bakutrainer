@@ -1,5 +1,7 @@
     .text       start:0x02000000 end:0x0204df14 kind:code align:32
-    .rodata     start:0x0204df14 end:0x020638fc kind:rodata align:4
+    .exception  start:0x0204df14 end:0x0204df1c kind:rodata align:4
+    .exceptix   start:0x0204df1c end:0x0204e054 kind:rodata align:4
+    .rodata     start:0x0204e054 end:0x020638fc kind:rodata align:4
     .ctor       start:0x020638fc end:0x020638fc kind:rodata align:4
     .data       start:0x02063900 end:0x02064820 kind:data align:32
     .bss        start:0x02064820 end:0x020ce200 kind:bss align:32
@@ -65,9 +67,13 @@ libs/nds/src/gx/gx_fifo.c:
     .text       start:0x0203d178 end:0x0203d1b8
 
 libs/nds/src/os/os_irqtable.c:
+    complete
     .text       start:0x0203d1b8 end:0x0203d468
+    .data       start:0x020644a8 end:0x020644b8
+    .bss        start:0x020ca6a8 end:0x020ca708
 
 libs/nds/src/os/os_interrupt.c:
+    complete
     .text       start:0x0203d468 end:0x0203d554
 
 libs/nds/src/os/os_spinlock.c:
@@ -76,7 +82,9 @@ libs/nds/src/os/os_spinlock.c:
     .bss        start:0x020ca708 end:0x020ca70c
 
 libs/nds/src/os/os_thread.c:
+    complete
     .text       start:0x0203d8c0 end:0x0203e25c
+    .bss        start:0x020ca70c end:0x020ca988
 
 // provisional: the mutex functions at the end may be a file of their own
 libs/nds/src/os/os_message.c:
@@ -94,7 +102,9 @@ libs/nds/src/os/os_init.c:
 
 // provisional: split from os_init.c
 libs/nds/src/os/os_arena.c:
+    complete
     .text       start:0x0203e5fc end:0x0203e948
+    .bss        start:0x020ca988 end:0x020ca990
 
 libs/nds/src/os/os_alloc.c:
     complete
@@ -185,10 +195,12 @@ libs/nds/src/snd/snd_cmdwrap.c:
 libs/nds/src/snd/snd_main.c:
     complete
     .text       start:0x020402f0 end:0x02040328
-    .bss        start:0x020caab0 end:0x020caacc
+    .bss        start:0x020caab0 end:0x020caae0
 
 libs/nds/src/snd/snd_command.c:
+    complete
     .text       start:0x02040328 end:0x020409cc
+    .bss        start:0x020caae0 end:0x020cc5c0
 
 // provisional: split from snd_work.c
 libs/nds/src/snd/snd_alarm.c:
@@ -244,7 +256,19 @@ libs/nds/src/ctrdg/ctrdg.c:
     .text       start:0x02048254 end:0x0204873c
 
 libs/nds/src/card/card_common.c:
-    .text       start:0x02044c20 end:0x02046018
+    complete
+    .text       start:0x02044c20 end:0x0204574c
+    .bss        start:0x020cc800 end:0x020ccea0
+
+libs/nds/src/card/card_rom.c:
+    complete
+    .text       start:0x0204574c end:0x02045e40
+    .data       start:0x020644c8 end:0x020644cc
+    .bss        start:0x020ccea0 end:0x020cd0e0
+
+libs/nds/src/card/card_request.c:
+    complete
+    .text       start:0x02045e40 end:0x02046018
 
 libs/nds/src/card/card_pullout.c:
     complete
@@ -288,23 +312,35 @@ libs/nds/src/math/math_fft.c:
     .text       start:0x0204882c end:0x02048b3c
 
 libs/msl/src/free_ptr.c:
+    complete
     .text       start:0x02048b3c end:0x02048b50
+    .exceptix   start:0x0204df1c end:0x0204df28
 
 libs/msl/src/abs.c:
     complete
     .text       start:0x02048b50 end:0x02048b5c
 
 libs/msl/src/mbstring.c:
+    complete
     .text       start:0x02048b5c end:0x02048c3c
+    .exceptix   start:0x0204df28 end:0x0204df40
 
 libs/msl/src/mem.c:
+    complete
     .text       start:0x02048c3c end:0x02048d8c
+    .exceptix   start:0x0204df40 end:0x0204df4c
 
 libs/msl/src/printf.c:
+    complete
     .text       start:0x02048d8c end:0x0204aedc
+    .exception  start:0x0204df14 end:0x0204df1c
+    .exceptix   start:0x0204df4c end:0x0204dfb8
+    .data       start:0x020646e8 end:0x02064728
 
 libs/msl/src/qsort.c:
+    complete
     .text       start:0x0204aedc end:0x0204b040
+    .exceptix   start:0x0204dfb8 end:0x0204dfc4
 
 libs/msl/src/string.c:
     complete
@@ -319,20 +355,29 @@ libs/msl/src/s_fabs.c:
     .text       start:0x0204b1d8 end:0x0204b1f8
 
 libs/msl/src/s_frexp.c:
+    complete
     .text       start:0x0204b1f8 end:0x0204b2b4
+    .exceptix   start:0x0204dfc4 end:0x0204dfd0
 
 libs/msl/src/s_scalbn.c:
+    complete
     .text       start:0x0204b2b4 end:0x0204b500
+    .exceptix   start:0x0204dfd0 end:0x0204dfdc
 
 libs/msl/src/float_digits.c:
+    complete
     .text       start:0x0204b500 end:0x0204bf28
+    .exceptix   start:0x0204dfdc end:0x0204e030
+    .data       start:0x02064728 end:0x020647fc
 
 libs/msl/src/msl_fpclassify.c:
     complete
     .text       start:0x0204bf28 end:0x0204bfac
 
 libs/msl/src/alloc.c:
+    complete
     .text       start:0x0204bfac end:0x0204bfc4
+    .exceptix   start:0x0204e030 end:0x0204e03c
 
 libs/msl/src/rt_soft_float_a.s:
     complete
@@ -351,7 +396,9 @@ libs/msl/src/rt_div32.s:
     .text       start:0x0204dae0 end:0x0204ded0
 
 libs/msl/src/rt_global_ctors.cpp:
+    complete
     .text       start:0x0204ded0 end:0x0204df14
+    .exceptix   start:0x0204e03c end:0x0204e054
 
 // provisional: starts with func_020461e4 (stores a command callback in the WM work area; called only from the
 // WM code after it) where card_pullout.c ends; the wm_command/wm_api split is inferred
@@ -371,7 +418,9 @@ libs/mobiclip/src/mobiclip_api.cpp:
     .text       start:0x02039dd8 end:0x0203a054
 
 libs/mobiclip/src/mobiclip_player.cpp:
+    complete
     .text       start:0x0203a054 end:0x0203af68
+    .data       start:0x0206447c end:0x020644a0
 
 libs/mobiclip/src/mobiclip_convert.cpp:
     complete

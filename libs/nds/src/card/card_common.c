@@ -4,30 +4,15 @@
 #include <nitro/pxi.h>
 #include <nitro/init.h>
 
-#define CARD_ROMCNT (*(vu32 *) 0x40001a4)
-#define CARD_ROMCNT_BUSY 0x80000000
-#define CARD_ROMCNT_DATA_READY 0x800000
-#define CARD_ROMDATA_ADDR 0x4100010
-#define CARD_ROMDATA (*(vu32 *) CARD_ROMDATA_ADDR)
-
 u32 data_020cc800 __attribute__((aligned(32)));
 CardArg data_020cc820 __attribute__((aligned(32)));
-// Bytes of the CardCommon state, accessed through CARD_COMMON.
+// Bytes of the CardCommon state.
 u8 data_020cc880[sizeof(CardCommon)];
 // Stack of the card thread.
 static u8 data_020ccaa0[0x400];
-// 32 bytes holding the offset added to every ROM read address (CARD_ROM_BASE); the request follows it.
-u8 data_020ccea0[0x20];
-// Bytes of the ROM read request, 32-byte aligned (the ROM read code keeps its address in a register across calls).
-u8 data_020ccec0[sizeof(CardRomReq)] __attribute__((aligned(32)));
-CardHeader *data_020644c8 = (CardHeader *) 0x27ffe00;
-
-#define CARD_ROM_BASE (*(u32 *) data_020ccea0)
-#define CARD_ROM_REQ ((CardRomReq *) data_020ccec0)
-#define CARD_COMMON ((CardCommon *) data_020cc880)
 
 void func_02044c20(void (*task)(CardCommon *)) {
-    CardCommon *c = CARD_COMMON;
+    CardCommon *c = (CardCommon *) data_020cc880;
     OS_SetThreadPriority(&c->thread, c->priority);
     c->curThread = &c->thread;
     c->task = task;
@@ -38,7 +23,7 @@ void func_02044c20(void (*task)(CardCommon *)) {
 #pragma optimize_for_size on
 #pragma dont_inline on
 void func_02044c5c(u32 id, u32 type) {
-    CardCommon *c = CARD_COMMON;
+    CardCommon *c = (CardCommon *) data_020cc880;
     u32 e = OS_DisableInterrupts();
     if (c->owner == id) {
         if (c->lockTarget != type) {
@@ -59,7 +44,7 @@ void func_02044c5c(u32 id, u32 type) {
 #pragma optimize_for_size reset
 
 void func_02044ce0(u32 id, u32 type) {
-    CardCommon *c = CARD_COMMON;
+    CardCommon *c = (CardCommon *) data_020cc880;
     u32 e = OS_DisableInterrupts();
     u32 n;
     if (c->owner != id || c->lockCount == 0) {
@@ -85,7 +70,7 @@ static inline BOOL IsBootType2(void) {
 }
 
 void func_02044d6c(void) {
-    CardCommon *c = CARD_COMMON;
+    CardCommon *c = (CardCommon *) data_020cc880;
     c->owner = CARD_OWNER_NONE;
     c->lockCount = 0;
     c->lockTarget = 0;
@@ -128,7 +113,7 @@ void func_02044ea4(u32 v) {
 #pragma optimize_for_size on
 #pragma dont_inline on
 int func_02044eb4(void) {
-    CardCommon *c = CARD_COMMON;
+    CardCommon *c = (CardCommon *) data_020cc880;
     u32 e = OS_DisableInterrupts();
     while (c->flags & CF_BUSY) {
         OS_SleepThread(&c->queue);
@@ -140,7 +125,7 @@ int func_02044eb4(void) {
 #pragma optimize_for_size reset
 
 int func_02044f00(void) {
-    return (CARD_COMMON->flags & CF_BUSY) == 0;
+    return (((CardCommon *) data_020cc880)->flags & CF_BUSY) == 0;
 }
 
 void func_02044f1c(u16 id) {
@@ -165,7 +150,7 @@ void func_02044f64(u32 id) {
 }
 
 void func_02044f8c(s32 id) {
-    CardArg *a = CARD_COMMON->arg;
+    CardArg *a = ((CardCommon *) data_020cc880)->arg;
     u32 size;
     u32 type;
     u32 variant;
@@ -288,7 +273,7 @@ void func_02044f8c(s32 id) {
     }
 fail:
     a->mUnk_18 = a->id = 0;
-    CARD_COMMON->arg->result = 3;
+    ((CardCommon *) data_020cc880)->arg->result = 3;
 }
 
 void func_02045310(CardCommon *c) {
@@ -309,7 +294,7 @@ void func_02045310(CardCommon *c) {
     if (cmd == 0xb) {
         chunk = func_020455e8();
     } else if (cmd == 0xf) {
-        chunk = CARD_COMMON->arg->mUnk_20;
+        chunk = ((CardCommon *) data_020cc880)->arg->mUnk_20;
     }
     buf = (u32) c->buf;
     do {
@@ -372,7 +357,7 @@ void func_02045310(CardCommon *c) {
 
 int func_02045500(u32 src, void *dst, u32 len, void (*cb)(void *), void *cbarg, int async, u32 cmd, u32 retry,
                   u32 mode) {
-    CardCommon *c = CARD_COMMON;
+    CardCommon *c = (CardCommon *) data_020cc880;
     u32 e;
     func_02000b9c(data_02000bec);
     e = OS_DisableInterrupts();
@@ -393,17 +378,17 @@ int func_02045500(u32 src, void *dst, u32 len, void (*cb)(void *), void *cbarg, 
         func_02044c20(func_02045310);
         return 1;
     }
-    CARD_COMMON->curThread = data_020ca730.current;
+    ((CardCommon *) data_020cc880)->curThread = data_020ca730.current;
     func_02045310(c);
     return c->arg->result == 0;
 }
 
 u32 func_020455e8(void) {
-    return CARD_COMMON->arg->mUnk_1c;
+    return ((CardCommon *) data_020cc880)->arg->mUnk_1c;
 }
 
 int func_020455fc(u32 id) {
-    CardCommon *c = CARD_COMMON;
+    CardCommon *c = (CardCommon *) data_020cc880;
     u32 e;
     u32 e2;
     void *arg;
@@ -422,7 +407,7 @@ int func_020455fc(u32 id) {
     c->cbArg = NULL;
     OS_RestoreInterrupts(e);
     func_02044f8c(id);
-    CARD_COMMON->curThread = data_020ca730.current;
+    ((CardCommon *) data_020cc880)->curThread = data_020ca730.current;
     func_02045ec4(c, 2, 1);
     c->arg->mUnk_0c = 0;
     c->arg->mUnk_10 = (u32) c->buf;
@@ -449,355 +434,4 @@ int func_02045734(void) {
 
 int func_02045740(void) {
     return func_02044f00();
-}
-
-int func_0204574c(CardRomReq *r) {
-    CardCommon *c = CARD_COMMON;
-    u32 page = *(vu32 *) &c->src & ~0x1ff;
-    if (page == r->page) {
-        u32 off = c->src - page;
-        u32 n = 0x200 - off;
-        if (n > c->len) {
-            n = c->len;
-        }
-        MI_CpuCopy8(r->cache + off, (void *) c->dst, n);
-        c->src += n;
-        c->dst += n;
-        c->len -= n;
-    }
-    return c->len != 0;
-}
-
-void func_020457d8(u32 a, u32 b) {
-    volatile u8 *p;
-    while (CARD_ROMCNT & CARD_ROMCNT_BUSY) {
-    }
-    p = (volatile u8 *) 0x40001a1;
-    p[0] = 0xc0;
-    p[7] = a >> 24;
-    p[8] = a >> 16;
-    p[9] = a >> 8;
-    p[10] = a;
-    p[11] = b >> 24;
-    p[12] = b >> 16;
-    p[13] = b >> 8;
-    p[14] = b;
-}
-
-void func_02045838(void) {
-    CardCommon *c = CARD_COMMON;
-    CardRomReq *r = CARD_ROM_REQ;
-    func_02040040(c->dma, (const void *) CARD_ROMDATA_ADDR, (void *) c->dst, 0x200);
-    func_020457d8((c->src >> 8) | 0xb7000000, c->src << 24);
-    CARD_ROMCNT = r->ctrl;
-}
-
-void func_0204588c(void) {
-    CardCommon *c;
-    CardCommon *p;
-    u32 more;
-    MI_StopDma(CARD_COMMON->dma);
-    p = CARD_COMMON;
-    p->src += 0x200;
-    p->dst += 0x200;
-    p->len -= 0x200;
-    more = p->len != 0;
-    if (!more) {
-        void (*fn)(void *);
-        void *arg;
-        u32 e;
-        OS_DisableIrqMask(CARD_IRQ_MASK);
-        OS_ResetRequestIrqMask(CARD_IRQ_MASK);
-        c = CARD_COMMON;
-        func_02046134(func_02045bd8());
-        c->arg->result = 0;
-        fn = c->callback;
-        arg = c->cbArg;
-        e = OS_DisableInterrupts();
-        c->flags &= ~(CF_BUSY | CF_TASK | CF_CANCEL);
-        OS_WakeupThread(&c->queue);
-        if (c->flags & CF_TASKWAIT) {
-            OS_WakeupThreadDirect(&c->thread);
-        }
-        OS_RestoreInterrupts(e);
-        if (fn) {
-            fn(arg);
-        }
-    } else {
-        func_02045838();
-    }
-}
-
-int func_0204595c(CardRomReq *r) {
-    CardCommon *c = CARD_COMMON;
-    u32 len = c->len;
-    int ok = 0;
-    int pageAligned = 0;
-    int noTcm = 0;
-    u32 dst = c->dst;
-    u32 mis = dst & 0x1f;
-    u32 dmaOk = 0;
-    if (mis == 0) {
-        dmaOk = c->dma <= 3;
-    }
-    if (dmaOk) {
-        u32 dtcm = func_0203ed7c();
-        u32 tcm = 1;
-        u32 inItcm = (dst + len > 0x1ff8000 && dst < 0x2000000);
-        u32 end = dst + len;
-        if (inItcm == 0) {
-            if (dtcm >= end || dtcm + 0x4000 <= dst) {
-                tcm = 0;
-            }
-        }
-        if (tcm == 0) {
-            noTcm = 1;
-        }
-    }
-    if (noTcm) {
-        if (((c->src | len) & 0x1ff) == 0) {
-            pageAligned = 1;
-        }
-    }
-    if (pageAligned && len != 0) {
-        ok = 1;
-    }
-    r->ctrl = (data_020644c8->romctrl & ~0x7000000) | 0xa1000000;
-    if (ok) {
-        u32 e;
-        e = OS_DisableInterrupts();
-        if (len < c->mUnk_118) {
-            IC_InvalidateRange((void *) dst, len);
-        } else {
-            IC_InvalidateAll();
-        }
-        if (len < c->mUnk_11c) {
-            if (mis != 0) {
-                dst -= mis;
-                DC_StoreRange((void *) dst, 0x20);
-                DC_StoreRange((void *) (dst + len), 0x20);
-                len += 0x20;
-            }
-            DC_InvalidateRange((void *) dst, len);
-            DC_WaitWriteBufferEmpty();
-        } else {
-            DC_FlushAll();
-        }
-        OS_SetIrqFunction(CARD_IRQ_MASK, func_0204588c);
-        OS_ResetRequestIrqMask(CARD_IRQ_MASK);
-        OS_EnableIrqMask(CARD_IRQ_MASK);
-        OS_RestoreInterrupts(e);
-        func_02045838();
-    }
-    return ok;
-}
-
-void func_02045ae8(CardRomReq *r) {
-    CardCommon *c = CARD_COMMON;
-    u32 t;
-    for (;;) {
-        u32 page = c->src & ~0x1ff;
-        u32 *dst;
-        u32 st;
-        u32 i;
-        u32 n;
-        if (page != c->src || ((u32) (dst = (u32 *) c->dst) & 3) || c->len < 0x200) {
-            r->page = page;
-            dst = (u32 *) r->cache;
-        }
-        func_020457d8((page >> 8) | 0xb7000000, page << 24);
-        i = 0;
-        CARD_ROMCNT = r->ctrl;
-        n = 0;
-        do {
-            st = CARD_ROMCNT;
-            if (st & CARD_ROMCNT_DATA_READY) {
-                u32 w = CARD_ROMDATA;
-                if (n < 0x200) {
-                    dst[i] = w;
-                    n += 4;
-                    i++;
-                }
-            }
-        } while (st & CARD_ROMCNT_BUSY);
-        if ((u32) dst == c->dst) {
-            t = CARD_COMMON->src + 0x200;
-            CARD_COMMON->src = t;
-            t = CARD_COMMON->dst + 0x200;
-            CARD_COMMON->dst = t;
-            t = CARD_COMMON->len - 0x200;
-            CARD_COMMON->len = t;
-            if (t == 0) {
-                break;
-            }
-        } else {
-            if (!func_0204574c(r)) {
-                return;
-            }
-        }
-    }
-}
-
-u32 func_02045bd8(void) {
-    u32 ctrl;
-    func_020457d8(0xb8000000, 0);
-    ctrl = (data_020644c8->romctrl & ~0x7000000) | 0xa7000000;
-    CARD_ROMCNT = ctrl & ~0x1fff;
-    while (!(CARD_ROMCNT & CARD_ROMCNT_DATA_READY)) {
-    }
-    return CARD_ROMDATA;
-}
-
-void func_02045c34(CardCommon *unused) {
-    CardCommon *c;
-    CardRomReq *r = CARD_ROM_REQ;
-    void (*fn)(void *);
-    void *arg;
-    u32 e;
-    if (func_0204574c(r)) {
-        r->func(r);
-    }
-    c = CARD_COMMON;
-    func_02046134(func_02045bd8());
-    c->arg->result = 0;
-    fn = c->callback;
-    arg = c->cbArg;
-    e = OS_DisableInterrupts();
-    c->flags &= ~(CF_BUSY | CF_TASK | CF_CANCEL);
-    OS_WakeupThread(&c->queue);
-    if (c->flags & CF_TASKWAIT) {
-        OS_WakeupThreadDirect(&c->thread);
-    }
-    OS_RestoreInterrupts(e);
-    if (fn) {
-        fn(arg);
-    }
-}
-
-#pragma optimize_for_size on
-void func_02045ccc(u32 dma, u32 src, void *dst, u32 len, void (*cb)(void *), void *cbarg, int async) {
-    CardRomReq *r = CARD_ROM_REQ;
-    CardCommon *c = CARD_COMMON;
-    u32 e;
-    func_02044e8c();
-    e = OS_DisableInterrupts();
-    while (c->flags & CF_BUSY) {
-        OS_SleepThread(&c->queue);
-    }
-    c->flags |= CF_BUSY;
-    c->callback = cb;
-    c->cbArg = cbarg;
-    OS_RestoreInterrupts(e);
-    c->dma = dma;
-    c->dst = (u32) dst;
-    c->src = src + CARD_ROM_BASE;
-    c->len = len;
-    if (dma <= 3) {
-        MI_StopDma(dma);
-    }
-    if (func_0204595c(r)) {
-        if (async) {
-            return;
-        }
-        func_02045e28();
-        return;
-    }
-    if (async) {
-        func_02044c20(func_02045c34);
-        return;
-    }
-    c->curThread = data_020ca730.current;
-    func_02045c34(c);
-}
-
-#pragma optimize_for_size reset
-
-void func_02045dc4(void) {
-    CardCommon *c = CARD_COMMON;
-    if (c->flags != 0) {
-        return;
-    }
-    c->flags = CF_READY;
-    c->len = 0;
-    c->dst = 0;
-    c->src = 0;
-    c->dma = -1;
-    c->callback = NULL;
-    c->cbArg = NULL;
-    CARD_ROM_BASE = 0;
-    func_02044d6c();
-    ((CardRomReq *) (data_020ccea0 + sizeof data_020ccea0))->func = func_02045e34();
-    func_02046018();
-}
-
-int func_02045e28(void) {
-    return func_02044eb4();
-}
-
-void (*func_02045e34(void))(CardRomReq *) {
-    return func_02045ae8;
-}
-
-void func_02045e40(int tag, u32 data, BOOL err) {
-    CardCommon *c;
-    if (tag != CARD_PXI_TAG) {
-        return;
-    }
-    if (err == 0) {
-        return;
-    }
-    c = CARD_COMMON;
-    c->flags &= ~CF_PXIWAIT;
-    OS_WakeupThreadDirect(c->curThread);
-}
-
-void func_02045e74(void *arg) {
-    CardCommon *c = CARD_COMMON;
-    for (;;) {
-        u32 e = OS_DisableInterrupts();
-        while (!(c->flags & CF_TASK)) {
-            OS_SleepThread(NULL);
-        }
-        OS_RestoreInterrupts(e);
-        c->task(c);
-    }
-}
-
-int func_02045ec4(CardCommon *c, u32 cmd, int tries) {
-    u32 e;
-    if (!(c->flags & CF_PXI)) {
-        c->flags |= CF_PXI;
-        if (!PXI_IsCallbackReady(CARD_PXI_TAG, 1)) {
-            do {
-                OS_SpinWait(100);
-            } while (!PXI_IsCallbackReady(CARD_PXI_TAG, 1));
-        }
-        func_02045ec4(c, 0, 1);
-    }
-    DC_FlushRange(c->arg, 0x60);
-    DC_WaitWriteBufferEmpty();
-    for (;;) {
-        c->mUnk_04 = cmd;
-        c->flags |= CF_PXIWAIT;
-        while (PXI_SendWordByFifo(CARD_PXI_TAG, cmd, 1) < 0) {
-        }
-        if (cmd == 0) {
-            CardArg *a = c->arg;
-            while (PXI_SendWordByFifo(CARD_PXI_TAG, (u32) a, 1) < 0) {
-            }
-        }
-        e = OS_DisableInterrupts();
-        while (c->flags & CF_PXIWAIT) {
-            OS_SleepThread(NULL);
-        }
-        OS_RestoreInterrupts(e);
-        DC_InvalidateRange(c->arg, 0x60);
-        if (c->arg->result != 4) {
-            break;
-        }
-        if (--tries <= 0) {
-            break;
-        }
-    }
-    return c->arg->result == 0;
 }

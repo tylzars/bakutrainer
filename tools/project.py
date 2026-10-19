@@ -206,6 +206,6 @@ def tcm_module(addr: int):
 # Constants the linker script must define for the game's code (tools/lcf_force_active.py adds them). Read their
 # values from the original's literal pools; the overlay ids (SDK_OVERLAY_OVnnn_ID) are added automatically.
 LCF_SYMBOLS = {
-    # "SDK_IRQ_STACKSIZE": "0x1000",
-    # "SDK_SYS_STACKSIZE": "0",
+    "SDK_IRQ_STACKSIZE": "0x800",  # pool words in func_0203d520, OS_InitThread and OS_GetInitArenaHi
+    "SDK_SYS_STACKSIZE": "0",  # pool words in OS_InitThread and OS_GetInitArenaHi
 }

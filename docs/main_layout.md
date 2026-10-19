@@ -8,7 +8,9 @@ and the exception index. Each line says what shows it; anything not yet checked 
 | Range | Section | Note |
 |---|---|---|
 | 0x02000000-0x0204df14 | `.text` | compiled code ends here: the exception index, then the game's tables, follow |
-| 0x0204df14-0x020638fc | `.rodata` | the game's tables in link order, the Mobiclip decoder, then the library tables |
+| 0x0204df14-0x0204df1c | `.exception` | printf's long exception record (for `func_0204a5c8`) |
+| 0x0204df1c-0x0204e054 | `.exceptix` | the exception index, built by the linker from the objects in link order |
+| 0x0204e054-0x020638fc | `.rodata` | the game's tables in link order, the Mobiclip decoder, then the library tables |
 | 0x020638fc | `.ctor` | empty |
 | 0x02063900-0x02064820 | `.data` | |
 | 0x02064820-0x020ce200 | `.bss` | |
@@ -46,7 +48,6 @@ call into a plain `b` to the decoder routine after it.
 
 ## Open
 
-- 0x0204df14-0x0204df1c: two words (0x6009ff20, 0) before the exception index.
 - Function boundaries in the library range where dsd's functions cover only part of a file's bytes (FS, CARD, WM),
   and the code at 0x020481bc-0x0204873c that dsd didn't analyse.
 - Unit (file) boundaries for game code.
