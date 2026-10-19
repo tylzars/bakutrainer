@@ -366,9 +366,9 @@ void func_02011f70(int kind, int x, int y, int delta) {
     func_0200d838(text, 2, data_0201a61c, 0x78, x, y + 6, 0, 0, 0x96, 1, 0);
 }
 
-void func_02011fec(int a, int b, int c, int d, u8 e, int x, int y, int z, u8 *state, s32 *position) {
-    int lo3;
+void func_02011fec(int a, int b, int c, u8 d, u8 e, int x, int y, int z, u8 *state, s32 *position) {
     int hi3;
+    int lo3;
     int lo4;
     int pos;
     int mid;
@@ -379,25 +379,27 @@ void func_02011fec(int a, int b, int c, int d, u8 e, int x, int y, int z, u8 *st
     int mid4;
     int half;
     int v0;
+    int base;
     int lo;
     int hi;
     int rem;
     char text[12];
 
-    if ((u32) d >= 7) {
+    if (d >= 7) {
         OS_Terminate();
     }
     if (e >= 7) {
         OS_Terminate();
     }
     v0 = data_0204ff22[e];
-    lo = data_0204ff14[d] - v0;
+    base = data_0204ff14[d];
+    lo = base - v0;
     if ((lo < GAUGE_MAX ? lo : GAUGE_MAX) < 0) {
         lo = 0;
     } else if (lo >= GAUGE_MAX) {
         lo = GAUGE_MAX;
     }
-    hi = data_0204ff14[d] + v0;
+    hi = base + v0;
     if ((hi < GAUGE_MAX ? hi : GAUGE_MAX) < 0) {
         hi = 0;
     } else if (hi >= GAUGE_MAX) {
@@ -428,21 +430,18 @@ void func_02011fec(int a, int b, int c, int d, u8 e, int x, int y, int z, u8 *st
         func_020215fc(x - 0x19, y - mid2 + 3, data_0201a612, text, 2, 200, 0x10, z);
     } else {
         half = data_020b6ee0.mUnk_a145 / 2;
-        if (data_020b6ee0.mUnk_a145 == 0x13) {
-            data_020b6ee0.mUnk_a145 = -1;
-        } else {
-            data_020b6ee0.mUnk_a145 = data_020b6ee0.mUnk_a145 + 1;
-        }
+        data_020b6ee0.mUnk_a145 = (data_020b6ee0.mUnk_a145 == 0x13) ? -1 : data_020b6ee0.mUnk_a145 + 1;
         if (data_020b6ee0.mUnk_a140 >= 7) {
             OS_Terminate();
         }
-        lo3 = data_0204ff14[data_020b6ee0.mUnk_a140] - v0;
+        base = data_0204ff14[data_020b6ee0.mUnk_a140];
+        lo3 = base - v0;
         if ((lo3 < GAUGE_MAX ? lo3 : GAUGE_MAX) < 0) {
             lo3 = 0;
         } else if (lo3 >= GAUGE_MAX) {
             lo3 = GAUGE_MAX;
         }
-        hi3 = data_0204ff14[data_020b6ee0.mUnk_a140] + v0;
+        hi3 = base + v0;
         if ((hi3 < GAUGE_MAX ? hi3 : GAUGE_MAX) < 0) {
             hi3 = 0;
         } else if (hi3 >= GAUGE_MAX) {

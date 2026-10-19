@@ -50,7 +50,7 @@ void func_0202ad54(void);
 u16 func_0202ad58(void);
 u16 func_0202ad68(void);
 u8 func_0202ad78(int layer);
-s16 func_0202ad9c(void);
+int func_0202ad9c(void);
 s8 func_0202adac(void);
 u32 *func_0202adc0(u32 index);
 u16 func_0202ade0(void);

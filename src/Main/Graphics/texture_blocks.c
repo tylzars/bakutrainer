@@ -55,7 +55,7 @@ u8 func_0202ad78(int layer) {
     return data_020c267c.mUnk_018[layer != 1].mUnk_577;
 }
 
-s16 func_0202ad9c(void) {
+int func_0202ad9c(void) {
     return data_020c267c.mUnk_b28;
 }
 

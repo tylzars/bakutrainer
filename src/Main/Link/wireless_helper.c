@@ -815,39 +815,43 @@ Unk_LinkBuffers data_020c9e00 __attribute__((aligned(32)));
 #define LINK_STEP_CHILD 0x40
 #define LINK_PACKET_OUT 0x200
 
+// One entry of object attribute memory (attributes 0-2, then one of the four affine parameters of the entry's group).
+typedef struct {
+    vu16 mUnk_0;
+    vu16 mUnk_2;
+    vu16 mUnk_4;
+    vu16 mUnk_6;
+} Unk_OamEntry;
+
 // Sets up one object of a screen: calls func_0202cf08 for the picture `id`, then writes object attribute entry `index`
-// (attr0, and attribute 2 from `attr2`, a tile offset and the palette) and, when `rotate` is set, the rotation entry of
-// the screen's group from the sine/cosine table at the frame counter's phase.
+// (attr0, attribute 1 from `attr2`, and attribute 2 from a tile offset and the palette) and, when `rotate` is set, the
+// rotation entry of the screen's group from the sine/cosine table at the frame counter's phase.
 void func_02039830(int id, u32 shift, u32 index, u32 attr2, u32 attr0, int rotate, int screen) {
-    u16 *oam = screen == 1 ? (u16 *) 0x07000000 : (u16 *) 0x07000400;
+    Unk_OamEntry *oam = screen == 1 ? (Unk_OamEntry *) 0x07000000 : (Unk_OamEntry *) 0x07000400;
     s16 tile;
-    u32 off;
 
     func_0202cf08(id + 0x200000, 0x80, 0x60, 0, screen);
     tile = func_0202ad9c();
     if (tile < 0) {
         return;
     }
-    tile = tile + (shift * 4 >> func_0202ad78(screen));
+    tile += (shift * 4 >> func_0202ad78(screen));
     if (rotate == 0) {
-        off = index * 8;
-        *(u16 *) ((u8 *) oam + off) = attr0;
-        ((u16 *) ((u8 *) oam + off))[1] = attr2 + 0x4000;
+        oam[index].mUnk_0 = attr0;
+        oam[index].mUnk_2 = attr2 + 0x4000;
     } else {
         int angle = (data_020c18bc.mUnk_45c & 0xff) << 8;
         u32 group = func_0202cdac(screen);
         int k = (angle >> 4) * 2;
-        u16 *rot = (u16 *) ((u8 *) oam + group * 32);
 
-        *(u16 *) ((u8 *) oam + 6 + group * 32) = FX_SinCosTable_[k + 1] >> 4;
-        rot[15] = *(u16 *) ((u8 *) oam + 6 + group * 32);
-        *(u16 *) ((u8 *) oam + 14 + group * 32) = FX_SinCosTable_[k] >> 4;
-        rot[11] = -*(u16 *) ((u8 *) oam + 14 + group * 32);
-        off = index * 8;
-        *(u16 *) ((u8 *) oam + off) = 0x300 | attr0;
-        ((u16 *) ((u8 *) oam + off))[1] = attr2 + 0x8000 + group * 512;
+        *(vu16 *) ((u8 *) oam + 6 + group * 32) = FX_SinCosTable_[k + 1] >> 4;
+        ((vu16 *) ((u8 *) oam + group * 32))[15] = *(vu16 *) ((u8 *) oam + 6 + group * 32);
+        *(vu16 *) ((u8 *) oam + 14 + group * 32) = FX_SinCosTable_[k] >> 4;
+        ((vu16 *) ((u8 *) oam + group * 32))[11] = -*(vu16 *) ((u8 *) oam + 14 + group * 32);
+        oam[index].mUnk_0 = 0x300 | attr0;
+        oam[index].mUnk_2 = attr2 + 0x8000 + group * 512;
     }
-    ((u16 *) ((u8 *) oam + off))[2] = tile + (func_0202adac() << 12);
+    oam[index].mUnk_4 = tile + (func_0202adac() << 12);
 }
 
 // Holds a countdown at 20 while func_02035058 reports 1 and counts it down otherwise. When the screens are flagged,
