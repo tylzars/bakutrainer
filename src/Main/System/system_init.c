@@ -1824,8 +1824,6 @@ void func_0201e56c(u8 *data, int target, void *lut) {
     u32 code;
     u32 si;
     u8 *q;
-    u8 *blk;
-    u32 marker;
 
     ncomp = 0;
     height = 0;
@@ -1845,34 +1843,34 @@ void func_0201e56c(u8 *data, int target, void *lut) {
                 while (total != 0) {
                     t = *q;
                     q++;
-                    for (i = 0; i < 64; i++) {
-                        quant[t][data_020502b8[i]] = *q++;
+                    for (n = 0; n < 64; n++) {
+                        quant[t][data_020502b8[n]] = *q++;
                     }
                     total -= 65;
                 }
                 break;
             case 0xc4:
-                blk = data_020c1820;
-                x = blk[1] + (blk[0] << 8);
-                blk += 2;
+                q = data_020c1820;
+                x = q[1] + (q[0] << 8);
+                q += 2;
                 x -= 2;
                 while (x != 0) {
-                    si = *blk++;
+                    si = *q++;
                     total = 0;
                     t = (si & 1) + (si >> 3);
                     for (l = 1; l <= 16; l++) {
-                        bits[t][l] = *blk++;
+                        bits[t][l] = *q++;
                         total += bits[t][l];
                     }
                     for (n = 0; n < total; n++) {
-                        huffval[t][n] = *blk++;
+                        huffval[t][n] = *q++;
                     }
                     x -= total + 17;
                     k = 0;
-                    for (l = 1; l <= 16; l++) {
-                        n = bits[t][l];
-                        while (n--) {
-                            huffsize[k++] = l;
+                    for (si = 1; si <= 16; si++) {
+                        l = bits[t][si];
+                        while (l--) {
+                            huffsize[k++] = si;
                         }
                     }
                     huffsize[k] = 0;
@@ -1881,21 +1879,23 @@ void func_0201e56c(u8 *data, int target, void *lut) {
                     k = 0;
                     while (huffsize[k] != 0) {
                         while (huffsize[k] == si) {
-                            huffcode[k++] = code++;
+                            huffcode[k] = code;
+                            k++;
+                            code++;
                         }
                         code <<= 1;
                         si++;
                     }
                     k = 0;
                     for (l = 1; l <= 16; l++) {
-                        if (bits[t][l] == 0) {
-                            maxcode[t][l] = -1;
-                        } else {
+                        if (bits[t][l] != 0) {
                             valptr[t][l] = k;
                             mincode[t][l] = huffcode[k];
                             k += bits[t][l] - 1;
                             maxcode[t][l] = huffcode[k];
                             k++;
+                        } else {
+                            maxcode[t][l] = -1;
                         }
                     }
                 }

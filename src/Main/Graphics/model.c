@@ -181,7 +181,7 @@ void func_0202397c(int from, int node) {
     int done;
     u16 tmpRot[3];
     s16 sx, cx, sy, cy, sz, cz;
-    s32 a, b, k0, k1, k2;
+    s32 a, b;
     s32 r00, r01, r02, r10, r11, r12, r20, r21, r22;
     u32 i;
     int ix, iy, iz;
@@ -228,17 +228,17 @@ void func_0202397c(int from, int node) {
     ax = -rot[0];
     az = -rot[2];
     ay = rot[1];
-    iy = (ay >> 4) * 2;
     ix = (ax >> 4) * 2;
-    iz = (az >> 4) * 2;
+    iy = (ay >> 4) * 2;
     sx = FX_SinCosTable_[ix];
+    iz = (az >> 4) * 2;
     sy = FX_SinCosTable_[iy];
-    cx = FX_SinCosTable_[ix + 1];
     cz = FX_SinCosTable_[iz + 1];
-    cy = FX_SinCosTable_[iy + 1];
     sz = FX_SinCosTable_[iz];
-    a = (sx * sy) >> 12;
+    cx = FX_SinCosTable_[ix + 1];
+    cy = FX_SinCosTable_[iy + 1];
     b = (cx * sy) >> 12;
+    a = (sx * sy) >> 12;
     r00 = (cy * cz) >> 12;
     r01 = (-cy * sz) >> 12;
     r02 = -sy;
@@ -248,18 +248,18 @@ void func_0202397c(int from, int node) {
     r20 = (b * cz + sx * sz) >> 12;
     r21 = ((-b) * sz + sx * cz) >> 12;
     r22 = (cx * cy) >> 12;
-    k0 = n->mUnk_2 * scale[0];
-    k1 = n->mUnk_3 * scale[1];
-    k2 = n->mUnk_4 * scale[2];
-    m._[0] = (k0 * r00) / 4096;
-    m._[1] = (k1 * r01) / 4096;
-    m._[2] = (k2 * r02) / 4096;
-    m._[3] = (k0 * r10) / 4096;
-    m._[4] = (k1 * r11) / 4096;
-    m._[5] = (k2 * r12) / 4096;
-    m._[6] = (k0 * r20) / 4096;
-    m._[7] = (k1 * r21) / 4096;
-    m._[8] = (k2 * r22) / 4096;
+    ix = n->mUnk_2 * scale[0];
+    iy = n->mUnk_3 * scale[1];
+    iz = n->mUnk_4 * scale[2];
+    m._[0] = (ix * r00) / 4096;
+    m._[1] = (iy * r01) / 4096;
+    m._[2] = (r02 * iz) / 4096;
+    m._[3] = (ix * r10) / 4096;
+    m._[4] = (iy * r11) / 4096;
+    m._[5] = (iz * r12) / 4096;
+    m._[6] = (ix * r20) / 4096;
+    m._[7] = (iy * r21) / 4096;
+    m._[8] = (iz * r22) / 4096;
     if (node == data_020c31dc.mUnk_42) {
         pos[0] = pos[0] * data_020c31dc.mUnk_40 / 256;
         pos[1] = pos[1] * data_020c31dc.mUnk_40 / 256;
@@ -1003,9 +1003,9 @@ void func_02024b5c(u32 id, void *params, void *obj, int flags) {
             emi = mesh->mUnk_28;
         }
         if (flags & 4) {
-            cur += 0x38;
             PutPolygonAttr(data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_5b, 3, 1, 0, alpha, 0);
             PutMaterial(dif | (((flags & 0x10) ? 0x7fff : amb) << 16), spe | (emi << 16));
+            cur += 0x38;
             DC_StoreRange(cur, mesh->mUnk_34);
             func_01ff831c(3, cur, mesh->mUnk_34);
             PutPolygonAttr(data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_5b, 3, 3, 8, alpha, 0);
@@ -1024,9 +1024,9 @@ void func_02024b5c(u32 id, void *params, void *obj, int flags) {
                 amb = 0x7fff;
             }
             PutMaterial(dif | (amb << 16) | 0x8000, spe | (emi << 16));
-            cur += 0x38;
             PutPolygonAttr(data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_5b, (flags & 8) ? 2 : 0, cull, polyId, alpha,
                            polyFlags);
+            cur += 0x38;
             DC_StoreRange(cur, mesh->mUnk_34);
             func_01ff831c(3, cur, mesh->mUnk_34);
         }

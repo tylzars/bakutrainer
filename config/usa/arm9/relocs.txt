@@ -4963,6 +4963,10 @@ from:0x0201eaec kind:arm_call_thumb to:0x0201c4f0 module:main
 from:0x0201eaf4 kind:arm_call_thumb to:0x0201c4f0 module:main
 from:0x0201eafc kind:arm_call_thumb to:0x0201c4f0 module:main
 from:0x0201eb0c kind:load to:0x020c1818 module:main
+from:0x0201eb10 kind:load to:0x020502b8 module:main
+from:0x0201eb14 kind:load to:0x020502f8 module:main
+from:0x0201eb18 kind:load to:0x020502a8 module:main
+from:0x0201eb1c kind:load to:0x020502a4 module:main
 from:0x0201eb5c kind:load to:0x020c18bc module:main
 from:0x0201eb60 kind:load to:0x02050220 module:main
 from:0x0201eb64 kind:load to:0x020502ac module:main
