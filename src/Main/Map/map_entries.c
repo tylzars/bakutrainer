@@ -872,10 +872,15 @@ u32 func_0203249c(u32 key) {
             data_020c3e44.mUnk_20 = 1;
         }
         {
-            int n = data_020c3e44.mUnk_14;
-            MapPair *e = data_020c3e44.mUnk_1c;
-            int step = data_020c3e44.mUnk_16;
-            int pos = 0;
+            int n;
+            MapPair *e;
+            int step;
+            int pos;
+
+            step = data_020c3e44.mUnk_16;
+            n = data_020c3e44.mUnk_14;
+            e = data_020c3e44.mUnk_1c;
+            pos = 0;
             do {
                 while (pos + step < n && e[pos + step].mUnk_0 <= key) {
                     pos += step;
@@ -1098,11 +1103,11 @@ void func_020329d0(u8 *p) {
             }
             fresh->mUnk_00 = def;
             fresh->mUnk_174 = def->mUnk_02 + data_020c3e44.mUnk_2024.mUnk_00;
-            rec = fresh;
             fresh->mUnk_176_10 = 0;
             fresh->mUnk_176_4 = 0;
             fresh->mUnk_176_9 = 0;
             fresh->mUnk_176_12 = 0;
+            rec = fresh;
             off = fresh->mUnk_00->mUnk_00 * 16;
             fresh->mUnk_17c.x = func_02031f98((MapEntry *) (entries + off));
             fresh->mUnk_17c.y = func_02031fa4((MapEntry *) (entries + off));
@@ -1366,7 +1371,7 @@ void func_02032d50(u32 px, u32 pz) {
                     if (result != 0 && func_02032bb8(nc, nr, w, cx, cz) != 0) {
                         data_020c3e44.mUnk_30[nc + nr * w].mUnk_3 = 1;
                         queue[tail] = idx;
-                        tail++;
+                        tail = (u8) (tail + 1);
                     }
                 }
             }
@@ -1436,9 +1441,9 @@ void func_0203315c(int x, int z) {
     box[0] = 0;
     box[1] = 0;
     box[2] = 0;
-    box[3] = 1;
-    box[4] = 1;
-    box[5] = 1;
+    box[3] = 0x1000;
+    box[4] = 0x1000;
+    box[5] = 0x1000;
     cx = (u32) x / data_020c3e44.mUnk_2024.mUnk_40;
     cz = (u32) z / data_020c3e44.mUnk_2024.mUnk_40;
     cols = data_020c3e44.mUnk_2024.mUnk_54;
@@ -1462,102 +1467,101 @@ void func_0203315c(int x, int z) {
         n++;
         data_020c3e44.mUnk_2024.mUnk_5b_4 = 1;
     }
-    if (n == 0) {
-        return;
-    }
-    b1 = *(u32 *) &box[2];
-    b2 = *(u32 *) &box[4];
-    while (n != m) {
-        u16 idx = list[m] & 0x7fff;
-        u16 *offs;
-        MapCellRec *rec;
-        u16 *p;
-        int px, pz, py;
-        u32 r;
-        u32 i;
-        u32 listlen;
-        u32 g;
-        int sx, sy, sz;
+    if (n != 0) {
+        b1 = *(u32 *) &box[2];
+        b2 = *(u32 *) &box[4];
+        do {
+            u16 idx = list[m] & 0x7fff;
+            u16 *offs;
+            MapCellRec *rec;
+            u16 *p;
+            int px, pz, py;
+            u32 r;
+            u32 i;
+            u32 listlen;
+            u32 g;
+            int sx, sy, sz;
 
-        m++;
-        offs = data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_50;
-        rec = (MapCellRec *) (chunk + offs[idx]);
-        listlen =
-            (u32) ((offs[idx + 1] - offs[idx]) * 2 - ((u8 *) (rec + 1) - (u8 *) rec) - (rec->mUnk_12 - 1) * 2) >> 1;
-        if (chunk[offs[idx]] == 0) {
-            OS_Terminate();
-        }
-        if (rec->mUnk_02 == 0) {
-            OS_Terminate();
-        }
-        if (rec->mUnk_03 == 0) {
-            OS_Terminate();
-        }
-        if (rec->mUnk_04 == 0) {
-            OS_Terminate();
-        }
-        px = rec->mUnk_06[0] + (rec->mUnk_06[1] << 16);
-        pz = rec->mUnk_0a[0] + (rec->mUnk_0a[1] << 16);
-        py = rec->mUnk_0e[0] + (rec->mUnk_0e[1] << 16);
-        r = (u32) data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_44 >> 9;
-        if (func_020322f4(px, pz, rec->mUnk_02, rec->mUnk_03) > r * r) {
-            continue;
-        }
-        *(vu32 *) 0x04000450 = 0x1e;
-        PutTrans(px, py, pz);
-        PutScale(rec->mUnk_02 * data_020c3e44.mUnk_2024.mUnk_40, rec->mUnk_04 * data_020c3e44.mUnk_2024.mUnk_40,
-                 rec->mUnk_03 * data_020c3e44.mUnk_2024.mUnk_40);
-        reg_G3X_BEGIN_VTXS = 0;
-        reg_G3X_END_VTXS = 0;
-        reg_G3X_BOX_TEST = *(u32 *) &box[0];
-        reg_G3X_BOX_TEST = b1;
-        reg_G3X_BOX_TEST = b2;
-        while (G3X_GetBoxTestResult(&result) != 0) {
-        }
-        if (result != 0 && rec->mUnk_12 > 1) {
-            data_020c3e44.mUnk_2024.mUnk_08[data_020c3e44.mUnk_2024.mUnk_0c++] = &rec->mUnk_13;
-        }
-        if (result == 0 && data_020c3e44.mUnk_36 != 0) {
-            continue;
-        }
-        if (result != 0) {
-            u32 k = func_02032368(rec->mUnk_00, px, pz, rec->mUnk_02, rec->mUnk_03);
-
-            data_020c3e44.mUnk_2c[data_020c3e44.mUnk_36].mUnk_04 = px;
-            data_020c3e44.mUnk_2c[data_020c3e44.mUnk_36].mUnk_08 = pz;
-            data_020c3e44.mUnk_2c[data_020c3e44.mUnk_36].mUnk_00 =
-                data_020c3e44.mUnk_2024.mUnk_58 - 1 + func_0203249c(k);
-            data_020c3e44.mUnk_36++;
-            if (data_020c3e44.mUnk_36 >= 0x180) {
+            m++;
+            offs = data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_50;
+            rec = (MapCellRec *) (chunk + offs[idx]);
+            listlen =
+                (u32) ((offs[idx + 1] - offs[idx]) * 2 - ((u8 *) (rec + 1) - (u8 *) rec) - (rec->mUnk_12 - 1) * 2) >> 1;
+            if (chunk[offs[idx]] == 0) {
                 OS_Terminate();
             }
-        }
-        p = (u16 *) rec + (rec->mUnk_12 - 1);
-        for (i = 0; i < listlen; i++, p++) {
-            u16 c = p[10] & mask;
-            u32 bit;
-
-            if (c & 0x8000) {
+            if (rec->mUnk_02 == 0) {
+                OS_Terminate();
+            }
+            if (rec->mUnk_03 == 0) {
+                OS_Terminate();
+            }
+            if (rec->mUnk_04 == 0) {
+                OS_Terminate();
+            }
+            px = rec->mUnk_06[0] + (rec->mUnk_06[1] << 16);
+            pz = rec->mUnk_0a[0] + (rec->mUnk_0a[1] << 16);
+            py = rec->mUnk_0e[0] + (rec->mUnk_0e[1] << 16);
+            r = (u32) data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_44 >> 9;
+            if (func_020322f4(px, pz, rec->mUnk_02, rec->mUnk_03) > r * r) {
                 continue;
             }
-            if (c == 0) {
-                OS_Terminate();
+            *(vu32 *) 0x04000450 = 0x1e;
+            PutTrans(px, py, pz);
+            PutScale(rec->mUnk_02 * data_020c3e44.mUnk_2024.mUnk_40, rec->mUnk_04 * data_020c3e44.mUnk_2024.mUnk_40,
+                     rec->mUnk_03 * data_020c3e44.mUnk_2024.mUnk_40);
+            reg_G3X_BEGIN_VTXS = 0;
+            reg_G3X_END_VTXS = 0;
+            reg_G3X_BOX_TEST = *(u32 *) &box[0];
+            reg_G3X_BOX_TEST = b1;
+            reg_G3X_BOX_TEST = b2;
+            while (G3X_GetBoxTestResult(&result) != 0) {
             }
-            if (c > 0x3ff) {
-                OS_Terminate();
+            if (result != 0 && rec->mUnk_12 > 1) {
+                data_020c3e44.mUnk_2024.mUnk_08[data_020c3e44.mUnk_2024.mUnk_0c++] = &rec->mUnk_13;
             }
-            bit = 1 << (c & 0x1f);
-            if (data_020c3e44.mUnk_24[c >> 5] & bit) {
+            if (result == 0 && data_020c3e44.mUnk_36 != 0) {
                 continue;
             }
-            data_020c3e44.mUnk_24[c >> 5] |= bit;
-            list[n] = c;
-            n = (u8) (n + 1);
-            if (n == m) {
-                OS_Terminate();
+            if (result != 0) {
+                u32 k = func_02032368(rec->mUnk_00, px, pz, rec->mUnk_02, rec->mUnk_03);
+
+                data_020c3e44.mUnk_2c[data_020c3e44.mUnk_36].mUnk_04 = px;
+                data_020c3e44.mUnk_2c[data_020c3e44.mUnk_36].mUnk_08 = pz;
+                data_020c3e44.mUnk_2c[data_020c3e44.mUnk_36].mUnk_00 =
+                    data_020c3e44.mUnk_2024.mUnk_58 - 1 + func_0203249c(k);
+                data_020c3e44.mUnk_36++;
+                if (data_020c3e44.mUnk_36 >= 0x180) {
+                    OS_Terminate();
+                }
             }
-        }
-        mask = 0xffff;
+            p = (u16 *) rec + (rec->mUnk_12 - 1);
+            for (i = 0; i < listlen; i++, p++) {
+                u16 c = p[10] & mask;
+                u32 bit;
+
+                if (c & 0x8000) {
+                    continue;
+                }
+                if (c == 0) {
+                    OS_Terminate();
+                }
+                if (c > 0x3ff) {
+                    OS_Terminate();
+                }
+                bit = 1 << (c & 0x1f);
+                if (data_020c3e44.mUnk_24[c >> 5] & bit) {
+                    continue;
+                }
+                data_020c3e44.mUnk_24[c >> 5] |= bit;
+                list[n] = c;
+                n = (u8) (n + 1);
+                if (n == m) {
+                    OS_Terminate();
+                }
+            }
+            mask = 0xffff;
+        } while (n != m);
     }
 }
 
@@ -1701,14 +1705,14 @@ void func_02033614(s32 x, s32 z) {
     func_020334f8(1);
     camera.mPos.x = data_020c3e44.mUnk_2024.mUnk_5c.x;
     camera.mPos.y = data_020c3e44.mUnk_2024.mUnk_5c.y;
+    camera.mPos.z = data_020c3e44.mUnk_2024.mUnk_5c.z;
     camera.mUnk_43_3 = 0;
     camera.mUnk_43_4 = 0;
-    camera.mUnk_43 = 0;
-    camera.mPos.z = data_020c3e44.mUnk_2024.mUnk_5c.z;
     camera.mUnk_38 = 0;
     camera.mUnk_3c = 0;
     camera.mUnk_3a = 0;
     camera.mUnk_28 = 0x1000;
+    camera.mUnk_43 = 0;
     func_020248e8(data_020c3e44.mUnk_2024.mUnk_52, &camera, data_020c3e44.mUnk_2024.mUnk_5b_1 == 0);
     func_020334f8(0);
 }
