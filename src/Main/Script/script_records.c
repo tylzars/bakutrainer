@@ -1423,14 +1423,14 @@ void func_0202a1ec(int (*callback)(void)) {
                     func_0202a160();
                 } else if (!(data_020c61ac.mUnk_1a & 8) &&
                            ((data_020c18bc.mUnk_10 & 1) ||
-                            (data_020c2560.mUnk_100.mUnk_04 & 0x4000ffff) == 0x40000400)) {
+                            (data_020c1d60.mUnk_800.mUnk_100.mUnk_04 & 0x4000ffff) == 0x40000400)) {
                     if (data_020c61ac.mUnk_1c_3 == 1) {
                         if ((data_020c18bc.mUnk_12 & 1) ||
-                            (data_020c2560.mUnk_100.mUnk_04 & 0xc000ffff) == 0xc0000400) {
+                            (data_020c1d60.mUnk_800.mUnk_100.mUnk_04 & 0xc000ffff) == 0xc0000400) {
                             data_020c61ac.mUnk_1c |= 2;
                         }
                     } else if ((data_020c18bc.mUnk_12 & 1) ||
-                               (data_020c2560.mUnk_100.mUnk_04 & 0xc000ffff) == 0xc0000400) {
+                               (data_020c1d60.mUnk_800.mUnk_100.mUnk_04 & 0xc000ffff) == 0xc0000400) {
                         if (data_020c18bc.mUnk_313 + data_020c18bc.mUnk_314 < data_020c18bc.mUnk_315) {
                             data_020c18bc.mUnk_313 += data_020c18bc.mUnk_314;
                         } else {

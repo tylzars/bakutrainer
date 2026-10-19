@@ -38,12 +38,12 @@ void func_020071a8(void) {}
 
 void func_020071ac(void) {
     func_02020944(0x190, 0, 0xa2, 0, 0, 0xd5, 0, 0x17d);
-    func_0202cf08((data_020c2560.mUnk_100.mUnk_04 == 0x40000190) + 0xd5, 0, 0xa2, 0x8e, 2);
+    func_0202cf08((data_020c1d60.mUnk_800.mUnk_100.mUnk_04 == 0x40000190) + 0xd5, 0, 0xa2, 0x8e, 2);
 }
 
 void func_020071f8(void) {
     func_02020944(0xc8, 0xff, 0xa2, 0, 0, 0x15, 0, 0x17d);
-    func_0202cf08((data_020c2560.mUnk_100.mUnk_04 == 0x400000c8) + 0x15, 0xff, 0xa2, 0x8e, 2);
+    func_0202cf08((data_020c1d60.mUnk_800.mUnk_100.mUnk_04 == 0x400000c8) + 0x15, 0xff, 0xa2, 0x8e, 2);
 }
 
 void func_02007244(int a) {
@@ -769,12 +769,12 @@ void func_02008288(void) {
                 func_02007244(cur[0] <= 0 ? data_02098d84.mSide[1].mUnk_13 : data_02098d84.mSide[0].mUnk_13);
                 data_020b6ee0.mModel[0].mUnk_134 |= 0x10;
                 data_020b6ee0.mUnk_fee = 1;
-            } else if (phase == 1 &&
-                       (data_020b6ee0.mModel[0].mUnk_172_10 == 1 || data_020c2560.mUnk_100.mUnk_04 == 0x20000190)) {
+            } else if (phase == 1 && (data_020b6ee0.mModel[0].mUnk_172_10 == 1 ||
+                                      data_020c1d60.mUnk_800.mUnk_100.mUnk_04 == 0x20000190)) {
                 func_02007244(cur[0] <= 0 ? data_02098d84.mSide[0].mUnk_13 : data_02098d84.mSide[1].mUnk_13);
                 data_020b6ee0.mModel[0].mUnk_134 |= 2;
-            } else if (phase == 2 &&
-                       (data_020b6ee0.mModel[0].mUnk_172_10 == 1 || data_020c2560.mUnk_100.mUnk_04 == 0x20000190)) {
+            } else if (phase == 2 && (data_020b6ee0.mModel[0].mUnk_172_10 == 1 ||
+                                      data_020c1d60.mUnk_800.mUnk_100.mUnk_04 == 0x20000190)) {
                 int id = func_02014538(data_020b6ee0.mUnk_a534, 7) + 23;
                 func_0201fb5c(&data_020b6ee0.mUnk_fee, 480);
                 func_0201f880(1);
@@ -817,7 +817,7 @@ void func_02008288(void) {
 
 int func_020088d8(StageInfo *info, int mode) {
     if (info->mUnk_16 == 1 || (mode == 0 && (data_020c18bc.mUnk_12 & 1)) ||
-        data_020c2560.mUnk_100.mUnk_04 == 0x200000c8 || (mode == 1 && data_020b6ee0.mUnk_ff4++ > 90)) {
+        data_020c1d60.mUnk_800.mUnk_100.mUnk_04 == 0x200000c8 || (mode == 1 && data_020b6ee0.mUnk_ff4++ > 90)) {
         return 1;
     }
     return 0;
@@ -937,7 +937,8 @@ void func_02008994(int side) {
                     active = 1;
                     data_020b6ee0.mModel[0].mUnk_134 |= 1;
                     func_020072a8();
-                    if (data_020b6ee0.mModel[0].mUnk_172_10 == 1 || data_020c2560.mUnk_100.mUnk_04 == 0x20000190) {
+                    if (data_020b6ee0.mModel[0].mUnk_172_10 == 1 ||
+                        data_020c1d60.mUnk_800.mUnk_100.mUnk_04 == 0x20000190) {
                         func_0200f848(func_02008920(1), 0);
                         data_020b6ee0.mUnk_ffa++;
                         func_0201f880(1);
@@ -957,10 +958,12 @@ void func_02008994(int side) {
                     active = 1;
                     data_020b6ee0.mModel[0].mUnk_134 |= 1;
                     func_020072a8();
-                    if (data_020b6ee0.mModel[0].mUnk_172_10 == 1 || data_020c2560.mUnk_100.mUnk_04 == 0x20000190) {
+                    if (data_020b6ee0.mModel[0].mUnk_172_10 == 1 ||
+                        data_020c1d60.mUnk_800.mUnk_100.mUnk_04 == 0x20000190) {
                         data_020b6ee0.mUnk_ffa = 6;
                         func_0201f880(1);
-                        if (data_020b6ee0.mModel[0].mUnk_172_10 == 1 || data_020c2560.mUnk_100.mUnk_04 == 0x20000190) {
+                        if (data_020b6ee0.mModel[0].mUnk_172_10 == 1 ||
+                            data_020c1d60.mUnk_800.mUnk_100.mUnk_04 == 0x20000190) {
                             data_020b6ee0.mUnk_ff6 = 0x4000;
                         }
                     }
@@ -1078,7 +1081,7 @@ void func_02008994(int side) {
         } else if (data_02098d84.mState.mUnk_17 == 60) {
             if (side == 0) {
                 int prev = data_02098d84.mState.mUnk_12;
-                u32 touch = data_020c2560.mUnk_100.mUnk_04;
+                u32 touch = data_020c1d60.mUnk_800.mUnk_100.mUnk_04;
                 int pos = (u16) touch;
                 if ((touch & 0x80000000) && pos != 0xffff && pos < 200) {
                     data_02098d84.mState.mUnk_12 = pos;
@@ -1177,9 +1180,9 @@ void func_02008994(int side) {
                 func_020071f8();
             }
             func_02020944(201, 128, 179, 0, 0, 0x10b2, 0, 0x167);
-            func_0202cf08((data_020c2560.mUnk_100.mUnk_04 == 0x400000c9) + 0x10b2, 128, 179, 142, 2);
+            func_0202cf08((data_020c1d60.mUnk_800.mUnk_100.mUnk_04 == 0x400000c9) + 0x10b2, 128, 179, 142, 2);
             func_020215fc(128, 179, data_0201a61c, func_0200f9f0(61), 2, 250, 0, 2);
-            if (data_020c2560.mUnk_100.mUnk_04 == 0x200000c9) {
+            if (data_020c1d60.mUnk_800.mUnk_100.mUnk_04 == 0x200000c9) {
                 info->mUnk_16 = 1;
             }
         }
@@ -1320,7 +1323,7 @@ void func_02009728(void) {
                                                         : &data_020b1524[data_02098d84.mState.mUnk_0e[1]]);
         selecting = 1;
         if (data_02098d84.mState.mUnk_14 == 0) {
-            u32 pick = data_020c2560.mUnk_100.mUnk_04;
+            u32 pick = data_020c1d60.mUnk_800.mUnk_100.mUnk_04;
             u16 keys;
             if ((pick & 0x40000000) && (u16) pick != 0xffff) {
                 int n = (u16) pick - 16;
@@ -1397,7 +1400,7 @@ void func_02009728(void) {
             hi = j == 1 ? 1 : 0;
             func_0202cf08(a + (hi * 8 + 0x11be), xs[j == 0 ? s : s + 3], ys[yi], 251, 2);
         }
-        if (move == SELECT_CONFIRM || data_020c2560.mUnk_100.mUnk_04 == 0x200000c8) {
+        if (move == SELECT_CONFIRM || data_020c1d60.mUnk_800.mUnk_100.mUnk_04 == 0x200000c8) {
             if (data_020990e0[data_02098d84.mState.mUnk_0e[0]].mInfo.mUnk_04 > -5000 &&
                 data_020b1524[data_02098d84.mState.mUnk_0e[1]].mUnk_04 > -5000) {
                 data_020b6ee0.mUnk_fe0 = 1;
@@ -1513,7 +1516,7 @@ void func_02009fe8(void) {
         }
     }
     if (data_020b6ee0.mUnk_fee == 0) {
-        if ((data_020c18bc.mUnk_12 & 1) || data_020c2560.mUnk_100.mUnk_04 == 0x200000c8) {
+        if ((data_020c18bc.mUnk_12 & 1) || data_020c1d60.mUnk_800.mUnk_100.mUnk_04 == 0x200000c8) {
             func_0201f880(1);
             func_02022120();
             func_0200f848(func_02014538(data_020b6ee0.mUnk_a534, 7) + 19, 0);

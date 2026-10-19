@@ -23,11 +23,6 @@ typedef struct Unk_TouchButton {
     u16 mUnk_e;
 } Unk_TouchButton;
 
-typedef struct Unk_020c1d60 {
-    Unk_TouchButton mUnk_000[0x80];
-} Unk_020c1d60;
-extern Unk_020c1d60 data_020c1d60;
-
 // The touch state that follows the trail.
 typedef struct Unk_020c2660 {
     u8 mUnk_00[4];
@@ -48,7 +43,13 @@ typedef struct Unk_020c2560 {
     Unk_TouchPoint mUnk_000[0x80];
     Unk_020c2660 mUnk_100;
 } Unk_020c2560;
-extern Unk_020c2560 data_020c2560;
+
+// The touch buttons, followed by the touch trail and its state, form one object.
+typedef struct Unk_020c1d60 {
+    Unk_TouchButton mUnk_000[0x80];
+    Unk_020c2560 mUnk_800;
+} Unk_020c1d60;
+extern Unk_020c1d60 data_020c1d60;
 
 int func_02020878(void);
 int func_02020890(void);

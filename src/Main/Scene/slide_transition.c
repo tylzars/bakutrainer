@@ -603,7 +603,7 @@ void func_0200e5b0(void) {
             }
             func_0200bb14(0, (data_020ae504.mUnk_1bc[4] >> 8) + 0xa1, 0x102, 0xe, 0, 0, 0x5a, flag);
             if (func_0200bdac(0x20000000, 0x704, 0x706)) {
-                data_020b1084.mUnk_0c = (u16) data_020c2560.mUnk_100.mUnk_04 - 0x704;
+                data_020b1084.mUnk_0c = (u16) data_020c1d60.mUnk_800.mUnk_100.mUnk_04 - 0x704;
                 if (s->mUnk_2c == 0) {
                     if (s->mUnk_00[data_020b1084.mUnk_0c].mUnk_00 == 1) {
                         func_0200e3d0(3, -1);

@@ -385,7 +385,7 @@ void func_0200d098(void) {
     }
     if (data_020b10fc.mUnk_00 < 2 && data_020c18bc.mUnk_2ac_0) {
         if (func_0200bdac(0x80000000, 0x100, 0x108)) {
-            func_0200d2a4(&data_02063940->mSlots[(u16) data_020c2560.mUnk_100.mUnk_04 - 0x100]);
+            func_0200d2a4(&data_02063940->mSlots[(u16) data_020c1d60.mUnk_800.mUnk_100.mUnk_04 - 0x100]);
         }
     }
 }

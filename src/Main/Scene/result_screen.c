@@ -221,7 +221,7 @@ void func_02004aa8(void) {
             data_0206d1d4.mUnk_34 = 1;
         }
         if (func_0200bdac(0x80000000, 0x500, 0x504) && ready) {
-            data_0206d1d4.mUnk_40 = (u16) data_020c2560.mUnk_100.mUnk_04 - 0x500;
+            data_0206d1d4.mUnk_40 = (u16) data_020c1d60.mUnk_800.mUnk_100.mUnk_04 - 0x500;
         }
     }
     if (func_0200bd80(0x20000000, 0x102)) {

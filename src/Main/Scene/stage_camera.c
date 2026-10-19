@@ -175,10 +175,8 @@ void func_02016008(int stage) {
                 break;
             case 0x19: {
                 int q = 0x32000 / d;
-                int ax = f->mUnk_178;
-                int az = f->mUnk_17c;
-                ax = px - ax;
-                az = pz - az;
+                int ax = px - f->mUnk_178;
+                int az = pz - f->mUnk_17c;
                 ax *= q;
                 az *= q;
                 rec->mUnk_1a0.x = ax + (f->mUnk_178 << 9);
@@ -221,8 +219,8 @@ void func_02016008(int stage) {
     i = 0;
     while (i < data_020b6ee0.mUnk_5a54) {
         pos.x = b->mUnk_178 << 9;
-        pos.y = 0;
         pos.z = b->mUnk_17c << 9;
+        pos.y = 0;
         if (func_02031d0c(&pos, 0x190000, 0x190000, 0x190000) == 1) {
             switch (b->mUnk_182) {
                 case 0x19:
@@ -252,13 +250,13 @@ void func_02016008(int stage) {
                     break;
                 case 0x23:
                     pos.y = 0;
-                    func_02023f58(&params, pos.x, pos.y, pos.z, 0x1000, (b->mUnk_184 & 3) << 14, 0, 0xff, 0x100);
+                    func_02023f58(&params, pos.x, pos.y, pos.z, 0x1000, (u16) (b->mUnk_184 << 14), 0, 0xff, 0x100);
                     func_020248e8(0xc8a, &params, 0);
                     break;
             }
         }
-        i++;
         b++;
+        i++;
     }
 }
 
@@ -509,7 +507,6 @@ void func_02016db4(Unk_020b1598 *followers, int index, u16 angle) {
     StageRec *rec = &data_020b1990[data_020b6ee0.mUnk_a8e4];
     int bestDist;
     int j;
-    int k;
 
     if (data_020b6ee0.mUnk_a8e4 < 0 || data_020b6ee0.mUnk_a8e4 >= STAGE_MAX) {
         OS_Terminate();
@@ -518,8 +515,8 @@ void func_02016db4(Unk_020b1598 *followers, int index, u16 angle) {
         OS_Terminate();
     }
     bestDist = followers->mUnk_3f4;
-    for (k = 0; k < 8; k++) {
-        f->mUnk_26[k] = 30000;
+    for (j = 0; j < 8; j++) {
+        f->mUnk_26[j] = 30000;
     }
     if (followers->mUnk_3f6 == 1) {
         VecFx32 pos;
@@ -770,10 +767,12 @@ void func_020175e8(int index, int *sel, int flags) {
     if (!(flags & 1)) {
         if (index == *sel) {
             if (data_020c18bc.mUnk_2ac_2) {
-                int n = data_020c2560.mUnk_100.mUnk_10 - 1;
+                int n = data_020c1d60.mUnk_800.mUnk_100.mUnk_10 - 1;
                 if (n < 30 && n > 1) {
-                    s32 dx = (data_020c2560.mUnk_000[n].mUnk_0 - data_020c2560.mUnk_000[0].mUnk_0) / 4;
-                    s32 dy = (data_020c2560.mUnk_000[n].mUnk_1 - data_020c2560.mUnk_000[0].mUnk_1) / 4;
+                    s32 dx =
+                        (data_020c1d60.mUnk_800.mUnk_000[n].mUnk_0 - data_020c1d60.mUnk_800.mUnk_000[0].mUnk_0) / 4;
+                    s32 dy =
+                        (data_020c1d60.mUnk_800.mUnk_000[n].mUnk_1 - data_020c1d60.mUnk_800.mUnk_000[0].mUnk_1) / 4;
                     int len = func_0201faf0(dx, dy);
                     if (len > 8) {
                         dx = (dx << 3) / len;
@@ -787,11 +786,12 @@ void func_020175e8(int index, int *sel, int flags) {
                     rec->mUnk_220 = len < 0x14000 ? len : 0x14000;
                 }
             } else if (data_020c18bc.mUnk_2ac_1) {
-                int n = data_020c2560.mUnk_100.mUnk_10 - 1;
+                int n = data_020c1d60.mUnk_800.mUnk_100.mUnk_10 - 1;
                 if (n > 4) {
-                    if ((int) func_0201faf0(data_020c2560.mUnk_000[n].mUnk_0 - (data_020c2560.mUnk_000 + n - 4)->mUnk_0,
-                                            data_020c2560.mUnk_000[n].mUnk_1 -
-                                                (data_020c2560.mUnk_000 + n - 4)->mUnk_1) < 4) {
+                    if ((int) func_0201faf0(data_020c1d60.mUnk_800.mUnk_000[n].mUnk_0 -
+                                                (data_020c1d60.mUnk_800.mUnk_000 + n - 4)->mUnk_0,
+                                            data_020c1d60.mUnk_800.mUnk_000[n].mUnk_1 -
+                                                (data_020c1d60.mUnk_800.mUnk_000 + n - 4)->mUnk_1) < 4) {
                         rec->mUnk_220 -= 3276.8;
                     }
                 }
@@ -836,6 +836,7 @@ void func_020175e8(int index, int *sel, int flags) {
             int diff;
             s32 along;
             s32 across;
+            s32 *c = data_020b6ee0.mUnk_9ddc;
 
             if (i == index) {
                 continue;
@@ -857,7 +858,7 @@ void func_020175e8(int index, int *sel, int flags) {
             across = rec->mUnk_220 * sinIdx(abs(diff)) / 4096;
             x += across * sinIdx((u16) (rec->mUnk_1d8 - diff)) / 4096;
             z += across * -cosIdx((u16) (rec->mUnk_1d8 - diff)) / 4096;
-            if (data_020b6ee0.mUnk_9ddc[2] < 3 && data_020b6ee0.mUnk_a146 != 2) {
+            if (c[2] < 3 && data_020b6ee0.mUnk_a146 != 2) {
                 other->mUnk_1d8 = func_0201feb0(-x, -z);
                 other->mUnk_220 = func_0201faf0(x, z) >> 1;
                 if (other->mUnk_142 != 1) {
@@ -997,17 +998,14 @@ int func_020182b8(int row, int column) {
 void func_020182cc(void) {
     int stage;
     Unk_020bfd40 *obj;
-    u8 resumed;
     StageRec *rec;
+    u8 resumed;
     int row;
 
     stage = data_020b6ee0.mUnk_a8e4;
     obj = &data_020b6ee0.mUnk_8e60;
     resumed = stage != -1;
-    if (stage == -1) {
-        stage = 0;
-    }
-    data_020b6ee0.mUnk_a8e4 = stage;
+    data_020b6ee0.mUnk_a8e4 = stage == -1 ? 0 : stage;
     {
         BOOL ok = 0;
         if (data_020b6ee0.mUnk_a8e4 >= 0 && data_020b6ee0.mUnk_a8e4 < STAGE_MAX) {
@@ -1165,8 +1163,7 @@ void func_02018770(StageRec *rec, int kind, int amount) {
 void func_02018840(StageRec *rec, int kind, int index) {
     Unk_020bfd40 *obj = &data_020b6ee0.mUnk_8e60;
     int time, score;
-    time = 0;
-    score = 0;
+    time = score = 0;
 
     switch ((u32) kind) {
         case 0xf:
@@ -1247,8 +1244,8 @@ void func_0201896c(void) {
     }
     params.mUnk_43 = 2;
     params.mUnk_28 = 2 << 19;
-    rec = data_020b1990;
-    for (i = 0; i < data_020b6ee0.mUnk_a8ee; i++, rec++) {
+    for (i = 0; i < data_020b6ee0.mUnk_a8ee; i++) {
+        rec = &data_020b1990[i];
         func_020271ec(rec, 0, 0, 0, data_0201ab04[rec->mInfo.mUnk_13]);
         rec->mDraw = params;
         rec->mUnk_1d8 = func_0201fd68();
@@ -1482,8 +1479,10 @@ void func_02018cd4(void) {
                 s32 scale = (0x3200 << 9) / dist;
                 s32 dx = (data_020b6ee0.mUnk_a574.mUnk_0c.x - camPos.x) / 512;
                 s32 dz = (data_020b6ee0.mUnk_a574.mUnk_0c.z - camPos.z) / 512;
-                data_020b6ee0.mUnk_a574.mUnk_0c.x = camPos.x + dx * scale;
-                data_020b6ee0.mUnk_a574.mUnk_0c.z = camPos.z + dz * scale;
+                dx *= scale;
+                dz *= scale;
+                data_020b6ee0.mUnk_a574.mUnk_0c.x = camPos.x + dx;
+                data_020b6ee0.mUnk_a574.mUnk_0c.z = camPos.z + dz;
             }
         }
     }
@@ -1507,14 +1506,13 @@ void func_020192d4(void) {
     }
     if (keys & 0x20) {
         if (data_020b6ee0.mUnk_a146 <= 1) {
-            int cur = data_020b6ee0.mUnk_a8e4;
-            int n;
-            if (cur > 0) {
-                n = cur;
+            int prev;
+            if (data_020b6ee0.mUnk_a8e4 > 0) {
+                prev = data_020b6ee0.mUnk_a8e4 - 1;
             } else {
-                n = data_020b6ee0.mUnk_a8ee;
+                prev = data_020b6ee0.mUnk_a8ee - 1;
             }
-            data_020b6ee0.mUnk_a8e4 = n - 1;
+            data_020b6ee0.mUnk_a8e4 = prev;
         }
     }
     if (data_020b6ee0.mUnk_a146 == 0 || data_020b6ee0.mUnk_a146 == 1 || data_020b6ee0.mUnk_a146 == 2 ||
@@ -1837,8 +1835,8 @@ void func_02019b38(void) {}
 void func_02019b3c(VecFx32 *a, VecFx32 *b) {
     Unk_020c1030 *p = &data_020b6ee0.mUnk_a150;
     VecFx32 v;
-    s32 out0[2];
     s32 out1[2];
+    s32 out0[2];
 
     func_02031fc4(0, &v);
     data_020b6ee0.mUnk_a574.mUnk_0c.x = a->x;
@@ -1893,9 +1891,13 @@ void func_02019b3c(VecFx32 *a, VecFx32 *b) {
         d = func_0201faf0((p->mUnk_00.mPos.x - v.x) / 512, (p->mUnk_00.mPos.z - v.z) / 512);
         if (d > 0x320) {
             s32 r = 0x64000 / d;
+            s32 dx = (p->mUnk_00.mPos.x - v.x) / 512;
+            s32 dz = (p->mUnk_00.mPos.z - v.z) / 512;
 
-            p->mUnk_00.mPos.x = v.x + (p->mUnk_00.mPos.x - v.x) / 512 * r;
-            p->mUnk_00.mPos.z = v.z + (p->mUnk_00.mPos.z - v.z) / 512 * r;
+            dx *= r;
+            dz *= r;
+            p->mUnk_00.mPos.x = v.x + dx;
+            p->mUnk_00.mPos.z = v.z + dz;
         }
     }
     func_0200b928(&p->mUnk_44, 0, 0x10);

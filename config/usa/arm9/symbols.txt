@@ -2278,9 +2278,6 @@ data_020c1834 kind:bss addr:0x020c1834
 data_020c1874 kind:bss addr:0x020c1874
 data_020c18bc kind:bss addr:0x020c18bc
 data_020c1d60 kind:bss addr:0x020c1d60
-data_020c2558 kind:bss addr:0x020c2558
-data_020c2559 kind:bss addr:0x020c2559
-data_020c2560 kind:bss addr:0x020c2560
 data_020c267c kind:bss addr:0x020c267c
 data_020c31ac kind:bss addr:0x020c31ac
 data_020c31dc kind:bss addr:0x020c31dc

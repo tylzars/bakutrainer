@@ -42,7 +42,7 @@ int func_02020890(void) {
 void func_020208dc(int flags, u16 a, u16 b, u16 c) {
     int index;
     if ((flags & TOUCH_ADD_FRONT) == 0) {
-        index = data_020c2560.mUnk_100.mUnk_08 - 1;
+        index = data_020c1d60.mUnk_800.mUnk_100.mUnk_08 - 1;
     } else {
         index = 0;
     }
@@ -68,7 +68,7 @@ void func_02020978(int id, int x, int y, int a, int b, int c) {
     int index;
     int shifting;
     Unk_TouchButton *button;
-    if (data_020c2560.mUnk_100.mUnk_08 >= TOUCH_BUTTON_COUNT) {
+    if (data_020c1d60.mUnk_800.mUnk_100.mUnk_08 >= TOUCH_BUTTON_COUNT) {
         OS_Terminate();
     }
     if (data_020c18bc.mUnk_46c & SYSTEM_TOUCH_LOCK) {
@@ -76,9 +76,9 @@ void func_02020978(int id, int x, int y, int a, int b, int c) {
     }
     shifting = id & TOUCH_ADD_FRONT;
     if (shifting == 0) {
-        index = data_020c2560.mUnk_100.mUnk_08;
+        index = data_020c1d60.mUnk_800.mUnk_100.mUnk_08;
     } else {
-        index = data_020c2560.mUnk_100.mUnk_08++;
+        index = data_020c1d60.mUnk_800.mUnk_100.mUnk_08++;
         while (index != 0) {
             data_020c1d60.mUnk_000[index] = data_020c1d60.mUnk_000[index - 1];
             index--;
@@ -106,14 +106,14 @@ void func_02020978(int id, int x, int y, int a, int b, int c) {
         button->mUnk_2 = y;
         button->mUnk_6 = c;
     }
-    if (data_020c2560.mUnk_100.mUnk_16 != 0) {
+    if (data_020c1d60.mUnk_800.mUnk_100.mUnk_16 != 0) {
         int mode = func_02020878() == 1 ? 2 : 1;
-        func_0202cf08(data_020c2560.mUnk_100.mUnk_16, button->mUnk_0, button->mUnk_2, 0, mode);
-        func_0202cf08(data_020c2560.mUnk_100.mUnk_16, button->mUnk_4, button->mUnk_6, 0, mode);
+        func_0202cf08(data_020c1d60.mUnk_800.mUnk_100.mUnk_16, button->mUnk_0, button->mUnk_2, 0, mode);
+        func_0202cf08(data_020c1d60.mUnk_800.mUnk_100.mUnk_16, button->mUnk_4, button->mUnk_6, 0, mode);
     }
     button->mUnk_8 = id;
     if (shifting == 0) {
-        data_020c2560.mUnk_100.mUnk_08++;
+        data_020c1d60.mUnk_800.mUnk_100.mUnk_08++;
     }
 }
 
@@ -179,13 +179,13 @@ int func_02020ab8(int x, int y, int shape, int px, int py) {
 }
 
 void func_02020ba0(void) {
-    data_020c2560.mUnk_100.mUnk_08 = 0;
+    data_020c1d60.mUnk_800.mUnk_100.mUnk_08 = 0;
 }
 
 // Polls the touch screen and the keys and returns the button state: the button id in the low half and the
 // TOUCH_* flags above it.
 u32 func_02020bac(u32 mask) {
-    u32 result = data_020c2560.mUnk_100.mUnk_12;
+    u32 result = data_020c1d60.mUnk_800.mUnk_100.mUnk_12;
     u32 wanted = result;
     int hit = -1;
     u8 pos[2];
@@ -194,54 +194,54 @@ u32 func_02020bac(u32 mask) {
         wanted = mask;
     }
     if (func_02020e3c(&pos[1], &pos[0]) == 1) {
-        for (i = 0; i < data_020c2560.mUnk_100.mUnk_08; i++) {
+        for (i = 0; i < data_020c1d60.mUnk_800.mUnk_100.mUnk_08; i++) {
             Unk_TouchButton *button = &data_020c1d60.mUnk_000[i];
             if (!(button->mUnk_8 & TOUCH_SHAPE)) {
                 if (pos[0] >= button->mUnk_2 && pos[0] <= button->mUnk_6 && pos[1] >= button->mUnk_0 &&
                     pos[1] <= button->mUnk_4) {
                     hit = i;
-                    data_020c2560.mUnk_100.mUnk_12 = data_020c1d60.mUnk_000[i].mUnk_8 & 0x7fff;
+                    data_020c1d60.mUnk_800.mUnk_100.mUnk_12 = data_020c1d60.mUnk_000[i].mUnk_8 & 0x7fff;
                     break;
                 }
             } else if (func_02020a90(button->mUnk_0, button->mUnk_2, button->mUnk_6)) {
                 hit = i;
-                data_020c2560.mUnk_100.mUnk_12 = data_020c1d60.mUnk_000[i].mUnk_8 & 0x7fff;
+                data_020c1d60.mUnk_800.mUnk_100.mUnk_12 = data_020c1d60.mUnk_000[i].mUnk_8 & 0x7fff;
                 break;
             }
         }
-        if (i == data_020c2560.mUnk_100.mUnk_08) {
-            data_020c2560.mUnk_100.mUnk_12 = TOUCH_NONE;
+        if (i == data_020c1d60.mUnk_800.mUnk_100.mUnk_08) {
+            data_020c1d60.mUnk_800.mUnk_100.mUnk_12 = TOUCH_NONE;
         }
-        result = data_020c2560.mUnk_100.mUnk_12 | TOUCH_DOWN;
-        if (data_020c2560.mUnk_100.mUnk_14 == 0 ||
-            (wanted != data_020c2560.mUnk_100.mUnk_12 && !(data_020c18bc.mUnk_46c & SYSTEM_TOUCH_QUIET))) {
+        result = data_020c1d60.mUnk_800.mUnk_100.mUnk_12 | TOUCH_DOWN;
+        if (data_020c1d60.mUnk_800.mUnk_100.mUnk_14 == 0 ||
+            (wanted != data_020c1d60.mUnk_800.mUnk_100.mUnk_12 && !(data_020c18bc.mUnk_46c & SYSTEM_TOUCH_QUIET))) {
             result |= TOUCH_PRESSED;
-            if (wanted == data_020c2560.mUnk_100.mUnk_12) {
+            if (wanted == data_020c1d60.mUnk_800.mUnk_100.mUnk_12) {
                 result |= TOUCH_REPEAT;
-                if (data_020c18bc.mUnk_45c - data_020c2560.mUnk_100.mUnk_0c < TOUCH_QUICK_FRAMES) {
+                if (data_020c18bc.mUnk_45c - data_020c1d60.mUnk_800.mUnk_100.mUnk_0c < TOUCH_QUICK_FRAMES) {
                     result |= TOUCH_QUICK;
                 }
             }
-            if (data_020c2560.mUnk_100.mUnk_14 == 0) {
-                data_020c2560.mUnk_100.mUnk_0c = data_020c18bc.mUnk_45c;
+            if (data_020c1d60.mUnk_800.mUnk_100.mUnk_14 == 0) {
+                data_020c1d60.mUnk_800.mUnk_100.mUnk_0c = data_020c18bc.mUnk_45c;
             }
         }
-        data_020c2560.mUnk_100.mUnk_14 = 1;
+        data_020c1d60.mUnk_800.mUnk_100.mUnk_14 = 1;
     } else {
-        if (data_020c2560.mUnk_100.mUnk_14 == 1) {
+        if (data_020c1d60.mUnk_800.mUnk_100.mUnk_14 == 1) {
             result |= TOUCH_RELEASED;
-            for (i = 0; i < data_020c2560.mUnk_100.mUnk_08; i++) {
+            for (i = 0; i < data_020c1d60.mUnk_800.mUnk_100.mUnk_08; i++) {
                 if ((u16) result == data_020c1d60.mUnk_000[i].mUnk_8) {
                     hit = i;
                     break;
                 }
             }
         }
-        data_020c2560.mUnk_100.mUnk_14 = 0;
+        data_020c1d60.mUnk_800.mUnk_100.mUnk_14 = 0;
     }
     if ((result & (TOUCH_DOWN | TOUCH_PRESSED | TOUCH_RELEASED)) == 0) {
         if ((u16) (data_020c18bc.mUnk_10 | data_020c18bc.mUnk_12 | data_020c18bc.mUnk_014) != 0) {
-            for (i = 0; i < data_020c2560.mUnk_100.mUnk_08; i++) {
+            for (i = 0; i < data_020c1d60.mUnk_800.mUnk_100.mUnk_08; i++) {
                 u16 keys = data_020c1d60.mUnk_000[i].mUnk_e;
                 if (keys != 0) {
                     if (data_020c18bc.mUnk_10 & keys) {
@@ -257,7 +257,7 @@ u32 func_02020bac(u32 mask) {
             }
         }
     }
-    data_020c2560.mUnk_100.mUnk_08 = 0;
+    data_020c1d60.mUnk_800.mUnk_100.mUnk_08 = 0;
     if (hit != -1 && (u16) result != TOUCH_NONE) {
         if (result & TOUCH_RELEASED) {
             if (data_020c1d60.mUnk_000[hit].mUnk_c != 0) {
@@ -276,18 +276,18 @@ u32 func_02020bac(u32 mask) {
 }
 
 void func_02020df4(void) {
-    data_020c2560.mUnk_100.mUnk_18 = 0;
-    data_020c2560.mUnk_100.mUnk_10 = 0;
-    MIi_CpuClear16(0xffff, data_020c2560.mUnk_000, sizeof(data_020c2560.mUnk_000));
+    data_020c1d60.mUnk_800.mUnk_100.mUnk_18 = 0;
+    data_020c1d60.mUnk_800.mUnk_100.mUnk_10 = 0;
+    MIi_CpuClear16(0xffff, data_020c1d60.mUnk_800.mUnk_000, sizeof(data_020c1d60.mUnk_800.mUnk_000));
 }
 
 void func_02020e18(u16 a, int b) {
-    data_020c2560.mUnk_100.mUnk_12 = TOUCH_NONE;
-    data_020c2560.mUnk_100.mUnk_08 = 0;
-    data_020c2560.mUnk_100.mUnk_14 = 0;
-    data_020c2560.mUnk_100.mUnk_0c = 0;
-    data_020c2560.mUnk_100.mUnk_16 = a;
-    data_020c2560.mUnk_100.mUnk_04 = TOUCH_NONE;
+    data_020c1d60.mUnk_800.mUnk_100.mUnk_12 = TOUCH_NONE;
+    data_020c1d60.mUnk_800.mUnk_100.mUnk_08 = 0;
+    data_020c1d60.mUnk_800.mUnk_100.mUnk_14 = 0;
+    data_020c1d60.mUnk_800.mUnk_100.mUnk_0c = 0;
+    data_020c1d60.mUnk_800.mUnk_100.mUnk_16 = a;
+    data_020c1d60.mUnk_800.mUnk_100.mUnk_04 = TOUCH_NONE;
     func_02020df4();
 }
 
@@ -299,27 +299,27 @@ int func_02020e3c(u8 *x, u8 *y) {
         if (y != 0) {
             *y = 0xff;
         }
-        if (data_020c2560.mUnk_100.mUnk_18 == 1) {
-            data_020c2560.mUnk_100.mUnk_00[2] = data_020c18bc.mUnk_2ae;
-            data_020c2560.mUnk_100.mUnk_00[3] = data_020c18bc.mUnk_2af;
-            data_020c2560.mUnk_100.mUnk_18 = 2;
-        } else if (data_020c2560.mUnk_100.mUnk_18 == 2) {
-            data_020c2560.mUnk_100.mUnk_18 = 3;
+        if (data_020c1d60.mUnk_800.mUnk_100.mUnk_18 == 1) {
+            data_020c1d60.mUnk_800.mUnk_100.mUnk_00[2] = data_020c18bc.mUnk_2ae;
+            data_020c1d60.mUnk_800.mUnk_100.mUnk_00[3] = data_020c18bc.mUnk_2af;
+            data_020c1d60.mUnk_800.mUnk_100.mUnk_18 = 2;
+        } else if (data_020c1d60.mUnk_800.mUnk_100.mUnk_18 == 2) {
+            data_020c1d60.mUnk_800.mUnk_100.mUnk_18 = 3;
         }
         return 0;
     }
-    if (data_020c2560.mUnk_100.mUnk_18 != 1) {
+    if (data_020c1d60.mUnk_800.mUnk_100.mUnk_18 != 1) {
         func_02020df4();
-        data_020c2560.mUnk_100.mUnk_00[0] = data_020c18bc.mUnk_2ae;
-        data_020c2560.mUnk_100.mUnk_00[1] = data_020c18bc.mUnk_2af;
-        data_020c2560.mUnk_100.mUnk_18 = 1;
+        data_020c1d60.mUnk_800.mUnk_100.mUnk_00[0] = data_020c18bc.mUnk_2ae;
+        data_020c1d60.mUnk_800.mUnk_100.mUnk_00[1] = data_020c18bc.mUnk_2af;
+        data_020c1d60.mUnk_800.mUnk_100.mUnk_18 = 1;
     }
     {
         u8 px = data_020c18bc.mUnk_2ae;
-        u32 n = data_020c2560.mUnk_100.mUnk_10;
-        data_020c2560.mUnk_000[n].mUnk_0 = px;
-        data_020c2560.mUnk_000[n].mUnk_1 = data_020c18bc.mUnk_2af;
-        data_020c2560.mUnk_100.mUnk_10 = (data_020c2560.mUnk_100.mUnk_10 + 1) & 0x7f;
+        u32 n = data_020c1d60.mUnk_800.mUnk_100.mUnk_10;
+        data_020c1d60.mUnk_800.mUnk_000[n].mUnk_0 = px;
+        data_020c1d60.mUnk_800.mUnk_000[n].mUnk_1 = data_020c18bc.mUnk_2af;
+        data_020c1d60.mUnk_800.mUnk_100.mUnk_10 = (data_020c1d60.mUnk_800.mUnk_100.mUnk_10 + 1) & 0x7f;
         if (x != 0) {
             *x = px;
         }

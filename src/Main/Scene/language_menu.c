@@ -72,7 +72,7 @@ int func_0200f468(void) {
 void func_0200f4d4(void) {
     int id;
     u32 idx;
-    if (data_020c2560.mUnk_100.mUnk_04 == 0x40000400) {
+    if (data_020c1d60.mUnk_800.mUnk_100.mUnk_04 == 0x40000400) {
         id = 0xf8f;
     } else {
         id = 0xf8e;
