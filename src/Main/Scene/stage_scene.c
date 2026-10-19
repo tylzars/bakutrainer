@@ -111,15 +111,13 @@ void func_0200ca14(void) {
     int i;
     int stage = data_020b6ee0.mUnk_a8e4;
     int ok;
-    s32 idx;
     if (stage < 0) {
         stage = 0;
     }
     data_02063940->mStage = data_020b1990[stage].mInfo;
-    idx = data_02063940->mStage.mUnk_11 - 1;
+    data_020b10fc.mUnk_08 = data_02063940->mStage.mUnk_11 - 1;
     ok = 0;
-    data_020b10fc.mUnk_08 = idx;
-    if (idx >= 0 && idx < 12) {
+    if (data_020b10fc.mUnk_08 >= 0 && data_020b10fc.mUnk_08 < 12) {
         ok = 1;
     }
     if (!ok) {
@@ -427,30 +425,37 @@ void func_0200d2a4(PopupSlot *slot) {
     }
 }
 
-static inline int lookup_d63(int idx, int k) {
-    return func_02021e44(0xd63, idx * 3 + k);
-}
-
-static inline int lookup_d62(int idx, int k) {
-    return func_02021e44(0xd62, 11 * idx + k);
-}
-
 void func_0200d434(void) {
-    data_02063940->mUnk_618 = lookup_d63(data_020b10fc.mUnk_08, 2) * 60;
+    int base;
+    base = data_020b10fc.mUnk_08 * 3;
+    data_02063940->mUnk_618 = func_02021e44(0xd63, base + 2) * 60;
     data_02063940->mUnk_614 = data_02063940->mUnk_618;
-    data_02063940->mUnk_630 = lookup_d63(data_020b10fc.mUnk_08 + 1, 0);
-    data_02063940->mUnk_624 = lookup_d63(data_020b10fc.mUnk_08, 4);
-    data_02063940->mUnk_638 = lookup_d62(data_020b10fc.mUnk_08, 2);
-    data_02063940->mUnk_63c = lookup_d62(data_020b10fc.mUnk_08, 3);
-    data_02063940->mUnk_640 = lookup_d62(data_020b10fc.mUnk_08, 4);
-    data_02063940->mUnk_650 = lookup_d62(data_020b10fc.mUnk_08, 5);
-    data_02063940->mUnk_644 = lookup_d62(data_020b10fc.mUnk_08, 6);
-    data_02063940->mUnk_648 = lookup_d62(data_020b10fc.mUnk_08, 7);
-    data_02063940->mUnk_64c = lookup_d62(data_020b10fc.mUnk_08, 8);
-    data_02063940->mUnk_660 = lookup_d62(data_020b10fc.mUnk_08 + 1, 0);
-    data_02063940->mUnk_65c = lookup_d62(data_020b10fc.mUnk_08, 10) * 60;
-    data_02063940->mUnk_658 = lookup_d62(data_020b10fc.mUnk_08, 9);
-    data_02063940->mUnk_628 = lookup_d62(data_020b10fc.mUnk_08, 12);
+    base = (data_020b10fc.mUnk_08 + 1) * 3;
+    data_02063940->mUnk_630 = func_02021e44(0xd63, base);
+    base = data_020b10fc.mUnk_08 * 3;
+    data_02063940->mUnk_624 = func_02021e44(0xd63, base + 4);
+    base = data_020b10fc.mUnk_08 * 11;
+    data_02063940->mUnk_638 = func_02021e44(0xd62, base + 2);
+    base = data_020b10fc.mUnk_08 * 11;
+    data_02063940->mUnk_63c = func_02021e44(0xd62, base + 3);
+    base = data_020b10fc.mUnk_08 * 11;
+    data_02063940->mUnk_640 = func_02021e44(0xd62, base + 4);
+    base = data_020b10fc.mUnk_08 * 11;
+    data_02063940->mUnk_650 = func_02021e44(0xd62, base + 5);
+    base = data_020b10fc.mUnk_08 * 11;
+    data_02063940->mUnk_644 = func_02021e44(0xd62, base + 6);
+    base = data_020b10fc.mUnk_08 * 11;
+    data_02063940->mUnk_648 = func_02021e44(0xd62, base + 7);
+    base = data_020b10fc.mUnk_08 * 11;
+    data_02063940->mUnk_64c = func_02021e44(0xd62, base + 8);
+    base = (data_020b10fc.mUnk_08 + 1) * 11;
+    data_02063940->mUnk_660 = func_02021e44(0xd62, base);
+    base = data_020b10fc.mUnk_08 * 11;
+    data_02063940->mUnk_65c = func_02021e44(0xd62, base + 10) * 60;
+    base = data_020b10fc.mUnk_08 * 11;
+    data_02063940->mUnk_658 = func_02021e44(0xd62, base + 9);
+    base = data_020b10fc.mUnk_08 * 11;
+    data_02063940->mUnk_628 = func_02021e44(0xd62, base + 12);
 }
 
 void func_0200d5f0(void) {

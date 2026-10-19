@@ -159,7 +159,8 @@ void func_0200a5f0(void) {
                 u32 k;
                 int x, y, xx, yy;
                 StageRec *rec;
-                id = data_020b6ee0.mUnk_c60[i];
+                // x holds the stage id until its record is found, then the x position
+                x = data_020b6ee0.mUnk_c60[i];
                 if (i < sel->mUnk_14) {
                     for (k = 0; k < 3; k++) {
                         t[k] = 0x4000;
@@ -168,19 +169,19 @@ void func_0200a5f0(void) {
                     for (k = 0; k < 3; k++) {
                         t[k] = sel->mUnk_18[k];
                     }
-                    if (id == -1 || (!(data_020b6ee0.mUnk_a8f3[i] & 1) && sel->mUnk_18[1] == 0x4000) ||
+                    if (x == -1 || (!(data_020b6ee0.mUnk_a8f3[i] & 1) && sel->mUnk_18[1] == 0x4000) ||
                         ((data_020b6ee0.mUnk_a8f3[i] & 1) && sel->mUnk_18[2] == 0x4000)) {
                         sel->mUnk_14 = sel->mUnk_14 + 1;
                         func_0200a5cc(1);
                     }
                 }
-                if (id == -1) {
+                if (x == -1) {
                     continue;
                 }
-                if (id == -1 || id >= 39) {
+                if (x == -1 || x >= 39) {
                     OS_Terminate();
                 }
-                rec = &data_020b1990[id];
+                rec = &data_020b1990[x];
                 x = 127;
                 if (i == 0) {
                     x -= 76;
@@ -541,22 +542,22 @@ void func_0200b0e0(void) {
             int dist2;
             int flag;
             if (p->mPos.x < 0) {
+                bounced = 1;
                 p->mPos.x = 0;
                 p->mVel.x = -p->mVel.x;
-                bounced = 1;
             } else if (p->mPos.x > 0xff00) {
+                bounced = 1;
                 p->mPos.x = 0xff00;
                 p->mVel.x = -p->mVel.x;
-                bounced = 1;
             }
             if (p->mPos.y < 0) {
+                bounced = 1;
                 p->mPos.y = 0;
                 p->mVel.y = -p->mVel.y;
-                bounced = 1;
             } else if (p->mPos.y > 0xc000) {
+                bounced = 1;
                 p->mPos.y = 0xc000;
                 p->mVel.y = -p->mVel.y;
-                bounced = 1;
             }
             if (bounced) {
                 func_0202f110(88, 100, 0, 64, 0xffff, 0);
