@@ -290,32 +290,43 @@ libs/mobiclip/src/mobiclip_convert.cpp:
 
 // provisional: no evidence yet for where these files begin and end
 src/Main/Unknown/arm_system.c:
+    complete
     .text       start:0x02001000 end:0x020011dc
 
 src/Main/Boot/main.c:
+    complete
     .text       start:0x02003000 end:0x02003194
 
 src/Main/Minigame/falling_blocks.c:
+    complete
     .text       start:0x02003194 end:0x0200494c
     .rodata     start:0x0204e054 end:0x0204e0cc
+    .data       start:0x02063900 end:0x02063908
+    .bss        start:0x02064820 end:0x02064824
 
 src/Main/Scene/result_screen.c:
     .text       start:0x0200494c end:0x020054a4
     .rodata     start:0x0204e0cc end:0x0204e0e8
 
 src/Main/Scene/mode_select.c:
+    complete
     .text       start:0x020054a4 end:0x02005c10
     .rodata     start:0x0204e0e8 end:0x0204e138
+    .data       start:0x0206391c end:0x02063924
 
 src/Main/Scene/field_objects.c:
+    complete
     .text       start:0x02005c10 end:0x02006fc0
     .rodata     start:0x0204e138 end:0x0204e158
+    .data       start:0x02063924 end:0x0206392c
 
 src/Main/Scene/page_viewer.c:
     .text       start:0x02006fc0 end:0x020071a8
 
 src/Main/Graphics/sprite_slots.c:
+    complete
     .text       start:0x0200d6c8 end:0x0200de68
+    .data       start:0x02063944 end:0x02063954
 
 // .bss data_02098d80..data_020990e0 (ascending sizes: one file); the 0x34-byte data_02099770 after the 0x690-byte
 // data_020990e0 starts the next file
@@ -326,22 +337,31 @@ src/Main/Scene/battle_screen.c:
 
 // provisional: may be two files
 src/Main/Minigame/stage_minigame.c:
+    complete
     .text       start:0x0200a384 end:0x0200b898
+    .data       start:0x02063930 end:0x02063940
+    .bss        start:0x02099770 end:0x020ab7e0
 
 // provisional: the start; nothing before 0x0200b898 calls the helpers, func_0200b994 calls func_0200b928
 src/Main/Unknown/game_util.c:
+    complete
     .text       start:0x0200b898 end:0x0200c034
 
 src/Main/Unknown/move_object.c:
+    complete
     .text       start:0x0200c034 end:0x0200c65c
 
 src/Main/Scene/stage_scene.c:
+    complete
     .text       start:0x0200c65c end:0x0200d6c8
     .rodata     start:0x0204e1c0 end:0x0204e1e4
 
 src/Main/Scene/slide_transition.c:
+    complete
     .text       start:0x0200de68 end:0x0200f374
     .rodata     start:0x0204e1e4 end:0x0204e208
+    .data       start:0x02063954 end:0x02063988
+    .bss        start:0x020ae44c end:0x020ae464
 
 // provisional: the end may lie past 0x0200f9c8 (the language-table lookups after it)
 src/Main/Scene/language_menu.c:
@@ -359,6 +379,7 @@ src/Main/Scene/stage_select.c:
 // provisional: a new unit starts by func_02014ac8 (its table at 0x020500d4 breaks the size order of the
 // .rodata before it); the end is provisional
 src/Main/Scene/stage_progress.c:
+    complete
     .text       start:0x020145bc end:0x02015340
     .rodata     start:0x020500d4 end:0x020500d8
 
@@ -377,19 +398,27 @@ src/Main/Scene/stage_camera.c:
 // .rodata 0x020500d8-0x02050164, strings 0x02063a5c-0x02063a90, .bss 0x020b13c8-0x020b1524 (defined here); the end
 // is provisional (func_02015d48 and func_02015d4c may meet in either file)
 src/Main/Minigame/three_in_row.c:
+    complete
     .text       start:0x02015340 end:0x02015d4c
     .rodata     start:0x020500d8 end:0x02050164
+    .data       start:0x02063a5c end:0x02063a90
+    .bss        start:0x020b13c8 end:0x020b1524
 
 // provisional: the data block 0x0201a608-0x0201b7e0 (script_data.s) follows
 src/Main/Scene/stage_map_menu.c:
+    complete
     .text       start:0x02019fa0 end:0x0201a608
+    .data       start:0x02063a9c end:0x02063aac
 
 // provisional: both ends (the ARM list helpers func_0201fa08/func_0201fa5c come before it)
 src/Main/System/game_math.c:
+    complete
     .text       start:0x0201fab0 end:0x0201fd68
+    .rodata     start:0x02050244 end:0x02050270
 
 // provisional: may be the same file as game_math.c (contiguous, no boundary evidence)
 src/Main/System/random_angle.c:
+    complete
     .text       start:0x0201fd68 end:0x0201ffd4
 
 // provisional: both ends (card code before it, no microphone calls after it)
@@ -403,27 +432,33 @@ src/Main/Graphics/text_draw.c:
 
 // provisional: may include random_angle.c's func_0201fed4/ff80/ffa0 (same SystemState block fields)
 src/Main/Save/save_blocks.c:
+    complete
     .text       start:0x0201ffd4 end:0x02020878
 
 // provisional: func_02020878/func_02020890 may be save_blocks.c's tail
 src/Main/Input/touch_buttons.c:
+    complete
     .text       start:0x02020878 end:0x02020ee0
 
 // backup memory access, called only from save_blocks.c
 src/Main/Save/backup_access.c:
+    complete
     .text       start:0x02020ee0 end:0x02020ff4
 
 // provisional: probably continues with func_020225dc (same pool objects)
 src/Main/Graphics/gx_pool.c:
+    complete
     .text       start:0x02021fb0 end:0x020223e8
 
 // provisional: may belong to gx_pool.c
 src/Main/Unknown/angle_blend.c:
+    complete
     .text       start:0x020223e8 end:0x020225dc
 
 // provisional: the pool allocator and hash lookups of the graphics pools (data_020c31dc, like gx_pool.c);
 // func_020232f0/func_02023478 work on the animation tracks and may belong with the model code after it
 src/Main/Graphics/vram_cache.c:
+    complete
     .text       start:0x020225dc end:0x0202350c
 
 // provisional: the .rodata 0x02050898-0x020508d8 of the ARM pose code, the ARM render code and func_02025f58 ascends
@@ -439,31 +474,39 @@ src/Main/System/engine_asm.s:
 // the script reader on data_020c61ac; it ends with func_0202a1ec (last pool word at 0x0202ad30), where the ARM run
 // of texture_blocks.c starts
 src/Main/Script/script_records.c:
+    complete
     .text       start:0x02028e5c end:0x0202ad34
     .rodata     start:0x020508d8 end:0x02050978
 
 // provisional: the ARM run 0x0202ad34-0x0202db1c (block heaps, texture blocks and sprites of data_020c267c), which
 // ends where Thumb code resumes; the empty routines at the start touch no object and are placed by address
 src/Main/Graphics/texture_blocks.c:
+    complete
     .text       start:0x0202ad34 end:0x0202db1c
     .rodata     start:0x02050978 end:0x020509b8
 
 // provisional: the Thumb sprite script player after texture_blocks.c's ARM run, up to the padding before ARM code
 src/Main/Graphics/sprite_script.c:
+    complete
     .text       start:0x0202db1c end:0x0202de94
 
 // provisional: the ARM file cache and loader on data_020c6470 (defined here), up to the wave player's func_0202ea50
 src/Main/System/file_loader.c:
+    complete
     .text       start:0x0202de94 end:0x0202ea50
+    .bss        start:0x020c6470 end:0x020c648c
 
 // provisional: the wave player on data_020c648c (16 channels and the channel count at 0x180); func_0202ea50 (ARM)
 // claims its channels; the wave stream (from 0x0202f110) uses the same object; ARM code resumes at 0x0202f500
 src/Main/Sound/wave_player.c:
+    complete
     .text       start:0x0202ea50 end:0x0202f500
+    .bss        start:0x020c648c end:0x020c661c
 
 // provisional: movie playback with its audio stream (ARM, on data_020c661c); the allocator pair at the start
 // (only referenced from far away) is placed by address; func_0202fcc4 after it uses other objects
 src/Main/Video/stream_audio.c:
+    complete
     .text       start:0x0202f500 end:0x0202fcc4
 
 // provisional: the "QRK" unpacker (range-coded LZ, its three tables in .data); starts where the movie code ends
@@ -475,6 +518,7 @@ src/Main/System/qrk_decode.c:
 // provisional: the floor heights of the stage map (chunks 0x5528/0x552a/0x552b); starts where the QRK unpacker
 // ends and ends where map_entries.c's ring quadtree begins
 src/Main/Map/map_floor.c:
+    complete
     .text       start:0x02030830 end:0x020312b8
 
 // provisional: the stage data file's chunks and entries, the placed objects, the visible cells and the camera
@@ -486,11 +530,13 @@ src/Main/Map/map_entries.c:
 
 // provisional: rounding helpers (32, 4, 2) used by several files; no tie to either neighbour
 src/Main/System/align_util.c:
+    complete
     .text       start:0x02034918 end:0x02034954
 
 // provisional: the wireless link's per-frame step, record exchange and error screen (data_020c66d4..data_020c68e0,
 // data_020c18bc.mUnk_250/mUnk_288) and the error screen's strings; func_02035108 after it is the tracker's
 src/Main/Link/comm_link.c:
+    complete
     .text       start:0x02034954 end:0x02035108
     .data       start:0x02063b58 end:0x02063c9c
 
