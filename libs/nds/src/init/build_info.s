@@ -6,14 +6,14 @@
 	.global BuildInfo
 	.extern data_02064c40
 	.extern data_02064c58
-	.extern data_02064820
+	.extern ARM9_BSS_START
 
 	.type BuildInfo, @object
 BuildInfo:
 	.word data_02064c40     ; autoload list: start
 	.word data_02064c58     ; autoload list: end
-	.word data_02064820     ; first autoload source
-	.word data_02064820     ; BSS start
+	.word ARM9_BSS_START    ; first autoload source
+	.word ARM9_BSS_START    ; BSS start
 	.word 0x020ce200        ; BSS end
 	.word 0                 ; end of the compressed part (0 in the unpacked image)
 	.word 0x04027539        ; version word
