@@ -21,7 +21,7 @@ progress below counts what is decompiled and what links from source.
 |---|---|
 | Matched code | 84.23% (269,698 / 320,196 bytes) |
 | Linked code (complete units) | 64.74% (207,298 bytes) |
-| Overall accuracy (fuzzy) | 94.42% |
+| Overall accuracy (fuzzy) | 94.45% |
 | Matched functions | 1,605 / 1,797 |
 
 The code size dropped from 389,724 to 320,196 bytes when the `.text`/`.rodata` boundary moved to where the original's code ends (0x0204df14): the game's constant tables and the Mobiclip decoder after them are in the original's `.rodata`. The step in the graph is that change, not new matching.

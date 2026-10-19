@@ -229,8 +229,8 @@ void func_0202397c(int from, int node) {
     az = -rot[2];
     ay = rot[1];
     iy = (ay >> 4) * 2;
-    iz = (az >> 4) * 2;
     ix = (ax >> 4) * 2;
+    iz = (az >> 4) * 2;
     sx = FX_SinCosTable_[ix];
     sy = FX_SinCosTable_[iy];
     cx = FX_SinCosTable_[ix + 1];
@@ -716,9 +716,9 @@ void func_02024b5c(u32 id, void *params, void *obj, int flags) {
             a1 = (u16) (angOfs + p->mUnk_3a) >> 4;
             a2 = p->mUnk_3c >> 4;
             cos2 = FX_SinCosTable_[a2 * 2 + 1];
-            sin0 = FX_SinCosTable_[a0 * 2];
             sin2 = FX_SinCosTable_[a2 * 2];
             cos0 = FX_SinCosTable_[a0 * 2 + 1];
+            sin0 = FX_SinCosTable_[a0 * 2];
             cos1 = FX_SinCosTable_[a1 * 2 + 1];
             sin1 = FX_SinCosTable_[a1 * 2];
             c2s0 = (cos2 * sin0) >> 12;
@@ -942,9 +942,10 @@ void func_02024b5c(u32 id, void *params, void *obj, int flags) {
                 tsx = func_02024a64((const AnimKey16 *) keys[0], (const u8 *) track, frame);
                 tsy = func_02024a64((const AnimKey16 *) keys[1], (const u8 *) track, frame);
                 if (tsx != 0x1000 || tsy != 0x1000) {
-                    PutTrans(0, height << 16, 0);
+                    y = height << 16;
+                    PutTrans(0, y, 0);
                     PutScale(tsx, tsy, 0x1000);
-                    PutTrans(0, -(height << 16), 0);
+                    PutTrans(0, -y, 0);
                 }
                 tx = func_02024a64((const AnimKey16 *) keys[3], (const u8 *) track, frame);
                 ty = func_02024a64((const AnimKey16 *) keys[4], (const u8 *) track, frame);
