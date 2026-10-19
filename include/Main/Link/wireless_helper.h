@@ -73,13 +73,15 @@ typedef struct Unk_WirelessWork {
 
 extern Unk_WirelessWork data_020c8380;
 extern u8 data_020c83e0[0x40];
-extern WMParentParam data_020c8420;
-extern u16 data_020c8460[0x60];
+// The parent parameter block, the parent record (flushed from the data cache by range) and the data-sharing block
+// handed to the wireless library are 32-byte aligned.
+extern WMParentParam data_020c8420 __attribute__((aligned(32)));
+extern u16 data_020c8460[0x60] __attribute__((aligned(32)));
 extern u16 data_020c8520[0x100];
 extern u8 data_020c8720[0x220];
 extern u8 data_020c8940[0x480];
 extern WMDataSharing data_020c8dc0;
-extern WMDataSharing data_020c95e0;
+extern WMDataSharing data_020c95e0 __attribute__((aligned(32)));
 
 const char *func_020386a4(u32 code);
 void func_020386c0(int state);
@@ -124,9 +126,11 @@ void func_0203982c(u16 code);
 
 // Work area of the link status code: +4 is the bit set of finished steps (see func_02039c88); +0x10 and +0x18 are the
 // two buffers of the outgoing message; +0x8, +0xc, +0x10, +0x14, +0x18 and +0x1c are released when the link shuts down.
-// The Thumb code of wireless_helper.c reaches the members through data_020c9e00 (pool word 0x020c9e00, offset in the
-// load), while the ARM code here and system_init.c / comm_link.c load the exact addresses 0x020c9e04, 0x020c9e10,
-// 0x020c9e14 and 0x020c9e1c, so they keep those as separate objects (system_init.h).
+// The Thumb code of wireless_helper.c reaches the members through this object's base (offset in the load), while the
+// ARM code here and system_init.c / comm_link.c name the flags and buffers as their own objects (data_020c9e04,
+// data_020c9e10, data_020c9e14 and data_020c9e1c in system_init.h).
+// The block is 32-byte aligned, and the compiler does not optimise the functions that use it (func_02039ba8 keeps an
+// unused test and func_02039c88's loop is not rotated).
 typedef struct Unk_LinkBuffers {
     u32 mUnk_00;
     vu16 mUnk_04;
@@ -138,7 +142,7 @@ typedef struct Unk_LinkBuffers {
     u8 *mUnk_1c;
 } Unk_LinkBuffers;
 
-extern Unk_LinkBuffers data_020c9e00;
+extern Unk_LinkBuffers data_020c9e00 __attribute__((aligned(32)));
 
 void func_02039830(int id, u32 shift, u32 index, u32 attr2, u32 attr0, int rotate, int screen);
 void func_02039908(u32 attr2, u32 attr0, int screen);

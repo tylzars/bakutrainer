@@ -7,7 +7,7 @@
 #pragma thumb off
 
 void func_02001000(void) {
-    func_0201c4f0(&data_020c66d4.mUnk_8);
+    func_0201c4f0(&data_020c66d4->mUnk_8);
     func_0201c4f0(&data_020c18bc.mUnk_250.mUnk_24);
     memset(&data_020c18bc.mUnk_250, 0, 0x2c);
     data_020c18bc.mUnk_2a2 = 0;
@@ -18,7 +18,7 @@ void func_02001000(void) {
     memset(data_020c68e0, 0, 0x1fc);
     memset(data_020c66e0, 0, 0x40);
     memset(data_020c6720, 0, 0xc0);
-    data_020c66d4.mUnk_4 = 0;
+    data_020c66d4->mUnk_4 = 0;
 }
 
 BOOL func_020010b4(u32 timeout) {
@@ -53,7 +53,7 @@ void func_02001120(void) {
 void func_02001170(void) {
     switch (func_0203946c()) {
         case 1:
-            func_0203947c(4, data_020c18bc.mUnk_294 + 1, data_020c66d4.mUnk_0);
+            func_0203947c(4, data_020c18bc.mUnk_294 + 1, data_020c66d4->mUnk_0);
             break;
         case 4:
         case 5:

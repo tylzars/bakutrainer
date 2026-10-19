@@ -31,7 +31,7 @@
 // Bit 9 of data_020c9e04: a packet is out.
 #define COMM_BUSY 0x200
 // Bit 23 of data_020c18bc.mUnk_2c8. Where the code tests it, the result goes nowhere (the test survives but whatever
-// it guarded does not): written below as a conditional expression whose value is dropped.
+// it guarded does not): written below as a conditional expression whose value is unused.
 #define COMM_TRACE 0x800000
 
 // A received record: the kind of message, then the message (a request carries a file number at 4; a range
@@ -57,7 +57,7 @@ void func_02034954(void) {
     if (func_020396b8(data_020c67e0) == 0) {
         return;
     }
-    *data_020c66d4.mUnk_4 = 0;
+    *data_020c66d4->mUnk_4 = 0;
     data_020c18bc.mUnk_288 = 0;
     for (i = 0; i < COMM_SLOTS; i++) {
         void *src = func_02039698(i);
@@ -218,7 +218,6 @@ void func_02034d1c(void) {
     u32 a;
     u32 b;
     u32 j;
-    u16 sz;
     u32 state;
     u32 len;
     u8 *buf2;
@@ -236,7 +235,7 @@ void func_02034d1c(void) {
     for (i = 0; i < 1; i++) {
         idxA = order[i];
         if (data_020c18bc.mUnk_250.mUnk_10[idxA] == COMM_PENDING && (data_020c9e04 & COMM_BUSY) == 0) {
-            buf = data_020c66d4.mUnk_8;
+            buf = data_020c66d4->mUnk_8;
             len = c->mUnk_1c[idxA];
 
             if (len >= COMM_CHUNK) {
@@ -247,8 +246,8 @@ void func_02034d1c(void) {
             func_020425f4(&data_020c1874, c->mUnk_14[idxA], 0);
             func_020425e4(&data_020c1874, buf + 5, len);
             data_020c9e04 |= COMM_BUSY;
-            sz = len + 5;
-            if (func_02046e28(func_02039d74, 0, data_020c66d4.mUnk_8, sz, 3, 10, 0) == 2) {
+            buf = data_020c66d4->mUnk_8;
+            if (func_02046e28(func_02039d74, 0, buf, len + 5, 3, 10, 0) == 2) {
                 c->mUnk_14[idxA] += len;
                 c->mUnk_1c[idxA] -= len;
                 if (c->mUnk_1c[idxA] == 0) {

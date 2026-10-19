@@ -167,7 +167,7 @@ void func_020388d4(Unk_WirelessMsg *msg) {
             int r;
 
             if (data_020c8380.mUnk_30 != 0) {
-                data_020c8380.mUnk_30("StartParent - new child (aid 0x%x) connected\n");
+                data_020c8380.mUnk_30("StartParent - new child (aid 0x%x) connected\n", msg->mUnk_10);
             }
             if (data_020c8380.mUnk_40 != 0 && data_020c8380.mUnk_40(msg) == 0) {
                 r = func_02046b68(0, msg->mUnk_10);
@@ -182,7 +182,7 @@ void func_020388d4(Unk_WirelessMsg *msg) {
         }
         case WM_STATECODE_DISCONNECTED:
             if (data_020c8380.mUnk_30 != 0) {
-                data_020c8380.mUnk_30("StartParent - child (aid 0x%x) disconnected\n");
+                data_020c8380.mUnk_30("StartParent - child (aid 0x%x) disconnected\n", msg->mUnk_10);
             }
             if (data_020c18bc.mUnk_230 != 0) {
                 data_020c18bc.mUnk_230(msg->mUnk_10);
@@ -191,7 +191,7 @@ void func_020388d4(Unk_WirelessMsg *msg) {
             return;
         case WM_STATECODE_DISCONNECTED_FROM_MYSELF:
             if (data_020c8380.mUnk_30 != 0) {
-                data_020c8380.mUnk_30("StartParent - child (aid 0x%x) disconnected from myself\n");
+                data_020c8380.mUnk_30("StartParent - child (aid 0x%x) disconnected from myself\n", msg->mUnk_10);
             }
             return;
         case WM_STATECODE_PARENT_START:
@@ -252,7 +252,9 @@ void func_02038b0c(Unk_WirelessMsg *msg) {
                     return;
                 }
             } else if (data_020c8380.mUnk_34 == 4) {
-                int r = func_02046fc8(&data_020c95e0, 13, 3, 84, 1);
+                // Shares data between aid 0 (the parent) and aid 1.
+                u16 mask = 3;
+                int r = func_02046fc8(&data_020c95e0, 13, mask, 84, 1);
 
                 if (r != 0) {
                     func_02038724(r);
@@ -271,9 +273,7 @@ void func_02038b0c(Unk_WirelessMsg *msg) {
         case WM_STATECODE_MPACK_IND:
         default:
             if (data_020c8380.mUnk_30 != 0) {
-                // The state code (mUnk_04) is read again here through a halfword view of the message, as the original
-                // reloads it instead of reusing the switch value.
-                data_020c8380.mUnk_30("unknown indicate, state = %d\n", ((u16 *) msg)[2]);
+                data_020c8380.mUnk_30("unknown indicate, state = %d\n", msg->mUnk_04);
             }
             return;
     }
@@ -508,7 +508,9 @@ void func_02039140(Unk_WirelessMsg *msg) {
                     return;
                 }
             } else if (data_020c8380.mUnk_34 == 5) {
-                int r = func_02046fc8(&data_020c95e0, 13, 3, 84, 1);
+                // Shares data between aid 0 (the parent) and aid 1.
+                u16 mask = 3;
+                int r = func_02046fc8(&data_020c95e0, 13, mask, 84, 1);
 
                 if (r != 0) {
                     func_02038724(r);
@@ -531,9 +533,7 @@ void func_02039140(Unk_WirelessMsg *msg) {
         case WM_STATECODE_MPEND_IND:
         default:
             if (data_020c8380.mUnk_30 != 0) {
-                // The state code (mUnk_04) is read again here through a halfword view of the message, as the original
-                // reloads it instead of reusing the switch value.
-                data_020c8380.mUnk_30("unknown indicate, state = %d\n", ((u16 *) msg)[2]);
+                data_020c8380.mUnk_30("unknown indicate, state = %d\n", msg->mUnk_04);
             }
             return;
     }
@@ -570,10 +570,13 @@ BOOL func_020392f0(void) {
     r = func_02047b64(&data_020c8dc0);
     if (r != 0) {
         func_02038724(r);
-        return FALSE;
+        ok = FALSE;
+    } else if (func_02039348() == 0) {
+        ok = FALSE;
+    } else {
+        ok = TRUE;
     }
-    ok = func_02039348();
-    return ok != 0;
+    return ok;
 }
 
 // Ends the connection to the host.
@@ -655,9 +658,7 @@ int func_0203946c(void) {
 // Sets up the host with the parameters (the game id, the channel) and starts the link in the given mode (even
 // modes host, odd modes join); returns whether it started.
 int func_0203947c(int mode, u16 b, u16 c) {
-    if (data_020c8380.mUnk_38 != WH_SYSSTATE_IDLE) {
-        OS_Terminate();
-    }
+    (void) (data_020c8380.mUnk_38 == WH_SYSSTATE_IDLE || (OS_Terminate(), 0));
     data_020c8380.mUnk_3c = 0x240;
     data_020c8380.mUnk_20 = 0x220;
     if (data_020c8380.mUnk_30 != 0) {
@@ -689,9 +690,7 @@ int func_0203947c(int mode, u16 b, u16 c) {
 
 // Starts the link as a child in the given mode, to the parent whose record is data.
 int func_02039598(int mode, const void *data) {
-    if (data_020c8380.mUnk_38 != WH_SYSSTATE_IDLE) {
-        OS_Terminate();
-    }
+    (void) (data_020c8380.mUnk_38 == WH_SYSSTATE_IDLE || (OS_Terminate(), 0));
     data_020c8380.mUnk_3c = 0x480;
     data_020c8380.mUnk_20 = 0x100;
     if (data_020c8380.mUnk_30 != 0) {
@@ -804,7 +803,7 @@ void func_0203982c(u16 code) {}
 
 // Link indicator and shutdown. The work area of the code below: the bit set of finished steps and the buffers of
 // the link status exchange.
-Unk_LinkBuffers data_020c9e00;
+Unk_LinkBuffers data_020c9e00 __attribute__((aligned(32)));
 
 // Plane bits of the display control registers (the four backgrounds, then the objects).
 #define DISPCNT_BGS 0xf00
@@ -925,11 +924,10 @@ void func_02039a94(void) {
     u32 y;
     u32 screen;
     u32 level;
-    u16 *base;
     u16 *src;
     u16 *dst;
-    int row;
     int col;
+    int row;
 
     if (!data_020c18bc.mUnk_2a6_0 && !data_020c18bc.mUnk_2a6_1) {
         return;
@@ -956,12 +954,12 @@ void func_02039a94(void) {
         }
         func_0201c4f0(&data_020c18bc.mUnk_284);
     } else {
-        base = data_020c18bc.mUnk_284;
-        if (base == 0) {
+        src = data_020c18bc.mUnk_284;
+        if (src == 0) {
             return;
         }
-        src = (u16 *) ((u8 *) base + ((level << 8) & ~1));
         dst = (u16 *) 0x06000000;
+        src = (u16 *) ((u8 *) src + ((level << 8) & ~1));
         for (row = 0; row < 16; row++) {
             for (col = 0; col < 8; col++) {
                 *dst++ = *src++;
@@ -971,8 +969,10 @@ void func_02039a94(void) {
     }
 }
 
-// Restarts the countdown and, when the status call succeeds with state 3, waits for the status step.
+// Restarts the countdown and, when the status call succeeds with state 3, waits for the status step. The spinner
+// characters are unused: they only reproduce the 4-byte rodata object that sits before the other rodata of the file.
 void func_02039b70(void) {
+    char spin[4] = {'-', '\\', '|', '/'};
     u16 buf[1000];
 
     data_020c18bc.mUnk_2a3 = 60;
@@ -982,13 +982,13 @@ void func_02039b70(void) {
 }
 
 // Shuts the link down: prints, waits for the two end steps when the link is up, then clears the indicator state and
-// releases its buffers. The array is unused: it only reproduces the 4-byte rodata object that sits before the other
-// rodata of the file.
+// releases its buffers. The link level is tested once without effect before the flags: the code compares it with
+// 1 and drops the result (the compiler does not optimise a function that uses the 32-byte aligned data_020c9e00, so
+// the test stays).
 void func_02039ba8(void) {
-    char spin[4] = {'-', '\\', '|', '/'};
-
     data_020c18bc.mUnk_2a3 = 60;
     func_02021fa8("WIR Shut Down\n");
+    (void) ((data_020c18bc.mUnk_2a4[1] >= 1) ? 0 : 0);
     if ((data_020c18bc.mUnk_46c & 0x600) || data_020c18bc.mUnk_2a4[1] >= 1) {
         if (func_0204684c(func_02039d98) == 2) {
             func_02039c88(LINK_STEP_PARENT, 0x2d0);
@@ -1017,14 +1017,16 @@ BOOL func_02039c88(u32 mask, u32 timeout) {
     u32 start = data_020c18bc.mUnk_45c;
     u32 last = data_020c18bc.mUnk_45c;
 
-    while (!(data_020c9e00.mUnk_04 & mask)) {
-        if (data_020c18bc.mUnk_45c != last) {
-            func_0201bb40(3);
-            last = data_020c18bc.mUnk_45c;
-        }
-        if (data_020c18bc.mUnk_45c - start > timeout) {
-            return FALSE;
-        }
+    if (!(data_020c9e00.mUnk_04 & mask)) {
+        do {
+            if (data_020c18bc.mUnk_45c != last) {
+                func_0201bb40(3);
+                last = data_020c18bc.mUnk_45c;
+            }
+            if (data_020c18bc.mUnk_45c - start > timeout) {
+                return FALSE;
+            }
+        } while (!(data_020c9e00.mUnk_04 & mask));
     }
     data_020c9e00.mUnk_04 &= ~mask;
     return TRUE;
