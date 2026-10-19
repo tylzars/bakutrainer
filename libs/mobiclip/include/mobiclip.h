@@ -134,6 +134,7 @@ typedef struct Player Player;
 typedef struct Reader Reader;
 typedef struct AdSt AdSt;
 typedef struct Chan Chan;
+typedef struct Ctx Ctx;
 
 #endif
 
@@ -178,14 +179,14 @@ void func_0203b764(AdSt *st, u8 *in, int n, u32 *out);
 // The decoder's tables, and the step tables of its 4-bit audio.
 extern u8 data_020541d4[];
 extern u8 data_020562d4[];
-extern u8 data_020583d4[];
 extern u8 data_0205eebc[];
 extern u8 data_0205f03c[];
 extern const s8 data_0205f33c[];
 extern const s16 data_0205f34c[];
 
-// Decoder entry points: picture filter (nine argument words), and the two audio channel decoders (each a
-// jump to the assembly routine below it).
+// Decoder entry points: picture decoder (run from a copy; returns the stream bytes used), picture filter (nine
+// argument words), and the two audio channel decoders (each a jump to the assembly routine below it).
+int func_020583d4(Ctx *ctx);
 void func_0205e970(void *args);
 int func_02052468(Chan *ch);
 void func_02052e28(Chan *ch);

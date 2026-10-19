@@ -1909,7 +1909,7 @@ func_02053658 kind:function(arm,size=0x1cc) addr:0x02053658
 func_02053834 kind:function(arm,size=0x1a0) addr:0x02053834
 data_020541d4 kind:data(any) addr:0x020541d4
 data_020562d4 kind:data(any) addr:0x020562d4
-data_020583d4 kind:data(any) addr:0x020583d4
+func_020583d4 kind:function(arm,size=0x659c,unknown) addr:0x020583d4
 func_0205e970 kind:function(arm,size=0xe4) addr:0x0205e970
 func_0205eaa0 kind:function(arm,size=0x138) addr:0x0205eaa0
 func_0205ebd8 kind:function(arm,size=0xf4) addr:0x0205ebd8

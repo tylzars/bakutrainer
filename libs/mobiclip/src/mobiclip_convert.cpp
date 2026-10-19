@@ -437,11 +437,11 @@ void *func_0203b584() {
     if (data_020ca680.mUnk_8 == 0) {
         if (data_020ca680.mUnk_14 >= 0x659c) {
             data_020ca680.mUnk_8 = (u32) data_020ca680.mUnk_18;
-            MIi_CpuCopyFast(data_020583d4, data_020ca680.mUnk_18, 0x659c);
+            MIi_CpuCopyFast((void *) func_020583d4, data_020ca680.mUnk_18, 0x659c);
             data_020ca680.mUnk_18 += 0x659c;
             data_020ca680.mUnk_14 -= 0x659c;
         } else {
-            return data_020583d4;
+            return (void *) func_020583d4;
         }
     }
     return (void *) data_020ca680.mUnk_8;
