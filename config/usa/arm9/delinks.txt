@@ -5,6 +5,7 @@
     .bss        start:0x02064820 end:0x020ce200 kind:bss align:32
 
 libs/nds/src/init/secure_area.s:
+    complete
     .text       start:0x02000000 end:0x02000800
 
 libs/nds/src/init/crt0.c:
@@ -333,6 +334,7 @@ libs/msl/src/alloc.c:
     .text       start:0x0204bfac end:0x0204bfc4
 
 libs/msl/src/rt_soft_float_a.s:
+    complete
     .text       start:0x0204bfc4 end:0x0204cd40
 
 libs/msl/src/rt_float_nan.c:
@@ -340,9 +342,11 @@ libs/msl/src/rt_float_nan.c:
     .text       start:0x0204cd40 end:0x0204cd48
 
 libs/msl/src/rt_soft_float_b.s:
+    complete
     .text       start:0x0204cd48 end:0x0204dae0
 
 libs/msl/src/rt_div32.s:
+    complete
     .text       start:0x0204dae0 end:0x0204ded0
 
 libs/msl/src/rt_global_ctors.cpp:
@@ -560,6 +564,7 @@ src/Main/Graphics/model.c:
 // hand-written: shared literal pools, branches into other routines and register interfaces tie it together;
 // it may be split at 0x020280dc, 0x02028150, 0x02028250, 0x02028928, 0x02028d48 or 0x02028df4
 src/Main/System/engine_asm.s:
+    complete
     .text       start:0x02027398 end:0x02028e5c
 
 // the script reader on data_020c61ac; it ends with func_0202a1ec (last pool word at 0x0202ad30), where the ARM run
@@ -650,6 +655,7 @@ src/Main/Link/wireless_helper.c:
 // start-up code, in the order the scripts were written (assembler: the compiler cannot place const data in .text
 // or keep objects of different sizes in source order)
 src/Main/Graphics/script_data.s:
+    complete
     .text       start:0x0201a608 end:0x0201b7e0
 
 // one file: its own-section .bss ascend (0x020c1818.. -> FSFile -> SystemState) and the JPEG and start-up code reach
