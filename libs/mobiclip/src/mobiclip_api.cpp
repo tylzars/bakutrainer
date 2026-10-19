@@ -104,3 +104,9 @@ int func_0203a018(Player *p, void *buffer) {
     }
     return func_0203abf0(p, buffer) == 1;
 }
+
+// Ends a reader's lifetime without freeing it. Nothing calls it and the compiler drops it, but its
+// destructor call emits ReaderBase's destructors here, after the other functions.
+static void DestroyReader(ReaderBase *r) {
+    r->~ReaderBase();
+}

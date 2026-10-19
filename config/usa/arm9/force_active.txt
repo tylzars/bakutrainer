@@ -15,3 +15,5 @@ _ZdlPv
 # Zero-filled objects at the end of .data after the decimal conversion strings: nothing references them.
 data_020647fc
 OverlaySignatures
+# Exception unit: 0x20-byte object between its state and the context block; nothing references it.
+data_020ca9c0

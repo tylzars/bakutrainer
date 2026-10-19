@@ -21,7 +21,10 @@ void OS_InitException(void) {
     sExceptionState.callback = 0;
 }
 
-__declspec(align(32)) static char sExceptionContext[0x80];
+// Eight words between the state and the context block that no code reads or writes.
+u32 data_020ca9c0[8];
+
+static char sExceptionContext[0x80];
 
 // OSi_ExceptionHandler: entry for processor exceptions (abort or undefined
 // instruction). If the first word of sExceptionState is non-zero (the
