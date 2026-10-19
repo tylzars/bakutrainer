@@ -254,7 +254,7 @@ void func_02035108(u16 a, u16 b, u8 c, u16 d, int e, int f) {
     TrackerInstrument *instruments;
     u8 *next;
     u32 size;
-    u32 i;
+    unsigned long i;
     u8 *src;
     u8 *pattern;
     u32 j;

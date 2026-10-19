@@ -21,9 +21,7 @@ int func_02014d2c(StageInfo *info);
 void func_02014d8c(int a);
 int func_02014de4(int kind, int index);
 int func_02014f14(int kind, int index);
-// Takes two arguments (it adds r1 to mInfo.mUnk_04), but the two calls in result_screen.c pass only the record:
-// r1 still holds the stage index there. The declaration carries no prototype.
-int func_02014f98();
+int func_02014f98(StageRec *rec, int delta);
 int func_02014ffc(StageRec *rec, int amount, int a, int b);
 int func_020150a0(StageRec *rec, int delta);
 int func_020150c0(StageInfo *info);

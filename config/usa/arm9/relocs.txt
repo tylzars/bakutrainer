@@ -2917,10 +2917,13 @@ from:0x0201220a kind:thumb_call_arm to:0x0204dcec module:main
 from:0x0201221c kind:thumb_call_arm to:0x0202cf08 module:main
 from:0x02012230 kind:thumb_call_arm to:0x0202cf08 module:main
 from:0x02012250 kind:thumb_call to:0x020215fc module:main
+from:0x020122a4 kind:load to:0x0204ff22 module:main
+from:0x020122a8 kind:load to:0x0204ff14 module:main
 from:0x020122ac kind:load to:0x020b6ee0 add:0xa120 module:main
 from:0x020122b0 kind:load to:0x020b6ee0 add:0xa100 module:main
 from:0x020122b4 kind:load to:0x02063a48 module:main
 from:0x020122b8 kind:load to:0x020b6ee0 add:0xa140 module:main
+from:0x020122bc kind:load to:0x0201a612 module:main
 from:0x020122d0 kind:thumb_call_arm to:0x0203f81c module:main
 from:0x020122f8 kind:thumb_call_arm to:0x0203f81c module:main
 from:0x02012312 kind:thumb_call to:0x0201fd68 module:main

@@ -423,17 +423,9 @@ void func_02011fec(int a, int b, int c, u8 d, u8 e, int x, int y, int z, u8 *sta
     v0 = data_0204ff22[e];
     base = data_0204ff14[d];
     lo = base - v0;
-    if ((lo < GAUGE_MAX ? lo : GAUGE_MAX) < 0) {
-        lo = 0;
-    } else if (lo >= GAUGE_MAX) {
-        lo = GAUGE_MAX;
-    }
+    lo = (lo < GAUGE_MAX ? lo : GAUGE_MAX) < 0 ? 0 : (lo >= GAUGE_MAX ? GAUGE_MAX : lo);
     hi = base + v0;
-    if ((hi < GAUGE_MAX ? hi : GAUGE_MAX) < 0) {
-        hi = 0;
-    } else if (hi >= GAUGE_MAX) {
-        hi = GAUGE_MAX;
-    }
+    hi = (hi < GAUGE_MAX ? hi : GAUGE_MAX) < 0 ? 0 : (hi >= GAUGE_MAX ? GAUGE_MAX : hi);
     mid = (lo + hi) / 2;
     lo2 = lo * 2 - 1;
     hi2 = hi * 2 + 3;
@@ -465,17 +457,9 @@ void func_02011fec(int a, int b, int c, u8 d, u8 e, int x, int y, int z, u8 *sta
         }
         base = data_0204ff14[data_020b6ee0.mUnk_a140];
         lo3 = base - v0;
-        if ((lo3 < GAUGE_MAX ? lo3 : GAUGE_MAX) < 0) {
-            lo3 = 0;
-        } else if (lo3 >= GAUGE_MAX) {
-            lo3 = GAUGE_MAX;
-        }
+        lo3 = (lo3 < GAUGE_MAX ? lo3 : GAUGE_MAX) < 0 ? 0 : (lo3 >= GAUGE_MAX ? GAUGE_MAX : lo3);
         hi3 = base + v0;
-        if ((hi3 < GAUGE_MAX ? hi3 : GAUGE_MAX) < 0) {
-            hi3 = 0;
-        } else if (hi3 >= GAUGE_MAX) {
-            hi3 = GAUGE_MAX;
-        }
+        hi3 = (hi3 < GAUGE_MAX ? hi3 : GAUGE_MAX) < 0 ? 0 : (hi3 >= GAUGE_MAX ? GAUGE_MAX : hi3);
         lo4 = lo3 * 2 - 1;
         hi4 = hi3 * 2 + 3;
         mid4 = (lo4 + hi4) / 2;
