@@ -7,6 +7,9 @@
 CTRDGState data_020cdbe8;
 u32 data_020cdbe4;
 
+// No code in the ROM uses it; the link keeps it (force_active.txt).
+u8 data_020cdbec[0x14];
+
 void func_02047f3c(void) {
     u32 zero = 0;
     CpuSet(&zero, &data_020cdbe8, 0x5000001);

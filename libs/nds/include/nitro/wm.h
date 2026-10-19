@@ -191,6 +191,8 @@ int func_02047c60(void);
 int func_02047c6c(void);
 void func_02047d00(void);
 void func_02047d3c(u32 code, u32 status);
+
+// Worker task queue (wm_task.c)
 BOOL func_02047d74(void);
 void func_02047d90(WMTask *task, u32 a, void *b, u32 prio);
 void func_02047ef4(void *callback);

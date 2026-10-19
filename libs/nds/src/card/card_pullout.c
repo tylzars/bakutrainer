@@ -7,6 +7,9 @@
 
 CardPullout data_020cd0e0;
 
+// No code in the ROM uses it; the link keeps it (force_active.txt).
+u8 data_020cd0e8[0x18];
+
 void func_02046018(void) {
     PXI_Init();
     PXI_SetFifoRecvCallback(CARD_PULLOUT_PXI_TAG, func_02046044);

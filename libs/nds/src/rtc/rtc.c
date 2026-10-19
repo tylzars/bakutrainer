@@ -18,7 +18,7 @@ typedef struct {
     /* 28 */ void (*alarmCb)(void);
 } RTCWork;
 
-extern RTCWork data_020cc7b8;
+RTCWork data_020cc7b8;
 
 typedef struct {
     u32 year : 8;

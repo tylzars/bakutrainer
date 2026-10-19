@@ -37,7 +37,7 @@ typedef struct {
     /* 28 */ u16 *resultPtr;
 } PMWork;
 
-extern PMWork pmWork;
+PMWork pmWork;
 void (*pmWaitFunc)(void) = func_02043700;
 
 // Takes the request lock; returns 0 if a request is already pending.

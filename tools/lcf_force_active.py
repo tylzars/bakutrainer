@@ -17,6 +17,8 @@ source.
 It also applies <config-dir>/lcf_edits.txt (one edit per line, `#` comments), for what dsd's per-unit ranges can't say:
   place <stub>.o <function> <unit>.o   the stub unit's line becomes OBJECT(<function>, <unit>.o): one function of a
                                        unit placed apart from the rest of it
+  org <unit>.o <address>               sets the location counter to <address> before the unit's .text line: zero
+                                       fill the link lays down before a unit placed at a fixed address
   alias <symbol> <base> <offset>       defines <symbol> = <base> + <offset>, for names other units use for a point
                                        inside an object of a linked unit (a field of a singleton instance)
   inner <symbol> <size>                aliases every symbols.txt name inside <symbol>'s <size> bytes to <symbol> +
@@ -87,6 +89,12 @@ if edits.exists():
             if old not in lcf:
                 raise SystemExit(f"lcf_edits: no line for {stub} in the LCF")
             lcf = lcf.replace(old, f"        OBJECT({func}, {unit})\n", 1)
+        elif words[0] == "org":
+            unit, address = words[1:]
+            old = f"        {unit}(.text)\n"
+            if old not in lcf:
+                raise SystemExit(f"lcf_edits: no line for {unit} in the LCF")
+            lcf = lcf.replace(old, f"        . = {address};\n{old}", 1)
         elif words[0] == "alias":
             name, base, offset = words[1:]
             aliases.append((base in main_syms, f"    {name} = {base} + {offset};"))

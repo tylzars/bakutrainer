@@ -5,9 +5,6 @@
 #include <nitro/init.h>
 #include <runtime.h>
 
-// Base of protection region 2 in the data TCM, with its enable and size bits (the region's register value).
-extern char data_027e0021[];
-
 #define IRQ_STACK_SIZE 0x800
 
 // Startup entry. Masks interrupts, waits for scanline 0, sets up the memory protection/cache,
@@ -273,7 +270,7 @@ asm void func_02000ab0(void) {
     mcr p15, 0, r0, c6, c0, 0
     ldr r0, =0x200002d
     mcr p15, 0, r0, c6, c1, 0
-    ldr r0, =data_027e0021
+    ldr r0, =0x27e0021
     mcr p15, 0, r0, c6, c2, 0
     ldr r0, =0x8000035
     mcr p15, 0, r0, c6, c3, 0

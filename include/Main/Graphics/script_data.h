@@ -8,6 +8,7 @@ extern "C" {
 
 // The data of script_data.s in the code area.
 // Font records (a range of character codes, its first glyph and the terminator), read by the text routines.
+extern const u8 data_0201a608[];
 extern const u8 data_0201a612[];
 extern const u8 data_0201a61c[];
 extern const u8 data_0201a626[];

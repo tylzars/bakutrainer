@@ -30,9 +30,6 @@ typedef struct FontRange {
     u16 mGlyph;
 } FontRange;
 
-// A font list in .data (eight FontRange lists).
-extern const FontRange *data_02063988[];
-
 u16 func_02021498(const u8 **text);
 void func_0202158c(u8 **out, u32 code);
 u32 func_020215f0(u32 code);

@@ -19,6 +19,7 @@ boundary) shows as one step instead of redrawing every earlier point.
 import argparse
 import csv
 import json
+import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -58,7 +59,24 @@ def image_code() -> int:
             f = dict(w.split(":", 1) for w in line.split()[1:] if ":" in w)
             if f.get("kind") == "code":
                 total += int(f["end"], 16) - int(f["start"], 16)
-    return total
+    return total - linker_fill()
+
+
+def linker_fill() -> int:
+    """Bytes of zero fill the link lays down in code sections (lcf_edits.txt `org` lines): from the end of the last
+    .text range below each `org` address up to it. No unit holds them, so they are not code to decompile."""
+    edits = module_paths("main")[0] / "lcf_edits.txt"
+    if not edits.is_file():
+        return 0
+    ends = [int(m.group(1), 16) for m in re.finditer(r"^\s+\.text\s+start:0x[0-9a-f]+ end:(0x[0-9a-f]+)",
+                                                      (module_paths("main")[0] / "delinks.txt").read_text(), re.M)]
+    fill = 0
+    for line in edits.read_text().splitlines():
+        words = line.split("#", 1)[0].split()
+        if len(words) == 3 and words[0] == "org":
+            address = int(words[2], 0)
+            fill += address - max(e for e in ends if e <= address)
+    return fill
 
 
 def read_report(ver: str) -> dict:
@@ -235,9 +253,10 @@ def readme_section(rows: list[dict]) -> str:
         *([("All code is linked from this repository's source and the ROM matches byte for byte. See "
             "[docs/decompiling.md](docs/decompiling.md) for functions objdiff scores below 100% with identical "
             "code."), ""] if r["complete_code"] == IMAGE_CODE else []),
-        *([f"The code size dropped from {FIRST_IMAGE_CODE:,} to {IMAGE_CODE:,} bytes when the `.text`/`.rodata` "
-            "boundary moved to where the original's code ends (0x0204df14): the game's constant tables and the "
-            "Mobiclip decoder after them are in the original's `.rodata`. The step in the graph is that change, "
+        *([f"The code size went from {FIRST_IMAGE_CODE:,} to {IMAGE_CODE:,} bytes in two steps: the `.text`/`.rodata` "
+            "boundary moved to where the original's code ends (0x0204df14; the game's constant tables and the "
+            "Mobiclip decoder after them are in the original's `.rodata`), and the zero fill the linker lays down "
+            "before 0x02001000 and 0x02003000 is no longer counted as code. The steps in the graph are these changes, "
             "not new matching.", ""] if IMAGE_CODE != FIRST_IMAGE_CODE else []),
         f"_Last updated {r['date'][:10]}. Full history: [`progress/history.csv`](progress/history.csv)._",
         END,

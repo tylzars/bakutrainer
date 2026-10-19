@@ -5,6 +5,8 @@
 #define G3X_GXSTAT_BUSY 0x08000000
 #define G3X_GXSTAT_ERROR_CLEAR 0x8000
 
+s32 data_020644a4 = 3;
+
 void G3X_Init(void) {
     G3X_ClearFifo();
     reg_G3X_END_VTXS = 0;

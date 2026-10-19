@@ -36,9 +36,10 @@ static const Unk_0204e96c data_0204e374[0x49] = {
     {0x650, -1, 0, -1},     {0x658, -1, 0, -1}, {0x660, -1, 0, -1},
 };
 
-const u16 data_0204e208[1] = {0};
-const u16 data_0204e20c[1] = {0};
+// Defined in reverse address order (see data_020ae6f4 below).
 const u16 data_0204e210[1] = {0};
+const u16 data_0204e20c[1] = {0};
+const u16 data_0204e208[1] = {0};
 const u32 data_0204e214[1] = {0};
 const Unk_0204e218 data_0204e218[3] = {
     {0, 0xc0, 0x49, 0x131},
@@ -66,7 +67,14 @@ typedef struct Unk_020ae6f4 {
     Model mUnk_04;
 } Unk_020ae6f4;
 
-// Defined before data_020ae6ec: the compiler's size sort then keeps the 2-byte tables above in address order.
+const FontRange *data_02063988[8] = {
+    (const FontRange *) data_0201a608, (const FontRange *) data_0201a608, (const FontRange *) data_0201a608,
+    (const FontRange *) data_0201a608, (const FontRange *) data_0201a608, (const FontRange *) data_0201a608,
+    (const FontRange *) data_0201a608, (const FontRange *) data_0201a608,
+};
+
+// Defined before data_020ae6ec: with the font list above and the 2-byte tables defined in reverse, the compiler's
+// size sort then keeps those tables in address order.
 Unk_020ae6f4 data_020ae6f4;
 Unk_020ae6ec data_020ae6ec;
 LangMenu data_020ae870;

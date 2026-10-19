@@ -41,21 +41,33 @@ libs/nds/src/fx/fx_vec.c:
     complete
     .text       start:0x0203c5e0 end:0x0203c7b8
 
+// provisional: the sine/cosine table's own file; it lies before fx_trig.c's arctangent table, which a size-sorted
+// single file would place first, so it belongs to some file before fx_trig.c (this one has no code)
+libs/nds/src/fx/fx_sincos.c:
+    complete
+    .rodata     start:0x0205f400 end:0x02063400
+
 libs/nds/src/fx/fx_trig.c:
     complete
     .text       start:0x0203c7b8 end:0x0203c960
+    .rodata     start:0x02063400 end:0x02063504
 
 libs/nds/src/gx/gx.c:
     complete
     .text       start:0x0203c960 end:0x0203ca80
+    .data       start:0x020644a0 end:0x020644a4
+    .bss        start:0x020ca6a4 end:0x020ca6a8
 
 libs/nds/src/gx/g3c.c:
     complete
     .text       start:0x0203ca80 end:0x0203cad4
 
+// provisional: .data 0x020644a4 (the GX DMA channel) is read only here; defined in gx.c it would sit at the same
+// address
 libs/nds/src/gx/g3x.c:
     complete
     .text       start:0x0203cad4 end:0x0203d030
+    .data       start:0x020644a4 end:0x020644a8
 
 // provisional: file name and its end
 libs/nds/src/gx/g3_util.c:
@@ -236,29 +248,45 @@ libs/nds/src/cp/cp_context.c:
 libs/nds/src/tp/tp.c:
     complete
     .text       start:0x02042914 end:0x020431ec
+    .bss        start:0x020cc730 end:0x020cc76c
 
 libs/nds/src/mic/mic.c:
     complete
     .text       start:0x020431ec end:0x020436e0
+    .bss        start:0x020cc76c end:0x020cc78c
 
 // provisional: func_02044474 at the end may belong to rtc.c
 libs/nds/src/pm/pm.c:
     complete
     .text       start:0x020436e0 end:0x02044500
     .data       start:0x020644c4 end:0x020644c8
+    .bss        start:0x020cc78c end:0x020cc7b8
 
+// .bss: the work area (0x2c bytes) and the padding up to card_common.c's 32-byte aligned .bss
 libs/nds/src/rtc/rtc.c:
     complete
     .text       start:0x02044500 end:0x02044c20
+    .bss        start:0x020cc7b8 end:0x020cc800
 
+// provisional: .bss 0x020cdbec-0x020cdc00 is an object no code uses; a file's unused objects follow its used ones,
+// which puts it here rather than at the start of ctrdg.c
 libs/nds/src/ctrdg/ctrdg_init.c:
     complete
     .text       start:0x02047f3c end:0x02048254
-    .bss        start:0x020cdbe4 end:0x020cdbec
+    .bss        start:0x020cdbe4 end:0x020cdc00
 
+// ends where ctrdg_task.c starts: the .bss sizes (0x1c, 0xc0, 0xe8, then 0x28, 0x400) are not one file's ascending
+// size order, and the objects' users split at 0x020485ac
 libs/nds/src/ctrdg/ctrdg.c:
     complete
-    .text       start:0x02048254 end:0x0204873c
+    .text       start:0x02048254 end:0x020485ac
+    .bss        start:0x020cdc00 end:0x020cddc8
+
+// .bss: the thread record, the thread's stack and the padding to the end of .bss
+libs/nds/src/ctrdg/ctrdg_task.c:
+    complete
+    .text       start:0x020485ac end:0x0204873c
+    .bss        start:0x020cddc8 end:0x020ce200
 
 libs/nds/src/card/card_common.c:
     complete
@@ -275,10 +303,12 @@ libs/nds/src/card/card_request.c:
     complete
     .text       start:0x02045e40 end:0x02046018
 
+// provisional: .bss 0x020cd0e8-0x020cd100 is an object no code uses; a file's unused objects follow its used ones,
+// and the wireless command objects after it sort by size, which rules out wm_command.c
 libs/nds/src/card/card_pullout.c:
     complete
     .text       start:0x02046018 end:0x020461e4
-    .bss        start:0x020cd0e0 end:0x020cd0e8
+    .bss        start:0x020cd0e0 end:0x020cd100
 
 // provisional: the split from fs_archive.c at 0x02041a78 is inferred from the handler table's end
 libs/nds/src/fs/fs_command.c:
@@ -329,6 +359,19 @@ libs/msl/src/mbstring.c:
     complete
     .text       start:0x02048b5c end:0x02048c3c
     .exceptix   start:0x0204df28 end:0x0204df40
+
+// the locale record and its parts: one file's .data (literals and used objects sorted by size, the record itself
+// unused within the file); the collation table after it cannot be in the same file
+libs/msl/src/locale.c:
+    complete
+    .data       start:0x020644cc end:0x02064628
+
+// provisional: the collation table's own file; the character-class table (.rodata) may belong to any file after
+// fs_command.c
+libs/msl/src/char_tables.c:
+    complete
+    .rodata     start:0x020637fc end:0x020638fc
+    .data       start:0x02064628 end:0x020646e8
 
 libs/msl/src/mem.c:
     complete
@@ -406,18 +449,28 @@ libs/msl/src/rt_global_ctors.cpp:
     .exceptix   start:0x0204e03c end:0x0204e054
 
 // provisional: starts with func_020461e4 (stores a command callback in the WM work area; called only from the
-// WM code after it) where card_pullout.c ends; the wm_command/wm_api split is inferred
+// WM code after it) where card_pullout.c ends; the wm_command/wm_api split is inferred; .bss 0x020cd128-0x020cdba0
+// is an object no code uses
 libs/nds/src/wm/wm_command.c:
     complete
     .text       start:0x020461e4 end:0x02046478
+    .bss        start:0x020cd100 end:0x020cdba0
 
 libs/nds/src/wm/wm_api.c:
     complete
     .text       start:0x02046478 end:0x02047be4
 
+// ends where wm_task.c starts: the 0x40-byte object comes before the 4-byte one in .bss, which one file's ascending
+// size order cannot give, and the objects' users split at 0x02047d74
 libs/nds/src/wm/wm_worker.c:
     complete
-    .text       start:0x02047be4 end:0x02047f3c
+    .text       start:0x02047be4 end:0x02047d74
+    .bss        start:0x020cdba0 end:0x020cdbe0
+
+libs/nds/src/wm/wm_task.c:
+    complete
+    .text       start:0x02047d74 end:0x02047f3c
+    .bss        start:0x020cdbe0 end:0x020cdbe4
 
 libs/mobiclip/src/mobiclip_api.cpp:
     complete
@@ -432,6 +485,7 @@ libs/mobiclip/src/mobiclip_player.cpp:
 libs/mobiclip/src/mobiclip_convert.cpp:
     complete
     .text       start:0x0203af68 end:0x0203b8bc
+    .rodata     start:0x0205f33c end:0x0205f400
     .bss        start:0x020ca680 end:0x020ca6a4
 
 // provisional: no evidence yet for where these files begin and end
@@ -477,6 +531,7 @@ src/Main/Graphics/sprite_slots.c:
     complete
     .text       start:0x0200d6c8 end:0x0200de68
     .data       start:0x02063944 end:0x02063954
+    .bss        start:0x020abfc0 end:0x020ae44c
 
 // .bss data_02098d80..data_020990e0 (ascending sizes: one file); the 0x34-byte data_02099770 after the 0x690-byte
 // data_020990e0 starts the next file
@@ -507,6 +562,8 @@ src/Main/Scene/stage_scene.c:
     complete
     .text       start:0x0200c65c end:0x0200d6c8
     .rodata     start:0x0204e1c0 end:0x0204e1e4
+    .data       start:0x02063940 end:0x02063944
+    .bss        start:0x020ab7e0 end:0x020abfc0
 
 src/Main/Scene/slide_transition.c:
     complete
@@ -520,7 +577,7 @@ src/Main/Scene/language_menu.c:
     complete
     .text       start:0x0200f374 end:0x0200f9c8
     .rodata     start:0x0204e208 end:0x0204e804
-    .data       start:0x020639a8 end:0x020639ec
+    .data       start:0x02063988 end:0x020639ec
     .bss        start:0x020ae6ec end:0x020b1078
 
 // one file: func_02014260's local initializer (0x0204fedc) and the panel tables after it share one .rodata section;
@@ -566,6 +623,7 @@ src/Main/Scene/stage_map_menu.c:
     complete
     .text       start:0x02019fa0 end:0x0201a608
     .data       start:0x02063a9c end:0x02063aac
+    .bss        start:0x020c17fc end:0x020c1818
 
 // provisional: the message functions from 0x02021e94 use this file's readers and follow with no gap; gx_pool.c
 // starts at 0x02021fb0
@@ -605,6 +663,7 @@ src/Main/Script/script_records.c:
     complete
     .text       start:0x02028e5c end:0x0202ad34
     .rodata     start:0x020508d8 end:0x02050978
+    .bss        start:0x020c61ac end:0x020c6470
 
 // provisional: the ARM run 0x0202ad34-0x0202db1c (block heaps, texture blocks and sprites of data_020c267c), which
 // ends where Thumb code resumes; the empty routines at the start touch no object and are placed by address
@@ -636,6 +695,7 @@ src/Main/Sound/wave_player.c:
 src/Main/Video/stream_audio.c:
     complete
     .text       start:0x0202f500 end:0x0202fcc4
+    .bss        start:0x020c661c end:0x020c66d4
 
 // provisional: the "QRK" unpacker (range-coded LZ, its three tables in .data); starts where the movie code ends
 // (func_0202fcc4 touches none of its objects); the end is the last function reached only from inside the run
@@ -667,6 +727,7 @@ src/Main/Link/comm_link.c:
     complete
     .text       start:0x02034954 end:0x02035108
     .data       start:0x02063b58 end:0x02063c9c
+    .bss        start:0x020c6adc end:0x020c6b14
 
 // provisional: the music tracker player on data_020c6b14 (defined here): from its song loader (the code before it
 // uses other objects) up to the wireless helpers at 0x020386a4, with the tick's wave table and strings in .data

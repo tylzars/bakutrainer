@@ -42,6 +42,8 @@ typedef struct Unk_0204e248 {
     u16 mUnk_02;
 } Unk_0204e248;
 
+// Font list of the script text (eight entries, all the first font record).
+extern const struct FontRange *data_02063988[8];
 extern Unk_020ae6ec data_020ae6ec;
 extern LangMenu data_020ae870;
 extern const Unk_0204e218 data_0204e218[];

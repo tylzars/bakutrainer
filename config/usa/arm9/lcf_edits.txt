@@ -1,5 +1,11 @@
-# place / alias / inner edits for the linker script, see tools/lcf_force_active.py.
+# place / org / alias / inner edits for the linker script, see tools/lcf_force_active.py.
 # Register read through a symbol by the cartridge code (scheduling).
 alias data_04000300 0x04000300 0
 # Names other units use for members of the thread system block (os_thread.c defines it as one object).
 inner data_020ca70c 0x27c
+# The zero fill before the game code: the image puts arm_system's code at 0x02001000 and main at 0x02003000 with
+# nothing referencing the bytes between (0x02000c04-0x02001000 and 0x020011dc-0x02003000).
+org arm_system.o 0x02001000
+org main.o 0x02003000
+# The start of the data TCM block, which the code uses as the interrupt handler table's address and as the TCM base.
+alias SDK_AUTOLOAD_DTCM_START DTCM_DATA_START 0

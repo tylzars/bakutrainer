@@ -26,6 +26,10 @@
 const u16 data_0204e1c0[6] = {0xd10, 0xd14, 0xd18, 0xd1c, 0xd20, 0xd24};
 const s32 data_0204e1cc[3][2] = {{28, 90}, {48, 90}, {68, 90}};
 
+// The stage scene object; the code reaches it through data_02063940.
+Scene data_020ab7e0;
+Scene *data_02063940 = &data_020ab7e0;
+
 void func_0200c65c(int index, VecFx32 *out) {
     void *entry = func_0203204c(index, 0);
     if (entry == 0) {

@@ -16,6 +16,8 @@
 #include <Main/Input/touch_buttons.h>
 #include <Main/Scene/language_menu.h>
 
+Unk_020c61ac data_020c61ac;
+
 // Finds the entry of the message block whose normalised text equals name and selects it.
 void func_02028e5c(const char *name) {
     char first[0x20];

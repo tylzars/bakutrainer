@@ -19,7 +19,7 @@ typedef struct {
     /* 1c */ u16 *lastAddr;
 } MICWork;
 
-extern MICWork micWork;
+MICWork micWork;
 
 void MIC_Init(void) {
     if (micWork.init) {

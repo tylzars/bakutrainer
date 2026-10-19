@@ -12,6 +12,10 @@
 #include <Main/Graphics/sprite_script.h>
 #include <Main/Graphics/script_data.h>
 
+SlotCounters data_020abfc0;
+AnimSlot data_020abfcc[ANIM_SLOT_COUNT];
+ObjSlot data_020ace4c[OBJ_SLOT_COUNT];
+
 void func_0200d6c8(void) {
     u32 i;
     data_020abfc0.mLastId = 0;

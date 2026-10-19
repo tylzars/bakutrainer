@@ -1,2 +1,8 @@
     .data       start:0x027e0000 end:0x027e0060 kind:data align:32
     .bss        start:0x027e0060 end:0x027e0080 kind:bss align:32
+
+// the interrupt handler table and the interrupt-wait thread queue, each with the padding to the next 32 bytes
+libs/nds/src/os/os_irq_dtcm.c:
+    complete
+    .data       start:0x027e0000 end:0x027e0060
+    .bss        start:0x027e0060 end:0x027e0080

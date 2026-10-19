@@ -1,9 +1,9 @@
 #include <nitro/gx.h>
 
 // Nonzero while the displays are on.
-extern u16 data_020644a0;
+u16 data_020644a0 = 1;
 // Display mode that GX_DispOn restores.
-extern u16 data_020ca6a4;
+u16 data_020ca6a4;
 
 #define GX_DISPCNT_KEEP_MASK 0xfff0fff0 // everything except the display mode and BG mode
 

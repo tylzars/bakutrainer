@@ -1,19 +1,19 @@
 # Data symbols the original link kept although nothing references them.
 BuildInfo
-# Zero fill before the game code at 0x02001000 and before main at 0x02003000: nothing references it, but the
-# original image has it.
-data_02000c04
-data_020011dc
 # Unreferenced routine between the two soft-float files; without it everything after it moves down 8 bytes.
 func_0204cd40
 # Byte table after the wireless helper's .rodata: no relocation reaches it.
 data_02052458
-# C runtime functions nothing calls (multibyte conversions, operator delete).
-mbtowc
-wctomb
+# C runtime function nothing calls (operator delete).
 _ZdlPv
 # Zero-filled objects at the end of .data after the decimal conversion strings: nothing references them.
 data_020647fc
 OverlaySignatures
+# Interrupt handler table at the start of data TCM: the code reaches it through SDK_AUTOLOAD_DTCM_START.
+data_027e0000
+# Work areas in the card pull-out, wireless command and cartridge start-up units that no linked code uses.
+data_020cd0e8
+data_020cd128
+data_020cdbec
 # Exception unit: 0x20-byte object between its state and the context block; nothing references it.
 data_020ca9c0

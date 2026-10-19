@@ -48,7 +48,7 @@ typedef struct {
     /* 3a */ u16 busy;
 } TPWork;
 
-extern TPWork tpWork;
+TPWork tpWork;
 
 // Receive handler for the touch panel's FIFO channel.
 void func_02042914(int tag, u32 data, BOOL err) {

@@ -26,6 +26,11 @@
 #include <Main/Map/map_floor.h>
 #include <Main/Graphics/script_data.h>
 
+// data_020c180c before data_020c1800: the compiler's size sort then leaves the two in address order.
+VecFx32 data_020c180c;
+VecFx32 data_020c1800;
+s32 data_020c17fc;
+
 void func_02019fa0(void) {
     static int prevSel = -1;
     DrawParams dp;

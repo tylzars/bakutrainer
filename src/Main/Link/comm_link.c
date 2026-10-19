@@ -16,6 +16,8 @@
 #include <Main/Link/wireless_helper.h>
 #include <Main/Graphics/gx_pool.h>
 
+Unk_020c6adc data_020c6adc;
+
 // The link keeps COMM_SLOTS received records of COMM_RECORD_SIZE bytes, indexed by slot.
 #define COMM_SLOTS 16
 #define COMM_RECORD_SIZE 254

@@ -9,6 +9,9 @@
 #include <Main/System/bg_image.h>
 #include <Main/System/screen_fade.h>
 #include <mobiclip.h>
+
+Unk_MovieAudio data_020c661c;
+
 #pragma thumb off
 
 void *func_0202f500(u32 size) {

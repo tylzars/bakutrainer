@@ -27,12 +27,10 @@ func_02000b9c kind:function(arm,size=0x4) addr:0x02000b9c
 BuildInfo kind:data(word[9]) addr:0x02000ba0
 data_02000bc4 kind:data(byte[40]) addr:0x02000bc4
 data_02000bec kind:data(byte[24]) addr:0x02000bec
-data_02000c04 kind:data(any) addr:0x02000c04
 func_02001000 kind:function(arm,size=0xb4) addr:0x02001000
 func_020010b4 kind:function(arm,size=0x6c) addr:0x020010b4
 func_02001120 kind:function(arm,size=0x50) addr:0x02001120
 func_02001170 kind:function(arm,size=0x6c) addr:0x02001170
-data_020011dc kind:data(any) addr:0x020011dc
 main kind:function(thumb,size=0x194) addr:0x02003000
 func_02003194 kind:function(thumb,size=0x18) addr:0x02003194
 func_020031ac kind:function(thumb,size=0x1c) addr:0x020031ac
@@ -1921,9 +1919,9 @@ data_0205eeac kind:data(any) addr:0x0205eeac
 data_0205eebc kind:data(any) addr:0x0205eebc
 data_0205f03c kind:data(any) addr:0x0205f03c
 data_0205f33c kind:data(any) addr:0x0205f33c
-data_0205f34c kind:data(any) addr:0x0205f34c
+data_0205f34c kind:data(short[89]) addr:0x0205f34c
 FX_SinCosTable_ kind:data(any) addr:0x0205f400
-FX_AtanIdxTable_ kind:data(any) addr:0x02063400
+FX_AtanIdxTable_ kind:data(short[129]) addr:0x02063400
 data_02063504 kind:data(any) addr:0x02063504 local
 data_020637d8 kind:data(any) addr:0x020637d8 local
 data_020637fc kind:data(any) addr:0x020637fc
@@ -2064,7 +2062,7 @@ data_0206442c kind:data(any) addr:0x0206442c
 data_02064448 kind:data(any) addr:0x02064448
 _ZTV10ReaderBase kind:data(any) addr:0x02064458 weak
 _ZTV6Reader kind:data(any) addr:0x0206447c
-data_020644a0 kind:data(any) addr:0x020644a0
+data_020644a0 kind:data(short) addr:0x020644a0
 data_020644a4 kind:data(any) addr:0x020644a4
 data_020644a8 kind:data(any) addr:0x020644a8
 data_020644b8 kind:data(any) addr:0x020644b8 local
@@ -2072,18 +2070,18 @@ data_020644bc kind:data(any) addr:0x020644bc local
 data_020644c0 kind:data(any) addr:0x020644c0 local
 pmWaitFunc kind:data(any) addr:0x020644c4
 data_020644c8 kind:data(any) addr:0x020644c8
-data_020644cc kind:data(any) addr:0x020644cc
-data_020644d0 kind:data(any) addr:0x020644d0
-data_020644d4 kind:data(any) addr:0x020644d4
+@47 kind:data(any) addr:0x020644cc local
+@44 kind:data(any) addr:0x020644d0 local
+@40 kind:data(any) addr:0x020644d4 local
 data_020644dc kind:data(any) addr:0x020644dc
 data_020644e4 kind:data(any) addr:0x020644e4
 data_020644f4 kind:data(any) addr:0x020644f4
-data_02064514 kind:data(any) addr:0x02064514
+@43 kind:data(any) addr:0x02064514 local
 data_02064520 kind:data(any) addr:0x02064520
-data_0206452c kind:data(any) addr:0x0206452c
-data_02064538 kind:data(any) addr:0x02064538
-data_02064548 kind:data(any) addr:0x02064548
-data_020645a0 kind:data(any) addr:0x020645a0
+@42 kind:data(any) addr:0x0206452c local
+@41 kind:data(any) addr:0x02064538 local
+@45 kind:data(any) addr:0x02064548 local
+@46 kind:data(any) addr:0x020645a0 local
 data_02064628 kind:data(any) addr:0x02064628
 @1376 kind:data(any) addr:0x020646e8 local
 @1377 kind:data(any) addr:0x020646f0 local
@@ -2160,9 +2158,7 @@ data_0206d714 kind:bss addr:0x0206d714
 data_0206d715 kind:bss addr:0x0206d715
 data_02070107 kind:bss addr:0x02070107
 data_02080227 kind:bss addr:0x02080227
-data_02080fdf kind:bss addr:0x02080fdf
 data_02089b14 kind:bss addr:0x02089b14
-data_0208f021 kind:bss addr:0x0208f021
 data_020901fd kind:bss addr:0x020901fd
 data_0209210b kind:bss addr:0x0209210b
 data_02097d14 kind:bss addr:0x02097d14
@@ -2348,6 +2344,7 @@ data_020cd0e0 kind:bss addr:0x020cd0e0
 data_020cd0e8 kind:bss addr:0x020cd0e8
 data_020cd100 kind:bss addr:0x020cd100
 data_020cd108 kind:bss addr:0x020cd108
+data_020cd128 kind:bss addr:0x020cd128
 data_020cdba0 kind:bss addr:0x020cdba0
 data_020cdbe0 kind:bss addr:0x020cdbe0
 data_020cdbe4 kind:bss addr:0x020cdbe4
@@ -2355,8 +2352,6 @@ data_020cdbe8 kind:bss addr:0x020cdbe8
 data_020cdbec kind:bss addr:0x020cdbec
 data_020cdc00 kind:bss addr:0x020cdc00
 data_020cdc20 kind:bss addr:0x020cdc20
-data_020cdc24 kind:bss addr:0x020cdc24
 data_020cdce0 kind:bss addr:0x020cdce0
 data_020cddc8 kind:bss addr:0x020cddc8
-data_020cddcc kind:bss addr:0x020cddcc
-data_020ce1f0 kind:bss addr:0x020ce1f0
+data_020cddf0 kind:bss addr:0x020cddf0

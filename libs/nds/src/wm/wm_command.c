@@ -4,6 +4,12 @@
 #include <nitro/math.h>
 #include <nitro/wm.h>
 
+WMState data_020cd100;
+OSMessageQueue data_020cd108;
+
+// No code in the ROM uses it; the link keeps it (force_active.txt).
+u8 data_020cd128[0xa78];
+
 void func_020461e4(u32 idx, WMCallback callback) {
     data_020cd100.work->cbTable[idx] = callback;
 }

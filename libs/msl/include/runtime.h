@@ -38,6 +38,8 @@ typedef struct {
 extern Locale data_02064520;
 // Character-class bits for the 128 ASCII codes (8: digit, 0x200: upper case).
 extern const unsigned short data_020637fc[];
+// Collation order of the characters 0x20-0x7f.
+extern unsigned short data_02064628[];
 
 // Double to decimal digits.
 int func_0204b500(const DecDigits *d, int n);
