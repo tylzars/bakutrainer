@@ -29,6 +29,7 @@ typedef struct {
     /* 04 */ u32 mUnk_04;
     /* 08 */ WMWorkerState *state;
     /* 0c */ WMWorkerShared *shared;
+    /* 10 */ u8 mUnk_10[0x30];
 } WMWorkerLink;
 
 extern WMWorkerLink data_020cdba0;

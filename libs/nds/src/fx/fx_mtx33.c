@@ -34,18 +34,26 @@ void func_0203b8d8(const MtxFx33 *src, MtxFx33 *dst, fx32 x, fx32 y, fx32 z) {
 
 #pragma thumb on
 // Writes the rotation matrix about the Z axis for the given sine and cosine.
-void func_0203b998(MtxFx33 *m, fx32 sin, fx32 cos) {
-    fx32 *p = m->_;
-    p[0] = cos;
-    p[1] = sin;
-    p[2] = 0;
-    p[3] = -sin;
-    p[4] = cos;
-    p[5] = 0;
-    p[6] = 0;
-    p[7] = 0;
-    p[8] = 0x1000;
+// Not compiled: stores with `stmia r0!, {r1, r3}` (Thumb, two registers, r0 not among them).
+// In Thumb code the compiler makes a stmia from a store plus a base increment (one register), in struct copies and
+// fills (always a run of consecutive registers), and by merging a following store into an existing stmia; in Thumb
+// code that merge is refused unless the merged list contains r0. None of these gives {r1, r3}.
+// clang-format off
+asm void func_0203b998(MtxFx33 *m, fx32 sin, fx32 cos) {
+    stmia r0!, {r2}
+    mov r3, #0
+    stmia r0!, {r1, r3}
+    neg r1, r1
+    stmia r0!, {r1, r2}
+    mov r1, #1
+    lsl r1, r1, #12
+    str r3, [r0, #0]
+    str r3, [r0, #4]
+    str r3, [r0, #8]
+    str r1, [r0, #12]
+    bx lr
 }
+// clang-format on
 #pragma thumb off
 
 // Vector times 3x3 matrix.
