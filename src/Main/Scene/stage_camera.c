@@ -17,7 +17,6 @@
 #include <Main/Scene/stage_camera.h>
 #include <Main/Unknown/move_object.h>
 #include <Main/Minigame/three_in_row.h>
-#include <Main/Scene/stage_select.h>
 #include <Main/Graphics/sprite_slots.h>
 #include <Main/Scene/stage_progress.h>
 #include <Main/Graphics/text_draw.h>

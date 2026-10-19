@@ -6,7 +6,7 @@
 #include <Main/System/game_math.h>
 #include <Main/System/bg_image.h>
 #include <Main/Scene/stage_progress.h>
-#include <Main/Scene/stage_select.h>
+#include <Main/Scene/stage_info_panel.h>
 #include <stdio.h>
 #include <Main/Unknown/game_util.h>
 #include <Main/Scene/language_menu.h>

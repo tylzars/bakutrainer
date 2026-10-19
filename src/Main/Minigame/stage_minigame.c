@@ -4,7 +4,6 @@
 #include <Main/System/screen_fade.h>
 #include <Main/System/game_math.h>
 #include <Main/Scene/stage_progress.h>
-#include <Main/Scene/stage_select.h>
 #include <Main/Unknown/game_util.h>
 #include <Main/Scene/language_menu.h>
 #include <Main/Scene/mode_select.h>

@@ -1,6 +1,5 @@
 #include <nitro/os.h>
 #include <Main/System/random_angle.h>
-#include <Main/Scene/stage_select.h>
 #include <Main/Scene/stage_data.h>
 #include <Main/System/state_flow.h>
 #include <Main/System/prompt_screen.h>

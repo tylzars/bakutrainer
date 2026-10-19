@@ -453,13 +453,14 @@ src/Main/Scene/language_menu.c:
     .text       start:0x0200f374 end:0x0200f9c8
     .rodata     start:0x0204e208 end:0x0204e804
 
-// provisional: the end; the .rodata layout puts the 0x0204fedc table (used by func_02014260) in this unit
+// one file: func_02014260's local initializer (0x0204fedc) and the panel tables after it share one .rodata section;
+// its strings 0x02063a2c-0x02063a5c follow in creation order and its .bss is the stage selection state. The end is
+// provisional (the lookup helpers func_020144a4..func_0201456c show no file break)
 src/Main/Scene/stage_info_panel.c:
-    .text       start:0x02011518 end:0x0201353c
-
-// provisional: the end (the lookup helpers func_020144a4..func_0201456c show no file break)
-src/Main/Scene/stage_select.c:
-    .text       start:0x0201353c end:0x020145bc
+    .text       start:0x02011518 end:0x020145bc
+    .rodata     start:0x0204fedc end:0x020500d4
+    .data       start:0x02063a2c end:0x02063a5c
+    .bss        start:0x020b13b0 end:0x020b13c8
 
 // provisional: a new unit starts by func_02014ac8 (its table at 0x020500d4 breaks the size order of the
 // .rodata before it); the end is provisional

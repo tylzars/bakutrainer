@@ -4,7 +4,7 @@
 #include <Main/System/screen_fade.h>
 #include <Main/System/game_math.h>
 #include <Main/System/bg_image.h>
-#include <Main/Scene/stage_select.h>
+#include <Main/Scene/stage_info_panel.h>
 #include <Main/System/state_flow.h>
 #include <Main/System/prompt_screen.h>
 #include <Main/System/sound_control.h>

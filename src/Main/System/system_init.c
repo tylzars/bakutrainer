@@ -13,7 +13,7 @@
 #include <Main/Unknown/game_util.h>
 #include <Main/System/prompt_screen.h>
 #include <Main/Scene/stage_camera.h>
-#include <Main/Scene/stage_select.h>
+#include <Main/Scene/stage_info_panel.h>
 #include <Main/System/state_flow.h>
 #include <nitro/fx.h>
 #include <nitro/wm.h>

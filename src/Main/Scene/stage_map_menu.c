@@ -14,7 +14,7 @@
 #include <Main/Unknown/game_util.h>
 #include <Main/System/prompt_screen.h>
 #include <Main/Scene/stage_camera.h>
-#include <Main/Scene/stage_select.h>
+#include <Main/Scene/stage_info_panel.h>
 #include <Main/System/state_flow.h>
 #include <Main/Scene/stage_map_menu.h>
 #include <Main/Graphics/text_draw.h>
