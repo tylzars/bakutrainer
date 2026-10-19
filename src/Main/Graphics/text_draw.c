@@ -1,13 +1,10 @@
 #include <Main/Graphics/text_draw.h>
+#include <Main/Graphics/model.h>
 #include <Main/Graphics/texture_blocks.h>
 #include <Main/System/file_loader.h>
 #include <Main/System/system_init.h>
 #include <nitro/os.h>
 #include <nitro/fx.h>
-
-// Declared without a prototype: this file passes func_020243c0's angle as an int, unconverted (model.h's u16
-// prototype would truncate it).
-void func_020243c0();
 
 u16 func_02021498(const u8 **text) {
     u32 first;
@@ -96,7 +93,11 @@ void func_020215fc(int x, int y, const void *font, const char *text, int align, 
     func_02021624(x, y, (const FontRange *const *) &f, 0, (const u8 *) text, 0, align, width, height, mode);
 }
 
-int func_02021624(int x, int y, const FontRange *const *fonts, u8 fontIndex, const u8 *text, int angle, u32 flags,
+// The `const u16 *` read into c keeps the glyph's own *q load (without the cast the compiler merges it with the load
+// into c), maxW doubles as the line loop's character count (zero first, so lineW and breakW copy it), spaces and lineW
+// are reused for the skipped count and the drawn width, and spaceW is reloaded inside the width loop: these keep the
+// stack slots in the original's order.
+int func_02021624(int x, int y, const FontRange *const *fonts, u8 fontIndex, const u8 *text, u16 angle, u32 flags,
                   u32 width, int height, int mode) {
     u8 widths[0x400];
     u16 chars[0x400];

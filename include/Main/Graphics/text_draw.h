@@ -34,7 +34,7 @@ u16 func_02021498(const u8 **text);
 void func_0202158c(u8 **out, u32 code);
 u32 func_020215f0(u32 code);
 void func_020215fc(int x, int y, const void *font, const char *text, int align, int width, int height, int mode);
-int func_02021624(int x, int y, const FontRange *const *fonts, u8 fontIndex, const u8 *text, int angle, u32 flags,
+int func_02021624(int x, int y, const FontRange *const *fonts, u8 fontIndex, const u8 *text, u16 angle, u32 flags,
                   u32 width, int height, int mode);
 const u8 *func_02021dd8(u16 block, int id);
 const u8 *func_02021df4(u32 base, const u8 *entry);
