@@ -5010,6 +5010,7 @@ from:0x0201f598 kind:load to:0x020c18bc add:0x460 module:main
 from:0x0201f59c kind:load to:0x020c18bc add:0x280 module:main
 from:0x0201f5a0 kind:load to:0x020c18bc add:0x2c0 module:main
 from:0x0201f5a8 kind:load to:0x020c267c add:0xb00 module:main
+from:0x0201f6c4 kind:load to:0x020501f4 module:main
 from:0x0201f6c8 kind:load to:0x020c18bc module:main
 from:0x0201f6e6 kind:thumb_call to:0x0201f880 module:main
 from:0x0201f6ee kind:thumb_call to:0x0201dde0 module:main

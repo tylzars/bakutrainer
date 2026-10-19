@@ -1535,12 +1535,13 @@ void func_0201de48(u8 *data, int target, int x, int flags) {
 
 // JPEG reader state (the asm block decoder func_02028980 uses it too): the count of buffered bits, the read
 // pointer (just past the marker of the current segment) and the bit buffer; data_020c181c is the arena start and
-// data_020c1828 the sleep callback node the start-up code keeps. This definition order gives the original .bss
-// layout 1818, 181c, 1820, 1824, 1828 (ties in size keep definition order except that the first goes last).
+// data_020c1828 the sleep callback node the start-up code keeps. The compiler sorts the file's objects by size and
+// orders equal sizes by the whole list: this definition order gives the original .bss layout 1818, 181c, 1820,
+// 1824, 1828, and defining data_020502a8 before data_020502a4 places data_020502a4 first.
 u8 data_020c1818;
-u32 data_020c1824;
 u8 *data_020c1820;
 void *data_020c181c;
+u32 data_020c1824;
 PMCallbackInfo data_020c1828;
 
 // VRAM control register of each bank (word address; data_020502ac holds the bit offset of the bank's byte).
@@ -1554,10 +1555,10 @@ const u32 data_02050270[13] = {
     0x06600000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 };
 
-// Blocks per MCU and quantisation table of each colour component (4:2:0 Y, Cb, Cr).
-const u8 data_020502a4[4] = {4, 1, 1, 0};
-
+// Quantisation table and blocks per MCU of each colour component (4:2:0 Y, Cb, Cr).
 const u8 data_020502a8[4] = {0, 1, 1, 0};
+
+const u8 data_020502a4[4] = {4, 1, 1, 0};
 
 const u8 data_020502ac[9] = {0, 8, 16, 24, 0, 8, 16, 0, 8};
 
@@ -2062,7 +2063,12 @@ void *func_0201eee4(int id, int target) {
     u32 idx;
     u32 head;
     u32 tail;
-    u8 *n;
+    u8 *n1;
+    u8 *n2;
+    u8 *n3;
+    u8 *n4;
+    u8 *n5;
+    u8 *n6;
     u8 *src;
     u8(*pal)[3];
     int cell;
@@ -2102,11 +2108,11 @@ void *func_0201eee4(int id, int target) {
         // Offers the entry idx to each neighbouring cell: the cell takes it when it is nearer to the cell's colour
         // than the entry the cell has, and joins the queue.
         if (r != 0) {
-            n = cube + cell - 1;
-            if (idx != *n) {
+            n1 = cube + cell - 1;
+            if (idx != *n1) {
                 d = func_0201eea4(pal, r - 1, g, b, idx);
                 if (dist[cell - 1] > d) {
-                    *n = idx;
+                    *n1 = idx;
                     dist[cell - 1] = d;
                     queue[tail].mUnk_0 = r - 1;
                     queue[tail].mUnk_1 = g;
@@ -2117,11 +2123,11 @@ void *func_0201eee4(int id, int target) {
             }
         }
         if (r < 31) {
-            n = cube + cell + 1;
-            if (idx != *n) {
+            n2 = cube + cell;
+            if (idx != n2[1]) {
                 d = func_0201eea4(pal, r + 1, g, b, idx);
                 if (dist[cell + 1] > d) {
-                    *n = idx;
+                    n2[1] = idx;
                     dist[cell + 1] = d;
                     queue[tail].mUnk_0 = r + 1;
                     queue[tail].mUnk_1 = g;
@@ -2132,11 +2138,11 @@ void *func_0201eee4(int id, int target) {
             }
         }
         if (g != 0) {
-            n = cube + cell - 32;
-            if (idx != *n) {
+            n3 = cube + cell - 32;
+            if (idx != *n3) {
                 d = func_0201eea4(pal, r, g - 1, b, idx);
                 if (dist[cell - 32] > d) {
-                    *n = idx;
+                    *n3 = idx;
                     dist[cell - 32] = d;
                     queue[tail].mUnk_0 = r;
                     queue[tail].mUnk_1 = g - 1;
@@ -2147,11 +2153,11 @@ void *func_0201eee4(int id, int target) {
             }
         }
         if (g < 31) {
-            n = cube + cell + 32;
-            if (idx != *n) {
+            n4 = cube + cell;
+            if (idx != n4[32]) {
                 d = func_0201eea4(pal, r, g + 1, b, idx);
                 if (dist[cell + 32] > d) {
-                    *n = idx;
+                    n4[32] = idx;
                     dist[cell + 32] = d;
                     queue[tail].mUnk_0 = r;
                     queue[tail].mUnk_1 = g + 1;
@@ -2162,11 +2168,11 @@ void *func_0201eee4(int id, int target) {
             }
         }
         if (b != 0) {
-            n = cube + cell - 0x400;
-            if (idx != *n) {
+            n5 = cube + cell - 0x400;
+            if (idx != *n5) {
                 d = func_0201eea4(pal, r, g, b - 1, idx);
                 if (dist[cell - 0x400] > d) {
-                    *n = idx;
+                    *n5 = idx;
                     dist[cell - 0x400] = d;
                     queue[tail].mUnk_0 = r;
                     queue[tail].mUnk_1 = g;
@@ -2177,11 +2183,11 @@ void *func_0201eee4(int id, int target) {
             }
         }
         if (b < 31) {
-            n = cube + cell + 0x400;
-            if (idx != *n) {
+            n6 = cube + cell;
+            if (idx != n6[0x400]) {
                 d = func_0201eea4(pal, r, g, b + 1, idx);
                 if (dist[cell + 0x400] > d) {
-                    *n = idx;
+                    n6[0x400] = idx;
                     dist[cell + 0x400] = d;
                     queue[tail].mUnk_0 = r;
                     queue[tail].mUnk_1 = g;
@@ -2304,7 +2310,9 @@ u8 *func_0201f5bc(u8 *palette, u32 count, int a, int target) {
     return palette;
 }
 
+// The unused array's initializer is what sits in .rodata just before the register table (01 01 00 00).
 void func_0201f648(void) {
+    u8 unused[2] = {1, 1};
     vu16 *regs[2] = {(vu16 *) 0x0400006c, (vu16 *) 0x0400106c};
     int i;
 

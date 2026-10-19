@@ -272,14 +272,18 @@ int func_02030830(fx32 x, fx32 z, fx32 y, int a, u32 mask, u8 *out, VecFx32 *vec
                     }
                 }
                 if (!miss) {
+                    int slot;
+
                     h = (region->mUnk_10 + ((region->mUnk_12 - region->mUnk_10) * t >> bits)) << 9;
                     if (count >= 12) {
                         OS_Terminate();
                     }
+                    slot = count;
                     *attrp = attr;
                     attrp++;
                     normp++;
-                    heights[count++] = h;
+                    count++;
+                    heights[slot] = h;
                 }
             }
         }

@@ -507,6 +507,7 @@ void func_02016db4(Unk_020b1598 *followers, int index, u16 angle) {
     StageRec *rec = &data_020b1990[data_020b6ee0.mUnk_a8e4];
     int bestDist;
     int j;
+    Unk_Follower *o;
 
     if (data_020b6ee0.mUnk_a8e4 < 0 || data_020b6ee0.mUnk_a8e4 >= STAGE_MAX) {
         OS_Terminate();
@@ -551,50 +552,52 @@ void func_02016db4(Unk_020b1598 *followers, int index, u16 angle) {
             }
         }
     }
-    for (j = 0; j < followers->mUnk_3f0 + 1; j++) {
-        Unk_Follower *o;
-        int dx;
-        int dz;
-        int dist;
+    j = 0;
+    if (j < followers->mUnk_3f0 + 1) {
+        o = followers->mUnk_000;
+        do {
+            int dx;
+            int dz;
+            int dist;
 
-        o = &followers->mUnk_000[j];
-        if (j != index) {
-            dx = o->mUnk_00.x - f->mUnk_00.x;
-            dz = o->mUnk_00.z - f->mUnk_00.z;
-            dist = func_0201faf0(dx, dz);
-            if (dist < followers->mUnk_3f4) {
-                u32 ang = func_0201feb0(dx, dz);
-                const s16 *s1 = &FX_SinCosTable_[((u16) (ang - 0x4000) >> 4) * 2];
-                int ax = f->mUnk_00.x + (float) (f->mUnk_20 * s1[0] / 2 / 0x1000);
-                int az = f->mUnk_00.z - (float) (f->mUnk_20 * s1[1] / 2 / 0x1000);
-                const s16 *s2 = &FX_SinCosTable_[((u16) (ang + 0x4000) >> 4) * 2];
-                int bx = o->mUnk_00.x + (float) (o->mUnk_20 * s2[0] / 2 / 0x1000);
-                int bz = o->mUnk_00.z - (float) (o->mUnk_20 * s2[1] / 2 / 0x1000);
-                u32 span = func_0201fe14(ang, func_0201feb0(bx - ax, bz - az));
-                u16 cur = ang - (u16) span;
-                u32 end = ang + span;
+            if (j != index) {
+                dx = o->mUnk_00.x - f->mUnk_00.x;
+                dz = o->mUnk_00.z - f->mUnk_00.z;
+                dist = func_0201faf0(dx, dz);
+                if (dist < followers->mUnk_3f4) {
+                    u32 ang = func_0201feb0(dx, dz);
+                    const s16 *s1 = &FX_SinCosTable_[((u16) (ang - 0x4000) >> 4) * 2];
+                    int ax = f->mUnk_00.x + (float) (f->mUnk_20 * s1[0] / 2 / 0x1000);
+                    int az = f->mUnk_00.z - (float) (f->mUnk_20 * s1[1] / 2 / 0x1000);
+                    const s16 *s2 = &FX_SinCosTable_[((u16) (ang + 0x4000) >> 4) * 2];
+                    int bx = o->mUnk_00.x + (float) (o->mUnk_20 * s2[0] / 2 / 0x1000);
+                    int bz = o->mUnk_00.z - (float) (o->mUnk_20 * s2[1] / 2 / 0x1000);
+                    u32 span = func_0201fe14(ang, func_0201feb0(bx - ax, bz - az));
+                    u16 cur = ang - (u16) span;
+                    u32 end = ang + span;
 
-                while (func_0201fe6c(end, cur) == 1) {
-                    u16 sector = ((cur + 0x1000) / 0x2000) & 7;
-                    if (f->mUnk_26[sector] > dist) {
-                        f->mUnk_26[sector] = dist;
+                    while (func_0201fe6c(end, cur) == 1) {
+                        u16 sector = ((cur + 0x1000) / 0x2000) & 7;
+                        if (f->mUnk_26[sector] > dist) {
+                            f->mUnk_26[sector] = dist;
+                        }
+                        cur += 0x200;
                     }
-                    cur += 0x200;
-                }
-                if (f->mUnk_26[(u32) f->mUnk_24 >> 13] < bestDist) {
-                    bestDist = dist;
-                    bestIdx = j;
+                    if (f->mUnk_26[(u32) f->mUnk_24 >> 13] < bestDist) {
+                        bestDist = dist;
+                        bestIdx = j;
+                    }
                 }
             }
-        }
+            o++;
+            j++;
+        } while (j < followers->mUnk_3f0 + 1);
     }
     if (bestDist < followers->mUnk_3f4) {
         int avg = (f->mUnk_20 + followers->mUnk_000[bestIdx].mUnk_20) / 2;
         int limit = followers->mUnk_3f2 + avg;
 
-        if (bestDist >= limit) {
-            bestDist = limit;
-        }
+        bestDist = (bestDist >= limit) ? limit : bestDist;
         f->mUnk_18 = f->mUnk_1c * (float) func_0201fbe4(bestDist, avg, limit, 0, 0x400) / 1024.0f;
         f->mUnk_37 = 1;
         if (f->mUnk_18 < 0.1) {
