@@ -30,19 +30,6 @@ typedef struct Unk_020ae6ec {
     u8 mUnk_06[2];
 } Unk_020ae6ec;
 
-// State of the shown figure: member 0x12 is a value read by other screens, 0x34 the current figure id.
-typedef struct Unk_020ae834 {
-    u8 mUnk_00[0x12];
-    u16 mUnk_12;
-    u8 mUnk_14[0x34 - 0x14];
-    u16 mUnk_34;
-    u16 mUnk_36_0 : 10;
-    u16 mUnk_36_10 : 1;
-    u16 mUnk_36_11 : 2;
-    u16 mUnk_36_13 : 1;
-    u16 mUnk_36_14 : 2;
-} Unk_020ae834;
-
 typedef struct Unk_0204e218 {
     s32 mUnk_00;
     s32 mUnk_04;
@@ -56,9 +43,6 @@ typedef struct Unk_0204e248 {
 } Unk_0204e248;
 
 extern Unk_020ae6ec data_020ae6ec;
-extern s32 data_020ae6f4;
-extern u8 data_020ae6f8[0x13c];
-extern Unk_020ae834 data_020ae834;
 extern LangMenu data_020ae870;
 extern const Unk_0204e218 data_0204e218[];
 extern const Unk_0204e248 data_0204e248[];

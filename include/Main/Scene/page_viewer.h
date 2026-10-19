@@ -11,7 +11,6 @@ typedef struct PageViewState {
     s32 mState;
     s32 mUnk_04;
     s32 mUnk_08;
-    s32 mUnk_0c;
 } PageViewState;
 
 extern PageViewState data_02098d74;

@@ -60,6 +60,14 @@ const u16 data_0204e2c8[86] = {
     0xeee, 0xef2, 0xef3, 9,     0xf10, 0xf2c, 0xc,   0xf19, 0xf1a, 0xeea, 8,
 };
 
+// The shown figure: the flag func_0200f848 stores with it (its second argument) and its model.
+typedef struct Unk_020ae6f4 {
+    s32 mUnk_00;
+    Model mUnk_04;
+} Unk_020ae6f4;
+
+// Defined before data_020ae6ec: the compiler's size sort then keeps the 2-byte tables above in address order.
+Unk_020ae6f4 data_020ae6f4;
 Unk_020ae6ec data_020ae6ec;
 LangMenu data_020ae870;
 
@@ -242,42 +250,42 @@ void func_0200f848(u32 a, int b) {
     if (a >= func_0200f988()) {
         OS_Terminate();
     }
-    func_02027230(data_020ae6f8, a * 2 + 0x1f5, a * 2 + 0x1f4, 2, 0);
-    data_020ae6f4 = b;
+    func_02027230(&data_020ae6f4.mUnk_04, a * 2 + 0x1f5, a * 2 + 0x1f4, 2, 0);
+    data_020ae6f4.mUnk_00 = b;
     if (b == 0) {
-        data_020ae834.mUnk_36_13 = 1;
+        data_020ae6f4.mUnk_04.mUnk_172_13 = 1;
     }
 }
 
 void func_0200f898(void) {
     u8 params[0x44];
-    int idx = (data_020ae834.mUnk_34 - 0x1f5) / 2;
+    int idx = (data_020ae6f4.mUnk_04.mUnk_170 - 0x1f5) / 2;
     int a, x, y, z;
     func_020242a8(params, 0xff, 0, 0, 0x1000, 0x8000, -1, 0x100);
     params[0x43] |= 8;
-    func_020262a0((Model *) data_020ae6f8);
-    func_02024b5c(data_020ae834.mUnk_34, params, data_020ae6f8, 0);
+    func_020262a0(&data_020ae6f4.mUnk_04);
+    func_02024b5c(data_020ae6f4.mUnk_04.mUnk_170, params, &data_020ae6f4.mUnk_04, 0);
     a = func_02021e44(0x235, idx * 4 + 2);
-    if (data_020ae834.mUnk_12 >= a) {
+    if (data_020ae6f4.mUnk_04.mUnk_14c.mUnk_2 >= a) {
         x = func_02021e44(0x235, idx * 4 + 4);
         y = func_02021e44(0x235, idx * 4 + 5);
         z = func_02021e44(0x235, idx * 4 + 3);
-        if (data_020ae834.mUnk_12 < a + 4) {
-            x = func_0201fbe4(data_020ae834.mUnk_12, a, a + 4, x - 0x78, x);
+        if (data_020ae6f4.mUnk_04.mUnk_14c.mUnk_2 < a + 4) {
+            x = func_0201fbe4(data_020ae6f4.mUnk_04.mUnk_14c.mUnk_2, a, a + 4, x - 0x78, x);
         }
         func_0202cf08(z * 6 + 0xee, x, y, 0x64, 1);
     }
 }
 
 int func_0200f95c(void) {
-    if (data_020ae6f4 != 0) {
+    if (data_020ae6f4.mUnk_00 != 0) {
         return 0;
     }
-    return data_020ae834.mUnk_36_10;
+    return data_020ae6f4.mUnk_04.mUnk_172_10;
 }
 
 u16 func_0200f97c(void) {
-    return data_020ae834.mUnk_12;
+    return data_020ae6f4.mUnk_04.mUnk_14c.mUnk_2;
 }
 
 int func_0200f988(void) {
