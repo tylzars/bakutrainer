@@ -1799,6 +1799,7 @@ _u32_div_f kind:function(arm,size=0x1e4) addr:0x0204dcec
 func_0204ded0 kind:function(arm,size=0x4) addr:0x0204ded0
 _ZdlPv kind:function(arm,size=0x14) addr:0x0204ded4
 func_0204dee8 kind:function(arm,size=0x2c) addr:0x0204dee8
+data_0204df14 kind:data(any) addr:0x0204df14
 data_0204e054 kind:data(byte[120]) addr:0x0204e054
 data_0204e0cc kind:data(any) addr:0x0204e0cc
 data_0204e0d4 kind:data(any) addr:0x0204e0d4
@@ -1888,6 +1889,7 @@ data_02051844 kind:data(short[1536]) addr:0x02051844
 data_02052444 kind:data(byte[4]) addr:0x02052444
 data_02052448 kind:data(word[2]) addr:0x02052448
 data_02052450 kind:data(byte[8]) addr:0x02052450
+data_02052458 kind:data(byte[16]) addr:0x02052458
 func_02052468 kind:function(arm,size=0x4) addr:0x02052468
 func_02052478 kind:function(arm,size=0x28) addr:0x02052478
 func_020524a8 kind:function(arm,size=0x148) addr:0x020524a8

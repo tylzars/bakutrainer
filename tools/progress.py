@@ -12,7 +12,9 @@ Both read build/<ver>/report.json, so run `ninja report` first.
 Every percentage is a share of one fixed size: the bytes of the code sections in config/ (kind:code sections of every
 module's delinks.txt). objdiff's own total only covers bytes that have a symbol, so it grows whenever a merge names
 bytes for the first time (a missed function, a table in .text) and the percentage would drop although nothing got
-worse. Measured against the fixed size, progress only moves when matched bytes do.
+worse. Measured against the fixed size, progress only moves when matched bytes do. Each history row keeps the size
+it was measured against (image_code), so a config change that moves bytes between code and data (the .text/.rodata
+boundary) shows as one step instead of redrawing every earlier point.
 """
 import argparse
 import csv
@@ -28,7 +30,9 @@ SVG = ROOT / "progress" / "progress.svg"
 README = ROOT / "README.md"
 START, END = "<!-- progress:start -->", "<!-- progress:end -->"
 FIELDS = ["date", "matched_code", "complete_code", "total_code", "matched_functions", "total_functions",
-          "fuzzy_match_percent"]
+          "fuzzy_match_percent", "image_code"]
+# The code size of every row recorded before image_code was a column.
+FIRST_IMAGE_CODE = 389724
 
 # (key, label, light, dark): categorical slots 1-3, validated light and dark.
 # matched_code: compiled C byte-identical to the original assembly.
@@ -62,8 +66,9 @@ def read_report(ver: str) -> dict:
     if not path.is_file():
         sys.exit(f"{path} missing; run `ninja report` first")
     m = json.loads(path.read_text())["measures"]
-    row = {k: int(m.get(k, 0)) for k in FIELDS[1:-1]}
+    row = {k: int(m.get(k, 0)) for k in FIELDS[1:-2]}
     row["fuzzy_match_percent"] = round(float(m.get("fuzzy_match_percent", 0)), 3)
+    row["image_code"] = IMAGE_CODE
     return row
 
 
@@ -71,8 +76,11 @@ def read_history() -> list[dict]:
     if not HISTORY.is_file():
         return []
     with HISTORY.open() as f:
-        return [{k: v if k == "date" else float(v) if k == "fuzzy_match_percent" else int(v)
-                 for k, v in row.items()} for row in csv.DictReader(f)]
+        rows = [{k: v if k == "date" else float(v) if k == "fuzzy_match_percent" else int(v)
+                 for k, v in row.items() if v not in (None, "")} for row in csv.DictReader(f)]
+    for row in rows:
+        row.setdefault("image_code", FIRST_IMAGE_CODE)
+    return rows
 
 
 def same(a: dict, b: dict) -> bool:
@@ -84,10 +92,12 @@ IMAGE_CODE = image_code()
 
 def pct(row: dict, key: str) -> float:
     """A share of the fixed code size. objdiff's fuzzy percentage is over its own total, so it is turned back into
-    credited bytes first (bytes without a symbol carry no credit either way)."""
+    credited bytes first (bytes without a symbol carry no credit either way). Each row uses the size it was measured
+    against."""
+    size = row.get("image_code", IMAGE_CODE)
     if key == "fuzzy_match_percent":
-        return row[key] * row["total_code"] / IMAGE_CODE if IMAGE_CODE else 0.0
-    return 100 * row[key] / IMAGE_CODE if IMAGE_CODE else 0.0
+        return row[key] * row["total_code"] / size if size else 0.0
+    return 100 * row[key] / size if size else 0.0
 
 
 def nice_ceiling(v: float) -> float:
@@ -225,6 +235,10 @@ def readme_section(rows: list[dict]) -> str:
         *([("All code is linked from this repository's source and the ROM matches byte for byte. See "
             "[docs/decompiling.md](docs/decompiling.md) for functions objdiff scores below 100% with identical "
             "code."), ""] if r["complete_code"] == IMAGE_CODE else []),
+        *([f"The code size dropped from {FIRST_IMAGE_CODE:,} to {IMAGE_CODE:,} bytes when the `.text`/`.rodata` "
+            "boundary moved to where the original's code ends (0x0204df14): the game's constant tables and the "
+            "Mobiclip decoder after them are in the original's `.rodata`. The step in the graph is that change, "
+            "not new matching.", ""] if IMAGE_CODE != FIRST_IMAGE_CODE else []),
         f"_Last updated {r['date'][:10]}. Full history: [`progress/history.csv`](progress/history.csv)._",
         END,
     ])

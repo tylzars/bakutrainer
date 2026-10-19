@@ -6,3 +6,7 @@ data_02000c04
 data_020011dc
 # Unreferenced routine between the two soft-float files; without it everything after it moves down 8 bytes.
 func_0204cd40
+# CodeWarrior's exception index after the code (0x0204df14): no relocation reaches it.
+data_0204df14
+# Byte table after the wireless helper's .rodata: no relocation reaches it.
+data_02052458
