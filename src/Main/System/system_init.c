@@ -1195,9 +1195,7 @@ restart:
     state = 0;
     i = 0;
     remaining = size;
-    if (size > 0xfb800) {
-        OS_Terminate();
-    }
+    (void) (size <= 0xfb800 || (OS_Terminate(), 0));
     for (; remaining > 0; remaining -= 0x1f7) {
         data_020c18bc.mUnk_250.mUnk_24[i >> 3] &= ~(1 << (i & 7));
         i++;
@@ -1209,31 +1207,34 @@ restart:
     data_020c18bc.mUnk_46c |= 3 << 18;
     remaining = size;
     while (data_020c18bc.mUnk_250.mUnk_08 != 0 && (s8) data_020c18bc.mUnk_2a4[1] >= 0) {
-        if (data_020c18bc.mUnk_250.mUnk_08 != remaining) {
+        if (data_020c18bc.mUnk_250.mUnk_08 == remaining) {
+            if (state-- == 0) {
+                i = 0;
+                while (data_020c18bc.mUnk_250.mUnk_24[i >> 3] & (1 << (i & 7))) {
+                    i++;
+                }
+                j = i;
+                sum = 0;
+                while (!(data_020c18bc.mUnk_250.mUnk_24[j >> 3] & (1 << (j & 7)))) {
+                    j++;
+                    sum += 0x1f7;
+                }
+                len = (j - i) * 0x1f7;
+                if (len >= data_020c18bc.mUnk_250.mUnk_04) {
+                    len = data_020c18bc.mUnk_250.mUnk_04;
+                }
+                cmd[0] = 0x51;
+                func_02034ce0(data_020c18bc.mUnk_250.mUnk_00 + 0x1f7 * i, cmd + 6);
+                func_02034ce0(len, cmd + 2);
+                state = 5;
+                if (func_02034cf0(cmd + 6) <= data_020c18bc.mUnk_250.mUnk_00 + data_020c18bc.mUnk_250.mUnk_04) {
+                } else {
+                    goto restart;
+                }
+            }
+        } else {
             remaining = data_020c18bc.mUnk_250.mUnk_08;
             state = 5;
-        } else if (state-- == 0) {
-            i = 0;
-            while (data_020c18bc.mUnk_250.mUnk_24[i >> 3] & (1 << (i & 7))) {
-                i++;
-            }
-            j = i;
-            sum = 0;
-            while (!(data_020c18bc.mUnk_250.mUnk_24[j >> 3] & (1 << (j & 7)))) {
-                j++;
-                sum += 0x1f7;
-            }
-            len = (j - i) * 0x1f7;
-            if (len >= data_020c18bc.mUnk_250.mUnk_04) {
-                len = data_020c18bc.mUnk_250.mUnk_04;
-            }
-            cmd[0] = 0x51;
-            func_02034ce0(data_020c18bc.mUnk_250.mUnk_00 + 0x1f7 * i, cmd + 6);
-            func_02034ce0(len, cmd + 2);
-            state = 5;
-            if (func_02034cf0(cmd + 6) > data_020c18bc.mUnk_250.mUnk_00 + data_020c18bc.mUnk_250.mUnk_04) {
-                goto restart;
-            }
         }
         func_0201bb30();
     }
@@ -1474,11 +1475,10 @@ void func_0201de48(u8 *data, int target, int x, int flags) {
                 rgb = func_0201c430(h * w * 2);
                 out = rgb;
                 for (n = h * w; n != 0; n--) {
-                    u8 *c = pal + *src * 3;
+                    u8 *c = pal + *src++ * 3;
 
                     color = (c[0] >> 3) | ((c[1] >> 3) << 5) | ((c[2] >> 3) << 10);
                     *out++ = color + 0x8000;
-                    src++;
                 }
                 pix = rgb;
             }
@@ -1494,8 +1494,7 @@ void func_0201de48(u8 *data, int target, int x, int flags) {
             if (indexed == 0) {
                 out = (u16 *) pal;
                 for (n = h * w; n != 0; n--) {
-                    color = (pal[0] >> 3) | ((pal[1] >> 3) << 5) | ((pal[2] >> 3) << 10);
-                    *out++ = color + 0x8000;
+                    *out++ = ((pal[0] >> 3) | ((pal[1] >> 3) << 5) | ((pal[2] >> 3) << 10)) + 0x8000;
                     pal += 3;
                 }
             } else {
@@ -1750,7 +1749,6 @@ void func_0201e56c(u8 *data, int target, void *lut) {
     u32 i;
     u32 l;
     u32 k;
-    u32 len;
     u32 total;
     u32 t;
     u32 code;
@@ -1763,43 +1761,43 @@ void func_0201e56c(u8 *data, int target, void *lut) {
     height = 0;
     width = 0;
     data_020c1820 = data + 4;
-    buf = func_0201c430(0x300);
-    huffsize = buf;
+    huffsize = func_0201c430(0x300);
+    buf = huffsize;
     huffcode = (u16 *) (buf + 0x100);
     block = func_0201c430(0x80);
     while (data_020c1820[-1] != 0xda) {
         switch (data_020c1820[-1]) {
             case 0xdb:
                 q = data_020c1820;
-                len = q[1] + (q[0] << 8);
+                total = q[1] + (q[0] << 8);
                 q += 2;
-                len -= 2;
-                while (len != 0) {
+                total -= 2;
+                while (total != 0) {
                     s16 *table = quant[*q++];
 
-                    for (k = 0; k < 64; k++) {
-                        table[data_020502b8[k]] = *q++;
+                    for (i = 0; i < 64; i++) {
+                        table[data_020502b8[i]] = *q++;
                     }
-                    len -= 65;
+                    total -= 65;
                 }
                 break;
             case 0xc4:
-                q = data_020c1820;
-                len = q[1] + (q[0] << 8);
-                q += 2;
-                len -= 2;
-                while (len != 0) {
-                    c = *q++;
+                blk = data_020c1820;
+                x = blk[1] + (blk[0] << 8);
+                blk += 2;
+                x -= 2;
+                while (x != 0) {
+                    c = *blk++;
                     total = 0;
                     t = (c & 1) + (c >> 3);
                     for (l = 1; l <= 16; l++) {
-                        bits[t][l] = *q++;
+                        bits[t][l] = *blk++;
                         total += bits[t][l];
                     }
                     for (i = 0; i < total; i++) {
-                        huffval[t][i] = *q++;
+                        huffval[t][i] = *blk++;
                     }
-                    len -= total + 17;
+                    x -= total + 17;
                     k = 0;
                     for (l = 1; l <= 16; l++) {
                         n = bits[t][l];
@@ -1852,10 +1850,8 @@ void func_0201e56c(u8 *data, int target, void *lut) {
             quant[t][k] = (quant[t][k] * data_020502f8[k]) >> 12;
         }
     }
-    i = 0;
     mcu = func_0201c430(0x1c0);
-    y = 0;
-    for (; i < 0x100; i++) {
+    for (i = 0; i < 0x100; i++) {
         buf[i] = 0;
         buf[i + 0x100] = i;
         buf[i + 0x200] = 0xff;
@@ -1864,7 +1860,7 @@ void func_0201e56c(u8 *data, int target, void *lut) {
     data_020c1818 = 0;
     data_020c1824 = 0;
     dc[0] = dc[1] = dc[2] = 0;
-    for (; y < height; y += 16) {
+    for (y = 0; y < height; y += 16) {
         for (x = 0; x < width; x += 16) {
             blk = mcu;
             for (c = 0; c < ncomp; c++) {
@@ -1930,9 +1926,7 @@ void func_0201ec2c(int type, u32 size, u32 addr) {
     u32 used = 0;
     int i;
     int best;
-    u32 j;
     u32 n;
-    u32 k;
     u32 h;
     u32 bank;
     u32 kb;
@@ -1943,6 +1937,7 @@ void func_0201ec2c(int type, u32 size, u32 addr) {
     u32 s2;
     u32 s3;
     u32 s4;
+    u32 k;
     s32 rem[5];
     u32 list[5];
     u32 addrs[5];
@@ -1955,13 +1950,13 @@ void func_0201ec2c(int type, u32 size, u32 addr) {
             used |= 1 << i;
         }
     }
-    j = 0;
+    i = 0;
     best = -1;
-    for (; data_02050478[j].mUnk_1 != 0; j++) {
-        if (type == data_02050478[j].mUnk_2 && !((1 << data_02050478[j].mUnk_0) & used) &&
-            addr == data_02050478[j].mUnk_4 && data_02050478[j].mUnk_1 >= size) {
-            if (best == -1 || data_02050478[j].mUnk_1 < data_02050478[best].mUnk_1) {
-                best = j;
+    for (; data_02050478[i].mUnk_1 != 0; i++) {
+        if (type == data_02050478[i].mUnk_2 && !((1 << data_02050478[i].mUnk_0) & used) &&
+            addr == data_02050478[i].mUnk_4 && data_02050478[i].mUnk_1 >= size) {
+            if (best == -1 || data_02050478[i].mUnk_1 < data_02050478[best].mUnk_1) {
+                best = i;
             }
         }
     }
@@ -1969,22 +1964,22 @@ void func_0201ec2c(int type, u32 size, u32 addr) {
         n = 1;
         list[1] = best;
     } else {
+        addrs[0] = addr;
         rem[0] = size;
         n = 0;
         list[0] = 0xff;
+        k = 0;
         bestRem = 0x7fffffff;
-        addrs[0] = addr;
-        j = 0;
         bestN = 0;
         for (;;) {
-            for (; (rec = &data_02050478[j])->mUnk_1 != 0; j++) {
+            for (; rec = &data_02050478[k], data_02050478[k].mUnk_1 != 0; k++) {
                 if (type == rec->mUnk_2) {
                     u32 bit = 1 << rec->mUnk_0;
 
                     if (!(used & bit) && rec->mUnk_4 == addrs[n]) {
                         rem[n + 1] = rem[n] - rec->mUnk_1;
                         addrs[n + 1] = rec->mUnk_4 + (rec->mUnk_1 << 10);
-                        list[n + 1] = j;
+                        list[n + 1] = k;
                         n++;
                         used |= bit;
                         if (rem[n] < 0 && -rem[n] < bestRem) {
@@ -2012,9 +2007,9 @@ void func_0201ec2c(int type, u32 size, u32 addr) {
             if (rem[n] == 0) {
                 break;
             }
-            j = list[n--];
-            used &= ~(1 << data_02050478[j].mUnk_0);
-            j++;
+            k = list[n--];
+            used &= ~(1 << data_02050478[k].mUnk_0);
+            k++;
         }
     }
     if (n == 0) {
