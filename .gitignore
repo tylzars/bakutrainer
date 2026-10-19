@@ -8,6 +8,7 @@ extract/*
 
 # Build output and downloaded tools
 build/
+*.o
 tools/bin/
 tools/mwccarm/
 .ninja_*
