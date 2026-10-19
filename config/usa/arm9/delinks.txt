@@ -4,6 +4,9 @@
     .data       start:0x02063900 end:0x02064820 kind:data align:32
     .bss        start:0x02064820 end:0x020ce200 kind:bss align:32
 
+libs/nds/src/init/secure_area.s:
+    .text       start:0x02000000 end:0x02000800
+
 libs/nds/src/init/crt0.c:
     .text       start:0x02000800 end:0x02000ba0
 
@@ -156,6 +159,10 @@ libs/nds/src/snd/snd_util.c:
 libs/nds/src/pxi/pxi.c:
     .text       start:0x02040bd0 end:0x02040eec
 
+// the divider and square-root register save/restore pair between the file system and touch panel code
+libs/nds/src/cp/cp_context.c:
+    .text       start:0x02042898 end:0x02042914
+
 libs/nds/src/tp/tp.c:
     .text       start:0x02042914 end:0x020431ec
 
@@ -267,9 +274,10 @@ libs/mobiclip/src/mobiclip_sound_a_call.c:
 libs/mobiclip/src/mobiclip_sound_b_call.c:
     .text       start:0x02052e28 end:0x02052e2c
 
-// provisional: the WM object starts before 0x020461fc (0x020461e4 and earlier); the wm_command/wm_api split is inferred
+// provisional: starts with func_020461e4 (stores a command callback in the WM work area; called only from the
+// WM code after it) where card_pullout.c ends; the wm_command/wm_api split is inferred
 libs/nds/src/wm/wm_command.c:
-    .text       start:0x020461fc end:0x02046478
+    .text       start:0x020461e4 end:0x02046478
 
 libs/nds/src/wm/wm_api.c:
     .text       start:0x02046478 end:0x02047be4

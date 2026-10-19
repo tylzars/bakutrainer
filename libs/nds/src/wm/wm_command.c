@@ -4,6 +4,10 @@
 #include <nitro/math.h>
 #include <nitro/wm.h>
 
+void func_020461e4(u32 idx, WMCallback callback) {
+    data_020cd100.work->cbTable[idx] = callback;
+}
+
 void *func_020461fc(void) {
     u16 *msg;
     if (!OS_ReceiveMessage(&data_020cd108, (void **) &msg, 0)) {
