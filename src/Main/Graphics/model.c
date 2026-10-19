@@ -420,6 +420,7 @@ void func_020243c0(int id, fx32 x, fx32 y, fx32 z, u16 angle, fx32 sx, fx32 sy, 
     s32 rect[4];
     TexInfo info;
     s32 clip[4];
+    int base;
     u16 *pal;
     int i;
     u16 key;
@@ -429,12 +430,12 @@ void func_020243c0(int id, fx32 x, fx32 y, fx32 z, u16 angle, fx32 sx, fx32 sy, 
     int fmt;
     int opaque;
     u32 tex;
-    u32 col;
     u32 pltt;
     u32 w;
     u32 *hdr;
-    int base;
+    int slot;
     int a, b, c, n;
+    int col;
 
     if (!(data_020c18bc.mUnk_46c & 0x80)) {
         OS_Terminate();
@@ -480,10 +481,12 @@ void func_020243c0(int id, fx32 x, fx32 y, fx32 z, u16 angle, fx32 sx, fx32 sy, 
         func_0202ae84(id, &info, i);
         func_0202d828(id, 0, clip);
         base = func_0201c538();
+        slot = id << 6;
+        slot += i;
         col = pal[info.mUnk_14] & 0x7fff;
         key = func_0201c544() + (c ^ (col << 2));
-        size = info.mUnk_0c * info.mUnk_0e;
         opaque = pal[info.mUnk_14] >> 15;
+        size = info.mUnk_0c * info.mUnk_0e;
         switch (info.mUnk_12) {
             case 1:
             case 4:
@@ -513,7 +516,7 @@ void func_020243c0(int id, fx32 x, fx32 y, fx32 z, u16 angle, fx32 sx, fx32 sy, 
                 }
                 break;
         }
-        tex = func_020229b4(1, base + (id << 6) + i, size, 0);
+        tex = func_020229b4(1, slot + base, size, 0);
         pltt = func_020230b0(col, key, info.mUnk_15 << 5);
         s = data_02050898[0x1c - func_02028250(info.mUnk_0c)];
         t = data_02050898[0x1c - func_02028250(info.mUnk_0e)];
@@ -1131,9 +1134,9 @@ int func_02026080(Model *m) {
     int scale, limit, count;
     q = (u16 *) ((u8 *) q + ((*(u32 *) q & 0xffff) * 4 + 1) * 4);
     r = q + q[1];
-    scale = q[2];
     limit = r[1];
     count = m->mUnk_14c.mUnk_4;
+    scale = q[2];
     if ((u32) ((m->mUnk_14c.mUnk_2 << 8) / (scale * count)) >= limit) {
         s32 d = (limit * scale * count) / 256;
         if (m->mUnk_172_13 == 0) {
@@ -1392,16 +1395,14 @@ void func_02026598(Model *m, u16 id, u32 value) {
 }
 
 void func_020266a8(Model *m, s32 *slot) {
-    int r;
     switch (m->mUnk_14c.mUnk_0) {
         default:
-            r = func_02026268(m, 0);
+            m->mUnk_172_10 |= func_02026268(m, 0);
             break;
         case 0:
-            r = func_02026268(m, 0);
+            m->mUnk_172_10 |= func_02026268(m, 0);
             break;
     }
-    m->mUnk_172_10 = r | m->mUnk_172_10;
     if (m->mUnk_174 != 0) {
         u8 t;
         func_02026268(m, 1);
