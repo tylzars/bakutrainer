@@ -131,7 +131,10 @@ code; [SP-diff] differs between 2.0 service packs; [host] depends on the host ru
   colourer though it leaves no instructions: a store every reachable case overwrites, an unread zero initialiser of a
   variable that is read later, a product whose result is overwritten, an extra live value. What the front end removes
   outright never matters, so don't try it: locals that are never read, discarded expressions, empty inlines,
-  self-assignments, `if (0)`, `do {} while (0)`, empty `asm` blocks. [sp2p2, traced]
+  self-assignments, `if (0)`, `do {} while (0)`, empty `asm` blocks. [sp2p2, traced] Folded just as completely:
+  identity arithmetic on an operand (`x << 0`, `x >> 0`, `x | 0`, `x ^ 0`, `x - 0`, `x * 1`, `x / 1`, `x & -1`) and
+  a repeated test with an EMPTY body, `if (a || a) {}` (no join block survives; the 1.2 form needs a body). Both gave
+  objects identical to the plain form in DrawModelFileEx and ComputePoseMatrices. [sp2p3, tested]
 - To see whether a register difference comes from scheduling or from allocation: compile with `-proc generic`
   instead of `-proc arm946e` (other flags unchanged); it skips the ARM9 instruction scheduler that runs before
   register allocation. Also shows stack-parameter copy order at entry.
@@ -149,6 +152,19 @@ Virtual-register numbering:
   declared gets the highest number of them; IR @temps below them; nested-scope locals lowest), then expression
   temporaries in creation order. Named locals are numbered below every temporary (traced with gdb on the stock
   compiler).
+- The IR objects are numbered downward from the top of their range, each group in creation order (the first one
+  created gets the highest number of its group). Groups from the top, traced on DrawModelFileEx: named locals
+  (reverse declaration order) with the IR's hoisted loop invariants just below them; temporaries of the IR's
+  common-subexpression pass; temporaries of the later lifetime-splitting pass; later webs of reused variables; call
+  results kept in an object; division results. [sp2p3, traced]
+- The number a value reaches the colourer with: a local whose uses all lie in its defining extended block loses its
+  copy (1.2), so the colourer sees the expression temporary, numbered in IR statement order, and the local's
+  declaration position changes nothing (ComputePoseMatrices' sin/cos locals: declaration order had no effect,
+  statement order did). A value with a use in a join block keeps its variable's number: the declared home for the
+  variable's first assignment, the web group (below the IR temporaries) for a later assignment that starts a new web.
+  So a value held in a dead earlier local is numbered below the IR temporaries (DrawModelFileEx: the material colours
+  held in the dead locals `y` and `x`; func_0201e56c: a counter and a pointer moved into reused locals). [sp2p3,
+  traced]
 Simplify/select (graph colouring, traced with --simplify):
 - Scans run over vregs in increasing number; each node with fewer conflicts than K is removed and pushed; scans
   repeat until empty (a stuck graph removes by lowest spill-cost/conflict ratio). Colours are handed out popping
@@ -158,6 +174,11 @@ Simplify/select (graph colouring, traced with --simplify):
   the scan where each is visited.
 - Register choice for a popped node: lowest free of r0-r3; else a callee-saved register already handed out; else
   r12, then r14; else a new callee-saved register.
+- Which value is spilled (stuck graph, lowest cost/conflicts): cost = 2 x (weighted use groups) + (weighted
+  definitions), where a use counts as a new group only when some other value dies between it and the value's
+  previous definition or use. So a statement that ends another value's life between a definition and its uses makes
+  that value dearer to spill; of two similar values the one with no death among its uses goes to the stack. This
+  decided which of DrawModelFileEx's two rotation half-sizes was spilled. [sp2p3, traced]
 Practical consequences (lab rules on int-sized values living across calls):
 - Named locals loaded from memory (or assigned later) are coloured in declaration order: first declared gets the
   lowest free register. Parameters go the other way round and after all locals.
@@ -171,8 +192,8 @@ Practical consequences (lab rules on int-sized values living across calls):
 - Under pressure, initialisation order can swap a pair where declaration order can't.
 - Types and order interact: search them together (one large update function matched only with `u32 id = (u8) x`
   AND a particular declaration order). permute.py supports `//PERM T=u8|u32|int`.
-- `s16` locals colour differently from `s32` in otherwise identical code. Declaration order does not
-  affect `double` locals.
+- `s16` locals colour differently from `s32` in otherwise identical code (one cause: the IR moves loads into `s16`
+  locals, 1.4). Declaration order does not affect `double` locals.
 
 Rules for "short-lived temp must share a callee-saved register with a long-lived value":
 - When the original reuses a long-lived value's callee-saved register for a short-lived value once the long one is
@@ -267,6 +288,13 @@ Coalescing [sp2p2, traced]:
   shares the whole address.
 - A pointer local can hoist shared index arithmetic over a branch: `T *e = list->mItems[p];` makes `p*4` a CSE with
   a later `p*4 + 0x28` and it is hoisted above the `if`. Index the container inside each arm to stop it.
+- The IR's common-subexpression pass makes a temporary at the SECOND occurrence of an equal subtree (repeated
+  loads, `*p`, `a * 2`), including the index conversion of an `int` variable used as an array index: an `int` set
+  by a statement with a call (`k = 31 - f(x)`) and used as `t[k]` in two expressions gets such a copy, numbered in
+  that pass's group (1.1); `k = 31 - m` got none. Plain reads (`x + k`, `f(k)`, `n <= k`) are not index conversions,
+  and a larger shared subtree hides the index inside it. An index declared `long` (or `unsigned long`) has no
+  conversion, so no copy: the variable itself is used. DrawModelFileEx: its texture key index, held in a `long`,
+  takes the original's spill slot. [sp2p3, traced]
 - Repeated identical reads: the compiler shares a repeated field read (only when no real call sits between the
   uses); a named local copy vs repeating the access moves register pairs. Reading a const table at each use (reads
   are merged even across calls) can give the original order where a named local takes a register too early.
@@ -291,6 +319,12 @@ Coalescing [sp2p2, traced]:
 - `u8 now = ++field;` gave `add; and; strb` with no reload where `field++; now = field;` reloaded (one C++ game
   function: the value is tested, then passed to an inline that writes hardware registers). In a small test without
   that context both forms compiled the same, so try both.
+- ARM store-to-load forwarding (the backend CSE just before scheduling): reading back a just-stored byte becomes
+  `and rD, rS, #255`, a word becomes a plain copy; halfwords are not forwarded. A later peephole turns that
+  `and #255` (likewise a shift pair that re-extends a value) into a copy only when it knows the source already has
+  that width: a value from `ldrb/ldrh/ldrsb/ldrsh`, `mov #0..255`, `and #0xff` or `and` with a mask below 0x80,
+  `and/orr` of known values, or a copy of one. `(x & 0xff0000) >> 16` is not known, so reading back such a stored byte
+  keeps the `and` (+4 bytes in DrawModelFileEx's shift count). [sp2p3, traced]
 - A constant stored to a member and read back stays a run-time computation (`mUnk_38 = 0x20; mUnk_38 = (0x6c -
   mUnk_38)/2 + 0x1e;`); from a local it folds. Likewise `n = 8; f(n*12);` via memory keeps
   `mov #8; mov #12; smulbb`.
@@ -317,12 +351,19 @@ Constants held in registers:
 
 ### 1.3 Scheduling (pre-colouring and post-colouring schedulers)
 
-- Two list schedulers (one before colouring, one after). Pick order: instruction whose latest start time has
-  arrived; then the one making the most successors ready; then the taller; then list (source) order. Ties = source
-  order, so statement placement decides ties.
+- Two list schedulers (one before colouring, one after). Pick order: the first ready instruction in list (source)
+  order wins unless a later one is strictly better by, in turn: latest start time arrived; more successors made
+  ready; height; an instruction-kind rank. Ties = source order, so statement placement decides ties. "Made ready"
+  counts the successors whose only unscheduled predecessor it is, so an instruction whose successor still waits on
+  a second predecessor counts 0 for it (DrawModelFileEx: while `sh0` is pending, the `16` of `16 << sh0` loses to a
+  product and the `.bss` address load and lands in r8). [sp2p3, traced]
 - Pre-colouring scheduler under register pressure: once live values reach the limit it picks by a pressure score
   (start 16; each last use subtracts 1 + max(1, live - limit); each new value adds max(1, live - limit)), keeping
-  source order on ties. [sp2p2, traced]
+  source order on ties. [sp2p2, traced] The mode is decided again at every pick (live count >= the limit, 14, at that
+  pick); the lowest score wins. The live count holds every value that is live out or still has unscheduled uses; a
+  definition adds one only when its value is still needed and is not also read by the same instruction. So one more
+  live value can switch every pick it is live across to pressure mode, and a statement's list position decides its
+  pressure ties (DrawModelFileEx: the `sh0` statement written after the six table loads). [sp2p3, traced]
 - Memory-dependence edges come from alias classes set by what defines the base register: an integer-constant base
   (hardware register `*(vu16*)0x04000300`) gets the worst-case class and is ordered after every earlier global store,
   whatever volatility/casts; a base from a symbol (`lda &sym`) gets that symbol's class and can pass stores to other
@@ -369,7 +410,9 @@ Constants held in registers:
 - A u16/s16 local or stack parameter is spilled to a full 32-bit slot; its spill stores/reloads use the worst-case
   alias set, so they are ordered against each other and the post-allocation clean-up won't reuse a register value
   across them. A parameter's/local's width moves both scheduling and copies (u16 and s16 parameters of a text
-  printing API; a u16 value and u8 flag that also needed the callee's parameters to be u8).
+  printing API; a u16 value and u8 flag that also needed the callee's parameters to be u8). A `u8` parameter's store
+  to its home carries a broad alias set that holds a `u16` parameter's entry copy but not the int-sized ones, so only
+  with the `u16` declaration is the store ordered after that copy (DrawTextEx's `angle`). [sp2p3, traced]
 - One more live value across a loop changes the loop body's schedule even if it leaves no code (`const u8 *mode =
   &g;` reloaded from the pool).
 - Ties between equally ready instructions go to source order, so moving a statement within its block (or adding a
@@ -406,7 +449,8 @@ Constants held in registers:
   groups the adds.
 - Identical first instruction in both arms of an if/else (same registers) is hoisted above the branch AFTER register
   allocation: not source-level CSE, so source forms can't stop it; the original avoids it only by different
-  registers per arm.
+  registers per arm. Only some opcodes are hoisted: register copies and `rsb` never are (DrawModelFileEx's sign
+  flips). [sp2p3, tested]
 - `mov rX, rY` just before a load through rX with rY live can be a second identical load turned into a copy by
   post-allocation clean-up; reading through a `const T *` (const-param inline helper) keeps that second load apart.
 
@@ -438,6 +482,18 @@ Constants held in registers:
   with a real 2-D member.
 - `u16 *` indexing keeps an index update in place where byte-pointer arithmetic lets it sink past calls; a local
   reassigned in place (`cx += width;`) keeps its register.
+- Loads from a const table into multi-use `s16` locals are moved by the IR: each sinks to just before its first use
+  (for `a * b`, the right operand's load first), past stores and other statements, unless a real reassignment of its
+  index variable (one that starts a new web) lies in between; then it stays where written and gets an extra copy at
+  its first use. Single-use locals are substituted into their use; multi-use arithmetic statements and statements
+  reading address-taken locals or through a pointer stay where written. With `int`/`s32` locals nothing moves and no
+  copy is made (IR order = source order), and the multiply is still `smulbb` (the backend knows the `ldrsh` width).
+  ComputePoseMatrices matched only with `s32` sin/cos locals written per axis. [sp2p3, traced]
+- Basic blocks are cut by size: when the IR is turned into instructions, a statement starts a new block once the
+  current one holds 101 or more instructions (copies, per-use address loads and stores count; comma-joined
+  statements are cut separately). A statement pushed into the next block loses its scheduling height there, so a few
+  extra copies early in a long straight-line block move later code across the cut (ComputePoseMatrices' matrix
+  block, cut right after `m._[6]`). [sp2p3, traced]
 
 ### 1.5 Loops
 
@@ -479,9 +535,15 @@ Constants held in registers:
   gave the original branch shape.
 - The compiler predicates the ELSE arm: in an if/else whose predicated arm branches over the other, the predicated
   arm is the source's else.
+- If-conversion runs after register colouring, before the second scheduler: an arm is predicated only when it has at
+  most 3 instructions counting its closing branch (a then-arm at most 2 real instructions, an else-arm 3). Each arm
+  is decided on its own, so one arm can be predicated while a branch is kept around the other. Predicated arms are
+  placed before the branch, then-arm first, and the second scheduler mixes them with the block's other code
+  (DrawModelFileEx's sign flips). [sp2p3, tested]
 - Identical trailing statements in both arms are merged into the join; identical setter calls in both arms are
   merged after the join; duplicated CALL tails are not merged. Write statements in both arms when the original keeps
-  them there.
+  them there. The comparison is on the IR: `sz = sx + 0` or `sz = (s32) sx` matches `sz = sx`, but an arm with
+  `sy = sz = sx;` does not match one with `sy = sx; sz = sx;` (DrawModelFileEx). [sp2p3, tested]
 - A helper called with a different constant per arm is compiled per arm and merged into `moveq/movne` only after the
   first scheduling pass, so a later call's arg setup isn't moved up.
 - 0/1 selects always put the 1 first: an int/bool select between exactly 0 and 1 (`x ? 1 : 0`, `x != 0`, `!!x`,
@@ -567,14 +629,22 @@ Constants held in registers:
 - Enum-typed copies/locals are a general tool: not const-propagated, not substituted into compares, real loads at
   declaration, change colouring order of an index relative to its base (u8 index coloured after its base).
 - `NitroSDK u32` is `unsigned long`; a project's own `u32` may be `unsigned int`; these differ to the compiler.
+- Locals that receive table loads: `s16` lets the IR move the loads and add copies, `int`/`s32` keeps source order
+  (1.4); same instructions otherwise, different order and registers (ComputePoseMatrices).
+- An `int` index used in two array expressions can get a CSE copy that a `long` index avoids (1.2), which moves its
+  register or spill slot (DrawModelFileEx).
 
 ### 1.9 Calls, parameters, stack arguments, frames
 
 - Spill slots: spilled parameters take the lowest stack slots in parameter order; spilled named locals go above them
   in reverse declaration order (first declared = highest slot); a spilled compiler temporary (e.g. a merged repeated
   global read) sits just above the parameters. Function-scope stack locals get slots in descending declaration
-  order. In the functions matched so far the spilled locals were the ones declared first (observed, not traced). A
-  local that won't take its slot may need to be a repeated expression.
+  order. In the functions matched so far the spilled locals were the ones declared first. A local that won't take
+  its slot may need to be a repeated expression. Mechanism: each colouring round hands out spill slots walking the
+  virtual registers in increasing number, from a running offset, so within a round a higher number gets a higher
+  slot (numbering: 1.1); a later round's spills sit above. To swap two spilled values' slots, change which number
+  each value reaches the colourer with (DrawModelFileEx: its texture key index and frame-record pointer). [sp2p3,
+  read from the compiler, consistent with the listings]
 - Declared before, computed after: declaring `b/bLevel` before `a/aLevel` but computing the `a` chain first changes
   which value is spilled, independently of either order alone.
 - Stack-parameter copies: emitted at entry in parameter order (`-proc generic` shows it); the arm946e scheduler moves
@@ -671,6 +741,9 @@ The size-sort model (exact on synthetic files, needs calibration on real ones):
 3. File-level statics add themselves where defined, preceded by the string literals of their initializer. String
    literals used inside functions don't join (emitted afterwards in creation order). Function-local static tables
    join at their function's position; a local array initializer's `@N` in .rodata joins at its function's position.
+   File-scope objects without an initialiser (static or global) join after all the others, in reverse definition
+   order; `extern` declarations never join (model.c's four `.bss` objects are defined in the order that gives the
+   game's `.rodata` order). [sp2p3, tested]
 4. Vtables join at the end, reverse class order.
 5. The list is heapsorted by size (max-heap, strict compares): ascending sizes; equal sizes in an order depending on
    the whole list. So a smaller object can never follow a bigger one from the same list.
