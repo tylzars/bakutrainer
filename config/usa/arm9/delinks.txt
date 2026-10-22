@@ -536,10 +536,10 @@ src/Main/Graphics/sprite_slots.c:
     .data       start:0x02063944 end:0x02063954
     .bss        start:0x020abfc0 end:0x020ae44c
 
-// .bss data_02098d80..data_020990e0 (ascending sizes: one file); the 0x34-byte data_02099770 after the 0x690-byte
-// data_020990e0 starts the next file
-// one file: func_020074ac, func_02008288, func_02008994 and func_02009fe8 reach the .rodata blob through one section
-// base, and func_020073b0's table is the blob's last object. The .rodata order of its equal-size local initializers
+// .bss sWavePlayed..gBattleSlotStages (ascending sizes: one file); the 0x34-byte data_02099770 after the 0x690-byte
+// gBattleSlotStages starts the next file
+// one file: SetupBattleScreen, UpdateBattleCompare, UpdateBattleEntryPick and UpdateBattleKindValues reach the .rodata blob through one section
+// base, and SetCameraFromModel's table is the blob's last object. The .rodata order of its equal-size local initializers
 // needs two objects the link strips (layout placeholders in the source)
 src/Main/Scene/battle_screen.c:
     complete

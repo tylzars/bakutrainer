@@ -6,20 +6,21 @@
 extern "C" {
 #endif
 
-// State of the page screen: its mode, the page shown and a countdown before the next input is read.
+// State of the page screen: its state (StartPageViewerState), the page shown and a countdown before button 0x601
+// (next page) appears.
 typedef struct PageViewState {
     s32 mState;
-    s32 mUnk_04;
-    s32 mUnk_08;
+    s32 mPageIndex;
+    s32 mNextPageTimer;
 } PageViewState;
 
-extern PageViewState data_02098d74;
+extern PageViewState gPageViewState;
 
-void func_02006fc0(void);
-void func_02007040(void);
-void func_020070c4(void);
-void func_02007168(int state);
-void func_0200719c(void);
+void SetupPageViewer(void);
+void DrawPageViewerButtons(void);
+void UpdatePageViewer(void);
+void StartPageViewerState(int state);
+void LeavePageViewer(void);
 
 #ifdef __cplusplus
 }

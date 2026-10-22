@@ -9,7 +9,9 @@ extern "C" {
 #define LANG_MENU_MAX 256
 #define LANG_TEXT_SIZE 0x20
 
-// One selectable language: its name, the id of its text row and the value stored as the selection.
+// One row of the list: a non-empty string of table 0x246 before "LAST" (its text, and its index in the table, which
+// UpdateLangMenu passes to func_02010364) and mIndex, its list position minus 1, which becomes the prompt number
+// (flow value 0x14) when the row is chosen.
 typedef struct LangEntry {
     char mText[LANG_TEXT_SIZE];
     s32 mTextId;
@@ -23,53 +25,55 @@ typedef struct LangMenu {
     u32 mSelected;
 } LangMenu;
 
-// Animated value and its sentinel for the figure shown on the language screen.
-typedef struct Unk_020ae6ec {
-    s32 mUnk_00;
-    u16 mUnk_04;
+// The prompt's sprite: its index in gPromptSpriteDefs (-1: none; script event 6 sets it) and its slide level, which
+// DrawPromptSprite eases to full.
+typedef struct PromptSprite {
+    s32 mSpriteIndex;
+    u16 mSlideLevel;
     u8 mUnk_06[2];
-} Unk_020ae6ec;
+} PromptSprite;
 
-typedef struct Unk_0204e218 {
-    s32 mUnk_00;
-    s32 mUnk_04;
-    s32 mUnk_08;
-    s32 mUnk_0c;
-} Unk_0204e218;
+typedef struct PromptSpriteDef {
+    s32 mX;
+    s32 mY;
+    // The y offset the sprite and the script text slide in from.
+    s32 mSlideY;
+    s32 mSpriteId;
+} PromptSpriteDef;
 
-typedef struct Unk_0204e248 {
-    u16 mUnk_00;
-    u16 mUnk_02;
-} Unk_0204e248;
+typedef struct PromptWave {
+    u16 mWaveId;
+    u16 mAddLanguage;
+} PromptWave;
 
 // Font list of the script text (eight entries, all the first font record).
 extern const struct FontRange *data_02063988[8];
-extern Unk_020ae6ec data_020ae6ec;
-extern LangMenu data_020ae870;
-extern const Unk_0204e218 data_0204e218[];
-extern const Unk_0204e248 data_0204e248[];
+extern PromptSprite gPromptSprite;
+extern LangMenu gLangMenu;
+extern const PromptSpriteDef gPromptSpriteDefs[];
+extern const PromptWave gPromptWaves[];
 extern const u16 data_0204e208[1];
 extern const u16 data_0204e20c[1];
 extern const u16 data_0204e210[1];
 extern const u32 data_0204e214[1];
 extern const u16 data_0204e2c8[86];
 
-void func_0200f374(void);
-int func_0200f468(void);
-void func_0200f4d4(void);
-void func_0200f580(void);
+void SetupPrompt(void);
+int DrawPromptSprite(void);
+void UpdatePrompt(void);
+void LeavePrompt(void);
 u8 func_0200f588(void);
-void func_0200f5a4(const char *key, u32 value);
-void func_0200f5c4(void);
-void func_0200f660(void);
-void func_0200f750(void);
-void func_0200f758(void);
-void func_0200f848(u32 a, int b);
-void func_0200f898(void);
-int func_0200f95c(void);
-u16 func_0200f97c(void);
-int func_0200f988(void);
-int func_0200f9b8(void);
+void SetScriptRecord(const char *key, u32 value);
+void HandlePromptEvents(void);
+void SetupLangMenu(void);
+void LeaveLangMenu(void);
+void UpdateLangMenu(void);
+void SetupSharedModel(u32 a, int b);
+void DrawSharedModel(void);
+int IsSharedModelDone(void);
+u16 GetSharedModelFrameIndex(void);
+int CountSharedModels(void);
+int GetDefaultLanguage(void);
 
 #ifdef __cplusplus
 }

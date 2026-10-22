@@ -20,7 +20,7 @@ void UpdateProgress(void) {
     int idx;
 
     if (stage != -1) {
-        rec = &data_020b1990[stage];
+        rec = &gStages[stage];
     } else {
         rec = NULL;
     }
@@ -48,7 +48,7 @@ void UpdateProgress(void) {
             }
             break;
         case 4:
-            if (GetState() == 10 && data_020b1990[0].mPolygonGroupIndex == data_020b1990[0].mInfo.mUnk_10) {
+            if (GetState() == 10 && gStages[0].mPolygonGroupIndex == gStages[0].mInfo.mKind) {
                 data_020b6ee0.mProgressState = 5;
                 data_020b6ee0.mUnk_a56c = 2;
                 SetTextAndImage(0x4d, 1, 0x1e0);
@@ -70,7 +70,7 @@ void UpdateProgress(void) {
             }
             break;
         case 7:
-            if (GetState() == 10 && data_020b6ee0.mPanelState <= 2 && data_020b1990[0].mInfo.mUnk_12 == 100 &&
+            if (GetState() == 10 && data_020b6ee0.mPanelState <= 2 && gStages[0].mInfo.mPercent == 100 &&
                 data_020b6ee0.mTextId == -1) {
                 data_020b6ee0.mProgressState = 8;
                 data_020b6ee0.mUnk_a56d = 2;
@@ -117,7 +117,7 @@ void UpdateProgress(void) {
             if (idx == -1) {
                 OS_Terminate();
             }
-            if (GetState() == 10 && data_020b1990[idx].mPolygonGroupIndex == data_020b1990[idx].mInfo.mUnk_10) {
+            if (GetState() == 10 && gStages[idx].mPolygonGroupIndex == gStages[idx].mInfo.mKind) {
                 data_020b6ee0.mProgressState = 14;
                 SetTextAndImage(0x56, 1, 0x1e0);
             }
@@ -127,7 +127,7 @@ void UpdateProgress(void) {
             if (idx == -1) {
                 OS_Terminate();
             }
-            if (GetState() == 10 && data_020b6ee0.mPanelState <= 2 && data_020b1990[idx].mInfo.mUnk_12 == 100 &&
+            if (GetState() == 10 && data_020b6ee0.mPanelState <= 2 && gStages[idx].mInfo.mPercent == 100 &&
                 data_020b6ee0.mTextId == -1) {
                 data_020b6ee0.mProgressState = 15;
                 data_020b6ee0.mUnk_a56d = 2;
@@ -240,7 +240,7 @@ void UpdateNodeState(void) {
     }
 }
 
-// Refills the StageInfo list (data_020b1524) with the three stage ids of the selected node (GetSelectedNodeStageId);
+// Refills the StageInfo list (gStageInfos) with the three stage ids of the selected node (GetSelectedNodeStageId);
 // node is only range-checked and mode is unused.
 void SetupNodeStageInfos(u32 node, int mode) {
     int i;
@@ -261,11 +261,11 @@ void func_02014afc(int node, int flags) {
         for (i = 0; i < 3; i++) {
             StageRec *rec = GetSlotStage(i);
             if (rec != NULL) {
-                if (data_020b6ee0.mUnk_a8f3[i] & 1) {
+                if (data_020b6ee0.mBattleSlotFlags[i] & BATTLE_SLOT_GRADE_UP) {
                     func_020150a0(rec, 1);
                 }
-                if (!(data_020b6ee0.mUnk_a8f3[i] & 2)) {
-                    if (data_020b6ee0.mUnk_a8f3[i] & 4) {
+                if (!(data_020b6ee0.mBattleSlotFlags[i] & BATTLE_SLOT_NOT_PICKED)) {
+                    if (data_020b6ee0.mBattleSlotFlags[i] & BATTLE_SLOT_KEPT) {
                         AddPercent(rec, -10, 0, 0);
                     } else {
                         AddPercent(rec, -30, 0, 0);
@@ -300,7 +300,7 @@ void func_02014bf0(void) {
     StageRec *rec;
 
     for (i = 0; i < data_020b6ee0.mStageCount; i++) {
-        rec = &data_020b1990[i];
+        rec = &gStages[i];
         func_02014ccc(&rec->mInfo);
         if (rec->mInSlot == 0) {
             AddPercent(rec, 10, 0, 0);
@@ -309,23 +309,23 @@ void func_02014bf0(void) {
 }
 
 void LoadStageInfo(StageInfo *info) {
-    int base = info->mUnk_13 * 27;
+    int base = info->mStageId * 27;
 
-    info->mUnk_10 = GetFileValue(0xfd6, base + 2);
-    info->mUnk_12 = GetFileValue(0xfd6, base + 3);
-    info->mUnk_11 = GetFileValue(0xfd6, base + 4);
-    info->mUnk_04 = GetFileValue(0xfd6, base + 5);
-    if (info->mUnk_10 >= 6) {
+    info->mKind = GetFileValue(0xfd6, base + 2);
+    info->mPercent = GetFileValue(0xfd6, base + 3);
+    info->mGrade = GetFileValue(0xfd6, base + 4);
+    info->mValue = GetFileValue(0xfd6, base + 5);
+    if (info->mKind >= 6) {
         OS_Terminate();
     }
     info->mUnk_14 = 0;
     info->mUnk_00 = 10;
     info->mUnk_02 = 11;
-    info->mUnk_1c[0] = GetFileValue(0xfd6, base + 0x17);
-    info->mUnk_1c[1] = GetFileValue(0xfd6, base + 0x18);
-    info->mUnk_1c[2] = GetFileValue(0xfd6, base + 0x19);
-    info->mUnk_1c[3] = GetFileValue(0xfd6, base + 0x1a);
-    info->mUnk_1c[4] = GetFileValue(0xfd6, base + 0x1b);
+    info->mTableEntryIds[0] = GetFileValue(0xfd6, base + 0x17);
+    info->mTableEntryIds[1] = GetFileValue(0xfd6, base + 0x18);
+    info->mTableEntryIds[2] = GetFileValue(0xfd6, base + 0x19);
+    info->mTableEntryIds[3] = GetFileValue(0xfd6, base + 0x1a);
+    info->mTableEntryIds[4] = GetFileValue(0xfd6, base + 0x1b);
     func_02014ccc(info);
 }
 
@@ -338,15 +338,15 @@ void func_02014cdc(StageInfo *info) {
     info->mUnk_1a = (info->mUnk_1a + 1 + r) & 3;
 }
 
-// Each of the five mUnk_1c values that is -1 gets an entry id from PickWeightedTableEntry; -2 becomes -1.
+// Each of the five mTableEntryIds values that is -1 gets an entry id from PickWeightedTableEntry; -2 becomes -1.
 void PickTableEntries(StageInfo *info) {
     int i;
 
     for (i = 0; i < 5; i++) {
-        if (info->mUnk_1c[i] == -1) {
-            info->mUnk_1c[i] = PickWeightedTableEntry(info);
-        } else if (info->mUnk_1c[i] == -2) {
-            info->mUnk_1c[i] = -1;
+        if (info->mTableEntryIds[i] == -1) {
+            info->mTableEntryIds[i] = PickWeightedTableEntry(info);
+        } else if (info->mTableEntryIds[i] == -2) {
+            info->mTableEntryIds[i] = -1;
         }
     }
 }
@@ -358,13 +358,13 @@ int PickWeightedTableEntry(StageInfo *info) {
     int off;
     u32 roll;
 
-    if (info->mUnk_11 >= 1 && info->mUnk_11 <= 12) {
+    if (info->mGrade >= 1 && info->mGrade <= 12) {
         ok = 1;
     }
     if (!ok) {
         OS_Terminate();
     }
-    row = info->mUnk_11 + 9;
+    row = info->mGrade + 9;
     roll = NextRandom() % 10000;
     i = 0;
     off = 0;
@@ -387,8 +387,8 @@ static void InitStageInfo(int index, int stage);
 // Clears both stage lists, adds stage ids 3, 4 and 5 to the StageInfo list and, only when a is 0, stage id 0x19 to
 // the StageRec list.
 void ResetStages(int a) {
-    memset(data_020b1990, 0, 0x5550);
-    memset(data_020b1524, 0, 0x72);
+    memset(gStages, 0, 0x5550);
+    memset(gStageInfos, 0, 0x72);
     data_020b6ee0.mStageCount = 0;
     data_020b6ee0.mStageInfoCount = data_020b6ee0.mStageCount;
     AddStage(1, 3);
@@ -399,8 +399,8 @@ void ResetStages(int a) {
     }
 }
 
-// Appends stage id to a list and returns its index: list 0 a StageRec in data_020b1990 (mStageCount), list 1 a
-// StageInfo in data_020b1524 (mStageInfoCount, at most 3).
+// Appends stage id to a list and returns its index: list 0 a StageRec in gStages (mStageCount), list 1 a
+// StageInfo in gStageInfos (mStageInfoCount, at most 3).
 int AddStage(int list, int id) {
     int slot;
 
@@ -440,10 +440,10 @@ static void InitStage(int index, int id) {
     if (index >= data_020b6ee0.mStageCount) {
         OS_Terminate();
     }
-    rec = &data_020b1990[index];
+    rec = &gStages[index];
     memset(rec, 0, sizeof(StageRec));
     rec->mPolygonGroupIndex = 99;
-    rec->mInfo.mUnk_13 = id;
+    rec->mInfo.mStageId = id;
     LoadStageInfo(&rec->mInfo);
     PickTableEntries(&rec->mInfo);
     rec->mStoredOffsetX = rec->mUnk_1e8 = rec->mStoredOffsetZ = -1;
@@ -458,15 +458,15 @@ static void InitStageInfo(int index, int id) {
     if (index >= data_020b6ee0.mStageInfoCount) {
         OS_Terminate();
     }
-    info = &data_020b1524[index];
+    info = &gStageInfos[index];
     // The original clears 0x230 bytes, a StageRec's size, from this StageInfo.
     memset(info, 0, sizeof(StageRec));
     if (id != -1) {
-        info->mUnk_13 = id;
+        info->mStageId = id;
         LoadStageInfo(info);
         PickTableEntries(info);
     } else {
-        info->mUnk_04 = -9999;
+        info->mValue = -9999;
     }
 }
 
@@ -482,7 +482,7 @@ int FindStage(int list, int id) {
         case 0:
             n = data_020b6ee0.mStageCount;
             for (i = 0; i < n; i++) {
-                v = data_020b1990[i].mInfo.mUnk_13;
+                v = gStages[i].mInfo.mStageId;
                 if (v == id) {
                     break;
                 }
@@ -494,7 +494,7 @@ int FindStage(int list, int id) {
         case 1:
             n = data_020b6ee0.mStageInfoCount;
             for (i = 0; i < n; i++) {
-                v = data_020b1524[i].mUnk_13;
+                v = gStageInfos[i].mStageId;
                 if (v == id) {
                     break;
                 }
@@ -517,26 +517,26 @@ int func_02014f98(StageRec *rec, int delta) {
     int low;
     int high;
 
-    low = GetFileValue(0xfd6, info->mUnk_11 + (info->mUnk_13 * 27 + 4));
-    high = GetFileValue(0xfd6, info->mUnk_11 + (info->mUnk_13 * 27 + 5));
-    info->mUnk_04 += delta;
-    if (delta > 0 && info->mUnk_04 > high) {
-        info->mUnk_04 = high;
+    low = GetFileValue(0xfd6, info->mGrade + (info->mStageId * 27 + 4));
+    high = GetFileValue(0xfd6, info->mGrade + (info->mStageId * 27 + 5));
+    info->mValue += delta;
+    if (delta > 0 && info->mValue > high) {
+        info->mValue = high;
         return 1;
     }
-    if (delta < 0 && info->mUnk_04 < low) {
-        info->mUnk_04 = low;
+    if (delta < 0 && info->mValue < low) {
+        info->mValue = low;
         return 1;
     }
     return 0;
 }
 
-// Adds amount to the stage's percent (mInfo.mUnk_12), clamped to 0..100; returns 1 when it was clamped. When amount
+// Adds amount to the stage's percent (mInfo.mPercent), clamped to 0..100; returns 1 when it was clamped. When amount
 // is positive, a set plays sound 0xe8 (func_0202f110) and b set, while a stage is selected, adds an ObjSlot
 // (AddAnimObjSlotEx) at the gauge position of the old value (PercentToX). Reaching 100 clears mUnk_22e.
 int AddPercent(StageRec *rec, int amount, int a, int b) {
     StageInfo *info = &rec->mInfo;
-    int value = info->mUnk_12;
+    int value = info->mPercent;
 
     if (a != 0 && amount > 0) {
         func_0202f110(0xe8, 100, 0, 0x40, 0xffff, 0);
@@ -547,30 +547,30 @@ int AddPercent(StageRec *rec, int amount, int a, int b) {
     value += amount;
     rec->mUnk_22e = value >= 100 ? 0 : rec->mUnk_22e;
     if (value > 100) {
-        info->mUnk_12 = 100;
+        info->mPercent = 100;
         return 1;
     }
     if (value < 0) {
-        info->mUnk_12 = 0;
+        info->mPercent = 0;
         return 1;
     }
-    info->mUnk_12 = value;
+    info->mPercent = value;
     return 0;
 }
 
 int func_020150a0(StageRec *rec, int delta) {
     StageInfo *info = &rec->mInfo;
 
-    info->mUnk_11 += delta;
-    if (info->mUnk_11 > 12) {
-        info->mUnk_11 = 12;
+    info->mGrade += delta;
+    if (info->mGrade > 12) {
+        info->mGrade = 12;
         return 1;
     }
     return 0;
 }
 
 int func_020150c0(StageInfo *info) {
-    if (info->mUnk_04 >= GetFileValue(0xfd6, info->mUnk_11 + (info->mUnk_13 * 27 + 5))) {
+    if (info->mValue >= GetFileValue(0xfd6, info->mGrade + (info->mStageId * 27 + 5))) {
         return 1;
     }
     return 0;
@@ -603,7 +603,7 @@ int SetSlotStage(int slot, int stage) {
         if (old >= STAGE_MAX) {
             OS_Terminate();
         }
-        rec = &data_020b1990[old];
+        rec = &gStages[old];
         rec->mInSlot = 0;
     }
     if (stage != -1) {
@@ -611,7 +611,7 @@ int SetSlotStage(int slot, int stage) {
             OS_Terminate();
         }
         data_020b6ee0.mSlotStages[slot] = stage;
-        rec = &data_020b1990[stage];
+        rec = &gStages[stage];
         rec->mInSlot = 1;
     } else {
         data_020b6ee0.mSlotStages[slot] = -1;
@@ -632,7 +632,7 @@ StageRec *GetSlotStage(int slot) {
     if (stage == -1) {
         return 0;
     }
-    return &data_020b1990[stage];
+    return &gStages[stage];
 }
 
 int FindStageSlot(int stage) {
@@ -660,7 +660,7 @@ void FillEmptySlots(void) {
         stage = data_020500d4[i];
         if (GetSlotStage(stage) == 0) {
             for (j = 0; j < data_020b6ee0.mStageCount; j++) {
-                if (data_020b1990[j].mInSlot == 0) {
+                if (gStages[j].mInSlot == 0) {
                     SetSlotStage(stage, j);
                 }
             }
@@ -672,7 +672,7 @@ int FindFirstUnslottedStage(void) {
     int i;
 
     for (i = 0; i < data_020b6ee0.mStageCount; i++) {
-        if (data_020b1990[i].mInSlot == 0) {
+        if (gStages[i].mInSlot == 0) {
             return i;
         }
     }
@@ -686,7 +686,7 @@ int FindNextUnslottedStage(int stage) {
         OS_Terminate();
     }
     for (i = stage + 1; i < data_020b6ee0.mStageCount; i++) {
-        if (data_020b1990[i].mInSlot == 0) {
+        if (gStages[i].mInSlot == 0) {
             return i;
         }
     }
@@ -697,7 +697,7 @@ int FindLastUnslottedStage(void) {
     int i;
 
     for (i = data_020b6ee0.mStageCount - 1; i >= 0; i--) {
-        if (data_020b1990[i].mInSlot == 0) {
+        if (gStages[i].mInSlot == 0) {
             return i;
         }
     }
@@ -711,7 +711,7 @@ int FindPrevUnslottedStage(int stage) {
         OS_Terminate();
     }
     for (i = stage - 1; i >= 0; i--) {
-        if (data_020b1990[i].mInSlot == 0) {
+        if (gStages[i].mInSlot == 0) {
             return i;
         }
     }

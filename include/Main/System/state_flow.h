@@ -44,7 +44,7 @@ extern const StateFunc gStateLeaveFuncs[STATE_COUNT];
 typedef struct Unk_020b10fc {
     s32 mSceneState;
     s32 mMode;
-    // mInfo.mUnk_11 - 1 of the selected stage (checked 0..11), set when a mode starts; the row of the mode's value
+    // mInfo.mGrade - 1 of the selected stage (checked 0..11), set when a mode starts; the row of the mode's value
     // tables.
     s32 mTableRow;
     s32 mUnk_0c;
@@ -92,7 +92,7 @@ typedef struct Unk_020c1454 {
 typedef struct Unk_020bfd40 {
     Model mModel;
     DrawParams mDraw;
-    // Frames left: func_020186fc counts it down in state 4 and calls func_02005a8c(0, ...) at 0. Also the time
+    // Frames left: func_020186fc counts it down in state 4 and calls StartModeSlide(0, ...) at 0. Also the time
     // func_0201168c draws; func_02018840 adds its signed time amounts to it.
     s32 mEndTimer;
     u32 mScore;
@@ -125,6 +125,16 @@ typedef struct MapMenu {
     u8 mNodeInfoHidden;
     u8 mUnk_3de[2];
 } MapMenu;
+
+// Bits of data_020b6ee0.mBattleSlotFlags[slot], set by the battle screen (battle_screen.c) for the three stage slots:
+// GRADE_UP when the slot's total was not lower and its grade below the other side's (the grade is raised by one
+// afterwards), NOT_PICKED until the slot's stage is picked into a compare, KEPT when its record stayed in at its last
+// compare that set a record out. STAGE_INFOS_OUT is used in entry 0 only: set when every gStageInfos record is out at
+// the end, cleared when every slot copy is out.
+#define BATTLE_SLOT_GRADE_UP 1
+#define BATTLE_SLOT_NOT_PICKED 2
+#define BATTLE_SLOT_KEPT 4
+#define BATTLE_STAGE_INFOS_OUT 0x80
 
 // Large block of game state shared by several screens; only the members the code touches are named.
 typedef struct Unk_020b6ee0 {
@@ -164,27 +174,32 @@ typedef struct Unk_020b6ee0 {
     u16 mUnk_ca8;
     u8 mUnk_caa[2];
     Model mModel[2];
-    VecFx32 mUnk_f9c;
+    // First member of a 0x44-byte block (up to mUnk_fdf) laid out as DrawParams: the battle models' draw parameters.
+    VecFx32 mModelPos;
     u8 mUnk_fa8[0xfc8 - 0xfa8];
     VecFx32 mUnk_fc8;
     u8 mUnk_fd4[0xfdf - 0xfd4];
     u8 mUnk_fdf;
-    u8 mUnk_fe0;
+    u8 mBattleState;
     u8 mUnk_fe1;
     u16 mUnk_fe2;
     u16 mUnk_fe4;
-    u16 mUnk_fe6[2];
+    // One per row of the stage pick, but the records of both rows appear by [0]. The stage pick clears it together
+    // with mUnk_fea and mUnk_fec (8 bytes).
+    u16 mSideListLevels[2];
     u16 mUnk_fea;
     u16 mUnk_fec;
     u16 mUnk_fee;
     u16 mUnk_ff0;
     u16 mUnk_ff2;
-    u16 mUnk_ff4;
+    // Counted by IsEntryPickDone while side 1's pick is awaited (the pick is done once it passes 90); reset after each
+    // turn.
+    u16 mEntryFrames;
     u16 mUnk_ff6;
     u16 mUnk_ff8;
-    u16 mUnk_ffa;
-    u16 mUnk_ffc;
-    u16 mUnk_ffe;
+    u16 mEntryStartStep;
+    u16 mEntryPanelXLevel;
+    u16 mEntryPanelYLevel;
     s32 mUnk_1000[3];
     s16 mUnk_100c;
     s16 mUnk_100e[3];
@@ -265,19 +280,20 @@ typedef struct Unk_020b6ee0 {
     u8 mButtonsEnabled;
     u8 mUnk_a5d1[3];
     Sprite mSelectionSprite;
-    Sprite mUnk_a6d8[2];
+    Sprite mSideSprites[2];
     s32 mPrevSelectedStageIndex;
     s32 mSelectedStageIndex;
     s32 mUnk_a8e8;
     u16 mPanelLevel;
-    // StageRec records in data_020b1990.
+    // StageRec records in gStages.
     u8 mStageCount;
-    // StageInfo records in data_020b1524 (at most 3).
+    // StageInfo records in gStageInfos (at most 3).
     u8 mStageInfoCount;
     u8 mUnk_a8f0;
     u8 mPanelRow;
     u8 mMapIndex;
-    u8 mUnk_a8f3[39];
+    // Only [0..2] belong to the stage slots (the battle set-up writes all 39); [0] also holds BATTLE_STAGE_INFOS_OUT.
+    u8 mBattleSlotFlags[39];
     u8 mUnk_a91a;
     u8 mUnk_a91b;
 } Unk_020b6ee0;

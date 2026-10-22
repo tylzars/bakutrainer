@@ -37,7 +37,7 @@ void func_0200a384(void) {
     data_02099770.mIn.mUnk_00 = func_02007758();
     data_02099770.mIn.mUnk_20 = -1;
     data_02099770.mIn.mUnk_24 = 0;
-    func_0200f848(data_02099770.mIn.mUnk_00 ? 11 : 0, 0);
+    SetupSharedModel(data_02099770.mIn.mUnk_00 ? 11 : 0, 0);
     RequestTrack(sel->mUnk_00 ? 8 : 7, 102);
 }
 
@@ -49,7 +49,7 @@ void func_0200a3fc(void) {
     Unk_02099774 *sel = &data_02099770.mIn;
     int done = 0;
     int id;
-    func_0200f898();
+    DrawSharedModel();
     if (data_02099770.mIn.mUnk_08 == 1) {
         func_0200bb14(255, 161, 0x101, 21, 0, 0, 0x17d, 1);
     }
@@ -168,8 +168,9 @@ void func_0200a5f0(void) {
                     for (k = 0; k < 3; k++) {
                         t[k] = sel->mUnk_18[k];
                     }
-                    if (x == -1 || (!(data_020b6ee0.mUnk_a8f3[i] & 1) && sel->mUnk_18[1] == 0x4000) ||
-                        ((data_020b6ee0.mUnk_a8f3[i] & 1) && sel->mUnk_18[2] == 0x4000)) {
+                    if (x == -1 ||
+                        (!(data_020b6ee0.mBattleSlotFlags[i] & BATTLE_SLOT_GRADE_UP) && sel->mUnk_18[1] == 0x4000) ||
+                        ((data_020b6ee0.mBattleSlotFlags[i] & BATTLE_SLOT_GRADE_UP) && sel->mUnk_18[2] == 0x4000)) {
                         sel->mUnk_14 = sel->mUnk_14 + 1;
                         func_0200a5cc(1);
                     }
@@ -180,7 +181,7 @@ void func_0200a5f0(void) {
                 if (x == -1 || x >= 39) {
                     OS_Terminate();
                 }
-                rec = &data_020b1990[x];
+                rec = &gStages[x];
                 x = 127;
                 if (i == 0) {
                     x -= 76;
@@ -188,7 +189,7 @@ void func_0200a5f0(void) {
                     x += 76;
                 }
                 y = MapRangeFromZero(t[0], 0x4000, -32, 106);
-                DrawSprite(rec->mInfo.mUnk_13 + 0x1089, x, y, gSystemState.mUnk_308 - 4, 2);
+                DrawSprite(rec->mInfo.mStageId + 0x1089, x, y, gSystemState.mUnk_308 - 4, 2);
                 DrawSprite(0x1088, x, 106, gSystemState.mUnk_308 - 2, 2);
                 if (i == 0) {
                     xx = MapRangeFromZero(t[1], 0x4000, -128, x);
@@ -200,8 +201,8 @@ void func_0200a5f0(void) {
                     xx = MapRangeFromZero(t[1], 0x4000, 384, x);
                     yy = 121;
                 }
-                if (!(data_020b6ee0.mUnk_a8f3[i] & 2)) {
-                    if (data_020b6ee0.mUnk_a8f3[i] & 4) {
+                if (!(data_020b6ee0.mBattleSlotFlags[i] & BATTLE_SLOT_NOT_PICKED)) {
+                    if (data_020b6ee0.mBattleSlotFlags[i] & BATTLE_SLOT_KEPT) {
                         id = data_020b1084.mLanguage + 0xfd9;
                     } else {
                         id = data_020b1084.mLanguage + 0xfd0;
@@ -210,7 +211,7 @@ void func_0200a5f0(void) {
                     id = 0xfd6;
                 }
                 DrawSprite(id, xx, yy, gSystemState.mUnk_308 - 4, 2);
-                if (data_020b6ee0.mUnk_a8f3[i] & 1) {
+                if (data_020b6ee0.mBattleSlotFlags[i] & BATTLE_SLOT_GRADE_UP) {
                     data_020b6ee0.mUnk_c6c[i] = -1;
                     if (i == 0) {
                         x = MapRangeFromZero(t[2], 0x4000, -128, x);
@@ -237,13 +238,13 @@ void func_0200a5f0(void) {
             if (id == -1 || id >= 39) {
                 OS_Terminate();
             }
-            rec = &data_020b1990[id];
+            rec = &gStages[id];
             DrawText(127, 37, data_0201a64e, GetText(50), 2, 256, 16, 2);
-            DrawSprite(rec->mInfo.mUnk_13 + 0x1089, 127, MapRangeFromZero(sel->mUnk_18[0], 0x4000, -32, 106),
+            DrawSprite(rec->mInfo.mStageId + 0x1089, 127, MapRangeFromZero(sel->mUnk_18[0], 0x4000, -32, 106),
                        gSystemState.mUnk_308 - 4, 2);
             DrawSprite(0x1088, 127, 106, gSystemState.mUnk_308 - 2, 2);
             DrawText(127, MapRangeFromZero(sel->mUnk_18[0], 0x4000, 208, 135), data_0201a61c,
-                     GetText(rec->mInfo.mUnk_13 + 98), 2, 256, 16, 2);
+                     GetText(rec->mInfo.mStageId + 98), 2, 256, 16, 2);
             if (sel->mUnk_18[0] == 0x4000) {
                 sel->mUnk_08 = 1;
             }
@@ -453,12 +454,12 @@ void func_0200adc0(Particle *p) {
             break;
         }
         case 3:
-            func_020059d0(&data_020997a4.mUnk_0008, data_020997a4.mUnk_11fc4[p->mUnk_00], 0);
+            AddCappedAt999Shifted(&data_020997a4.mUnk_0008, data_020997a4.mUnk_11fc4[p->mUnk_00], 0);
             func_0200ad64(p, 0);
             func_0202f110(224, 100, 0, 64, 0xffff, 0);
             break;
         case 4:
-            func_020059e8(&data_020997a4.mUnk_0004, 60000 * data_020997a4.mUnk_11fd8[p->mUnk_00] / 1000);
+            AddCappedAt5999(&data_020997a4.mUnk_0004, 60000 * data_020997a4.mUnk_11fd8[p->mUnk_00] / 1000);
             sprintf(buf, "+%d'", data_020997a4.mUnk_11fd8[p->mUnk_00]);
             AddTextObjSlot(buf, 2, data_0201a61c, 30, p->mPos.x >> 8, p->mPos.y >> 8, 0, -128, 100, 1, 0);
             func_0200ad64(p, 0);
@@ -495,13 +496,13 @@ void func_0200af28(Particle *p, int angle) {
             func_0200acfc(&q, (u16) (base + 0x2000));
             StartSprite(&q.mSprite, data_0201abec[q.mUnk_00 + 6]);
             func_0200aadc(&q, -1);
-            func_020059d0(&data_020997a4.mUnk_0008, data_020997a4.mUnk_11fc4[p->mUnk_00], 0);
+            AddCappedAt999Shifted(&data_020997a4.mUnk_0008, data_020997a4.mUnk_11fc4[p->mUnk_00], 0);
             func_0200ad64(p, 1);
             func_0202f110(217, 100, 0, 64, 0xffff, 0);
             return;
         case 0:
         case 2:
-            func_020059d0(&data_020997a4.mUnk_0008, data_020997a4.mUnk_11fc4[p->mUnk_00], 0);
+            AddCappedAt999Shifted(&data_020997a4.mUnk_0008, data_020997a4.mUnk_11fc4[p->mUnk_00], 0);
             func_0200ad64(p, 1);
             func_0202f110(217, 100, 0, 64, 0xffff, 0);
             return;
@@ -601,8 +602,8 @@ void func_0200b278(void) {
     if (level < 0) {
         level = 0;
     }
-    data_020997a4.mInfo = data_020b1990[level].mInfo;
-    data_020b10fc.mTableRow = data_020997a4.mInfo.mUnk_11 - 1;
+    data_020997a4.mInfo = gStages[level].mInfo;
+    data_020b10fc.mTableRow = data_020997a4.mInfo.mGrade - 1;
     {
         BOOL ok = 0;
         if (data_020b10fc.mTableRow >= 0 && data_020b10fc.mTableRow < 12) {
@@ -612,7 +613,7 @@ void func_0200b278(void) {
             OS_Terminate();
         }
     }
-    func_0200c5d8(0, 0, data_020997a4.mInfo.mUnk_13 + 0xdb3, 0x100, 16, 1, 130);
+    func_0200c5d8(0, 0, data_020997a4.mInfo.mStageId + 0xdb3, 0x100, 16, 1, 130);
     func_02024208();
     RequestTrack(2, 0x4c);
     data_020997a4.mUnk_0230 = 0;
@@ -659,14 +660,14 @@ void func_0200b278(void) {
     data_020997a4.mUnk_0004 = data_020997a4.mUnk_11ff0;
     data_020997a4.mUnk_0008 = 0;
     data_020997a4.mUnk_11fc0 = 180;
-    func_02005a8c(1, 0);
+    StartModeSlide(1, 0);
 }
 
 void func_0200b53c(void) {
-    func_0201168c(data_020b6ee0.mSelectedStageIndex, data_020997a4.mUnk_0008, data_0206d448.mUnk_00,
+    func_0201168c(data_020b6ee0.mSelectedStageIndex, data_020997a4.mUnk_0008, gModeSelectState.mScoreThreshold,
                   data_020997a4.mUnk_0004, 2);
-    func_0200aa68(data_020997a4.mInfo.mUnk_10 + 0xd28, 256, 0, 0x1000, 0x1000, 0, 255, 256);
-    func_0200aa68(data_020997a4.mInfo.mUnk_13 + 0xd31, data_020997a4.mUnk_01ac >> 8, data_020997a4.mUnk_01b0 >> 8, 0,
+    func_0200aa68(data_020997a4.mInfo.mKind + 0xd28, 256, 0, 0x1000, 0x1000, 0, 255, 256);
+    func_0200aa68(data_020997a4.mInfo.mStageId + 0xd31, data_020997a4.mUnk_01ac >> 8, data_020997a4.mUnk_01b0 >> 8, 0,
                   0x6000, data_020997a4.mUnk_0230, 255, 0);
     func_0200aa68(0xd2e, data_020997a4.mUnk_01ac >> 8, data_020997a4.mUnk_01b0 >> 8, 0, 0x6000, 0, 255, 0);
     func_0200aa2c(&data_020997a4.mModel, data_020997a4.mUnk_01ac >> 8, data_020997a4.mUnk_01b0 >> 8, 0x6000,
@@ -677,13 +678,13 @@ void func_0200b53c(void) {
 void func_0200b610(void) {
     u8 state;
     func_020059cc(data_020997a4.mUnk_0008);
-    state = func_02005bf8();
-    if (state != 0) {
+    state = GetModeSlideState();
+    if (state != MODE_SLIDE_STATE_NONE) {
         int result;
         func_0200b53c();
-        result = func_02005b1c(1);
-        if (state == 2 && result == 0) {
-            func_020059b4(func_02005c04(), data_020997a4.mUnk_0008);
+        result = UpdateModeSlide(1);
+        if (state == MODE_SLIDE_STATE_END && result == 0) {
+            StartResultScreen(GetScoreThresholdMet(), data_020997a4.mUnk_0008);
         }
         return;
     }
@@ -789,7 +790,7 @@ void func_0200b610(void) {
     }
     func_0200b0e0();
     if (--data_020997a4.mUnk_0004 == 0) {
-        func_02005a8c(0, data_020997a4.mUnk_0008 >= data_020997a4.mUnk_11ff4);
+        StartModeSlide(0, data_020997a4.mUnk_0008 >= data_020997a4.mUnk_11ff4);
     }
     func_0200b244();
     func_0200b53c();

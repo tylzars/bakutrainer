@@ -8,25 +8,38 @@
 typedef struct StageInfo {
     s16 mUnk_00;
     s16 mUnk_02;
-    s16 mUnk_04;
-    s16 mUnk_06;
-    s16 mUnk_08;
-    s16 mUnk_0a;
-    s16 mUnk_0c;
-    s16 mUnk_0e;
-    u8 mUnk_10;
-    u8 mUnk_11;
-    u8 mUnk_12;
-    u8 mUnk_13;
+    // -9999 marks a record that is out (tested as > -5000 / < -5000). func_02014f98 adds to it and clamps it to
+    // columns grade + 4 and grade + 5 of the stage's row of table 0xfd6.
+    s16 mValue;
+    s16 mKindValue;
+    // Subtracted by GetBattleTotal. Table entry kind 5 negates it, so that it then adds; the compare takes the same
+    // amount off both sides through it.
+    s16 mSubtracted;
+    s16 mAdded;
+    s16 mOthersHalfSum;
+    // The side's battle total before the last table entry applied by either side (stored after ApplyTableEntry);
+    // read by table entry kind 2.
+    s16 mPrevBattleTotal;
+    u8 mKind;
+    u8 mGrade;
+    u8 mPercent;
+    u8 mStageId;
+    // Set to 0 by LoadStageInfo; nothing reads it.
     u8 mUnk_14;
-    u8 mUnk_15;
-    u8 mUnk_16;
-    u8 mUnk_17;
-    u8 mUnk_18;
-    u8 mUnk_19;
+    // Set by table entry kind 12; kinds 13-16 triple their amount and clear it (kind 15 only when it applies).
+    // GetTableEntryTotalDiff's estimate triples only for kinds 13 and 14.
+    u8 mTriplePending;
+    // Skips the side's next entry pick: set by table entry kind 4 for the other side, by key bit 2, by button 201 and
+    // when FindBestSide1Entry finds none; cleared after the side's turn.
+    u8 mSkipEntry;
+    // Screen position (mBattleY: y) of the stage's sprite on the battle screen; the sprite's moves start or end there.
+    u8 mBattleX;
+    u8 mBattleY;
+    u8 mOthersHalfSumAdded;
     u8 mUnk_1a;
-    s8 mUnk_1b;
-    s16 mUnk_1c[5];
+    // Index in gStages; set only on the battle copies (gBattleSlotStages), -1 in gStageInfos.
+    s8 mStageIndex;
+    s16 mTableEntryIds[5];
 } StageInfo;
 
 typedef struct StageOffset {
@@ -49,9 +62,11 @@ typedef struct StageRec {
     union {
         DrawParams mDraw;
         struct {
-            VecFx32 mUnk_1a0;
+            VecFx32 mPos;
             u8 mUnk_1ac[0x1d8 - 0x1ac];
-            u16 mUnk_1d8;
+            // Direction the stage moves in; also mDraw.mUnk_38, the angle the stage is drawn with. The panel
+            // (stage_info_panel.c) sets it to 0xe000 and eases it back to 0.
+            u16 mMoveAngle;
             u16 mUnk_1da;
             u16 mUnk_1dc;
             u8 mUnk_1de[0x1e4 - 0x1de];
@@ -70,7 +85,7 @@ typedef struct StageRec {
     s32 mDistancePerFrame;
     u16 mUnk_224;
     // Polygon group (10..15) the stage lies in, minus 10 (FindStagePolygonGroup); 99 = none. Compared with
-    // mInfo.mUnk_10.
+    // mInfo.mKind.
     s8 mPolygonGroupIndex;
     u8 mUnk_227[5];
     u8 mUnk_22c;
@@ -83,5 +98,6 @@ typedef struct StageRec {
 
 #define STAGE_MAX 0x27
 
-extern StageRec data_020b1990[];
-extern StageInfo data_020b1524[3];
+extern StageRec gStages[];
+// A separate list of up to 3 StageInfo records, not the mInfo of gStages.
+extern StageInfo gStageInfos[3];

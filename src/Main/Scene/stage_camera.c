@@ -38,7 +38,7 @@ void ClearPanelState(void) {
 }
 
 void SetStageCameraFar(int stage) {
-    StageRec *rec = &data_020b1990[stage];
+    StageRec *rec = &gStages[stage];
     int distancePerFrame = rec->mDistancePerFrame >> 4;
     int height;
 
@@ -48,9 +48,9 @@ void SetStageCameraFar(int stage) {
     gMapState.mCamera.mLookAtGoal.x = rec->mUnk_158.x;
     gMapState.mCamera.mLookAtGoal.z = rec->mUnk_158.z;
     gMapState.mCamera.mLookAtGoal.y = rec->mUnk_158.y;
-    gMapState.mCamera.mPosGoal.x = rec->mUnk_1a0.x - 400 * FX_SinCosTable_[(rec->mUnk_224 >> 4) * 2];
-    gMapState.mCamera.mPosGoal.z = rec->mUnk_1a0.z + 400 * FX_SinCosTable_[(rec->mUnk_224 >> 4) * 2 + 1];
-    height = rec->mUnk_1a0.y + MapRangeFromZero(distancePerFrame, 0xc00, 0x320000, 0x4b0000);
+    gMapState.mCamera.mPosGoal.x = rec->mPos.x - 400 * FX_SinCosTable_[(rec->mUnk_224 >> 4) * 2];
+    gMapState.mCamera.mPosGoal.z = rec->mPos.z + 400 * FX_SinCosTable_[(rec->mUnk_224 >> 4) * 2 + 1];
+    height = rec->mPos.y + MapRangeFromZero(distancePerFrame, 0xc00, 0x320000, 0x4b0000);
     gMapState.mCamera.mPosGoal.y = height;
     if (height > 0x5dc000) {
         gMapState.mCamera.mPosGoal.y = 0x5dc000;
@@ -59,7 +59,7 @@ void SetStageCameraFar(int stage) {
 }
 
 void SetStageCameraNear(int stage) {
-    StageRec *rec = &data_020b1990[stage];
+    StageRec *rec = &gStages[stage];
 
     if (stage < 0 || stage >= STAGE_MAX) {
         OS_Terminate();
@@ -67,9 +67,9 @@ void SetStageCameraNear(int stage) {
     gMapState.mCamera.mLookAtGoal.x = rec->mUnk_158.x;
     gMapState.mCamera.mLookAtGoal.z = rec->mUnk_158.z;
     gMapState.mCamera.mLookAtGoal.y = rec->mUnk_158.y;
-    gMapState.mCamera.mPosGoal.x = rec->mUnk_1a0.x - 300 * FX_SinCosTable_[(rec->mUnk_224 >> 4) * 2];
-    gMapState.mCamera.mPosGoal.z = rec->mUnk_1a0.z + 300 * FX_SinCosTable_[(rec->mUnk_224 >> 4) * 2 + 1];
-    gMapState.mCamera.mPosGoal.y = rec->mUnk_1a0.y + 0x64000;
+    gMapState.mCamera.mPosGoal.x = rec->mPos.x - 300 * FX_SinCosTable_[(rec->mUnk_224 >> 4) * 2];
+    gMapState.mCamera.mPosGoal.z = rec->mPos.z + 300 * FX_SinCosTable_[(rec->mUnk_224 >> 4) * 2 + 1];
+    gMapState.mCamera.mPosGoal.y = rec->mPos.y + 0x64000;
     EaseCameraToGoals();
 }
 
@@ -119,9 +119,9 @@ void func_02015f34(void) {
 }
 
 void func_02016008(int stage) {
-    StageRec *rec = &data_020b1990[stage];
-    s32 px = rec->mUnk_1a0.x / 512;
-    s32 pz = rec->mUnk_1a0.z / 512;
+    StageRec *rec = &gStages[stage];
+    s32 px = rec->mPos.x / 512;
+    s32 pz = rec->mPos.z / 512;
     int moved = 0;
     Unk_020b7ef4 *f;
     Unk_020b7ef4 *b;
@@ -149,7 +149,7 @@ void func_02016008(int stage) {
                 f->mNearFrames++;
                 f->mModel.mUnk_134 |= 1;
                 if (f->mNearFrames > (f->mUnk_187 + 1) * 6) {
-                    rec->mUnk_1d8 += 0x8000;
+                    rec->mMoveAngle += 0x8000;
                     rec->mDistancePerFrame += 0x2000;
                     f->mNearFrames = 0;
                     func_02018840(rec, 0x14, i);
@@ -169,8 +169,8 @@ void func_02016008(int stage) {
     if (i != data_020b6ee0.mUnk_5a54) {
         switch (f->mKind) {
             case 0xf:
-                rec->mUnk_1a0 = rec->mUnk_210;
-                rec->mUnk_1d8 += 0x8000;
+                rec->mPos = rec->mUnk_210;
+                rec->mMoveAngle += 0x8000;
                 rec->mDistancePerFrame = 0x2000;
                 func_02018840(rec, 0xf, i);
                 break;
@@ -180,15 +180,15 @@ void func_02016008(int stage) {
                 int az = pz - f->mPosZ;
                 ax *= q;
                 az *= q;
-                rec->mUnk_1a0.x = ax + (f->mPosX << 9);
-                rec->mUnk_1a0.z = az + (f->mPosZ << 9);
-                rec->mUnk_1d8 = AngleOfVector(rec->mUnk_1a0.x / 512 - f->mPosX, rec->mUnk_1a0.z / 512 - f->mPosZ);
+                rec->mPos.x = ax + (f->mPosX << 9);
+                rec->mPos.z = az + (f->mPosZ << 9);
+                rec->mMoveAngle = AngleOfVector(rec->mPos.x / 512 - f->mPosX, rec->mPos.z / 512 - f->mPosZ);
                 rec->mDistancePerFrame += 0x4000;
                 func_0202f110(0x28, 0x64, 0, 0x40, 0xffff, 0);
                 break;
             }
             case 0x23:
-                rec->mUnk_1d8 = ((f->mUnk_184 + 1) & 3) << 14;
+                rec->mMoveAngle = ((f->mUnk_184 + 1) & 3) << 14;
                 rec->mDistancePerFrame = 0x14000;
                 func_0202f110(1, 0x64, 0, 0x40, 0xffff, 0);
                 break;
@@ -204,8 +204,8 @@ void func_02016008(int stage) {
                     rec->mDistancePerFrame = 0;
                     for (j = 0; j < data_020b6ee0.mUnk_5a54; j++, p++) {
                         if (p->mKind == 0x28 && p->mUnk_186 == key) {
-                            rec->mUnk_1a0.x = p->mPosX << 9;
-                            rec->mUnk_1a0.z = p->mPosZ << 9;
+                            rec->mPos.x = p->mPosX << 9;
+                            rec->mPos.z = p->mPosZ << 9;
                             break;
                         }
                     }
@@ -213,7 +213,7 @@ void func_02016008(int stage) {
                 break;
         }
     } else {
-        rec->mUnk_210 = rec->mUnk_1a0;
+        rec->mUnk_210 = rec->mPos;
     }
     rec->mUnk_22c = moved;
     b = data_020b6ee0.mUnk_1014;
@@ -262,9 +262,9 @@ void func_02016008(int stage) {
 }
 
 void func_020164e0(int stage) {
-    StageRec *rec = &data_020b1990[stage];
-    s32 px = rec->mUnk_1a0.x / 512;
-    s32 pz = rec->mUnk_1a0.z / 512;
+    StageRec *rec = &gStages[stage];
+    s32 px = rec->mPos.x / 512;
+    s32 pz = rec->mPos.z / 512;
     DrawParams params;
     VecFx32 pos;
     int i;
@@ -433,7 +433,7 @@ void SetupMapObjects(void) {
 }
 
 void UpdateFollowers(int stage) {
-    StageRec *rec = &data_020b1990[stage];
+    StageRec *rec = &gStages[stage];
     int n;
     int i;
 
@@ -449,8 +449,8 @@ void UpdateFollowers(int stage) {
             OS_Terminate();
         }
         if (data_020b6ee0.mFollowerEntries[i].mPresent != 0) {
-            int dx = abs(data_020b6ee0.mFollowerEntries[i].mPos.x - rec->mUnk_1a0.x);
-            int dz = abs(data_020b6ee0.mFollowerEntries[i].mPos.z - rec->mUnk_1a0.z);
+            int dx = abs(data_020b6ee0.mFollowerEntries[i].mPos.x - rec->mPos.x);
+            int dz = abs(data_020b6ee0.mFollowerEntries[i].mPos.z - rec->mPos.z);
             if (dx + dz < 0x4b0000) {
                 gFollowerGroup.mFollowers[n].mPos.x = data_020b6ee0.mFollowerEntries[i].mPos.x / 512;
                 gFollowerGroup.mFollowers[n].mPos.y = data_020b6ee0.mFollowerEntries[i].mPos.y / 512;
@@ -472,9 +472,9 @@ void UpdateFollowers(int stage) {
         gFollowerGroup.mFollowers[n].mDiameter = 0;
         gFollowerGroup.mTargetFixed = 1;
     } else {
-        gFollowerGroup.mFollowers[n].mPos.x = rec->mUnk_1a0.x / 512;
-        gFollowerGroup.mFollowers[n].mPos.y = rec->mUnk_1a0.y / 512;
-        gFollowerGroup.mFollowers[n].mPos.z = rec->mUnk_1a0.z / 512;
+        gFollowerGroup.mFollowers[n].mPos.x = rec->mPos.x / 512;
+        gFollowerGroup.mFollowers[n].mPos.y = rec->mPos.y / 512;
+        gFollowerGroup.mFollowers[n].mPos.z = rec->mPos.z / 512;
         gFollowerGroup.mFollowers[n].mDiameter = 900;
         gFollowerGroup.mFollowers[n].mMaxDistancePerFrame = 0;
         gFollowerGroup.mTargetFixed = 0;
@@ -513,7 +513,7 @@ void UpdateFollowers(int stage) {
 void UpdateFollower(FollowerGroup *followers, int index, u16 angle) {
     int bestIdx = 0;
     Follower *f = &followers->mFollowers[index];
-    StageRec *rec = &data_020b1990[data_020b6ee0.mSelectedStageIndex];
+    StageRec *rec = &gStages[data_020b6ee0.mSelectedStageIndex];
     int bestDist;
     int j;
     Follower *o;
@@ -696,7 +696,7 @@ void MoveFollowers(FollowerGroup *followers) {
 
 #pragma thumb off
 int SelectStageOnTap(int stage, int *out) {
-    StageRec *rec = &data_020b1990[stage];
+    StageRec *rec = &gStages[stage];
 
     if (gSystemState.mTouchReleased && rec->mVisible == 1) {
         if ((int) Length2d(gSystemState.mTouchX - rec->mScreenX, gSystemState.mTouchY - rec->mScreenY) < 0x10) {
@@ -727,9 +727,9 @@ static inline s32 cosIdx(int a) {
 // the selected stage by the decaying spin mUnk_a8e8 or lets a tap select another stage (panel states 0..2). The touch
 // drag that would set the spin here needs panel state 3 or 4 with flags bit 0 clear, which no call reaches in this
 // build (state 10 sets bit 0 in panel states 3 to 5, and state 4 keeps panel state 0). Otherwise it moves the stage
-// along mUnk_1d8, keeps it on the ground and handles its hits with other stages and the map (func_02031824).
+// along mMoveAngle, keeps it on the ground and handles its hits with other stages and the map (func_02031824).
 void UpdateStageMotion(int index, int *sel, int flags) {
-    StageRec *rec = &data_020b1990[index];
+    StageRec *rec = &gStages[index];
     int hit = 0;
     int i;
     s32 x;
@@ -769,7 +769,7 @@ void UpdateStageMotion(int index, int *sel, int flags) {
                     data_020b6ee0.mPrevTouchX = gSystemState.mTouchX;
                 }
             }
-            rec->mUnk_1d8 -= data_020b6ee0.mUnk_a8e8;
+            rec->mMoveAngle -= data_020b6ee0.mUnk_a8e8;
             data_020b6ee0.mUnk_a8e8 = data_020b6ee0.mUnk_a8e8 * 31 / 32;
             return;
         }
@@ -797,9 +797,9 @@ void UpdateStageMotion(int index, int *sel, int flags) {
                         dy = (dy << 3) / len;
                         Length2d(dx, dy);
                     }
-                    dx = (dx << 12) + rec->mDistancePerFrame * sinIdx(rec->mUnk_1d8) / 4096;
-                    dy = (dy << 12) + rec->mDistancePerFrame * -cosIdx(rec->mUnk_1d8) / 4096;
-                    rec->mUnk_1d8 = AngleOfVector(dx, dy);
+                    dx = (dx << 12) + rec->mDistancePerFrame * sinIdx(rec->mMoveAngle) / 4096;
+                    dy = (dy << 12) + rec->mDistancePerFrame * -cosIdx(rec->mMoveAngle) / 4096;
+                    rec->mMoveAngle = AngleOfVector(dx, dy);
                     len = Length2d(dx, dy);
                     rec->mDistancePerFrame = len < 0x14000 ? len : 0x14000;
                 }
@@ -827,28 +827,27 @@ void UpdateStageMotion(int index, int *sel, int flags) {
     {
         k = rec->mUnk_1dc;
         k = k + (spd = spd * 0xc0 >> 12);
-        old = rec->mUnk_1a0;
+        old = rec->mPos;
         rec->mUnk_1dc = k;
-        x = rec->mDistancePerFrame * sinIdx(rec->mUnk_1d8) >> 12;
-        z = rec->mDistancePerFrame * -cosIdx(rec->mUnk_1d8) >> 12;
-        rec->mUnk_1a0.x += x;
-        rec->mUnk_1a0.z += z;
-        ground =
-            GetFloorHeightEx(rec->mUnk_1a0.x, rec->mUnk_1a0.z, rec->mUnk_1a0.y + 0xc800, 0, 0, NULL, &push) + 0x32000;
+        x = rec->mDistancePerFrame * sinIdx(rec->mMoveAngle) >> 12;
+        z = rec->mDistancePerFrame * -cosIdx(rec->mMoveAngle) >> 12;
+        rec->mPos.x += x;
+        rec->mPos.z += z;
+        ground = GetFloorHeightEx(rec->mPos.x, rec->mPos.z, rec->mPos.y + 0xc800, 0, 0, NULL, &push) + 0x32000;
     }
     if (rec->mDistancePerFrame != 0) {
         func_0202f110(0x1c4, MapRangeFromZero(abs(rec->mDistancePerFrame >> 12), 0x20, 0, 0x4b), 1, 0x40, 0xffff, 0);
     }
     if (push.y != 0x1000) {
-        rec->mUnk_1a0.x += push.x;
-        rec->mUnk_1a0.z += push.z;
+        rec->mPos.x += push.x;
+        rec->mPos.z += push.z;
         rec->mUnk_1dc -= 0x50;
     }
-    if (ground >= rec->mUnk_1a0.y) {
-        rec->mUnk_1a0.y = ground;
+    if (ground >= rec->mPos.y) {
+        rec->mPos.y = ground;
         rec->mUnk_21c = 0.0f;
     } else {
-        rec->mUnk_1a0.y = rec->mUnk_1a0.y - rec->mUnk_21c;
+        rec->mPos.y = rec->mPos.y - rec->mUnk_21c;
         if (rec->mUnk_21c < 51200.0f) {
             rec->mUnk_21c += 5120.0f;
         }
@@ -865,14 +864,14 @@ void UpdateStageMotion(int index, int *sel, int flags) {
             if (i == index) {
                 continue;
             }
-            other = &data_020b1990[i];
-            ex = (other->mUnk_1a0.x - rec->mUnk_1a0.x) / 512;
-            ez = (other->mUnk_1a0.z - rec->mUnk_1a0.z) / 512;
+            other = &gStages[i];
+            ex = (other->mPos.x - rec->mPos.x) / 512;
+            ez = (other->mPos.z - rec->mPos.z) / 512;
             if (LengthSquared2d64(ex, ez) >= 0x60e64) {
                 continue;
             }
             dir = AngleOfVector(ex, ez);
-            diff = AngleDelta(rec->mUnk_1d8, dir);
+            diff = AngleDelta(rec->mMoveAngle, dir);
             if (abs(diff) >= 0x3000) {
                 continue;
             }
@@ -880,10 +879,10 @@ void UpdateStageMotion(int index, int *sel, int flags) {
             x = along * sinIdx((u16) (dir + 0x8000)) / 4096;
             z = along * -cosIdx((u16) (dir + 0x8000)) / 4096;
             across = rec->mDistancePerFrame * sinIdx(abs(diff)) / 4096;
-            x += across * sinIdx((u16) (rec->mUnk_1d8 - diff)) / 4096;
-            z += across * -cosIdx((u16) (rec->mUnk_1d8 - diff)) / 4096;
+            x += across * sinIdx((u16) (rec->mMoveAngle - diff)) / 4096;
+            z += across * -cosIdx((u16) (rec->mMoveAngle - diff)) / 4096;
             if (c[2] < 3 && data_020b6ee0.mPanelState != 2) {
-                other->mUnk_1d8 = AngleOfVector(-x, -z);
+                other->mMoveAngle = AngleOfVector(-x, -z);
                 other->mDistancePerFrame = Length2d(x, z) >> 1;
                 if (other->mUnk_142 != 1) {
                     other->mDistancePerFrame = 0;
@@ -898,23 +897,23 @@ void UpdateStageMotion(int index, int *sel, int flags) {
         }
     }
     if (hit == 1) {
-        rec->mUnk_1d8 = AngleOfVector(x, z);
+        rec->mMoveAngle = AngleOfVector(x, z);
         rec->mDistancePerFrame = Length2d(x, z);
     }
     {
         int mask = 1;
-        if (func_02031824(&rec->mUnk_1a0, 400, 200, 0, 0x400, 0)) {
+        if (func_02031824(&rec->mPos, 400, 200, 0, 0x400, 0)) {
             s32 oz = old.z / 512;
             s32 ox = old.x / 512;
             if (Cross2d(gMapState.mCamera.mUnk_14.x, gMapState.mCamera.mUnk_14.z, gMapState.mCamera.mUnk_20.x,
                         gMapState.mCamera.mUnk_20.z, ox, oz) > 0) {
                 if (AngleDistance(AngleOfVector(gMapState.mCamera.mUnk_2c.x - ox, gMapState.mCamera.mUnk_2c.z - oz),
-                                  rec->mUnk_1d8) < 0x4000) {
+                                  rec->mMoveAngle) < 0x4000) {
                     mask |= 0x400;
                 }
             }
         }
-        res = func_02031824(&rec->mUnk_1a0, 400, 200, 0, mask, 0);
+        res = func_02031824(&rec->mPos, 400, 200, 0, mask, 0);
     }
     if (res == 0) {
         return;
@@ -926,7 +925,7 @@ void UpdateStageMotion(int index, int *sel, int flags) {
     turn = turn != 0 ? (turn >> 31) | 1 : 0;
     turn = -(turn * 0x4000);
     if (!(res & 0x10000000)) {
-        angle = base - turn + AngleDelta(rec->mUnk_1d8, (u16) (base + turn));
+        angle = base - turn + AngleDelta(rec->mMoveAngle, (u16) (base + turn));
     } else {
         angle = base - turn;
     }
@@ -968,8 +967,8 @@ void UpdateStageMotion(int index, int *sel, int flags) {
             int near;
             for (j = 0; j < data_020b6ee0.mUnk_0c48; j++) {
                 Unk_020b6ee8 *g = &data_020b6ee0.mUnk_0008[j];
-                s32 dx = g->mPosX - rec->mUnk_1a0.x / 512;
-                s32 dz = g->mPosZ - rec->mUnk_1a0.z / 512;
+                s32 dx = g->mPosX - rec->mPos.x / 512;
+                s32 dz = g->mPosZ - rec->mPos.z / 512;
                 u32 dist = abs(dx) + abs(dz);
                 if (dist < best) {
                     best = dist;
@@ -979,7 +978,7 @@ void UpdateStageMotion(int index, int *sel, int flags) {
             data_020b6ee0.mUnk_0008[near].mUnk_180 = key;
             i = near;
         }
-        dmg = abs(rec->mDistancePerFrame * cosIdx((u16) AngleDistance(angle, rec->mUnk_1d8)) / 4096 >> 12);
+        dmg = abs(rec->mDistancePerFrame * cosIdx((u16) AngleDistance(angle, rec->mMoveAngle)) / 4096 >> 12);
         data_020b6ee0.mUnk_0008[i].mUnk_186 -= dmg;
         if (data_020b6ee0.mUnk_0008[i].mUnk_186 < 0) {
             func_02031c98(gMapState.mCamera.mUnk_10, 0, 0);
@@ -990,8 +989,8 @@ void UpdateStageMotion(int index, int *sel, int flags) {
         }
     }
     rec->mDistancePerFrame -= rec->mDistancePerFrame / 2 < 1 ? 1 : rec->mDistancePerFrame / 2;
-    rec->mUnk_1a0 = old;
-    rec->mUnk_1d8 = angle;
+    rec->mPos = old;
+    rec->mMoveAngle = angle;
     data_020b6ee0.mUnk_8e60.mModel.mUnk_134 |= 1;
 }
 #pragma thumb on
@@ -1037,26 +1036,26 @@ void func_020182cc(void) {
             OS_Terminate();
         }
     }
-    rec = &data_020b1990[data_020b6ee0.mSelectedStageIndex];
+    rec = &gStages[data_020b6ee0.mSelectedStageIndex];
     if (resumed == 1) {
-        if (rec->mInfo.mUnk_11 > 12) {
+        if (rec->mInfo.mGrade > 12) {
             OS_Terminate();
         }
-        if (rec->mInfo.mUnk_10 >= 6) {
+        if (rec->mInfo.mKind >= 6) {
             OS_Terminate();
         }
-        row = (rec->mInfo.mUnk_11 - 1) / 3;
+        row = (rec->mInfo.mGrade - 1) / 3;
         if (row > 4) {
             OS_Terminate();
         }
-        data_020b6ee0.mMapIndex = sMapIndices[row][rec->mInfo.mUnk_10];
+        data_020b6ee0.mMapIndex = sMapIndices[row][rec->mInfo.mKind];
         if (data_020b6ee0.mMapIndex >= 24) {
             OS_Terminate();
         }
     }
     ResetVramBanks();
     ReleaseTextureLayers();
-    LoadImage(rec->mInfo.mUnk_13 + 0xdb3, 2);
+    LoadImage(rec->mInfo.mStageId + 0xdb3, 2);
     SetupTextureLayer(0x10cb, 0x10ca, 0x10cc, 0, 1);
     SetupTextureLayer(0x10cb, 0x10ca, 0x10cc, 0, 2);
     SetLcdSwap(0);
@@ -1067,13 +1066,13 @@ void func_020182cc(void) {
     gMapState.mCamera.mUnk_2dc.mUnk_44 = 0x186a000;
     RequestTrack(3, 0x4c);
     MI_CpuFill8(&rec->mDraw, 0, 0x44);
-    func_02031fc4(0, &rec->mUnk_1a0);
+    func_02031fc4(0, &rec->mPos);
     rec->mDraw.mUnk_43 = 2;
     rec->mDraw.mUnk_28 = 2 << 19;
     rec->mDistancePerFrame = 0;
     rec->mUnk_224 = 0;
-    InitModel(rec, 0, 0, 0, data_0201ab04[rec->mInfo.mUnk_13]);
-    rec->mUnk_158 = rec->mUnk_1a0;
+    InitModel(rec, 0, 0, 0, data_0201ab04[rec->mInfo.mStageId]);
+    rec->mUnk_158 = rec->mPos;
     InitModel(&data_020b6ee0.mUnk_8e60, 0, 0, 0, data_0201aba0[5]);
     data_020b6ee0.mUnk_8e60.mDraw = rec->mDraw;
     data_020b6ee0.mUnk_8e60.mDraw.mUnk_2c = -1;
@@ -1087,15 +1086,15 @@ void func_020182cc(void) {
     gMapState.mCamera.mPos.y += 0x6d6000;
     ClearPanelState();
     SetupMapObjects();
-    obj->mEndTimer = func_020182b8(rec->mInfo.mUnk_11 - 1, 2) * 60000 / 1000;
+    obj->mEndTimer = func_020182b8(rec->mInfo.mGrade - 1, 2) * 60000 / 1000;
     obj->mScore = 0;
-    func_02005a8c(1, 0);
+    StartModeSlide(1, 0);
 }
 
 void func_02018558(void) {
     int stage = data_020b6ee0.mSelectedStageIndex;
     Unk_020bfd40 *obj = &data_020b6ee0.mUnk_8e60;
-    StageRec *rec = &data_020b1990[stage];
+    StageRec *rec = &gStages[stage];
     VecFx32 pos;
     u8 mode;
     int busy;
@@ -1103,16 +1102,16 @@ void func_02018558(void) {
     if (stage >= STAGE_MAX) {
         OS_Terminate();
     }
-    func_0201168c(data_020b6ee0.mSelectedStageIndex, obj->mScore, data_0206d448.mUnk_00, obj->mEndTimer, 2);
+    func_0201168c(data_020b6ee0.mSelectedStageIndex, obj->mScore, gModeSelectState.mScoreThreshold, obj->mEndTimer, 2);
     SetStageCameraFar(stage);
-    rec->mUnk_158 = rec->mUnk_1a0;
-    func_0200ba94(&rec->mUnk_1a0, 0x70800, 0x800);
-    UpdateAndDrawModel(rec, &rec->mUnk_1a0, 0);
+    rec->mUnk_158 = rec->mPos;
+    func_0200ba94(&rec->mPos, 0x70800, 0x800);
+    UpdateAndDrawModel(rec, &rec->mPos, 0);
     PlayObjectSe(rec);
-    ProjectToScreen(&rec->mUnk_1a0, &rec->mScreenX);
+    ProjectToScreen(&rec->mPos, &rec->mScreenX);
     UpdateModelScript(&data_020b6ee0.mUnk_8e60.mModel);
     if (data_020b6ee0.mUnk_8e60.mModel.mUnk_142 != 1) {
-        data_020b6ee0.mUnk_8e60.mDraw.mPos = rec->mUnk_1a0;
+        data_020b6ee0.mUnk_8e60.mDraw.mPos = rec->mPos;
         DrawModelFileEx(data_020b6ee0.mUnk_8e60.mModel.mUnk_170, &data_020b6ee0.mUnk_8e60.mDraw,
                         &data_020b6ee0.mUnk_8e60, 0);
     } else {
@@ -1127,11 +1126,11 @@ void func_02018558(void) {
     func_02015f34();
     func_02016008(stage);
     func_020164e0(stage);
-    mode = func_02005bf8();
-    if (mode != 0) {
-        busy = func_02005b1c(1);
-        if (mode == 2 && busy == 0) {
-            func_020059b4(func_02005c04(), obj->mScore);
+    mode = GetModeSlideState();
+    if (mode != MODE_SLIDE_STATE_NONE) {
+        busy = UpdateModeSlide(1);
+        if (mode == MODE_SLIDE_STATE_END && busy == 0) {
+            StartResultScreen(GetScoreThresholdMet(), obj->mScore);
         }
         return;
     }
@@ -1151,7 +1150,7 @@ int func_020186f0(u8 stage) {
 
 void func_020186fc(int stage) {
     Unk_020bfd40 *obj = &data_020b6ee0.mUnk_8e60;
-    StageRec *rec = &data_020b1990[stage];
+    StageRec *rec = &gStages[stage];
 
     if (stage < 0 || stage >= STAGE_MAX) {
         OS_Terminate();
@@ -1159,7 +1158,7 @@ void func_020186fc(int stage) {
     obj->mEndTimer--;
     func_020059cc(obj->mScore);
     if (obj->mEndTimer <= 0 || data_020b6ee0.mUnk_8ad9 == 0) {
-        func_02005a8c(0, obj->mScore >= func_020182b8(rec->mInfo.mUnk_11 - 1, 3));
+        StartModeSlide(0, obj->mScore >= func_020182b8(rec->mInfo.mGrade - 1, 3));
     }
 }
 
@@ -1175,10 +1174,10 @@ void AddStageAmountObjSlots(StageRec *rec, int kind, int amount) {
         sprintf(buf, "-%d", amount < 0 ? -amount : amount);
     }
     slot = FindObjSlot(AddSpriteObjSlot(kind, 0, 30, 0, -15, 0, -256, 110, 1, 0));
-    slot->mUnk_134 = rec->mUnk_1a0;
+    slot->mUnk_134 = rec->mPos;
     slot->mUnk_140 = 1;
     slot = FindObjSlot(AddTextObjSlot(buf, 2, data_0201a61c, 30, 0, 0, 0, -256, 100, 1, 0));
-    slot->mUnk_134 = rec->mUnk_1a0;
+    slot->mUnk_134 = rec->mPos;
     slot->mUnk_140 = 1;
 }
 
@@ -1216,7 +1215,7 @@ void func_02018840(StageRec *rec, int kind, int index) {
             break;
     }
     if (time != 0 || score != 0) {
-        ProjectToScreen(&rec->mUnk_1a0, &rec->mScreenX);
+        ProjectToScreen(&rec->mPos, &rec->mScreenX);
     }
     if (time != 0) {
         obj->mEndTimer += time;
@@ -1225,7 +1224,7 @@ void func_02018840(StageRec *rec, int kind, int index) {
         if (score <= 0) {
             OS_Terminate();
         }
-        func_020059d0(&obj->mScore, score, 0);
+        AddCappedAt999Shifted(&obj->mScore, score, 0);
         AddStageAmountObjSlots(rec, 0xf48, score);
     }
 }
@@ -1267,23 +1266,22 @@ void func_0201896c(void) {
     params.mUnk_43 = 2;
     params.mUnk_28 = 2 << 19;
     for (i = 0; i < data_020b6ee0.mStageCount; i++) {
-        rec = &data_020b1990[i];
-        InitModel(rec, 0, 0, 0, data_0201ab04[rec->mInfo.mUnk_13]);
+        rec = &gStages[i];
+        InitModel(rec, 0, 0, 0, data_0201ab04[rec->mInfo.mStageId]);
         rec->mDraw = params;
-        rec->mUnk_1d8 = NextRandom();
+        rec->mMoveAngle = NextRandom();
         rec->mDistancePerFrame = 0;
         rec->mUnk_224 = 0;
         if (rec->mUnk_1e8 == -1) {
-            func_02031fc4(0, &rec->mUnk_1a0);
+            func_02031fc4(0, &rec->mPos);
             rec->mDistancePerFrame = 0x6000;
         } else {
-            rec->mUnk_1a0.x = offset.x + rec->mStoredOffsetX;
-            rec->mUnk_1a0.z = offset.z + rec->mStoredOffsetZ;
+            rec->mPos.x = offset.x + rec->mStoredOffsetX;
+            rec->mPos.z = offset.z + rec->mStoredOffsetZ;
         }
-        rec->mUnk_1a0.y = offset.y + 0x32000;
-        rec->mUnk_1a0.y =
-            GetFloorHeightEx(rec->mUnk_1a0.x, rec->mUnk_1a0.z, rec->mUnk_1a0.y + 0xc800, 0, 0, 0, 0) + 0x32000;
-        rec->mUnk_158 = rec->mUnk_1a0;
+        rec->mPos.y = offset.y + 0x32000;
+        rec->mPos.y = GetFloorHeightEx(rec->mPos.x, rec->mPos.z, rec->mPos.y + 0xc800, 0, 0, 0, 0) + 0x32000;
+        rec->mUnk_158 = rec->mPos;
     }
     if (data_020b6ee0.mSelectedStageIndex == -1) {
         data_020b6ee0.mPanelState = 0;
@@ -1298,9 +1296,9 @@ void func_0201896c(void) {
                 OS_Terminate();
             }
         }
-        rec = &data_020b1990[data_020b6ee0.mSelectedStageIndex];
-        dx = rec->mUnk_1a0.x - gMapState.mCamera.mLookAtGoal.x;
-        dz = rec->mUnk_1a0.z - gMapState.mCamera.mLookAtGoal.z;
+        rec = &gStages[data_020b6ee0.mSelectedStageIndex];
+        dx = rec->mPos.x - gMapState.mCamera.mLookAtGoal.x;
+        dz = rec->mPos.z - gMapState.mCamera.mLookAtGoal.z;
         gMapState.mCamera.mLookAtGoal.x += dx;
         gMapState.mCamera.mLookAtGoal.z += dz;
         gMapState.mCamera.mPosGoal.x += dx;
@@ -1359,7 +1357,7 @@ void func_02018cd4(void) {
     memset(order, 0, data_020b6ee0.mStageCount * 2);
     memset(c, 0, 0xc);
     for (i = 0; i < data_020b6ee0.mStageCount; i++) {
-        StageRec *rec = &data_020b1990[i];
+        StageRec *rec = &gStages[i];
         if (i == data_020b6ee0.mSelectedStageIndex) {
             order[i].mKey = 0xffff;
         } else if (rec->mUnk_142 != 1) {
@@ -1385,17 +1383,17 @@ void func_02018cd4(void) {
     for (j = 0; j < data_020b6ee0.mStageCount; j++) {
         int idx = order[j].mStage;
         int lim;
-        rec = &data_020b1990[idx];
+        rec = &gStages[idx];
         params = rec->mDraw;
         rec->mUnk_158 = params.mPos;
-        rec->mVisible = func_02031d0c(&rec->mUnk_1a0, 0x64000, 0x64000, 0x64000);
+        rec->mVisible = func_02031d0c(&rec->mPos, 0x64000, 0x64000, 0x64000);
         if (rec->mVisible == 1 || idx == data_020b6ee0.mSelectedStageIndex) {
-            ProjectToScreen(&rec->mUnk_1a0, &rec->mScreenX);
+            ProjectToScreen(&rec->mPos, &rec->mScreenX);
             lim = (data_020b6ee0.mPanelState == 0 || data_020b6ee0.mPanelState == 1) ? 2 : 1;
             if (order[j].mKey != 0 && j < lim) {
-                rec->mUnk_170 = rec->mInfo.mUnk_13 * 6 + 0xfd8;
+                rec->mUnk_170 = rec->mInfo.mStageId * 6 + 0xfd8;
             } else {
-                rec->mUnk_170 = rec->mInfo.mUnk_13 * 6 + 0xfdb;
+                rec->mUnk_170 = rec->mInfo.mStageId * 6 + 0xfdb;
             }
             if (rec->mUnk_142 != 1 || rec->mUnk_134 != 0 || idx == data_020b6ee0.mSelectedStageIndex) {
                 if (rec->mUnk_142 != 1 && data_020b6ee0.mUnk_ca8 != 0 && idx == data_020b6ee0.mSelectedStageIndex) {
@@ -1424,7 +1422,7 @@ void func_02018cd4(void) {
             if (idx == data_020b6ee0.mSelectedStageIndex) {
                 UpdateModelScript(&data_020b6ee0.mUnk_8e60.mModel);
                 if (data_020b6ee0.mUnk_8e60.mModel.mUnk_142 != 1) {
-                    data_020b6ee0.mUnk_8e60.mDraw.mPos = rec->mUnk_1a0;
+                    data_020b6ee0.mUnk_8e60.mDraw.mPos = rec->mPos;
                     DrawModelFileEx(data_020b6ee0.mUnk_8e60.mModel.mUnk_170, &data_020b6ee0.mUnk_8e60.mDraw.mPos,
                                     &data_020b6ee0.mUnk_8e60.mModel, 0);
                 } else {
@@ -1573,10 +1571,10 @@ void StoreStageOffsets(void) {
 
         func_02031fc4(0, &pos);
         for (i = 0; i < data_020b6ee0.mStageCount; i++) {
-            rec = &data_020b1990[i];
-            rec->mStoredOffsetX = rec->mUnk_1a0.x - pos.x;
+            rec = &gStages[i];
+            rec->mStoredOffsetX = rec->mPos.x - pos.x;
             rec->mUnk_1e8 = 0;
-            rec->mStoredOffsetZ = rec->mUnk_1a0.z - pos.z;
+            rec->mStoredOffsetZ = rec->mPos.z - pos.z;
         }
     }
 }
@@ -1584,14 +1582,14 @@ void StoreStageOffsets(void) {
 // Stores in mPolygonGroupIndex the first polygon group of 10..15 that holds the stage's position (func_020320c0),
 // minus 10, or 99 when none does.
 void FindStagePolygonGroup(int stage) {
-    StageRec *rec = &data_020b1990[stage];
+    StageRec *rec = &gStages[stage];
     int i;
 
     if (stage < 0 || stage >= STAGE_MAX) {
         OS_Terminate();
     }
     for (i = 10; i < 16; i++) {
-        if (func_020320c0(i, 0, &rec->mUnk_1a0) == 1) {
+        if (func_020320c0(i, 0, &rec->mPos) == 1) {
             if (rec->mPolygonGroupIndex != i - 10) {
                 rec->mPolygonGroupIndex = i - 10;
             }
@@ -1606,7 +1604,7 @@ void FindStagePolygonGroup(int stage) {
 // Called every frame of state 10; does nothing while mPanelState > 2. Picks a random stage and, unless it is the
 // selected one, moving, out of view or the panel is in state 2, may start a random turn or move or change its
 // mUnk_22e. About one call in 0x40 / mStageCount + 8 then updates that stage's polygon group and adds 2 percent when it
-// equals mInfo.mUnk_10, or -2 when it is another group and mProgressState is 99 or more. While mUnk_a149 < 4, one call
+// equals mInfo.mKind, or -2 when it is another group and mProgressState is 99 or more. While mUnk_a149 < 4, one call
 // in 512 also runs func_020198f0.
 void UpdateRandomStage(void) {
     s32 *c = data_020b6ee0.mUnk_9ddc;
@@ -1622,7 +1620,7 @@ void UpdateRandomStage(void) {
     if (!((idx >= 0) & (idx < data_020b6ee0.mStageCount))) {
         OS_Terminate();
     }
-    rec = &data_020b1990[idx];
+    rec = &gStages[idx];
     if (data_020b6ee0.mUnk_a149 < 4 && !(NextRandom() & 0x1ff)) {
         func_020198f0();
     }
@@ -1631,13 +1629,13 @@ void UpdateRandomStage(void) {
         switch ((u8) NextRandom()) {
             case 0:
                 if (c[1] == 0) {
-                    rec->mUnk_1d8 = NextRandom();
+                    rec->mMoveAngle = NextRandom();
                     rec->mUnk_134 |= 4;
                 }
                 break;
             case 1:
                 if (c[1] == 0) {
-                    rec->mUnk_1d8 = NextRandom();
+                    rec->mMoveAngle = NextRandom();
                     rec->mDistancePerFrame = 0x4000;
                 }
                 break;
@@ -1645,7 +1643,7 @@ void UpdateRandomStage(void) {
                 if (rec->mInfo.mUnk_1a >= 4) {
                     OS_Terminate();
                 }
-                if (rec->mInfo.mUnk_12 < 0x64) {
+                if (rec->mInfo.mPercent < 0x64) {
                     rec->mUnk_22e = c[0] < 3 ? 1 : rec->mUnk_22e;
                 } else {
                     rec->mUnk_22e = 0;
@@ -1658,7 +1656,7 @@ void UpdateRandomStage(void) {
         return;
     }
     FindStagePolygonGroup(idx);
-    if (rec->mPolygonGroupIndex == rec->mInfo.mUnk_10) {
+    if (rec->mPolygonGroupIndex == rec->mInfo.mKind) {
         result = 2;
     } else if (rec->mPolygonGroupIndex != 99 && (u32) data_020b6ee0.mProgressState >= 0x63) {
         result = -2;
@@ -1730,7 +1728,7 @@ void func_02019788(void) {
 // the move object from the record's screen point (UpdateStageMoveObject adds 10 percent to the record when it ends),
 // plays sound 0xe0 (func_0202f110) and sets mUnk_a570. Called for the selected stage in panel states 0..2 and 5.
 void func_02019800(StageRec *rec) {
-    int i = func_02019874(&rec->mUnk_1a0);
+    int i = func_02019874(&rec->mPos);
 
     if (i != -1) {
         Unk_020bff04 *e = &data_020b6ee0.mUnk_9024[i];
@@ -1823,14 +1821,14 @@ void DrawStageSprite(StageRec *rec, int index, int sprite, int mulX, int mulY, i
 }
 
 // Starts the move object carrying the record: with mode 1 from (x, y) to the record's percent position (PercentToX of
-// mInfo.mUnk_12, 0x5e - 252), otherwise the reverse. c and d are unused.
+// mInfo.mPercent, 0x5e - 252), otherwise the reverse. c and d are unused.
 void StartStageMoveObject(StageRec *rec, int x, int y, int c, int d, int mode) {
     MoveObj *o = &data_020b6ee0.mMoveObj;
     Vec2i pos;
     int r;
 
     o->mUnk_310 = rec;
-    r = PercentToX(rec->mInfo.mUnk_12);
+    r = PercentToX(rec->mInfo.mPercent);
     pos.x = mode == 1 ? x : r;
     pos.y = mode == 1 ? y : 0x5e;
     pos.y += mode == 1 ? 0 : -252;

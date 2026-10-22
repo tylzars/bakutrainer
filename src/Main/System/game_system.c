@@ -92,22 +92,85 @@ SphereModel gSphereModel;
 const u8 gStatePromptScreenEnabled[STATE_COUNT] = {0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 1, 0, 0,
                                                    0, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0};
 const StateFunc gStateLeaveFuncs[STATE_COUNT] = {
-    NULL,          func_0200f360, func_0201133c, func_0200f580, func_020186cc, func_02015d34, LeaveMapMenu,
-    LeaveRecap, NULL,          LeaveSlotScreen, func_02019438, NULL,          func_0200f750, func_020059ac,
-    LeaveScene, func_0200b884, func_02006fac, func_02004930, func_0200548c, func_02007750, func_0200a3f4,
-    func_02014184, func_0201438c, func_02011510, func_0200719c,
+    NULL,
+    LeaveTitleScreen,
+    func_0201133c,
+    LeavePrompt,
+    func_020186cc,
+    func_02015d34,
+    LeaveMapMenu,
+    LeaveRecap,
+    NULL,
+    LeaveSlotScreen,
+    func_02019438,
+    NULL,
+    LeaveLangMenu,
+    LeaveModeSelect,
+    LeaveScene,
+    func_0200b884,
+    LeaveField,
+    func_02004930,
+    LeaveResultScreen,
+    LeaveBattleScreen,
+    func_0200a3f4,
+    func_02014184,
+    func_0201438c,
+    func_02011510,
+    LeavePageViewer,
 };
 const StateFunc gStateEnterFuncs[STATE_COUNT] = {
-    NULL,          func_0200e4c4, SetupStateMenu,   func_0200f374, func_020182cc, func_02015cd4, SetupMapMenu,
-    SetupRecap, NULL,          SetupSlotScreen,    func_0201896c, NULL,          func_0200f660, func_02005548,
-    SetupScene, func_0200b278, func_020067ac,    func_0200445c, func_02004964, func_020074ac, func_0200a384,
-    func_020140d4, func_02014190, SetupSphereModel, func_02006fc0,
+    NULL,
+    SetupTitleScreen,
+    SetupStateMenu,
+    SetupPrompt,
+    func_020182cc,
+    func_02015cd4,
+    SetupMapMenu,
+    SetupRecap,
+    NULL,
+    SetupSlotScreen,
+    func_0201896c,
+    NULL,
+    SetupLangMenu,
+    SetupModeSelect,
+    SetupScene,
+    func_0200b278,
+    SetupField,
+    func_0200445c,
+    SetupResultScreen,
+    SetupBattleScreen,
+    func_0200a384,
+    func_020140d4,
+    func_02014190,
+    SetupSphereModel,
+    SetupPageViewer,
 };
 const StateFunc gStateUpdateFuncs[STATE_COUNT] = {
-    NULL,          func_0200e5b0, UpdateStateMenu,   func_0200f4d4, func_02018558, func_02015d2c, UpdateMapMenu,
-    UpdateRecap, NULL,          UpdateSlotScreen,     func_02018cd4, NULL,          func_0200f758, func_02005898,
-    UpdateScene, func_0200b610, func_02006b68,     func_02004768, func_02005194, func_02007704, func_0200a3fc,
-    func_02014124, func_02014260, UpdateSphereModel, func_020070c4,
+    NULL,
+    UpdateTitleScreen,
+    UpdateStateMenu,
+    UpdatePrompt,
+    func_02018558,
+    func_02015d2c,
+    UpdateMapMenu,
+    UpdateRecap,
+    NULL,
+    UpdateSlotScreen,
+    func_02018cd4,
+    NULL,
+    UpdateLangMenu,
+    UpdateModeSelect,
+    UpdateScene,
+    func_0200b610,
+    UpdateField,
+    func_02004768,
+    UpdateResultScreen,
+    UpdateBattleScreen,
+    func_0200a3fc,
+    func_02014124,
+    func_02014260,
+    UpdateSphereModel,
+    UpdatePageViewer,
 };
 
 #define SE_COUNT 0x78
@@ -937,18 +1000,23 @@ int ReadSaveSlot(u32 slot) {
         data_020b6ee0.mStageCount = 0;
         for (i = 0; i < STAGE_MAX; i++) {
             if (rec->mStageWritten[i] == 1) {
-                stage = &data_020b1990[AddStage(0, i)];
+                stage = &gStages[AddStage(0, i)];
                 stage->mStoredOffsetX = (rec->mUnk_f8[i] - 0x100) * STAGE_UNIT;
                 stage->mUnk_1e8 = 0;
                 stage->mStoredOffsetZ = (rec->mUnk_194[i] - 0x100) * STAGE_UNIT;
-                stage->mInfo.mUnk_12 = rec->mUnk_230[i];
-                stage->mInfo.mUnk_04 = rec->mUnk_2cc[i];
-                stage->mInfo.mUnk_11 = rec->mUnk_368[i];
-                stage->mInfo.mUnk_1c[0] = rec->mUnk_404[i] == 0 ? -1 : GetTableEntryValue(rec->mUnk_404[i] - 1, 2);
-                stage->mInfo.mUnk_1c[1] = rec->mUnk_4a0[i] == 0 ? -1 : GetTableEntryValue(rec->mUnk_4a0[i] - 1, 2);
-                stage->mInfo.mUnk_1c[2] = rec->mUnk_53c[i] == 0 ? -1 : GetTableEntryValue(rec->mUnk_53c[i] - 1, 2);
-                stage->mInfo.mUnk_1c[3] = rec->mUnk_5d8[i] == 0 ? -1 : GetTableEntryValue(rec->mUnk_5d8[i] - 1, 2);
-                stage->mInfo.mUnk_1c[4] = rec->mUnk_674[i] == 0 ? -1 : GetTableEntryValue(rec->mUnk_674[i] - 1, 2);
+                stage->mInfo.mPercent = rec->mUnk_230[i];
+                stage->mInfo.mValue = rec->mUnk_2cc[i];
+                stage->mInfo.mGrade = rec->mUnk_368[i];
+                stage->mInfo.mTableEntryIds[0] =
+                    rec->mUnk_404[i] == 0 ? -1 : GetTableEntryValue(rec->mUnk_404[i] - 1, 2);
+                stage->mInfo.mTableEntryIds[1] =
+                    rec->mUnk_4a0[i] == 0 ? -1 : GetTableEntryValue(rec->mUnk_4a0[i] - 1, 2);
+                stage->mInfo.mTableEntryIds[2] =
+                    rec->mUnk_53c[i] == 0 ? -1 : GetTableEntryValue(rec->mUnk_53c[i] - 1, 2);
+                stage->mInfo.mTableEntryIds[3] =
+                    rec->mUnk_5d8[i] == 0 ? -1 : GetTableEntryValue(rec->mUnk_5d8[i] - 1, 2);
+                stage->mInfo.mTableEntryIds[4] =
+                    rec->mUnk_674[i] == 0 ? -1 : GetTableEntryValue(rec->mUnk_674[i] - 1, 2);
             }
         }
         for (i = 0; i < 3; i++) {
@@ -1020,7 +1088,7 @@ void WriteSaveSlot(u32 slot) {
         u8 slotStage = 0;
         stage = GetSlotStage(i);
         if (stage != NULL) {
-            slotStage = stage->mInfo.mUnk_13;
+            slotStage = stage->mInfo.mStageId;
             if (slotStage >= STAGE_MAX) {
                 OS_Terminate();
             }
@@ -1034,8 +1102,8 @@ void WriteSaveSlot(u32 slot) {
     rec->mStageCount = data_020b6ee0.mStageCount;
     for (i = 0; i < data_020b6ee0.mStageCount; i++) {
         u8 id;
-        stage = &data_020b1990[i];
-        id = stage->mInfo.mUnk_13;
+        stage = &gStages[i];
+        id = stage->mInfo.mStageId;
         if (id >= STAGE_MAX) {
             OS_Terminate();
         }
@@ -1053,14 +1121,14 @@ void WriteSaveSlot(u32 slot) {
             OS_Terminate();
         }
         rec->mUnk_194[id] = v + 0x100;
-        rec->mUnk_230[id] = stage->mInfo.mUnk_12;
-        rec->mUnk_2cc[id] = stage->mInfo.mUnk_04;
-        rec->mUnk_368[id] = stage->mInfo.mUnk_11;
-        rec->mUnk_404[id] = FindTableEntryIndex(stage->mInfo.mUnk_1c[0]) + 1;
-        rec->mUnk_4a0[id] = FindTableEntryIndex(stage->mInfo.mUnk_1c[1]) + 1;
-        rec->mUnk_53c[id] = FindTableEntryIndex(stage->mInfo.mUnk_1c[2]) + 1;
-        rec->mUnk_5d8[id] = FindTableEntryIndex(stage->mInfo.mUnk_1c[3]) + 1;
-        rec->mUnk_674[id] = FindTableEntryIndex(stage->mInfo.mUnk_1c[4]) + 1;
+        rec->mUnk_230[id] = stage->mInfo.mPercent;
+        rec->mUnk_2cc[id] = stage->mInfo.mValue;
+        rec->mUnk_368[id] = stage->mInfo.mGrade;
+        rec->mUnk_404[id] = FindTableEntryIndex(stage->mInfo.mTableEntryIds[0]) + 1;
+        rec->mUnk_4a0[id] = FindTableEntryIndex(stage->mInfo.mTableEntryIds[1]) + 1;
+        rec->mUnk_53c[id] = FindTableEntryIndex(stage->mInfo.mTableEntryIds[2]) + 1;
+        rec->mUnk_5d8[id] = FindTableEntryIndex(stage->mInfo.mTableEntryIds[3]) + 1;
+        rec->mUnk_674[id] = FindTableEntryIndex(stage->mInfo.mTableEntryIds[4]) + 1;
     }
     WriteSaveBlock(slot, rec, SAVE_BLOCK_ID);
     FreeSaveRecord(&rec);
@@ -1102,7 +1170,7 @@ void func_02010cfc(void) {
 }
 
 void func_02010d34(void) {
-    data_020b1084.mLanguage = func_0200f9b8();
+    data_020b1084.mLanguage = GetDefaultLanguage();
     data_020b1084.mUnk_04 = 1;
     data_020b1084.mUnk_08 = 3;
 }
@@ -1118,7 +1186,7 @@ void func_02010d4c(SaveRecord *rec) {
 #define ENTRY_BLOCK 0x236
 #define ENTRY_STRIDE 0x25
 
-// The grade (data_020b10d4.mUnk_11, 0x6d bytes on from gStateMenu) is written through gStateMenu's address,
+// The grade (data_020b10d4.mGrade, 0x6d bytes on from gStateMenu) is written through gStateMenu's address,
 // past that object's end: an out-of-bounds store is ordered after every earlier store, which gives the instruction
 // order here.
 void SetupStateMenu(void) {
@@ -1154,32 +1222,32 @@ void UpdateStateMenu(void) {
     if (gStateMenu.mCardPage == 1) {
         func_0200bc50(0xe9, 0x30, 0, 0, 0x8c, 0x202, 0xd7, "Card", 0, 2, 0, 0, 1, 0, 0, 0);
         if (func_0200bd80(0x20000000, 0x202)) {
-            memset(data_020b10d4.mUnk_1c, -1, 10);
+            memset(data_020b10d4.mTableEntryIds, -1, 10);
             PickTableEntries(&data_020b10d4);
         }
         pad = gSystemState.mKeysPressed;
         if (pad & 0x10) {
-            grade = data_020b10d4.mUnk_11;
+            grade = data_020b10d4.mGrade;
             if (grade != 12) {
                 grade++;
             }
-            data_020b10d4.mUnk_11 = grade;
+            data_020b10d4.mGrade = grade;
         }
         if (pad & 0x20) {
-            grade = data_020b10d4.mUnk_11;
+            grade = data_020b10d4.mGrade;
             if (grade != 1) {
                 grade--;
             }
-            data_020b10d4.mUnk_11 = grade;
+            data_020b10d4.mGrade = grade;
         }
-        func_0200b898(0x10, 0x10, "grade: %i", data_020b10d4.mUnk_11);
+        func_0200b898(0x10, 0x10, "grade: %i", data_020b10d4.mGrade);
         for (k = 0; k < 5; k++) {
             func_0200b898(0x10, 0x1a + k * 10, "%s",
-                          GetText(GetTableEntryValueById(data_020b10d4.mUnk_1c[k], 3) + 0x8a));
+                          GetText(GetTableEntryValueById(data_020b10d4.mTableEntryIds[k], 3) + 0x8a));
         }
         for (k = 0; k < 5; k++) {
-            func_0200b898(0x88, 0x1a + k * 10, "%i %i", GetTableEntryValueById(data_020b10d4.mUnk_1c[k], 4),
-                          GetTableEntryValueById(data_020b10d4.mUnk_1c[k], 5));
+            func_0200b898(0x88, 0x1a + k * 10, "%i %i", GetTableEntryValueById(data_020b10d4.mTableEntryIds[k], 4),
+                          GetTableEntryValueById(data_020b10d4.mTableEntryIds[k], 5));
         }
     } else {
         func_0200bc50(0xe9, 0x30, 0, 0, 0x8c, 0x200, 0xd7, "Save", 0, 2, 0, 0, 1, 0, 0, 0);

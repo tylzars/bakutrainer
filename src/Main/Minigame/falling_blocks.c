@@ -144,7 +144,7 @@ void func_020033ac(Piece *p) {
         }
         func_0202f110(0x56, 0x4b, 0, 0x40, 0xffff, 0);
         if (p->mType < 7) {
-            func_020059d0(&data_02064828.mUnk_10, data_02064828.mUnk_8990, 0);
+            AddCappedAt999Shifted(&data_02064828.mUnk_10, data_02064828.mUnk_8990, 0);
         }
         data_02064828.mUnk_8994++;
     }
@@ -739,7 +739,7 @@ void func_02004304(void) {
 }
 
 void func_0200443c(int a) {
-    func_02005a8c(0, data_02064828.mUnk_10 >= data_02064828.mUnk_14);
+    StartModeSlide(0, data_02064828.mUnk_10 >= data_02064828.mUnk_14);
 }
 
 // Starts the board screen: loads the stage settings, clears the cells and sprites and sets the counters.
@@ -752,12 +752,12 @@ void func_0200445c(void) {
     if (level < 0) {
         level = 0;
     }
-    data_02064828.mStage = data_020b1990[level].mInfo;
-    data_02064828.mUnk_00 = data_02064828.mStage.mUnk_11 - 1;
+    data_02064828.mStage = gStages[level].mInfo;
+    data_02064828.mUnk_00 = data_02064828.mStage.mGrade - 1;
     if (data_020b10fc.mTableRow < 0 || data_02064828.mUnk_00 >= 12) {
         OS_Terminate();
     }
-    func_0200c5d8(0, data_02064828.mStage.mUnk_10 + 0x1cb, data_02064828.mStage.mUnk_13 + 0xdb3, 64, 16, 2, 130);
+    func_0200c5d8(0, data_02064828.mStage.mKind + 0x1cb, data_02064828.mStage.mStageId + 0xdb3, 64, 16, 2, 130);
     func_02024208();
     RequestTrack(3, 76);
     func_0200bdcc(2, 16);
@@ -810,11 +810,11 @@ void func_0200445c(void) {
     }
     func_020031ac(2, 0, &data_02064828.mUnk_83c4.mPos);
     data_02064828.mUnk_83c4.mPos.y -= 5 << 10;
-    func_02005a8c(1, 0);
+    StartModeSlide(1, 0);
 }
 
 void func_02004720(void) {
-    func_0201168c(data_020b6ee0.mSelectedStageIndex, data_02064828.mUnk_10, data_0206d448.mUnk_00,
+    func_0201168c(data_020b6ee0.mSelectedStageIndex, data_02064828.mUnk_10, gModeSelectState.mScoreThreshold,
                   data_02064828.mUnk_08, 2);
     func_02003aa8(&data_02064828.mUnk_8608, 2, 0);
     func_02004254();
@@ -830,12 +830,12 @@ void func_02004768(void) {
     int idle;
     Pair *cursor = &data_02064828.mUnk_83c4;
     func_020059cc(data_02064828.mUnk_10);
-    r = func_02005bf8();
-    if (r != 0) {
+    r = GetModeSlideState();
+    if (r != MODE_SLIDE_STATE_NONE) {
         func_02004720();
-        idle = func_02005b1c(1);
-        if (r == 2 && idle == 0) {
-            func_020059b4(func_02005c04(), data_02064828.mUnk_10);
+        idle = UpdateModeSlide(1);
+        if (r == MODE_SLIDE_STATE_END && idle == 0) {
+            StartResultScreen(GetScoreThresholdMet(), data_02064828.mUnk_10);
             return;
         }
         if (r == 1) {
@@ -864,7 +864,7 @@ void func_02004768(void) {
     } else if (data_02064828.mUnk_8950 == 2) {
         if (func_02003e60()) {
             if (data_02064828.mUnk_8994 >= 6) {
-                func_020059e8(&data_02064828.mUnk_08, 300);
+                AddCappedAt5999(&data_02064828.mUnk_08, 300);
                 sprintf(buf, "+%d'", 5);
                 AddTextObjSlot(buf, 2, data_0201a61c, 30, data_02064828.mUnk_83c4.mPos.x >> 8,
                                data_02064828.mUnk_83c4.mPos.y >> 8, 0, -128, 100, 1, 0);

@@ -6,35 +6,44 @@
 extern "C" {
 #endif
 
-// State shared by the mode selection screen and the screen transition.
+// Values of ModeSelectState.mSlideState (GetModeSlideState): no slide, the slide every mode starts with (it moves out
+// and ends), the slide a mode ends with (it stays; the caller then goes to the result screen).
+#define MODE_SLIDE_STATE_NONE 0
+#define MODE_SLIDE_STATE_START 1
+#define MODE_SLIDE_STATE_END 2
+
+// State of the mode selection screen (the selected mode's score threshold and best score) and of the slide every mode
+// shows at its start and end.
 typedef struct ModeSelectState {
-    s32 mUnk_00;
-    s32 mUnk_04;
-    u8 mUnk_08;
+    s32 mScoreThreshold;
+    s32 mBestScore;
+    u8 mSlideState;
     u8 mPad_09[3];
-    s32 mUnk_0c;
-    s32 mUnk_10;
-    s32 mUnk_14;
+    s32 mSlideX;
+    s32 mSlideHoldTimer;
+    // StartModeSlide's b: every start slide passes 0, so it is read only for the end slide. The modes pass it on to
+    // StartResultScreen (data_020b10fc.mUnk_0c).
+    s32 mScoreThresholdMet;
 } ModeSelectState;
 
-extern s32 data_0206d444;
-extern ModeSelectState data_0206d448;
-extern u32 data_0206391c;
+extern s32 gKeepSelectedMode;
+extern ModeSelectState gModeSelectState;
+extern u32 gPrevTimeLeft;
 
-void func_020054a4(int mode);
-void func_02005548(void);
-void func_020055a8(void);
-void func_02005898(void);
-void func_020059ac(void);
-void func_020059b4(int a, u32 b);
+void SelectMode(int mode);
+void SetupModeSelect(void);
+void DrawModeSelect(void);
+void UpdateModeSelect(void);
+void LeaveModeSelect(void);
+void StartResultScreen(int a, u32 b);
 void func_020059cc(u32 value);
-void func_020059d0(u32 *value, u32 add, int shift);
-void func_020059e8(u32 *value, u32 add);
-int func_02005a00(u32 value);
-void func_02005a8c(int a, int b);
-int func_02005b1c(int mode);
-u8 func_02005bf8(void);
-s32 func_02005c04(void);
+void AddCappedAt999Shifted(u32 *value, u32 add, int shift);
+void AddCappedAt5999(u32 *value, u32 add);
+int UpdateTimeLeft(u32 value);
+void StartModeSlide(int a, int b);
+int UpdateModeSlide(int mode);
+u8 GetModeSlideState(void);
+s32 GetScoreThresholdMet(void);
 
 #ifdef __cplusplus
 }

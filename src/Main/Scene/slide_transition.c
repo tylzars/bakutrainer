@@ -6,6 +6,7 @@
 #include <Main/System/game_math.h>
 #include <Main/System/bg_image.h>
 #include <Main/Scene/stage_info_panel.h>
+#include <Main/Scene/stage_map_menu.h>
 #include <Main/System/state_flow.h>
 #include <Main/System/prompt_screen.h>
 #include <Main/System/sound_control.h>
@@ -23,13 +24,13 @@
 #include <nitro/os.h>
 #include <stdio.h>
 
-// The record buffer AllocSaveRecord returns.
-typedef struct Unk_RecordBuf {
+// The record buffer AllocSaveRecord returns; only its first 0x1c bytes (as in SaveRecord) are declared here.
+typedef struct SaveRecordHead {
     u8 mUnk_00[0x10];
-    s32 mUnk_10;
-    s32 mUnk_14;
-    s32 mUnk_18;
-} Unk_RecordBuf;
+    s32 mWritten;
+    s32 mReachedNodeIndex;
+    s32 mLastNodeDone;
+} SaveRecordHead;
 
 #define SLIDE_STEP 0x1e00
 #define SLIDE_STEP_SMALL 0x780
@@ -37,279 +38,279 @@ typedef struct Unk_RecordBuf {
 #define SLIDE_MID 0x8000
 #define SLIDE_NEAR 0x4000
 
-int func_0200de68(void) {
+int UpdateTitleSlide(void) {
     s32 x;
     int i;
     s32 sum;
-    switch (data_020ae504.mUnk_1b8) {
-        case 0:
-            switch (data_020ae504.mUnk_24) {
+    switch (gTitleScreen.mSlideState) {
+        case TITLE_SLIDE_STATE_IN:
+            switch (gTitleScreen.mState) {
                 case 1:
-                    if (data_020ae504.mUnk_1dc > 0) {
-                        x = data_020ae504.mUnk_1bc[0] + SLIDE_STEP;
+                    if (gTitleScreen.mSlideDirection > 0) {
+                        x = gTitleScreen.mSlideOffsets[0] + SLIDE_STEP;
                         if (x >= 0) {
                             x = 0;
                         }
-                        data_020ae504.mUnk_1bc[0] = x;
-                        x = data_020ae504.mUnk_1bc[1] + SLIDE_STEP;
+                        gTitleScreen.mSlideOffsets[0] = x;
+                        x = gTitleScreen.mSlideOffsets[1] + SLIDE_STEP;
                         if (x >= 0) {
                             x = 0;
                         }
-                        data_020ae504.mUnk_1bc[1] = x;
-                        x = data_020ae504.mUnk_1bc[2] + SLIDE_STEP;
+                        gTitleScreen.mSlideOffsets[1] = x;
+                        x = gTitleScreen.mSlideOffsets[2] + SLIDE_STEP;
                         if (x >= 0) {
                             x = 0;
                         }
-                        data_020ae504.mUnk_1bc[2] = x;
+                        gTitleScreen.mSlideOffsets[2] = x;
                     } else {
-                        x = data_020ae504.mUnk_1bc[0] - SLIDE_STEP;
+                        x = gTitleScreen.mSlideOffsets[0] - SLIDE_STEP;
                         if (x < 0) {
                             x = 0;
                         }
-                        data_020ae504.mUnk_1bc[0] = x;
-                        x = data_020ae504.mUnk_1bc[1] - SLIDE_STEP;
+                        gTitleScreen.mSlideOffsets[0] = x;
+                        x = gTitleScreen.mSlideOffsets[1] - SLIDE_STEP;
                         if (x < 0) {
                             x = 0;
                         }
-                        data_020ae504.mUnk_1bc[1] = x;
-                        x = data_020ae504.mUnk_1bc[2] - SLIDE_STEP;
+                        gTitleScreen.mSlideOffsets[1] = x;
+                        x = gTitleScreen.mSlideOffsets[2] - SLIDE_STEP;
                         if (x < 0) {
                             x = 0;
                         }
-                        data_020ae504.mUnk_1bc[2] = x;
+                        gTitleScreen.mSlideOffsets[2] = x;
                     }
-                    if (data_020ae504.mUnk_1bc[0] == 0 && data_020ae504.mUnk_1bc[1] == 0 &&
-                        data_020ae504.mUnk_1bc[2] == 0) {
-                        data_020ae504.mUnk_1b8 = 1;
+                    if (gTitleScreen.mSlideOffsets[0] == 0 && gTitleScreen.mSlideOffsets[1] == 0 &&
+                        gTitleScreen.mSlideOffsets[2] == 0) {
+                        gTitleScreen.mSlideState = TITLE_SLIDE_STATE_IN_PLACE;
                     }
                     break;
                 case 2:
                 case 5:
-                    if (data_020ae504.mUnk_1dc > 0) {
-                        x = data_020ae504.mUnk_1bc[0] + SLIDE_STEP;
+                    if (gTitleScreen.mSlideDirection > 0) {
+                        x = gTitleScreen.mSlideOffsets[0] + SLIDE_STEP;
                         if (x >= 0) {
                             x = 0;
                         }
-                        data_020ae504.mUnk_1bc[0] = x;
-                        x = data_020ae504.mUnk_1bc[1] + SLIDE_STEP;
+                        gTitleScreen.mSlideOffsets[0] = x;
+                        x = gTitleScreen.mSlideOffsets[1] + SLIDE_STEP;
                         if (x >= 0) {
                             x = 0;
                         }
-                        data_020ae504.mUnk_1bc[1] = x;
-                        x = data_020ae504.mUnk_1bc[2] + SLIDE_STEP;
+                        gTitleScreen.mSlideOffsets[1] = x;
+                        x = gTitleScreen.mSlideOffsets[2] + SLIDE_STEP;
                         if (x >= 0) {
                             x = 0;
                         }
-                        data_020ae504.mUnk_1bc[2] = x;
+                        gTitleScreen.mSlideOffsets[2] = x;
                     } else {
-                        x = data_020ae504.mUnk_1bc[0] - SLIDE_STEP;
+                        x = gTitleScreen.mSlideOffsets[0] - SLIDE_STEP;
                         if (x < 0) {
                             x = 0;
                         }
-                        data_020ae504.mUnk_1bc[0] = x;
-                        x = data_020ae504.mUnk_1bc[1] - SLIDE_STEP;
+                        gTitleScreen.mSlideOffsets[0] = x;
+                        x = gTitleScreen.mSlideOffsets[1] - SLIDE_STEP;
                         if (x < 0) {
                             x = 0;
                         }
-                        data_020ae504.mUnk_1bc[1] = x;
-                        x = data_020ae504.mUnk_1bc[2] - SLIDE_STEP;
+                        gTitleScreen.mSlideOffsets[1] = x;
+                        x = gTitleScreen.mSlideOffsets[2] - SLIDE_STEP;
                         if (x < 0) {
                             x = 0;
                         }
-                        data_020ae504.mUnk_1bc[2] = x;
+                        gTitleScreen.mSlideOffsets[2] = x;
                     }
-                    x = data_020ae504.mUnk_1bc[3] + SLIDE_STEP_SMALL;
+                    x = gTitleScreen.mSlideOffsets[3] + SLIDE_STEP_SMALL;
                     if (x >= 0) {
                         x = 0;
                     }
-                    data_020ae504.mUnk_1bc[3] = x;
-                    x = data_020ae504.mUnk_1bc[4] - SLIDE_STEP_SMALL;
+                    gTitleScreen.mSlideOffsets[3] = x;
+                    x = gTitleScreen.mSlideOffsets[4] - SLIDE_STEP_SMALL;
                     if (x < 0) {
                         x = 0;
                     }
-                    data_020ae504.mUnk_1bc[4] = x;
-                    if (data_020ae504.mUnk_1bc[0] == 0 && data_020ae504.mUnk_1bc[1] == 0 &&
-                        data_020ae504.mUnk_1bc[2] == 0 && data_020ae504.mUnk_1bc[3] == 0 && x == 0) {
-                        data_020ae504.mUnk_1b8 = 1;
+                    gTitleScreen.mSlideOffsets[4] = x;
+                    if (gTitleScreen.mSlideOffsets[0] == 0 && gTitleScreen.mSlideOffsets[1] == 0 &&
+                        gTitleScreen.mSlideOffsets[2] == 0 && gTitleScreen.mSlideOffsets[3] == 0 && x == 0) {
+                        gTitleScreen.mSlideState = TITLE_SLIDE_STATE_IN_PLACE;
                     }
                     break;
                 case 4:
-                    x = data_020ae504.mUnk_1bc[0] + SLIDE_STEP_SMALL;
+                    x = gTitleScreen.mSlideOffsets[0] + SLIDE_STEP_SMALL;
                     if (x >= 0) {
                         x = 0;
                     }
-                    data_020ae504.mUnk_1bc[0] = x;
-                    x = data_020ae504.mUnk_1bc[1] - SLIDE_STEP_SMALL;
+                    gTitleScreen.mSlideOffsets[0] = x;
+                    x = gTitleScreen.mSlideOffsets[1] - SLIDE_STEP_SMALL;
                     if (x < 0) {
                         x = 0;
                     }
-                    data_020ae504.mUnk_1bc[1] = x;
+                    gTitleScreen.mSlideOffsets[1] = x;
                     for (i = 0; i < 1; i++) {
-                        x = data_020ae504.mUnk_1bc[i + 2] - SLIDE_STEP;
+                        x = gTitleScreen.mSlideOffsets[i + 2] - SLIDE_STEP;
                         if (x < 0) {
                             x = 0;
                         }
-                        data_020ae504.mUnk_1bc[i + 2] = x;
+                        gTitleScreen.mSlideOffsets[i + 2] = x;
                     }
                     sum = 0;
                     for (i = 0; i < 8; i++) {
-                        sum += data_020ae504.mUnk_1bc[i];
+                        sum += gTitleScreen.mSlideOffsets[i];
                     }
                     if (sum == 0) {
-                        data_020ae504.mUnk_1b8 = 1;
+                        gTitleScreen.mSlideState = TITLE_SLIDE_STATE_IN_PLACE;
                     }
                     break;
                 case 3:
-                    x = data_020ae504.mUnk_1bc[0] - SLIDE_STEP;
+                    x = gTitleScreen.mSlideOffsets[0] - SLIDE_STEP;
                     if (x < 0) {
                         x = 0;
                     }
-                    data_020ae504.mUnk_1bc[0] = x;
-                    x = data_020ae504.mUnk_1bc[4] - SLIDE_STEP_SMALL;
+                    gTitleScreen.mSlideOffsets[0] = x;
+                    x = gTitleScreen.mSlideOffsets[4] - SLIDE_STEP_SMALL;
                     if (x < 0) {
                         x = 0;
                     }
-                    data_020ae504.mUnk_1bc[4] = x;
-                    if (data_020ae504.mUnk_1bc[0] == 0 && x == 0) {
-                        data_020ae504.mUnk_1b8 = 1;
+                    gTitleScreen.mSlideOffsets[4] = x;
+                    if (gTitleScreen.mSlideOffsets[0] == 0 && x == 0) {
+                        gTitleScreen.mSlideState = TITLE_SLIDE_STATE_IN_PLACE;
                     }
                     break;
                 case 6:
-                    x = data_020ae504.mUnk_1bc[0] - SLIDE_STEP;
+                    x = gTitleScreen.mSlideOffsets[0] - SLIDE_STEP;
                     if (x < 0) {
                         x = 0;
                     }
-                    data_020ae504.mUnk_1bc[0] = x;
-                    x = data_020ae504.mUnk_1bc[1] - SLIDE_STEP;
+                    gTitleScreen.mSlideOffsets[0] = x;
+                    x = gTitleScreen.mSlideOffsets[1] - SLIDE_STEP;
                     if (x < 0) {
                         x = 0;
                     }
-                    data_020ae504.mUnk_1bc[1] = x;
-                    x = data_020ae504.mUnk_1bc[3] + SLIDE_STEP_SMALL;
+                    gTitleScreen.mSlideOffsets[1] = x;
+                    x = gTitleScreen.mSlideOffsets[3] + SLIDE_STEP_SMALL;
                     if (x >= 0) {
                         x = 0;
                     }
-                    data_020ae504.mUnk_1bc[3] = x;
-                    x = data_020ae504.mUnk_1bc[4] - SLIDE_STEP_SMALL;
+                    gTitleScreen.mSlideOffsets[3] = x;
+                    x = gTitleScreen.mSlideOffsets[4] - SLIDE_STEP_SMALL;
                     if (x < 0) {
                         x = 0;
                     }
-                    data_020ae504.mUnk_1bc[4] = x;
-                    if (data_020ae504.mUnk_1bc[0] == 0 && data_020ae504.mUnk_1bc[1] == 0 &&
-                        data_020ae504.mUnk_1bc[3] == 0 && x == 0) {
-                        data_020ae504.mUnk_1b8 = 1;
+                    gTitleScreen.mSlideOffsets[4] = x;
+                    if (gTitleScreen.mSlideOffsets[0] == 0 && gTitleScreen.mSlideOffsets[1] == 0 &&
+                        gTitleScreen.mSlideOffsets[3] == 0 && x == 0) {
+                        gTitleScreen.mSlideState = TITLE_SLIDE_STATE_IN_PLACE;
                     }
                     break;
             }
             break;
-        case 2:
-            switch (data_020ae504.mUnk_24) {
+        case TITLE_SLIDE_STATE_OUT:
+            switch (gTitleScreen.mState) {
                 case 1:
-                    x = data_020ae504.mUnk_1bc[0] - SLIDE_STEP;
+                    x = gTitleScreen.mSlideOffsets[0] - SLIDE_STEP;
                     if (x < -SLIDE_FAR) {
                         x = -SLIDE_FAR;
                     }
-                    data_020ae504.mUnk_1bc[0] = x;
+                    gTitleScreen.mSlideOffsets[0] = x;
                     if (x <= -SLIDE_MID) {
-                        x = data_020ae504.mUnk_1bc[1] - SLIDE_STEP;
+                        x = gTitleScreen.mSlideOffsets[1] - SLIDE_STEP;
                         if (x < -SLIDE_FAR) {
                             x = -SLIDE_FAR;
                         }
-                        data_020ae504.mUnk_1bc[1] = x;
+                        gTitleScreen.mSlideOffsets[1] = x;
                     }
-                    if (data_020ae504.mUnk_1bc[1] <= -2 * SLIDE_MID) {
-                        x = data_020ae504.mUnk_1bc[2] - SLIDE_STEP;
+                    if (gTitleScreen.mSlideOffsets[1] <= -2 * SLIDE_MID) {
+                        x = gTitleScreen.mSlideOffsets[2] - SLIDE_STEP;
                         if (x < -SLIDE_FAR) {
                             x = -SLIDE_FAR;
                         }
-                        data_020ae504.mUnk_1bc[2] = x;
+                        gTitleScreen.mSlideOffsets[2] = x;
                     }
-                    if (data_020ae504.mUnk_1bc[0] == -SLIDE_FAR && data_020ae504.mUnk_1bc[1] == -SLIDE_FAR &&
-                        data_020ae504.mUnk_1bc[2] == -SLIDE_FAR) {
+                    if (gTitleScreen.mSlideOffsets[0] == -SLIDE_FAR && gTitleScreen.mSlideOffsets[1] == -SLIDE_FAR &&
+                        gTitleScreen.mSlideOffsets[2] == -SLIDE_FAR) {
                         return 1;
                     }
                     break;
                 case 2:
                 case 5:
-                    if (data_020ae504.mUnk_1dc > 0) {
-                        x = data_020ae504.mUnk_1bc[0] + SLIDE_STEP;
+                    if (gTitleScreen.mSlideDirection > 0) {
+                        x = gTitleScreen.mSlideOffsets[0] + SLIDE_STEP;
                         if (x >= SLIDE_FAR) {
                             x = SLIDE_FAR;
                         }
-                        data_020ae504.mUnk_1bc[0] = x;
+                        gTitleScreen.mSlideOffsets[0] = x;
                         if (x >= 2 * SLIDE_NEAR) {
-                            x = data_020ae504.mUnk_1bc[1] + SLIDE_STEP;
+                            x = gTitleScreen.mSlideOffsets[1] + SLIDE_STEP;
                             if (x >= SLIDE_FAR) {
                                 x = SLIDE_FAR;
                             }
-                            data_020ae504.mUnk_1bc[1] = x;
+                            gTitleScreen.mSlideOffsets[1] = x;
                         }
-                        if (data_020ae504.mUnk_1bc[1] >= 4 * SLIDE_NEAR) {
-                            x = data_020ae504.mUnk_1bc[2] + SLIDE_STEP;
+                        if (gTitleScreen.mSlideOffsets[1] >= 4 * SLIDE_NEAR) {
+                            x = gTitleScreen.mSlideOffsets[2] + SLIDE_STEP;
                             if (x >= SLIDE_FAR) {
                                 x = SLIDE_FAR;
                             }
-                            data_020ae504.mUnk_1bc[2] = x;
+                            gTitleScreen.mSlideOffsets[2] = x;
                         }
                     } else {
-                        x = data_020ae504.mUnk_1bc[0] - SLIDE_STEP;
+                        x = gTitleScreen.mSlideOffsets[0] - SLIDE_STEP;
                         if (x < -SLIDE_FAR) {
                             x = -SLIDE_FAR;
                         }
-                        data_020ae504.mUnk_1bc[0] = x;
+                        gTitleScreen.mSlideOffsets[0] = x;
                         if (x <= -2 * SLIDE_NEAR) {
-                            x = data_020ae504.mUnk_1bc[1] - SLIDE_STEP;
+                            x = gTitleScreen.mSlideOffsets[1] - SLIDE_STEP;
                             if (x < -SLIDE_FAR) {
                                 x = -SLIDE_FAR;
                             }
-                            data_020ae504.mUnk_1bc[1] = x;
+                            gTitleScreen.mSlideOffsets[1] = x;
                         }
-                        if (data_020ae504.mUnk_1bc[1] <= -4 * SLIDE_NEAR) {
-                            x = data_020ae504.mUnk_1bc[2] - SLIDE_STEP;
+                        if (gTitleScreen.mSlideOffsets[1] <= -4 * SLIDE_NEAR) {
+                            x = gTitleScreen.mSlideOffsets[2] - SLIDE_STEP;
                             if (x < -SLIDE_FAR) {
                                 x = -SLIDE_FAR;
                             }
-                            data_020ae504.mUnk_1bc[2] = x;
+                            gTitleScreen.mSlideOffsets[2] = x;
                         }
                     }
-                    x = data_020ae504.mUnk_1bc[3] - SLIDE_STEP_SMALL;
+                    x = gTitleScreen.mSlideOffsets[3] - SLIDE_STEP_SMALL;
                     if (x < -SLIDE_NEAR) {
                         x = -SLIDE_NEAR;
                     }
-                    data_020ae504.mUnk_1bc[3] = x;
-                    x = data_020ae504.mUnk_1bc[4] + SLIDE_STEP_SMALL;
+                    gTitleScreen.mSlideOffsets[3] = x;
+                    x = gTitleScreen.mSlideOffsets[4] + SLIDE_STEP_SMALL;
                     if (x >= SLIDE_NEAR) {
                         x = SLIDE_NEAR;
                     }
-                    data_020ae504.mUnk_1bc[4] = x;
-                    sum = data_020ae504.mUnk_1dc * SLIDE_FAR;
-                    if (data_020ae504.mUnk_1bc[0] == sum && data_020ae504.mUnk_1bc[1] == sum &&
-                        data_020ae504.mUnk_1bc[2] == sum && data_020ae504.mUnk_1bc[3] == -SLIDE_NEAR &&
+                    gTitleScreen.mSlideOffsets[4] = x;
+                    sum = gTitleScreen.mSlideDirection * SLIDE_FAR;
+                    if (gTitleScreen.mSlideOffsets[0] == sum && gTitleScreen.mSlideOffsets[1] == sum &&
+                        gTitleScreen.mSlideOffsets[2] == sum && gTitleScreen.mSlideOffsets[3] == -SLIDE_NEAR &&
                         x == SLIDE_NEAR) {
                         return 1;
                     }
                     break;
                 case 4:
-                    x = data_020ae504.mUnk_1bc[0] - SLIDE_STEP_SMALL;
+                    x = gTitleScreen.mSlideOffsets[0] - SLIDE_STEP_SMALL;
                     if (x < -SLIDE_NEAR) {
                         x = -SLIDE_NEAR;
                     }
-                    data_020ae504.mUnk_1bc[0] = x;
-                    x = data_020ae504.mUnk_1bc[1] + SLIDE_STEP_SMALL;
+                    gTitleScreen.mSlideOffsets[0] = x;
+                    x = gTitleScreen.mSlideOffsets[1] + SLIDE_STEP_SMALL;
                     if (x >= SLIDE_NEAR) {
                         x = SLIDE_NEAR;
                     }
-                    data_020ae504.mUnk_1bc[1] = x;
+                    gTitleScreen.mSlideOffsets[1] = x;
                     for (i = 0; i < 1; i++) {
-                        x = data_020ae504.mUnk_1bc[i + 2] + SLIDE_STEP;
+                        x = gTitleScreen.mSlideOffsets[i + 2] + SLIDE_STEP;
                         if (x >= SLIDE_FAR) {
                             x = SLIDE_FAR;
                         }
-                        data_020ae504.mUnk_1bc[i + 2] = x;
+                        gTitleScreen.mSlideOffsets[i + 2] = x;
                     }
-                    if (data_020ae504.mUnk_1bc[0] == -SLIDE_NEAR && data_020ae504.mUnk_1bc[1] == SLIDE_NEAR) {
+                    if (gTitleScreen.mSlideOffsets[0] == -SLIDE_NEAR && gTitleScreen.mSlideOffsets[1] == SLIDE_NEAR) {
                         for (i = 0; i < 1; i++) {
-                            if (data_020ae504.mUnk_1bc[i + 2] < SLIDE_FAR) {
+                            if (gTitleScreen.mSlideOffsets[i + 2] < SLIDE_FAR) {
                                 return 0;
                             }
                         }
@@ -317,45 +318,45 @@ int func_0200de68(void) {
                     }
                     break;
                 case 3:
-                    x = data_020ae504.mUnk_1bc[0] + SLIDE_STEP;
+                    x = gTitleScreen.mSlideOffsets[0] + SLIDE_STEP;
                     if (x >= SLIDE_FAR) {
                         x = SLIDE_FAR;
                     }
-                    data_020ae504.mUnk_1bc[0] = x;
-                    x = data_020ae504.mUnk_1bc[4] + SLIDE_STEP_SMALL;
+                    gTitleScreen.mSlideOffsets[0] = x;
+                    x = gTitleScreen.mSlideOffsets[4] + SLIDE_STEP_SMALL;
                     if (x >= SLIDE_NEAR) {
                         x = SLIDE_NEAR;
                     }
-                    data_020ae504.mUnk_1bc[4] = x;
-                    if (data_020ae504.mUnk_1bc[0] == SLIDE_FAR && x == SLIDE_NEAR) {
+                    gTitleScreen.mSlideOffsets[4] = x;
+                    if (gTitleScreen.mSlideOffsets[0] == SLIDE_FAR && x == SLIDE_NEAR) {
                         return 1;
                     }
                     break;
                 case 6:
-                    x = data_020ae504.mUnk_1bc[0] + SLIDE_STEP;
+                    x = gTitleScreen.mSlideOffsets[0] + SLIDE_STEP;
                     if (x >= SLIDE_FAR) {
                         x = SLIDE_FAR;
                     }
-                    data_020ae504.mUnk_1bc[0] = x;
+                    gTitleScreen.mSlideOffsets[0] = x;
                     if (x >= 4 * SLIDE_NEAR) {
-                        x = data_020ae504.mUnk_1bc[1] + SLIDE_STEP;
+                        x = gTitleScreen.mSlideOffsets[1] + SLIDE_STEP;
                         if (x >= SLIDE_FAR) {
                             x = SLIDE_FAR;
                         }
-                        data_020ae504.mUnk_1bc[1] = x;
+                        gTitleScreen.mSlideOffsets[1] = x;
                     }
-                    x = data_020ae504.mUnk_1bc[3] - SLIDE_STEP_SMALL;
+                    x = gTitleScreen.mSlideOffsets[3] - SLIDE_STEP_SMALL;
                     if (x < -SLIDE_NEAR) {
                         x = -SLIDE_NEAR;
                     }
-                    data_020ae504.mUnk_1bc[3] = x;
-                    x = data_020ae504.mUnk_1bc[4] + SLIDE_STEP_SMALL;
+                    gTitleScreen.mSlideOffsets[3] = x;
+                    x = gTitleScreen.mSlideOffsets[4] + SLIDE_STEP_SMALL;
                     if (x >= SLIDE_NEAR) {
                         x = SLIDE_NEAR;
                     }
-                    data_020ae504.mUnk_1bc[4] = x;
-                    if (data_020ae504.mUnk_1bc[0] == SLIDE_FAR && data_020ae504.mUnk_1bc[1] == SLIDE_FAR &&
-                        data_020ae504.mUnk_1bc[3] == -SLIDE_NEAR && x == SLIDE_NEAR) {
+                    gTitleScreen.mSlideOffsets[4] = x;
+                    if (gTitleScreen.mSlideOffsets[0] == SLIDE_FAR && gTitleScreen.mSlideOffsets[1] == SLIDE_FAR &&
+                        gTitleScreen.mSlideOffsets[3] == -SLIDE_NEAR && x == SLIDE_NEAR) {
                         return 1;
                     }
                     break;
@@ -365,83 +366,91 @@ int func_0200de68(void) {
     return 0;
 }
 
-void func_0200e3d0(int a, int b) {
-    data_020ae504.mUnk_28 = a;
-    data_020ae504.mUnk_1b8 = 2;
-    data_020ae504.mUnk_1dc = b;
+// Also starts the slide-out, in direction b; UpdateTitleScreen moves to state a once it is done.
+void RequestTitleState(int a, int b) {
+    gTitleScreen.mNextState = a;
+    gTitleScreen.mSlideState = TITLE_SLIDE_STATE_OUT;
+    gTitleScreen.mSlideDirection = b;
 }
 
-typedef struct Unk_020ae458 {
+// Copies of data_020b1084.mUnk_04 and mUnk_08 that state 6's buttons change (0x709 / 0x70a and 0x70b / 0x70c);
+// CloseMicEdit(1) writes them back when they differ.
+typedef struct MicEdit {
     u32 mUnk_00;
     u32 mUnk_04;
-    u32 mUnk_08;
-} Unk_020ae458;
+    // Falling peak of state 6's mic value: raised to each larger value, drawn as sprite 0xe01 + mPeak while not 0 and
+    // lowered by one per frame; 0 while gSystemState.mUnk_492 is set.
+    u32 mPeak;
+} MicEdit;
 
-static Unk_020ae458 data_020ae458;
-WaveStream data_020ae464;
-Unk_020ae504 data_020ae504;
+static MicEdit sMicEdit;
+WaveStream gTitleStream;
+TitleScreen gTitleScreen;
 
-void func_0200e3ec(void) {
-    func_0202f2e8(&data_020ae464);
-    data_020ae458.mUnk_00 = data_020b1084.mUnk_04;
-    data_020ae458.mUnk_04 = data_020b1084.mUnk_08;
+// Also stops the title stream; CloseMicEdit starts it again.
+void OpenMicEdit(void) {
+    func_0202f2e8(&gTitleStream);
+    sMicEdit.mUnk_00 = data_020b1084.mUnk_04;
+    sMicEdit.mUnk_04 = data_020b1084.mUnk_08;
     InitMic(0x400, data_020b1084.mUnk_04);
     StartMicSampling(0x82e, 0);
 }
 
-void func_0200e424(int a) {
+// With a = 1 (button 0x101) writes the copies back and saves when they changed; a = 0 (0x102) drops them. Starts the
+// title stream again.
+void CloseMicEdit(int a) {
     ReleaseMic();
     if (a != 0) {
-        if (data_020ae458.mUnk_04 != data_020b1084.mUnk_08 || data_020ae458.mUnk_00 != data_020b1084.mUnk_04) {
-            data_020b1084.mUnk_04 = data_020ae458.mUnk_00;
-            data_020b1084.mUnk_08 = data_020ae458.mUnk_04;
+        if (sMicEdit.mUnk_04 != data_020b1084.mUnk_08 || sMicEdit.mUnk_00 != data_020b1084.mUnk_04) {
+            data_020b1084.mUnk_04 = sMicEdit.mUnk_00;
+            data_020b1084.mUnk_08 = sMicEdit.mUnk_04;
             RunSaveScreen(1);
         }
     }
-    func_0202f290(&data_020ae464, "BAK_strm_Title.raw", 0x5654);
+    func_0202f290(&gTitleStream, "BAK_strm_Title.raw", 0x5654);
 }
 
-void func_0200e474(void) {
-    data_020ae504.mUnk_38 = -1;
+void ResetTitleReturnState(void) {
+    gTitleScreen.mReturnState = -1;
 }
 
-void func_0200e484(void) {
+void SetupTitleImageAndModel(void) {
     func_0200c5d8(0, 0, 0x25e, 0x100, 0x10, 1, 2);
     func_02024208();
-    StartModel(&data_020ae504.mUnk_3c, 0x25d, 0x25c, 2, 0);
+    StartModel(&gTitleScreen.mModel, 0x25d, 0x25c, 2, 0);
 }
 
-void func_0200e4c4(void) {
-    Unk_020ae504 *s = &data_020ae504;
+void SetupTitleScreen(void) {
+    TitleScreen *s = &gTitleScreen;
     int i;
-    func_0200e484();
-    s->mUnk_24 = data_020ae504.mUnk_38 < 0 ? 1 : s->mUnk_38;
-    s->mUnk_28 = -1;
-    s->mUnk_2c = 0;
-    s->mUnk_30 = 0;
-    s->mUnk_34 = (data_020b6ee0.mUnk_a91a != 0 && s->mUnk_38 < 0) ? 1 : 0x4b0;
-    s->mUnk_1dc = -1;
+    SetupTitleImageAndModel();
+    s->mState = gTitleScreen.mReturnState < 0 ? 1 : s->mReturnState;
+    s->mNextState = -1;
+    s->mReadSelected = 0;
+    s->mAnySaveWritten = 0;
+    s->mIntroTimer = (data_020b6ee0.mUnk_a91a != 0 && s->mReturnState < 0) ? 1 : 0x4b0;
+    s->mSlideDirection = -1;
     func_0200dd90();
-    if (s->mUnk_38 < 0) {
+    if (s->mReturnState < 0) {
         s->mUnk_1e4 = 0;
         s->mUnk_1e0 = 0x10000;
     } else {
         s->mUnk_1e4 = 1;
         s->mUnk_1e0 = 0;
     }
-    s->mUnk_38 = -1;
+    s->mReturnState = -1;
     data_020b6ee0.mUnk_a91a = 0;
     data_020b6ee0.mUnk_a91b = 0;
     RequestTrack(0, 0x80);
-    func_0202f290(&data_020ae464, "BAK_strm_Title.raw", 0x5654);
+    func_0202f290(&gTitleStream, "BAK_strm_Title.raw", 0x5654);
     for (i = 0; i < 3; i++) {
-        Unk_RecordBuf *buf = AllocSaveRecord();
+        SaveRecordHead *buf = AllocSaveRecord();
         ReadSaveBlock(i, buf, SAVE_BLOCK_ID);
-        s->mUnk_00[i].mUnk_00 = buf->mUnk_10;
-        if (s->mUnk_00[i].mUnk_00 == 1) {
-            s->mUnk_30 = 1;
-            s->mUnk_00[i].mUnk_04 = buf->mUnk_14;
-            s->mUnk_00[i].mUnk_08 = buf->mUnk_18;
+        s->mSaveSlots[i].mWritten = buf->mWritten;
+        if (s->mSaveSlots[i].mWritten == 1) {
+            s->mAnySaveWritten = 1;
+            s->mSaveSlots[i].mReachedNodeIndex = buf->mReachedNodeIndex;
+            s->mSaveSlots[i].mLastNodeDone = buf->mLastNodeDone;
         }
         FreeSaveRecord(&buf);
     }
@@ -452,18 +461,19 @@ static const u32 data_0204e1ec[1] = {0xdd1};
 static const u32 data_0204e1e8[1] = {0xdce};
 static const s16 data_0204e1f0[4] = {140, 70, -22, 0};
 
-typedef struct Unk_0204e1f8 {
-    u32 mUnk_00;
-    u32 mUnk_04;
-} Unk_0204e1f8;
+typedef struct MicRange {
+    u32 mMin;
+    u32 mMax;
+} MicRange;
 
-static const Unk_0204e1f8 data_0204e1f8[2] = {{0, 3}, {0, 7}};
+// Only [1] is read (the range of sMicEdit.mUnk_04).
+static const MicRange sMicRanges[2] = {{0, 3}, {0, 7}};
 
-void func_0200e5b0(void) {
-    static s32 data_020ae454;
-    static s32 data_020ae450;
-    static s32 data_020ae44c;
-    Unk_020ae504 *s = &data_020ae504;
+void UpdateTitleScreen(void) {
+    static s32 sShakeTimer;
+    static s32 sShakeX;
+    static s32 sShakeY;
+    TitleScreen *s = &gTitleScreen;
     DrawParams params;
     char text[0x40];
     char num[8];
@@ -475,35 +485,35 @@ void func_0200e5b0(void) {
     const u32 *id;
     u32 v;
     u32 *level;
-    const Unk_0204e1f8 *range;
+    const MicRange *range;
 
-    if (s->mUnk_34 == 0) {
+    if (s->mIntroTimer == 0) {
         SetFaded(3);
         ReleaseGxPool();
         ReleaseTextureLayers();
         LoadImage(0xdaa, 1);
-        func_0202f410(&data_020ae464);
+        func_0202f410(&gTitleStream);
         RunVideo("BAK_Intro.mods", 2);
-        s->mUnk_34 = 0x4b0;
+        s->mIntroTimer = 0x4b0;
         SetupImageLayer(1, 0, 0x100, 0x100);
-        func_0200e484();
-        func_0202f470(&data_020ae464);
+        SetupTitleImageAndModel();
+        func_0202f470(&gTitleStream);
         return;
     }
-    if (s->mUnk_24 != 6 && s->mUnk_28 != 6) {
-        func_0202f31c(&data_020ae464);
+    if (s->mState != 6 && s->mNextState != 6) {
+        func_0202f31c(&gTitleStream);
     }
-    if (s->mUnk_24 == 1 && s->mUnk_28 < 0) {
+    if (s->mState == 1 && s->mNextState < 0) {
         if (gSystemState.mKeysDown != 0 || gSystemState.mTouchDown) {
-            s->mUnk_34 = 0x4b0;
+            s->mIntroTimer = 0x4b0;
         } else {
-            s->mUnk_34--;
+            s->mIntroTimer--;
         }
     }
     func_020242a8(&params, 0xff, 0, 0, 0x1000, 0x8000, -1, 0x100);
     params.mUnk_43_3 = 1;
-    UpdateModelScript(&s->mUnk_3c);
-    DrawModelFileEx(s->mUnk_3c.mUnk_170, &params, &s->mUnk_3c, 0);
+    UpdateModelScript(&s->mModel);
+    DrawModelFileEx(s->mModel.mUnk_170, &params, &s->mModel, 0);
     if (s->mUnk_1e4 == 0) {
         if (s->mUnk_1e0 >= 0) {
             s32 x = s->mUnk_1e0 - 0x1900;
@@ -516,7 +526,7 @@ void func_0200e5b0(void) {
             if (s->mUnk_1e0 == 0) {
                 func_0202f110(0xe7, 100, 0, 0x40, 0xffff, 0);
                 s->mUnk_1e0 = -1;
-                data_020ae454 = 12;
+                sShakeTimer = 12;
                 return;
             }
         } else {
@@ -525,14 +535,14 @@ void func_0200e5b0(void) {
             sign = (NextRandom() & 1) ? -1 : 1;
             d = RandomRange(0, 2);
             d *= sign;
-            data_020ae450 = d;
+            sShakeX = d;
             sign = (NextRandom() & 1) ? -1 : 1;
             d = RandomRange(0, 2);
             d *= sign;
-            data_020ae44c = d;
-            DrawSprite(0xdfa, data_020ae450 + 0x59, d + 0x35, 0x96, 2);
-            DrawSprite(0xdfb, data_020ae450 + 0x59, data_020ae44c + 0x35, 0x8c, 2);
-            if (--data_020ae454 == 0) {
+            sShakeY = d;
+            DrawSprite(0xdfa, sShakeX + 0x59, d + 0x35, 0x96, 2);
+            DrawSprite(0xdfb, sShakeX + 0x59, sShakeY + 0x35, 0x8c, 2);
+            if (--sShakeTimer == 0) {
                 s->mUnk_1e4 = 1;
                 return;
             }
@@ -541,73 +551,77 @@ void func_0200e5b0(void) {
     }
     DrawSprite(0xdfa, 0x59, 0x35, 0x96, 2);
     DrawSprite(0xdfb, 0x59, 0x35, 0x8c, 2);
-    if (func_0200de68() != 0 && s->mUnk_28 >= 0) {
-        s->mUnk_24 = s->mUnk_28;
-        s->mUnk_28 = -1;
+    if (UpdateTitleSlide() != 0 && s->mNextState >= 0) {
+        s->mState = s->mNextState;
+        s->mNextState = -1;
         func_0200dd90();
     }
-    flag = data_020ae504.mUnk_1b8 == 1 ? 1 : 0;
-    switch (s->mUnk_24) {
+    flag = gTitleScreen.mSlideState == TITLE_SLIDE_STATE_IN_PLACE ? 1 : 0;
+    switch (s->mState) {
         case 1:
-            func_0200bc50((data_020ae504.mUnk_1bc[0] >> 8) + 0x80, 0x3e, 0, 0, 0x8c, 0x701, 0xdda, GetText(0xc4),
+            func_0200bc50((gTitleScreen.mSlideOffsets[0] >> 8) + 0x80, 0x3e, 0, 0, 0x8c, 0x701, 0xdda, GetText(0xc4),
                           data_0201a61c, 2, 0, 0x167, flag, 0, 0, 0);
-            if (s->mUnk_30 != 0) {
-                func_0200bc50((data_020ae504.mUnk_1bc[1] >> 8) + 0x80, 0x66, 0, 0, 0x8c, 0x700, 0xdda, GetText(0xc5),
-                              data_0201a61c, 2, 0, 0x167, flag, 0, 0, 0);
+            if (s->mAnySaveWritten != 0) {
+                func_0200bc50((gTitleScreen.mSlideOffsets[1] >> 8) + 0x80, 0x66, 0, 0, 0x8c, 0x700, 0xdda,
+                              GetText(0xc5), data_0201a61c, 2, 0, 0x167, flag, 0, 0, 0);
             } else {
-                func_0200bc50((data_020ae504.mUnk_1bc[1] >> 8) + 0x80, 0x66, 0, 0, 0x8c, 0x700, 0xddc, GetText(0xc5),
-                              data_0201a626, 2, 0, 0x167, 0, 0, 0, 0);
+                func_0200bc50((gTitleScreen.mSlideOffsets[1] >> 8) + 0x80, 0x66, 0, 0, 0x8c, 0x700, 0xddc,
+                              GetText(0xc5), data_0201a626, 2, 0, 0x167, 0, 0, 0, 0);
             }
-            func_0200bc50((data_020ae504.mUnk_1bc[2] >> 8) + 0x80, 0x8e, 0, 0, 0x8c, 0x706, 0xdda, GetText(0xc6),
+            func_0200bc50((gTitleScreen.mSlideOffsets[2] >> 8) + 0x80, 0x8e, 0, 0, 0x8c, 0x706, 0xdda, GetText(0xc6),
                           data_0201a61c, 2, 0, 0x167, flag, 0, 0, 0);
             if (func_0200bd80(0x20000000, 0x700)) {
-                func_0200e3d0(2, -1);
-                s->mUnk_2c = 1;
+                RequestTitleState(2, -1);
+                s->mReadSelected = 1;
             }
             if (func_0200bd80(0x20000000, 0x701)) {
-                func_0200e3d0(2, -1);
-                s->mUnk_2c = 0;
+                RequestTitleState(2, -1);
+                s->mReadSelected = 0;
             }
             if (func_0200bd80(0x20000000, 0x706)) {
-                func_0200e3d0(5, -1);
+                RequestTitleState(5, -1);
                 return;
             }
             break;
         case 2:
-            DrawSprite(0xe22, 0x2f, (data_020ae504.mUnk_1bc[3] >> 8) + 0x11, 0x8c, 1);
-            if (s->mUnk_2c == 0) {
-                DrawText(0x2f, (data_020ae504.mUnk_1bc[3] >> 8) + 0x11, data_0201a61c, GetText(0xc4), 0, 200, 16, 1);
+            DrawSprite(0xe22, 0x2f, (gTitleScreen.mSlideOffsets[3] >> 8) + 0x11, 0x8c, 1);
+            if (s->mReadSelected == 0) {
+                DrawText(0x2f, (gTitleScreen.mSlideOffsets[3] >> 8) + 0x11, data_0201a61c, GetText(0xc4), 0, 200, 16,
+                         1);
             } else {
-                DrawText(0x2f, (data_020ae504.mUnk_1bc[3] >> 8) + 0x11, data_0201a61c, GetText(0xc5), 0, 200, 16, 1);
+                DrawText(0x2f, (gTitleScreen.mSlideOffsets[3] >> 8) + 0x11, data_0201a61c, GetText(0xc5), 0, 200, 16,
+                         1);
             }
             for (i = 0; i < 3; i++) {
-                if (s->mUnk_00[i].mUnk_00 == 1) {
-                    pct = s->mUnk_00[i].mUnk_08 != 0 ? 100 : s->mUnk_00[i].mUnk_04 * 100 / 25;
-                    func_0200bc50((data_020ae504.mUnk_1bc[i] >> 8) + 0x39, i * 0x2c + 0x36, 0, 0, 0x8c, 0x704 + i,
+                if (s->mSaveSlots[i].mWritten == 1) {
+                    pct = s->mSaveSlots[i].mLastNodeDone != 0
+                              ? 100
+                              : s->mSaveSlots[i].mReachedNodeIndex * 100 / MAP_NODE_COUNT;
+                    func_0200bc50((gTitleScreen.mSlideOffsets[i] >> 8) + 0x39, i * 0x2c + 0x36, 0, 0, 0x8c, 0x704 + i,
                                   0xdf6, 0, 0, 2, 0, 0x167, flag, 0, 0, 0);
                     sprintf(text, "%s %d", GetText(0xcd), i + 1);
-                    DrawText((data_020ae504.mUnk_1bc[i] >> 8) + 0x39, i * 0x2c + 0x36, data_0201a61c, text, 0, 0xf0,
+                    DrawText((gTitleScreen.mSlideOffsets[i] >> 8) + 0x39, i * 0x2c + 0x36, data_0201a61c, text, 0, 0xf0,
                              0x10, 1);
                     if (pct != 0) {
                         u8 n = MapRange(pct, 0, 100, 0, 0x18);
-                        DrawSprite(0xddd + n, (data_020ae504.mUnk_1bc[i] >> 8) + 0xa0, i * 0x2c + 0x36, 0x82, 1);
+                        DrawSprite(0xddd + n, (gTitleScreen.mSlideOffsets[i] >> 8) + 0xa0, i * 0x2c + 0x36, 0x82, 1);
                     }
                     sprintf(text, "%d%", pct);
-                    DrawText((data_020ae504.mUnk_1bc[i] >> 8) + 0xa0, i * 0x2c + 0x36, data_0201a662, text, 2, 0xf0,
+                    DrawText((gTitleScreen.mSlideOffsets[i] >> 8) + 0xa0, i * 0x2c + 0x36, data_0201a662, text, 2, 0xf0,
                              0x10, 1);
-                } else if (s->mUnk_2c == 0) {
-                    func_0200bc50((data_020ae504.mUnk_1bc[i] >> 8) + 0x39, i * 0x2c + 0x36, 0, 0, 0x8c, 0x704 + i,
+                } else if (s->mReadSelected == 0) {
+                    func_0200bc50((gTitleScreen.mSlideOffsets[i] >> 8) + 0x39, i * 0x2c + 0x36, 0, 0, 0x8c, 0x704 + i,
                                   0xdf8, 0, 0, 2, 0, 0, flag, 0, 0, 0);
-                    DrawText((data_020ae504.mUnk_1bc[i] >> 8) + 0x39, i * 0x2c + 0x36, data_0201a61c, GetText(0xcc), 0,
-                             0xf0, 0x10, 1);
+                    DrawText((gTitleScreen.mSlideOffsets[i] >> 8) + 0x39, i * 0x2c + 0x36, data_0201a61c, GetText(0xcc),
+                             0, 0xf0, 0x10, 1);
                 }
             }
-            func_0200bb14(0, (data_020ae504.mUnk_1bc[4] >> 8) + 0xa1, 0x102, 0xe, 0, 0, 0x5a, flag);
+            func_0200bb14(0, (gTitleScreen.mSlideOffsets[4] >> 8) + 0xa1, 0x102, 0xe, 0, 0, 0x5a, flag);
             if (func_0200bdac(0x20000000, 0x704, 0x706)) {
                 data_020b1084.mSaveSlot = (u16) data_020c1d60.mUnk_800.mUnk_100.mUnk_04 - 0x704;
-                if (s->mUnk_2c == 0) {
-                    if (s->mUnk_00[data_020b1084.mSaveSlot].mUnk_00 == 1) {
-                        func_0200e3d0(3, -1);
+                if (s->mReadSelected == 0) {
+                    if (s->mSaveSlots[data_020b1084.mSaveSlot].mWritten == 1) {
+                        RequestTitleState(3, -1);
                     } else {
                         ResetAllProgress();
                         PushState(10);
@@ -620,15 +634,15 @@ void func_0200e5b0(void) {
                 }
             }
             if (func_0200bd80(0x20000000, 0x102)) {
-                func_0200e3d0(1, 1);
+                RequestTitleState(1, 1);
                 return;
             }
             break;
         case 3:
-            DrawSprite(0xe21, (data_020ae504.mUnk_1bc[0] >> 8) + 0x7f, 0x50, 0x8c, 1);
-            DrawText((data_020ae504.mUnk_1bc[0] >> 8) + 0x7f, 0x50, data_0201a61c, GetText(0xcf), 2, 0xc0, 0xc, 1);
-            func_0200bb14(0xff, (data_020ae504.mUnk_1bc[4] >> 8) + 0xa1, 0x101, 0x15, 0, 0, 0x17d, flag);
-            func_0200bb14(0, (data_020ae504.mUnk_1bc[4] >> 8) + 0xa1, 0x102, 0xe, 0, 0, 0x5a, flag);
+            DrawSprite(0xe21, (gTitleScreen.mSlideOffsets[0] >> 8) + 0x7f, 0x50, 0x8c, 1);
+            DrawText((gTitleScreen.mSlideOffsets[0] >> 8) + 0x7f, 0x50, data_0201a61c, GetText(0xcf), 2, 0xc0, 0xc, 1);
+            func_0200bb14(0xff, (gTitleScreen.mSlideOffsets[4] >> 8) + 0xa1, 0x101, 0x15, 0, 0, 0x17d, flag);
+            func_0200bb14(0, (gTitleScreen.mSlideOffsets[4] >> 8) + 0xa1, 0x102, 0xe, 0, 0, 0x5a, flag);
             if (func_0200bd80(0x20000000, 0x101)) {
                 ResetAllProgress();
                 RunSaveScreen(0);
@@ -636,138 +650,139 @@ void func_0200e5b0(void) {
                 PopState();
             }
             if (func_0200bd80(0x20000000, 0x102)) {
-                func_0200e3d0(2, 1);
-                s->mUnk_2c = 0;
+                RequestTitleState(2, 1);
+                s->mReadSelected = 0;
                 return;
             }
             break;
         case 5:
-            DrawSprite(0xe22, 0x2f, (data_020ae504.mUnk_1bc[3] >> 8) + 0x11, 0x8c, 1);
-            DrawText(0x2f, (data_020ae504.mUnk_1bc[3] >> 8) + 0x11, data_0201a61c, GetText(0xc6), 0, 200, 16, 1);
-            func_0200bc50((data_020ae504.mUnk_1bc[1] >> 8) + 0x80, 0x48, 0, 0, 0x8c, 0x703, 0xdda, GetText(0xc8),
+            DrawSprite(0xe22, 0x2f, (gTitleScreen.mSlideOffsets[3] >> 8) + 0x11, 0x8c, 1);
+            DrawText(0x2f, (gTitleScreen.mSlideOffsets[3] >> 8) + 0x11, data_0201a61c, GetText(0xc6), 0, 200, 16, 1);
+            func_0200bc50((gTitleScreen.mSlideOffsets[1] >> 8) + 0x80, 0x48, 0, 0, 0x8c, 0x703, 0xdda, GetText(0xc8),
                           data_0201a61c, 2, 0, 0x167, flag, 0, 0, 0);
-            func_0200bc50((data_020ae504.mUnk_1bc[2] >> 8) + 0x80, 0x70, 0, 0, 0x8c, 0x708, 0xdda, GetText(0xc9),
+            func_0200bc50((gTitleScreen.mSlideOffsets[2] >> 8) + 0x80, 0x70, 0, 0, 0x8c, 0x708, 0xdda, GetText(0xc9),
                           data_0201a61c, 2, 0, 0x167, flag, 0, 0, 0);
-            func_0200bb14(0, (data_020ae504.mUnk_1bc[4] >> 8) + 0xa1, 0x102, 0xe, 0, 0, 0x5a, flag);
+            func_0200bb14(0, (gTitleScreen.mSlideOffsets[4] >> 8) + 0xa1, 0x102, 0xe, 0, 0, 0x5a, flag);
             if (func_0200bd80(0x20000000, 0x702)) {
-                data_020ae504.mUnk_1b4 = data_020b1084.mLanguage;
-                func_0200e3d0(4, -1);
+                gTitleScreen.mSelectedLanguage = data_020b1084.mLanguage;
+                RequestTitleState(4, -1);
             }
             if (func_0200bd80(0x20000000, 0x703)) {
-                s->mUnk_38 = s->mUnk_24;
+                s->mReturnState = s->mState;
                 PushState(0x18);
                 PopState();
             }
             if (func_0200bd80(0x20000000, 0x708)) {
-                func_0200e3d0(6, -1);
-                func_0200e3ec();
+                RequestTitleState(6, -1);
+                OpenMicEdit();
             }
             if (func_0200bd80(0x20000000, 0x102)) {
-                func_0200e3d0(1, 1);
+                RequestTitleState(1, 1);
                 return;
             }
             break;
         case 4:
-            DrawSprite(0xe22, 0x2f, (data_020ae504.mUnk_1bc[0] >> 8) + 0x11, 0x8c, 1);
-            DrawText(0x2f, (data_020ae504.mUnk_1bc[0] >> 8) + 0x11, data_0201a61c, GetText(0xc7), 0, 200, 16, 1);
+            DrawSprite(0xe22, 0x2f, (gTitleScreen.mSlideOffsets[0] >> 8) + 0x11, 0x8c, 1);
+            DrawText(0x2f, (gTitleScreen.mSlideOffsets[0] >> 8) + 0x11, data_0201a61c, GetText(0xc7), 0, 200, 16, 1);
             pos = data_0204e1f0;
             id = data_0204e1ec;
             for (i = 0; i < 1; i++) {
                 idx = data_0204e1e4[i] + 2;
-                func_0200bb14((data_020ae504.mUnk_1bc[idx] >> 8) + data_0204e1f0[0], data_0204e1f0[1], 0x705 + i,
+                func_0200bb14((gTitleScreen.mSlideOffsets[idx] >> 8) + data_0204e1f0[0], data_0204e1f0[1], 0x705 + i,
                               data_0204e1e8[i], 0, 0, 0x167, 1);
-                if (data_020ae504.mUnk_1b4 == i) {
-                    DrawSprite(0xdd0, pos[0] + (data_020ae504.mUnk_1bc[idx] >> 8), pos[1], 0xfa, 1);
+                if (gTitleScreen.mSelectedLanguage == i) {
+                    DrawSprite(0xdd0, pos[0] + (gTitleScreen.mSlideOffsets[idx] >> 8), pos[1], 0xfa, 1);
                 }
-                DrawSprite(*id, (data_020ae504.mUnk_1bc[idx] >> 8) + (pos[0] + pos[2]), pos[1], 0xff, 1);
+                DrawSprite(*id, (gTitleScreen.mSlideOffsets[idx] >> 8) + (pos[0] + pos[2]), pos[1], 0xff, 1);
             }
-            func_0200bb14(0xff, (data_020ae504.mUnk_1bc[1] >> 8) + 0xa1, 0x101, 0x15, 0, 0, 0x17d, flag);
-            func_0200bb14(0, (data_020ae504.mUnk_1bc[1] >> 8) + 0xa1, 0x102, 0xe, 0, 0, 0x5a, flag);
+            func_0200bb14(0xff, (gTitleScreen.mSlideOffsets[1] >> 8) + 0xa1, 0x101, 0x15, 0, 0, 0x17d, flag);
+            func_0200bb14(0, (gTitleScreen.mSlideOffsets[1] >> 8) + 0xa1, 0x102, 0xe, 0, 0, 0x5a, flag);
             for (i = 0; i < 1; i++) {
                 if (func_0200bd80(0x80000000, 0x705 + i)) {
-                    data_020ae504.mUnk_1b4 = i;
+                    gTitleScreen.mSelectedLanguage = i;
                     break;
                 }
             }
             if (func_0200bd80(0x20000000, 0x102)) {
-                func_0200e3d0(5, 1);
+                RequestTitleState(5, 1);
             }
             if (func_0200bd80(0x20000000, 0x101)) {
-                if (data_020ae504.mUnk_1b4 != data_020b1084.mLanguage) {
-                    data_020b1084.mLanguage = data_020ae504.mUnk_1b4;
-                    func_0202f2e8(&data_020ae464);
+                if (gTitleScreen.mSelectedLanguage != data_020b1084.mLanguage) {
+                    data_020b1084.mLanguage = gTitleScreen.mSelectedLanguage;
+                    func_0202f2e8(&gTitleStream);
                     RunSaveScreen(1);
-                    func_0202f290(&data_020ae464, "BAK_strm_Title.raw", 0x5654);
+                    func_0202f290(&gTitleStream, "BAK_strm_Title.raw", 0x5654);
                 }
-                func_0200e3d0(5, 1);
+                RequestTitleState(5, 1);
                 return;
             }
             break;
         case 6:
-            DrawSprite(0xe22, 0x2f, (data_020ae504.mUnk_1bc[3] >> 8) + 0x11, 0x8c, 1);
-            DrawText(0x2f, (data_020ae504.mUnk_1bc[3] >> 8) + 0x11, data_0201a61c, GetText(0xc9), 0, 200, 16, 1);
-            DrawSprite(0xe21, (data_020ae504.mUnk_1bc[0] >> 8) + 0x7f, 0x28, 0x8c, 1);
-            DrawSprite(0xe00, (data_020ae504.mUnk_1bc[1] >> 8) + 0x7f, 0x8f, 0x8c, 1);
-            DrawText((data_020ae504.mUnk_1bc[1] >> 8) + 0x7f, 0x9e, data_0201a61c, GetText(0xd2), 2, 0xc0, 0xc, 1);
-            level = &data_020ae458.mUnk_04;
-            range = &data_0204e1f8[1];
+            DrawSprite(0xe22, 0x2f, (gTitleScreen.mSlideOffsets[3] >> 8) + 0x11, 0x8c, 1);
+            DrawText(0x2f, (gTitleScreen.mSlideOffsets[3] >> 8) + 0x11, data_0201a61c, GetText(0xc9), 0, 200, 16, 1);
+            DrawSprite(0xe21, (gTitleScreen.mSlideOffsets[0] >> 8) + 0x7f, 0x28, 0x8c, 1);
+            DrawSprite(0xe00, (gTitleScreen.mSlideOffsets[1] >> 8) + 0x7f, 0x8f, 0x8c, 1);
+            DrawText((gTitleScreen.mSlideOffsets[1] >> 8) + 0x7f, 0x9e, data_0201a61c, GetText(0xd2), 2, 0xc0, 0xc, 1);
+            level = &sMicEdit.mUnk_04;
+            range = &sMicRanges[1];
             sprintf(num, "%d", *level + 1);
-            DrawText((data_020ae504.mUnk_1bc[1] >> 8) + 0x82, 0xb4, data_0201a676, num, 0, 0xf0, 1, 1);
-            if (*level > range->mUnk_00) {
-                func_0200bb14((data_020ae504.mUnk_1bc[1] >> 8) + 0x50, 0x85, 0x70b, 0xdfc, 0, 0, 0x17d,
+            DrawText((gTitleScreen.mSlideOffsets[1] >> 8) + 0x82, 0xb4, data_0201a676, num, 0, 0xf0, 1, 1);
+            if (*level > range->mMin) {
+                func_0200bb14((gTitleScreen.mSlideOffsets[1] >> 8) + 0x50, 0x85, 0x70b, 0xdfc, 0, 0, 0x17d,
                               gSystemState.mUnk_492 == 0 ? 1 : 0);
             }
-            if (*level < range->mUnk_04) {
-                func_0200bb14((data_020ae504.mUnk_1bc[1] >> 8) + 0xaf, 0x85, 0x70c, 0xdfe, 0, 0, 0x17d,
+            if (*level < range->mMax) {
+                func_0200bb14((gTitleScreen.mSlideOffsets[1] >> 8) + 0xaf, 0x85, 0x70c, 0xdfe, 0, 0, 0x17d,
                               gSystemState.mUnk_492 == 0 ? 1 : 0);
             }
             if (gSystemState.mUnk_492 == 0) {
-                DrawText((data_020ae504.mUnk_1bc[0] >> 8) + 0x7f, 0x28, data_0201a61c, GetText(0xd1), 2, 0xc0, 0xc, 1);
-                if (s->mUnk_28 < 0) {
+                DrawText((gTitleScreen.mSlideOffsets[0] >> 8) + 0x7f, 0x28, data_0201a61c, GetText(0xd1), 2, 0xc0, 0xc,
+                         1);
+                if (s->mNextState < 0) {
                     if (!(gSystemState.mFlags & 0x800)) {
                         OS_Terminate();
                     }
-                    v = MapRangeFromZero(func_020213e8((data_0204e1f8[1].mUnk_04 - data_020ae458.mUnk_04 + 1) * 25), 7,
-                                         0, 0x1f);
+                    v = MapRangeFromZero(func_020213e8((sMicRanges[1].mMax - sMicEdit.mUnk_04 + 1) * 25), 7, 0, 0x1f);
                 } else {
                     v = 0;
                 }
             } else {
-                DrawText((data_020ae504.mUnk_1bc[0] >> 8) + 0x7f, 0x28, data_0201a61c, GetText(0xd3), 2, 0xc0, 0xc, 1);
-                data_020ae458.mUnk_08 = 0;
+                DrawText((gTitleScreen.mSlideOffsets[0] >> 8) + 0x7f, 0x28, data_0201a61c, GetText(0xd3), 2, 0xc0, 0xc,
+                         1);
+                sMicEdit.mPeak = 0;
                 v = 0;
             }
-            if (v > data_020ae458.mUnk_08) {
-                data_020ae458.mUnk_08 = v;
+            if (v > sMicEdit.mPeak) {
+                sMicEdit.mPeak = v;
             }
-            if (data_020ae458.mUnk_08 != 0) {
-                DrawSprite(data_020ae458.mUnk_08 + 0xe01, (data_020ae504.mUnk_1bc[1] >> 8) + 0x7f, 0x8f, 0x8c, 1);
-                data_020ae458.mUnk_08--;
+            if (sMicEdit.mPeak != 0) {
+                DrawSprite(sMicEdit.mPeak + 0xe01, (gTitleScreen.mSlideOffsets[1] >> 8) + 0x7f, 0x8f, 0x8c, 1);
+                sMicEdit.mPeak--;
             }
-            func_0200bb14(0xff, (data_020ae504.mUnk_1bc[4] >> 8) + 0xa1, 0x101, 0x15, 0, 0, 0x17d, flag);
-            func_0200bb14(0, (data_020ae504.mUnk_1bc[4] >> 8) + 0xa1, 0x102, 0xe, 0, 0, 0x5a, flag);
+            func_0200bb14(0xff, (gTitleScreen.mSlideOffsets[4] >> 8) + 0xa1, 0x101, 0x15, 0, 0, 0x17d, flag);
+            func_0200bb14(0, (gTitleScreen.mSlideOffsets[4] >> 8) + 0xa1, 0x102, 0xe, 0, 0, 0x5a, flag);
             if (func_0200bd80(0x20000000, 0x709)) {
-                func_02021054(--data_020ae458.mUnk_00);
+                func_02021054(--sMicEdit.mUnk_00);
             } else if (func_0200bd80(0x20000000, 0x70a)) {
-                func_02021054(++data_020ae458.mUnk_00);
+                func_02021054(++sMicEdit.mUnk_00);
             } else if (func_0200bd80(0x20000000, 0x70b)) {
-                data_020ae458.mUnk_04--;
+                sMicEdit.mUnk_04--;
             } else if (func_0200bd80(0x20000000, 0x70c)) {
-                data_020ae458.mUnk_04++;
+                sMicEdit.mUnk_04++;
             }
             if (func_0200bd80(0x20000000, 0x102)) {
-                func_0200e3d0(5, 1);
-                func_0200e424(0);
+                RequestTitleState(5, 1);
+                CloseMicEdit(0);
             }
             if (func_0200bd80(0x20000000, 0x101)) {
-                func_0200e3d0(5, 1);
-                func_0200e424(1);
+                RequestTitleState(5, 1);
+                CloseMicEdit(1);
             }
             break;
     }
 }
 
-void func_0200f360(void) {
-    func_0202f2e8(&data_020ae464);
+void LeaveTitleScreen(void) {
+    func_0202f2e8(&gTitleStream);
     func_020102f8();
 }

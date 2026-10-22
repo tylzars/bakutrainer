@@ -45,7 +45,7 @@ typedef struct Unk_020b13b0 {
     u8 mSlotChanged;
     // The stage shown outside the slots (-1 for none); used only while mUnslottedVisible is 1.
     s32 mUnslottedStageIndex;
-    // Highlighted entry of the selected stage's row of five (0..4 into mInfo.mUnk_1c), -1 for none.
+    // Highlighted entry of the selected stage's row of five (0..4 into mInfo.mTableEntryIds), -1 for none.
     s32 mEntryCursor;
 } Unk_020b13b0;
 
@@ -56,7 +56,7 @@ s32 gSavedSlotStages[3];
 
 // Loads the image for screen mode unless that screen already shows it: in state 10 with stage -1 or a text set, image
 // 0x1e4 + mTextImageIndex; otherwise the stage's image (0xdb3 + its stage id). A stage of -1 outside state 10 reads
-// data_020b1990[-1]; UpdateSlotScreen passes -1 when no stage is selected.
+// gStages[-1]; UpdateSlotScreen passes -1 when no stage is selected.
 void LoadStageOrTextImage(int stage, int mode) {
     u16 current;
     int id;
@@ -74,7 +74,7 @@ void LoadStageOrTextImage(int stage, int mode) {
         id = data_020b6ee0.mTextImageIndex + 0x1e4;
         func_0200bdcc(2, 8);
     } else {
-        id = data_020b1990[stage].mInfo.mUnk_13 + 0xdb3;
+        id = gStages[stage].mInfo.mStageId + 0xdb3;
     }
     if ((u16) id != current) {
         SetFaded(mode);
@@ -107,9 +107,9 @@ void FormatSignedSeconds(int frames, char *buf) {
     }
 }
 
-// Draws the panel shown while a mode runs: score and b (every caller passes data_0206d448.mUnk_00), each as at least
-// three digits, and, unless func_02005a00(frames) is not 0, the time left from frames. stage is only range-checked
-// (-1 counts as 0).
+// Draws the panel shown while a mode runs: score and b (every caller passes gModeSelectState.mScoreThreshold), each as
+// at least three digits, and, unless UpdateTimeLeft(frames) is not 0, the time left from frames. stage is only
+// range-checked (-1 counts as 0).
 void func_0201168c(int stage, u32 score, int b, int frames, int d) {
     char time[12];
     char text[32];
@@ -131,7 +131,7 @@ void func_0201168c(int stage, u32 score, int b, int frames, int d) {
     DrawText(0x7b, 0xb0, data_0201a68a, text, 2, 0x82, 0x10, d);
     DrawSprite(0xf49, 0xb2, 0x8e, 0xc8, d);
     DrawText(0xc1, 0x95, data_0201a612, GetText(0x31), 0, 0xc8, 0x10, d);
-    if (func_02005a00(frames) == 0) {
+    if (UpdateTimeLeft(frames) == 0) {
         FormatFrameTime(frames, time);
         DrawText(0xd2, 0xb0, data_0201a694, time, 2, 0xc8, 0x10, d);
     }
@@ -156,8 +156,8 @@ void DrawPercentGauge(int stage, int mode) {
             OS_Terminate();
         }
         DrawSprite(0xf59, 8, 0x54, 0xa0, mode);
-        rec = &data_020b1990[stage];
-        DrawSprite(MapRange(rec->mInfo.mUnk_12, 0, 100, 50, 0) + 0xf5a, 7, 0x58, 0x9f, mode);
+        rec = &gStages[stage];
+        DrawSprite(MapRange(rec->mInfo.mPercent, 0, 100, 50, 0) + 0xf5a, 7, 0x58, 0x9f, mode);
         DrawText(0x1c, 0x54, data_0201a612, GetText(10), 0, 0xf0, 0x10, mode);
     }
 }
@@ -171,7 +171,7 @@ void DrawStageInfo(int level, int mode) {
     char number[8];
 
     if (level >= 0) {
-        rec = &data_020b1990[level];
+        rec = &gStages[level];
         total = GetFileValue(0x1e8, 0x13);
         if (!(level >= 0 && level < STAGE_MAX)) {
             OS_Terminate();
@@ -182,19 +182,19 @@ void DrawStageInfo(int level, int mode) {
         DrawSprite(0xf8d, 0, 0x79, 0xfa, mode);
         DrawText(0x25, 0x83, data_0201a61c, GetText(0xd), 2, 0xfa, 0, mode);
         DrawSprite(0xf4a, 0x27, 0xa3, 0xfa, mode);
-        DrawSprite(0xf4a + rec->mInfo.mUnk_11, 0x27, 0xa3, 0xfa, mode);
+        DrawSprite(0xf4a + rec->mInfo.mGrade, 0x27, 0xa3, 0xfa, mode);
         DrawSprite(0xf38, 0x47, 0x8b, 0x94, mode);
         DrawText(0x85, 0x83, data_0201a61c, GetText(0x18), 2, 0xfa, 0, mode);
-        DrawSprite(0xf42 + rec->mInfo.mUnk_10, 0x74, 0xaa, 0xfa, mode);
-        *FormatDecimal(rec->mInfo.mUnk_04, label) = 0;
+        DrawSprite(0xf42 + rec->mInfo.mKind, 0x74, 0xaa, 0xfa, mode);
+        *FormatDecimal(rec->mInfo.mValue, label) = 0;
         DrawText(0x74, 0xaa, data_0201a694, label, 0, 0xfa, 10, mode);
         if (func_020150c0(&rec->mInfo)) {
             DrawSprite(0xf57 + (gSystemState.mElapsedFrames % 60 <= 3 ? 1 : 0), 0x82, 0xbb, 0x8c, mode);
         }
-        sprintf(number, "+%d", rec->mInfo.mUnk_04 * total / 100);
+        sprintf(number, "+%d", rec->mInfo.mValue * total / 100);
         DrawText(0xbe, 0xa4, data_0201a68a, number, 0, 0xfa, 10, mode);
         DrawText(0xe8, 0xb3, data_0201a61c, GetText(0xf), 1, 0xfa, 0, mode);
-        DrawSprite(GetFileValue(0x10d5, rec->mInfo.mUnk_10 * 2 + 3) + 0xf32, 0xf2, 0xaf, 0xf8, mode);
+        DrawSprite(GetFileValue(0x10d5, rec->mInfo.mKind * 2 + 3) + 0xf32, 0xf2, 0xaf, 0xf8, mode);
     }
     data_020b6ee0.mTextOffsetY = 0x100;
 }
@@ -386,7 +386,7 @@ void func_02011ebc(StageRec *rec, u8 index, u32 flags) {
     data_020b6ee0.mUnk_c94 = 0;
     data_020b6ee0.mUnk_c98 = 0;
     data_020b6ee0.mUnk_c9c = 0;
-    rec->mUnk_1d8 = 0;
+    rec->mMoveAngle = 0;
     rec->mUnk_1dc = 0;
     rec->mDistancePerFrame = 0;
     rec->mUnk_21c = 0;
@@ -516,9 +516,9 @@ void StartGauge(u8 type) {
     if (data_020b6ee0.mSelectedStageIndex == -1) {
         OS_Terminate();
     }
-    rec = &data_020b1990[data_020b6ee0.mSelectedStageIndex];
+    rec = &gStages[data_020b6ee0.mSelectedStageIndex];
     ok = 0;
-    grade = rec->mInfo.mUnk_11;
+    grade = rec->mInfo.mGrade;
     if (grade >= 1 && grade <= 12) {
         ok = 1;
     }
@@ -532,7 +532,7 @@ void StartGauge(u8 type) {
     data_020b6ee0.mUnk_a104 = 0;
     data_020b6ee0.mUnk_a108 = 0;
     data_020b6ee0.mUnk_a13f = NextRandom() % 7;
-    data_020b6ee0.mUnk_a141 = MapRange(rec->mInfo.mUnk_11, 1, 12, 0, 6);
+    data_020b6ee0.mUnk_a141 = MapRange(rec->mInfo.mGrade, 1, 12, 0, 6);
     data_020b6ee0.mUnk_a142 = 0;
     data_020b6ee0.mUnk_a143 = 0;
     data_020b6ee0.mUnk_a144 = 0;
@@ -559,7 +559,7 @@ void StopGauge(int a) {
     if (data_020b6ee0.mSelectedStageIndex == -1) {
         OS_Terminate();
     }
-    rec = &data_020b1990[data_020b6ee0.mSelectedStageIndex];
+    rec = &gStages[data_020b6ee0.mSelectedStageIndex];
     data_020b6ee0.mUnk_a13e = a;
     data_020b6ee0.mPanelState = 5;
     data_020b6ee0.mUnk_a148 = 1;
@@ -593,14 +593,14 @@ void UpdateGauge(u8 a, int b) {
     if (data_020b6ee0.mSelectedStageIndex == -1) {
         OS_Terminate();
     }
-    rec = &data_020b1990[data_020b6ee0.mSelectedStageIndex];
+    rec = &gStages[data_020b6ee0.mSelectedStageIndex];
     if (data_020b6ee0.mUnk_a13d > 3) {
         OS_Terminate();
     }
-    if (rec->mInfo.mUnk_13 >= STAGE_MAX) {
+    if (rec->mInfo.mStageId >= STAGE_MAX) {
         OS_Terminate();
     }
-    level = data_02050038[rec->mInfo.mUnk_13] - 6;
+    level = data_02050038[rec->mInfo.mStageId] - 6;
     if (level <= 8) {
         OS_Terminate();
     }
@@ -700,7 +700,7 @@ void UpdatePanel(int stage) {
     Unk_020c1454 *fade = &data_020b6ee0.mUnk_a574;
 
     if (stage != -1) {
-        rec = &data_020b1990[stage];
+        rec = &gStages[stage];
     } else {
         rec = NULL;
     }
@@ -733,7 +733,7 @@ void UpdatePanel(int stage) {
             if (stage == -1 || rec == NULL) {
                 OS_Terminate();
             }
-            if (rec->mInfo.mUnk_12 == 100) {
+            if (rec->mInfo.mPercent == 100) {
                 func_0200bbd0(fade->mPanelButtonOffsetX + 0xff, 0x41, 0, 0, 0x8c, 0xc, 0xcc, 0, 0, 0, 0, 0x167, 1, 0, 0,
                               0, &data_020b6ee0.mUnk_a56d);
             } else {
@@ -788,7 +788,7 @@ void UpdatePanel(int stage) {
             x = 0x39 - alpha;
             DrawSprite(0xde, x, 0x12, 0x8c, 1);
             DrawText(x, 0x12, data_0201a61c, GetText(0x11), 0, 0xf0, 0x10, 1);
-            rec->mUnk_1d8 += AngleDelta(rec->mUnk_1d8, 0) / 8;
+            rec->mMoveAngle += AngleDelta(rec->mMoveAngle, 0) / 8;
             if (data_020b6ee0.mUnk_a148 == 0) {
                 for (i = 0; i < 3; i++) {
                     func_0200bc50(i * 0x32 + 0x3a, 0x60, 0, 0, 0x8c, i + 0x1e, i * 2 + 0xdf, 0, 0, 0, 0, 0x167, 1, 0, 0,
@@ -836,10 +836,10 @@ void UpdatePanel(int stage) {
             }
             rec->mUnk_1da += AngleDelta(rec->mUnk_1da, 0) / 8;
             rec->mUnk_1dc += AngleDelta(rec->mUnk_1dc, 0) / 8;
-            if (rec->mUnk_1d8 > data_020b6ee0.mUnk_0000) {
+            if (rec->mMoveAngle > data_020b6ee0.mUnk_0000) {
                 data_020b6ee0.mUnk_0002 += 0x100;
             }
-            data_020b6ee0.mUnk_0000 = rec->mUnk_1d8;
+            data_020b6ee0.mUnk_0000 = rec->mMoveAngle;
             if (data_020b6ee0.mUnk_0002 > 4) {
                 data_020b6ee0.mUnk_0002 -= 4;
             }
@@ -854,10 +854,10 @@ void UpdatePanel(int stage) {
             x = 0x39 - alpha;
             DrawSprite(0xdc, x, 0x12, 0x8c, 1);
             DrawText(x, 0x12, data_0201a61c, GetText(0x16), 0, 0xf0, 0x10, 1);
-            DrawGauge(rec->mUnk_1a0.y - 0x32000, 0, 0x12c000, data_020b6ee0.mUnk_a13f, data_020b6ee0.mUnk_a141,
-                          0x2c - alpha, 0x96, 1, &kind, &value);
+            DrawGauge(rec->mPos.y - 0x32000, 0, 0x12c000, data_020b6ee0.mUnk_a13f, data_020b6ee0.mUnk_a141,
+                      0x2c - alpha, 0x96, 1, &kind, &value);
             if (gSystemState.mTouchPressed) {
-                speed = rec->mUnk_1a0.y / 0xc800;
+                speed = rec->mPos.y / 0xc800;
                 if (speed < 0) {
                     speed = -speed;
                 }
@@ -868,11 +868,10 @@ void UpdatePanel(int stage) {
                 }
                 rec->mUnk_21c = -MapRange(speed, 0, 40, 10, 20) << 12;
             }
-            rec->mUnk_1a0.y = rec->mUnk_1a0.y + rec->mUnk_21c;
+            rec->mPos.y = rec->mPos.y + rec->mUnk_21c;
             rec->mUnk_21c = rec->mUnk_21c - 2000.0f;
-            ground = GetFloorHeightEx(rec->mUnk_1a0.x, rec->mUnk_1a0.z, rec->mUnk_1a0.y + 0xc800, 0, 0, NULL, &normal) +
-                     0x32000;
-            if (rec->mUnk_1a0.y < ground) {
+            ground = GetFloorHeightEx(rec->mPos.x, rec->mPos.z, rec->mPos.y + 0xc800, 0, 0, NULL, &normal) + 0x32000;
+            if (rec->mPos.y < ground) {
                 speed = rec->mUnk_21c >= 0.0f ? rec->mUnk_21c : 0.0f - rec->mUnk_21c;
                 if ((speed < 30000 ? speed : 30000) < 0) {
                     speed = 0;
@@ -881,7 +880,7 @@ void UpdatePanel(int stage) {
                 }
                 speed = MapRange(speed, 0, 30000, 0, 0x30);
                 rec->mUnk_21c = (0.0f - rec->mUnk_21c) * speed / 64.0f;
-                rec->mUnk_1a0.y = ground;
+                rec->mPos.y = ground;
                 if (rec->mUnk_21c >= 5000.0f) {
                     func_0202f110(0x27, 100, 0, 0x40, 0xffff, 0);
                 }
@@ -983,16 +982,16 @@ void UpdatePanel(int stage) {
                 data_020b6ee0.mUnk_1000[0] = data_0204fff0[r][0];
                 data_020b6ee0.mUnk_1000[1] = data_0204fff0[r][1];
                 data_020b6ee0.mUnk_1000[2] = data_0204fff0[r][2];
-                base = rec->mInfo.mUnk_10 * 0x68;
+                base = rec->mInfo.mKind * 0x68;
                 first = base + 0x1a;
                 ok = 0;
-                if (rec->mInfo.mUnk_11 != 0 && rec->mInfo.mUnk_11 - 1 < 12) {
+                if (rec->mInfo.mGrade != 0 && rec->mInfo.mGrade - 1 < 12) {
                     ok = 1;
                 }
                 if (!ok) {
                     OS_Terminate();
                 }
-                idx = rec->mInfo.mUnk_11 - 1;
+                idx = rec->mInfo.mGrade - 1;
                 k = NextRandom() % data_0204ffc0[idx];
                 k += data_0204ff90[idx];
                 data_020b6ee0.mUnk_100c = base + k;
@@ -1016,9 +1015,8 @@ void UpdatePanel(int stage) {
                 data_020b6ee0.mPanelLevel = 0;
                 data_020b6ee0.mUnk_ca8 = 0;
                 rec->mUnk_134 |= 2;
-                rec->mUnk_1a0.y =
-                    GetFloorHeightEx(rec->mUnk_1a0.x, rec->mUnk_1a0.z, rec->mUnk_1a0.y + 0xc800, 0, 0, NULL, NULL) +
-                    0x32000;
+                rec->mPos.y =
+                    GetFloorHeightEx(rec->mPos.x, rec->mPos.z, rec->mPos.y + 0xc800, 0, 0, NULL, NULL) + 0x32000;
                 break;
             case 0x17: {
                 int got;
@@ -1070,7 +1068,7 @@ void UpdatePanel(int stage) {
                 data_020b6ee0.mPanelState = 7;
                 StartGauge(1);
                 rec->mUnk_21c = -60000.0f;
-                rec->mUnk_1d8 = 0xe000;
+                rec->mMoveAngle = 0xe000;
                 rec->mUnk_1da = 0;
                 rec->mUnk_1dc = 0;
                 data_020b6ee0.mPanelLevel = 0;
@@ -1079,7 +1077,7 @@ void UpdatePanel(int stage) {
             case 0x20:
                 data_020b6ee0.mPanelState = 8;
                 StartGauge(2);
-                rec->mUnk_1d8 = 0xe000;
+                rec->mMoveAngle = 0xe000;
                 rec->mUnk_1da = 0;
                 rec->mUnk_1dc = 0;
                 data_020b6ee0.mPanelLevel = 0;
@@ -1136,7 +1134,7 @@ void SetupSlotScreen(void) {
     if (stage == -1) {
         id = 0x237;
     } else {
-        id = data_020b1990[stage].mInfo.mUnk_13 + 0xdb3;
+        id = gStages[stage].mInfo.mStageId + 0xdb3;
     }
     LoadImage(id, 1);
     LoadImage(data_020b6ee0.mUnslottedVisible == 1 ? 0x10ce : 0x10cd, 2);
@@ -1153,7 +1151,7 @@ void UpdateSlotScreen(void) {
     int sub;
 
     if (data_020b13b0.mUnslottedStageIndex != -1) {
-        sel = &data_020b1990[data_020b13b0.mUnslottedStageIndex];
+        sel = &gStages[data_020b13b0.mUnslottedStageIndex];
     } else {
         sel = NULL;
     }
@@ -1186,7 +1184,7 @@ void UpdateSlotScreen(void) {
             if (s >= STAGE_MAX) {
                 OS_Terminate();
             }
-            DrawSprite(data_020b1990[s].mInfo.mUnk_13 + 0x1089, x, y, 0x64, 2);
+            DrawSprite(gStages[s].mInfo.mStageId + 0x1089, x, y, 0x64, 2);
             DrawSprite(0x1088, x, y, 0x66, 2);
             if (s == data_020b6ee0.mSelectedStageIndex) {
                 sub = (gSystemState.mElapsedFrames >> 1) & 7;
@@ -1213,7 +1211,7 @@ void UpdateSlotScreen(void) {
     }
     if (data_020b6ee0.mUnslottedVisible == 1) {
         s = data_020b13b0.mUnslottedStageIndex;
-        DrawSprite(sel->mInfo.mUnk_13 + 0x1089, 0x32, 0x4e, 0x64, 2);
+        DrawSprite(sel->mInfo.mStageId + 0x1089, 0x32, 0x4e, 0x64, 2);
         DrawSprite(0x1088, 0x32, 0x4e, 0x66, 2);
         if (data_020b13b0.mUnslottedStageIndex == data_020b6ee0.mSelectedStageIndex) {
             sub = (gSystemState.mElapsedFrames >> 1) & 7;
@@ -1287,7 +1285,7 @@ void func_02013b48(StageInfo *info, int slot, int *a, int *b) {
     int v4;
     int v5;
 
-    index = func_020079ec(slot);
+    index = FindTableEntryIndexUnbounded(slot);
     base = index * 0x14;
     v4 = GetFileValue(0x1d9, base + 4);
     v5 = GetFileValue(0x1d9, base + 5);
@@ -1298,7 +1296,7 @@ void func_02013b48(StageInfo *info, int slot, int *a, int *b) {
         *a = 0x10c1;
         *b = v4 / 10 + 0x113f;
     } else if (slot < 300) {
-        *a = info->mUnk_10 + 0x10c2;
+        *a = info->mKind + 0x10c2;
         *b = v4 / 10 + 0x113f;
     } else if (slot < 400) {
         *a = v5 + 0x10c8;
@@ -1315,7 +1313,7 @@ void func_02013c24(StageInfo *info, int slot, int *a, int *b, int *c, int *d, in
     int v5;
     int base;
 
-    index = func_020079ec(slot);
+    index = FindTableEntryIndexUnbounded(slot);
     base = index * 0x14;
     v4 = GetFileValue(0x1d9, base + 4);
     v5 = GetFileValue(0x1d9, base + 5);
@@ -1339,7 +1337,7 @@ void func_02013c24(StageInfo *info, int slot, int *a, int *b, int *c, int *d, in
         *d = v4 / 10 + 0x10ee;
     } else if (slot < 300) {
         *b = 0x10ec;
-        *c = info->mUnk_10 + 0x10dd;
+        *c = info->mKind + 0x10dd;
         *d = v4 / 10 + 0x10ee;
     } else if (slot < 400) {
         *b = 0x10ed;
@@ -1386,8 +1384,8 @@ void func_02013dc8(StageInfo *info, s16 slot, int a, int b) {
         DrawText(0x5f, 0x93, data_0201a61c, GetText(index + 0x8a), 0, 0xf0, 0x10, 1);
         DrawText(0x12, 0xa4, data_0201a612, GetText(index + 0x9b), 0, 0xe8, 0xa, 1);
     } else if (kind == 0xe) {
-        DrawText(0x5f, 0x93, data_0201a61c, GetText(info->mUnk_10 + 0xb8), 0, 0xf0, 0x10, 1);
-        DrawText(0x12, 0xa4, data_0201a612, GetText(info->mUnk_10 + 0xac), 0, 0xe8, 0xa, 1);
+        DrawText(0x5f, 0x93, data_0201a61c, GetText(info->mKind + 0xb8), 0, 0xf0, 0x10, 1);
+        DrawText(0x12, 0xa4, data_0201a612, GetText(info->mKind + 0xac), 0, 0xe8, 0xa, 1);
     } else if (kind == 0xf) {
         DrawText(0x5f, 0x93, data_0201a61c, GetText(kindId + 0xbe), 0, 0xf0, 0x10, 1);
         DrawText(0x12, 0xa4, data_0201a612, GetText(kindId + 0xb2), 0, 0xe8, 0xa, 1);
@@ -1406,7 +1404,7 @@ void func_02013f74(int stage, int *cursor, int x, int y, int mode, int flags) {
     StageInfo *info;
 
     if (stage != -1) {
-        rec = &data_020b1990[stage];
+        rec = &gStages[stage];
     } else {
         rec = NULL;
     }
@@ -1424,10 +1422,10 @@ void func_02013f74(int stage, int *cursor, int x, int y, int mode, int flags) {
             info = &rec->mInfo;
             sel = (*cursor == i);
             xx = x - 0x34;
-            if (info->mUnk_1c[i] >= 0) {
-                func_02013d48(info, info->mUnk_1c[i], sel, 0x500 + i, xx, y, mode, flags);
+            if (info->mTableEntryIds[i] >= 0) {
+                func_02013d48(info, info->mTableEntryIds[i], sel, 0x500 + i, xx, y, mode, flags);
                 if (sel) {
-                    func_02013dc8(info, info->mUnk_1c[i], mode2, flags);
+                    func_02013dc8(info, info->mTableEntryIds[i], mode2, flags);
                 }
             } else if (flags & 2) {
                 if (!(flags & 4)) {
@@ -1454,27 +1452,27 @@ void func_020140d4(void) {
     SetLcdSwap(1);
     func_02024208();
     data_020b13b0.mUnk_02 = 0;
-    func_0200f848(0, 1);
+    SetupSharedModel(0, 1);
 }
 
 void func_02014124(void) {
     u32 sel;
 
-    func_0200f898();
+    DrawSharedModel();
     if (gSystemState.mKeysPressed & 0x100) {
         sel = data_020b13b0.mUnk_02 + 1;
-        if (sel >= func_0200f988() - 1) {
-            sel = func_0200f988() - 1;
+        if (sel >= CountSharedModels() - 1) {
+            sel = CountSharedModels() - 1;
         }
         data_020b13b0.mUnk_02 = sel;
-        func_0200f848(data_020b13b0.mUnk_02, 1);
+        SetupSharedModel(data_020b13b0.mUnk_02, 1);
     } else if (gSystemState.mKeysPressed & 0x200) {
         int prev = data_020b13b0.mUnk_02 - 1;
         if (prev < 0) {
             prev = 0;
         }
         data_020b13b0.mUnk_02 = prev;
-        func_0200f848(data_020b13b0.mUnk_02, 1);
+        SetupSharedModel(data_020b13b0.mUnk_02, 1);
     }
 }
 
@@ -1496,8 +1494,8 @@ void func_02014190(void) {
     gMapState.mCamera.mUnk_04 = func_0201418c;
     gMapState.mCamera.mUnk_2dc.mUnk_54 = 0x640;
     gMapState.mCamera.mUnk_2dc.mUnk_44 = 0x128e000;
-    memset(&data_020b6ee0.mUnk_f9c, 0, 0x44);
-    func_02031fc4(0, &data_020b6ee0.mUnk_f9c);
+    memset(&data_020b6ee0.mModelPos, 0, 0x44);
+    func_02031fc4(0, &data_020b6ee0.mModelPos);
     data_020b6ee0.mUnk_fdf &= ~7;
     InitModel(&data_020b6ee0.mModel[0], 0, 0, 0, data_0201aa60[0]);
     data_020b13b0.mUnk_01 = 0;
@@ -1508,9 +1506,9 @@ void func_02014260(void) {
     u8 order[5] = {0, 1, 2, 3, 4};
     u16 keys;
 
-    func_020073b0();
+    SetCameraFromModel();
     func_02033614(gMapState.mCamera.mPosGoal.x, gMapState.mCamera.mPosGoal.z);
-    func_020072a8();
+    DrawBattleModels();
     func_0200b8dc(10, 10, "t:%i a:%i", data_020b13b0.mUnk_00, data_020b13b0.mUnk_01);
     keys = gSystemState.mKeysPressed;
     if (keys & 0x10) {
@@ -1529,14 +1527,14 @@ void func_02014260(void) {
     if (keys & 0x40) {
         if (data_020b13b0.mUnk_01 < 0x26) {
             data_020b13b0.mUnk_01++;
-            func_02007244(data_020b13b0.mUnk_01);
+            SetupStageModels(data_020b13b0.mUnk_01);
             data_020b6ee0.mModel[0].mUnk_142 = 0;
             data_020b6ee0.mModel[0].mUnk_134 |= 1 << order[data_020b13b0.mUnk_00];
         }
     } else if (keys & 0x80) {
         if (data_020b13b0.mUnk_01 != 0) {
             data_020b13b0.mUnk_01--;
-            func_02007244(data_020b13b0.mUnk_01);
+            SetupStageModels(data_020b13b0.mUnk_01);
             data_020b6ee0.mModel[0].mUnk_142 = 0;
             data_020b6ee0.mModel[0].mUnk_134 |= 1 << order[data_020b13b0.mUnk_00];
         }

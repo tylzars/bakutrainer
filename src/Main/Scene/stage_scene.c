@@ -139,8 +139,8 @@ void SetupScene(void) {
     if (stage < 0) {
         stage = 0;
     }
-    gScene->mStage = data_020b1990[stage].mInfo;
-    data_020b10fc.mTableRow = gScene->mStage.mUnk_11 - 1;
+    gScene->mStage = gStages[stage].mInfo;
+    data_020b10fc.mTableRow = gScene->mStage.mGrade - 1;
     ok = 0;
     if (data_020b10fc.mTableRow >= 0 && data_020b10fc.mTableRow < 12) {
         ok = 1;
@@ -148,10 +148,10 @@ void SetupScene(void) {
     if (!ok) {
         OS_Terminate();
     }
-    func_0200c5d8(0, 0, gScene->mStage.mUnk_13 + 0xdb3, 0x180, 16, 0, 2);
+    func_0200c5d8(0, 0, gScene->mStage.mStageId + 0xdb3, 0x180, 16, 0, 2);
     func_02024208();
     RequestTrack(4, 0x4c);
-    func_0200dc08(data_0204e1c0[gScene->mStage.mUnk_10], &area[4], &area[3], &area[2], &area[1], &area[0], 0);
+    func_0200dc08(data_0204e1c0[gScene->mStage.mKind], &area[4], &area[3], &area[2], &area[1], &area[0], 0);
     SetupMap(area[4], area[2], area[3], 0, area[1], area[0]);
     UpdateSystemAndWait();
     SetupSceneCamera();
@@ -159,7 +159,7 @@ void SetupScene(void) {
     memset(&gScene->mUnk_3a8, 0, sizeof(DrawParams));
     func_02031fc4(3, &gScene->mUnk_3a8.mPos);
     gScene->mUnk_3a8.mUnk_43 = 0;
-    InitModel(&gScene->mUnk_230, 0, 0, 0, data_0201abbc[gScene->mStage.mUnk_10 + 1]);
+    InitModel(&gScene->mUnk_230, 0, 0, 0, data_0201abbc[gScene->mStage.mKind + 1]);
     gScene->mBasePos = gScene->mUnk_3a8.mPos;
     InitModel(&gScene->mUnk_3ec, 0, 0, 0, data_0201abbc[0]);
     data_020b10fc.mSceneState = SCENE_STATE_START;
@@ -172,20 +172,20 @@ void SetupScene(void) {
     for (i = 0; i < POPUP_SLOT_COUNT; i++) {
         gScene->mSlots[i].mState = POPUP_STATE_FREE;
     }
-    func_02005a8c(1, 0);
+    StartModeSlide(1, 0);
 }
 
 void UpdateScene(void) {
     u8 mode;
     int busy;
     func_020059cc(gScene->mScore);
-    mode = func_02005bf8();
-    if (mode != 0) {
+    mode = GetModeSlideState();
+    if (mode != MODE_SLIDE_STATE_NONE) {
         UpdateSceneCamera();
         DrawScene();
-        busy = func_02005b1c(1);
-        if (mode == 2 && busy == 0) {
-            func_020059b4(func_02005c04(), gScene->mScore);
+        busy = UpdateModeSlide(1);
+        if (mode == MODE_SLIDE_STATE_END && busy == 0) {
+            StartResultScreen(GetScoreThresholdMet(), gScene->mScore);
         }
         return;
     }
@@ -215,7 +215,7 @@ void UpdateScene(void) {
             break;
         case SCENE_STATE_END:
             if (gScene->mUnk_230.mUnk_172_9) {
-                func_02005a8c(0, gScene->mScore >= gScene->mUnk_630);
+                StartModeSlide(0, gScene->mScore >= gScene->mUnk_630);
             }
             break;
     }
@@ -227,7 +227,8 @@ void LeaveScene(void) {
 }
 
 void DrawScene(void) {
-    func_0201168c(data_020b6ee0.mSelectedStageIndex, gScene->mScore, data_0206d448.mUnk_00, gScene->mEndTimer, 2);
+    func_0201168c(data_020b6ee0.mSelectedStageIndex, gScene->mScore, gModeSelectState.mScoreThreshold,
+                  gScene->mEndTimer, 2);
     func_0200cdc4();
     func_02033614(gMapState.mCamera.mUnk_9c.mUnk_228.x, gMapState.mCamera.mUnk_9c.mUnk_228.z);
     UpdateAndDrawModel(&gScene->mUnk_230, &gScene->mUnk_3a8, 0xb0000002);
@@ -442,12 +443,12 @@ void HandlePopupTouch(PopupSlot *slot) {
             gScene->mEndTimer < gScene->mEndTimerMax ? gScene->mEndTimer : gScene->mEndTimerMax;
         func_0202f110(0x75, 100, 0, 0x40, 0xffff, 0);
     } else if (slot->mKind == 2) {
-        func_020059d0(&gScene->mScore, gScene->mUnk_658, 0);
+        AddCappedAt999Shifted(&gScene->mScore, gScene->mUnk_658, 0);
         ShowNumber(gScene->mUnk_658, &pos);
         gScene->mUnk_3a8.mPos.z = gScene->mBasePos.z - 0xc800;
         func_0202f110(0x74, 100, 0, 0x40, 0xffff, 0);
     } else {
-        func_020059d0(&gScene->mScore, gScene->mUnk_660, 0);
+        AddCappedAt999Shifted(&gScene->mScore, gScene->mUnk_660, 0);
         ShowNumber(gScene->mUnk_660, &pos);
         gScene->mUnk_3a8.mPos.z = gScene->mBasePos.z - 0xc800;
         func_0202f110(0x73, 100, 0, 0x40, 0xffff, 0);

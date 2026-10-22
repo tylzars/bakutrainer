@@ -331,43 +331,43 @@ void RunVideo(const char *path, int b) {
 
 void func_0200dd90(void) {
     int i;
-    data_020ae504.mUnk_1b8 = 0;
+    gTitleScreen.mSlideState = TITLE_SLIDE_STATE_IN;
     for (i = 0; i < 8; i++) {
-        data_020ae504.mUnk_1bc[i] = 0;
+        gTitleScreen.mSlideOffsets[i] = 0;
     }
-    if (data_020ae504.mUnk_38 < 0) {
+    if (gTitleScreen.mReturnState < 0) {
         s32 v;
-        switch (data_020ae504.mUnk_24) {
+        switch (gTitleScreen.mState) {
             case 1:
-                v = -data_020ae504.mUnk_1dc;
-                data_020ae504.mUnk_1bc[0] = v << 16;
-                data_020ae504.mUnk_1bc[1] = (v * 0x180) << 8;
-                data_020ae504.mUnk_1bc[2] = v << 17;
+                v = -gTitleScreen.mSlideDirection;
+                gTitleScreen.mSlideOffsets[0] = v << 16;
+                gTitleScreen.mSlideOffsets[1] = (v * 0x180) << 8;
+                gTitleScreen.mSlideOffsets[2] = v << 17;
                 break;
             case 2:
             case 5:
-                v = -data_020ae504.mUnk_1dc;
-                data_020ae504.mUnk_1bc[0] = v << 16;
-                data_020ae504.mUnk_1bc[1] = (v * 0x180) << 8;
-                data_020ae504.mUnk_1bc[2] = v << 17;
-                data_020ae504.mUnk_1bc[3] = -0x4000;
-                data_020ae504.mUnk_1bc[4] = 0xa000;
+                v = -gTitleScreen.mSlideDirection;
+                gTitleScreen.mSlideOffsets[0] = v << 16;
+                gTitleScreen.mSlideOffsets[1] = (v * 0x180) << 8;
+                gTitleScreen.mSlideOffsets[2] = v << 17;
+                gTitleScreen.mSlideOffsets[3] = -0x4000;
+                gTitleScreen.mSlideOffsets[4] = 0xa000;
                 break;
             case 4:
-                data_020ae504.mUnk_1bc[0] = -0x4000;
-                data_020ae504.mUnk_1bc[1] = 0xa000;
-                data_020ae504.mUnk_1bc[2] = 0x10000;
+                gTitleScreen.mSlideOffsets[0] = -0x4000;
+                gTitleScreen.mSlideOffsets[1] = 0xa000;
+                gTitleScreen.mSlideOffsets[2] = 0x10000;
                 break;
             case 3:
-                data_020ae504.mUnk_1bc[0] = -data_020ae504.mUnk_1dc << 16;
-                data_020ae504.mUnk_1bc[4] = 0x8000;
+                gTitleScreen.mSlideOffsets[0] = -gTitleScreen.mSlideDirection << 16;
+                gTitleScreen.mSlideOffsets[4] = 0x8000;
                 break;
             case 6:
-                v = -data_020ae504.mUnk_1dc;
-                data_020ae504.mUnk_1bc[0] = v << 16;
-                data_020ae504.mUnk_1bc[1] = (v * 0x180) << 8;
-                data_020ae504.mUnk_1bc[3] = -0x4000;
-                data_020ae504.mUnk_1bc[4] = 0xa000;
+                v = -gTitleScreen.mSlideDirection;
+                gTitleScreen.mSlideOffsets[0] = v << 16;
+                gTitleScreen.mSlideOffsets[1] = (v * 0x180) << 8;
+                gTitleScreen.mSlideOffsets[3] = -0x4000;
+                gTitleScreen.mSlideOffsets[4] = 0xa000;
                 break;
         }
     }

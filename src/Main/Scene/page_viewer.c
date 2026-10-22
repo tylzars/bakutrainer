@@ -9,9 +9,12 @@
 #include <Main/Scene/page_viewer.h>
 #include <Main/Graphics/texture_blocks.h>
 
-PageViewState data_02098d74;
+// Number of pages: images 0x1e9 to 0x1f3, shown in turn by button 0x601.
+#define PAGE_VIEWER_PAGE_COUNT 11
 
-void func_02006fc0(void) {
+PageViewState gPageViewState;
+
+void SetupPageViewer(void) {
     UpdateSystemAndWait();
     SetFaded(3);
     ResetKeys();
@@ -22,37 +25,40 @@ void func_02006fc0(void) {
     SetupTextureLayer(0x10cb, 0x10ca, 0x10cc, 2, 1);
     SetupTextureLayer(0x10cb, 0x10ca, 0x10cc, 2, 2);
     RequestTrack(1, 0x80);
-    data_02098d74.mUnk_04 = 0;
-    func_02007168(1);
+    gPageViewState.mPageIndex = 0;
+    StartPageViewerState(1);
     if (data_020b6ee0.mSaveRequested == 1) {
         RunSaveScreen(0);
         data_020b6ee0.mSaveRequested = 0;
     }
 }
 
-void func_02007040(void) {
-    PageViewState *p = &data_02098d74;
-    switch (data_02098d74.mState) {
+// The state 0 branch (button 0x600 at 0x80, 0x60) never runs in this build: every StartPageViewerState call passes 1.
+void DrawPageViewerButtons(void) {
+    PageViewState *p = &gPageViewState;
+    switch (gPageViewState.mState) {
         case 0:
             func_0200bb14(0x80, 0x60, 0x600, 0xf8e, 0, 0, 0, 1);
             break;
         case 1:
             func_0200bb14(0, 0xa1, 0x600, 14, 0, 0, 90, 1);
-            if (p->mUnk_08 == 0) {
+            if (p->mNextPageTimer == 0) {
                 func_0200bb14(0xff, 0xa1, 0x601, 21, 0, 0, 0x17d, 1);
             }
             break;
     }
 }
 
-void func_020070c4(void) {
-    PageViewState *p = &data_02098d74;
-    func_02007040();
-    switch (data_02098d74.mState) {
+// Button 0x600 leaves for game state 10 when data_020b6ee0.mUnk_a91b is set (clearing it), else for the title screen
+// (state 1); 0x601 shows the next page. State 0 is never entered in this build.
+void UpdatePageViewer(void) {
+    PageViewState *p = &gPageViewState;
+    DrawPageViewerButtons();
+    switch (gPageViewState.mState) {
         case 0:
             if (func_0200bd80(0x20000000, 0x600) != 0) {
-                p->mUnk_04 = 0;
-                func_02007168(1);
+                p->mPageIndex = 0;
+                StartPageViewerState(1);
             }
             break;
         case 1:
@@ -66,35 +72,36 @@ void func_020070c4(void) {
                     PopState();
                 }
             }
-            if (p->mUnk_08 == 0) {
+            if (p->mNextPageTimer == 0) {
                 if (func_0200bd80(0x20000000, 0x601) != 0) {
-                    p->mUnk_04++;
-                    if (p->mUnk_04 == 11) {
-                        p->mUnk_04 = 0;
+                    p->mPageIndex++;
+                    if (p->mPageIndex == PAGE_VIEWER_PAGE_COUNT) {
+                        p->mPageIndex = 0;
                     }
-                    func_02007168(1);
+                    StartPageViewerState(1);
                 }
             } else {
-                p->mUnk_08--;
+                p->mNextPageTimer--;
             }
             break;
     }
 }
 
-void func_02007168(int state) {
-    PageViewState *p = &data_02098d74;
+// Every call passes 1 (load the page's image and start the next-page countdown).
+void StartPageViewerState(int state) {
+    PageViewState *p = &gPageViewState;
     SetFaded(3);
     switch (state) {
         case 0:
             break;
         case 1:
-            LoadImageEx(p->mUnk_04 + 0x1e9, 3, 0, 2);
-            p->mUnk_08 = 120;
+            LoadImageEx(p->mPageIndex + 0x1e9, 3, 0, 2);
+            p->mNextPageTimer = 120;
             break;
     }
     p->mState = state;
 }
 
-void func_0200719c(void) {
+void LeavePageViewer(void) {
     SetFaded(3);
 }

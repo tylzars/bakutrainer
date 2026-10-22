@@ -43,7 +43,7 @@ void main(void) {
     ClearObjSlots();
     ClearAnimSlots();
     ResetAllProgress();
-    func_0200e474();
+    ResetTitleReturnState();
     StartSprite(&data_020b6ee0.mSelectionSprite, data_0201abec[2]);
     data_020b6ee0.mUnk_a91b = 0;
     func_0200dbac();

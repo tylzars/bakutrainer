@@ -79,89 +79,89 @@ func_02004768 kind:function(thumb,size=0x1c8) addr:0x02004768
 func_02004930 kind:function(thumb,size=0xe) addr:0x02004930
 func_02004940 kind:function(thumb,size=0xc) addr:0x02004940
 func_0200494c kind:function(thumb,size=0x18) addr:0x0200494c
-func_02004964 kind:function(thumb,size=0x144) addr:0x02004964
-func_02004aa8 kind:function(thumb,size=0x6ec) addr:0x02004aa8
-func_02005194 kind:function(thumb,size=0x2f8) addr:0x02005194
-func_0200548c kind:function(thumb,size=0x18) addr:0x0200548c
-func_020054a4 kind:function(thumb,size=0xa4) addr:0x020054a4
-func_02005548 kind:function(thumb,size=0x60) addr:0x02005548
-func_020055a8 kind:function(thumb,size=0x2f0) addr:0x020055a8
-func_02005898 kind:function(thumb,size=0x114) addr:0x02005898
-func_020059ac kind:function(thumb,size=0x8) addr:0x020059ac
-func_020059b4 kind:function(thumb,size=0x18) addr:0x020059b4
+SetupResultScreen kind:function(thumb,size=0x144) addr:0x02004964
+DrawResultScreenAndHandleButtons kind:function(thumb,size=0x6ec) addr:0x02004aa8
+UpdateResultScreen kind:function(thumb,size=0x2f8) addr:0x02005194
+LeaveResultScreen kind:function(thumb,size=0x18) addr:0x0200548c
+SelectMode kind:function(thumb,size=0xa4) addr:0x020054a4
+SetupModeSelect kind:function(thumb,size=0x60) addr:0x02005548
+DrawModeSelect kind:function(thumb,size=0x2f0) addr:0x020055a8
+UpdateModeSelect kind:function(thumb,size=0x114) addr:0x02005898
+LeaveModeSelect kind:function(thumb,size=0x8) addr:0x020059ac
+StartResultScreen kind:function(thumb,size=0x18) addr:0x020059b4
 func_020059cc kind:function(thumb,size=0x2) addr:0x020059cc
-func_020059d0 kind:function(thumb,size=0x18) addr:0x020059d0
-func_020059e8 kind:function(thumb,size=0x18) addr:0x020059e8
-func_02005a00 kind:function(thumb,size=0x8c) addr:0x02005a00
-func_02005a8c kind:function(thumb,size=0x90) addr:0x02005a8c
-func_02005b1c kind:function(thumb,size=0xdc) addr:0x02005b1c
-func_02005bf8 kind:function(thumb,size=0xc) addr:0x02005bf8
-func_02005c04 kind:function(thumb,size=0xc) addr:0x02005c04
-func_02005c10 kind:function(thumb,size=0x14) addr:0x02005c10
-func_02005c24 kind:function(thumb,size=0x18) addr:0x02005c24
-func_02005c3c kind:function(thumb,size=0x18) addr:0x02005c3c
-func_02005c54 kind:function(thumb,size=0x60) addr:0x02005c54
-func_02005cb4 kind:function(thumb,size=0xe0) addr:0x02005cb4
-func_02005d94 kind:function(thumb,size=0x4c) addr:0x02005d94
-func_02005de0 kind:function(thumb,size=0x190) addr:0x02005de0
-func_02005f70 kind:function(thumb,size=0x23c) addr:0x02005f70
-func_020061ac kind:function(thumb,size=0x13c) addr:0x020061ac
-func_020062e8 kind:function(thumb,size=0x4) addr:0x020062e8
-func_020062ec kind:function(thumb,size=0x20) addr:0x020062ec
-func_0200630c kind:function(thumb,size=0x44) addr:0x0200630c
-func_02006350 kind:function(thumb,size=0x48) addr:0x02006350
-func_02006398 kind:function(thumb,size=0x150) addr:0x02006398
-func_020064e8 kind:function(thumb,size=0xb4) addr:0x020064e8
-func_0200659c kind:function(thumb,size=0x12c) addr:0x0200659c
-func_020066c8 kind:function(thumb,size=0xe4) addr:0x020066c8
-func_020067ac kind:function(thumb,size=0x370) addr:0x020067ac
-func_02006b1c kind:function(thumb,size=0x4c) addr:0x02006b1c
-func_02006b68 kind:function(thumb,size=0x444) addr:0x02006b68
-func_02006fac kind:function(thumb,size=0x8) addr:0x02006fac
-func_02006fb4 kind:function(thumb,size=0xc) addr:0x02006fb4
-func_02006fc0 kind:function(thumb,size=0x80) addr:0x02006fc0
-func_02007040 kind:function(thumb,size=0x84) addr:0x02007040
-func_020070c4 kind:function(thumb,size=0xa4) addr:0x020070c4
-func_02007168 kind:function(thumb,size=0x34) addr:0x02007168
-func_0200719c kind:function(thumb,size=0xc) addr:0x0200719c
+AddCappedAt999Shifted kind:function(thumb,size=0x18) addr:0x020059d0
+AddCappedAt5999 kind:function(thumb,size=0x18) addr:0x020059e8
+UpdateTimeLeft kind:function(thumb,size=0x8c) addr:0x02005a00
+StartModeSlide kind:function(thumb,size=0x90) addr:0x02005a8c
+UpdateModeSlide kind:function(thumb,size=0xdc) addr:0x02005b1c
+GetModeSlideState kind:function(thumb,size=0xc) addr:0x02005bf8
+GetScoreThresholdMet kind:function(thumb,size=0xc) addr:0x02005c04
+GetFieldTableValue kind:function(thumb,size=0x14) addr:0x02005c10
+GetFieldPatternValue kind:function(thumb,size=0x18) addr:0x02005c24
+GetFieldPatternListValue kind:function(thumb,size=0x18) addr:0x02005c3c
+GetGridCell kind:function(thumb,size=0x60) addr:0x02005c54
+DrawFieldObjects kind:function(thumb,size=0xe0) addr:0x02005cb4
+EmptyGridGroup kind:function(thumb,size=0x4c) addr:0x02005d94
+FillGridGroup kind:function(thumb,size=0x190) addr:0x02005de0
+MoveListObjects kind:function(thumb,size=0x23c) addr:0x02005f70
+ShiftGridGroups kind:function(thumb,size=0x13c) addr:0x020061ac
+IsXInputEnabled kind:function(thumb,size=0x4) addr:0x020062e8
+IsYInputEnabled kind:function(thumb,size=0x20) addr:0x020062ec
+StartDriveMinusX kind:function(thumb,size=0x44) addr:0x0200630c
+StartDrivePlusX kind:function(thumb,size=0x48) addr:0x02006350
+ApplyFieldObject kind:function(thumb,size=0x150) addr:0x02006398
+ApplyObjectsAtStage kind:function(thumb,size=0xb4) addr:0x020064e8
+SetupFieldCameraAndInfo kind:function(thumb,size=0x12c) addr:0x0200659c
+UpdateFieldScrollAndScore kind:function(thumb,size=0xe4) addr:0x020066c8
+SetupField kind:function(thumb,size=0x370) addr:0x020067ac
+DrawField kind:function(thumb,size=0x4c) addr:0x02006b1c
+UpdateField kind:function(thumb,size=0x444) addr:0x02006b68
+LeaveField kind:function(thumb,size=0x8) addr:0x02006fac
+GetFieldScoreThreshold kind:function(thumb,size=0xc) addr:0x02006fb4
+SetupPageViewer kind:function(thumb,size=0x80) addr:0x02006fc0
+DrawPageViewerButtons kind:function(thumb,size=0x84) addr:0x02007040
+UpdatePageViewer kind:function(thumb,size=0xa4) addr:0x020070c4
+StartPageViewerState kind:function(thumb,size=0x34) addr:0x02007168
+LeavePageViewer kind:function(thumb,size=0xc) addr:0x0200719c
 func_020071a8 kind:function(thumb,size=0x2) addr:0x020071a8
 func_020071ac kind:function(thumb,size=0x4c) addr:0x020071ac
 func_020071f8 kind:function(thumb,size=0x4c) addr:0x020071f8
-func_02007244 kind:function(thumb,size=0x64) addr:0x02007244
-func_020072a8 kind:function(thumb,size=0xc8) addr:0x020072a8
+SetupStageModels kind:function(thumb,size=0x64) addr:0x02007244
+DrawBattleModels kind:function(thumb,size=0xc8) addr:0x020072a8
 func_02007370 kind:function(thumb,size=0x20) addr:0x02007370
 func_02007390 kind:function(thumb,size=0x20) addr:0x02007390
-func_020073b0 kind:function(thumb,size=0xfc) addr:0x020073b0
-func_020074ac kind:function(thumb,size=0x258) addr:0x020074ac
-func_02007704 kind:function(thumb,size=0x4c) addr:0x02007704
-func_02007750 kind:function(thumb,size=0x8) addr:0x02007750
+SetCameraFromModel kind:function(thumb,size=0xfc) addr:0x020073b0
+SetupBattleScreen kind:function(thumb,size=0x258) addr:0x020074ac
+UpdateBattleScreen kind:function(thumb,size=0x4c) addr:0x02007704
+LeaveBattleScreen kind:function(thumb,size=0x8) addr:0x02007750
 func_02007758 kind:function(thumb,size=0x18) addr:0x02007758
-func_02007770 kind:function(thumb,size=0x60) addr:0x02007770
-func_020077d0 kind:function(thumb,size=0x20) addr:0x020077d0
-func_020077f0 kind:function(thumb,size=0x108) addr:0x020077f0
+LoadKindValues kind:function(thumb,size=0x60) addr:0x02007770
+GetPercentOfBattleTotal kind:function(thumb,size=0x20) addr:0x020077d0
+SetupBattleSides kind:function(thumb,size=0x108) addr:0x020077f0
 func_020078f8 kind:function(thumb,size=0x48) addr:0x020078f8
 func_02007940 kind:function(thumb,size=0x60) addr:0x02007940
-func_020079a0 kind:function(thumb,size=0x2c) addr:0x020079a0
-func_020079cc kind:function(thumb,size=0x20) addr:0x020079cc
-func_020079ec kind:function(thumb,size=0x30) addr:0x020079ec
+GetBattleTotal kind:function(thumb,size=0x2c) addr:0x020079a0
+GetValuePlusKindValue kind:function(thumb,size=0x20) addr:0x020079cc
+FindTableEntryIndexUnbounded kind:function(thumb,size=0x30) addr:0x020079ec
 func_02007a1c kind:function(thumb,size=0x94) addr:0x02007a1c
 func_02007ab0 kind:function(thumb,size=0xc) addr:0x02007ab0
 func_02007abc kind:function(thumb,size=0x5c) addr:0x02007abc
-func_02007b18 kind:function(thumb,size=0x16c) addr:0x02007b18
-func_02007c84 kind:function(thumb,size=0x250) addr:0x02007c84
-func_02007ed4 kind:function(thumb,size=0x90) addr:0x02007ed4
-func_02007f64 kind:function(thumb,size=0x40) addr:0x02007f64
-func_02007fa4 kind:function(thumb,size=0x58) addr:0x02007fa4
+GetTableEntryTotalDiff kind:function(thumb,size=0x16c) addr:0x02007b18
+ApplyTableEntry kind:function(thumb,size=0x250) addr:0x02007c84
+ComparePickIndicesWithBestPair kind:function(thumb,size=0x90) addr:0x02007ed4
+FindBestSide1Entry kind:function(thumb,size=0x40) addr:0x02007f64
+SubtractHalfFromList kind:function(thumb,size=0x58) addr:0x02007fa4
 func_02007ffc kind:function(thumb,size=0x94) addr:0x02007ffc
-func_02008090 kind:function(thumb,size=0x1ec) addr:0x02008090
+DrawBattleStageInfo kind:function(thumb,size=0x1ec) addr:0x02008090
 func_0200827c kind:function(thumb,size=0xc) addr:0x0200827c
-func_02008288 kind:function(thumb,size=0x650) addr:0x02008288
-func_020088d8 kind:function(thumb,size=0x48) addr:0x020088d8
+UpdateBattleCompare kind:function(thumb,size=0x650) addr:0x02008288
+IsEntryPickDone kind:function(thumb,size=0x48) addr:0x020088d8
 func_02008920 kind:function(thumb,size=0x30) addr:0x02008920
 func_02008950 kind:function(thumb,size=0x44) addr:0x02008950
-func_02008994 kind:function(thumb,size=0xd94) addr:0x02008994
-func_02009728 kind:function(thumb,size=0x8c0) addr:0x02009728
-func_02009fe8 kind:function(thumb,size=0x39c) addr:0x02009fe8
+UpdateBattleEntryPick kind:function(thumb,size=0xd94) addr:0x02008994
+UpdateBattleStagePick kind:function(thumb,size=0x8c0) addr:0x02009728
+UpdateBattleKindValues kind:function(thumb,size=0x39c) addr:0x02009fe8
 func_0200a384 kind:function(thumb,size=0x70) addr:0x0200a384
 func_0200a3f4 kind:function(thumb,size=0x8) addr:0x0200a3f4
 func_0200a3fc kind:function(thumb,size=0x1d0) addr:0x0200a3fc
@@ -256,32 +256,32 @@ func_0200dbac kind:function(thumb,size=0x5c) addr:0x0200dbac
 func_0200dc08 kind:function(thumb,size=0x154) addr:0x0200dc08
 RunVideo kind:function(thumb,size=0x34) addr:0x0200dd5c
 func_0200dd90 kind:function(thumb,size=0xd8) addr:0x0200dd90
-func_0200de68 kind:function(thumb,size=0x568) addr:0x0200de68
-func_0200e3d0 kind:function(thumb,size=0x1c) addr:0x0200e3d0
-func_0200e3ec kind:function(thumb,size=0x38) addr:0x0200e3ec
-func_0200e424 kind:function(thumb,size=0x50) addr:0x0200e424
-func_0200e474 kind:function(thumb,size=0x10) addr:0x0200e474
-func_0200e484 kind:function(thumb,size=0x40) addr:0x0200e484
-func_0200e4c4 kind:function(thumb,size=0xec) addr:0x0200e4c4
-func_0200e5b0 kind:function(thumb,size=0xdb0) addr:0x0200e5b0
+UpdateTitleSlide kind:function(thumb,size=0x568) addr:0x0200de68
+RequestTitleState kind:function(thumb,size=0x1c) addr:0x0200e3d0
+OpenMicEdit kind:function(thumb,size=0x38) addr:0x0200e3ec
+CloseMicEdit kind:function(thumb,size=0x50) addr:0x0200e424
+ResetTitleReturnState kind:function(thumb,size=0x10) addr:0x0200e474
+SetupTitleImageAndModel kind:function(thumb,size=0x40) addr:0x0200e484
+SetupTitleScreen kind:function(thumb,size=0xec) addr:0x0200e4c4
+UpdateTitleScreen kind:function(thumb,size=0xdb0) addr:0x0200e5b0
 .L_0200f31e kind:label(thumb) addr:0x0200f31e local
-func_0200f360 kind:function(thumb,size=0x14) addr:0x0200f360
-func_0200f374 kind:function(thumb,size=0xf4) addr:0x0200f374
-func_0200f468 kind:function(thumb,size=0x6c) addr:0x0200f468
-func_0200f4d4 kind:function(thumb,size=0xac) addr:0x0200f4d4
-func_0200f580 kind:function(thumb,size=0x8) addr:0x0200f580
+LeaveTitleScreen kind:function(thumb,size=0x14) addr:0x0200f360
+SetupPrompt kind:function(thumb,size=0xf4) addr:0x0200f374
+DrawPromptSprite kind:function(thumb,size=0x6c) addr:0x0200f468
+UpdatePrompt kind:function(thumb,size=0xac) addr:0x0200f4d4
+LeavePrompt kind:function(thumb,size=0x8) addr:0x0200f580
 func_0200f588 kind:function(thumb,size=0x1c) addr:0x0200f588
-func_0200f5a4 kind:function(thumb,size=0x20) addr:0x0200f5a4
-func_0200f5c4 kind:function(thumb,size=0x9c) addr:0x0200f5c4
-func_0200f660 kind:function(thumb,size=0xf0) addr:0x0200f660
-func_0200f750 kind:function(thumb,size=0x8) addr:0x0200f750
-func_0200f758 kind:function(thumb,size=0xf0) addr:0x0200f758
-func_0200f848 kind:function(thumb,size=0x50) addr:0x0200f848
-func_0200f898 kind:function(thumb,size=0xc4) addr:0x0200f898
-func_0200f95c kind:function(thumb,size=0x20) addr:0x0200f95c
-func_0200f97c kind:function(thumb,size=0xc) addr:0x0200f97c
-func_0200f988 kind:function(thumb,size=0x30) addr:0x0200f988
-func_0200f9b8 kind:function(thumb,size=0x10) addr:0x0200f9b8
+SetScriptRecord kind:function(thumb,size=0x20) addr:0x0200f5a4
+HandlePromptEvents kind:function(thumb,size=0x9c) addr:0x0200f5c4
+SetupLangMenu kind:function(thumb,size=0xf0) addr:0x0200f660
+LeaveLangMenu kind:function(thumb,size=0x8) addr:0x0200f750
+UpdateLangMenu kind:function(thumb,size=0xf0) addr:0x0200f758
+SetupSharedModel kind:function(thumb,size=0x50) addr:0x0200f848
+DrawSharedModel kind:function(thumb,size=0xc4) addr:0x0200f898
+IsSharedModelDone kind:function(thumb,size=0x20) addr:0x0200f95c
+GetSharedModelFrameIndex kind:function(thumb,size=0xc) addr:0x0200f97c
+CountSharedModels kind:function(thumb,size=0x30) addr:0x0200f988
+GetDefaultLanguage kind:function(thumb,size=0x10) addr:0x0200f9b8
 LookupLanguageFileId kind:function(thumb,size=0x28) addr:0x0200f9c8
 GetText kind:function(thumb,size=0x20) addr:0x0200f9f0
 GetLanguageText kind:function(thumb,size=0x12) addr:0x0200fa10
@@ -1799,13 +1799,13 @@ _ZdlPv kind:function(arm,size=0x14) addr:0x0204ded4
 func_0204dee8 kind:function(arm,size=0x2c) addr:0x0204dee8
 @ET@func_0204a5c8 kind:data(any) addr:0x0204df14 local
 data_0204e054 kind:data(byte[120]) addr:0x0204e054
-data_0204e0cc kind:data(any) addr:0x0204e0cc local
-data_0204e0d4 kind:data(any) addr:0x0204e0d4 local
-data_0204e0e8 kind:data(any) addr:0x0204e0e8 local
-data_0204e0f0 kind:data(any) addr:0x0204e0f0 local
-data_0204e0fc kind:data(any) addr:0x0204e0fc local
-data_0204e110 kind:data(any) addr:0x0204e110 local
-data_0204e124 kind:data(any) addr:0x0204e124 local
+sResultSharedModelIndices kind:data(any) addr:0x0204e0cc local
+sModeSpriteIds kind:data(any) addr:0x0204e0d4 local
+sThresholdNotMetWaveIds kind:data(any) addr:0x0204e0e8 local
+sThresholdMetWaveIds kind:data(any) addr:0x0204e0f0 local
+sModeStates kind:data(any) addr:0x0204e0fc local
+sModePrompts kind:data(any) addr:0x0204e110 local
+sModeButtonIds kind:data(any) addr:0x0204e124 local
 data_0204e138 kind:data(byte[12]) addr:0x0204e138 local
 data_0204e144 kind:data(any) addr:0x0204e144 local
 @2185 kind:data(byte[2]) addr:0x0204e158 local
@@ -1831,15 +1831,15 @@ data_0204e1e4 kind:data(byte[4]) addr:0x0204e1e4 local
 data_0204e1e8 kind:data(byte[4]) addr:0x0204e1e8 local
 data_0204e1ec kind:data(byte[4]) addr:0x0204e1ec local
 data_0204e1f0 kind:data(byte[8]) addr:0x0204e1f0 local
-data_0204e1f8 kind:data(byte[16]) addr:0x0204e1f8 local
+sMicRanges kind:data(byte[16]) addr:0x0204e1f8 local
 data_0204e208 kind:data(short[2]) addr:0x0204e208
 data_0204e20c kind:data(short[2]) addr:0x0204e20c
 data_0204e210 kind:data(short[2]) addr:0x0204e210
 data_0204e214 kind:data(word[1]) addr:0x0204e214
-data_0204e218 kind:data(word[12]) addr:0x0204e218
-data_0204e248 kind:data(short[64]) addr:0x0204e248
+gPromptSpriteDefs kind:data(word[12]) addr:0x0204e218
+gPromptWaves kind:data(short[64]) addr:0x0204e248
 data_0204e2c8 kind:data(short[86]) addr:0x0204e2c8
-data_0204e374 kind:data(any) addr:0x0204e374 local
+sPrompts kind:data(any) addr:0x0204e374 local
 @1790 kind:data(byte[14]) addr:0x0204e804 local
 ids$2097 kind:data(byte[18]) addr:0x0204e812 local
 gStatePromptScreenEnabled kind:data(byte[25]) addr:0x0204e824
@@ -1944,7 +1944,7 @@ ARM9_CTOR_END kind:data(any) addr:0x02063900
 @1701 kind:data(any) addr:0x02063908 local
 @1702 kind:data(any) addr:0x0206390c local
 @1703 kind:data(any) addr:0x02063914 local
-data_0206391c kind:data(any) addr:0x0206391c
+gPrevTimeLeft kind:data(any) addr:0x0206391c
 @1506 kind:data(any) addr:0x02063920 local
 @2534 kind:data(any) addr:0x02063924 local
 @3357 kind:data(any) addr:0x0206392c local
@@ -2134,30 +2134,30 @@ ARM9_BSS_START kind:bss addr:0x02064820
 data_02064828 kind:bss(size=0x8998) addr:0x02064828
 data_02064c40 kind:bss addr:0x02064c40
 data_02064c58 kind:bss addr:0x02064c58
-data_0206d1c0 kind:bss addr:0x0206d1c0
-data_0206d1d4 kind:bss addr:0x0206d1d4
-data_0206d444 kind:bss addr:0x0206d444
-data_0206d448 kind:bss addr:0x0206d448
-data_0206d460 kind:bss addr:0x0206d460
-data_02098d74 kind:bss addr:0x02098d74
-data_02098d80$2044 kind:bss addr:0x02098d80 local
-data_02098d84 kind:bss addr:0x02098d84
-data_020990e0 kind:bss addr:0x020990e0
+gResultRemainder kind:bss addr:0x0206d1c0
+gResultState kind:bss addr:0x0206d1d4
+gKeepSelectedMode kind:bss addr:0x0206d444
+gModeSelectState kind:bss addr:0x0206d448
+gFieldObjects kind:bss addr:0x0206d460
+gPageViewState kind:bss addr:0x02098d74
+sWavePlayed$2044 kind:bss addr:0x02098d80 local
+gBattleView kind:bss addr:0x02098d84
+gBattleSlotStages kind:bss addr:0x020990e0
 data_02099770 kind:bss addr:0x02099770
 data_020997a4 kind:bss addr:0x020997a4
 data_020ab7e0 kind:bss addr:0x020ab7e0
 data_020abfc0 kind:bss addr:0x020abfc0
 data_020abfcc kind:bss addr:0x020abfcc
 data_020ace4c kind:bss addr:0x020ace4c
-data_020ae44c$1705 kind:bss addr:0x020ae44c local
-data_020ae450$1706 kind:bss addr:0x020ae450 local
-data_020ae454$1704 kind:bss addr:0x020ae454 local
-data_020ae458 kind:bss addr:0x020ae458 local
-data_020ae464 kind:bss addr:0x020ae464
-data_020ae504 kind:bss addr:0x020ae504
-data_020ae6ec kind:bss addr:0x020ae6ec
-data_020ae6f4 kind:bss addr:0x020ae6f4
-data_020ae870 kind:bss addr:0x020ae870
+sShakeY$1705 kind:bss addr:0x020ae44c local
+sShakeX$1706 kind:bss addr:0x020ae450 local
+sShakeTimer$1704 kind:bss addr:0x020ae454 local
+sMicEdit kind:bss addr:0x020ae458 local
+gTitleStream kind:bss addr:0x020ae464
+gTitleScreen kind:bss addr:0x020ae504
+gPromptSprite kind:bss addr:0x020ae6ec
+gSharedModel kind:bss addr:0x020ae6f4
+gLangMenu kind:bss addr:0x020ae870
 gStateMenu kind:bss addr:0x020b1078
 data_020b1084 kind:bss addr:0x020b1084
 gStateMenuSelection kind:bss addr:0x020b1094
@@ -2171,7 +2171,7 @@ data_020b13b0 kind:bss addr:0x020b13b0
 gSavedSlotStages kind:bss addr:0x020b13bc
 data_020b13c8 kind:bss addr:0x020b13c8
 data_020b13d4 kind:bss addr:0x020b13d4
-data_020b1524 kind:bss addr:0x020b1524
+gStageInfos kind:bss addr:0x020b1524
 data_020b1528 kind:bss addr:0x020b1528
 data_020b152a kind:bss addr:0x020b152a
 data_020b1537 kind:bss addr:0x020b1537
@@ -2183,7 +2183,7 @@ data_020b15b4 kind:bss addr:0x020b15b4
 data_020b15b8 kind:bss addr:0x020b15b8
 data_020b1958 kind:bss addr:0x020b1958
 data_020b1978 kind:bss addr:0x020b1978
-data_020b1990 kind:bss addr:0x020b1990
+gStages kind:bss addr:0x020b1990
 data_020b1b08 kind:bss addr:0x020b1b08
 data_020b1b10 kind:bss addr:0x020b1b10
 data_020b1b18 kind:bss addr:0x020b1b18

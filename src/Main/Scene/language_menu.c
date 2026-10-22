@@ -18,7 +18,7 @@
 #include <stdio.h>
 
 // The prompts (this file's copy; the code reads from the second word of each entry).
-static const Unk_0204e96c data_0204e374[0x49] = {
+static const Unk_0204e96c sPrompts[0x49] = {
     {0x6c, -1, 0, -1},      {0x71, -1, 0, -1},  {0x96, -1, 0, 0x2f},    {0xb1, -1, 0, -1},      {0xc2, -1, 0, -1},
     {0xef, -1, 0, -1},      {0x10b, -1, 0, -1}, {0x148, -1, 0, -1},     {0x16f, -1, 0, -1},     {0x174, -1, 0, -1},
     {0x17d, -1, 0, -1},     {0x186, -1, 0, -1}, {0x1b3, -1, 0, -1},     {0x1f0, -1, 0, -1},     {0x22d, -1, 0, -1},
@@ -36,17 +36,17 @@ static const Unk_0204e96c data_0204e374[0x49] = {
     {0x650, -1, 0, -1},     {0x658, -1, 0, -1}, {0x660, -1, 0, -1},
 };
 
-// Defined in reverse address order (see data_020ae6f4 below).
+// Defined in reverse address order (see gSharedModel below).
 const u16 data_0204e210[1] = {0};
 const u16 data_0204e20c[1] = {0};
 const u16 data_0204e208[1] = {0};
 const u32 data_0204e214[1] = {0};
-const Unk_0204e218 data_0204e218[3] = {
+const PromptSpriteDef gPromptSpriteDefs[3] = {
     {0, 0xc0, 0x49, 0x131},
     {0xff, 0xc0, 0x49, 0x130},
     {0, 0xc0, 0x49, 0x132},
 };
-const Unk_0204e248 data_0204e248[32] = {
+const PromptWave gPromptWaves[32] = {
     {0xdf, 0},  {0xde, 0}, {0x84, 1},  {0xa7, 1},  {0x6b, 1},  {0x19a, 1}, {0x193, 1}, {0x17e, 1},
     {0x18c, 1}, {0x99, 1}, {0xa0, 1},  {0xb5, 1},  {0x4f, 1},  {0x41, 1},  {0x3a, 1},  {0x33, 1},
     {0x48, 1},  {0xd1, 1}, {0x1b6, 1}, {0x1a8, 1}, {0x174, 1}, {0x1af, 1}, {0x1a1, 1}, {0xc3, 1},
@@ -61,11 +61,13 @@ const u16 data_0204e2c8[86] = {
     0xeee, 0xef2, 0xef3, 9,     0xf10, 0xf2c, 0xc,   0xf19, 0xf1a, 0xeea, 8,
 };
 
-// The shown figure: the flag func_0200f848 stores with it (its second argument) and its model.
-typedef struct Unk_020ae6f4 {
+// The one model that the prompt, battle and result screens and others play (SetupSharedModel), and the flag stored with
+// it (SetupSharedModel's b): with 0 the model holds its last frame and IsSharedModelDone reports it; with any other
+// value IsSharedModelDone always returns 0.
+typedef struct SharedModel {
     s32 mUnk_00;
-    Model mUnk_04;
-} Unk_020ae6f4;
+    Model mModel;
+} SharedModel;
 
 const FontRange *data_02063988[8] = {
     (const FontRange *) data_0201a608, (const FontRange *) data_0201a608, (const FontRange *) data_0201a608,
@@ -73,19 +75,19 @@ const FontRange *data_02063988[8] = {
     (const FontRange *) data_0201a608, (const FontRange *) data_0201a608,
 };
 
-// Defined before data_020ae6ec: with the font list above and the 2-byte tables defined in reverse, the compiler's
+// Defined before gPromptSprite: with the font list above and the 2-byte tables defined in reverse, the compiler's
 // size sort then keeps those tables in address order.
-Unk_020ae6f4 data_020ae6f4;
-Unk_020ae6ec data_020ae6ec;
-LangMenu data_020ae870;
+SharedModel gSharedModel;
+PromptSprite gPromptSprite;
+LangMenu gLangMenu;
 
-void func_0200f374(void) {
-    s32 *p = &data_020ae6ec.mUnk_00;
+void SetupPrompt(void) {
+    s32 *p = &gPromptSprite.mSpriteIndex;
     u32 idx = GetFlowValue(0x14);
     u32 v;
     func_02010294(0x180, 1, 1);
-    if (data_0204e374[idx].mUnk_04 >= 0) {
-        func_0200f848(data_0204e374[idx].mUnk_04, data_0204e374[idx].mUnk_08);
+    if (sPrompts[idx].mUnk_04 >= 0) {
+        SetupSharedModel(sPrompts[idx].mUnk_04, sPrompts[idx].mUnk_08);
         data_020c61ac.mUnk_280.mUnk_40 = 1;
     } else {
         data_020c61ac.mUnk_280.mUnk_40 = 0;
@@ -96,7 +98,7 @@ void func_0200f374(void) {
     *p = -1;
     func_02028f0c(0xfbc, LookupLanguageFileId(data_020b1084.mLanguage), 0x244, 0x246, 2, 0, 0, 0, 0);
     data_020c61ac.mUnk_20 = 0;
-    func_0200f5a4("LANGUAGE", data_020b1084.mLanguage);
+    SetScriptRecord("LANGUAGE", data_020b1084.mLanguage);
     v = LookupLanguageFileId(data_020b1084.mLanguage);
     func_02028f0c(0xfbc, v, 0x244, 0x246, GetFlowValue(0x17), 0, 0, func_0200f588, 0);
     v = GetFlowValue(0x16);
@@ -106,21 +108,23 @@ void func_0200f374(void) {
     }
 }
 
-int func_0200f468(void) {
-    Unk_020ae6ec *state = &data_020ae6ec;
-    if (data_020ae6ec.mUnk_00 != -1) {
-        int i = state->mUnk_00;
-        const Unk_0204e218 *e = &data_0204e218[i];
-        EaseLevel(&state->mUnk_04, 8);
-        data_020c61ac.mUnk_2a = MapRangeFromZero(state->mUnk_04, 0x4000, e->mUnk_08, 0);
+// Draw callback of the prompt's script text: while a sprite is chosen, eases its slide level, sets the text's y offset
+// (data_020c61ac.mUnk_2a) to the sprite's slide offset, draws the sprite and returns 0x7e; otherwise returns 0.
+int DrawPromptSprite(void) {
+    PromptSprite *state = &gPromptSprite;
+    if (gPromptSprite.mSpriteIndex != -1) {
+        int i = state->mSpriteIndex;
+        const PromptSpriteDef *e = &gPromptSpriteDefs[i];
+        EaseLevel(&state->mSlideLevel, 8);
+        data_020c61ac.mUnk_2a = MapRangeFromZero(state->mSlideLevel, 0x4000, e->mSlideY, 0);
         func_0202a1cc();
-        DrawSprite(e->mUnk_0c + 0x800000, data_0204e218[i].mUnk_00, e->mUnk_04 + data_020c61ac.mUnk_2a, 0x80, 1);
+        DrawSprite(e->mSpriteId + 0x800000, gPromptSpriteDefs[i].mX, e->mY + data_020c61ac.mUnk_2a, 0x80, 1);
         return 0x7e;
     }
     return 0;
 }
 
-void func_0200f4d4(void) {
+void UpdatePrompt(void) {
     int id;
     u32 idx;
     if (data_020c1d60.mUnk_800.mUnk_100.mUnk_04 == 0x40000400) {
@@ -129,14 +133,14 @@ void func_0200f4d4(void) {
         id = 0xf8e;
     }
     idx = GetFlowValue(0x14);
-    if (data_0204e374[idx].mUnk_04 >= 0) {
-        func_0200f898();
+    if (sPrompts[idx].mUnk_04 >= 0) {
+        DrawSharedModel();
     }
-    func_0202a1ec(func_0200f468);
-    func_0200f5c4();
+    func_0202a1ec(DrawPromptSprite);
+    HandlePromptEvents();
     if (data_020c61ac.mUnk_1a & 4) {
-        if (data_0204e374[idx].mUnk_0c >= 0) {
-            func_0201033c(data_0204e374[idx].mUnk_0c, 0);
+        if (sPrompts[idx].mUnk_0c >= 0) {
+            func_0201033c(sPrompts[idx].mUnk_0c, 0);
             ReenterState();
         } else {
             PopState();
@@ -148,7 +152,7 @@ void func_0200f4d4(void) {
     }
 }
 
-void func_0200f580(void) {
+void LeavePrompt(void) {
     func_020102f8();
 }
 
@@ -160,15 +164,15 @@ u8 func_0200f588(void) {
     return buf[i];
 }
 
-void func_0200f5a4(const char *key, u32 value) {
+void SetScriptRecord(const char *key, u32 value) {
     char buf[0x20];
     sprintf(buf, "%s=%i", key, value);
     func_020292f4(buf);
 }
 
-void func_0200f5c4(void) {
+void HandlePromptEvents(void) {
     Unk_EventRec *rec;
-    Unk_020ae6ec *state = &data_020ae6ec;
+    PromptSprite *state = &gPromptSprite;
     int ok;
     while ((rec = func_0202a1a4()) != 0) {
         switch (rec->mUnk_00) {
@@ -177,22 +181,22 @@ void func_0200f5c4(void) {
                 if (!ok) {
                     OS_Terminate();
                 }
-                state->mUnk_00 = rec->mUnk_02 - 1;
-                state->mUnk_04 = 0;
+                state->mSpriteIndex = rec->mUnk_02 - 1;
+                state->mSlideLevel = 0;
                 break;
             case 7:
                 if (!data_020c61ac.mUnk_1c_2) {
-                    const Unk_0204e248 *e = &data_0204e248[rec->mUnk_02];
-                    u32 base = e->mUnk_02 == 1 ? data_020b1084.mLanguage : 0;
-                    func_0202f110(base + e->mUnk_00, 100, 0, 0x40, 0xffff, 0);
+                    const PromptWave *e = &gPromptWaves[rec->mUnk_02];
+                    u32 base = e->mAddLanguage == 1 ? data_020b1084.mLanguage : 0;
+                    func_0202f110(base + e->mWaveId, 100, 0, 0x40, 0xffff, 0);
                 }
                 break;
         }
     }
 }
 
-void func_0200f660(void) {
-    LangMenu *menu = &data_020ae870;
+void SetupLangMenu(void) {
+    LangMenu *menu = &gLangMenu;
     int i;
     char buf[0x20];
     func_02010294(0x100, 1, 0);
@@ -200,7 +204,7 @@ void func_0200f660(void) {
     func_02024208();
     RequestTrack(0, 0x80);
     i = 2;
-    data_020ae870.mCount = 0;
+    gLangMenu.mCount = 0;
     for (;; i++) {
         if (GetFileValueType(0x246, i) == 4) {
             const u8 *s = GetFileString(0x246, i);
@@ -228,13 +232,13 @@ void func_0200f660(void) {
     }
 }
 
-void func_0200f750(void) {
+void LeaveLangMenu(void) {
     func_020102f8();
 }
 
-void func_0200f758(void) {
-    LangMenu *menu = &data_020ae870;
-    func_0200b920(0x10, "CS (U/D): %i", data_020ae870.mSelected - 1);
+void UpdateLangMenu(void) {
+    LangMenu *menu = &gLangMenu;
+    func_0200b920(0x10, "CS (U/D): %i", gLangMenu.mSelected - 1);
     func_0200b920(0x20, "Language (LB/RB): %s", GetLanguageText(data_020b1084.mLanguage + 2, data_020b1084.mLanguage));
     if ((gSystemState.mKeysPressed & 0x80) && menu->mSelected > 1) {
         menu->mSelected--;
@@ -254,49 +258,50 @@ void func_0200f758(void) {
     }
 }
 
-void func_0200f848(u32 a, int b) {
-    if (a >= func_0200f988()) {
+void SetupSharedModel(u32 a, int b) {
+    if (a >= CountSharedModels()) {
         OS_Terminate();
     }
-    StartModel(&data_020ae6f4.mUnk_04, a * 2 + 0x1f5, a * 2 + 0x1f4, 2, 0);
-    data_020ae6f4.mUnk_00 = b;
+    StartModel(&gSharedModel.mModel, a * 2 + 0x1f5, a * 2 + 0x1f4, 2, 0);
+    gSharedModel.mUnk_00 = b;
     if (b == 0) {
-        data_020ae6f4.mUnk_04.mUnk_172_13 = 1;
+        gSharedModel.mModel.mUnk_172_13 = 1;
     }
 }
 
-void func_0200f898(void) {
+void DrawSharedModel(void) {
     u8 params[0x44];
-    int idx = (data_020ae6f4.mUnk_04.mUnk_170 - 0x1f5) / 2;
+    int idx = (gSharedModel.mModel.mUnk_170 - 0x1f5) / 2;
     int a, x, y, z;
     func_020242a8(params, 0xff, 0, 0, 0x1000, 0x8000, -1, 0x100);
     params[0x43] |= 8;
-    UpdateModelScript(&data_020ae6f4.mUnk_04);
-    DrawModelFileEx(data_020ae6f4.mUnk_04.mUnk_170, params, &data_020ae6f4.mUnk_04, 0);
+    UpdateModelScript(&gSharedModel.mModel);
+    DrawModelFileEx(gSharedModel.mModel.mUnk_170, params, &gSharedModel.mModel, 0);
     a = GetFileValue(0x235, idx * 4 + 2);
-    if (data_020ae6f4.mUnk_04.mUnk_14c.mUnk_2 >= a) {
+    if (gSharedModel.mModel.mUnk_14c.mUnk_2 >= a) {
         x = GetFileValue(0x235, idx * 4 + 4);
         y = GetFileValue(0x235, idx * 4 + 5);
         z = GetFileValue(0x235, idx * 4 + 3);
-        if (data_020ae6f4.mUnk_04.mUnk_14c.mUnk_2 < a + 4) {
-            x = MapRange(data_020ae6f4.mUnk_04.mUnk_14c.mUnk_2, a, a + 4, x - 0x78, x);
+        if (gSharedModel.mModel.mUnk_14c.mUnk_2 < a + 4) {
+            x = MapRange(gSharedModel.mModel.mUnk_14c.mUnk_2, a, a + 4, x - 0x78, x);
         }
         DrawSprite(z * 6 + 0xee, x, y, 0x64, 1);
     }
 }
 
-int func_0200f95c(void) {
-    if (data_020ae6f4.mUnk_00 != 0) {
+int IsSharedModelDone(void) {
+    if (gSharedModel.mUnk_00 != 0) {
         return 0;
     }
-    return data_020ae6f4.mUnk_04.mUnk_172_10;
+    return gSharedModel.mModel.mUnk_172_10;
 }
 
-u16 func_0200f97c(void) {
-    return data_020ae6f4.mUnk_04.mUnk_14c.mUnk_2;
+u16 GetSharedModelFrameIndex(void) {
+    return gSharedModel.mModel.mUnk_14c.mUnk_2;
 }
 
-int func_0200f988(void) {
+// Number of rows of table 0x235 (column 2 up to -1): the model indices SetupSharedModel accepts.
+int CountSharedModels(void) {
     int n = 0;
     while (GetFileValue(0x235, 2 + n * 4) != -1) {
         n++;
@@ -304,7 +309,8 @@ int func_0200f988(void) {
     return n;
 }
 
-int func_0200f9b8(void) {
+// Always 0 in this build; the owner info it reads is not used.
+int GetDefaultLanguage(void) {
     OSOwnerInfo info;
     OS_GetOwnerInfo(&info);
     return 0;
