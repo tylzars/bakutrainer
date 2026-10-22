@@ -6,24 +6,27 @@
 #include <Main/Link/link_indicator.h>
 
 StateC data_020c66d4[1];
-u32 data_020c66e0[16] __attribute__((aligned(32)));
+u32 gCommRecordReceived[16] __attribute__((aligned(32)));
 u8 data_020c6720[0xc0] __attribute__((aligned(32)));
-u8 data_020c67e0[0x100] __attribute__((aligned(32)));
-u8 data_020c68e0[0x1fc] __attribute__((aligned(32)));
+u8 gCommSendData[0x100] __attribute__((aligned(32)));
+u8 gCommRecords[0x1fc] __attribute__((aligned(32)));
 
 #pragma thumb off
 
-void func_02001000(void) {
-    Free(&data_020c66d4->mUnk_8);
+// The host side of the file link in comm_link.c. Like the rest of that link it does not run in this build: UpdateSystem
+// calls UpdateCommParent only while gSystemState.mFlags has 0x400 set, which nothing sets.
+
+void ReleaseComm(void) {
+    Free(&data_020c66d4->mPacket);
     Free(&gSystemState.mUnk_250.mUnk_24);
     memset(&gSystemState.mUnk_250, 0, 0x2c);
     gSystemState.mUnk_2a2 = 0;
     gSystemState.mUnk_2a8 = 0;
     gSystemState.mUnk_296 = 0;
     gSystemState.mUnk_292 = 0;
-    memset(data_020c67e0, 0, 0xfe);
-    memset(data_020c68e0, 0, 0x1fc);
-    memset(data_020c66e0, 0, 0x40);
+    memset(gCommSendData, 0, 0xfe);
+    memset(gCommRecords, 0, 0x1fc);
+    memset(gCommRecordReceived, 0, 0x40);
     memset(data_020c6720, 0, 0xc0);
     data_020c66d4->mUnk_4 = 0;
 }
@@ -46,27 +49,30 @@ BOOL func_020010b4(u32 timeout) {
     return TRUE;
 }
 
-void func_02001120(void) {
+// Shuts the file link down: unless the link state (func_020350f8) is 0 or 5 it first runs func_020350a0 and waits up to
+// 0x3c frames for the state to clear, then releases the link's buffers and shuts the link down. In this build the state
+// stays 0, so the wait never runs, and the function is never reached: its caller needs mUnk_2a6_1, which is never set.
+void ShutDownComm(void) {
     gSystemState.mUnk_2a6_1 = 0;
     gSystemState.mUnk_2a3 = 0x10;
     if (func_020350f8() != 5 && func_020350f8() != 0) {
         func_020350a0();
         func_020010b4(0x3c);
     }
-    func_02001000();
-    func_02039ba8();
+    ReleaseComm();
+    ShutDownLink();
 }
 
-void func_02001170(void) {
-    switch (func_0203946c()) {
-        case 1:
-            func_0203947c(4, gSystemState.mUnk_294 + 1, data_020c66d4->mUnk_0);
+void UpdateCommParent(void) {
+    switch (WhGetSysState()) {
+        case WH_SYSSTATE_IDLE:
+            WhConnectAsParent(WH_CONNECT_MODE_PARENT_DATASHARING, gSystemState.mUnk_294 + 1, data_020c66d4->mUnk_0);
             break;
-        case 4:
-        case 5:
-        case 6:
-            func_02034d1c();
-            func_02034954();
+        case WH_SYSSTATE_CONNECTED:
+        case WH_SYSSTATE_DATASHARING:
+        case WH_SYSSTATE_KEYSHARING:
+            ServeCommFiles();
+            ExchangeCommRecords();
             break;
     }
 }

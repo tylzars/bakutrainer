@@ -389,7 +389,7 @@ TitleScreen gTitleScreen;
 
 // Also stops the title stream; CloseMicEdit starts it again.
 void OpenMicEdit(void) {
-    func_0202f2e8(&gTitleStream);
+    CloseWaveStream(&gTitleStream);
     sMicEdit.mUnk_00 = data_020b1084.mUnk_04;
     sMicEdit.mUnk_04 = data_020b1084.mUnk_08;
     InitMic(0x400, data_020b1084.mUnk_04);
@@ -407,7 +407,7 @@ void CloseMicEdit(int a) {
             RunSaveScreen(1);
         }
     }
-    func_0202f290(&gTitleStream, "BAK_strm_Title.raw", 0x5654);
+    OpenWaveStream(&gTitleStream, "BAK_strm_Title.raw", 0x5654);
 }
 
 void ResetTitleReturnState(void) {
@@ -442,7 +442,7 @@ void SetupTitleScreen(void) {
     data_020b6ee0.mUnk_a91a = 0;
     data_020b6ee0.mUnk_a91b = 0;
     RequestTrack(0, 0x80);
-    func_0202f290(&gTitleStream, "BAK_strm_Title.raw", 0x5654);
+    OpenWaveStream(&gTitleStream, "BAK_strm_Title.raw", 0x5654);
     for (i = 0; i < 3; i++) {
         SaveRecordHead *buf = AllocSaveRecord();
         ReadSaveBlock(i, buf, SAVE_BLOCK_ID);
@@ -492,16 +492,16 @@ void UpdateTitleScreen(void) {
         ReleaseGxPool();
         ReleaseTextureLayers();
         LoadImage(0xdaa, 1);
-        func_0202f410(&gTitleStream);
+        PauseWaveStream(&gTitleStream);
         RunVideo("BAK_Intro.mods", 2);
         s->mIntroTimer = 0x4b0;
         SetupImageLayer(1, 0, 0x100, 0x100);
         SetupTitleImageAndModel();
-        func_0202f470(&gTitleStream);
+        ResumeWaveStream(&gTitleStream);
         return;
     }
     if (s->mState != 6 && s->mNextState != 6) {
-        func_0202f31c(&gTitleStream);
+        UpdateWaveStream(&gTitleStream);
     }
     if (s->mState == 1 && s->mNextState < 0) {
         if (gSystemState.mKeysDown != 0 || gSystemState.mTouchDown) {
@@ -524,7 +524,7 @@ void UpdateTitleScreen(void) {
             DrawSprite(0xdfa, 0x59 - (s->mUnk_1e0 >> 8), 0x35, 0x96, 2);
             DrawSprite(0xdfb, (s->mUnk_1e0 >> 8) + 0x59, 0x35, 0x8c, 2);
             if (s->mUnk_1e0 == 0) {
-                func_0202f110(0xe7, 100, 0, 0x40, 0xffff, 0);
+                PlayWaveKeepAlive(0xe7, 100, 0, 0x40, 0xffff, 0);
                 s->mUnk_1e0 = -1;
                 sShakeTimer = 12;
                 return;
@@ -570,15 +570,15 @@ void UpdateTitleScreen(void) {
             }
             func_0200bc50((gTitleScreen.mSlideOffsets[2] >> 8) + 0x80, 0x8e, 0, 0, 0x8c, 0x706, 0xdda, GetText(0xc6),
                           data_0201a61c, 2, 0, 0x167, flag, 0, 0, 0);
-            if (func_0200bd80(0x20000000, 0x700)) {
+            if (TestButton(0x20000000, 0x700)) {
                 RequestTitleState(2, -1);
                 s->mReadSelected = 1;
             }
-            if (func_0200bd80(0x20000000, 0x701)) {
+            if (TestButton(0x20000000, 0x701)) {
                 RequestTitleState(2, -1);
                 s->mReadSelected = 0;
             }
-            if (func_0200bd80(0x20000000, 0x706)) {
+            if (TestButton(0x20000000, 0x706)) {
                 RequestTitleState(5, -1);
                 return;
             }
@@ -617,8 +617,8 @@ void UpdateTitleScreen(void) {
                 }
             }
             func_0200bb14(0, (gTitleScreen.mSlideOffsets[4] >> 8) + 0xa1, 0x102, 0xe, 0, 0, 0x5a, flag);
-            if (func_0200bdac(0x20000000, 0x704, 0x706)) {
-                data_020b1084.mSaveSlot = (u16) data_020c1d60.mUnk_800.mUnk_100.mUnk_04 - 0x704;
+            if (TestButtonRange(0x20000000, 0x704, 0x706)) {
+                data_020b1084.mSaveSlot = (u16) gTouchInput.mTrail.mTouchState.mButtonState - 0x704;
                 if (s->mReadSelected == 0) {
                     if (s->mSaveSlots[data_020b1084.mSaveSlot].mWritten == 1) {
                         RequestTitleState(3, -1);
@@ -633,7 +633,7 @@ void UpdateTitleScreen(void) {
                     PopState();
                 }
             }
-            if (func_0200bd80(0x20000000, 0x102)) {
+            if (TestButton(0x20000000, 0x102)) {
                 RequestTitleState(1, 1);
                 return;
             }
@@ -643,13 +643,13 @@ void UpdateTitleScreen(void) {
             DrawText((gTitleScreen.mSlideOffsets[0] >> 8) + 0x7f, 0x50, data_0201a61c, GetText(0xcf), 2, 0xc0, 0xc, 1);
             func_0200bb14(0xff, (gTitleScreen.mSlideOffsets[4] >> 8) + 0xa1, 0x101, 0x15, 0, 0, 0x17d, flag);
             func_0200bb14(0, (gTitleScreen.mSlideOffsets[4] >> 8) + 0xa1, 0x102, 0xe, 0, 0, 0x5a, flag);
-            if (func_0200bd80(0x20000000, 0x101)) {
+            if (TestButton(0x20000000, 0x101)) {
                 ResetAllProgress();
                 RunSaveScreen(0);
                 PushState(10);
                 PopState();
             }
-            if (func_0200bd80(0x20000000, 0x102)) {
+            if (TestButton(0x20000000, 0x102)) {
                 RequestTitleState(2, 1);
                 s->mReadSelected = 0;
                 return;
@@ -663,20 +663,20 @@ void UpdateTitleScreen(void) {
             func_0200bc50((gTitleScreen.mSlideOffsets[2] >> 8) + 0x80, 0x70, 0, 0, 0x8c, 0x708, 0xdda, GetText(0xc9),
                           data_0201a61c, 2, 0, 0x167, flag, 0, 0, 0);
             func_0200bb14(0, (gTitleScreen.mSlideOffsets[4] >> 8) + 0xa1, 0x102, 0xe, 0, 0, 0x5a, flag);
-            if (func_0200bd80(0x20000000, 0x702)) {
+            if (TestButton(0x20000000, 0x702)) {
                 gTitleScreen.mSelectedLanguage = data_020b1084.mLanguage;
                 RequestTitleState(4, -1);
             }
-            if (func_0200bd80(0x20000000, 0x703)) {
+            if (TestButton(0x20000000, 0x703)) {
                 s->mReturnState = s->mState;
                 PushState(0x18);
                 PopState();
             }
-            if (func_0200bd80(0x20000000, 0x708)) {
+            if (TestButton(0x20000000, 0x708)) {
                 RequestTitleState(6, -1);
                 OpenMicEdit();
             }
-            if (func_0200bd80(0x20000000, 0x102)) {
+            if (TestButton(0x20000000, 0x102)) {
                 RequestTitleState(1, 1);
                 return;
             }
@@ -698,20 +698,20 @@ void UpdateTitleScreen(void) {
             func_0200bb14(0xff, (gTitleScreen.mSlideOffsets[1] >> 8) + 0xa1, 0x101, 0x15, 0, 0, 0x17d, flag);
             func_0200bb14(0, (gTitleScreen.mSlideOffsets[1] >> 8) + 0xa1, 0x102, 0xe, 0, 0, 0x5a, flag);
             for (i = 0; i < 1; i++) {
-                if (func_0200bd80(0x80000000, 0x705 + i)) {
+                if (TestButton(0x80000000, 0x705 + i)) {
                     gTitleScreen.mSelectedLanguage = i;
                     break;
                 }
             }
-            if (func_0200bd80(0x20000000, 0x102)) {
+            if (TestButton(0x20000000, 0x102)) {
                 RequestTitleState(5, 1);
             }
-            if (func_0200bd80(0x20000000, 0x101)) {
+            if (TestButton(0x20000000, 0x101)) {
                 if (gTitleScreen.mSelectedLanguage != data_020b1084.mLanguage) {
                     data_020b1084.mLanguage = gTitleScreen.mSelectedLanguage;
-                    func_0202f2e8(&gTitleStream);
+                    CloseWaveStream(&gTitleStream);
                     RunSaveScreen(1);
-                    func_0202f290(&gTitleStream, "BAK_strm_Title.raw", 0x5654);
+                    OpenWaveStream(&gTitleStream, "BAK_strm_Title.raw", 0x5654);
                 }
                 RequestTitleState(5, 1);
                 return;
@@ -761,20 +761,20 @@ void UpdateTitleScreen(void) {
             }
             func_0200bb14(0xff, (gTitleScreen.mSlideOffsets[4] >> 8) + 0xa1, 0x101, 0x15, 0, 0, 0x17d, flag);
             func_0200bb14(0, (gTitleScreen.mSlideOffsets[4] >> 8) + 0xa1, 0x102, 0xe, 0, 0, 0x5a, flag);
-            if (func_0200bd80(0x20000000, 0x709)) {
+            if (TestButton(0x20000000, 0x709)) {
                 func_02021054(--sMicEdit.mUnk_00);
-            } else if (func_0200bd80(0x20000000, 0x70a)) {
+            } else if (TestButton(0x20000000, 0x70a)) {
                 func_02021054(++sMicEdit.mUnk_00);
-            } else if (func_0200bd80(0x20000000, 0x70b)) {
+            } else if (TestButton(0x20000000, 0x70b)) {
                 sMicEdit.mUnk_04--;
-            } else if (func_0200bd80(0x20000000, 0x70c)) {
+            } else if (TestButton(0x20000000, 0x70c)) {
                 sMicEdit.mUnk_04++;
             }
-            if (func_0200bd80(0x20000000, 0x102)) {
+            if (TestButton(0x20000000, 0x102)) {
                 RequestTitleState(5, 1);
                 CloseMicEdit(0);
             }
-            if (func_0200bd80(0x20000000, 0x101)) {
+            if (TestButton(0x20000000, 0x101)) {
                 RequestTitleState(5, 1);
                 CloseMicEdit(1);
             }
@@ -783,6 +783,6 @@ void UpdateTitleScreen(void) {
 }
 
 void LeaveTitleScreen(void) {
-    func_0202f2e8(&gTitleStream);
+    CloseWaveStream(&gTitleStream);
     func_020102f8();
 }

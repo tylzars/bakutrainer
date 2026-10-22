@@ -275,7 +275,7 @@ typedef struct Unk_020b6ee0 {
     Unk_020c1454 mUnk_a574;
     u8 mUnk_a5b8[0xa5d0 - 0xa5b8];
     // 0 from a touch press that hit none of the screen's buttons until a frame with neither touch down nor release;
-    // func_0200bd80 reports no button while it is 0. The camera drag of panel state 0 (state 10) and the map menu's
+    // TestButton reports no button while it is 0. The camera drag of panel state 0 (state 10) and the map menu's
     // cursor drag move only while it is 0.
     u8 mButtonsEnabled;
     u8 mUnk_a5d1[3];

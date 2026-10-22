@@ -26,7 +26,7 @@
 #include <stdio.h>
 
 Unk_02099770 data_02099770;
-Unk_020997a4 data_020997a4;
+ParticleGame gParticleGame;
 
 void func_0200a384(void) {
     Unk_02099774 *sel = &data_02099770.mIn;
@@ -56,9 +56,9 @@ void func_0200a3fc(void) {
     if (sel->mUnk_0c == 1) {
         func_0200bb14(0, 161, 0x102, 14, 0, 0, 90, 1);
     }
-    switch (sel->mUnk_04) {
+    switch (sel->mState) {
         case 0:
-            id = sel->mUnk_10 + 0xfa8;
+            id = sel->mStateFrames + 0xfa8;
             DrawSprite(id, 127, 88, 255, 2);
             func_0200a5f0();
             if (id == 0xfb3) {
@@ -69,7 +69,7 @@ void func_0200a3fc(void) {
         case 1:
             DrawSprite(0xfb3, 127, 88, 255, 2);
             func_0200a5f0();
-            if (func_0200bd80(0x20000000, 0x101)) {
+            if (TestButton(0x20000000, 0x101)) {
                 if (data_020b6ee0.mNodeStageCount) {
                     func_0200a5cc(2);
                     sel->mUnk_14 = 0;
@@ -81,7 +81,7 @@ void func_0200a3fc(void) {
         case 2:
             DrawSprite(0xfb3, 127, 88, 255, 2);
             func_0200a5f0();
-            if (func_0200bd80(0x20000000, 0x101)) {
+            if (TestButton(0x20000000, 0x101)) {
                 sel->mUnk_14++;
                 if (sel->mUnk_14 < data_020b6ee0.mNodeStageCount) {
                     func_0200a5cc(2);
@@ -97,10 +97,10 @@ void func_0200a3fc(void) {
     if (done == 0) {
         if (IsFadeState(3, FADE_STATE_CLEAR) == 1) {
             u32 i;
-            sel->mUnk_10++;
+            sel->mStateFrames++;
             for (i = 0; i < 3; i++) {
-                if (sel->mUnk_18[i] != 0x4000) {
-                    AddLevel(&sel->mUnk_18[i], 0x400);
+                if (sel->mLevels[i] != 0x4000) {
+                    AddLevel(&sel->mLevels[i], 0x400);
                     break;
                 }
             }
@@ -132,13 +132,13 @@ void func_0200a3fc(void) {
 void func_0200a5cc(int value) {
     u32 i;
     Unk_02099774 *sel;
-    data_02099770.mIn.mUnk_04 = value;
+    data_02099770.mIn.mState = value;
     data_02099770.mIn.mUnk_08 = 0;
     data_02099770.mIn.mUnk_0c = 0;
-    data_02099770.mIn.mUnk_10 = 0;
+    data_02099770.mIn.mStateFrames = 0;
     sel = &data_02099770.mIn;
     for (i = 0; i < 3; i++) {
-        sel->mUnk_18[i] = 0;
+        sel->mLevels[i] = 0;
     }
 }
 
@@ -147,7 +147,7 @@ void func_0200a5f0(void) {
     Unk_02099774 *sel = &data_02099770.mIn;
     u32 i;
     int id;
-    switch (data_02099770.mIn.mUnk_04) {
+    switch (data_02099770.mIn.mState) {
         case 0:
             sel->mUnk_08 = 0;
             return;
@@ -166,11 +166,11 @@ void func_0200a5f0(void) {
                     }
                 } else {
                     for (k = 0; k < 3; k++) {
-                        t[k] = sel->mUnk_18[k];
+                        t[k] = sel->mLevels[k];
                     }
                     if (x == -1 ||
-                        (!(data_020b6ee0.mBattleSlotFlags[i] & BATTLE_SLOT_GRADE_UP) && sel->mUnk_18[1] == 0x4000) ||
-                        ((data_020b6ee0.mBattleSlotFlags[i] & BATTLE_SLOT_GRADE_UP) && sel->mUnk_18[2] == 0x4000)) {
+                        (!(data_020b6ee0.mBattleSlotFlags[i] & BATTLE_SLOT_GRADE_UP) && sel->mLevels[1] == 0x4000) ||
+                        ((data_020b6ee0.mBattleSlotFlags[i] & BATTLE_SLOT_GRADE_UP) && sel->mLevels[2] == 0x4000)) {
                         sel->mUnk_14 = sel->mUnk_14 + 1;
                         func_0200a5cc(1);
                     }
@@ -240,12 +240,12 @@ void func_0200a5f0(void) {
             }
             rec = &gStages[id];
             DrawText(127, 37, data_0201a64e, GetText(50), 2, 256, 16, 2);
-            DrawSprite(rec->mInfo.mStageId + 0x1089, 127, MapRangeFromZero(sel->mUnk_18[0], 0x4000, -32, 106),
+            DrawSprite(rec->mInfo.mStageId + 0x1089, 127, MapRangeFromZero(sel->mLevels[0], 0x4000, -32, 106),
                        gSystemState.mUnk_308 - 4, 2);
             DrawSprite(0x1088, 127, 106, gSystemState.mUnk_308 - 2, 2);
-            DrawText(127, MapRangeFromZero(sel->mUnk_18[0], 0x4000, 208, 135), data_0201a61c,
+            DrawText(127, MapRangeFromZero(sel->mLevels[0], 0x4000, 208, 135), data_0201a61c,
                      GetText(rec->mInfo.mStageId + 98), 2, 256, 16, 2);
-            if (sel->mUnk_18[0] == 0x4000) {
+            if (sel->mLevels[0] == 0x4000) {
                 sel->mUnk_08 = 1;
             }
             return;
@@ -256,11 +256,11 @@ void func_0200a5f0(void) {
     }
 }
 
-int func_0200a970(int a, int b) {
+int LookupParticleKindValue(int a, int b) {
     return GetFileValue(0xd5f, b + a * 10);
 }
 
-int func_0200a988(int a, int b) {
+int LookupParticleGameValue(int a, int b) {
     return GetFileValue(0xd60, b + a * 20);
 }
 
@@ -301,12 +301,12 @@ void func_0200aa68(u16 id, u32 a, u32 b, u32 c, s32 d, u16 e, u8 f, s32 g) {
     DrawModelFileEx(id, &params, 0, g);
 }
 
-int func_0200aa9c(void) {
+int PickParticleKind(void) {
     u8 i;
     u8 sum = 0;
     u8 r = RandomRange(1, 100);
     for (i = 0; i < 5; i++) {
-        u32 w = data_020997a4.mWeights[0][i];
+        u32 w = gParticleGame.mWeights[0][i];
         sum += w;
         if (w != 0 && r <= sum) {
             return i;
@@ -315,28 +315,28 @@ int func_0200aa9c(void) {
     return -1;
 }
 
-int func_0200aadc(Particle *src, int kind) {
+int AddParticle(Particle *src, int kind) {
     int i;
     for (i = 0; i < PARTICLE_COUNT; i++) {
-        Particle *p = &data_020997a4.mParts[i];
-        if (p->mUnk_14 == 0) {
+        Particle *p = &gParticleGame.mParts[i];
+        if (p->mPresent == 0) {
             if (src != 0) {
                 *p = *src;
-                data_020997a4.mCount++;
+                gParticleGame.mCount++;
                 return 1;
             }
-            p->mUnk_14 = 1;
-            p->mUnk_15 = 0;
-            p->mUnk_16 = 0;
+            p->mPresent = 1;
+            p->mEntered = 0;
+            p->mFacingHitTimer = 0;
             if (kind < 0) {
-                p->mUnk_00 = func_0200aa9c();
+                p->mKind = PickParticleKind();
             } else {
                 if (kind >= 5) {
                     OS_Terminate();
                 }
-                p->mUnk_00 = kind;
+                p->mKind = kind;
             }
-            if (p->mUnk_00 >= 3) {
+            if (p->mKind >= 3) {
                 u32 j;
                 u32 near = 0;
                 u8 mask = 0;
@@ -344,16 +344,16 @@ int func_0200aadc(Particle *src, int kind) {
                 u8 n;
                 u8 pick;
                 for (j = 0; j < PARTICLE_COUNT; j++) {
-                    if (data_020997a4.mParts[j].mUnk_14 != 0 && data_020997a4.mParts[j].mUnk_00 == 3) {
+                    if (gParticleGame.mParts[j].mPresent != 0 && gParticleGame.mParts[j].mKind == 3) {
                         near++;
                     }
                 }
                 if (near <= 3) {
                     u32 k;
-                    if (data_020997a4.mUnk_01ac >> 8 > 128) {
+                    if (gParticleGame.mX >> 8 > 128) {
                         mask |= 1;
                     }
-                    if (data_020997a4.mUnk_01b0 >> 8 > 96) {
+                    if (gParticleGame.mY >> 8 > 96) {
                         mask |= 2;
                     }
                     n = 0;
@@ -377,10 +377,10 @@ int func_0200aadc(Particle *src, int kind) {
                     p->mVel.x = 0;
                     p->mVel.y = 0;
                 } else {
-                    p->mUnk_00 = 0;
+                    p->mKind = 0;
                 }
             }
-            if (p->mUnk_00 < 3) {
+            if (p->mKind < 3) {
                 int dx;
                 int dy;
                 int dist;
@@ -393,27 +393,27 @@ int func_0200aadc(Particle *src, int kind) {
                 }
                 p->mPos.x <<= 8;
                 p->mPos.y <<= 8;
-                dx = (data_020997a4.mUnk_01ac - p->mPos.x) >> 8;
-                dy = (data_020997a4.mUnk_01b0 - p->mPos.y) >> 8;
+                dx = (gParticleGame.mX - p->mPos.x) >> 8;
+                dy = (gParticleGame.mY - p->mPos.y) >> 8;
                 dist = SqrtU32(dx * dx + dy * dy);
                 p->mVel.x =
-                    ((int) RandomRange(data_020997a4.mWeights[1][p->mUnk_00], data_020997a4.mWeights[2][p->mUnk_00]) *
-                     dx / (dist + 1))
+                    ((int) RandomRange(gParticleGame.mWeights[1][p->mKind], gParticleGame.mWeights[2][p->mKind]) * dx /
+                     (dist + 1))
                     << 8;
                 p->mVel.y =
-                    ((int) RandomRange(data_020997a4.mWeights[1][p->mUnk_00], data_020997a4.mWeights[2][p->mUnk_00]) *
-                     dy / (dist + 1))
+                    ((int) RandomRange(gParticleGame.mWeights[1][p->mKind], gParticleGame.mWeights[2][p->mKind]) * dy /
+                     (dist + 1))
                     << 8;
             }
-            StartSprite(&p->mSprite, data_0201abec[p->mUnk_00 + 6]);
-            data_020997a4.mCount++;
+            StartSprite(&p->mSprite, data_0201abec[p->mKind + 6]);
+            gParticleGame.mCount++;
             return 1;
         }
     }
     return 0;
 }
 
-void func_0200acfc(Particle *p, int angle) {
+void SetParticleDirection(Particle *p, int angle) {
     int len = SqrtU32(p->mVel.x * p->mVel.x + p->mVel.y * p->mVel.y);
     int len2;
     p->mVel.x = -FX_SinCosTable_[(angle >> 4) * 2];
@@ -423,117 +423,117 @@ void func_0200acfc(Particle *p, int angle) {
     p->mVel.y = p->mVel.y * (len + 1) / (len2 + 1);
 }
 
-void func_0200ad64(Particle *p, int flag) {
-    p->mUnk_14 = 0;
+void RemoveParticle(Particle *p, int flag) {
+    p->mPresent = 0;
     if (flag) {
-        if (p->mUnk_00 == 2) {
+        if (p->mKind == 2) {
             AddAnimObjSlotEx(12, 1 << 23, p->mPos.x >> 8, p->mPos.y >> 8, 0, 0, 30, 1);
         } else {
             AddAnimObjSlotEx(11, 1 << 23, p->mPos.x >> 8, p->mPos.y >> 8, 0, 0, 30, 1);
         }
     }
-    data_020997a4.mCount--;
+    gParticleGame.mCount--;
 }
 
-void func_0200adc0(Particle *p) {
+void ApplyParticleNearHit(Particle *p) {
     char buf[32];
-    switch (p->mUnk_00) {
+    switch (p->mKind) {
         case 0:
         case 1:
         case 2: {
-            u32 loss = 60000 * data_020997a4.mUnk_11fd8[p->mUnk_00] / 1000;
-            if (loss >= data_020997a4.mUnk_0004) {
-                data_020997a4.mUnk_0004 = 1;
+            u32 loss = 60000 * gParticleGame.mKindSeconds[p->mKind] / 1000;
+            if (loss >= gParticleGame.mTimer) {
+                gParticleGame.mTimer = 1;
             } else {
-                data_020997a4.mUnk_0004 -= loss;
+                gParticleGame.mTimer -= loss;
             }
-            sprintf(buf, "-%d'", data_020997a4.mUnk_11fd8[p->mUnk_00]);
+            sprintf(buf, "-%d'", gParticleGame.mKindSeconds[p->mKind]);
             AddTextObjSlot(buf, 2, data_0201a61c, 30, p->mPos.x >> 8, p->mPos.y >> 8, 0, -128, 100, 1, 0);
-            func_0202f110(47, 100, 0, 64, 0xffff, 0);
-            func_0200ad64(p, 1);
+            PlayWaveKeepAlive(47, 100, 0, 64, 0xffff, 0);
+            RemoveParticle(p, 1);
             break;
         }
         case 3:
-            AddCappedAt999Shifted(&data_020997a4.mUnk_0008, data_020997a4.mUnk_11fc4[p->mUnk_00], 0);
-            func_0200ad64(p, 0);
-            func_0202f110(224, 100, 0, 64, 0xffff, 0);
+            AddCappedAt999Shifted(&gParticleGame.mScore, gParticleGame.mKindScores[p->mKind], 0);
+            RemoveParticle(p, 0);
+            PlayWaveKeepAlive(224, 100, 0, 64, 0xffff, 0);
             break;
         case 4:
-            AddCappedAt5999(&data_020997a4.mUnk_0004, 60000 * data_020997a4.mUnk_11fd8[p->mUnk_00] / 1000);
-            sprintf(buf, "+%d'", data_020997a4.mUnk_11fd8[p->mUnk_00]);
+            AddCappedAt5999(&gParticleGame.mTimer, 60000 * gParticleGame.mKindSeconds[p->mKind] / 1000);
+            sprintf(buf, "+%d'", gParticleGame.mKindSeconds[p->mKind]);
             AddTextObjSlot(buf, 2, data_0201a61c, 30, p->mPos.x >> 8, p->mPos.y >> 8, 0, -128, 100, 1, 0);
-            func_0200ad64(p, 0);
-            func_0202f110(224, 100, 0, 64, 0xffff, 0);
+            RemoveParticle(p, 0);
+            PlayWaveKeepAlive(224, 100, 0, 64, 0xffff, 0);
             break;
     }
 }
 
-void func_0200af28(Particle *p, int angle) {
+void ApplyParticleFacingHit(Particle *p, int angle) {
     Particle q;
     u16 base;
-    switch (p->mUnk_00) {
+    switch (p->mKind) {
         case 3:
         case 4:
-            func_0200adc0(p);
+            ApplyParticleNearHit(p);
             return;
         case 1:
-            base = AngleHalfway((u16) angle, data_020997a4.mUnk_0230);
+            base = AngleHalfway((u16) angle, gParticleGame.mAngle);
             q = *p;
-            q.mUnk_00 = 0;
-            q.mUnk_16 = 16;
-            func_0200acfc(&q, base);
-            StartSprite(&q.mSprite, data_0201abec[q.mUnk_00 + 6]);
-            func_0200aadc(&q, -1);
+            q.mKind = 0;
+            q.mFacingHitTimer = 16;
+            SetParticleDirection(&q, base);
+            StartSprite(&q.mSprite, data_0201abec[q.mKind + 6]);
+            AddParticle(&q, -1);
             q = *p;
-            q.mUnk_00 = 0;
-            q.mUnk_16 = 16;
-            func_0200acfc(&q, (u16) (base - 0x2000));
-            StartSprite(&q.mSprite, data_0201abec[q.mUnk_00 + 6]);
-            func_0200aadc(&q, -1);
+            q.mKind = 0;
+            q.mFacingHitTimer = 16;
+            SetParticleDirection(&q, (u16) (base - 0x2000));
+            StartSprite(&q.mSprite, data_0201abec[q.mKind + 6]);
+            AddParticle(&q, -1);
             q = *p;
-            q.mUnk_00 = 0;
-            q.mUnk_16 = 16;
-            func_0200acfc(&q, (u16) (base + 0x2000));
-            StartSprite(&q.mSprite, data_0201abec[q.mUnk_00 + 6]);
-            func_0200aadc(&q, -1);
-            AddCappedAt999Shifted(&data_020997a4.mUnk_0008, data_020997a4.mUnk_11fc4[p->mUnk_00], 0);
-            func_0200ad64(p, 1);
-            func_0202f110(217, 100, 0, 64, 0xffff, 0);
+            q.mKind = 0;
+            q.mFacingHitTimer = 16;
+            SetParticleDirection(&q, (u16) (base + 0x2000));
+            StartSprite(&q.mSprite, data_0201abec[q.mKind + 6]);
+            AddParticle(&q, -1);
+            AddCappedAt999Shifted(&gParticleGame.mScore, gParticleGame.mKindScores[p->mKind], 0);
+            RemoveParticle(p, 1);
+            PlayWaveKeepAlive(217, 100, 0, 64, 0xffff, 0);
             return;
         case 0:
         case 2:
-            AddCappedAt999Shifted(&data_020997a4.mUnk_0008, data_020997a4.mUnk_11fc4[p->mUnk_00], 0);
-            func_0200ad64(p, 1);
-            func_0202f110(217, 100, 0, 64, 0xffff, 0);
+            AddCappedAt999Shifted(&gParticleGame.mScore, gParticleGame.mKindScores[p->mKind], 0);
+            RemoveParticle(p, 1);
+            PlayWaveKeepAlive(217, 100, 0, 64, 0xffff, 0);
             return;
     }
 }
 
-void func_0200b0a0(void) {
+void DrawParticles(void) {
     int i;
     for (i = 0; i < PARTICLE_COUNT; i++) {
-        Particle *p = &data_020997a4.mParts[i];
-        if (p->mUnk_14) {
+        Particle *p = &gParticleGame.mParts[i];
+        if (p->mPresent) {
             UpdateSprite(&p->mSprite);
             DrawSprite(p->mSprite.mUnk_04 + (1 << 23), p->mPos.x >> 8, p->mPos.y >> 8, 100, 1);
         }
     }
 }
 
-void func_0200b0e0(void) {
+void UpdateParticles(void) {
     int i;
     for (i = 0; i < PARTICLE_COUNT; i++) {
-        Particle *p = &data_020997a4.mParts[i];
+        Particle *p = &gParticleGame.mParts[i];
         Vec2i old;
-        if (p->mUnk_14 == 0) {
+        if (p->mPresent == 0) {
             continue;
         }
         old = p->mPos;
         p->mPos.x += p->mVel.x / 60;
         p->mPos.y += p->mVel.y / 60;
-        if (p->mUnk_15 == 0) {
+        if (p->mEntered == 0) {
             if (p->mPos.x > 0 && p->mPos.x <= 0xff00 && p->mPos.y > 0 && p->mPos.y <= 0xbf00) {
-                p->mUnk_15 = 1;
+                p->mEntered = 1;
             }
         } else {
             int bounced = 0;
@@ -560,50 +560,50 @@ void func_0200b0e0(void) {
                 p->mVel.y = -p->mVel.y;
             }
             if (bounced) {
-                func_0202f110(88, 100, 0, 64, 0xffff, 0);
+                PlayWaveKeepAlive(88, 100, 0, 64, 0xffff, 0);
             }
-            dx = (p->mPos.x - data_020997a4.mUnk_01ac) >> 8;
-            dy = (p->mPos.y - data_020997a4.mUnk_01b0) >> 8;
+            dx = (p->mPos.x - gParticleGame.mX) >> 8;
+            dy = (p->mPos.y - gParticleGame.mY) >> 8;
             dist2 = dx * dx + dy * dy;
             flag = 0;
-            if (p->mUnk_16 == 0) {
+            if (p->mFacingHitTimer == 0) {
                 if (dist2 <= 576) {
-                    u16 angle = 0xffff - AngleOfVector((old.x - data_020997a4.mUnk_01ac) >> 8,
-                                                       (old.y - data_020997a4.mUnk_01b0) >> 8);
-                    if (AngleDistance(data_020997a4.mUnk_0230, angle) <= 16000) {
+                    u16 angle =
+                        0xffff - AngleOfVector((old.x - gParticleGame.mX) >> 8, (old.y - gParticleGame.mY) >> 8);
+                    if (AngleDistance(gParticleGame.mAngle, angle) <= 16000) {
                         flag = 1;
-                        func_0200af28(p, angle);
+                        ApplyParticleFacingHit(p, angle);
                     }
                 }
             } else {
-                p->mUnk_16--;
+                p->mFacingHitTimer--;
             }
             if (!flag && dist2 <= 196) {
-                func_0200adc0(p);
+                ApplyParticleNearHit(p);
             }
         }
     }
 }
 
-void func_0200b244(void) {
-    if (data_020997a4.mCount < data_020997a4.mUnk_11fec) {
-        if (data_020997a4.mUnk_11fc0 == 0) {
-            func_0200aadc(0, -1);
-            data_020997a4.mUnk_11fc0 = RandomRange(data_020997a4.mUnk_11ff8, data_020997a4.mUnk_11ffc);
+void SpawnParticles(void) {
+    if (gParticleGame.mCount < gParticleGame.mParticleLimit) {
+        if (gParticleGame.mSpawnTimer == 0) {
+            AddParticle(0, -1);
+            gParticleGame.mSpawnTimer = RandomRange(gParticleGame.mSpawnDelayMin, gParticleGame.mSpawnDelayLimit);
         } else {
-            data_020997a4.mUnk_11fc0--;
+            gParticleGame.mSpawnTimer--;
         }
     }
 }
 
-void func_0200b278(void) {
+void SetupParticleGame(void) {
     s32 level = data_020b6ee0.mSelectedStageIndex;
     int i;
     if (level < 0) {
         level = 0;
     }
-    data_020997a4.mInfo = gStages[level].mInfo;
-    data_020b10fc.mTableRow = data_020997a4.mInfo.mGrade - 1;
+    gParticleGame.mInfo = gStages[level].mInfo;
+    data_020b10fc.mTableRow = gParticleGame.mInfo.mGrade - 1;
     {
         BOOL ok = 0;
         if (data_020b10fc.mTableRow >= 0 && data_020b10fc.mTableRow < 12) {
@@ -613,84 +613,84 @@ void func_0200b278(void) {
             OS_Terminate();
         }
     }
-    func_0200c5d8(0, 0, data_020997a4.mInfo.mStageId + 0xdb3, 0x100, 16, 1, 130);
+    func_0200c5d8(0, 0, gParticleGame.mInfo.mStageId + 0xdb3, 0x100, 16, 1, 130);
     func_02024208();
     RequestTrack(2, 0x4c);
-    data_020997a4.mUnk_0230 = 0;
-    data_020997a4.mUnk_01ac = 0x8000;
-    data_020997a4.mUnk_01b0 = 0x6000;
-    data_020997a4.mUnk_023c = 0;
-    data_020997a4.mUnk_0240 = 0;
-    InitModel(&data_020997a4.mModel, 0, 0, 0, data_0201abbc[8]);
+    gParticleGame.mAngle = 0;
+    gParticleGame.mX = 0x8000;
+    gParticleGame.mY = 0x6000;
+    gParticleGame.mVelX = 0;
+    gParticleGame.mVelY = 0;
+    InitModel(&gParticleGame.mModel, 0, 0, 0, data_0201abbc[8]);
     for (i = 0; i < PARTICLE_COUNT; i++) {
-        data_020997a4.mParts[i].mUnk_14 = 0;
+        gParticleGame.mParts[i].mPresent = 0;
     }
-    data_020997a4.mCount = 0;
-    data_020997a4.mUnk_11fc4[0] = func_0200a970(0, 2);
-    data_020997a4.mUnk_11fd8[0] = func_0200a970(0, 3);
-    data_020997a4.mUnk_11fc4[1] = func_0200a970(0, 4);
-    data_020997a4.mUnk_11fd8[1] = func_0200a970(0, 5);
-    data_020997a4.mUnk_11fc4[2] = func_0200a970(0, 6);
-    data_020997a4.mUnk_11fd8[2] = func_0200a970(0, 7);
-    data_020997a4.mUnk_11fc4[3] = func_0200a970(0, 8);
-    data_020997a4.mUnk_11fd8[3] = func_0200a970(0, 9);
-    data_020997a4.mUnk_11fc4[4] = func_0200a970(0, 10);
-    data_020997a4.mUnk_11fd8[4] = func_0200a970(0, 11);
-    data_020997a4.mUnk_11fec = func_0200a988(data_020b10fc.mTableRow, 2);
-    data_020997a4.mUnk_11ff0 = func_0200a988(data_020b10fc.mTableRow, 3) * 60000 / 1000;
-    data_020997a4.mUnk_11ff4 = func_0200a988(data_020b10fc.mTableRow, 4);
-    data_020997a4.mUnk_11ff8 = func_0200a988(data_020b10fc.mTableRow, 5) * 60 / 1000;
-    data_020997a4.mUnk_11ffc = func_0200a988(data_020b10fc.mTableRow, 6) * 60 / 1000;
-    data_020997a4.mWeights[0][0] = func_0200a988(data_020b10fc.mTableRow, 7);
-    data_020997a4.mWeights[1][0] = func_0200a988(data_020b10fc.mTableRow, 8);
-    data_020997a4.mWeights[2][0] = func_0200a988(data_020b10fc.mTableRow, 9);
-    data_020997a4.mWeights[0][1] = func_0200a988(data_020b10fc.mTableRow, 10);
-    data_020997a4.mWeights[1][1] = func_0200a988(data_020b10fc.mTableRow, 11);
-    data_020997a4.mWeights[2][1] = func_0200a988(data_020b10fc.mTableRow, 12);
-    data_020997a4.mWeights[0][2] = func_0200a988(data_020b10fc.mTableRow, 13);
-    data_020997a4.mWeights[1][2] = func_0200a988(data_020b10fc.mTableRow, 14);
-    data_020997a4.mWeights[2][2] = func_0200a988(data_020b10fc.mTableRow, 15);
-    data_020997a4.mWeights[0][3] = func_0200a988(data_020b10fc.mTableRow, 16);
-    data_020997a4.mWeights[1][3] = func_0200a988(data_020b10fc.mTableRow, 17);
-    data_020997a4.mWeights[2][3] = func_0200a988(data_020b10fc.mTableRow, 18);
-    data_020997a4.mWeights[0][4] = func_0200a988(data_020b10fc.mTableRow, 19);
-    data_020997a4.mWeights[1][4] = func_0200a988(data_020b10fc.mTableRow, 20);
-    data_020997a4.mWeights[2][4] = func_0200a988(data_020b10fc.mTableRow, 21);
-    data_020997a4.mUnk_0000 = 0;
-    data_020997a4.mUnk_0004 = data_020997a4.mUnk_11ff0;
-    data_020997a4.mUnk_0008 = 0;
-    data_020997a4.mUnk_11fc0 = 180;
+    gParticleGame.mCount = 0;
+    gParticleGame.mKindScores[0] = LookupParticleKindValue(0, 2);
+    gParticleGame.mKindSeconds[0] = LookupParticleKindValue(0, 3);
+    gParticleGame.mKindScores[1] = LookupParticleKindValue(0, 4);
+    gParticleGame.mKindSeconds[1] = LookupParticleKindValue(0, 5);
+    gParticleGame.mKindScores[2] = LookupParticleKindValue(0, 6);
+    gParticleGame.mKindSeconds[2] = LookupParticleKindValue(0, 7);
+    gParticleGame.mKindScores[3] = LookupParticleKindValue(0, 8);
+    gParticleGame.mKindSeconds[3] = LookupParticleKindValue(0, 9);
+    gParticleGame.mKindScores[4] = LookupParticleKindValue(0, 10);
+    gParticleGame.mKindSeconds[4] = LookupParticleKindValue(0, 11);
+    gParticleGame.mParticleLimit = LookupParticleGameValue(data_020b10fc.mTableRow, 2);
+    gParticleGame.mTimerStart = LookupParticleGameValue(data_020b10fc.mTableRow, 3) * 60000 / 1000;
+    gParticleGame.mScoreThreshold = LookupParticleGameValue(data_020b10fc.mTableRow, 4);
+    gParticleGame.mSpawnDelayMin = LookupParticleGameValue(data_020b10fc.mTableRow, 5) * 60 / 1000;
+    gParticleGame.mSpawnDelayLimit = LookupParticleGameValue(data_020b10fc.mTableRow, 6) * 60 / 1000;
+    gParticleGame.mWeights[0][0] = LookupParticleGameValue(data_020b10fc.mTableRow, 7);
+    gParticleGame.mWeights[1][0] = LookupParticleGameValue(data_020b10fc.mTableRow, 8);
+    gParticleGame.mWeights[2][0] = LookupParticleGameValue(data_020b10fc.mTableRow, 9);
+    gParticleGame.mWeights[0][1] = LookupParticleGameValue(data_020b10fc.mTableRow, 10);
+    gParticleGame.mWeights[1][1] = LookupParticleGameValue(data_020b10fc.mTableRow, 11);
+    gParticleGame.mWeights[2][1] = LookupParticleGameValue(data_020b10fc.mTableRow, 12);
+    gParticleGame.mWeights[0][2] = LookupParticleGameValue(data_020b10fc.mTableRow, 13);
+    gParticleGame.mWeights[1][2] = LookupParticleGameValue(data_020b10fc.mTableRow, 14);
+    gParticleGame.mWeights[2][2] = LookupParticleGameValue(data_020b10fc.mTableRow, 15);
+    gParticleGame.mWeights[0][3] = LookupParticleGameValue(data_020b10fc.mTableRow, 16);
+    gParticleGame.mWeights[1][3] = LookupParticleGameValue(data_020b10fc.mTableRow, 17);
+    gParticleGame.mWeights[2][3] = LookupParticleGameValue(data_020b10fc.mTableRow, 18);
+    gParticleGame.mWeights[0][4] = LookupParticleGameValue(data_020b10fc.mTableRow, 19);
+    gParticleGame.mWeights[1][4] = LookupParticleGameValue(data_020b10fc.mTableRow, 20);
+    gParticleGame.mWeights[2][4] = LookupParticleGameValue(data_020b10fc.mTableRow, 21);
+    gParticleGame.mUnk_0000 = 0;
+    gParticleGame.mTimer = gParticleGame.mTimerStart;
+    gParticleGame.mScore = 0;
+    gParticleGame.mSpawnTimer = 180;
     StartModeSlide(1, 0);
 }
 
-void func_0200b53c(void) {
-    func_0201168c(data_020b6ee0.mSelectedStageIndex, data_020997a4.mUnk_0008, gModeSelectState.mScoreThreshold,
-                  data_020997a4.mUnk_0004, 2);
-    func_0200aa68(data_020997a4.mInfo.mKind + 0xd28, 256, 0, 0x1000, 0x1000, 0, 255, 256);
-    func_0200aa68(data_020997a4.mInfo.mStageId + 0xd31, data_020997a4.mUnk_01ac >> 8, data_020997a4.mUnk_01b0 >> 8, 0,
-                  0x6000, data_020997a4.mUnk_0230, 255, 0);
-    func_0200aa68(0xd2e, data_020997a4.mUnk_01ac >> 8, data_020997a4.mUnk_01b0 >> 8, 0, 0x6000, 0, 255, 0);
-    func_0200aa2c(&data_020997a4.mModel, data_020997a4.mUnk_01ac >> 8, data_020997a4.mUnk_01b0 >> 8, 0x6000,
-                  data_020997a4.mUnk_0230, 256);
-    func_0200b0a0();
+void DrawParticleGame(void) {
+    func_0201168c(data_020b6ee0.mSelectedStageIndex, gParticleGame.mScore, gModeSelectState.mScoreThreshold,
+                  gParticleGame.mTimer, 2);
+    func_0200aa68(gParticleGame.mInfo.mKind + 0xd28, 256, 0, 0x1000, 0x1000, 0, 255, 256);
+    func_0200aa68(gParticleGame.mInfo.mStageId + 0xd31, gParticleGame.mX >> 8, gParticleGame.mY >> 8, 0, 0x6000,
+                  gParticleGame.mAngle, 255, 0);
+    func_0200aa68(0xd2e, gParticleGame.mX >> 8, gParticleGame.mY >> 8, 0, 0x6000, 0, 255, 0);
+    func_0200aa2c(&gParticleGame.mModel, gParticleGame.mX >> 8, gParticleGame.mY >> 8, 0x6000, gParticleGame.mAngle,
+                  256);
+    DrawParticles();
 }
 
-void func_0200b610(void) {
+void UpdateParticleGame(void) {
     u8 state;
-    func_020059cc(data_020997a4.mUnk_0008);
+    func_020059cc(gParticleGame.mScore);
     state = GetModeSlideState();
     if (state != MODE_SLIDE_STATE_NONE) {
         int result;
-        func_0200b53c();
+        DrawParticleGame();
         result = UpdateModeSlide(1);
         if (state == MODE_SLIDE_STATE_END && result == 0) {
-            StartResultScreen(GetScoreThresholdMet(), data_020997a4.mUnk_0008);
+            StartResultScreen(GetScoreThresholdMet(), gParticleGame.mScore);
         }
         return;
     }
     {
         s32 lim = 51200;
-        s32 v = data_020997a4.mUnk_023c;
+        s32 v = gParticleGame.mVelX;
         if (v < lim) {
             lim = v;
         }
@@ -699,11 +699,11 @@ void func_0200b610(void) {
         } else if (v >= 51200) {
             v = 51200;
         }
-        data_020997a4.mUnk_023c = v;
+        gParticleGame.mVelX = v;
     }
     {
         s32 lim = 51200;
-        s32 v = data_020997a4.mUnk_0240;
+        s32 v = gParticleGame.mVelY;
         if (v < lim) {
             lim = v;
         }
@@ -712,13 +712,13 @@ void func_0200b610(void) {
         } else if (v >= 51200) {
             v = 51200;
         }
-        data_020997a4.mUnk_0240 = v;
+        gParticleGame.mVelY = v;
     }
-    data_020997a4.mUnk_01ac += data_020997a4.mUnk_023c / 60;
-    data_020997a4.mUnk_01b0 += data_020997a4.mUnk_0240 / 60;
+    gParticleGame.mX += gParticleGame.mVelX / 60;
+    gParticleGame.mY += gParticleGame.mVelY / 60;
     {
         s32 lim = 0xff00;
-        s32 v = data_020997a4.mUnk_01ac;
+        s32 v = gParticleGame.mX;
         if (v < lim) {
             lim = v;
         }
@@ -727,10 +727,10 @@ void func_0200b610(void) {
         } else if (v >= 0xff00) {
             v = 0xff00;
         }
-        data_020997a4.mUnk_01ac = v;
+        gParticleGame.mX = v;
     }
     {
-        s32 v = data_020997a4.mUnk_01b0;
+        s32 v = gParticleGame.mY;
         s32 lim = 0xbf00;
         if (v < lim) {
             lim = v;
@@ -740,30 +740,30 @@ void func_0200b610(void) {
         } else if (v >= 0xbf00) {
             v = 0xbf00;
         }
-        data_020997a4.mUnk_01b0 = v;
+        gParticleGame.mY = v;
     }
     if (gSystemState.mKeysDown & 0x10) {
-        data_020997a4.mUnk_023c += 0x1000;
+        gParticleGame.mVelX += 0x1000;
     } else if (gSystemState.mKeysDown & 0x20) {
-        data_020997a4.mUnk_023c -= 0x1000;
+        gParticleGame.mVelX -= 0x1000;
     } else {
-        func_0200b9cc(&data_020997a4.mUnk_023c, 0x300);
+        MoveTowardZero(&gParticleGame.mVelX, 0x300);
     }
     if (gSystemState.mKeysDown & 0x80) {
-        data_020997a4.mUnk_0240 += 0x1000;
+        gParticleGame.mVelY += 0x1000;
     } else if (gSystemState.mKeysDown & 0x40) {
-        data_020997a4.mUnk_0240 -= 0x1000;
+        gParticleGame.mVelY -= 0x1000;
     } else {
-        func_0200b9cc(&data_020997a4.mUnk_0240, 0x300);
+        MoveTowardZero(&gParticleGame.mVelY, 0x300);
     }
     if (gSystemState.mTouchDown) {
-        u16 target = 0xffff - AngleOfVector(gSystemState.mTouchX - (data_020997a4.mUnk_01ac >> 8),
-                                            gSystemState.mTouchY - (data_020997a4.mUnk_01b0 >> 8));
-        s32 angle = data_020997a4.mUnk_0230;
-        func_0200b994(&angle, target, 2);
-        data_020997a4.mUnk_0230 = angle;
+        u16 target = 0xffff - AngleOfVector(gSystemState.mTouchX - (gParticleGame.mX >> 8),
+                                            gSystemState.mTouchY - (gParticleGame.mY >> 8));
+        s32 angle = gParticleGame.mAngle;
+        EaseAngleToward(&angle, target, 2);
+        gParticleGame.mAngle = angle;
     } else {
-        u16 current = data_020997a4.mUnk_0230;
+        u16 current = gParticleGame.mAngle;
         s32 target = current;
         s32 angle;
         u16 keys = gSystemState.mKeysDown;
@@ -785,21 +785,21 @@ void func_0200b610(void) {
             target = 0;
         }
         angle = current;
-        func_0200b994(&angle, target, 2);
-        data_020997a4.mUnk_0230 = angle;
+        EaseAngleToward(&angle, target, 2);
+        gParticleGame.mAngle = angle;
     }
-    func_0200b0e0();
-    if (--data_020997a4.mUnk_0004 == 0) {
-        StartModeSlide(0, data_020997a4.mUnk_0008 >= data_020997a4.mUnk_11ff4);
+    UpdateParticles();
+    if (--gParticleGame.mTimer == 0) {
+        StartModeSlide(0, gParticleGame.mScore >= gParticleGame.mScoreThreshold);
     }
-    func_0200b244();
-    func_0200b53c();
+    SpawnParticles();
+    DrawParticleGame();
 }
 
-void func_0200b884(void) {
+void LeaveParticleGame(void) {
     func_020102f8();
 }
 
-int func_0200b88c(u8 stage) {
-    return func_0200a988(stage, 4);
+int GetParticleGameScoreThreshold(u8 stage) {
+    return LookupParticleGameValue(stage, 4);
 }

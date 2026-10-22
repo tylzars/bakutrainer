@@ -37,7 +37,7 @@ void main(void) {
     gSystemState.mUnk_310 = 0x40;
     gSystemState.mUnk_493 = 1;
     gSystemState.mUnk_494 = 1;
-    func_0202f00c();
+    InitWavePlayer();
     InitSoundCtl(0, 0x80);
     InitGameFlow();
     ClearObjSlots();
@@ -79,7 +79,7 @@ void main(void) {
         UpdateObjSlots();
         UpdateAnimSlots();
         flow->mFrame++;
-        func_0202f200();
+        UpdateKeepAliveWaves();
         UpdateSoundCtl();
         UpdateSystemAndWait();
     }

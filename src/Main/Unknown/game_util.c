@@ -38,7 +38,7 @@ void func_0200b8dc(int x, int y, const char *format, ...) {
 void func_0200b920(int line, const char *format, ...) {}
 
 // Moves *p toward target by 1/steps of the distance (at least one unit); returns 1 while it is still moving.
-int func_0200b928(s32 *p, s32 target, int steps) {
+int EaseToward(s32 *p, s32 target, int steps) {
     if (steps <= 1) {
         *p = target;
     } else if (*p != target) {
@@ -51,17 +51,18 @@ int func_0200b928(s32 *p, s32 target, int steps) {
     return 0;
 }
 
-// func_0200b928 for each component; returns how many components are still moving.
-int func_0200b960(VecFx32 *p, VecFx32 target, int steps) {
+// EaseToward for each component; returns how many components are still moving.
+int EaseVecToward(VecFx32 *p, VecFx32 target, int steps) {
     int moving = 0;
-    moving += func_0200b928(&p->x, target.x, steps);
-    moving += func_0200b928(&p->y, target.y, steps);
-    moving += func_0200b928(&p->z, target.z, steps);
+    moving += EaseToward(&p->x, target.x, steps);
+    moving += EaseToward(&p->y, target.y, steps);
+    moving += EaseToward(&p->z, target.z, steps);
     return moving;
 }
 
-// Moves *p toward target by 1/steps of the distance, across the wrap-around at 0xffff when that is the shorter way.
-int func_0200b994(s32 *p, s32 target, int steps) {
+// Moves *p toward target by 1/steps of the distance. When they are more than 0x8000 apart it heads for target + 0xffff
+// instead and wraps back below 0x10000, which is the shorter way only when target is below *p.
+int EaseAngleToward(s32 *p, s32 target, int steps) {
     int r;
     s32 d = target - *p;
     s32 w = target + 0xffff;
@@ -69,18 +70,18 @@ int func_0200b994(s32 *p, s32 target, int steps) {
         d = -d;
     }
     if (d > 0x8000) {
-        r = func_0200b928(p, w, steps);
+        r = EaseToward(p, w, steps);
         if (*p > 0xffff) {
             *p -= 0xffff;
         }
     } else {
-        r = func_0200b928(p, target, steps);
+        r = EaseToward(p, target, steps);
     }
     return r;
 }
 
 // Moves *p toward zero by delta and stops at zero.
-int func_0200b9cc(s32 *p, int delta) {
+int MoveTowardZero(s32 *p, int delta) {
     s8 s = *p != 0 ? (*p >> 31) | 1 : 0;
     *p = *p + -s * delta;
     if (s != (*p != 0 ? (*p >> 31) | 1 : 0)) {
@@ -121,16 +122,15 @@ void func_0200ba94(const VecFx32 *src, int dy, int d) {
     func_0200ba08(0x1c5, &v, 0, 0, d, 0x38000006);
 }
 
-// Largest of the three absolute values.
-u32 func_0200bacc(int x, int y, int z) {
+u32 MaxAbs3(int x, int y, int z) {
     u32 a = x < 0 ? -x : x;
     u32 b = y < 0 ? -y : y;
     u32 c = z < 0 ? -z : z;
     return (a < c ? c : a) < b ? b : (a < c ? c : a);
 }
 
-u32 func_0200baf8(const VecFx32 *a, const VecFx32 *b) {
-    return func_0200bacc(b->x - a->x, 0, b->z - a->z);
+u32 MaxAbsDeltaXz(const VecFx32 *a, const VecFx32 *b) {
+    return MaxAbs3(b->x - a->x, 0, b->z - a->z);
 }
 
 void func_0200bb14(int a, int b, int c, int d, int e, int f, int g, int h) {
@@ -163,9 +163,9 @@ void func_0200bc50(int a, int b, int c, int d, int e, int f, int g, const char *
     int mode = IsLcdSwapped() ? 2 : 1;
     int g2 = g;
     if (o == 0 && data_020b6ee0.mButtonsEnabled != 0 && p == 0) {
-        g2 = g + (data_020c1d60.mUnk_800.mUnk_100.mUnk_04 == f + 0x40000000);
+        g2 = g + (gTouchInput.mTrail.mTouchState.mButtonState == f + 0x40000000);
     }
-    if (n == 0 && (p != 1 || data_020c1d60.mUnk_800.mUnk_100.mUnk_04 == f + 0x40000000)) {
+    if (n == 0 && (p != 1 || gTouchInput.mTrail.mTouchState.mButtonState == f + 0x40000000)) {
         func_0202de80(g2, a, b, e, -1, mode);
     }
     if (h != 0) {
@@ -181,25 +181,29 @@ void func_0200bc50(int a, int b, int c, int d, int e, int f, int g, const char *
         } else {
             AddTouchButtonEx(f, a, b, 0, 0, g, 0, 0, (u16) k);
         }
-        if (l != 0 && func_0200bd80(0x20000000, f)) {
-            func_0202f110(l, 100, 0, 64, 0xffff, 0);
+        if (l != 0 && TestButton(0x20000000, f)) {
+            PlayWaveKeepAlive(l, 100, 0, 64, 0xffff, 0);
         }
     }
 }
 
-int func_0200bd80(u32 mask, u32 id) {
+int TestButton(u32 mask, u32 id) {
     if (data_020b6ee0.mButtonsEnabled == 0) {
         return 0;
     }
-    if ((mask & data_020c1d60.mUnk_800.mUnk_100.mUnk_04) && (u16) data_020c1d60.mUnk_800.mUnk_100.mUnk_04 == id) {
+    if ((mask & gTouchInput.mTrail.mTouchState.mButtonState) &&
+        (u16) gTouchInput.mTrail.mTouchState.mButtonState == id) {
         return 1;
     }
     return 0;
 }
 
-int func_0200bdac(u32 mask, u32 lo, u32 hi) {
-    if ((mask & data_020c1d60.mUnk_800.mUnk_100.mUnk_04) && (u16) data_020c1d60.mUnk_800.mUnk_100.mUnk_04 >= lo &&
-        (u16) data_020c1d60.mUnk_800.mUnk_100.mUnk_04 <= hi) {
+// 1 when the button state has a flag of mask and its id is in lo..hi; unlike TestButton it does not check
+// mButtonsEnabled.
+int TestButtonRange(u32 mask, u32 lo, u32 hi) {
+    if ((mask & gTouchInput.mTrail.mTouchState.mButtonState) &&
+        (u16) gTouchInput.mTrail.mTouchState.mButtonState >= lo &&
+        (u16) gTouchInput.mTrail.mTouchState.mButtonState <= hi) {
         return 1;
     }
     return 0;
@@ -223,10 +227,10 @@ u16 func_0200be10(u32 r, u32 g, u32 b) {
     return r | (g << 5) | (b << 10);
 }
 
-void func_0200be20(u32 num, int a, int b, u16 color) {
+void SetLightFromAngles(u32 num, int a, int b, u16 color) {
     VecFx32 v;
-    func_0200bec0(&v, a, b, 127);
-    func_0200be50(num, v.x, v.y, v.z, color);
+    VecFromAngles(&v, a, b, 127);
+    SetLight(num, v.x, v.y, v.z, color);
 }
 
 static inline void G3_LightVector(u32 num, fx16 x, fx16 y, fx16 z) {
@@ -237,7 +241,8 @@ static inline void G3_LightColor(u32 num, u16 color) {
     *(vu32 *) 0x040004cc = (num << 30) | color;
 }
 
-void func_0200be50(u32 num, s8 x, s8 y, s8 z, u32 color) {
+// Sets the direction and color of light num; the light mask is replaced by num's bit, so only that light stays on.
+void SetLight(u32 num, s8 x, s8 y, s8 z, u32 color) {
     G3_LoadMtx43(&gMapState.mUnk_3c);
     reg_G3X_MTX_MODE = 2;
     gMapState.mCamera.mUnk_2dc.mLightMask = 0;
@@ -246,7 +251,7 @@ void func_0200be50(u32 num, s8 x, s8 y, s8 z, u32 color) {
     gMapState.mCamera.mUnk_2dc.mLightMask |= 1 << num;
 }
 
-void func_0200bec0(VecFx32 *out, int a, int b, int scale) {
+void VecFromAngles(VecFx32 *out, int a, int b, int scale) {
     int j = (b >> 4) * 2;
     int i = (a >> 4) * 2;
     out->x = (FX_SinCosTable_[i + 1] * FX_SinCosTable_[j + 1]) / 4096;
@@ -270,7 +275,7 @@ u32 func_0200bf54(int n) {
     return ~((1 << n) - 1);
 }
 
-int func_0200bf68(u32 *p) {
+int TakeRandomClearBit(u32 *p) {
     u8 bits[32];
     u32 free = ~*p;
     u8 n = 0;
@@ -294,14 +299,14 @@ int func_0200bf68(u32 *p) {
     return -1;
 }
 
-int func_0200bfc4(int a, int b, int c, int d, int e) {
+int MapRangeClamped(int a, int b, int c, int d, int e) {
     int r = MapRange(a, b, c, d, e);
     int lo = d < e ? d : e;
     int hi = d < e ? e : d;
     return (r < hi ? r : hi) < lo ? lo : (r < hi ? r : hi);
 }
 
-void func_0200bffc(int x, int y, int value, const void *font, int align, int mode) {
+void DrawDecimal(int x, int y, int value, const void *font, int align, int mode) {
     char buf[16];
     *FormatDecimal(value, buf) = 0;
     DrawText(x, y, font, buf, align, 100, 10, mode);

@@ -100,7 +100,7 @@ typedef struct MoveObj {
     s32 mRepeat;
     s32 mX;
     s32 mY;
-    s32 mUnk_290;
+    s32 mLayer;
     u32 mUnk_294;
     s32 mScale;
     s32 mSpeed;
@@ -117,13 +117,13 @@ typedef struct MoveObj {
     void *mUnk_310;
 } MoveObj;
 
-void func_0200c034(MoveObj *o, int sprite, int model, const Vec2i *pos, int e, int f, int g);
-void func_0200c0dc(MoveObj *o, int speed, const Vec2i *target, int limit);
-void func_0200c124(MoveObj *o, u16 lo, u16 hi);
-void func_0200c164(MoveObj *o);
-int func_0200c174(MoveObj *o, const Vec2i *pos);
-void func_0200c3d8(MoveObj *o, int *outX, int *outY, int *state);
-void func_0200c470(MoveObj *o);
+void SetupMoveObj(MoveObj *o, int sprite, int model, const Vec2i *pos, int e, int f, int g);
+void StartMoveObj(MoveObj *o, int speed, const Vec2i *target, int limit);
+void SetMoveObjTrail(MoveObj *o, u16 lo, u16 hi);
+void StopMoveObj(MoveObj *o);
+int UpdateMoveObj(MoveObj *o, const Vec2i *pos);
+void GetMoveObjDrawPos(MoveObj *o, int *outX, int *outY, int *layer);
+void DrawMoveObj(MoveObj *o);
 void func_0200c5d8(int a, int b, int c, int d, int e, int f, int g);
 
 #ifdef __cplusplus

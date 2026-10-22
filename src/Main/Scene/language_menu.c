@@ -88,19 +88,19 @@ void SetupPrompt(void) {
     func_02010294(0x180, 1, 1);
     if (sPrompts[idx].mUnk_04 >= 0) {
         SetupSharedModel(sPrompts[idx].mUnk_04, sPrompts[idx].mUnk_08);
-        data_020c61ac.mUnk_280.mUnk_40 = 1;
+        gScriptWork.mUnk_280.mUnk_40 = 1;
     } else {
-        data_020c61ac.mUnk_280.mUnk_40 = 0;
+        gScriptWork.mUnk_280.mUnk_40 = 0;
     }
     LoadImage(0x237, 2);
     func_02024208();
     RequestTrack(5, 0x66);
     *p = -1;
-    func_02028f0c(0xfbc, LookupLanguageFileId(data_020b1084.mLanguage), 0x244, 0x246, 2, 0, 0, 0, 0);
-    data_020c61ac.mUnk_20 = 0;
+    SetupScript(0xfbc, LookupLanguageFileId(data_020b1084.mLanguage), 0x244, 0x246, 2, 0, 0, 0, 0);
+    gScriptWork.mCharFrameCount = 0;
     SetScriptRecord("LANGUAGE", data_020b1084.mLanguage);
     v = LookupLanguageFileId(data_020b1084.mLanguage);
-    func_02028f0c(0xfbc, v, 0x244, 0x246, GetFlowValue(0x17), 0, 0, func_0200f588, 0);
+    SetupScript(0xfbc, v, 0x244, 0x246, GetFlowValue(0x17), 0, 0, func_0200f588, 0);
     v = GetFlowValue(0x16);
     if (v != 0) {
         PushState(v);
@@ -109,16 +109,16 @@ void SetupPrompt(void) {
 }
 
 // Draw callback of the prompt's script text: while a sprite is chosen, eases its slide level, sets the text's y offset
-// (data_020c61ac.mUnk_2a) to the sprite's slide offset, draws the sprite and returns 0x7e; otherwise returns 0.
+// (gScriptWork.mUnk_2a) to the sprite's slide offset, draws the sprite and returns 0x7e; otherwise returns 0.
 int DrawPromptSprite(void) {
     PromptSprite *state = &gPromptSprite;
     if (gPromptSprite.mSpriteIndex != -1) {
         int i = state->mSpriteIndex;
         const PromptSpriteDef *e = &gPromptSpriteDefs[i];
         EaseLevel(&state->mSlideLevel, 8);
-        data_020c61ac.mUnk_2a = MapRangeFromZero(state->mSlideLevel, 0x4000, e->mSlideY, 0);
+        gScriptWork.mTextOffsetY = MapRangeFromZero(state->mSlideLevel, 0x4000, e->mSlideY, 0);
         func_0202a1cc();
-        DrawSprite(e->mSpriteId + 0x800000, gPromptSpriteDefs[i].mX, e->mY + data_020c61ac.mUnk_2a, 0x80, 1);
+        DrawSprite(e->mSpriteId + 0x800000, gPromptSpriteDefs[i].mX, e->mY + gScriptWork.mTextOffsetY, 0x80, 1);
         return 0x7e;
     }
     return 0;
@@ -127,7 +127,7 @@ int DrawPromptSprite(void) {
 void UpdatePrompt(void) {
     int id;
     u32 idx;
-    if (data_020c1d60.mUnk_800.mUnk_100.mUnk_04 == 0x40000400) {
+    if (gTouchInput.mTrail.mTouchState.mButtonState == 0x40000400) {
         id = 0xf8f;
     } else {
         id = 0xf8e;
@@ -136,9 +136,9 @@ void UpdatePrompt(void) {
     if (sPrompts[idx].mUnk_04 >= 0) {
         DrawSharedModel();
     }
-    func_0202a1ec(DrawPromptSprite);
+    UpdateScript(DrawPromptSprite);
     HandlePromptEvents();
-    if (data_020c61ac.mUnk_1a & 4) {
+    if (gScriptWork.mEofFlags & 4) {
         if (sPrompts[idx].mUnk_0c >= 0) {
             func_0201033c(sPrompts[idx].mUnk_0c, 0);
             ReenterState();
@@ -146,7 +146,7 @@ void UpdatePrompt(void) {
             PopState();
         }
     }
-    if (func_0202a188() != 3) {
+    if (GetScriptState() != SCRIPT_STATE_END) {
         AddTouchButtonWithSounds(0x400, 0x80, 0x60, 0, 0, id, 0, 0x168);
         DrawSprite(id, 0x80, 0x60, 0, 2);
     }
@@ -167,14 +167,14 @@ u8 func_0200f588(void) {
 void SetScriptRecord(const char *key, u32 value) {
     char buf[0x20];
     sprintf(buf, "%s=%i", key, value);
-    func_020292f4(buf);
+    SetScriptRecordFromText(buf);
 }
 
 void HandlePromptEvents(void) {
-    Unk_EventRec *rec;
+    ScriptEvent *rec;
     PromptSprite *state = &gPromptSprite;
     int ok;
-    while ((rec = func_0202a1a4()) != 0) {
+    while ((rec = NextScriptEvent()) != 0) {
         switch (rec->mUnk_00) {
             case 6:
                 ok = rec->mUnk_02 >= 0 && rec->mUnk_02 <= 3;
@@ -185,10 +185,10 @@ void HandlePromptEvents(void) {
                 state->mSlideLevel = 0;
                 break;
             case 7:
-                if (!data_020c61ac.mUnk_1c_2) {
+                if (!gScriptWork.mUnk_1c_2) {
                     const PromptWave *e = &gPromptWaves[rec->mUnk_02];
                     u32 base = e->mAddLanguage == 1 ? data_020b1084.mLanguage : 0;
-                    func_0202f110(base + e->mWaveId, 100, 0, 0x40, 0xffff, 0);
+                    PlayWaveKeepAlive(base + e->mWaveId, 100, 0, 0x40, 0xffff, 0);
                 }
                 break;
         }
@@ -209,8 +209,8 @@ void SetupLangMenu(void) {
         if (GetFileValueType(0x246, i) == 4) {
             const u8 *s = GetFileString(0x246, i);
             if (s[0] != 0) {
-                func_0202938c(buf, s);
-                if (func_020290ac("LAST", buf) == 1) {
+                CopyUpperWord(buf, s);
+                if (StringsEqual("LAST", buf) == 1) {
                     break;
                 }
                 if (menu->mCount >= LANG_MENU_MAX) {

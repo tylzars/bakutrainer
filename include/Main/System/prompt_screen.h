@@ -11,7 +11,7 @@ extern "C" {
 #define PROMPT_SCREEN_STATE_SLIDE_IN 0
 #define PROMPT_SCREEN_STATE_IN_PLACE 1
 #define PROMPT_SCREEN_STATE_SLIDE_OUT 2
-// Ids of the prompt screen's two buttons (drawn by DrawPromptScreen, tested with func_0200bd80).
+// Ids of the prompt screen's two buttons (drawn by DrawPromptScreen, tested with TestButton).
 #define PROMPT_SCREEN_BUTTON_FIRST 0x400
 #define PROMPT_SCREEN_BUTTON_SECOND 0x401
 

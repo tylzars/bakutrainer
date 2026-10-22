@@ -7,50 +7,57 @@
 extern "C" {
 #endif
 
-// A point of the touch trail (two bytes) that ReadTouchAndAppendTrail appends (see Unk_020c2560).
-typedef struct Unk_TouchPoint {
-    u8 mUnk_0;
-    u8 mUnk_1;
-} Unk_TouchPoint;
+// A point of the touch trail (two bytes) that ReadTouchAndAppendTrail appends (see TouchTrail).
+typedef struct TrailPoint {
+    u8 mX;
+    u8 mY;
+} TrailPoint;
 
-typedef struct Unk_TouchButton {
-    s16 mUnk_0;
-    s16 mUnk_2;
-    s16 mUnk_4;
-    s16 mUnk_6;
-    u16 mUnk_8;
-    u16 mUnk_a;
-    u16 mUnk_c;
-    u16 mUnk_e;
-} Unk_TouchButton;
+// A touch button: the box mMinX..mMaxX by mMinY..mMaxY, except for a TOUCH_SHAPE button, whose mMinX and mMinY are
+// the shape's position and mMaxY the shape id. mId is the caller's id with the TOUCH_SHAPE bit. mReleaseSoundId plays
+// on release and, when non-zero, also lets the release stop mPressSoundId.
+typedef struct TouchButton {
+    s16 mMinX;
+    s16 mMinY;
+    s16 mMaxX;
+    s16 mMaxY;
+    u16 mId;
+    u16 mPressSoundId;
+    u16 mReleaseSoundId;
+    u16 mKeys;
+} TouchButton;
 
-// The touch state that follows the trail.
-typedef struct Unk_020c2660 {
+// The touch state that follows the trail. mUnk_00 holds the stroke's start x and y, then its end x and y; mUnk_18 is
+// the stroke step (1 while touching, 2 once released with the end stored, then 3).
+typedef struct TouchState {
     u8 mUnk_00[4];
-    u32 mUnk_04;
-    u32 mUnk_08;
-    u32 mUnk_0c;
-    u16 mUnk_10;
-    u16 mUnk_12;
-    u8 mUnk_14;
+    u32 mButtonState;
+    u32 mButtonCount;
+    // Frame (gSystemState.mElapsedFrames) of the last touch-down.
+    u32 mPressFrame;
+    u16 mTrailCount;
+    u16 mHitId;
+    u8 mPrevDown;
     u8 mUnk_15;
-    u16 mUnk_16;
+    // Sprite drawn at two corners of each button added while it is non-zero; never set in this build (both
+    // ResetTouchButtons calls pass 0).
+    u16 mCornerSpriteId;
     u8 mUnk_18;
-} Unk_020c2660;
+} TouchState;
 
-// The touch trail (the points ReadTouchAndAppendTrail appends; their count is mUnk_100.mUnk_10, wrapping at 0x80)
-// and the touch state that follows it form one object.
-typedef struct Unk_020c2560 {
-    Unk_TouchPoint mUnk_000[0x80];
-    Unk_020c2660 mUnk_100;
-} Unk_020c2560;
+// The touch trail (the points ReadTouchAndAppendTrail appends; their count is mTouchState.mTrailCount, wrapping at
+// 0x80) and the touch state that follows it form one object.
+typedef struct TouchTrail {
+    TrailPoint mPoints[0x80];
+    TouchState mTouchState;
+} TouchTrail;
 
 // The touch buttons, followed by the touch trail and its state, form one object.
-typedef struct Unk_020c1d60 {
-    Unk_TouchButton mUnk_000[0x80];
-    Unk_020c2560 mUnk_800;
-} Unk_020c1d60;
-extern Unk_020c1d60 data_020c1d60;
+typedef struct TouchInput {
+    TouchButton mButtons[0x80];
+    TouchTrail mTrail;
+} TouchInput;
+extern TouchInput gTouchInput;
 
 int IsLcdSwapped(void);
 int func_02020890(void);

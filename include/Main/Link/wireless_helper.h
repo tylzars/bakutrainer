@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-// States of the link (Unk_WirelessWork.mUnk_38); the names are the ones the game prints.
+// States of the link (WirelessWork.mSysState); the names are the ones the game prints.
 #define WH_SYSSTATE_STOP 0
 #define WH_SYSSTATE_IDLE 1
 #define WH_SYSSTATE_SCANNING 2
@@ -35,110 +35,122 @@ extern "C" {
 #define WM_STATECODE_MPACK_IND 13
 #define WM_STATECODE_DISCONNECTED_FROM_MYSELF 26
 
+// Connect modes: the mode of WhConnectAsParent (parent modes) and WhConnectAsChild (child modes), kept as the wireless
+// work's connect mode. The key-sharing and data-sharing modes start that sharing when the MP exchange starts. Only the
+// two data-sharing modes are passed in this build (by UpdateCommParent and ConnectCommAsChild, which never run).
+#define WH_CONNECT_MODE_PARENT 0
+#define WH_CONNECT_MODE_CHILD 1
+#define WH_CONNECT_MODE_PARENT_KEYSHARING 2
+#define WH_CONNECT_MODE_CHILD_KEYSHARING 3
+#define WH_CONNECT_MODE_PARENT_DATASHARING 4
+#define WH_CONNECT_MODE_CHILD_DATASHARING 5
+
 // Message block that the wireless callbacks receive.
-typedef struct Unk_WirelessMsg {
+typedef struct WirelessMsg {
     u16 mUnk_00;
-    u16 mUnk_02;
-    u16 mUnk_04;
+    u16 mError;
+    u16 mMpStateCode;
     u16 mUnk_06;
-    u16 mUnk_08;
-    u16 mUnk_0a;
+    u16 mStateCode;
+    u16 mAssignedAid;
     u8 mUnk_0c[4];
-    u16 mUnk_10;
-} Unk_WirelessMsg;
+    u16 mChildAid;
+} WirelessMsg;
 
 // State of the wireless link (0x60 bytes).
-typedef struct Unk_WirelessWork {
+typedef struct WirelessWork {
     u16 mUnk_00;
-    // Bit per child (by its id) that is connected.
-    u16 mUnk_02;
-    u16 mUnk_04;
+    // Bit per aid: bit 0 (this unit, aid 0) is set when hosting starts, a child's bit is set when it connects and
+    // cleared when it disconnects. Nothing reads it in this build.
+    u16 mAidBits;
+    u16 mAid;
     u8 mUnk_06[0x16];
     // Fills the key block (first argument) for the parent / the child (second argument is the parent parameter
-    // block / the connection record) and returns the key mode.
-    u32 (*mUnk_1c)(void *key, void *param);
-    u32 mUnk_20;
-    int mUnk_24;
-    u32 (*mUnk_28)(void *key, void *param);
+    // block / the connection record) and returns the key mode. Neither this nor mChildWepKeyFunc is set in this build.
+    u32 (*mParentWepKeyFunc)(void *key, void *param);
+    u32 mSendBufferSize;
+    // Last error code recorded by WhSetError; nothing reads it in this build.
+    int mError;
+    u32 (*mChildWepKeyFunc)(void *key, void *param);
     u8 mUnk_2c[4];
-    // Debug print, called when set.
-    void (*mUnk_30)(const char *fmt, ...);
-    int mUnk_34;
-    int mUnk_38;
-    u32 mUnk_3c;
-    // Asked when a child connects: nonzero accepts it.
-    int (*mUnk_40)(Unk_WirelessMsg *msg);
+    // Print function, called with a format and its values when set; never set in this build.
+    void (*mPrintFunc)(const char *fmt, ...);
+    int mConnectMode;
+    int mSysState;
+    u32 mRecvBufferSize;
+    // Asked when a child connects: nonzero accepts it. Never set in this build, so every child is accepted.
+    int (*mChildConnectedFunc)(WirelessMsg *msg);
     u8 mUnk_44[0x1c];
-} Unk_WirelessWork;
+} WirelessWork;
 
 // Names of the api ids (WM_APIID_UNKNOWN .. WM_APIID_READ_STATUS), then of the link states (WH_SYSSTATE_STOP ..
 // WH_SYSSTATE_ERROR); the tables in wireless_state.c point at them.
-extern char data_02063d1c[];
-extern char data_02063da8[];
-extern char data_02063d6c[];
-extern char data_02063d80[];
-extern char data_02063dec[];
-extern char data_02063d30[];
-extern char data_02063d08[];
-extern char data_02063e04[];
-extern char data_02063d44[];
-extern char data_02063e34[];
-extern char data_02063f0c[];
-extern char data_02063e4c[];
-extern char data_02064088[];
-extern char data_02063f54[];
-extern char data_02063d58[];
+extern char gWmApiIdUnknownName[];
+extern char gWmApiIdIndicationName[];
+extern char gWmApiIdPortSendName[];
+extern char gWmApiIdPortRecvName[];
+extern char gWmApiIdReadStatusName[];
+extern char gWhSysStateStopName[];
+extern char gWhSysStateIdleName[];
+extern char gWhSysStateScanningName[];
+extern char gWhSysStateBusyName[];
+extern char gWhSysStateConnectedName[];
+extern char gWhSysStateDataSharingName[];
+extern char gWhSysStateKeySharingName[];
+extern char gWhSysStateMeasureChannelName[];
+extern char gWhSysStateConnectFailName[];
+extern char gWhSysStateErrorName[];
 
 extern u8 data_020c83e0[0x30];
 // The parent parameter block, the parent record (flushed from the data cache by range) and the data-sharing block
 // handed to the wireless library are 32-byte aligned.
-extern WMParentParam data_020c8420 __attribute__((aligned(32)));
+extern WMParentParam gWhParentParam __attribute__((aligned(32)));
 extern u16 data_020c8460[0x60] __attribute__((aligned(32)));
-extern u16 data_020c8520[0x100];
-extern u8 data_020c8720[0x220];
-extern u8 data_020c8940[0x480];
-extern WMDataSharing data_020c8dc0;
-extern WMDataSharing data_020c95e0 __attribute__((aligned(32)));
+extern u16 gWhDataSharingRecv[0x100];
+extern u8 gWhSendBuffer[0x220];
+extern u8 gWhRecvBuffer[0x480];
+extern WMDataSharing gWhKeySharing;
+extern WMDataSharing gWhDataSharing __attribute__((aligned(32)));
 
-const char *func_020386a4(u32 code);
-void func_020386c0(int state);
-void func_02038724(int error);
+const char *WhGetStateCodeName(u32 code);
+void WhSetSysState(int state);
+void WhSetError(int error);
 BOOL func_02038740(void);
-void func_02038780(Unk_WirelessMsg *msg);
-BOOL func_020387e4(void);
-void func_02038844(Unk_WirelessMsg *msg);
-BOOL func_0203887c(void);
-void func_020388d4(Unk_WirelessMsg *msg);
-BOOL func_02038a78(void);
-void func_02038b0c(Unk_WirelessMsg *msg);
-BOOL func_02038c48(void);
-BOOL func_02038c7c(void);
-BOOL func_02038ce0(void);
-void func_02038d10(Unk_WirelessMsg *msg);
-BOOL func_02038d60(void);
-void func_02038d88(Unk_WirelessMsg *msg);
-BOOL func_02038dac(void);
-void func_02038e0c(Unk_WirelessMsg *msg);
-BOOL func_02038e64(void);
-void func_02038f04(Unk_WirelessMsg *msg);
-BOOL func_020390d4(void);
-void func_02039140(Unk_WirelessMsg *msg);
-BOOL func_02039298(void);
-BOOL func_020392f0(void);
-BOOL func_02039348(void);
-void func_02039378(Unk_WirelessMsg *msg);
-BOOL func_020393ac(void);
-void func_020393e4(Unk_WirelessMsg *msg);
-BOOL func_02039408(void);
-void func_02039438(Unk_WirelessMsg *msg);
-int func_0203946c(void);
-int func_0203947c(int mode, u16 b, u16 c);
-int func_02039598(int mode, const void *data);
-u8 *func_02039698(u32 n);
-BOOL func_020396b8(void *buf);
-void func_0203970c(void);
-void func_02039728(void);
-u16 func_0203981c(void);
+void func_02038780(WirelessMsg *msg);
+BOOL WhSetParentWepKey(void);
+void WhSetParentWepKeyCallback(WirelessMsg *msg);
+BOOL WhStartParent(void);
+void WhStartParentCallback(WirelessMsg *msg);
+BOOL WhStartParentMp(void);
+void WhStartParentMpCallback(WirelessMsg *msg);
+BOOL WhStartParentKeyShare(void);
+BOOL WhEndParentKeyShareAndMp(void);
+BOOL WhEndParentMp(void);
+void WhEndParentMpCallback(WirelessMsg *msg);
+BOOL WhEndParent(void);
+void WhEndParentCallback(WirelessMsg *msg);
+BOOL WhSetChildWepKey(void);
+void WhSetChildWepKeyCallback(WirelessMsg *msg);
+BOOL WhStartChild(void);
+void WhStartChildCallback(WirelessMsg *msg);
+BOOL WhStartChildMp(void);
+void WhStartChildMpCallback(WirelessMsg *msg);
+BOOL WhStartChildKeyShare(void);
+BOOL WhEndChildKeyShareAndMp(void);
+BOOL WhEndChildMp(void);
+void WhEndChildMpCallback(WirelessMsg *msg);
+BOOL WhEndChild(void);
+void WhEndChildCallback(WirelessMsg *msg);
+BOOL WhStartShutDown(void);
+void WhShutDownCallback(WirelessMsg *msg);
+int WhGetSysState(void);
+int WhConnectAsParent(int mode, u16 b, u16 c);
+int WhConnectAsChild(int mode, const void *data);
+u8 *WhGetSharedData(u32 n);
+BOOL WhUpdateDataSharing(void *buf);
+void WhShutDownOrFail(void);
+void WhFinalize(void);
+u16 WhGetAid(void);
 
 #ifdef __cplusplus
 }

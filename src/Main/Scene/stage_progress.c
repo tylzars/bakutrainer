@@ -532,14 +532,14 @@ int func_02014f98(StageRec *rec, int delta) {
 }
 
 // Adds amount to the stage's percent (mInfo.mPercent), clamped to 0..100; returns 1 when it was clamped. When amount
-// is positive, a set plays sound 0xe8 (func_0202f110) and b set, while a stage is selected, adds an ObjSlot
+// is positive, a set plays sound 0xe8 (PlayWaveKeepAlive) and b set, while a stage is selected, adds an ObjSlot
 // (AddAnimObjSlotEx) at the gauge position of the old value (PercentToX). Reaching 100 clears mUnk_22e.
 int AddPercent(StageRec *rec, int amount, int a, int b) {
     StageInfo *info = &rec->mInfo;
     int value = info->mPercent;
 
     if (a != 0 && amount > 0) {
-        func_0202f110(0xe8, 100, 0, 0x40, 0xffff, 0);
+        PlayWaveKeepAlive(0xe8, 100, 0, 0x40, 0xffff, 0);
     }
     if (b != 0 && amount > 0 && data_020b6ee0.mSelectedStageIndex != -1) {
         AddAnimObjSlotEx(0x1e, 0, PercentToX(value), 0x5e, 0, 0, 0x3c, 2);

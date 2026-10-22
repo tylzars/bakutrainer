@@ -11,18 +11,24 @@
 #include <Main/System/system_init.h>
 #include <Main/Link/link_indicator.h>
 
+// Of the code in this file only GetIndicatorLayer does any work in this build: the link conditions the rest needs
+// (gSystemState.mFlags 0x200 or 0x400, mUnk_2a6_0, mUnk_2a6_1, mUnk_2a4[1] above 1) never hold, so UpdateIndicator
+// returns at once and the other functions are never called.
+
 void func_0203982c(u16 code) {}
 
 // Link indicator and shutdown. The work area of the code below: the bit set of finished steps and the buffers of
 // the link status exchange. Its zero initialiser makes it take part in the compiler's size ordering of this file's
 // data where it is defined, which puts the local initialisers of the functions below in the game's order.
-Unk_LinkBuffers data_020c9e00 __attribute__((aligned(32))) = {0};
+LinkBuffers gLinkBuffers __attribute__((aligned(32))) = {0};
 
 // Plane bits of the display control registers (the four backgrounds, then the objects).
 #define DISPCNT_BGS 0xf00
 #define DISPCNT_OBJ 0x1000
 
-// Steps whose end the link waits for in func_02039c88 (bits of Unk_LinkBuffers.mUnk_04).
+// Steps whose end the link waits for in WaitForLinkStep (bits of LinkBuffers.mFlags). LINK_STEP_PARENT and
+// LINK_STEP_CHILD are set by the callbacks of ShutDownLink's first and second step, which both run whatever the link's
+// role; nothing sets LINK_STEP_STATUS.
 #define LINK_STEP_STATUS 0x10
 #define LINK_STEP_PARENT 0x20
 #define LINK_STEP_CHILD 0x40
@@ -39,7 +45,7 @@ typedef struct {
 // Sets up one object of a screen: calls DrawSprite for the picture `id`, then writes object attribute entry `index`
 // (attr0, attribute 1 from `attr2`, and attribute 2 from a tile offset and the palette) and, when `rotate` is set, the
 // rotation entry of the screen's group from the sine/cosine table at the frame counter's phase.
-void func_02039830(int id, u32 shift, u32 index, u32 attr2, u32 attr0, int rotate, int screen) {
+void WriteIndicatorOam(int id, u32 shift, u32 index, u32 attr2, u32 attr0, int rotate, int screen) {
     Unk_OamEntry *oam = screen == 1 ? (Unk_OamEntry *) 0x07000000 : (Unk_OamEntry *) 0x07000400;
     s16 tile;
 
@@ -67,16 +73,16 @@ void func_02039830(int id, u32 shift, u32 index, u32 attr2, u32 attr0, int rotat
     oam[index].mUnk_4 = tile + (func_0202adac() << 12);
 }
 
-// Holds a countdown at 20 while func_02035058 reports 1 and counts it down otherwise. When the screens are flagged,
+// Holds a countdown at 20 while IsCommReading reports 1 and counts it down otherwise. When the screens are flagged,
 // saves the plane bits of each engine's display control (hiding all but the objects on the engine that is not the
 // indicator's), or puts them back, then draws the two objects.
-void func_02039908(u32 attr2, u32 attr0, int screen) {
+void UpdateCommIndicator(u32 attr2, u32 attr0, int screen) {
     int layer;
     int other;
     int i;
     u32 mask;
 
-    if (func_02035058() == 1) {
+    if (IsCommReading() == 1) {
         gSystemState.mUnk_250.mUnk_28[0]++;
         if (gSystemState.mUnk_250.mUnk_28[0] != 0) {
             gSystemState.mUnk_250.mUnk_28[0] = 20;
@@ -120,23 +126,23 @@ void func_02039908(u32 attr2, u32 attr0, int screen) {
             }
         }
         if ((gSystemState.mFlags & 0xc0000) && gSystemState.mUnk_250.mUnk_28[0] != 0) {
-            func_02039830(gSystemState.mUnk_290 + 9, 0, 0x7e, 0x61, 0x41, 1, layer);
+            WriteIndicatorOam(gSystemState.mUnk_290 + 9, 0, 0x7e, 0x61, 0x41, 1, layer);
         }
-        func_02039830(gSystemState.mUnk_290 + 10, 3 - func_0204672c(), 0x7f, attr2, attr0, 0, layer);
+        WriteIndicatorOam(gSystemState.mUnk_290 + 10, 3 - func_0204672c(), 0x7f, attr2, attr0, 0, layer);
     }
 }
 
-// The screen (1 or 2) that carries the indicator, by bit 2 of mUnk_2a4[0] and the screen flags.
-u32 func_02039a64(void) {
+// The screen (layer 1 or 2) that carries the indicator, by bit 2 of mUnk_2a4[0] and the screen flags.
+u32 GetIndicatorLayer(void) {
     if (gSystemState.mUnk_2a4[0] & 4) {
         return (gSystemState.mFlags & 2) ? 2 : 1;
     }
     return (gSystemState.mFlags & 1) ? 1 : 2;
 }
 
-// While the link is flagged, draws an object (through func_02039908 when the 0x200 flag is set) and calls the hook;
-// otherwise copies a 16 by 8 halfword picture, chosen by the link level, into the background memory.
-void func_02039a94(void) {
+// While the link is flagged, draws an object (through UpdateCommIndicator when the 0x200 flag is set) and calls the
+// hook; otherwise copies a 16 by 8 halfword picture, chosen by the link level, into the background memory.
+void UpdateIndicator(void) {
     u32 x;
     u32 y;
     u32 screen;
@@ -158,11 +164,11 @@ void func_02039a94(void) {
         x = colors[(gSystemState.mUnk_2a4[0] & 3) * 2];
         y = colors[(gSystemState.mUnk_2a4[0] & 3) * 2 + 1];
     }
-    screen = func_02039a64();
+    screen = GetIndicatorLayer();
     level = 3 - func_0204672c();
     if (gSystemState.mFlags & 3) {
         if (gSystemState.mFlags & 0x200) {
-            func_02039908(x, y, screen);
+            UpdateCommIndicator(x, y, screen);
         } else {
             DrawSprite(gSystemState.mUnk_290 + level, x, y, 0, screen);
         }
@@ -186,55 +192,56 @@ void func_02039a94(void) {
     }
 }
 
-// Restarts the countdown and, when the status call succeeds with state 3, waits for the status step. The spinner
-// characters are unused: they only reproduce the 4-byte rodata object that sits before the other rodata of the file.
+// Restarts the countdown and, when the status call succeeds with state 3, waits for the status step (its bit is never
+// set, so the wait runs to its 0x78-frame timeout). The spinner characters are unused: they only reproduce the 4-byte
+// rodata object that sits before the other rodata of the file.
 void func_02039b70(void) {
     char spin[4] = {'-', '\\', '|', '/'};
     u16 buf[1000];
 
     gSystemState.mUnk_2a3 = 60;
     if (func_020465b0(buf) == 0 && buf[0] == 3) {
-        func_02039c88(LINK_STEP_STATUS, 0x78);
+        WaitForLinkStep(LINK_STEP_STATUS, 0x78);
     }
 }
 
 // Shuts the link down: prints, waits for the two end steps when the link is up, then clears the indicator state and
 // releases its buffers. The link level is tested once without effect before the flags: the code compares it with
-// 1 and drops the result (the compiler does not optimise a function that uses the 32-byte aligned data_020c9e00, so
+// 1 and drops the result (the compiler does not optimise a function that uses the 32-byte aligned gLinkBuffers, so
 // the test stays).
-void func_02039ba8(void) {
+void ShutDownLink(void) {
     gSystemState.mUnk_2a3 = 60;
     func_02021fa8("WIR Shut Down\n");
     (void) ((gSystemState.mUnk_2a4[1] >= 1) ? 0 : 0);
     if ((gSystemState.mFlags & 0x600) || gSystemState.mUnk_2a4[1] >= 1) {
-        if (func_0204684c(func_02039d98) == 2) {
-            func_02039c88(LINK_STEP_PARENT, 0x2d0);
+        if (func_0204684c(FirstShutDownStepCallback) == 2) {
+            WaitForLinkStep(LINK_STEP_PARENT, 0x2d0);
         }
-        if (func_02046884(func_02039db8) == 2) {
-            func_02039c88(LINK_STEP_CHILD, 0x3c);
+        if (func_02046884(SecondShutDownStepCallback) == 2) {
+            WaitForLinkStep(LINK_STEP_CHILD, 0x3c);
         }
     }
     gSystemState.mUnk_2a4[1] = -1;
     gSystemState.mUnk_2a6_0 = 0;
     gSystemState.mUnk_2a6_1 = 0;
     gSystemState.mUnk_250.mUnk_08 = 0;
-    Free(&data_020c9e00.mUnk_08);
-    Free(&data_020c9e00.mUnk_0c);
-    Free(&data_020c9e00.mUnk_14);
-    Free(&data_020c9e00.mUnk_1c);
-    Free(&data_020c9e00.mUnk_10);
-    Free(&data_020c9e00.mUnk_18);
-    data_020c9e00.mUnk_04 = 0;
+    Free(&gLinkBuffers.mUnk_08);
+    Free(&gLinkBuffers.mUnk_0c);
+    Free(&gLinkBuffers.mRecvBuffer);
+    Free(&gLinkBuffers.mRecvCopy);
+    Free(&gLinkBuffers.mSendBuffer);
+    Free(&gLinkBuffers.mOutMessage);
+    gLinkBuffers.mFlags = 0;
     gSystemState.mFlags &= ~0x400;
 }
 
 // Waits until a step in `mask` has finished (a bit set by the callbacks below), calling the system frame function
 // whenever the frame counter changes; gives up and returns FALSE after `timeout` frames. Clears the bits on success.
-BOOL func_02039c88(u32 mask, u32 timeout) {
+BOOL WaitForLinkStep(u32 mask, u32 timeout) {
     u32 start = gSystemState.mElapsedFrames;
     u32 last = gSystemState.mElapsedFrames;
 
-    if (!(data_020c9e00.mUnk_04 & mask)) {
+    if (!(gLinkBuffers.mFlags & mask)) {
         do {
             if (gSystemState.mElapsedFrames != last) {
                 UpdateSystem(3);
@@ -243,15 +250,15 @@ BOOL func_02039c88(u32 mask, u32 timeout) {
             if (gSystemState.mElapsedFrames - start > timeout) {
                 return FALSE;
             }
-        } while (!(data_020c9e00.mUnk_04 & mask));
+        } while (!(gLinkBuffers.mFlags & mask));
     }
-    data_020c9e00.mUnk_04 &= ~mask;
+    gLinkBuffers.mFlags &= ~mask;
     return TRUE;
 }
 
 // Reserves `size` bytes of the outgoing message buffer and returns its start (byte 1 holds the size), or 0 when the
 // link is not up or the buffer (0x54 bytes) is full.
-u8 *func_02039cd4(u32 size) {
+u8 *ReserveLinkMessage(u32 size) {
     u32 pos;
     u8 *p;
 
@@ -259,9 +266,9 @@ u8 *func_02039cd4(u32 size) {
         pos = gSystemState.mUnk_296;
         if (pos + size <= 0x54) {
             if (gSystemState.mFlags & 0x600) {
-                p = data_020c67e0;
+                p = gCommSendData;
             } else {
-                p = data_020c9e00.mUnk_18;
+                p = gLinkBuffers.mOutMessage;
             }
             p += pos;
             p[1] = size;
@@ -273,45 +280,43 @@ u8 *func_02039cd4(u32 size) {
 }
 
 // Ends the outgoing message with a terminator record and, unless the 0x600 flags are set, copies the buffer on.
-void func_02039d24(void) {
+void EndLinkMessage(void) {
     u8 *p;
 
     if (gSystemState.mUnk_2a4[1] > 1) {
-        p = func_02039cd4(2);
+        p = ReserveLinkMessage(2);
         if (p != 0) {
             p[0] = 0xff;
             p[1] = 0;
         }
         gSystemState.mUnk_296 = 0;
         if (!(gSystemState.mFlags & 0x600)) {
-            MIi_CpuCopyFast(data_020c9e00.mUnk_18, data_020c9e00.mUnk_10, 0x200);
+            MIi_CpuCopyFast(gLinkBuffers.mOutMessage, gLinkBuffers.mSendBuffer, 0x200);
         }
     }
 }
 
 // Callback of a packet send (func_02046e28): on success clears the packet-out bit, otherwise passes the code on.
-void func_02039d74(Unk_WirelessMsg *msg) {
-    if (msg->mUnk_02 != 0) {
+void PacketSentCallback(WirelessMsg *msg) {
+    if (msg->mError != 0) {
         func_0203982c(msg->mUnk_00);
     } else {
-        data_020c9e00.mUnk_04 &= ~LINK_PACKET_OUT;
+        gLinkBuffers.mFlags &= ~LINK_PACKET_OUT;
     }
 }
 
-// Callback of the first shutdown step.
-void func_02039d98(Unk_WirelessMsg *msg) {
-    if (msg->mUnk_02 != 0) {
+void FirstShutDownStepCallback(WirelessMsg *msg) {
+    if (msg->mError != 0) {
         func_0203982c(msg->mUnk_00);
     } else {
-        data_020c9e00.mUnk_04 |= LINK_STEP_PARENT;
+        gLinkBuffers.mFlags |= LINK_STEP_PARENT;
     }
 }
 
-// Callback of the second shutdown step.
-void func_02039db8(Unk_WirelessMsg *msg) {
-    if (msg->mUnk_02 != 0) {
+void SecondShutDownStepCallback(WirelessMsg *msg) {
+    if (msg->mError != 0) {
         func_0203982c(msg->mUnk_00);
     } else {
-        data_020c9e00.mUnk_04 |= LINK_STEP_CHILD;
+        gLinkBuffers.mFlags |= LINK_STEP_CHILD;
     }
 }

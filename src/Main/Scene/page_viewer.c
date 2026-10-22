@@ -56,13 +56,13 @@ void UpdatePageViewer(void) {
     DrawPageViewerButtons();
     switch (gPageViewState.mState) {
         case 0:
-            if (func_0200bd80(0x20000000, 0x600) != 0) {
+            if (TestButton(0x20000000, 0x600) != 0) {
                 p->mPageIndex = 0;
                 StartPageViewerState(1);
             }
             break;
         case 1:
-            if (func_0200bd80(0x20000000, 0x600) != 0) {
+            if (TestButton(0x20000000, 0x600) != 0) {
                 if (data_020b6ee0.mUnk_a91b != 0) {
                     data_020b6ee0.mUnk_a91b = 0;
                     PushState(10);
@@ -73,7 +73,7 @@ void UpdatePageViewer(void) {
                 }
             }
             if (p->mNextPageTimer == 0) {
-                if (func_0200bd80(0x20000000, 0x601) != 0) {
+                if (TestButton(0x20000000, 0x601) != 0) {
                     p->mPageIndex++;
                     if (p->mPageIndex == PAGE_VIEWER_PAGE_COUNT) {
                         p->mPageIndex = 0;

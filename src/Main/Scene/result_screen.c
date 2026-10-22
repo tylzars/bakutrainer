@@ -207,7 +207,7 @@ void DrawResultScreenAndHandleButtons(void) {
         if (gResultState.mEntryCursor == 5) {
             func_02013dc8(&rec->mInfo, tableEntryId, 1, 0);
         }
-        if (func_0200bd80(0x80000000, 0x505) && ready) {
+        if (TestButton(0x80000000, 0x505) && ready) {
             gResultState.mEntryCursor = 5;
         }
         if (gResultState.mUnk_68.mUnk_de != 0) {
@@ -219,7 +219,7 @@ void DrawResultScreenAndHandleButtons(void) {
         }
         func_0200bc50((gResultState.mSlideOffsets[4] >> 8) + 181, 174, 0, 0, 140, 512, 0xfb5, GetText(41),
                       data_0201a61c, 2, 0, 359, ready, 0, 0, 0);
-        if (func_0200bd80(0x20000000, 0x200) && ready) {
+        if (TestButton(0x20000000, 0x200) && ready) {
             gResultRemainder.mEntryReplaced = 1;
             gResultState.mReplacedTableEntryId = rec->mInfo.mTableEntryIds[gResultState.mReplaceEntryIndex];
             rec->mInfo.mTableEntryIds[gResultState.mReplaceEntryIndex] = tableEntryId;
@@ -227,15 +227,15 @@ void DrawResultScreenAndHandleButtons(void) {
         }
         func_0200bc50((gResultState.mSlideOffsets[3] >> 8) + 73, 174, 0, 0, 140, 513, 0xfd7, GetText(61), data_0201a61c,
                       2, 0, 90, ready, 0, 0, 0);
-        if (func_0200bd80(0x20000000, 0x201) && ready) {
+        if (TestButton(0x20000000, 0x201) && ready) {
             gResultRemainder.mEntryReplaced = 0;
             gResultState.mEntryDecided = 1;
         }
-        if (func_0200bdac(0x80000000, 0x500, 0x504) && ready) {
-            gResultState.mReplaceEntryIndex = (u16) data_020c1d60.mUnk_800.mUnk_100.mUnk_04 - 0x500;
+        if (TestButtonRange(0x80000000, 0x500, 0x504) && ready) {
+            gResultState.mReplaceEntryIndex = (u16) gTouchInput.mTrail.mTouchState.mButtonState - 0x500;
         }
     }
-    if (func_0200bd80(0x20000000, 0x102)) {
+    if (TestButton(0x20000000, 0x102)) {
         gResultState.mEntryDecided = 0;
         if (gResultRemainder.mEntryReplaced != 0) {
             rec->mInfo.mTableEntryIds[gResultState.mReplaceEntryIndex] = gResultState.mReplacedTableEntryId;
@@ -371,7 +371,7 @@ void UpdateResultScreen(void) {
                 }
                 break;
         }
-        if (func_0200bd80(0x20000000, 0x101)) {
+        if (TestButton(0x20000000, 0x101)) {
             if (gResultState.mPickedTableEntryId < 0) {
                 func_0200494c();
             } else {
@@ -382,7 +382,7 @@ void UpdateResultScreen(void) {
             }
         }
     } else if (gResultState.mState == RESULT_STATE_TABLE_ENTRY) {
-        if (func_0200bd80(0x20000000, 0x101)) {
+        if (TestButton(0x20000000, 0x101)) {
             func_0200494c();
         }
     }

@@ -16,21 +16,53 @@
 #include <Main/Input/touch_buttons.h>
 #include <Main/Scene/language_menu.h>
 
-Unk_020c61ac data_020c61ac;
+ScriptWork gScriptWork;
 
-// Finds the entry of the message block whose normalised text equals name and selects it.
-void func_02028e5c(const char *name) {
+// Script commands: the index of the command's name in sCommandNames, which UpdateScript switches on.
+#define SCRIPT_CMD_LET 0
+#define SCRIPT_CMD_SPR 1
+#define SCRIPT_CMD_SPRX 2
+#define SCRIPT_CMD_SPRSCR 3
+#define SCRIPT_CMD_SHPSCR 4
+#define SCRIPT_CMD_SHAPE 5
+#define SCRIPT_CMD_TXT 6
+#define SCRIPT_CMD_EOF 7
+#define SCRIPT_CMD_TXTSPD 8
+#define SCRIPT_CMD_ESC 9
+#define SCRIPT_CMD_SYNC 10
+#define SCRIPT_CMD_GOTO 11
+#define SCRIPT_CMD_SCREEN 12
+#define SCRIPT_CMD_IF 13
+#define SCRIPT_CMD_EQ 14
+#define SCRIPT_CMD_NE 15
+#define SCRIPT_CMD_GT 16
+#define SCRIPT_CMD_LT 17
+#define SCRIPT_CMD_MUSIC 18
+#define SCRIPT_CMD_SOUND 19
+#define SCRIPT_CMD_BRA 20
+#define SCRIPT_CMD_FADE 21
+#define SCRIPT_CMD_SETEYE 22
+#define SCRIPT_CMD_SETLS 23
+#define SCRIPT_CMD_SETLSC 24
+#define SCRIPT_CMD_COUNT 25
+
+// What ReadNumber returns when the text holds no further number.
+#define SCRIPT_NO_NUMBER 0x55aa
+
+// Finds the entry of the line-name file (from entry 2 on) whose first word, upper-cased, equals name's and starts the
+// script at it. The search has no end: it does not stop when no entry matches.
+void StartScriptAtName(const char *name) {
     char first[0x20];
     char second[0x20];
     int i = 2;
-    func_0202938c(first, name);
+    CopyUpperWord(first, name);
     for (;; i++) {
-        if (GetFileValueType(data_020c61ac.mUnk_0e, i) == 4) {
-            const u8 *s = GetFileString(data_020c61ac.mUnk_0e, i);
+        if (GetFileValueType(gScriptWork.mLineNameFileId, i) == 4) {
+            const u8 *s = GetFileString(gScriptWork.mLineNameFileId, i);
             if (s[0] != 0) {
-                func_0202938c(second, s);
-                if (func_020290ac(first, second) == 1) {
-                    func_02028eb4(i);
+                CopyUpperWord(second, s);
+                if (StringsEqual(first, second) == 1) {
+                    StartScript(i);
                     return;
                 }
             }
@@ -38,122 +70,118 @@ void func_02028e5c(const char *name) {
     }
 }
 
-// Resets the record state and marks every slot as unused.
-void func_02028eb4(int index) {
+// Starts the script at line index: empties the event queue; clears the sprite and text counts, the Ls selection, the
+// state (SCRIPT_STATE_READ), the EOF flags, the pending images and the wait timer; sets every eye's timer to -1.
+void StartScript(int index) {
     u32 i;
-    func_0202a194();
-    data_020c61ac.mUnk_10 = index;
-    data_020c61ac.mUnk_16 = 0;
-    data_020c61ac.mUnk_280.mUnk_38 = -1;
-    data_020c61ac.mUnk_280.mUnk_34 = -1;
-    data_020c61ac.mUnk_280.mUnk_3c = 0;
-    data_020c61ac.mUnk_1e = 0;
-    data_020c61ac.mUnk_2a = 0;
-    data_020c61ac.mUnk_1b = 0;
-    data_020c61ac.mUnk_1a = 0;
-    data_020c61ac.mUnk_1c_3 = 0;
-    data_020c61ac.mUnk_1c_2 = 0;
-    data_020c61ac.mUnk_280.mUnk_14[0] = data_020c61ac.mUnk_280.mUnk_14[1] = 0;
-    data_020c61ac.mUnk_280.mUnk_1c = 0;
-    data_020c61ac.mUnk_18 = 0;
+    ClearScriptEvents();
+    gScriptWork.mLineId = index;
+    gScriptWork.mSpriteCount = 0;
+    gScriptWork.mUnk_280.mLsSpriteIndex = -1;
+    gScriptWork.mUnk_280.mLsIndex = -1;
+    gScriptWork.mUnk_280.mLsTimer = 0;
+    gScriptWork.mTextCount = 0;
+    gScriptWork.mTextOffsetY = 0;
+    gScriptWork.mState = SCRIPT_STATE_READ;
+    gScriptWork.mEofFlags = 0;
+    gScriptWork.mTextIncomplete = 0;
+    gScriptWork.mUnk_1c_2 = 0;
+    gScriptWork.mUnk_280.mPendingImageTargets[0] = gScriptWork.mUnk_280.mPendingImageTargets[1] = 0;
+    gScriptWork.mUnk_280.mUnk_1c = 0;
+    gScriptWork.mWaitTimer = 0;
     for (i = 0; i < 0x20; i++) {
-        data_020c61ac.mUnk_5c[i].mUnk_12 = -1;
+        gScriptWork.mEyes[i].mTimer = -1;
     }
 }
 
-// Sets up the record store: the ids and buffers, or releases the old buffers when the ids change.
-void func_02028f0c(int a, int b, int c, int d, int e, int f, void (*g)(u32 id, int x, int y, int w, int mode),
-                   u8 (*h)(void), u32 (*i)(u32)) {
-    data_020c61ac.mUnk_280.mUnk_28 = h;
-    data_020c61ac.mUnk_04 = i;
-    if ((a != data_020c61ac.mUnk_08 && a != 0) || (b != data_020c61ac.mUnk_0a && b != 0)) {
-        func_02028fe8();
+// Sets up the script engine: stores the callbacks, releases the old buffers when the file ids change, on first use
+// stores the ids and allocates the buffers, then starts the script at line e and runs its first frame (UpdateScript).
+void SetupScript(int a, int b, int c, int d, int e, int f, void (*g)(u32 id, int x, int y, int w, int mode),
+                 u8 (*h)(void), u32 (*i)(u32)) {
+    gScriptWork.mUnk_280.mTextEscapeFunc = h;
+    gScriptWork.mSoundIdFunc = i;
+    if ((a != gScriptWork.mScriptFileId && a != 0) || (b != gScriptWork.mTextFileId && b != 0)) {
+        ReleaseScript();
     }
-    if (data_020c61ac.mUnk_08 == 0) {
+    if (gScriptWork.mScriptFileId == 0) {
         if (a == 0) {
             OS_Terminate();
         }
         if (b == 0) {
             OS_Terminate();
         }
-        data_020c61ac.mUnk_08 = a;
-        data_020c61ac.mUnk_0a = b;
-        data_020c61ac.mUnk_0c = c;
-        data_020c61ac.mUnk_0e = d;
-        data_020c61ac.mUnk_32 = 0;
-        data_020c61ac.mUnk_2c = Alloc(0x800);
-        data_020c61ac.mUnk_58 = Alloc(0x200);
-        data_020c61ac.mUnk_5c = Alloc(0x2c0);
-        data_020c61ac.mUnk_60 = Alloc(0x480);
-        data_020c61ac.mUnk_64 = Alloc(0x120);
-        data_020c61ac.mUnk_68 = Alloc(0x48);
-        data_020c61ac.mUnk_6c = Alloc(0x48);
-        data_020c61ac.mUnk_28 = f;
+        gScriptWork.mScriptFileId = a;
+        gScriptWork.mTextFileId = b;
+        gScriptWork.mTextNameFileId = c;
+        gScriptWork.mLineNameFileId = d;
+        gScriptWork.mTrackFileId = 0;
+        gScriptWork.mRecords = Alloc(0x800);
+        gScriptWork.mLsList = Alloc(0x200);
+        gScriptWork.mEyes = Alloc(0x2c0);
+        gScriptWork.mSprites = Alloc(0x480);
+        gScriptWork.mTexts = Alloc(0x120);
+        gScriptWork.mUnk_68 = Alloc(0x48);
+        gScriptWork.mUnk_6c = Alloc(0x48);
+        gScriptWork.mCharSoundId = f;
     }
-    data_020c61ac.mUnk_280.mUnk_2c = data_020c61ac.mUnk_280.mUnk_2e = data_020c61ac.mUnk_280.mUnk_30 = 0;
-    data_020c61ac.mUnk_14 = 2;
-    data_020c61ac.mUnk_24 = 0;
-    data_020c61ac.mUnk_26 = 0;
-    data_020c61ac.mUnk_00 = g;
-    func_02028eb4(e);
-    func_0202a1ec(0);
+    gScriptWork.mUnk_280.mUnk_2c = gScriptWork.mUnk_280.mUnk_2e = gScriptWork.mUnk_280.mUnk_30 = 0;
+    gScriptWork.mUnk_14 = 2;
+    gScriptWork.mUnk_24 = 0;
+    gScriptWork.mUnk_26 = 0;
+    gScriptWork.mSpriteDrawFunc = g;
+    StartScript(e);
+    UpdateScript(0);
 }
 
-// Releases the record store buffers.
-void func_02028fe8(void) {
-    data_020c61ac.mUnk_08 = 0;
-    Free(&data_020c61ac.mUnk_2c);
-    Free(&data_020c61ac.mUnk_5c);
-    Free(&data_020c61ac.mUnk_58);
-    Free(&data_020c61ac.mUnk_60);
-    Free(&data_020c61ac.mUnk_64);
-    Free(&data_020c61ac.mUnk_68);
-    Free(&data_020c61ac.mUnk_6c);
+// Frees the script engine's seven buffers and clears the script file id.
+void ReleaseScript(void) {
+    gScriptWork.mScriptFileId = 0;
+    Free(&gScriptWork.mRecords);
+    Free(&gScriptWork.mEyes);
+    Free(&gScriptWork.mLsList);
+    Free(&gScriptWork.mSprites);
+    Free(&gScriptWork.mTexts);
+    Free(&gScriptWork.mUnk_68);
+    Free(&gScriptWork.mUnk_6c);
 }
 
-// Upper-cases a-z.
-u8 func_0202903c(u8 c) {
+u8 ToUpper(u8 c) {
     if (c >= 'a' && c <= 'z') {
         c &= 0x5f;
     }
     return c;
 }
 
-// Letter or underscore.
-int func_02029050(u8 c) {
-    c = func_0202903c(c);
+int IsLetterOrUnderscore(u8 c) {
+    c = ToUpper(c);
     if ((c >= 'A' && c <= 'Z') || c == '_') {
         return 1;
     }
     return 0;
 }
 
-// Digit or sign.
-int func_0202906c(u8 c) {
+int IsDigitOrSign(u8 c) {
     if ((c >= '0' && c <= '9') || c == '-' || c == '+') {
         return 1;
     }
     return 0;
 }
 
-// Sign character.
-int func_02029084(u8 c) {
+int IsSign(u8 c) {
     if (c == '-' || c == '+') {
         return 1;
     }
     return 0;
 }
 
-// Neither a sign nor a space.
-int func_02029094(u8 c) {
-    if (func_02029084(c) == 0 && c != ' ') {
+int IsNotSignOrSpace(u8 c) {
+    if (IsSign(c) == 0 && c != ' ') {
         return 1;
     }
     return 0;
 }
 
-// Equality of two NUL-terminated strings.
-int func_020290ac(const char *x, const char *y) {
+int StringsEqual(const char *x, const char *y) {
     const u8 *a = (const u8 *) x;
     const u8 *b = (const u8 *) y;
     while (*a == *b) {
@@ -167,14 +195,14 @@ int func_020290ac(const char *x, const char *y) {
 }
 
 // Copies the next identifier of *src, upper-cased, to *dst and advances both.
-void func_020290cc(u8 **src, u8 **dst) {
+void CopyUpperName(u8 **src, u8 **dst) {
     u8 *p = *src;
     u8 *q = *dst;
-    while (func_02029050(*p) == 0) {
+    while (IsLetterOrUnderscore(*p) == 0) {
         p++;
     }
-    while (func_02029050(*p) == 1) {
-        *q++ = func_0202903c(*p++);
+    while (IsLetterOrUnderscore(*p) == 1) {
+        *q++ = ToUpper(*p++);
     }
     *q = 0;
     *dst = q;
@@ -182,26 +210,26 @@ void func_020290cc(u8 **src, u8 **dst) {
 }
 
 // Stores a 16-bit value little-endian at *out and advances *out.
-void func_02029118(s16 value, u8 **out) {
+void WriteS16(s16 value, u8 **out) {
     u8 *p = *out;
     p[0] = value;
     p[1] = value >> 8;
     *out = p + 2;
 }
 
-// Reads the next signed decimal number of *text; 0x55aa when there is none.
-s16 func_02029128(u8 **text) {
+// Reads the next signed decimal number of *text; SCRIPT_NO_NUMBER when there is none.
+s16 ReadNumber(u8 **text) {
     u8 *p = *text;
     s16 sign = 1;
     s16 value = 0;
     int found = 0;
-    while (func_0202906c(*p) == 0) {
+    while (IsDigitOrSign(*p) == 0) {
         if (*p == 0) {
-            return 0x55aa;
+            return SCRIPT_NO_NUMBER;
         }
         p++;
     }
-    while (func_0202906c(*p) == 1) {
+    while (IsDigitOrSign(*p) == 1) {
         int c = *p;
         if (c == '+') {
         } else if (c == '-') {
@@ -216,19 +244,19 @@ s16 func_02029128(u8 **text) {
     if (found == 1) {
         return sign * value;
     }
-    return 0x55aa;
+    return SCRIPT_NO_NUMBER;
 }
 
-// Looks up the record named name in the record buffer.
-const u8 *func_020291a4(const u8 *name) {
-    const u8 *rec = data_020c61ac.mUnk_2c;
+const u8 *FindScriptRecord(const u8 *name) {
+    const u8 *rec = gScriptWork.mRecords;
     const u8 *p;
     const u8 *q;
     while (*rec != 0) {
-        for (p = rec + 1, q = name;
-             *q == *p && func_02029050(*q) != 0 && func_02029050(*q) == 1 && func_02029050(*p) == 1; p++, q++) {
+        for (p = rec + 1, q = name; *q == *p && IsLetterOrUnderscore(*q) != 0 && IsLetterOrUnderscore(*q) == 1 &&
+                                    IsLetterOrUnderscore(*p) == 1;
+             p++, q++) {
         }
-        if (func_02029050(*q) == 0 && func_02029050(*p) == 0) {
+        if (IsLetterOrUnderscore(*q) == 0 && IsLetterOrUnderscore(*p) == 0) {
             return rec;
         }
         rec += *rec;
@@ -237,10 +265,10 @@ const u8 *func_020291a4(const u8 *name) {
 }
 
 // Reads the values of a record: a count byte, then that many little-endian 16-bit values.
-void func_0202920c(const u8 *p, u16 *values, u32 *count) {
+void ReadScriptRecordValues(const u8 *p, u16 *values, u32 *count) {
     u8 n;
     p++;
-    while (func_02029050(*p) == 1) {
+    while (IsLetterOrUnderscore(*p) == 1) {
         p++;
     }
     n = *p++;
@@ -255,7 +283,7 @@ void func_0202920c(const u8 *p, u16 *values, u32 *count) {
 }
 
 // Names of the script commands, in command order, padded to 6 characters.
-static const u8 data_020508e0[25][6] = {
+static const u8 sCommandNames[SCRIPT_CMD_COUNT][6] = {
     "LET   ", "SPR   ", "SPRX  ", "SPRSCR", "SHPSCR", "SHAPE ", "TXT   ", "EOF   ", "TXTSPD",
     "ESC   ", "SYNC  ", "GOTO  ", "SCREEN", "IF    ", "EQ\t  ", "NE    ", "GT\t  ", "LT\t  ",
     "MUSIC ", "SOUND ", "BRA   ", "FADE  ", "SETEYE", "SETLS ", "SETLSC",
@@ -265,7 +293,7 @@ static const u8 data_020508e0[25][6] = {
 static const u8 data_020508dc[4] = {0, 2, 1, 0};
 
 // Adds (or, for '-', subtracts) count 16-bit values of src to dst.
-void func_02029250(const s16 *src, s16 *dst, int count, int op) {
+void AddOrSubtractValues(const s16 *src, s16 *dst, int count, int op) {
     while (count-- != 0) {
         switch (op) {
             case '+':
@@ -279,22 +307,22 @@ void func_02029250(const s16 *src, s16 *dst, int count, int op) {
 }
 
 // Finds the command whose name starts the text, advances the text past it and returns its index.
-int func_02029298(u8 **text) {
+int ReadScriptCommand(u8 **text) {
     u32 k;
     u8 *start = *text;
-    const u8 *name = (const u8 *) data_020508e0;
+    const u8 *name = (const u8 *) sCommandNames;
     u32 i = 0;
     do {
         u8 c;
         k = 0;
-        c = func_0202903c(start[0]);
+        c = ToUpper(start[0]);
         if (c == name[0]) {
             for (;;) {
                 u8 d;
                 u8 *p;
                 k++;
                 p = start + (int) k;
-                d = func_0202903c(*p);
+                d = ToUpper(*p);
                 if (d == 0 || d == ' ') {
                     *text = p;
                     return i;
@@ -306,15 +334,15 @@ int func_02029298(u8 **text) {
         }
         name += 6;
         i++;
-    } while (i < 25);
-    if (i >= 25) {
+    } while (i < SCRIPT_CMD_COUNT);
+    if (i >= SCRIPT_CMD_COUNT) {
         OS_Terminate();
     }
-    return 25;
+    return SCRIPT_CMD_COUNT;
 }
 
 // Stores the record for the text: its name, the count of values and the values themselves.
-void func_020292f4(const char *text) {
+void SetScriptRecordFromText(const char *text) {
     u8 name[0x28];
     u8 *first;
     u8 *rest;
@@ -326,11 +354,11 @@ void func_020292f4(const char *text) {
     rest = (u8 *) text;
     first = (u8 *) text;
     dst = name;
-    func_020290cc(&first, &dst);
-    rec = (u8 *) func_020291a4(name);
+    CopyUpperName(&first, &dst);
+    rec = (u8 *) FindScriptRecord(name);
     if (rec == 0) {
         oldLen = 0;
-        rec = data_020c61ac.mUnk_2c;
+        rec = gScriptWork.mRecords;
         while (*rec != 0) {
             rec += *rec;
         }
@@ -338,17 +366,17 @@ void func_020292f4(const char *text) {
         oldLen = *rec;
     }
     dst = rec + 1;
-    func_020290cc(&rest, &dst);
+    CopyUpperName(&rest, &dst);
     values = dst + 1;
     for (;;) {
-        s16 v = func_02029128(&rest);
-        if (v == 0x55aa) {
+        s16 v = ReadNumber(&rest);
+        if (v == SCRIPT_NO_NUMBER) {
             break;
         }
-        func_02029118(v, &values);
+        WriteS16(v, &values);
         count++;
     }
-    if ((u32) (values - data_020c61ac.mUnk_2c) >= 0x800) {
+    if ((u32) (values - gScriptWork.mRecords) >= 0x800) {
         OS_Terminate();
     }
     *rec = values - rec;
@@ -359,7 +387,7 @@ void func_020292f4(const char *text) {
 }
 
 // Copies the first word of src, upper-cased, to dst; returns the end of the copy.
-char *func_0202938c(char *dst, const char *src) {
+char *CopyUpperWord(char *dst, const char *src) {
     u8 c;
     do {
         c = *src++;
@@ -368,7 +396,7 @@ char *func_0202938c(char *dst, const char *src) {
         }
     } while (c == ' ');
     while (c != ' ' && c != 0) {
-        *dst++ = func_0202903c(c);
+        *dst++ = ToUpper(c);
         c = *src++;
     }
     *dst = 0;
@@ -376,13 +404,14 @@ char *func_0202938c(char *dst, const char *src) {
 }
 
 // Clears the output and parses the text into it; returns the number of values.
-int func_020293c4(s16 *out, u8 *text, u32 size) {
+int ClearAndEvaluate(s16 *out, u8 *text, u32 size) {
     MIi_CpuClear16(0, out, size);
-    return func_020293dc(out, text);
+    return Evaluate(out, text);
 }
 
-// Evaluates the text: names of records and numbers, joined by signs, into out; returns the number of values.
-int func_020293dc(s16 *out, u8 *text) {
+// Evaluates the text: names of records and numbers, joined by signs, added into out (subtracted after '-'); out is not
+// cleared first (ClearAndEvaluate does that). Returns the number of values.
+int Evaluate(s16 *out, u8 *text) {
     s16 buf[0x10];
     u8 name[0x10];
     u32 count;
@@ -394,30 +423,30 @@ int func_020293dc(s16 *out, u8 *text) {
     u8 op = '+';
     MIi_CpuClear16(0, buf, 0x20);
     while (*text != 0) {
-        if (func_02029094(*text) == 1) {
+        if (IsNotSignOrSpace(*text) == 1) {
             have = 0;
             op = '+';
         }
-        if (func_02029050(*text) == 1) {
+        if (IsLetterOrUnderscore(*text) == 1) {
             dst = name;
-            func_020290cc(&text, &dst);
-            rec = func_020291a4(name);
+            CopyUpperName(&text, &dst);
+            rec = FindScriptRecord(name);
             // rec is compared with 0 twice (two compares in the code).
             if (rec == 0 && rec == 0) {
                 OS_Terminate();
             }
             off = n;
-            func_0202920c(rec, buf + off, &count);
-            func_02029250(buf + off, out + off, count, op);
+            ReadScriptRecordValues(rec, buf + off, &count);
+            AddOrSubtractValues(buf + off, out + off, count, op);
             have = 1;
             n += count;
-        } else if (func_02029084(*text) == 1 && have == 1) {
+        } else if (IsSign(*text) == 1 && have == 1) {
             op = *text++;
             n -= count;
-        } else if (func_0202906c(*text) == 1) {
+        } else if (IsDigitOrSign(*text) == 1) {
             off = n;
-            buf[off] = func_02029128(&text);
-            func_02029250(buf + off, out + off, 1, op);
+            buf[off] = ReadNumber(&text);
+            AddOrSubtractValues(buf + off, out + off, 1, op);
             count = 1;
             n++;
             have = 1;
@@ -428,14 +457,14 @@ int func_020293dc(s16 *out, u8 *text) {
     return n;
 }
 
-// Reads a command from the text and queues it in the next command slot.
-void func_020294c4(u8 *text, int mode) {
+// Reads a sprite (mode 0) or a shape (mode 1) from the text into the next entry of mSprites.
+void AddScriptSprite(u8 *text, int mode) {
     s16 buf[12];
     TexInfo info;
     s32 rect[4];
-    Unk_020c61ac_Cmd *cmd;
+    ScriptSprite *cmd;
     u32 index;
-    int n = func_020293c4(buf, text, 0x18);
+    int n = ClearAndEvaluate(buf, text, 0x18);
     u32 tableValue;
     u32 shiftX;
     u32 shiftY;
@@ -445,21 +474,21 @@ void func_020294c4(u8 *text, int mode) {
     if (n > 12) {
         OS_Terminate();
     }
-    if (data_020c61ac.mUnk_16 >= 0x20) {
+    if (gScriptWork.mSpriteCount >= 0x20) {
         OS_Terminate();
     }
-    func_0202a0dc(data_020c61ac.mUnk_16, buf[0]);
-    index = data_020c61ac.mUnk_16++;
-    cmd = data_020c61ac.mUnk_60 + index;
-    cmd->mUnk_00 = buf[0];
+    SelectLsForSprite(gScriptWork.mSpriteCount, buf[0]);
+    index = gScriptWork.mSpriteCount++;
+    cmd = gScriptWork.mSprites + index;
+    cmd->mId = buf[0];
     if (mode == 0) {
-        cmd->mUnk_04 = data_0204e2c8[buf[0]];
+        cmd->mDrawId = data_0204e2c8[buf[0]];
         if (buf[4] & 8) {
-            cmd->mUnk_22 = 1;
+            cmd->mLayer = 1;
         } else {
-            cmd->mUnk_22 = 2;
+            cmd->mLayer = 2;
         }
-        GetTexInfo(cmd->mUnk_04, &info, 0);
+        GetTexInfo(cmd->mDrawId, &info, 0);
         // Both arms clear bit 4 of mUnk_21: one through the bit-field, one as a byte operation (the code keeps two
         // separate stores).
         if (info.mUnk_12 > 1) {
@@ -469,24 +498,24 @@ void func_020294c4(u8 *text, int mode) {
         }
     } else {
         tableValue = data_0204e214[buf[0]];
-        cmd->mUnk_04 = 0x80000000 | (u16) tableValue;
+        cmd->mDrawId = 0x80000000 | (u16) tableValue;
         shiftX = 1 << (tableValue >> 24);
         shiftY = 1 << (u8) (tableValue >> 16);
         if (cmd->mUnk_1a >= 0x100) {
             OS_Terminate();
         }
         cmd->mUnk_21_4 = 0;
-        cmd->mUnk_22 = 1;
+        cmd->mLayer = 1;
     }
     cmd->mUnk_08 = buf[1];
     cmd->mUnk_0a = buf[2];
     cmd->mUnk_1a = buf[3];
-    cmd->mUnk_16 = buf[5];
+    cmd->mDelayTimer = buf[5];
     cmd->mUnk_18 = buf[6];
-    cmd->mUnk_1d = buf[7];
-    cmd->mUnk_1c = cmd->mUnk_1d;
-    cmd->mUnk_1e = buf[8];
-    cmd->mUnk_1f = 0;
+    cmd->mAnimFramesLeft = buf[7];
+    cmd->mAnimFrameCount = cmd->mAnimFramesLeft;
+    cmd->mFramesPerAnimFrame = buf[8];
+    cmd->mAnimFrameFrames = 0;
     cmd->mUnk_0c = buf[9] * 100;
     cmd->mUnk_0e = buf[10] * 100;
     cmd->mUnk_10 = buf[11];
@@ -513,19 +542,19 @@ void func_020294c4(u8 *text, int mode) {
         cmd->mUnk_21_3 = 0;
     }
     if (!(buf[4] & 4) && cmd->mUnk_10 == 0) {
-        cmd->mUnk_20 = 0x80;
+        cmd->mSlideProgress = 0x80;
         cmd->mUnk_12 = cmd->mUnk_08;
         cmd->mUnk_14 = cmd->mUnk_0a;
         cmd->mUnk_21_0 = 0;
         return;
     }
     if (mode == 0) {
-        GetSpriteRect(cmd->mUnk_04, 0, rect);
+        GetSpriteRect(cmd->mDrawId, 0, rect);
         if (buf[4] & 1) {
             cmd->mUnk_14 = cmd->mUnk_0a;
             if (buf[4] & 2) {
                 s32 v;
-                if (cmd->mUnk_04 & 0x10000) {
+                if (cmd->mDrawId & 0x10000) {
                     v = -rect[0];
                 } else {
                     v = rect[2];
@@ -533,7 +562,7 @@ void func_020294c4(u8 *text, int mode) {
                 cmd->mUnk_12 = -v;
             } else {
                 s32 v;
-                if (cmd->mUnk_04 & 0x10000) {
+                if (cmd->mDrawId & 0x10000) {
                     v = rect[2];
                 } else {
                     v = -rect[0];
@@ -565,121 +594,127 @@ void func_020294c4(u8 *text, int mode) {
             }
         }
     }
-    cmd->mUnk_20 = 0;
+    cmd->mSlideProgress = 0;
 }
 
-// Reads an entry of the lists from the text and appends it to the list the text selects.
-void func_020297c8(u8 *text) {
+// Reads a text from the script line and appends it to mTexts, or to mUnk_68 when its seventh value is non-zero
+// (nothing reads that list in this build).
+void AddScriptText(u8 *text) {
     s16 buf[8];
-    Unk_020c61ac_Entry *entry;
-    u32 n = func_020293c4(buf, text, 0x10);
+    ScriptText *entry;
+    u32 n = ClearAndEvaluate(buf, text, 0x10);
     if (n - 6 > 2) {
         OS_Terminate();
     }
     if (buf[6] == 0) {
-        entry = data_020c61ac.mUnk_64 + data_020c61ac.mUnk_1e++;
-        if (data_020c61ac.mUnk_1e >= 0x10) {
-            data_020c61ac.mUnk_1e = 0xf;
+        entry = gScriptWork.mTexts + gScriptWork.mTextCount++;
+        if (gScriptWork.mTextCount >= 0x10) {
+            gScriptWork.mTextCount = 0xf;
         }
     } else {
-        entry = data_020c61ac.mUnk_68 + data_020c61ac.mUnk_24++;
-        if (data_020c61ac.mUnk_24 >= 4) {
-            data_020c61ac.mUnk_24 = 3;
+        entry = gScriptWork.mUnk_68 + gScriptWork.mUnk_24++;
+        if (gScriptWork.mUnk_24 >= 4) {
+            gScriptWork.mUnk_24 = 3;
         }
     }
-    entry->mUnk_00 = data_020c61ac.mUnk_12++;
-    entry->mUnk_02 = buf[0];
-    entry->mUnk_04 = buf[1];
+    entry->mTextId = gScriptWork.mNextTextId++;
+    entry->mX = buf[0];
+    entry->mY = buf[1];
     entry->mUnk_06 = buf[2];
     entry->mUnk_08 = buf[3];
     entry->mUnk_0a = data_020508dc[buf[4]];
-    entry->mUnk_0e = buf[5];
+    entry->mFontIndex = buf[5];
     if (buf[7] == 0) {
         entry->mUnk_11 = 2;
     } else {
         entry->mUnk_11 = 1;
     }
-    entry->mUnk_0c =
-        CountFileStringChars(data_020c61ac.mUnk_0a, entry->mUnk_00, (data_020c61ac.mUnk_280.mUnk_28 != 0 ? 2 : 0) + 1);
-    entry->mUnk_10 = data_020c61ac.mUnk_20;
+    entry->mCharCount = CountFileStringChars(gScriptWork.mTextFileId, entry->mTextId,
+                                             (gScriptWork.mUnk_280.mTextEscapeFunc != 0 ? 2 : 0) + 1);
+    entry->mCharFrameCount = gScriptWork.mCharFrameCount;
 }
 
-// Reads one value from the text into mUnk_20.
-void func_02029898(u8 *text) {
+// Sets mCharFrameCount to 3 plus the value read from the text (Evaluate adds into the 3), or to 3 without a value.
+void ScriptCmdTxtSpd(u8 *text) {
     s16 value[1] = {3};
-    if (func_020293dc(value, text) > 1) {
+    if (Evaluate(value, text) > 1) {
         OS_Terminate();
     }
-    data_020c61ac.mUnk_20 = value[0];
+    gScriptWork.mCharFrameCount = value[0];
 }
 
-// Starts the listed ids (through the mUnk_04 callback when one is set) and empties the list.
-void func_020298c8(void) {
+// Sets the state to SCRIPT_STATE_END and plays the queued MUSIC track; then for each queued sound id (mapped through
+// mSoundIdFunc when set, never in this build) stops it in mode 2 or plays it otherwise unless mUnk_1c_2 is set, and
+// empties the sound list.
+void PlayScriptTrackAndSounds(void) {
     u32 i;
-    data_020c61ac.mUnk_1b = 3;
-    if (data_020c61ac.mUnk_32 > 0) {
-        func_02035108(data_020c61ac.mUnk_32, 0, data_020c61ac.mUnk_34, 0, 1, 0);
-        data_020c61ac.mUnk_30 = data_020c61ac.mUnk_34;
-        data_020c61ac.mUnk_32 = 0;
+    gScriptWork.mState = SCRIPT_STATE_END;
+    if (gScriptWork.mTrackFileId > 0) {
+        PlayTrack(gScriptWork.mTrackFileId, 0, gScriptWork.mTrackVolume, 0, 1, 0);
+        gScriptWork.mUnk_30 = gScriptWork.mTrackVolume;
+        gScriptWork.mTrackFileId = 0;
     }
-    for (i = 0; i < data_020c61ac.mUnk_56; i++) {
+    for (i = 0; i < gScriptWork.mSoundCount; i++) {
         u32 id;
-        if (data_020c61ac.mUnk_04 == 0) {
-            id = data_020c61ac.mUnk_36[i];
+        if (gScriptWork.mSoundIdFunc == 0) {
+            id = gScriptWork.mSoundIds[i];
         } else {
-            id = data_020c61ac.mUnk_04(data_020c61ac.mUnk_36[i]);
+            id = gScriptWork.mSoundIdFunc(gScriptWork.mSoundIds[i]);
         }
-        if (data_020c61ac.mUnk_4e[i] == 2) {
-            func_0202edd0(id);
-        } else if (!data_020c61ac.mUnk_1c_2) {
-            func_0202eb64(id, data_020c61ac.mUnk_46[i], data_020c61ac.mUnk_4e[i], 0x40, 0xffff, 0);
+        if (gScriptWork.mSoundModes[i] == 2) {
+            StopWave(id);
+        } else if (!gScriptWork.mUnk_1c_2) {
+            PlayWave(id, gScriptWork.mSoundVolumes[i], gScriptWork.mSoundModes[i], 0x40, 0xffff, 0);
         }
     }
-    data_020c61ac.mUnk_56 = 0;
+    gScriptWork.mSoundCount = 0;
 }
 
-// Reads the flags of the next command and the values that go with them.
-void func_02029970(u8 *text) {
+// Reads the EOF command's own flags (mEofFlags, read by the wait and finish states) and the values that go with them:
+// flag 8 plays the queued track and sounds and sets the wait timer, flag 0x10 sets the number of lines shown at a time.
+void ScriptCmdEof(u8 *text) {
     s16 buf[3];
-    if (func_020293c4(buf, text, 6) > 3) {
+    if (ClearAndEvaluate(buf, text, 6) > 3) {
         OS_Terminate();
     }
-    data_020c61ac.mUnk_1a = buf[0];
-    if (data_020c61ac.mUnk_1a & 8) {
-        func_020298c8();
-        data_020c61ac.mUnk_18 = buf[1];
+    gScriptWork.mEofFlags = buf[0];
+    if (gScriptWork.mEofFlags & 8) {
+        PlayScriptTrackAndSounds();
+        gScriptWork.mWaitTimer = buf[1];
     }
     gSystemState.mUnk_313 = 0;
-    if (data_020c61ac.mUnk_1a & 0x10) {
+    if (gScriptWork.mEofFlags & 0x10) {
         gSystemState.mUnk_314 = buf[2];
     } else {
-        gSystemState.mUnk_314 = data_020c61ac.mUnk_14;
+        gSystemState.mUnk_314 = gScriptWork.mUnk_14;
     }
 }
 
-// Reads up to 16 values from the text into the next entry of the event queue.
-void func_020299d4(u8 *text) {
-    int len = func_020293c4(&data_020c61ac.mUnk_70[data_020c61ac.mUnk_280.mUnk_10].mUnk_00, text, 0x20);
+// Reads up to 16 values from the text into the next entry of the event queue. There is no full check: a write can
+// overwrite an entry that was not read yet.
+void QueueScriptEvent(u8 *text) {
+    int len = ClearAndEvaluate(&gScriptWork.mEvents[gScriptWork.mUnk_280.mEventWriteIndex].mUnk_00, text, 0x20);
     if (len > 0x10) {
         OS_Terminate();
     }
-    data_020c61ac.mUnk_70[data_020c61ac.mUnk_280.mUnk_10].mUnk_20 = len;
-    data_020c61ac.mUnk_280.mUnk_10 = (data_020c61ac.mUnk_280.mUnk_10 + 1) & 0xf;
+    gScriptWork.mEvents[gScriptWork.mUnk_280.mEventWriteIndex].mValueCount = len;
+    gScriptWork.mUnk_280.mEventWriteIndex = (gScriptWork.mUnk_280.mEventWriteIndex + 1) & 0xf;
 }
 
-// Finds the entry of the message block (mUnk_0c) whose normalised text equals name and stores its index.
-void func_02029a1c(const char *name) {
+// Finds the entry of the text-name file (mTextNameFileId) whose first word, upper-cased, equals name's and stores its
+// index in mNextTextId.
+void ScriptCmdSync(const char *name) {
     char first[0x20];
     char second[0x20];
     int i;
-    func_0202938c(first, name);
+    CopyUpperWord(first, name);
     for (i = 2;; i++) {
-        if (GetFileValueType(data_020c61ac.mUnk_0c, i) == 4) {
-            const u8 *s = GetFileString(data_020c61ac.mUnk_0c, i);
+        if (GetFileValueType(gScriptWork.mTextNameFileId, i) == 4) {
+            const u8 *s = GetFileString(gScriptWork.mTextNameFileId, i);
             if (s[0] != 0) {
-                func_0202938c(second, s);
-                if (func_020290ac(first, second) == 1) {
-                    data_020c61ac.mUnk_12 = i;
+                CopyUpperWord(second, s);
+                if (StringsEqual(first, second) == 1) {
+                    gScriptWork.mNextTextId = i;
                     return;
                 }
             }
@@ -687,14 +722,14 @@ void func_02029a1c(const char *name) {
     }
 }
 
-// Adds the two values read from the text to mUnk_10 and mUnk_12.
-void func_02029a74(u8 *text) {
+// Moves mLineId and mNextTextId by the two values read from the text (relative).
+void ScriptCmdGoto(u8 *text) {
     s16 v[0x10];
-    if (func_020293c4(v, text, 0x20) > 2) {
+    if (ClearAndEvaluate(v, text, 0x20) > 2) {
         OS_Terminate();
     }
-    data_020c61ac.mUnk_10 += v[0];
-    data_020c61ac.mUnk_12 += v[1];
+    gScriptWork.mLineId += v[0];
+    gScriptWork.mNextTextId += v[1];
 }
 
 // Reads an index and up to two more values; unless mUnk_280.mUnk_40 is set, mUnk_280.mUnk_1c becomes a table entry
@@ -706,12 +741,12 @@ void func_02029aac(u8 *text, int flag) {
     s32 sel;
     v[1] = 0;
     v[2] = 0;
-    n = func_020293c4(v, text, 6);
+    n = ClearAndEvaluate(v, text, 6);
     if (n != 1 && n != 3) {
         OS_Terminate();
     }
     {
-        Unk_020c642c *o = &data_020c61ac.mUnk_280;
+        Unk_020c642c *o = &gScriptWork.mUnk_280;
         if (o->mUnk_40 == 0) {
             if (flag == 0) {
                 x = data_0204e214[v[0]] & 0x7fff;
@@ -721,87 +756,87 @@ void func_02029aac(u8 *text, int flag) {
                 sel = 1;
             }
             o->mUnk_1c = x - (sel << 30);
-            data_020c61ac.mUnk_280.mUnk_20 = v[1];
-            data_020c61ac.mUnk_280.mUnk_22 = v[2];
+            gScriptWork.mUnk_280.mUnk_20 = v[1];
+            gScriptWork.mUnk_280.mUnk_22 = v[2];
         }
     }
 }
 
-// Reads a value and a mode; odd modes store the value in mUnk_280.mUnk_16[0] with the mode in mUnk_280.mUnk_14[0],
-// even modes store it in mUnk_280.mUnk_16[1] and set mUnk_280.mUnk_14[1] to 2.
-void func_02029b28(u8 *text) {
+// Reads a value and a mode; odd modes store the value in mPendingImageIndexes[0] with the mode in
+// mPendingImageTargets[0], even modes store it in mPendingImageIndexes[1] and set mPendingImageTargets[1] to 2.
+void ScriptCmdScreen(u8 *text) {
     s16 v[4];
-    if (func_020293c4(v, text, 8) > 2) {
+    if (ClearAndEvaluate(v, text, 8) > 2) {
         OS_Terminate();
     }
     if (v[1] & 1) {
-        data_020c61ac.mUnk_280.mUnk_16[0] = v[0];
-        data_020c61ac.mUnk_280.mUnk_14[0] = v[1];
+        gScriptWork.mUnk_280.mPendingImageIndexes[0] = v[0];
+        gScriptWork.mUnk_280.mPendingImageTargets[0] = v[1];
     } else {
-        data_020c61ac.mUnk_280.mUnk_16[1] = v[0];
-        data_020c61ac.mUnk_280.mUnk_14[1] = 2;
+        gScriptWork.mUnk_280.mPendingImageIndexes[1] = v[0];
+        gScriptWork.mUnk_280.mPendingImageTargets[1] = 2;
     }
 }
 
 // Reads the two values compared by the conditional commands.
-void func_02029b6c(u8 *text) {
+void ScriptCmdIf(u8 *text) {
     s16 v[2];
-    if (func_020293c4(v, text, 4) != 2) {
+    if (ClearAndEvaluate(v, text, 4) != 2) {
         OS_Terminate();
     }
-    data_020c61ac.mUnk_280.mUnk_24 = v[0];
-    data_020c61ac.mUnk_280.mUnk_26 = v[1];
+    gScriptWork.mUnk_280.mIfValueA = v[0];
+    gScriptWork.mUnk_280.mIfValueB = v[1];
 }
 
-// Adds the value to mUnk_10 when the two compared values are equal.
-void func_02029b98(u8 *text) {
+// Adds the value to mLineId when the two compared values are equal.
+void ScriptCmdEq(u8 *text) {
     s16 v[0x10];
-    if (data_020c61ac.mUnk_280.mUnk_24 == data_020c61ac.mUnk_280.mUnk_26) {
-        if (func_020293c4(v, text, 0x20) != 1) {
+    if (gScriptWork.mUnk_280.mIfValueA == gScriptWork.mUnk_280.mIfValueB) {
+        if (ClearAndEvaluate(v, text, 0x20) != 1) {
             OS_Terminate();
         }
-        data_020c61ac.mUnk_10 += v[0];
+        gScriptWork.mLineId += v[0];
     }
 }
 
-// Adds the value to mUnk_10 when the two compared values differ.
-void func_02029bd8(u8 *text) {
+// Adds the value to mLineId when the two compared values differ.
+void ScriptCmdNe(u8 *text) {
     s16 v[0x10];
-    if (data_020c61ac.mUnk_280.mUnk_24 != data_020c61ac.mUnk_280.mUnk_26) {
-        if (func_020293c4(v, text, 0x20) != 1) {
+    if (gScriptWork.mUnk_280.mIfValueA != gScriptWork.mUnk_280.mIfValueB) {
+        if (ClearAndEvaluate(v, text, 0x20) != 1) {
             OS_Terminate();
         }
-        data_020c61ac.mUnk_10 += v[0];
+        gScriptWork.mLineId += v[0];
     }
 }
 
-// Adds the value to mUnk_10 when the first compared value is greater.
-void func_02029c18(u8 *text) {
+// Adds the value to mLineId when the first compared value is greater.
+void ScriptCmdGt(u8 *text) {
     s16 v[8];
-    if (data_020c61ac.mUnk_280.mUnk_24 > data_020c61ac.mUnk_280.mUnk_26) {
-        if (func_020293c4(v, text, 0x10) != 1) {
+    if (gScriptWork.mUnk_280.mIfValueA > gScriptWork.mUnk_280.mIfValueB) {
+        if (ClearAndEvaluate(v, text, 0x10) != 1) {
             OS_Terminate();
         }
-        data_020c61ac.mUnk_10 += v[0];
+        gScriptWork.mLineId += v[0];
     }
 }
 
-// Adds the value to mUnk_10 when the first compared value is smaller.
-void func_02029c58(u8 *text) {
+// Adds the value to mLineId when the first compared value is smaller.
+void ScriptCmdLt(u8 *text) {
     s16 v[8];
-    if (data_020c61ac.mUnk_280.mUnk_24 < data_020c61ac.mUnk_280.mUnk_26) {
-        if (func_020293c4(v, text, 0x10) != 1) {
+    if (gScriptWork.mUnk_280.mIfValueA < gScriptWork.mUnk_280.mIfValueB) {
+        if (ClearAndEvaluate(v, text, 0x10) != 1) {
             OS_Terminate();
         }
-        data_020c61ac.mUnk_10 += v[0];
+        gScriptWork.mLineId += v[0];
     }
 }
 
-// Reads an index (and an optional second value, default 100); selects mUnk_32 through the remap table when it is
-// enabled.
-void func_02029c98(u8 *text) {
+// Reads a track index and an optional volume (default 100) into mTrackFileId and mTrackVolume; the index goes
+// through the remap table when that is enabled, which it is not in this build (its first entry is 0).
+void ScriptCmdMusic(u8 *text) {
     s16 v[4] = {0, 0, 0, 0};
-    int n = func_020293dc(v, text);
+    int n = Evaluate(v, text);
     if (n != 1 && n != 2) {
         OS_Terminate();
     }
@@ -809,18 +844,18 @@ void func_02029c98(u8 *text) {
         v[1] = 100;
     }
     if (data_0204e210[0] != 0) {
-        data_020c61ac.mUnk_32 = data_0204e210[v[0]];
+        gScriptWork.mTrackFileId = data_0204e210[v[0]];
     } else {
-        data_020c61ac.mUnk_32 = v[0];
+        gScriptWork.mTrackFileId = v[0];
     }
-    data_020c61ac.mUnk_34 = v[1];
+    gScriptWork.mTrackVolume = v[1];
 }
 
-// Appends one entry (table value, second value, third value in 0..2) to the lists indexed by mUnk_56.
-void func_02029d00(u8 *text) {
+// Appends one sound at mSoundCount: the id from the sound table, the volume (default 100) and the mode in 0..2.
+void ScriptCmdSound(u8 *text) {
     s16 v[4] = {0, 0, 0, 0};
-    u8 idx = data_020c61ac.mUnk_56++;
-    int n = func_020293dc(v, text);
+    u8 idx = gScriptWork.mSoundCount++;
+    int n = Evaluate(v, text);
     int ok;
     if (n < 1 || n > 3) {
         OS_Terminate();
@@ -835,21 +870,21 @@ void func_02029d00(u8 *text) {
     if (ok == 0) {
         OS_Terminate();
     }
-    data_020c61ac.mUnk_36[idx] = data_0204e208[v[0]];
-    data_020c61ac.mUnk_46[idx] = v[1];
-    data_020c61ac.mUnk_4e[idx] = v[2];
+    gScriptWork.mSoundIds[idx] = data_0204e208[v[0]];
+    gScriptWork.mSoundVolumes[idx] = v[1];
+    gScriptWork.mSoundModes[idx] = v[2];
 }
 
-// Selects the entry named by the text, then steps mUnk_10 back by one.
-void func_02029d8c(const char *name) {
-    func_02028e5c(name);
-    data_020c61ac.mUnk_10--;
+// Starts the script at the line named by the text, then steps mLineId back by one (the reader's increment follows).
+void ScriptCmdBra(const char *name) {
+    StartScriptAtName(name);
+    gScriptWork.mLineId--;
 }
 
 // Reads flags; bit 0 and bit 1 each trigger SetFaded with that bit.
-void func_02029da0(u8 *text) {
+void ScriptCmdFade(u8 *text) {
     s16 v[1] = {0};
-    if (func_020293dc(v, text) != 1) {
+    if (Evaluate(v, text) != 1) {
         OS_Terminate();
     }
     if (v[0] & 1) {
@@ -862,10 +897,10 @@ void func_02029da0(u8 *text) {
 
 // Parses a text command (slot number, two ids, a value and up to five timing values) and fills that slot,
 // or marks it unused when only the slot number is given.
-void func_02029dd8(u8 *text) {
+void ScriptCmdSetEye(u8 *text) {
     s16 v[9] = {0};
-    Unk_020c61ac_Slot *slot;
-    int n = func_020293dc(v, text);
+    ScriptEye *slot;
+    int n = Evaluate(v, text);
     BOOL ok;
     if (n != 1 && (n < 4 || n >= 10)) {
         OS_Terminate();
@@ -877,75 +912,76 @@ void func_02029dd8(u8 *text) {
     if (ok == 0) {
         OS_Terminate();
     }
-    slot = &data_020c61ac.mUnk_5c[v[0]];
+    slot = &gScriptWork.mEyes[v[0]];
     if (n > 1) {
-        slot->mUnk_00 = 1;
-        slot->mUnk_02 = v[1];
-        slot->mUnk_04 = v[2];
-        if (slot->mUnk_02 < 0 && slot->mUnk_04 < 0) {
+        slot->mUsed = 1;
+        slot->mId = v[1];
+        slot->mAltId = v[2];
+        if (slot->mId < 0 && slot->mAltId < 0) {
             OS_Terminate();
         }
-        if (slot->mUnk_02 < -1 || slot->mUnk_04 < -1) {
+        if (slot->mId < -1 || slot->mAltId < -1) {
             OS_Terminate();
         }
-        slot->mUnk_0c = v[3];
-        if (slot->mUnk_0c < 0) {
+        slot->mSpriteId = v[3];
+        if (slot->mSpriteId < 0) {
             OS_Terminate();
         }
-        slot->mUnk_06 = 0x3c;
-        slot->mUnk_08 = 0x78;
-        slot->mUnk_0a = 0x1e;
-        slot->mUnk_0e = 0;
-        slot->mUnk_10 = 0;
+        slot->mDelayMin = 0x3c;
+        slot->mDelayLimit = 0x78;
+        slot->mAltFrameCount = 0x1e;
+        slot->mOffsetX = 0;
+        slot->mOffsetY = 0;
         if (n > 4) {
-            slot->mUnk_06 = v[4];
+            slot->mDelayMin = v[4];
             if (n > 5) {
-                slot->mUnk_08 = v[5];
+                slot->mDelayLimit = v[5];
                 if (n > 6) {
-                    slot->mUnk_0a = v[6];
+                    slot->mAltFrameCount = v[6];
                     if (n > 7) {
-                        slot->mUnk_0e = v[7];
+                        slot->mOffsetX = v[7];
                         if (n > 8) {
-                            slot->mUnk_10 = v[8];
+                            slot->mOffsetY = v[8];
                         }
                     }
                 }
             }
         }
     } else {
-        slot->mUnk_00 = 0;
+        slot->mUsed = 0;
     }
 }
 
-// Looks up the active slot whose value equals id, returns its three values and steps its countdown; when the
-// countdown is unset it draws a new one between the slot's two bounds.
-void func_02029ed8(int id, int *a, int *b, int *c) {
-    Unk_020c61ac_Slot *slot;
+// Looks up the eye in use whose sprite id equals id, returns the id it shows (mId, or mAltId while the alternate
+// shows; -1 when no eye matches) and its offsets, and steps its countdown; when the countdown is -1 it draws a new
+// delay from mDelayMin up to mDelayLimit - 1.
+void UpdateScriptEye(int id, int *a, int *b, int *c) {
+    ScriptEye *slot;
     u32 i;
     *a = -1;
-    for (i = 0, slot = data_020c61ac.mUnk_5c; i < 0x20; i++, slot++) {
-        if (slot->mUnk_00 == 1 && slot->mUnk_0c == id) {
-            *b = slot->mUnk_0e;
-            *c = slot->mUnk_10;
-            *a = slot->mUnk_02;
-            if (slot->mUnk_12 == -1) {
+    for (i = 0, slot = gScriptWork.mEyes; i < 0x20; i++, slot++) {
+        if (slot->mUsed == 1 && slot->mSpriteId == id) {
+            *b = slot->mOffsetX;
+            *c = slot->mOffsetY;
+            *a = slot->mId;
+            if (slot->mTimer == -1) {
                 u16 lo;
-                slot->mUnk_14 = 0;
-                lo = slot->mUnk_06;
-                slot->mUnk_12 = lo + NextRandom() % (slot->mUnk_08 - lo);
+                slot->mShowingAlt = 0;
+                lo = slot->mDelayMin;
+                slot->mTimer = lo + NextRandom() % (slot->mDelayLimit - lo);
                 return;
             }
-            if (slot->mUnk_14 == 1) {
-                *a = slot->mUnk_04;
+            if (slot->mShowingAlt == 1) {
+                *a = slot->mAltId;
             }
-            slot->mUnk_12--;
-            if (slot->mUnk_12 == 0) {
-                if (slot->mUnk_14 == 0) {
-                    slot->mUnk_12 = slot->mUnk_0a;
-                    slot->mUnk_14 = 1;
+            slot->mTimer--;
+            if (slot->mTimer == 0) {
+                if (slot->mShowingAlt == 0) {
+                    slot->mTimer = slot->mAltFrameCount;
+                    slot->mShowingAlt = 1;
                     return;
                 }
-                slot->mUnk_12 = -1;
+                slot->mTimer = -1;
                 return;
             }
             return;
@@ -953,12 +989,12 @@ void func_02029ed8(int id, int *a, int *b, int *c) {
     }
 }
 
-// Parses a text command (slot number, a value and up to five more) and fills that small record,
+// Parses a text command (slot number, a value and up to five more) and fills that Ls entry,
 // or marks it unused when only the slot number is given.
-void func_02029f6c(u8 *text) {
+void ScriptCmdSetLs(u8 *text) {
     s16 v[8] = {0};
-    Unk_020c61ac_Rec10 *rec;
-    int n = func_020293dc(v, text);
+    ScriptLs *rec;
+    int n = Evaluate(v, text);
     BOOL ok;
     if (n != 1 && (n < 3 || n >= 9)) {
         OS_Terminate();
@@ -970,93 +1006,95 @@ void func_02029f6c(u8 *text) {
     if (ok == 0) {
         OS_Terminate();
     }
-    rec = &data_020c61ac.mUnk_58[v[0]];
+    rec = &gScriptWork.mLsList[v[0]];
     if (n > 1) {
-        rec->mUnk_00 = 1;
-        rec->mUnk_02 = v[1];
-        if (rec->mUnk_02 < -1) {
+        rec->mUsed = 1;
+        rec->mStillId = v[1];
+        if (rec->mStillId < -1) {
             OS_Terminate();
         }
-        rec->mUnk_04 = v[2];
-        rec->mUnk_06 = 2;
-        rec->mUnk_08 = 2;
-        rec->mUnk_0a = 0;
-        rec->mUnk_0c = 0;
-        rec->mUnk_0e = -1;
+        rec->mAnimId = v[2];
+        rec->mAnimFrameCount = 2;
+        rec->mFramesPerAnimFrame = 2;
+        rec->mOffsetX = 0;
+        rec->mOffsetY = 0;
+        rec->mSpriteId = -1;
         if (n > 3) {
-            rec->mUnk_06 = v[3];
+            rec->mAnimFrameCount = v[3];
             if (n > 4) {
-                rec->mUnk_08 = v[4];
+                rec->mFramesPerAnimFrame = v[4];
                 if (n > 5) {
-                    rec->mUnk_0a = v[5];
+                    rec->mOffsetX = v[5];
                     if (n > 6) {
-                        rec->mUnk_0c = v[6];
+                        rec->mOffsetY = v[6];
                         if (n > 7) {
-                            rec->mUnk_0e = v[7];
+                            rec->mSpriteId = v[7];
                         }
                     }
                 }
             }
         }
     } else {
-        rec->mUnk_00 = 0;
+        rec->mUsed = 0;
     }
 }
 
-// Parses a text command with no values or two (a record index and a second index) and selects them.
-void func_0202a034(u8 *text) {
+// Parses a text command with no values or two (an Ls index and a sprite index) and selects them.
+void ScriptCmdSetLsc(u8 *text) {
     s16 v[2] = {0};
-    int n = func_020293dc(v, text);
+    int n = Evaluate(v, text);
     if (n != 0 && n != 2) {
         OS_Terminate();
     }
     if (n == 2) {
-        func_0202a078(v[0], v[1]);
+        SelectLs(v[0], v[1]);
     } else {
-        func_0202a078(-1, -1);
+        SelectLs(-1, -1);
     }
 }
 
-// Stores the two selected indexes (each -1 or a slot number) and checks that the first one is in use.
-void func_0202a078(int a, int b) {
+// Stores the two selected indexes (each -1 or 0..0x1f) and, when both are set, checks that the Ls entry is in use.
+void SelectLs(int a, int b) {
     BOOL ok;
-    data_020c61ac.mUnk_280.mUnk_34 = a;
-    data_020c61ac.mUnk_280.mUnk_38 = b;
+    gScriptWork.mUnk_280.mLsIndex = a;
+    gScriptWork.mUnk_280.mLsSpriteIndex = b;
     ok = 0;
-    if (data_020c61ac.mUnk_280.mUnk_34 >= -1 && data_020c61ac.mUnk_280.mUnk_34 < 0x20) {
+    if (gScriptWork.mUnk_280.mLsIndex >= -1 && gScriptWork.mUnk_280.mLsIndex < 0x20) {
         ok = 1;
     }
     if (ok == 0) {
         OS_Terminate();
     }
     ok = 0;
-    if (data_020c61ac.mUnk_280.mUnk_38 >= -1 && data_020c61ac.mUnk_280.mUnk_38 < 0x20) {
+    if (gScriptWork.mUnk_280.mLsSpriteIndex >= -1 && gScriptWork.mUnk_280.mLsSpriteIndex < 0x20) {
         ok = 1;
     }
     if (ok == 0) {
         OS_Terminate();
     }
-    if (data_020c61ac.mUnk_280.mUnk_34 != -1 && data_020c61ac.mUnk_280.mUnk_38 != -1) {
-        if (data_020c61ac.mUnk_58[data_020c61ac.mUnk_280.mUnk_34].mUnk_00 != 1) {
+    if (gScriptWork.mUnk_280.mLsIndex != -1 && gScriptWork.mUnk_280.mLsSpriteIndex != -1) {
+        if (gScriptWork.mLsList[gScriptWork.mUnk_280.mLsIndex].mUsed != 1) {
             OS_Terminate();
         }
     }
 }
 
-// Selects the record whose value equals id together with the given index.
-void func_0202a0dc(int index, int id) {
-    Unk_020c61ac_Rec10 *rec;
+// Selects the Ls entry in use whose sprite id equals id for the sprite at index; when none matches, the previous
+// selection stays.
+void SelectLsForSprite(int index, int id) {
+    ScriptLs *rec;
     u32 i;
-    for (i = 0, rec = data_020c61ac.mUnk_58; i < 0x20; i++, rec++) {
-        if (rec->mUnk_00 == 1 && rec->mUnk_0e == id) {
-            func_0202a078(i, index);
+    for (i = 0, rec = gScriptWork.mLsList; i < 0x20; i++, rec++) {
+        if (rec->mUsed == 1 && rec->mSpriteId == id) {
+            SelectLs(i, index);
             return;
         }
     }
 }
 
-// Swaps the two value pairs of a record once, unless it is flagged as already swapped.
-void func_0202a10c(Unk_020c61ac_Cmd *rec) {
+// Swaps the sprite's position (mUnk_08, mUnk_0a) with its slide start (mUnk_12, mUnk_14) and restarts the slide, so
+// it slides back; not when mUnk_21_0 is set (moving sprites, and a sprite its show timer already reversed).
+void ReverseScriptSprite(ScriptSprite *rec) {
     if (!rec->mUnk_21_0) {
         s16 a = rec->mUnk_08;
         rec->mUnk_08 = rec->mUnk_12;
@@ -1064,46 +1102,45 @@ void func_0202a10c(Unk_020c61ac_Cmd *rec) {
         a = rec->mUnk_0a;
         rec->mUnk_0a = rec->mUnk_14;
         rec->mUnk_14 = a;
-        rec->mUnk_20 = 0;
+        rec->mSlideProgress = 0;
     }
 }
 
-// Swaps the value pairs of every record in use.
-void func_0202a138(void) {
+// Runs ReverseScriptSprite on every sprite.
+void ReverseScriptSprites(void) {
     u32 i;
-    for (i = 0; i < data_020c61ac.mUnk_16; i++) {
-        func_0202a10c(&data_020c61ac.mUnk_60[i]);
+    for (i = 0; i < gScriptWork.mSpriteCount; i++) {
+        ReverseScriptSprite(&gScriptWork.mSprites[i]);
     }
 }
 
-// Sets the state to 2 and, depending on the flags, resets the counter and swaps the record values.
-void func_0202a160(void) {
-    data_020c61ac.mUnk_1b = 2;
-    if (!(data_020c61ac.mUnk_1a & 2)) {
-        data_020c61ac.mUnk_1e = 0;
+// Ends the wait after an EOF line: sets the state to SCRIPT_STATE_FINISH, clears the texts unless EOF flag 2 is set
+// and reverses the sprites unless EOF flag 1 is set.
+void StartEofFinish(void) {
+    gScriptWork.mState = SCRIPT_STATE_FINISH;
+    if (!(gScriptWork.mEofFlags & 2)) {
+        gScriptWork.mTextCount = 0;
     }
-    if (!(data_020c61ac.mUnk_1a & 1)) {
-        func_0202a138();
+    if (!(gScriptWork.mEofFlags & 1)) {
+        ReverseScriptSprites();
     }
 }
 
-// Returns the state.
-u8 func_0202a188(void) {
-    return data_020c61ac.mUnk_1b;
+u8 GetScriptState(void) {
+    return gScriptWork.mState;
 }
 
-// Empties the event queue.
-void func_0202a194(void) {
-    data_020c61ac.mUnk_280.mUnk_11 = 0;
-    data_020c61ac.mUnk_280.mUnk_10 = 0;
+void ClearScriptEvents(void) {
+    gScriptWork.mUnk_280.mEventReadIndex = 0;
+    gScriptWork.mUnk_280.mEventWriteIndex = 0;
 }
 
 // Takes the next event off the queue; returns 0 when it is empty.
-Unk_EventRec *func_0202a1a4(void) {
-    u8 read = data_020c61ac.mUnk_280.mUnk_11;
-    if (read != data_020c61ac.mUnk_280.mUnk_10) {
-        data_020c61ac.mUnk_280.mUnk_11 = (read + 1) & 0xf;
-        return &data_020c61ac.mUnk_70[read];
+ScriptEvent *NextScriptEvent(void) {
+    u8 read = gScriptWork.mUnk_280.mEventReadIndex;
+    if (read != gScriptWork.mUnk_280.mEventWriteIndex) {
+        gScriptWork.mUnk_280.mEventReadIndex = (read + 1) & 0xf;
+        return &gScriptWork.mEvents[read];
     }
     return NULL;
 }
@@ -1116,9 +1153,10 @@ void func_0202a1cc(void) {
     gMapState.mCamera.mUnk_2dc.mUnk_4c &= 0x1f;
 }
 
-// Runs one frame of the script engine: applies queued screen changes, moves and draws the command sprites, builds
-// and draws the message text, then reads script commands until one waits; repeats while mUnk_1c_2 is set.
-void func_0202a1ec(int (*callback)(void)) {
+// Runs one frame of the script engine: applies queued screen changes, moves and draws the script sprites, builds
+// and draws the message text, then reads script commands until one waits; repeats while mUnk_1c_2 is set (never in
+// this build).
+void UpdateScript(int (*callback)(void)) {
     char text[0x200];
     u8 name[0x80];
     TexInfo info;
@@ -1133,95 +1171,95 @@ void func_0202a1ec(int (*callback)(void)) {
     s32 flip;
     u8 saved;
 
-    if (data_020c61ac.mUnk_280.mUnk_28 != 0) {
-        gSystemState.mUnk_304 = (u32 (*)(u32)) data_020c61ac.mUnk_280.mUnk_28;
+    if (gScriptWork.mUnk_280.mTextEscapeFunc != 0) {
+        gSystemState.mUnk_304 = (u32 (*)(u32)) gScriptWork.mUnk_280.mTextEscapeFunc;
     }
     do {
         done = 0;
         flag = 0;
-        if (data_020c61ac.mUnk_08 == 0) {
+        if (gScriptWork.mScriptFileId == 0) {
             OS_Terminate();
         }
-        data_020c61ac.mUnk_1c_0 = 0;
+        gScriptWork.mSpritesBusy = 0;
         for (i = 0; i < 2; i++) {
-            if (data_020c61ac.mUnk_280.mUnk_14[i] != 0) {
-                u16 image = data_0204e20c[data_020c61ac.mUnk_280.mUnk_16[i]];
-                SetFaded(data_020c61ac.mUnk_280.mUnk_14[i]);
-                LoadImage(image, data_020c61ac.mUnk_280.mUnk_14[i]);
-                if (data_020c61ac.mUnk_280.mUnk_14[i] == 1) {
-                    data_020c61ac.mUnk_280.mUnk_1c = 0;
-                    data_020c61ac.mUnk_280.mUnk_2c = image;
+            if (gScriptWork.mUnk_280.mPendingImageTargets[i] != 0) {
+                u16 image = data_0204e20c[gScriptWork.mUnk_280.mPendingImageIndexes[i]];
+                SetFaded(gScriptWork.mUnk_280.mPendingImageTargets[i]);
+                LoadImage(image, gScriptWork.mUnk_280.mPendingImageTargets[i]);
+                if (gScriptWork.mUnk_280.mPendingImageTargets[i] == 1) {
+                    gScriptWork.mUnk_280.mUnk_1c = 0;
+                    gScriptWork.mUnk_280.mUnk_2c = image;
                     flag = 1;
-                } else if (data_020c61ac.mUnk_280.mUnk_14[i] == 2) {
-                    data_020c61ac.mUnk_280.mUnk_2e = image;
-                } else if (data_020c61ac.mUnk_280.mUnk_14[i] == 3) {
+                } else if (gScriptWork.mUnk_280.mPendingImageTargets[i] == 2) {
+                    gScriptWork.mUnk_280.mUnk_2e = image;
+                } else if (gScriptWork.mUnk_280.mPendingImageTargets[i] == 3) {
                     flag = 1;
-                    data_020c61ac.mUnk_280.mUnk_2c = data_020c61ac.mUnk_280.mUnk_2e = image;
+                    gScriptWork.mUnk_280.mUnk_2c = gScriptWork.mUnk_280.mUnk_2e = image;
                 }
-                data_020c61ac.mUnk_280.mUnk_14[i] = 0;
+                gScriptWork.mUnk_280.mPendingImageTargets[i] = 0;
             }
             if (flag == 1 && (gSystemState.mFlags & 0x80)) {
                 func_02024208();
             }
         }
 
-        if (data_020c61ac.mUnk_280.mUnk_1c != 0) {
-            if (data_020c61ac.mUnk_280.mUnk_1c & 0x80000000) {
-                data_020c61ac.mUnk_280.mUnk_1c &= 0x7fffffff;
+        if (gScriptWork.mUnk_280.mUnk_1c != 0) {
+            if (gScriptWork.mUnk_280.mUnk_1c & 0x80000000) {
+                gScriptWork.mUnk_280.mUnk_1c &= 0x7fffffff;
                 SetFaded(1);
-                data_020c61ac.mUnk_280.mUnk_30 = data_020c61ac.mUnk_280.mUnk_1c;
+                gScriptWork.mUnk_280.mUnk_30 = gScriptWork.mUnk_280.mUnk_1c;
             }
-            if (!(data_020c61ac.mUnk_280.mUnk_1c & 0x40000000)) {
-                func_020242e8(data_020c61ac.mUnk_280.mUnk_1c, data_020c61ac.mUnk_280.mUnk_20,
-                              data_020c61ac.mUnk_280.mUnk_22, 0x4000, 0x1000, 0x8000, 0xff, 0);
+            if (!(gScriptWork.mUnk_280.mUnk_1c & 0x40000000)) {
+                func_020242e8(gScriptWork.mUnk_280.mUnk_1c, gScriptWork.mUnk_280.mUnk_20, gScriptWork.mUnk_280.mUnk_22,
+                              0x4000, 0x1000, 0x8000, 0xff, 0);
             } else {
-                u32 tex = data_020c61ac.mUnk_280.mUnk_1c & 0x3fffffff;
+                u32 tex = gScriptWork.mUnk_280.mUnk_1c & 0x3fffffff;
                 GetTexInfo(tex, &info, 0);
                 if (info.mUnk_12 <= 1) {
                     OS_Terminate();
                 }
                 func_0202a1cc();
-                DrawSprite(tex + 0x800000, data_020c61ac.mUnk_280.mUnk_20, data_020c61ac.mUnk_280.mUnk_22, 0xff, 1);
+                DrawSprite(tex + 0x800000, gScriptWork.mUnk_280.mUnk_20, gScriptWork.mUnk_280.mUnk_22, 0xff, 1);
             }
         }
 
-        for (i = 0; i < data_020c61ac.mUnk_16; i++) {
-            Unk_020c61ac_Cmd *cmd = &data_020c61ac.mUnk_60[i];
+        for (i = 0; i < gScriptWork.mSpriteCount; i++) {
+            ScriptSprite *cmd = &gScriptWork.mSprites[i];
             int x;
             int y;
             flip = 0;
-            if (cmd->mUnk_16 != 0) {
-                data_020c61ac.mUnk_1c_0 = 1;
-                cmd->mUnk_16--;
+            if (cmd->mDelayTimer != 0) {
+                gScriptWork.mSpritesBusy = 1;
+                cmd->mDelayTimer--;
                 continue;
             }
             if (cmd->mUnk_18 != 0) {
-                data_020c61ac.mUnk_1c_0 = 1;
+                gScriptWork.mSpritesBusy = 1;
                 cmd->mUnk_18--;
                 if (cmd->mUnk_18 == 0) {
                     if (cmd->mUnk_12 == cmd->mUnk_08 && cmd->mUnk_14 == cmd->mUnk_0a) {
-                        cmd->mUnk_04 = -1;
+                        cmd->mDrawId = -1;
                     } else {
-                        func_0202a10c(cmd);
+                        ReverseScriptSprite(cmd);
                         cmd->mUnk_21_0 = 1;
                     }
                 }
             }
-            if (cmd->mUnk_1e != 0 && cmd->mUnk_04 != -1) {
-                data_020c61ac.mUnk_1c_0 = 1;
-                cmd->mUnk_1f++;
-                if (cmd->mUnk_1f == cmd->mUnk_1e) {
-                    cmd->mUnk_04++;
-                    cmd->mUnk_1f = 0;
-                    cmd->mUnk_1d--;
-                    if (cmd->mUnk_1d == 0) {
+            if (cmd->mFramesPerAnimFrame != 0 && cmd->mDrawId != -1) {
+                gScriptWork.mSpritesBusy = 1;
+                cmd->mAnimFrameFrames++;
+                if (cmd->mAnimFrameFrames == cmd->mFramesPerAnimFrame) {
+                    cmd->mDrawId++;
+                    cmd->mAnimFrameFrames = 0;
+                    cmd->mAnimFramesLeft--;
+                    if (cmd->mAnimFramesLeft == 0) {
                         if (cmd->mUnk_21_1 == 0) {
-                            cmd->mUnk_04--;
-                            cmd->mUnk_1e = 0;
+                            cmd->mDrawId--;
+                            cmd->mFramesPerAnimFrame = 0;
                         } else {
-                            data_020c61ac.mUnk_1c_0 = 0;
-                            cmd->mUnk_04 -= cmd->mUnk_1c;
-                            cmd->mUnk_1d = cmd->mUnk_1c;
+                            gScriptWork.mSpritesBusy = 0;
+                            cmd->mDrawId -= cmd->mAnimFrameCount;
+                            cmd->mAnimFramesLeft = cmd->mAnimFrameCount;
                         }
                     }
                 }
@@ -1268,75 +1306,78 @@ void func_0202a1ec(int (*callback)(void)) {
                 }
                 x = cmd->mUnk_08 / 100;
                 y = cmd->mUnk_0a / 100;
-            } else if (cmd->mUnk_20 < 0x80) {
+            } else if (cmd->mSlideProgress < 0x80) {
                 if (cmd->mUnk_21_4 == 0) {
-                    cmd->mUnk_20 += 20;
+                    cmd->mSlideProgress += 20;
                 } else if (cmd->mUnk_21_4 > 1) {
                     cmd->mUnk_21_4--;
                 } else if (gSystemState.mTransferCount == 0) {
                     cmd->mUnk_21_4 = 0;
                 }
-                data_020c61ac.mUnk_1c_0 = 1;
-                x = MapRangeFromZero(cmd->mUnk_20 < 0x80 ? cmd->mUnk_20 : 0x80, 0x80, cmd->mUnk_12, cmd->mUnk_08);
-                y = MapRangeFromZero(cmd->mUnk_20 < 0x80 ? cmd->mUnk_20 : 0x80, 0x80, cmd->mUnk_14, cmd->mUnk_0a);
+                gScriptWork.mSpritesBusy = 1;
+                x = MapRangeFromZero(cmd->mSlideProgress < 0x80 ? cmd->mSlideProgress : 0x80, 0x80, cmd->mUnk_12,
+                                     cmd->mUnk_08);
+                y = MapRangeFromZero(cmd->mSlideProgress < 0x80 ? cmd->mSlideProgress : 0x80, 0x80, cmd->mUnk_14,
+                                     cmd->mUnk_0a);
                 if (x == cmd->mUnk_08 && y == cmd->mUnk_0a) {
-                    cmd->mUnk_20 = 0x80;
+                    cmd->mSlideProgress = 0x80;
                 }
             } else {
                 x = cmd->mUnk_08;
                 y = cmd->mUnk_0a;
             }
 
-            if (data_020c61ac.mUnk_1c_2 == 0) {
-                if (!(cmd->mUnk_04 & 0x80000000)) {
-                    if (data_020c61ac.mUnk_00 != 0) {
-                        data_020c61ac.mUnk_00(cmd->mUnk_04 ^ flip, x, y, cmd->mUnk_1a, cmd->mUnk_22);
+            if (gScriptWork.mUnk_1c_2 == 0) {
+                if (!(cmd->mDrawId & 0x80000000)) {
+                    if (gScriptWork.mSpriteDrawFunc != 0) {
+                        gScriptWork.mSpriteDrawFunc(cmd->mDrawId ^ flip, x, y, cmd->mUnk_1a, cmd->mLayer);
                     } else {
-                        GetTexInfo(cmd->mUnk_04, &info, 0);
+                        GetTexInfo(cmd->mDrawId, &info, 0);
                         if (info.mUnk_12 > 1) {
                             func_0202a1cc();
-                            DrawSprite(cmd->mUnk_04 ^ (flip + 0x800000), x, y, cmd->mUnk_1a, cmd->mUnk_22);
+                            DrawSprite(cmd->mDrawId ^ (flip + 0x800000), x, y, cmd->mUnk_1a, cmd->mLayer);
                         } else {
-                            DrawSprite(flip ^ cmd->mUnk_04, x, y, cmd->mUnk_1a, cmd->mUnk_22);
+                            DrawSprite(flip ^ cmd->mDrawId, x, y, cmd->mUnk_1a, cmd->mLayer);
                         }
                     }
                 } else {
-                    func_020242e8(cmd->mUnk_04 & 0x7fffffff, x, y, cmd->mUnk_1a << 6, 0x1000, 0x8000, 0xff, 0);
+                    func_020242e8(cmd->mDrawId & 0x7fffffff, x, y, cmd->mUnk_1a << 6, 0x1000, 0x8000, 0xff, 0);
                 }
             }
 
-            func_02029ed8(cmd->mUnk_00, &id, &dx, &dy);
+            UpdateScriptEye(cmd->mId, &id, &dx, &dy);
             if (id != -1) {
                 id = data_0204e2c8[id];
                 GetTexInfo(id, &info, 0);
                 if (info.mUnk_12 > 1) {
                     func_0202a1cc();
-                    DrawSprite(id + flip + 0x800000, x + dx, y + dy, cmd->mUnk_1a - 2, cmd->mUnk_22);
+                    DrawSprite(id + flip + 0x800000, x + dx, y + dy, cmd->mUnk_1a - 2, cmd->mLayer);
                 } else {
-                    DrawSprite(id + flip, x + dx, y + dy, cmd->mUnk_1a - 2, cmd->mUnk_22);
+                    DrawSprite(id + flip, x + dx, y + dy, cmd->mUnk_1a - 2, cmd->mLayer);
                 }
             }
 
-            if (data_020c61ac.mUnk_280.mUnk_34 != -1 && data_020c61ac.mUnk_280.mUnk_38 == i) {
-                Unk_020c61ac_Rec10 *rec = &data_020c61ac.mUnk_58[data_020c61ac.mUnk_280.mUnk_34];
+            if (gScriptWork.mUnk_280.mLsIndex != -1 && gScriptWork.mUnk_280.mLsSpriteIndex == i) {
+                ScriptLs *rec = &gScriptWork.mLsList[gScriptWork.mUnk_280.mLsIndex];
                 id = -1;
-                if (data_020c61ac.mUnk_280.mUnk_3c != 0) {
-                    data_020c61ac.mUnk_280.mUnk_3c--;
-                    // Always true: mUnk_04 is 16-bit.
-                    if (rec->mUnk_04 != -1) {
-                        id = data_0204e2c8[rec->mUnk_04] + (gSystemState.mElapsedFrames / rec->mUnk_08) % rec->mUnk_06;
+                if (gScriptWork.mUnk_280.mLsTimer != 0) {
+                    gScriptWork.mUnk_280.mLsTimer--;
+                    // Always true: mAnimId is 16-bit.
+                    if (rec->mAnimId != -1) {
+                        id = data_0204e2c8[rec->mAnimId] +
+                             (gSystemState.mElapsedFrames / rec->mFramesPerAnimFrame) % rec->mAnimFrameCount;
                     }
-                } else if (rec->mUnk_02 != -1) {
-                    id = data_0204e2c8[rec->mUnk_02];
+                } else if (rec->mStillId != -1) {
+                    id = data_0204e2c8[rec->mStillId];
                 }
                 if (id != -1) {
                     GetTexInfo(id, &info, 0);
                     if (info.mUnk_12 > 1) {
                         func_0202a1cc();
-                        DrawSprite(id + flip + 0x800000, x + rec->mUnk_0a, y + rec->mUnk_0c, cmd->mUnk_1a - 2,
-                                   cmd->mUnk_22);
+                        DrawSprite(id + flip + 0x800000, x + rec->mOffsetX, y + rec->mOffsetY, cmd->mUnk_1a - 2,
+                                   cmd->mLayer);
                     } else {
-                        DrawSprite(id + flip, x + rec->mUnk_0a, y + rec->mUnk_0c, cmd->mUnk_1a - 2, cmd->mUnk_22);
+                        DrawSprite(id + flip, x + rec->mOffsetX, y + rec->mOffsetY, cmd->mUnk_1a - 2, cmd->mLayer);
                     }
                 }
             }
@@ -1347,29 +1388,29 @@ void func_0202a1ec(int (*callback)(void)) {
             start = 0;
             len = 0;
             i = 0;
-            for (; i < data_020c61ac.mUnk_1e; i++) {
-                Unk_020c61ac_Entry *entry = &data_020c61ac.mUnk_64[i];
+            for (; i < gScriptWork.mTextCount; i++) {
+                ScriptText *entry = &gScriptWork.mTexts[i];
                 const u8 *s;
                 u16 pos;
-                if (data_020c61ac.mUnk_280.mUnk_28 != 0) {
+                if (gScriptWork.mUnk_280.mTextEscapeFunc != 0) {
                     s = name;
-                    CopyFileString(data_020c61ac.mUnk_0a, entry->mUnk_00, name, 1);
+                    CopyFileString(gScriptWork.mTextFileId, entry->mTextId, name, 1);
                 } else {
-                    s = GetFileString(data_020c61ac.mUnk_0a, entry->mUnk_00);
+                    s = GetFileString(gScriptWork.mTextFileId, entry->mTextId);
                 }
                 pos = gSystemState.mUnk_30c;
-                if (pos >= start && pos <= start + entry->mUnk_0c) {
-                    data_020c61ac.mUnk_22++;
-                    if (data_020c61ac.mUnk_22 > entry->mUnk_10 && data_020c61ac.mUnk_1c_3 == 1) {
-                        data_020c61ac.mUnk_280.mUnk_3c = entry->mUnk_10 + 1;
+                if (pos >= start && pos <= start + entry->mCharCount) {
+                    gScriptWork.mCharFrames++;
+                    if (gScriptWork.mCharFrames > entry->mCharFrameCount && gScriptWork.mTextIncomplete == 1) {
+                        gScriptWork.mUnk_280.mLsTimer = entry->mCharFrameCount + 1;
                         gSystemState.mUnk_30c = pos + 1;
-                        if (data_020c61ac.mUnk_28 != 0) {
-                            func_0202eb64(data_020c61ac.mUnk_28, 100, 0, 0x40, 0xffff, 0);
+                        if (gScriptWork.mCharSoundId != 0) {
+                            PlayWave(gScriptWork.mCharSoundId, 100, 0, 0x40, 0xffff, 0);
                         }
-                        data_020c61ac.mUnk_22 = 0;
+                        gScriptWork.mCharFrames = 0;
                     }
                 }
-                start += entry->mUnk_0c;
+                start += entry->mCharCount;
                 while (*s != 0) {
                     text[len++] = *s++;
                 }
@@ -1379,173 +1420,173 @@ void func_0202a1ec(int (*callback)(void)) {
             }
             text[len] = 0;
 
-            if (data_020c61ac.mUnk_1c_2 == 0 && len != 0) {
-                Unk_020c61ac_Entry *entry = data_020c61ac.mUnk_64;
+            if (gScriptWork.mUnk_1c_2 == 0 && len != 0) {
+                ScriptText *entry = gScriptWork.mTexts;
                 u8 value = 0;
                 u32 extra = 0;
                 if (callback != 0) {
                     value = callback();
                 }
-                GetTexInfo(data_02063988[entry->mUnk_0e]->mGlyph, &info, 0);
+                GetTexInfo(data_02063988[entry->mFontIndex]->mGlyph, &info, 0);
                 if (info.mUnk_12 > 1) {
                     extra = TEXT_ROTATE;
                     saved = gSystemState.mUnk_30a[0];
                     gSystemState.mUnk_30a[0] = value;
                     func_0202a1cc();
                 }
-                DrawTextEx(entry->mUnk_02, entry->mUnk_04 + data_020c61ac.mUnk_2a, data_02063988, (u8) entry->mUnk_0e,
+                DrawTextEx(entry->mX, entry->mY + gScriptWork.mTextOffsetY, data_02063988, (u8) entry->mFontIndex,
                            (const u8 *) text, 0,
                            extra + (entry->mUnk_0a + (TEXT_LINE_WINDOW | TEXT_LIMIT | TEXT_HILITE) +
-                                    (data_020c61ac.mUnk_280.mUnk_28 != 0 ? TEXT_ESCAPES : 0)),
+                                    (gScriptWork.mUnk_280.mTextEscapeFunc != 0 ? TEXT_ESCAPES : 0)),
                            entry->mUnk_06, entry->mUnk_08, entry->mUnk_11);
                 if (extra & TEXT_ROTATE) {
                     gSystemState.mUnk_30a[0] = saved;
                 }
-                data_020c61ac.mUnk_1c_3 = gSystemState.mUnk_317_0;
+                gScriptWork.mTextIncomplete = gSystemState.mUnk_317_0;
             }
         }
 
-        if (data_020c61ac.mUnk_1b == 3) {
+        if (gScriptWork.mState == SCRIPT_STATE_END) {
             return;
         }
-        if (data_020c61ac.mUnk_1b == 1) {
-            if (data_020c61ac.mUnk_1c_2 == 1 ||
-                (data_020c61ac.mUnk_16 == 0 && data_020c61ac.mUnk_1e == 0 && data_020c61ac.mUnk_18 == 0)) {
-                func_0202a160();
+        if (gScriptWork.mState == SCRIPT_STATE_WAIT) {
+            if (gScriptWork.mUnk_1c_2 == 1 ||
+                (gScriptWork.mSpriteCount == 0 && gScriptWork.mTextCount == 0 && gScriptWork.mWaitTimer == 0)) {
+                StartEofFinish();
             } else {
-                if (data_020c61ac.mUnk_1c_1 == 1 && data_020c61ac.mUnk_1c_3 == 1) {
+                if (gScriptWork.mFastText == 1 && gScriptWork.mTextIncomplete == 1) {
                     gSystemState.mUnk_30c += 2;
                 }
-                if (data_020c61ac.mUnk_18 != 0 && --data_020c61ac.mUnk_18 == 0) {
-                    func_0202a160();
-                } else if (!(data_020c61ac.mUnk_1a & 8) &&
+                if (gScriptWork.mWaitTimer != 0 && --gScriptWork.mWaitTimer == 0) {
+                    StartEofFinish();
+                } else if (!(gScriptWork.mEofFlags & 8) &&
                            ((gSystemState.mKeysDown & 1) ||
-                            (data_020c1d60.mUnk_800.mUnk_100.mUnk_04 & 0x4000ffff) == 0x40000400)) {
-                    if (data_020c61ac.mUnk_1c_3 == 1) {
+                            (gTouchInput.mTrail.mTouchState.mButtonState & 0x4000ffff) == 0x40000400)) {
+                    if (gScriptWork.mTextIncomplete == 1) {
                         if ((gSystemState.mKeysPressed & 1) ||
-                            (data_020c1d60.mUnk_800.mUnk_100.mUnk_04 & 0xc000ffff) == 0xc0000400) {
-                            data_020c61ac.mUnk_1c |= 2;
+                            (gTouchInput.mTrail.mTouchState.mButtonState & 0xc000ffff) == 0xc0000400) {
+                            gScriptWork.mUnk_1c |= 2;
                         }
                     } else if ((gSystemState.mKeysPressed & 1) ||
-                               (data_020c1d60.mUnk_800.mUnk_100.mUnk_04 & 0xc000ffff) == 0xc0000400) {
+                               (gTouchInput.mTrail.mTouchState.mButtonState & 0xc000ffff) == 0xc0000400) {
                         if (gSystemState.mUnk_313 + gSystemState.mUnk_314 < gSystemState.mUnk_315) {
                             gSystemState.mUnk_313 += gSystemState.mUnk_314;
                         } else {
-                            func_0202a160();
+                            StartEofFinish();
                         }
                     }
                 }
             }
-        } else if (data_020c61ac.mUnk_1b == 2) {
-            if (data_020c61ac.mUnk_1c_2 == 1 || data_020c61ac.mUnk_1c_0 == 0) {
+        } else if (gScriptWork.mState == SCRIPT_STATE_FINISH) {
+            if (gScriptWork.mUnk_1c_2 == 1 || gScriptWork.mSpritesBusy == 0) {
                 if (((gMapState.mCamera.mUnk_2dc.mUnk_0c != 0 && gMapState.mCamera.mUnk_2dc.mUnk_33 == 8 &&
                       (gSystemState.mFlags & 0x80)) ||
                      (gMapState.mCamera.mUnk_2dc.mUnk_0e != 0 && (gSystemState.mFlags & 0x80))) &&
                     !(gSystemState.mFlags & 0x08000000)) {
                     continue;
                 }
-                if (!(data_020c61ac.mUnk_1a & 1)) {
-                    data_020c61ac.mUnk_16 = 0;
-                    data_020c61ac.mUnk_280.mUnk_34 = data_020c61ac.mUnk_280.mUnk_38 = -1;
+                if (!(gScriptWork.mEofFlags & 1)) {
+                    gScriptWork.mSpriteCount = 0;
+                    gScriptWork.mUnk_280.mLsIndex = gScriptWork.mUnk_280.mLsSpriteIndex = -1;
                 }
-                if (data_020c61ac.mUnk_1a & 4) {
-                    data_020c61ac.mUnk_1b = 3;
-                    func_020298c8();
+                if (gScriptWork.mEofFlags & 4) {
+                    gScriptWork.mState = SCRIPT_STATE_END;
+                    PlayScriptTrackAndSounds();
                 } else {
-                    data_020c61ac.mUnk_1b = 0;
+                    gScriptWork.mState = SCRIPT_STATE_READ;
                 }
             }
         } else {
-            data_020c61ac.mUnk_1c_1 = 0;
+            gScriptWork.mFastText = 0;
             do {
-                int kind = GetFileValueType(data_020c61ac.mUnk_08, data_020c61ac.mUnk_10);
+                int kind = GetFileValueType(gScriptWork.mScriptFileId, gScriptWork.mLineId);
                 // kind is compared with 0 before the test for 4 (both compares are in the code).
                 if (kind != 0 && kind == 4) {
-                    line = (u8 *) GetFileString(data_020c61ac.mUnk_08, data_020c61ac.mUnk_10);
-                    switch (func_02029298(&line)) {
-                        case 0:
-                            func_020292f4((const char *) line);
+                    line = (u8 *) GetFileString(gScriptWork.mScriptFileId, gScriptWork.mLineId);
+                    switch (ReadScriptCommand(&line)) {
+                        case SCRIPT_CMD_LET:
+                            SetScriptRecordFromText((const char *) line);
                             break;
-                        case 1:
-                            func_020294c4(line, 0);
+                        case SCRIPT_CMD_SPR:
+                            AddScriptSprite(line, 0);
                             break;
-                        case 2:
-                            func_020294c4(line, 0);
-                            data_020c61ac.mUnk_60[data_020c61ac.mUnk_16 - 1].mUnk_04 |= 0x10000;
+                        case SCRIPT_CMD_SPRX:
+                            AddScriptSprite(line, 0);
+                            gScriptWork.mSprites[gScriptWork.mSpriteCount - 1].mDrawId |= 0x10000;
                             break;
-                        case 3:
+                        case SCRIPT_CMD_SPRSCR:
                             func_02029aac(line, 1);
                             break;
-                        case 4:
+                        case SCRIPT_CMD_SHPSCR:
                             func_02029aac(line, 0);
                             break;
-                        case 5:
-                            func_020294c4(line, 1);
+                        case SCRIPT_CMD_SHAPE:
+                            AddScriptSprite(line, 1);
                             break;
-                        case 6:
-                            func_020297c8(line);
+                        case SCRIPT_CMD_TXT:
+                            AddScriptText(line);
                             gSystemState.mUnk_30c = 0;
                             break;
-                        case 8:
-                            func_02029898(line);
+                        case SCRIPT_CMD_TXTSPD:
+                            ScriptCmdTxtSpd(line);
                             break;
-                        case 7:
-                            func_02029970(line);
-                            data_020c61ac.mUnk_1b = 1;
+                        case SCRIPT_CMD_EOF:
+                            ScriptCmdEof(line);
+                            gScriptWork.mState = SCRIPT_STATE_WAIT;
                             done = 1;
                             break;
-                        case 9:
-                            func_020299d4(line);
+                        case SCRIPT_CMD_ESC:
+                            QueueScriptEvent(line);
                             break;
-                        case 10:
-                            func_02029a1c((const char *) line);
+                        case SCRIPT_CMD_SYNC:
+                            ScriptCmdSync((const char *) line);
                             break;
-                        case 11:
-                            func_02029a74(line);
+                        case SCRIPT_CMD_GOTO:
+                            ScriptCmdGoto(line);
                             break;
-                        case 12:
-                            func_02029b28(line);
+                        case SCRIPT_CMD_SCREEN:
+                            ScriptCmdScreen(line);
                             break;
-                        case 13:
-                            func_02029b6c(line);
+                        case SCRIPT_CMD_IF:
+                            ScriptCmdIf(line);
                             break;
-                        case 14:
-                            func_02029b98(line);
+                        case SCRIPT_CMD_EQ:
+                            ScriptCmdEq(line);
                             break;
-                        case 15:
-                            func_02029bd8(line);
+                        case SCRIPT_CMD_NE:
+                            ScriptCmdNe(line);
                             break;
-                        case 16:
-                            func_02029c18(line);
+                        case SCRIPT_CMD_GT:
+                            ScriptCmdGt(line);
                             break;
-                        case 17:
-                            func_02029c58(line);
+                        case SCRIPT_CMD_LT:
+                            ScriptCmdLt(line);
                             break;
-                        case 18:
-                            func_02029c98(line);
+                        case SCRIPT_CMD_MUSIC:
+                            ScriptCmdMusic(line);
                             break;
-                        case 19:
-                            func_02029d00(line);
+                        case SCRIPT_CMD_SOUND:
+                            ScriptCmdSound(line);
                             break;
-                        case 20:
-                            func_02029d8c((const char *) line);
+                        case SCRIPT_CMD_BRA:
+                            ScriptCmdBra((const char *) line);
                             break;
-                        case 21:
-                            func_02029da0(line);
+                        case SCRIPT_CMD_FADE:
+                            ScriptCmdFade(line);
                             break;
-                        case 22:
-                            func_02029dd8(line);
+                        case SCRIPT_CMD_SETEYE:
+                            ScriptCmdSetEye(line);
                             break;
-                        case 23:
-                            func_02029f6c(line);
+                        case SCRIPT_CMD_SETLS:
+                            ScriptCmdSetLs(line);
                             break;
-                        case 24:
-                            func_0202a034(line);
+                        case SCRIPT_CMD_SETLSC:
+                            ScriptCmdSetLsc(line);
                             break;
                     }
                 }
-                data_020c61ac.mUnk_10++;
+                gScriptWork.mLineId++;
             } while (done == 0);
         }
-    } while (data_020c61ac.mUnk_1c_2);
+    } while (gScriptWork.mUnk_1c_2);
 }

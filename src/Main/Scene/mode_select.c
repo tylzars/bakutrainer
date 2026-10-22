@@ -42,13 +42,13 @@ void SelectMode(int mode) {
             gModeSelectState.mScoreThreshold = func_0200d6b0(tableRow);
             break;
         case 1:
-            gModeSelectState.mScoreThreshold = func_0200b88c(tableRow);
+            gModeSelectState.mScoreThreshold = GetParticleGameScoreThreshold(tableRow);
             break;
         case 2:
             gModeSelectState.mScoreThreshold = GetFieldScoreThreshold(tableRow);
             break;
         case 3:
-            gModeSelectState.mScoreThreshold = func_02004940(tableRow);
+            gModeSelectState.mScoreThreshold = GetFallingBlocksScoreThreshold(tableRow);
             break;
         case 4:
             gModeSelectState.mScoreThreshold = func_020186f0(tableRow);
@@ -110,22 +110,22 @@ void DrawModeSelect(void) {
 // prompt with state 13 to follow, keeping the selected mode (gKeepSelectedMode).
 void UpdateModeSelect(void) {
     int idx;
-    if (func_0200bd80(0x20000000, 0x102)) {
+    if (TestButton(0x20000000, 0x102)) {
         PushState(10);
         PopState();
     }
-    if (func_0200bd80(0x20000000, 0x300)) {
+    if (TestButton(0x20000000, 0x300)) {
         SelectMode(1);
-    } else if (func_0200bd80(0x20000000, 0x301)) {
+    } else if (TestButton(0x20000000, 0x301)) {
         SelectMode(0);
-    } else if (func_0200bd80(0x20000000, 0x302)) {
+    } else if (TestButton(0x20000000, 0x302)) {
         SelectMode(2);
-    } else if (func_0200bd80(0x20000000, 0x304)) {
+    } else if (TestButton(0x20000000, 0x304)) {
         SelectMode(3);
-    } else if (func_0200bd80(0x20000000, 0x303)) {
+    } else if (TestButton(0x20000000, 0x303)) {
         SelectMode(4);
     }
-    if (func_0200bd80(0x20000000, 0x101)) {
+    if (TestButton(0x20000000, 0x101)) {
         idx = data_020b10fc.mMode;
         if (data_020b10fc.mBestScores[idx] == 0) {
             func_0201033c(sModePrompts[idx], sModeStates[idx]);
@@ -134,7 +134,7 @@ void UpdateModeSelect(void) {
             PopState();
         }
     }
-    if (func_0200bd80(0x20000000, 0x320)) {
+    if (TestButton(0x20000000, 0x320)) {
         gKeepSelectedMode = 1;
         func_0201033c(sModePrompts[data_020b10fc.mMode], 13);
     }
@@ -171,7 +171,7 @@ int UpdateTimeLeft(u32 value) {
     u32 prev = gPrevTimeLeft;
     if ((prev >= 600 && value < 600) || (prev >= 300 && value < 300) || (prev >= 240 && value < 240) ||
         (prev >= 180 && value < 180) || (prev >= 120 && value < 120) || (prev >= 60 && value < 60)) {
-        func_0202f110(361, 100, 0, 64, 0xffff, 0);
+        PlayWaveKeepAlive(361, 100, 0, 64, 0xffff, 0);
     }
     gPrevTimeLeft = value;
     if (value <= 600 && value != 0 && (gSystemState.mElapsedFrames & 0x1f) <= 8) {
@@ -187,9 +187,10 @@ void StartModeSlide(int a, int b) {
     gModeSelectState.mScoreThresholdMet = b;
     if (a == 0) {
         if (b == 1) {
-            func_0202f110(data_020b1084.mLanguage + sThresholdMetWaveIds[NextRandom() % 3], 100, 0, 64, 0xffff, 0);
+            PlayWaveKeepAlive(data_020b1084.mLanguage + sThresholdMetWaveIds[NextRandom() % 3], 100, 0, 64, 0xffff, 0);
         } else if (b == 0) {
-            func_0202f110(data_020b1084.mLanguage + sThresholdNotMetWaveIds[NextRandom() & 1], 100, 0, 64, 0xffff, 0);
+            PlayWaveKeepAlive(data_020b1084.mLanguage + sThresholdNotMetWaveIds[NextRandom() & 1], 100, 0, 64, 0xffff,
+                              0);
         }
     }
 }

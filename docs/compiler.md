@@ -97,7 +97,7 @@ one-constant change of it misses on every build.
 | 2.0 base ... sp2p4 (each) | 15 | 9 |
 | DSi (9 builds) | 6-8 | 4 |
 
-1.2 has no `-ipa file`, so it was compiled without it. The Thumb miss on 2.0 is `func_0200b994`: 8 words differ in
+1.2 has no `-ipa file`, so it was compiled without it. The Thumb miss on 2.0 is `EaseAngleToward`: 8 words differ in
 the same way on every build and flag set (register assignment following the source's shape). The ARM miss is
 `StartVideo`: 4 words differ on sp2p2 ... sp2p4 (larger on earlier builds, below).
 
@@ -114,7 +114,7 @@ the same way on every build and flag set (register assignment following the sour
   object defined in the probe's file, sp2p2 and every earlier build add a second pool word; sp2p3 and sp2p4
   reproduce `StopVideo` exactly (the 64-byte section rule above). With the object `extern`, every build matches.
   So sp2p3 holds if `data_020c661c` is defined in the file of those functions. Two Thumb probes with their global
-  defined in the file (`func_02026268`, `func_02039c88`) split the same way and rest on the same kind of
+  defined in the file (`func_02026268`, `WaitForLinkStep`) split the same way and rest on the same kind of
   assumption. No probe matches on sp2p2 and misses on sp2p3.
 - sp2p3 and sp2p4 gave the same code on every probe: not separated, sp2p3 kept.
 
@@ -127,12 +127,12 @@ that match with the build's set (functions probed in several variants count once
 |---|---|
 | `-O4,p` | `-O4,s` and `-O2` miss 14 of 26. `-O3,p` gives the same code on every probe: not separated |
 | `-ipa file` | `DrawPageViewerButtons` (Thumb), `RemoveLeastRecentCacheEntry` and `FindCachedFileSize` (ARM) load one global's address from two pool words. Written as C they match only with `-ipa file` and the global defined in the probe's file; without `-ipa file`, or with the global `extern`, every build misses. Written as C++ they match with or without `-ipa file`, so this shows `-ipa file` for C code (the game code looks like C: `.ctor` is empty, every probe matches as C) |
-| `-inline on,noauto` | `-inline auto` misses 4 of 26: it inlines same-file callees the original calls with `bl` (`TestBits` into `StartFade`, `NextRandom` into `RandomRange`, and in `StopVideo` and `func_02034c38`). The default inlining gives the same code as `on,noauto`: not separated |
+| `-inline on,noauto` | `-inline auto` misses 4 of 26: it inlines same-file callees the original calls with `bl` (`TestBits` into `StartFade`, `NextRandom` into `RandomRange`, and in `StopVideo` and `UpdateCommChild`). The default inlining gives the same code as `on,noauto`: not separated |
 | `-char signed` | not separated by game code: no game function changes with `-char unsigned`. The game's own text code reads bytes unsigned (`ldrb`, unsigned compares), so its text is `u8`. Shown for the C runtime and the glue code (below) |
 | `-str reuse` | `.data` 0x02063a2c-0x02063a50 holds one `"+%d"` and one `"-%d"` used by three functions. A linked test file with the same literal uses reproduces those 0x24 bytes exactly with `-str reuse` (sp2p2 and sp2p3); `noreuse` adds copies, `pool` packs them unaligned, and named `char` arrays come before a file's function literals, so they give another order |
 | `-enum int` | `-enum min` gives the same code on every probe: not separated |
 | `-proc arm946e` | `-proc arm9tdmi` misses 18 of 26 |
-| `-interworking` | without it 3 ARM functions miss (`AreScreensOff`, `func_02034cc4`, `func_02034cdc`: returns and tail calls); no Thumb probe misses without it |
+| `-interworking` | without it 3 ARM functions miss (`AreScreensOff`, `ConnectCommAsChild`, `func_02034cdc`: returns and tail calls); no Thumb probe misses without it |
 | `-thumb` | Thumb functions compile only with it. `#pragma thumb off` ... `#pragma thumb on` around a function gives the code of compiling it without `-thumb` |
 
 ### Mobiclip glue code

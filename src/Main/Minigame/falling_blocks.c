@@ -18,47 +18,47 @@
 #include <nitro/os.h>
 #include <stdio.h>
 
-Board data_02064828;
+Board gBoard;
 
-int func_02003194(int a, int b) {
+int LookupFallingBlocksValue(int a, int b) {
     return GetFileValue(0xd66, b + a * 12);
 }
 
-void func_020031ac(s8 col, s8 row, Vec2i *out) {
+void CellToBoardPos(s8 col, s8 row, Vec2i *out) {
     out->x = (col * 20 + 0x4d) << 8;
     out->y = (row * 20 - 4) << 8;
 }
 
-void func_020031c8(const Vec2i *pos, s8 *col, s8 *row) {
+void BoardPosToCell(const Vec2i *pos, s8 *col, s8 *row) {
     *col = ((pos->x >> 8) - 0x4d) / 20;
     *row = ((pos->y >> 8) + 4) / 20;
 }
 
 u16 func_020031f0(void) {
-    return (NextRandom() % 10 == 0) ? 0 : RandomRange(data_02064828.mUnk_896a, data_02064828.mUnk_896c);
+    return (NextRandom() % 10 == 0) ? 0 : RandomRange(gBoard.mUnk_896a, gBoard.mUnk_896c);
 }
 
 void func_02003218(u8 *p) {
-    data_02064828.mUnk_8968--;
-    if (data_02064828.mUnk_8968 <= 0) {
+    gBoard.mUnk_8968--;
+    if (gBoard.mUnk_8968 <= 0) {
         *p += 7;
-        data_02064828.mUnk_8968 = func_020031f0();
+        gBoard.mUnk_8968 = func_020031f0();
     }
 }
 
 u16 func_02003240(void) {
-    return RandomRange(data_02064828.mUnk_8970, data_02064828.mUnk_8972);
+    return RandomRange(gBoard.mUnk_8970, gBoard.mUnk_8972);
 }
 
 void func_02003258(u8 *p) {
-    data_02064828.mUnk_896e--;
-    if (data_02064828.mUnk_896e <= 0) {
+    gBoard.mUnk_896e--;
+    if (gBoard.mUnk_896e <= 0) {
         *p = 0xe;
-        data_02064828.mUnk_896e = func_02003240();
+        gBoard.mUnk_896e = func_02003240();
     }
 }
 
-u8 func_0200327c(u8 lo, u8 hi) {
+u8 PickPieceType(u8 lo, u8 hi) {
     int roll = RandomRange(1, 100);
     int span = hi - lo;
     int step = 100 / (span + 1);
@@ -74,7 +74,9 @@ u8 func_0200327c(u8 lo, u8 hi) {
     return lo + i;
 }
 
-void func_020032b4(Piece *p, u8 type) {
+// Sets the piece's type, cancels a removal marker (mUnk_110 = -1) and, for a type other than 0, starts the type's
+// sprite.
+void SetPieceType(Piece *p, u8 type) {
     p->mType = type;
     p->mUnk_110 = -1;
     if (type != 0) {
@@ -89,7 +91,7 @@ void func_020032b4(Piece *p, u8 type) {
     }
 }
 
-void func_020032e4(Piece *p, int x, int y, int mode, int flag) {
+void DrawPiece(Piece *p, int x, int y, int mode, int flag) {
     int prio;
     int frame;
 
@@ -113,144 +115,147 @@ void func_020032e4(Piece *p, int x, int y, int mode, int flag) {
     }
 }
 
-void func_02003338(const Piece *src, u8 col, u8 row, int unused, Vec2i *out) {
-    data_02064828.mGrid[col][row] = *src;
-    func_020031ac(col, row, &data_02064828.mGrid[col][row].mPos);
+// Copies the piece into the cell and stores the cell in *out. In row 0 the piece in column 2 ends the round; in the
+// other columns it is cleared again at once.
+void PlacePiece(const Piece *src, u8 col, u8 row, int unused, Vec2i *out) {
+    gBoard.mGrid[col][row] = *src;
+    CellToBoardPos(col, row, &gBoard.mGrid[col][row].mPos);
     if (out != NULL) {
         out->x = col;
         out->y = row;
     }
     if (row == 0) {
         if (col == 2) {
-            func_0200443c(1);
+            EndFallingBlocks(1);
         } else {
-            func_02003f08(col, row);
+            ClearCell(col, row);
         }
     }
 }
 
-void func_020033ac(Piece *p) {
+void StartPieceRemoval(Piece *p) {
     if (p->mUnk_110 < 0 && p->mType != 0) {
-        data_02064828.mUnk_430c++;
+        gBoard.mRemovingCount++;
         p->mUnk_110 = 1;
         p->mSprite.mUnk_14 |= 1;
         if (p->mType < 7) {
-            s32 left = data_02064828.mUnk_8978[p->mType - 1] - 1;
+            s32 left = gBoard.mUnk_8978[p->mType - 1] - 1;
 
             if (left < 0) {
                 left = 0;
             }
-            data_02064828.mUnk_8978[p->mType - 1] = left;
+            gBoard.mUnk_8978[p->mType - 1] = left;
         }
-        func_0202f110(0x56, 0x4b, 0, 0x40, 0xffff, 0);
+        PlayWaveKeepAlive(0x56, 0x4b, 0, 0x40, 0xffff, 0);
         if (p->mType < 7) {
-            AddCappedAt999Shifted(&data_02064828.mUnk_10, data_02064828.mUnk_8990, 0);
+            AddCappedAt999Shifted(&gBoard.mScore, gBoard.mPieceScore, 0);
         }
-        data_02064828.mUnk_8994++;
+        gBoard.mRemovedCount++;
     }
 }
 
-BOOL func_02003430(Piece *p) {
+BOOL DropPiece(Piece *p) {
     s8 cell[2];
 
     p->mPos.y += 0x640;
-    func_020031c8(&p->mPos, &cell[1], &cell[0]);
-    if (cell[0] + 1 >= BOARD_ROWS || !func_02003ed8(cell[1], cell[0] + 1)) {
-        func_02003338(p, cell[1], cell[0], 0, NULL);
+    BoardPosToCell(&p->mPos, &cell[1], &cell[0]);
+    if (cell[0] + 1 >= BOARD_ROWS || !IsCellEmpty(cell[1], cell[0] + 1)) {
+        PlacePiece(p, cell[1], cell[0], 0, NULL);
         return TRUE;
     }
     return FALSE;
 }
 
-void func_02003488(Pair *pr) {
-    if (pr->mUnk_240 > 0 && pr->mUnk_242 != 0) {
-        pr->mUnk_240 = 0x12;
-        pr->mUnk_242--;
+// Restarts the land timer when it is running (above 0) and resets remain, using one.
+void ResetLandTimer(Pair *pr) {
+    if (pr->mLandTimer > 0 && pr->mLandResetsRemaining != 0) {
+        pr->mLandTimer = 0x12;
+        pr->mLandResetsRemaining--;
     }
 }
 
-void func_020034ac(Pair *pr) {
+void SwapPairPieces(Pair *pr) {
     Piece tmp = pr->mPiece[0];
 
     pr->mPiece[0] = pr->mPiece[1];
     pr->mPiece[1] = tmp;
 }
 
-void func_020034f8(const Pair *pr, Vec2i *out) {
+void GetPairSecondPos(const Pair *pr, Vec2i *out) {
     *out = pr->mPos;
     switch (pr->mDir) {
-        case 0:
+        case PAIR_DIR_UP:
             out->y -= 5 << 10;
             break;
-        case 1:
+        case PAIR_DIR_RIGHT:
             out->x += 5 << 10;
             break;
-        case 2:
+        case PAIR_DIR_DOWN:
             out->y += 5 << 10;
             break;
-        case 3:
+        case PAIR_DIR_LEFT:
             out->x -= 5 << 10;
             break;
     }
 }
 
-void func_0200355c(Pair *pr, Piece *unused) {
+void LandPair(Pair *pr, Piece *unused) {
     s8 cell[2];
 
-    if (pr->mUnk_240 < 0) {
-        pr->mUnk_240 = 0x12;
-        func_0202f110(0x57, 0x4b, 0, 0x40, 0xffff, 0);
+    if (pr->mLandTimer < 0) {
+        pr->mLandTimer = 0x12;
+        PlayWaveKeepAlive(0x57, 0x4b, 0, 0x40, 0xffff, 0);
     }
-    func_020031c8(&pr->mPos, &cell[1], &cell[0]);
-    func_020031ac(cell[1], cell[0], &pr->mPos);
+    BoardPosToCell(&pr->mPos, &cell[1], &cell[0]);
+    CellToBoardPos(cell[1], cell[0], &pr->mPos);
 }
 
-void func_020035b0(Pair *pr) {
+void MovePairLeft(Pair *pr) {
     Vec2i pos;
     s8 cell[2];
 
-    if (pr->mUnk_234 == 0) {
-        if (pr->mDir == 3) {
-            func_020034f8(pr, &pos);
+    if (pr->mSplit == 0) {
+        if (pr->mDir == PAIR_DIR_LEFT) {
+            GetPairSecondPos(pr, &pos);
         } else {
             pos = pr->mPos;
         }
-        func_020031c8(&pos, &cell[1], &cell[0]);
-        if (pr->mDir == 2) {
+        BoardPosToCell(&pos, &cell[1], &cell[0]);
+        if (pr->mDir == PAIR_DIR_DOWN) {
             cell[0]++;
         }
-        if (cell[1] > 0 && func_02003ed8(cell[1] - 1, cell[0])) {
+        if (cell[1] > 0 && IsCellEmpty(cell[1] - 1, cell[0])) {
             BOOL free;
 
             if (cell[0] >= BOARD_ROWS) {
                 free = TRUE;
             } else {
-                free = func_02003ed8(cell[1] - 1, cell[0] + 1);
+                free = IsCellEmpty(cell[1] - 1, cell[0] + 1);
             }
             if (free) {
                 pr->mPos.x -= 5 << 10;
-                func_02003488(pr);
+                ResetLandTimer(pr);
             }
         }
-        func_0202f110(0x10c, 0x4b, 0, 0x40, 0xffff, 0);
+        PlayWaveKeepAlive(0x10c, 0x4b, 0, 0x40, 0xffff, 0);
     }
 }
 
-void func_02003670(Pair *pr) {
+void MovePairRight(Pair *pr) {
     Vec2i pos;
     s8 cell[2];
 
-    if (pr->mUnk_234 == 0) {
-        if (pr->mDir == 1) {
-            func_020034f8(pr, &pos);
+    if (pr->mSplit == 0) {
+        if (pr->mDir == PAIR_DIR_RIGHT) {
+            GetPairSecondPos(pr, &pos);
         } else {
             pos = pr->mPos;
         }
-        func_020031c8(&pos, &cell[1], &cell[0]);
-        if (pr->mDir == 2) {
+        BoardPosToCell(&pos, &cell[1], &cell[0]);
+        if (pr->mDir == PAIR_DIR_DOWN) {
             cell[0]++;
         }
-        if (cell[1] < BOARD_COLS - 1 && func_02003ed8(cell[1] + 1, cell[0])) {
+        if (cell[1] < BOARD_COLS - 1 && IsCellEmpty(cell[1] + 1, cell[0])) {
             BOOL free;
 
             BOOL edge = cell[0] >= BOARD_ROWS || cell[0] <= 0;
@@ -258,161 +263,161 @@ void func_02003670(Pair *pr) {
             if (edge) {
                 free = TRUE;
             } else {
-                free = func_02003ed8(cell[1] + 1, cell[0] + 1);
+                free = IsCellEmpty(cell[1] + 1, cell[0] + 1);
             }
             if (free) {
                 pr->mPos.x += 5 << 10;
-                func_02003488(pr);
+                ResetLandTimer(pr);
             }
         }
-        func_0202f110(0x10c, 0x4b, 0, 0x40, 0xffff, 0);
+        PlayWaveKeepAlive(0x10c, 0x4b, 0, 0x40, 0xffff, 0);
     }
 }
 
-void func_0200373c(Pair *pr, u8 dir) {
+void TurnPairTo(Pair *pr, u8 dir) {
     s8 cell[2];
     s8 row;
     s8 row1;
     s8 row2;
 
-    func_020031c8(&pr->mPos, &cell[1], &cell[0]);
+    BoardPosToCell(&pr->mPos, &cell[1], &cell[0]);
     row = cell[0];
     row1 = row < BOARD_ROWS - 1 ? row + 1 : row;
     row2 = row1 < BOARD_ROWS - 1 ? row1 + 1 : row1;
     switch (dir) {
-        case 0:
+        case PAIR_DIR_UP:
             pr->mDir = dir;
-            func_02003488(pr);
+            ResetLandTimer(pr);
             return;
-        case 1:
-            if (cell[1] < BOARD_COLS - 1 && func_02003ed8(cell[1] + 1, row) && func_02003ed8(cell[1] + 1, row1)) {
+        case PAIR_DIR_RIGHT:
+            if (cell[1] < BOARD_COLS - 1 && IsCellEmpty(cell[1] + 1, row) && IsCellEmpty(cell[1] + 1, row1)) {
                 pr->mDir = dir;
                 return;
             }
-            if (cell[1] > 0 && func_02003ed8(cell[1] - 1, cell[0]) && func_02003ed8(cell[1] - 1, row1)) {
+            if (cell[1] > 0 && IsCellEmpty(cell[1] - 1, cell[0]) && IsCellEmpty(cell[1] - 1, row1)) {
                 pr->mDir = dir;
                 pr->mPos.x -= 5 << 10;
-                func_02003488(pr);
+                ResetLandTimer(pr);
                 return;
             }
-            func_020034ac(pr);
-            func_02003488(pr);
+            SwapPairPieces(pr);
+            ResetLandTimer(pr);
             return;
-        case 2:
-            if (row < BOARD_ROWS - 1 && func_02003ed8(cell[1], row1) && func_02003ed8(cell[1], row2)) {
+        case PAIR_DIR_DOWN:
+            if (row < BOARD_ROWS - 1 && IsCellEmpty(cell[1], row1) && IsCellEmpty(cell[1], row2)) {
                 pr->mDir = dir;
-                func_02003488(pr);
+                ResetLandTimer(pr);
                 return;
             }
             pr->mDir = dir;
             pr->mPos.y -= 5 << 10;
-            func_02003488(pr);
+            ResetLandTimer(pr);
             return;
-        case 3:
-            if (cell[1] > 0 && func_02003ed8(cell[1] - 1, cell[0]) && func_02003ed8(cell[1] - 1, row1)) {
+        case PAIR_DIR_LEFT:
+            if (cell[1] > 0 && IsCellEmpty(cell[1] - 1, cell[0]) && IsCellEmpty(cell[1] - 1, row1)) {
                 pr->mDir = dir;
-                func_02003488(pr);
+                ResetLandTimer(pr);
                 return;
             }
-            if (cell[1] < BOARD_COLS - 1 && func_02003ed8(cell[1] + 1, cell[0]) && func_02003ed8(cell[1] + 1, row1)) {
+            if (cell[1] < BOARD_COLS - 1 && IsCellEmpty(cell[1] + 1, cell[0]) && IsCellEmpty(cell[1] + 1, row1)) {
                 pr->mDir = dir;
                 pr->mPos.x += 5 << 10;
-                func_02003488(pr);
+                ResetLandTimer(pr);
                 return;
             }
-            func_020034ac(pr);
-            func_02003488(pr);
+            SwapPairPieces(pr);
+            ResetLandTimer(pr);
             return;
     }
 }
 
-void func_02003924(Pair *pr) {
-    if (pr->mUnk_234 == 0) {
-        func_0200373c(pr, (pr->mDir + 1) % 4);
-        func_0202f110(0x17b, 0x4b, 0, 0x40, 0xffff, 0);
+void TurnPairClockwise(Pair *pr) {
+    if (pr->mSplit == 0) {
+        TurnPairTo(pr, (pr->mDir + 1) % 4);
+        PlayWaveKeepAlive(0x17b, 0x4b, 0, 0x40, 0xffff, 0);
     }
 }
 
-void func_0200396c(Pair *pr) {
-    if (pr->mUnk_234 == 0) {
+void TurnPairCounterclockwise(Pair *pr) {
+    if (pr->mSplit == 0) {
         int dir;
 
-        if (pr->mDir == 0) {
-            dir = 3;
+        if (pr->mDir == PAIR_DIR_UP) {
+            dir = PAIR_DIR_LEFT;
         } else {
             dir = (pr->mDir - 1) % 4;
         }
-        func_0200373c(pr, dir);
-        func_0202f110(0x17b, 0x4b, 0, 0x40, 0xffff, 0);
+        TurnPairTo(pr, dir);
+        PlayWaveKeepAlive(0x17b, 0x4b, 0, 0x40, 0xffff, 0);
     }
 }
 
-void func_020039bc(void) {
-    Pair *pr = &data_02064828.mUnk_8608;
+void PickNextPair(void) {
+    Pair *pr = &gBoard.mNextPair;
     u8 type[2];
 
-    type[1] = func_0200327c(1, data_02064828.mUnk_01);
+    type[1] = PickPieceType(1, gBoard.mTypeCount);
     func_02003218(&type[1]);
     func_02003258(&type[1]);
-    type[0] = func_0200327c(1, data_02064828.mUnk_01);
+    type[0] = PickPieceType(1, gBoard.mTypeCount);
     func_02003218(&type[0]);
     func_02003258(&type[0]);
-    func_020032b4(&pr->mPiece[0], type[1]);
-    func_020032b4(&pr->mPiece[1], type[0]);
-    pr->mDir = 0;
-    pr->mUnk_234 = 0;
-    pr->mUnk_23c = data_02064828.mUnk_8964;
-    pr->mUnk_240 = -1;
-    pr->mUnk_242 = 3;
+    SetPieceType(&pr->mPiece[0], type[1]);
+    SetPieceType(&pr->mPiece[1], type[0]);
+    pr->mDir = PAIR_DIR_UP;
+    pr->mSplit = 0;
+    pr->mSpeed = gBoard.mFallSpeed;
+    pr->mLandTimer = -1;
+    pr->mLandResetsRemaining = 3;
     pr->mPos.x = 0x37 << 10;
     pr->mPos.y = 0x45 << 8;
 }
 
-void func_02003a5c(void) {
-    data_02064828.mUnk_83c4 = data_02064828.mUnk_8608;
-    func_020039bc();
-    func_020031ac(2, 0, &data_02064828.mUnk_83c4.mPos);
-    data_02064828.mUnk_83c4.mPos.y -= 5 << 10;
-    data_02064828.mUnk_8950 = 0;
+void TakeNextPair(void) {
+    gBoard.mPair = gBoard.mNextPair;
+    PickNextPair();
+    CellToBoardPos(2, 0, &gBoard.mPair.mPos);
+    gBoard.mPair.mPos.y -= 5 << 10;
+    gBoard.mPairState = 0;
 }
 
-void func_02003aa8(Pair *pr, int a, int b) {
+void DrawPair(Pair *pr, int a, int b) {
     Vec2i pos;
 
-    if (a == 2 || data_02064828.mUnk_8950 < 2) {
-        func_020032e4(&pr->mPiece[0], pr->mPos.x >> 8, pr->mPos.y >> 8, 1, 0);
-        if (pr->mUnk_234 == 0) {
-            func_020034f8(pr, &pos);
-            func_020032e4(&pr->mPiece[1], pos.x >> 8, pos.y >> 8, 1, 1);
+    if (a == 2 || gBoard.mPairState < 2) {
+        DrawPiece(&pr->mPiece[0], pr->mPos.x >> 8, pr->mPos.y >> 8, 1, 0);
+        if (pr->mSplit == 0) {
+            GetPairSecondPos(pr, &pos);
+            DrawPiece(&pr->mPiece[1], pos.x >> 8, pos.y >> 8, 1, 1);
             if (b != 0) {
-                UpdateSprite(&data_02064828.mUnk_884c);
-                func_0202de80(data_02064828.mUnk_884c.mUnk_04, pr->mPos.x >> 8, pr->mPos.y >> 8, 0xfa, -1, 1);
+                UpdateSprite(&gBoard.mPairMarker);
+                func_0202de80(gBoard.mPairMarker.mUnk_04, pr->mPos.x >> 8, pr->mPos.y >> 8, 0xfa, -1, 1);
             }
         }
     }
 }
 
-BOOL func_02003b3c(Pair *pr) {
+BOOL DropPair(Pair *pr) {
     BOOL result = FALSE;
     s32 speed;
     Vec2i partner;
     Vec2i swap;
     s8 cell[4];
 
-    if (data_02064828.mUnk_8950 != 0 || data_02064828.mUnk_430c != 0 || data_02064828.mCount != 0) {
+    if (gBoard.mPairState != 0 || gBoard.mRemovingCount != 0 || gBoard.mCount != 0) {
         return TRUE;
     }
-    if (pr->mUnk_234 != 0) {
+    if (pr->mSplit != 0) {
         speed = 0x19 << 12;
     } else {
-        speed = pr->mUnk_23c;
+        speed = pr->mSpeed;
     }
     pr->mPos.y += (speed << 4) / 1024;
-    func_020034f8(pr, &partner);
+    GetPairSecondPos(pr, &partner);
     pr->mPiece[0].mPos = pr->mPos;
     pr->mPiece[1].mPos = partner;
-    func_020031c8(&pr->mPos, &cell[3], &cell[2]);
-    func_020031c8(&partner, &cell[1], &cell[0]);
+    BoardPosToCell(&pr->mPos, &cell[3], &cell[2]);
+    BoardPosToCell(&partner, &cell[1], &cell[0]);
     if (cell[2] < 0 || cell[0] < 0) {
         return FALSE;
     }
@@ -420,110 +425,110 @@ BOOL func_02003b3c(Pair *pr) {
         cell[2]--;
         cell[0]--;
     }
-    if (pr->mUnk_240 > 0) {
-        pr->mUnk_240--;
+    if (pr->mLandTimer > 0) {
+        pr->mLandTimer--;
     }
-    if (cell[2] + 1 >= BOARD_ROWS || (pr->mUnk_234 == 0 && cell[0] + 1 >= BOARD_ROWS)) {
+    if (cell[2] + 1 >= BOARD_ROWS || (pr->mSplit == 0 && cell[0] + 1 >= BOARD_ROWS)) {
         result = TRUE;
-        if (pr->mUnk_240 == 0) {
-            func_02003338(&pr->mPiece[0], cell[3], cell[2], 1, &data_02064828.mUnk_8954);
-            if (pr->mUnk_234 == 0) {
-                func_02003338(&pr->mPiece[1], cell[1], cell[0], 1, &data_02064828.mUnk_895c);
+        if (pr->mLandTimer == 0) {
+            PlacePiece(&pr->mPiece[0], cell[3], cell[2], 1, &gBoard.mFirstPieceCell);
+            if (pr->mSplit == 0) {
+                PlacePiece(&pr->mPiece[1], cell[1], cell[0], 1, &gBoard.mSecondPieceCell);
             } else {
-                func_0202f110(0x57, 0x4b, 0, 0x40, 0xffff, 0);
+                PlayWaveKeepAlive(0x57, 0x4b, 0, 0x40, 0xffff, 0);
             }
-            data_02064828.mUnk_8950 = 1;
+            gBoard.mPairState = 1;
             return TRUE;
         }
-        func_0200355c(pr, (pr->mUnk_234 != 0 || cell[2] + 1 >= BOARD_ROWS) ? &pr->mPiece[0] : &pr->mPiece[1]);
+        LandPair(pr, (pr->mSplit != 0 || cell[2] + 1 >= BOARD_ROWS) ? &pr->mPiece[0] : &pr->mPiece[1]);
     }
-    if (pr->mUnk_234 == 0 && !func_02003ed8(cell[1], cell[0] + 1)) {
+    if (pr->mSplit == 0 && !IsCellEmpty(cell[1], cell[0] + 1)) {
         result = TRUE;
-        if (pr->mUnk_240 == 0) {
-            func_02003338(&pr->mPiece[1], cell[1], cell[0], 1, &data_02064828.mUnk_895c);
-            if (pr->mDir == 3 || pr->mDir == 1) {
-                pr->mUnk_234 = 1;
-                pr->mUnk_238 = gSystemState.mElapsedFrames;
-                pr->mUnk_240 = 0;
+        if (pr->mLandTimer == 0) {
+            PlacePiece(&pr->mPiece[1], cell[1], cell[0], 1, &gBoard.mSecondPieceCell);
+            if (pr->mDir == PAIR_DIR_LEFT || pr->mDir == PAIR_DIR_RIGHT) {
+                pr->mSplit = 1;
+                pr->mSplitFrame = gSystemState.mElapsedFrames;
+                pr->mLandTimer = 0;
             } else {
-                func_02003338(&pr->mPiece[0], cell[3], cell[2], 1, &data_02064828.mUnk_8954);
-                data_02064828.mUnk_8950 = result;
+                PlacePiece(&pr->mPiece[0], cell[3], cell[2], 1, &gBoard.mFirstPieceCell);
+                gBoard.mPairState = result;
                 return result;
             }
         } else {
-            func_0200355c(pr, &pr->mPiece[1]);
+            LandPair(pr, &pr->mPiece[1]);
         }
     }
-    if (!func_02003ed8(cell[3], cell[2] + 1)) {
+    if (!IsCellEmpty(cell[3], cell[2] + 1)) {
         result = TRUE;
-        if (pr->mUnk_240 == 0) {
-            func_02003338(&pr->mPiece[0], cell[3], cell[2], 1, &data_02064828.mUnk_8954);
-            if (pr->mUnk_234 == 0) {
-                if (pr->mDir == 3 || pr->mDir == 1) {
-                    pr->mUnk_234 = 1;
-                    pr->mUnk_238 = gSystemState.mElapsedFrames;
-                    pr->mUnk_240 = 0;
+        if (pr->mLandTimer == 0) {
+            PlacePiece(&pr->mPiece[0], cell[3], cell[2], 1, &gBoard.mFirstPieceCell);
+            if (pr->mSplit == 0) {
+                if (pr->mDir == PAIR_DIR_LEFT || pr->mDir == PAIR_DIR_RIGHT) {
+                    pr->mSplit = 1;
+                    pr->mSplitFrame = gSystemState.mElapsedFrames;
+                    pr->mLandTimer = 0;
                     pr->mPiece[0] = pr->mPiece[1];
                     pr->mPos = partner;
-                    swap = data_02064828.mUnk_8954;
-                    data_02064828.mUnk_8954 = data_02064828.mUnk_895c;
-                    data_02064828.mUnk_895c = swap;
+                    swap = gBoard.mFirstPieceCell;
+                    gBoard.mFirstPieceCell = gBoard.mSecondPieceCell;
+                    gBoard.mSecondPieceCell = swap;
                 } else {
-                    func_02003338(&pr->mPiece[1], cell[1], cell[0], 1, &data_02064828.mUnk_895c);
-                    data_02064828.mUnk_8950 = result;
+                    PlacePiece(&pr->mPiece[1], cell[1], cell[0], 1, &gBoard.mSecondPieceCell);
+                    gBoard.mPairState = result;
                     return result;
                 }
             } else {
-                data_02064828.mUnk_8950 = result;
-                if (gSystemState.mElapsedFrames - pr->mUnk_238 > 1) {
-                    func_0202f110(0x57, 0x4b, 0, 0x40, 0xffff, 0);
+                gBoard.mPairState = result;
+                if (gSystemState.mElapsedFrames - pr->mSplitFrame > 1) {
+                    PlayWaveKeepAlive(0x57, 0x4b, 0, 0x40, 0xffff, 0);
                 }
                 return TRUE;
             }
         } else {
-            func_0200355c(pr, pr->mPiece);
+            LandPair(pr, pr->mPiece);
         }
     }
     return result;
 }
 
-void func_02003e50(Pair *pr) {
+void DropPairUntilLanded(Pair *pr) {
     do {
-    } while (!func_02003b3c(pr));
+    } while (!DropPair(pr));
 }
 
-BOOL func_02003e60(void) {
-    if (data_02064828.mUnk_430c == 0 && data_02064828.mCount == 0) {
+BOOL IsBoardSettled(void) {
+    if (gBoard.mRemovingCount == 0 && gBoard.mCount == 0) {
         return TRUE;
     }
     return FALSE;
 }
 
-void func_02003e80(const Piece *src) {
+void AddFallingPiece(const Piece *src) {
     int i;
 
     for (i = 0; i < PIECE_LIST_SIZE; i++) {
-        if (data_02064828.mList[i].mType == 0) {
-            data_02064828.mList[i] = *src;
-            data_02064828.mCount++;
+        if (gBoard.mList[i].mType == 0) {
+            gBoard.mList[i] = *src;
+            gBoard.mCount++;
             return;
         }
     }
 }
 
-BOOL func_02003ed8(u8 col, u8 row) {
-    if (data_02064828.mGrid[col][row].mType == 0) {
+BOOL IsCellEmpty(u8 col, u8 row) {
+    if (gBoard.mGrid[col][row].mType == 0) {
         return TRUE;
     }
     return FALSE;
 }
 
-void func_02003f08(u8 col, u8 row) {
-    data_02064828.mGrid[col][row].mType = 0;
+void ClearCell(u8 col, u8 row) {
+    gBoard.mGrid[col][row].mType = 0;
 }
 
 // Starting contents of the board for each level, rows top to bottom, columns left to right.
-const u8 data_0204e054[2][BOARD_ROWS][BOARD_COLS] = {
+const u8 gStartingBoards[2][BOARD_ROWS][BOARD_COLS] = {
     {
         {0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0},
@@ -550,48 +555,48 @@ const u8 data_0204e054[2][BOARD_ROWS][BOARD_COLS] = {
     },
 };
 
-void func_02003f2c(int level) {
+void FillStartingBoard(int level) {
     int col;
     int row;
 
     for (col = 0; col < BOARD_COLS; col++) {
         for (row = 0; row < BOARD_ROWS; row++) {
-            func_020032b4(&data_02064828.mGrid[col][row], data_0204e054[level][row][col]);
-            func_020031ac(col, row, &data_02064828.mGrid[col][row].mPos);
+            SetPieceType(&gBoard.mGrid[col][row], gStartingBoards[level][row][col]);
+            CellToBoardPos(col, row, &gBoard.mGrid[col][row].mPos);
         }
     }
 }
 
-void func_02003fac(u8 type) {
+void RemovePiecesOfType(u8 type) {
     int col;
     int row;
 
     for (col = 0; col < BOARD_COLS; col++) {
         for (row = 0; row < BOARD_ROWS; row++) {
-            if (type == data_02064828.mGrid[col][row].mType) {
-                func_020033ac(&data_02064828.mGrid[col][row]);
+            if (type == gBoard.mGrid[col][row].mType) {
+                StartPieceRemoval(&gBoard.mGrid[col][row]);
             }
         }
     }
 }
 
-void func_0200400c(u8 col, u8 row) {
-    Piece *column = data_02064828.mGrid[col];
+void StartPieceFall(u8 col, u8 row) {
+    Piece *column = gBoard.mGrid[col];
 
     if (column[row].mType != 0 && row < BOARD_ROWS - 1 && column[row + 1].mType == 0) {
-        func_02003e80(&column[row]);
-        func_02003f08(col, row);
+        AddFallingPiece(&column[row]);
+        ClearCell(col, row);
     }
 }
 
-BOOL func_02004050(u8 col, u8 row, u8 col2, u8 row2) {
-    Piece *a = &data_02064828.mGrid[col][row];
-    Piece *b = &data_02064828.mGrid[col2][row2];
+BOOL PiecesMatch(u8 col, u8 row, u8 col2, u8 row2) {
+    Piece *a = &gBoard.mGrid[col][row];
+    Piece *b = &gBoard.mGrid[col2][row2];
 
     if (a->mType == 0 || b->mType == 0) {
         return FALSE;
     }
-    if (a->mUnk_110 > 0 && a->mSprite.mUnk_04 == data_02064828.mUnk_8974 && b->mType == a->mType && b->mUnk_110 < 0) {
+    if (a->mUnk_110 > 0 && a->mSprite.mUnk_04 == gBoard.mUnk_8974 && b->mType == a->mType && b->mUnk_110 < 0) {
         return TRUE;
     }
     if (a->mType < 7 && b->mType == a->mType + 7) {
@@ -603,112 +608,111 @@ BOOL func_02004050(u8 col, u8 row, u8 col2, u8 row2) {
     return FALSE;
 }
 
-void func_020040e8(u8 col, u8 row) {
-    Piece *cell = &data_02064828.mGrid[col][row];
+void RemoveMatchesAt(u8 col, u8 row) {
+    Piece *cell = &gBoard.mGrid[col][row];
 
     if (cell->mType != 0) {
         if (cell->mType == 14) {
             if (row < BOARD_ROWS - 1) {
                 u8 x = 0;
-                u8 t = data_02064828.mGrid[col][row + 1].mType;
+                u8 t = gBoard.mGrid[col][row + 1].mType;
 
                 if (t < 7) {
                     x = t;
                 } else if (t > 7) {
                     x = t - 7;
                 }
-                func_02003fac(x);
-                func_020033ac(cell);
+                RemovePiecesOfType(x);
+                StartPieceRemoval(cell);
                 return;
             }
-            func_020033ac(cell);
+            StartPieceRemoval(cell);
             return;
         }
         if (col != 0) {
             int c1 = col - 1;
 
-            if (func_02004050(col, row, c1, row)) {
-                func_020033ac(cell);
-                func_020033ac(&data_02064828.mGrid[c1][row]);
+            if (PiecesMatch(col, row, c1, row)) {
+                StartPieceRemoval(cell);
+                StartPieceRemoval(&gBoard.mGrid[c1][row]);
             }
         }
         if (col < BOARD_COLS - 1) {
             int c1 = col + 1;
 
-            if (func_02004050(col, row, c1, row)) {
-                func_020033ac(cell);
-                func_020033ac(&data_02064828.mGrid[c1][row]);
+            if (PiecesMatch(col, row, c1, row)) {
+                StartPieceRemoval(cell);
+                StartPieceRemoval(&gBoard.mGrid[c1][row]);
             }
         }
         if (row != 0) {
             int r1 = row - 1;
 
-            if (func_02004050(col, row, col, r1)) {
-                func_020033ac(cell);
-                func_020033ac(&data_02064828.mGrid[col][r1]);
+            if (PiecesMatch(col, row, col, r1)) {
+                StartPieceRemoval(cell);
+                StartPieceRemoval(&gBoard.mGrid[col][r1]);
             }
         }
         if (row < BOARD_ROWS - 1) {
             int r1 = row + 1;
 
-            if (func_02004050(col, row, col, r1)) {
-                func_020033ac(cell);
-                func_020033ac(&data_02064828.mGrid[col][r1]);
+            if (PiecesMatch(col, row, col, r1)) {
+                StartPieceRemoval(cell);
+                StartPieceRemoval(&gBoard.mGrid[col][r1]);
             }
         }
     }
 }
 
-void func_0200420c(void) {
+// Removes the matches around every cell of rows 9..1 (row 0 is handled by PlacePiece).
+void RemoveAllMatches(void) {
     int col;
     int row;
 
     for (col = 0; col < BOARD_COLS; col++) {
         for (row = BOARD_ROWS - 1; row > 0; row--) {
-            func_020040e8(col, row);
+            RemoveMatchesAt(col, row);
         }
     }
 }
 
-void func_02004230(void) {
+void StartAllPieceFalls(void) {
     int col;
     int row;
 
     for (col = 0; col < BOARD_COLS; col++) {
         for (row = 0; row < BOARD_ROWS; row++) {
-            func_0200400c(col, row);
+            StartPieceFall(col, row);
         }
     }
 }
 
-// Redraws every cell and sprite at its position.
-void func_02004254(void) {
+// Redraws every cell, and every falling piece of mList while there are any, at its position.
+void DrawBoard(void) {
     int i, j;
     for (i = 0; i < BOARD_COLS; i++) {
         for (j = 0; j < BOARD_ROWS; j++) {
-            func_020032e4(&data_02064828.mGrid[i][j], data_02064828.mGrid[i][j].mPos.x >> 8,
-                          data_02064828.mGrid[i][j].mPos.y >> 8, 1, 0);
+            DrawPiece(&gBoard.mGrid[i][j], gBoard.mGrid[i][j].mPos.x >> 8, gBoard.mGrid[i][j].mPos.y >> 8, 1, 0);
         }
     }
-    if (data_02064828.mCount != 0) {
+    if (gBoard.mCount != 0) {
         for (j = 0; j < PIECE_LIST_SIZE; j++) {
-            func_020032e4(&data_02064828.mList[j], data_02064828.mList[j].mPos.x >> 8,
-                          data_02064828.mList[j].mPos.y >> 8, 1, 0);
+            DrawPiece(&gBoard.mList[j], gBoard.mList[j].mPos.x >> 8, gBoard.mList[j].mPos.y >> 8, 1, 0);
         }
     }
 }
 
-// Advances the sprites while any are active, otherwise the cells of the board.
-void func_02004304(void) {
+// Advances the falling pieces of mList while any are active, otherwise the cells of the board.
+void UpdateBoard(void) {
     int i, k;
-    if (data_02064828.mCount != 0) {
+    if (gBoard.mCount != 0) {
         for (i = 0; i < PIECE_LIST_SIZE; i++) {
-            if (data_02064828.mList[i].mType != 0 && func_02003430(&data_02064828.mList[i])) {
-                func_020032b4(&data_02064828.mList[i], 0);
-                if (--data_02064828.mCount == 0) {
-                    func_02004230();
-                    if (data_02064828.mCount == 0) {
-                        func_0200420c();
+            if (gBoard.mList[i].mType != 0 && DropPiece(&gBoard.mList[i])) {
+                SetPieceType(&gBoard.mList[i], 0);
+                if (--gBoard.mCount == 0) {
+                    StartAllPieceFalls();
+                    if (gBoard.mCount == 0) {
+                        RemoveAllMatches();
                     }
                     return;
                 }
@@ -717,20 +721,20 @@ void func_02004304(void) {
     } else {
         for (i = 0; i < BOARD_COLS; i++) {
             for (k = BOARD_ROWS - 1; k >= 0; k--) {
-                if (data_02064828.mGrid[i][k].mType != 0) {
-                    Piece *c = &data_02064828.mGrid[i][k];
+                if (gBoard.mGrid[i][k].mType != 0) {
+                    Piece *c = &gBoard.mGrid[i][k];
                     if (c->mUnk_110 > 0) {
                         if (c->mSprite.mUnk_de != 0) {
                             c->mUnk_110 = 0;
                         }
-                        if (c->mSprite.mUnk_04 == data_02064828.mUnk_8974) {
-                            func_020040e8(i, k);
+                        if (c->mSprite.mUnk_04 == gBoard.mUnk_8974) {
+                            RemoveMatchesAt(i, k);
                         } else if (c->mUnk_110 == 0) {
-                            func_02003f08(i, k);
-                            data_02064828.mUnk_430c--;
+                            ClearCell(i, k);
+                            gBoard.mRemovingCount--;
                         }
-                    } else if (data_02064828.mUnk_430c == 0) {
-                        func_0200400c(i, k);
+                    } else if (gBoard.mRemovingCount == 0) {
+                        StartPieceFall(i, k);
                     }
                 }
             }
@@ -738,12 +742,13 @@ void func_02004304(void) {
     }
 }
 
-void func_0200443c(int a) {
-    StartModeSlide(0, data_02064828.mUnk_10 >= data_02064828.mUnk_14);
+void EndFallingBlocks(int a) {
+    StartModeSlide(0, gBoard.mScore >= gBoard.mScoreThreshold);
 }
 
-// Starts the board screen: loads the stage settings, clears the cells and sprites and sets the counters.
-void func_0200445c(void) {
+// Starts the board screen: loads the stage settings, clears the cells and the falling-piece list and sets the
+// counters.
+void SetupFallingBlocks(void) {
     int i, j;
     s32 level;
     int total;
@@ -752,90 +757,88 @@ void func_0200445c(void) {
     if (level < 0) {
         level = 0;
     }
-    data_02064828.mStage = gStages[level].mInfo;
-    data_02064828.mUnk_00 = data_02064828.mStage.mGrade - 1;
-    if (data_020b10fc.mTableRow < 0 || data_02064828.mUnk_00 >= 12) {
+    gBoard.mStage = gStages[level].mInfo;
+    gBoard.mTableRow = gBoard.mStage.mGrade - 1;
+    if (data_020b10fc.mTableRow < 0 || gBoard.mTableRow >= 12) {
         OS_Terminate();
     }
-    func_0200c5d8(0, data_02064828.mStage.mKind + 0x1cb, data_02064828.mStage.mStageId + 0xdb3, 64, 16, 2, 130);
+    func_0200c5d8(0, gBoard.mStage.mKind + 0x1cb, gBoard.mStage.mStageId + 0xdb3, 64, 16, 2, 130);
     func_02024208();
     RequestTrack(3, 76);
     func_0200bdcc(2, 16);
     for (i = 0; i < BOARD_COLS; i++) {
         for (j = 0; j < BOARD_ROWS; j++) {
-            func_020032b4(&data_02064828.mGrid[i][j], 0);
+            SetPieceType(&gBoard.mGrid[i][j], 0);
         }
     }
-    data_02064828.mUnk_4300 = ~13;
-    data_02064828.mUnk_42fc = 67;
-    data_02064828.mUnk_4308 = 186;
-    data_02064828.mUnk_4304 = 187;
-    data_02064828.mUnk_430c = 0;
+    gBoard.mUnk_4300 = ~13;
+    gBoard.mUnk_42fc = 67;
+    gBoard.mUnk_4308 = 186;
+    gBoard.mUnk_4304 = 187;
+    gBoard.mRemovingCount = 0;
     for (i = 0; i < PIECE_LIST_SIZE; i++) {
-        func_020032b4(&data_02064828.mList[i], 0);
+        SetPieceType(&gBoard.mList[i], 0);
     }
-    data_02064828.mCount = 0;
-    data_02064828.mUnk_8974 = 3738;
-    StartSprite(&data_02064828.mUnk_884c, data_0201abec[26]);
-    data_02064828.mUnk_01 = func_02003194(data_02064828.mUnk_00, 2);
-    stagger = func_02003194(data_02064828.mUnk_00, 3);
-    data_02064828.mUnk_08 = data_02064828.mUnk_04 = func_02003194(data_02064828.mUnk_00, 5) * 60000 / 1000;
-    data_02064828.mUnk_0c = -12800;
-    data_02064828.mUnk_10 = 0;
-    data_02064828.mUnk_14 = func_02003194(data_02064828.mUnk_00, 6);
-    data_02064828.mUnk_18 = 0;
-    data_02064828.mUnk_896a = func_02003194(data_02064828.mUnk_00, 8);
-    data_02064828.mUnk_896c = func_02003194(data_02064828.mUnk_00, 9);
-    data_02064828.mUnk_8968 = func_020031f0();
-    data_02064828.mUnk_8970 = func_02003194(data_02064828.mUnk_00, 10);
-    data_02064828.mUnk_8972 = func_02003194(data_02064828.mUnk_00, 11);
-    data_02064828.mUnk_896e = func_02003240();
-    data_02064828.mUnk_8964 = func_02003194(data_02064828.mUnk_00, 4) << 8;
-    data_02064828.mUnk_8990 = func_02003194(data_02064828.mUnk_00, 7);
-    data_02064828.mUnk_8994 = 0;
-    total = RandomRange(func_02003194(data_02064828.mUnk_00, 12), func_02003194(data_02064828.mUnk_00, 13));
+    gBoard.mCount = 0;
+    gBoard.mUnk_8974 = 3738;
+    StartSprite(&gBoard.mPairMarker, data_0201abec[26]);
+    gBoard.mTypeCount = LookupFallingBlocksValue(gBoard.mTableRow, 2);
+    stagger = LookupFallingBlocksValue(gBoard.mTableRow, 3);
+    gBoard.mTimer = gBoard.mUnk_04 = LookupFallingBlocksValue(gBoard.mTableRow, 5) * 60000 / 1000;
+    gBoard.mUnk_0c = -12800;
+    gBoard.mScore = 0;
+    gBoard.mScoreThreshold = LookupFallingBlocksValue(gBoard.mTableRow, 6);
+    gBoard.mUnk_18 = 0;
+    gBoard.mUnk_896a = LookupFallingBlocksValue(gBoard.mTableRow, 8);
+    gBoard.mUnk_896c = LookupFallingBlocksValue(gBoard.mTableRow, 9);
+    gBoard.mUnk_8968 = func_020031f0();
+    gBoard.mUnk_8970 = LookupFallingBlocksValue(gBoard.mTableRow, 10);
+    gBoard.mUnk_8972 = LookupFallingBlocksValue(gBoard.mTableRow, 11);
+    gBoard.mUnk_896e = func_02003240();
+    gBoard.mFallSpeed = LookupFallingBlocksValue(gBoard.mTableRow, 4) << 8;
+    gBoard.mPieceScore = LookupFallingBlocksValue(gBoard.mTableRow, 7);
+    gBoard.mRemovedCount = 0;
+    total = RandomRange(LookupFallingBlocksValue(gBoard.mTableRow, 12), LookupFallingBlocksValue(gBoard.mTableRow, 13));
     for (i = 0; i < 6; i++) {
-        if (i < data_02064828.mUnk_01 - 1) {
-            data_02064828.mUnk_8978[i] = RandomRange(total / 8, total / 2);
-            total -= data_02064828.mUnk_8978[i];
-        } else if (i == data_02064828.mUnk_01 - 1) {
-            data_02064828.mUnk_8978[i] = total;
+        if (i < gBoard.mTypeCount - 1) {
+            gBoard.mUnk_8978[i] = RandomRange(total / 8, total / 2);
+            total -= gBoard.mUnk_8978[i];
+        } else if (i == gBoard.mTypeCount - 1) {
+            gBoard.mUnk_8978[i] = total;
         } else {
-            data_02064828.mUnk_8978[i] = -1;
+            gBoard.mUnk_8978[i] = -1;
         }
     }
-    func_020039bc();
+    PickNextPair();
     if (stagger > 0) {
-        func_02003f2c((u8) ((stagger - 1 < 1 ? stagger - 1 : 1) < 0 ? 0 : (stagger - 1 < 1 ? stagger - 1 : 1)));
+        FillStartingBoard((u8) ((stagger - 1 < 1 ? stagger - 1 : 1) < 0 ? 0 : (stagger - 1 < 1 ? stagger - 1 : 1)));
     }
-    func_020031ac(2, 0, &data_02064828.mUnk_83c4.mPos);
-    data_02064828.mUnk_83c4.mPos.y -= 5 << 10;
+    CellToBoardPos(2, 0, &gBoard.mPair.mPos);
+    gBoard.mPair.mPos.y -= 5 << 10;
     StartModeSlide(1, 0);
 }
 
-void func_02004720(void) {
-    func_0201168c(data_020b6ee0.mSelectedStageIndex, data_02064828.mUnk_10, gModeSelectState.mScoreThreshold,
-                  data_02064828.mUnk_08, 2);
-    func_02003aa8(&data_02064828.mUnk_8608, 2, 0);
-    func_02004254();
-    func_02003aa8(&data_02064828.mUnk_83c4, 1, 1);
+void DrawFallingBlocks(void) {
+    func_0201168c(data_020b6ee0.mSelectedStageIndex, gBoard.mScore, gModeSelectState.mScoreThreshold, gBoard.mTimer, 2);
+    DrawPair(&gBoard.mNextPair, 2, 0);
+    DrawBoard();
+    DrawPair(&gBoard.mPair, 1, 1);
 }
 
-// Per-frame update of the board screen.
-void func_02004768(void) {
+void UpdateFallingBlocks(void) {
     static s32 data_02064824;
     static s32 data_02064820;
     char buf[32];
     int r;
     int idle;
-    Pair *cursor = &data_02064828.mUnk_83c4;
-    func_020059cc(data_02064828.mUnk_10);
+    Pair *cursor = &gBoard.mPair;
+    func_020059cc(gBoard.mScore);
     r = GetModeSlideState();
     if (r != MODE_SLIDE_STATE_NONE) {
-        func_02004720();
+        DrawFallingBlocks();
         idle = UpdateModeSlide(1);
         if (r == MODE_SLIDE_STATE_END && idle == 0) {
-            StartResultScreen(GetScoreThresholdMet(), data_02064828.mUnk_10);
+            StartResultScreen(GetScoreThresholdMet(), gBoard.mScore);
             return;
         }
         if (r == 1) {
@@ -844,61 +847,61 @@ void func_02004768(void) {
         }
         return;
     }
-    data_02064828.mUnk_0c += 0x355;
-    if (data_02064828.mUnk_0c > 0x2000) {
-        data_02064828.mUnk_0c = 0x2000;
+    gBoard.mUnk_0c += 0x355;
+    if (gBoard.mUnk_0c > 0x2000) {
+        gBoard.mUnk_0c = 0x2000;
     }
     if (data_02064820 == 0) {
         data_02064820 = 1;
-        func_02003a5c();
+        TakeNextPair();
     }
-    if (--data_02064828.mUnk_08 == 0) {
-        func_0200443c(1);
+    if (--gBoard.mTimer == 0) {
+        EndFallingBlocks(1);
     }
-    func_02003b3c(cursor);
-    if (data_02064828.mUnk_8950 == 1) {
-        data_02064828.mUnk_8994 = 0;
-        func_020040e8(data_02064828.mUnk_8954.x, data_02064828.mUnk_8954.y);
-        func_020040e8(data_02064828.mUnk_895c.x, data_02064828.mUnk_895c.y);
-        data_02064828.mUnk_8950++;
-    } else if (data_02064828.mUnk_8950 == 2) {
-        if (func_02003e60()) {
-            if (data_02064828.mUnk_8994 >= 6) {
-                AddCappedAt5999(&data_02064828.mUnk_08, 300);
+    DropPair(cursor);
+    if (gBoard.mPairState == 1) {
+        gBoard.mRemovedCount = 0;
+        RemoveMatchesAt(gBoard.mFirstPieceCell.x, gBoard.mFirstPieceCell.y);
+        RemoveMatchesAt(gBoard.mSecondPieceCell.x, gBoard.mSecondPieceCell.y);
+        gBoard.mPairState++;
+    } else if (gBoard.mPairState == 2) {
+        if (IsBoardSettled()) {
+            if (gBoard.mRemovedCount >= 6) {
+                AddCappedAt5999(&gBoard.mTimer, 300);
                 sprintf(buf, "+%d'", 5);
-                AddTextObjSlot(buf, 2, data_0201a61c, 30, data_02064828.mUnk_83c4.mPos.x >> 8,
-                               data_02064828.mUnk_83c4.mPos.y >> 8, 0, -128, 100, 1, 0);
+                AddTextObjSlot(buf, 2, data_0201a61c, 30, gBoard.mPair.mPos.x >> 8, gBoard.mPair.mPos.y >> 8, 0, -128,
+                               100, 1, 0);
             }
-            data_02064828.mUnk_8994 = 0;
-            func_02003a5c();
+            gBoard.mRemovedCount = 0;
+            TakeNextPair();
         }
     }
-    func_02004304();
+    UpdateBoard();
     if (gSystemState.mKeysPressed & 0x20) {
-        func_020035b0(cursor);
+        MovePairLeft(cursor);
     } else if (gSystemState.mKeysPressed & 0x10) {
-        func_02003670(cursor);
+        MovePairRight(cursor);
     }
     if (gSystemState.mKeysDown & 0x80) {
-        data_02064828.mUnk_83c4.mUnk_23c = 25 << 12;
+        gBoard.mPair.mSpeed = 25 << 12;
     } else if (gSystemState.mKeysPressed & 0x40) {
-        func_02003e50(cursor);
+        DropPairUntilLanded(cursor);
     } else {
-        data_02064828.mUnk_83c4.mUnk_23c = data_02064828.mUnk_8964;
+        gBoard.mPair.mSpeed = gBoard.mFallSpeed;
     }
     if (gSystemState.mKeysPressed & 1) {
-        func_02003924(cursor);
+        TurnPairClockwise(cursor);
     } else if (gSystemState.mKeysPressed & 2) {
-        func_0200396c(cursor);
+        TurnPairCounterclockwise(cursor);
     }
-    func_02004720();
+    DrawFallingBlocks();
 }
 
-void func_02004930(void) {
+void LeaveFallingBlocks(void) {
     SetFaded(3);
     ReleaseGxPool();
 }
 
-int func_02004940(u8 stage) {
-    return func_02003194(stage, 6);
+int GetFallingBlocksScoreThreshold(u8 stage) {
+    return LookupFallingBlocksValue(stage, 6);
 }

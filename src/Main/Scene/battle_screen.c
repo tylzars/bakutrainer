@@ -51,12 +51,12 @@ void func_020071a8(void) {}
 
 void func_020071ac(void) {
     AddTouchButtonWithSounds(0x190, 0, 0xa2, 0, 0, 0xd5, 0, 0x17d);
-    DrawSprite((data_020c1d60.mUnk_800.mUnk_100.mUnk_04 == 0x40000190) + 0xd5, 0, 0xa2, 0x8e, 2);
+    DrawSprite((gTouchInput.mTrail.mTouchState.mButtonState == 0x40000190) + 0xd5, 0, 0xa2, 0x8e, 2);
 }
 
 void func_020071f8(void) {
     AddTouchButtonWithSounds(0xc8, 0xff, 0xa2, 0, 0, 0x15, 0, 0x17d);
-    DrawSprite((data_020c1d60.mUnk_800.mUnk_100.mUnk_04 == 0x400000c8) + 0x15, 0xff, 0xa2, 0x8e, 2);
+    DrawSprite((gTouchInput.mTrail.mTouchState.mButtonState == 0x400000c8) + 0x15, 0xff, 0xa2, 0x8e, 2);
 }
 
 void SetupStageModels(int a) {
@@ -79,7 +79,7 @@ void DrawBattleModels(void) {
     int flags = 0;
     u16 color = func_0200be10(0x1f, 0x15, 0xc);
     u16 count;
-    func_0200be20(flags, 0xf618, 14 << 12, color);
+    SetLightFromAngles(flags, 0xf618, 14 << 12, color);
     count = data_020b6ee0.mModel[1].mUnk_170;
     flags |= 8;
     if (count != 0) {
@@ -530,7 +530,7 @@ void ApplyTableEntry(void) {
                 mine->mTriplePending = 0;
             }
             mine->mValue += p1;
-            func_0202f110(p1 > 0 ? 0xe2 : 0xe1, 100, 0, 64, 0xffff, 0);
+            PlayWaveKeepAlive(p1 > 0 ? 0xe2 : 0xe1, 100, 0, 64, 0xffff, 0);
             done = 1;
             break;
         case 14:
@@ -539,7 +539,7 @@ void ApplyTableEntry(void) {
                 mine->mTriplePending = 0;
             }
             mine->mValue += p1;
-            func_0202f110(p1 > 0 ? 0xe2 : 0xe1, 100, 0, 64, 0xffff, 0);
+            PlayWaveKeepAlive(p1 > 0 ? 0xe2 : 0xe1, 100, 0, 64, 0xffff, 0);
             if (other->mKind == mine->mKind) {
                 other->mValue += p1;
             }
@@ -552,7 +552,7 @@ void ApplyTableEntry(void) {
                     mine->mTriplePending = 0;
                 }
                 mine->mValue += p1;
-                func_0202f110(p1 > 0 ? 0xe1 : 0xe2, 100, 0, 64, 0xffff, 0);
+                PlayWaveKeepAlive(p1 > 0 ? 0xe1 : 0xe2, 100, 0, 64, 0xffff, 0);
                 done = 1;
             }
             break;
@@ -562,9 +562,9 @@ void ApplyTableEntry(void) {
                 mine->mTriplePending = 0;
             }
             if (mine->mStageIndex != -1) {
-                func_0202f110(p1 > 0 ? 0xe2 : 0xe1, 100, 0, 64, 0xffff, 0);
+                PlayWaveKeepAlive(p1 > 0 ? 0xe2 : 0xe1, 100, 0, 64, 0xffff, 0);
             } else if (other->mStageIndex != -1) {
-                func_0202f110(p1 > 0 ? 0xe1 : 0xe2, 100, 0, 64, 0xffff, 0);
+                PlayWaveKeepAlive(p1 > 0 ? 0xe1 : 0xe2, 100, 0, 64, 0xffff, 0);
             }
             other->mValue -= p1;
             mine->mValue += p1;
@@ -755,7 +755,7 @@ void UpdateBattleCompare(void) {
                     DrawSprite(r + 0xfec + info->mKind * 21, startX[i], startY[i], 100, 2);
                     if (r == 1 && sWavePlayed == 0) {
                         sWavePlayed = 1;
-                        func_0202f110(42, 100, 0, 64, 0xffff, 0);
+                        PlayWaveKeepAlive(42, 100, 0, 64, 0xffff, 0);
                     } else if (r > 1) {
                         sWavePlayed = 0;
                     }
@@ -796,11 +796,11 @@ void UpdateBattleCompare(void) {
                 data_020b6ee0.mModel[0].mUnk_134 |= 0x10;
                 data_020b6ee0.mUnk_fee = 1;
             } else if (phase == 1 && (data_020b6ee0.mModel[0].mUnk_172_10 == 1 ||
-                                      data_020c1d60.mUnk_800.mUnk_100.mUnk_04 == 0x20000190)) {
+                                      gTouchInput.mTrail.mTouchState.mButtonState == 0x20000190)) {
                 SetupStageModels(cur[0] <= 0 ? gBattleView.mSide[0].mStageId : gBattleView.mSide[1].mStageId);
                 data_020b6ee0.mModel[0].mUnk_134 |= 2;
             } else if (phase == 2 && (data_020b6ee0.mModel[0].mUnk_172_10 == 1 ||
-                                      data_020c1d60.mUnk_800.mUnk_100.mUnk_04 == 0x20000190)) {
+                                      gTouchInput.mTrail.mTouchState.mButtonState == 0x20000190)) {
                 int id = GetNodeValue(data_020b6ee0.mSelectedNodeIndex, 7) + 23;
                 AddLevel(&data_020b6ee0.mUnk_fee, 480);
                 SetFaded(1);
@@ -845,7 +845,7 @@ void UpdateBattleCompare(void) {
 // 90. Either side is done when it skips (mSkipEntry) or on touch state 0x200000c8 (button 200).
 int IsEntryPickDone(StageInfo *info, int mode) {
     if (info->mSkipEntry == 1 || (mode == 0 && (gSystemState.mKeysPressed & 1)) ||
-        data_020c1d60.mUnk_800.mUnk_100.mUnk_04 == 0x200000c8 || (mode == 1 && data_020b6ee0.mEntryFrames++ > 90)) {
+        gTouchInput.mTrail.mTouchState.mButtonState == 0x200000c8 || (mode == 1 && data_020b6ee0.mEntryFrames++ > 90)) {
         return 1;
     }
     return 0;
@@ -951,7 +951,7 @@ void UpdateBattleEntryPick(int side) {
                     SetupSharedModel(func_02008920(0), 0);
                     data_020b6ee0.mEntryStartStep++;
                     SetFaded(1);
-                    func_0202f110(func_02008950(0), 100, 0, 64, 0xffff, 0);
+                    PlayWaveKeepAlive(func_02008950(0), 100, 0, 64, 0xffff, 0);
                     break;
                 case 1:
                     DrawSharedModel();
@@ -967,11 +967,11 @@ void UpdateBattleEntryPick(int side) {
                     data_020b6ee0.mModel[0].mUnk_134 |= 1;
                     DrawBattleModels();
                     if (data_020b6ee0.mModel[0].mUnk_172_10 == 1 ||
-                        data_020c1d60.mUnk_800.mUnk_100.mUnk_04 == 0x20000190) {
+                        gTouchInput.mTrail.mTouchState.mButtonState == 0x20000190) {
                         SetupSharedModel(func_02008920(1), 0);
                         data_020b6ee0.mEntryStartStep++;
                         SetFaded(1);
-                        func_0202f110(func_02008950(1), 100, 0, 64, 0xffff, 0);
+                        PlayWaveKeepAlive(func_02008950(1), 100, 0, 64, 0xffff, 0);
                     }
                     break;
                 case 3:
@@ -988,11 +988,11 @@ void UpdateBattleEntryPick(int side) {
                     data_020b6ee0.mModel[0].mUnk_134 |= 1;
                     DrawBattleModels();
                     if (data_020b6ee0.mModel[0].mUnk_172_10 == 1 ||
-                        data_020c1d60.mUnk_800.mUnk_100.mUnk_04 == 0x20000190) {
+                        gTouchInput.mTrail.mTouchState.mButtonState == 0x20000190) {
                         data_020b6ee0.mEntryStartStep = 6;
                         SetFaded(1);
                         if (data_020b6ee0.mModel[0].mUnk_172_10 == 1 ||
-                            data_020c1d60.mUnk_800.mUnk_100.mUnk_04 == 0x20000190) {
+                            gTouchInput.mTrail.mTouchState.mButtonState == 0x20000190) {
                             data_020b6ee0.mUnk_ff6 = 0x4000;
                         }
                     }
@@ -1111,7 +1111,7 @@ void UpdateBattleEntryPick(int side) {
         } else if (gBattleView.mState.mEntryTimer == 60) {
             if (side == 0) {
                 int prev = gBattleView.mState.mEntryCursor;
-                u32 touch = data_020c1d60.mUnk_800.mUnk_100.mUnk_04;
+                u32 touch = gTouchInput.mTrail.mTouchState.mButtonState;
                 int pos = (u16) touch;
                 if ((touch & 0x80000000) && pos != 0xffff && pos < 200) {
                     gBattleView.mState.mEntryCursor = pos;
@@ -1212,9 +1212,9 @@ void UpdateBattleEntryPick(int side) {
                 func_020071f8();
             }
             AddTouchButtonWithSounds(201, 128, 179, 0, 0, 0x10b2, 0, 0x167);
-            DrawSprite((data_020c1d60.mUnk_800.mUnk_100.mUnk_04 == 0x400000c9) + 0x10b2, 128, 179, 142, 2);
+            DrawSprite((gTouchInput.mTrail.mTouchState.mButtonState == 0x400000c9) + 0x10b2, 128, 179, 142, 2);
             DrawText(128, 179, data_0201a61c, GetText(61), 2, 250, 0, 2);
-            if (data_020c1d60.mUnk_800.mUnk_100.mUnk_04 == 0x200000c9) {
+            if (gTouchInput.mTrail.mTouchState.mButtonState == 0x200000c9) {
                 info->mSkipEntry = 1;
             }
         }
@@ -1357,7 +1357,7 @@ void UpdateBattleStagePick(void) {
                                 : &gStageInfos[gBattleView.mState.mPickIndices[1]]);
         selecting = 1;
         if (gBattleView.mState.mFirstSide == 0) {
-            u32 pick = data_020c1d60.mUnk_800.mUnk_100.mUnk_04;
+            u32 pick = gTouchInput.mTrail.mTouchState.mButtonState;
             u16 keys;
             if ((pick & 0x40000000) && (u16) pick != 0xffff) {
                 int n = (u16) pick - 16;
@@ -1434,7 +1434,7 @@ void UpdateBattleStagePick(void) {
             hi = j == 1 ? 1 : 0;
             DrawSprite(a + (hi * 8 + 0x11be), xs[j == 0 ? s : s + 3], ys[yi], 251, 2);
         }
-        if (move == SELECT_CONFIRM || data_020c1d60.mUnk_800.mUnk_100.mUnk_04 == 0x200000c8) {
+        if (move == SELECT_CONFIRM || gTouchInput.mTrail.mTouchState.mButtonState == 0x200000c8) {
             if (gBattleSlotStages[gBattleView.mState.mPickIndices[0]].mInfo.mValue > -5000 &&
                 gStageInfos[gBattleView.mState.mPickIndices[1]].mValue > -5000) {
                 data_020b6ee0.mBattleState = BATTLE_STATE_ENTRY_PICK;
@@ -1550,11 +1550,11 @@ void UpdateBattleKindValues(void) {
         }
     }
     if (data_020b6ee0.mUnk_fee == 0) {
-        if ((gSystemState.mKeysPressed & 1) || data_020c1d60.mUnk_800.mUnk_100.mUnk_04 == 0x200000c8) {
+        if ((gSystemState.mKeysPressed & 1) || gTouchInput.mTrail.mTouchState.mButtonState == 0x200000c8) {
             SetFaded(1);
             ResetTexCache();
             SetupSharedModel(GetNodeValue(data_020b6ee0.mSelectedNodeIndex, 7) + 19, 0);
-            func_0202f110(91, 100, 0, 64, 0xffff, 0);
+            PlayWaveKeepAlive(91, 100, 0, 64, 0xffff, 0);
             data_020b6ee0.mUnk_fee = 1;
         }
     } else if (IsSharedModelDone() == 1) {

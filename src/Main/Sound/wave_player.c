@@ -6,24 +6,24 @@
 #include <Main/System/file_loader.h>
 #include <Main/System/system_init.h>
 
-WavePlayer data_020c648c;
+WavePlayer gWavePlayer;
 
 #pragma thumb off
 
-int func_0202ea50(int steal, u32 mask) {
+int ClaimWaveChannel(int steal, u32 mask) {
     int second = 0;
     u32 i;
     u32 bit;
 
     for (;;) {
-        for (i = 0; i < data_020c648c.mUnk_180; i++) {
+        for (i = 0; i < gWavePlayer.mChannelCount; i++) {
             bit = 1 << i;
 
-            if ((mask & bit) && (data_020c648c.mUnk_000[i].mActive == 0 || second == 1)) {
-                WaveChannel *s = &data_020c648c.mUnk_000[i];
+            if ((mask & bit) && (gWavePlayer.mChannels[i].mActive == 0 || second == 1)) {
+                WaveChannel *s = &gWavePlayer.mChannels[i];
 
                 if (s->mActive == 1) {
-                    func_0202ed90(bit);
+                    StopWaveChannels(bit);
                 }
                 s->mActive = 1;
                 func_02040198(bit, 0);
@@ -41,27 +41,27 @@ int func_0202ea50(int steal, u32 mask) {
 
 #pragma thumb on
 
-void func_0202eb18(u32 id, int x, int volume, int repeat, int pan, u32 mask, WaveLoop *loop, const void *data, int rate,
-                   u32 size, int mode) {
+void PlayWaveBuffer(u32 id, int x, int volume, int repeat, int pan, u32 mask, WaveLoop *loop, const void *data,
+                    int rate, u32 size, int mode) {
     WaveInfo info;
     info.mRate = rate;
     info.mUnk_02 = 1;
     info.mSize = size;
     info.mFormat = (mode == 1) ? 2 : 1;
     info.mUnk_0a = 0;
-    func_0202ebb8(&info, data, id | 0x40000000, x, volume, repeat, pan, mask, loop);
+    PlayWaveData(&info, data, id | WAVE_ID_NO_FILE, x, volume, repeat, pan, mask, loop);
 }
 
-void func_0202eb64(int id, int volume, int repeat, int pan, u32 mask, WaveLoop *loop) {
-    func_0202eb84(id, 0, volume, repeat, pan, mask, loop);
+void PlayWave(int id, int volume, int repeat, int pan, u32 mask, WaveLoop *loop) {
+    PlayWaveEx(id, 0, volume, repeat, pan, mask, loop);
 }
 
-void func_0202eb84(u32 id, int x, int volume, int repeat, int pan, u32 mask, WaveLoop *loop) {
-    func_0202ebb8(0, FindOrLoadCachedFile((u16) id), id, x, volume, repeat, pan, mask, loop);
+void PlayWaveEx(u32 id, int x, int volume, int repeat, int pan, u32 mask, WaveLoop *loop) {
+    PlayWaveData(0, FindOrLoadCachedFile((u16) id), id, x, volume, repeat, pan, mask, loop);
 }
 
-void func_0202ebb8(const WaveInfo *info, const void *data, u32 id, int x, u32 volume, int repeat, int pan, u32 mask,
-                   WaveLoop *loop) {
+void PlayWaveData(const WaveInfo *info, const void *data, u32 id, int x, u32 volume, int repeat, int pan, u32 mask,
+                  WaveLoop *loop) {
     WaveChannel *ch;
     u32 key;
     u32 size;
@@ -79,11 +79,11 @@ void func_0202ebb8(const WaveInfo *info, const void *data, u32 id, int x, u32 vo
         return;
     }
     key = id & 0x4000ffff;
-    index = func_0202ea50((id & 0x80000000) ? 1 : 0, mask);
-    if (index == data_020c648c.mUnk_180) {
+    index = ClaimWaveChannel((id & WAVE_ID_STEAL) ? 1 : 0, mask);
+    if (index == gWavePlayer.mChannelCount) {
         return;
     }
-    data_020c648c.mUnk_000[index].mId = key;
+    gWavePlayer.mChannels[index].mId = key;
     if (info == 0) {
         const WaveHeader *hdr = data;
         if (hdr->mMagic != WAVE_FORMAT_MAGIC) {
@@ -102,14 +102,14 @@ void func_0202ebb8(const WaveInfo *info, const void *data, u32 id, int x, u32 vo
     if (format == 0) {
         size >>= 2;
     }
-    data_020c648c.mUnk_000[index].mWave = data;
-    ch = &data_020c648c.mUnk_000[index];
-    ch->mUnk_0d_2 = repeat;
+    gWavePlayer.mChannels[index].mWave = data;
+    ch = &gWavePlayer.mChannels[index];
+    ch->mRepeat = repeat;
     timer = 0xffb0ff / rate;
     loopStart = 0;
     ch->mUnk_0d_1 = 0;
-    data_020c648c.mUnk_000[index].mTimer = timer;
-    data_020c648c.mUnk_000[index].mUnk_14 = volume;
+    gWavePlayer.mChannels[index].mTimer = timer;
+    gWavePlayer.mChannels[index].mVolume = volume;
     ch->mUnk_0d_3 = 0;
     if (x != 0) {
         x = rate * x / 60;
@@ -140,46 +140,46 @@ void func_0202ebb8(const WaveInfo *info, const void *data, u32 id, int x, u32 vo
         func_02040240(index, mode, (u32) body + (x & ~1), (repeat == 1) ? 1 : 2, loopStart, size >> 2,
                       volume * 0x145 >> 8, 0, timer, pan);
         func_020400cc(1 << index, 0, 0, 0);
-        ch->mUnk_00 = SND_GetCurrentCommandTag();
+        ch->mCommandTag = SND_GetCurrentCommandTag();
     }
 }
 
-void func_0202ed90(u32 mask) {
+void StopWaveChannels(u32 mask) {
     u32 i;
     if (mask != 0) {
         func_020400f4(mask, 0, 0, 0);
         func_020401b8(mask, 0);
-        for (i = 0; i < data_020c648c.mUnk_180; i++) {
+        for (i = 0; i < gWavePlayer.mChannelCount; i++) {
             if (mask & (1 << i)) {
-                func_0202efe4(i);
+                ClearWaveChannel(i);
             }
         }
     }
 }
 
-int func_0202edd0(u32 id) {
+int StopWave(u32 id) {
     u32 mask = 0;
     u32 i;
-    for (i = 0; i < data_020c648c.mUnk_180; i++) {
-        if (data_020c648c.mUnk_000[i].mActive == 1 && id == data_020c648c.mUnk_000[i].mId) {
+    for (i = 0; i < gWavePlayer.mChannelCount; i++) {
+        if (gWavePlayer.mChannels[i].mActive == 1 && id == gWavePlayer.mChannels[i].mId) {
             mask |= 1 << i;
         }
     }
-    func_0202ed90(mask);
+    StopWaveChannels(mask);
     if (mask == 0) {
         return 0;
     }
     return 1;
 }
 
-int func_0202ee1c(u32 id) {
-    return func_0202ee28(id, 0);
+int IsWavePlaying(u32 id) {
+    return FindWaveChannel(id, 0);
 }
 
-int func_0202ee28(u32 id, int *index) {
+int FindWaveChannel(u32 id, int *index) {
     u32 i;
-    for (i = 0; i < data_020c648c.mUnk_180; i++) {
-        if (data_020c648c.mUnk_000[i].mActive == 1 && id == data_020c648c.mUnk_000[i].mId) {
+    for (i = 0; i < gWavePlayer.mChannelCount; i++) {
+        if (gWavePlayer.mChannels[i].mActive == 1 && id == gWavePlayer.mChannels[i].mId) {
             if (index != 0) {
                 *index = i;
             }
@@ -189,55 +189,58 @@ int func_0202ee28(u32 id, int *index) {
     return 0;
 }
 
-void func_0202ee68(u32 id, u32 volume) {
+// Sets the volume of the channels playing id. Never runs in this build: its only caller is UpdateWaves' fade branch,
+// and mUnk_0d_3 is only ever 0.
+void SetWaveVolume(u32 id, u32 volume) {
     u32 i;
     u32 mask = 0;
-    for (i = 0; i < data_020c648c.mUnk_180; i++) {
-        if (data_020c648c.mUnk_000[i].mActive == 1 && id == data_020c648c.mUnk_000[i].mId) {
+    for (i = 0; i < gWavePlayer.mChannelCount; i++) {
+        if (gWavePlayer.mChannels[i].mActive == 1 && id == gWavePlayer.mChannels[i].mId) {
             mask |= 1 << i;
         }
     }
     if (mask != 0) {
         u32 out = volume;
-        for (i = 0; i < data_020c648c.mUnk_180; i++) {
+        for (i = 0; i < gWavePlayer.mChannelCount; i++) {
             // Tests the channel number itself against the mask, not its bit.
-            if ((mask & i) && data_020c648c.mUnk_000[i].mUnk_0d_1 == 1) {
+            if ((mask & i) && gWavePlayer.mChannels[i].mUnk_0d_1 == 1) {
                 out = volume * 0x30 >> 8;
-                data_020c648c.mUnk_000[i].mUnk_14 = out;
+                gWavePlayer.mChannels[i].mVolume = out;
             }
         }
         func_020401f8(mask, out * 0x145 >> 8, 0);
     }
 }
 
-void func_0202eeec(void) {
+void StopAllWaves(void) {
     u32 mask = 0;
     u32 i;
-    for (i = 0; i < data_020c648c.mUnk_180; i++) {
-        if (data_020c648c.mUnk_000[i].mActive == 1) {
+    for (i = 0; i < gWavePlayer.mChannelCount; i++) {
+        if (gWavePlayer.mChannels[i].mActive == 1) {
             mask |= 1 << i;
         }
     }
-    func_0202ed90(mask);
+    StopWaveChannels(mask);
 }
 
-void func_0202ef24(void) {
+void UpdateWaves(void) {
     u32 mask = 0;
     u32 busy = func_02040a90();
     u32 i;
     WaveChannel *ch;
-    for (i = 0; i < data_020c648c.mUnk_180; i++) {
-        ch = &data_020c648c.mUnk_000[i];
-        if (ch->mUnk_0d_3 && ch->mUnk_14 != 0) {
-            u32 v = ch->mUnk_14;
-            ch->mUnk_14 = v - 1;
-            func_0202ee68(ch->mId, v);
+    for (i = 0; i < gWavePlayer.mChannelCount; i++) {
+        ch = &gWavePlayer.mChannels[i];
+        // Fade branch: never runs in this build, mUnk_0d_3 is only ever 0.
+        if (ch->mUnk_0d_3 && ch->mVolume != 0) {
+            u32 v = ch->mVolume;
+            ch->mVolume = v - 1;
+            SetWaveVolume(ch->mId, v);
         }
         if (ch->mActive == 1) {
-            if ((ch->mUnk_0d_2 == 0 || gSystemState.mUnk_494 == 0) && (busy & (1 << i)) == 0 &&
-                SND_IsFinishedCommandTag(ch->mUnk_00) == 1) {
+            if ((ch->mRepeat == 0 || gSystemState.mUnk_494 == 0) && (busy & (1 << i)) == 0 &&
+                SND_IsFinishedCommandTag(ch->mCommandTag) == 1) {
                 mask |= 1 << i;
-            } else if ((ch->mId & 0x40000000) == 0) {
+            } else if ((ch->mId & WAVE_ID_NO_FILE) == 0) {
                 if (FindOrLoadCachedFile(ch->mId) != ch->mWave) {
                     mask |= 1 << i;
                 }
@@ -245,158 +248,173 @@ void func_0202ef24(void) {
         }
     }
     if (mask != 0) {
-        func_0202ed90(mask);
+        StopWaveChannels(mask);
     }
     while (SND_RecvCommandReply(0) != 0) {
     }
     SND_FlushCommand(2);
 }
 
-void func_0202efd4(void) {
+void DrainCommandReplies(void) {
     while (SND_RecvCommandReply(0) != 0) {
     }
 }
 
-void func_0202efe4(u32 index) {
-    WaveChannel *ch = &data_020c648c.mUnk_000[index];
+// Frees a channel: clears mActive, mKeepAlive and mWave; the other fields keep their values.
+void ClearWaveChannel(u32 index) {
+    WaveChannel *ch = &gWavePlayer.mChannels[index];
     ch->mActive = 0;
-    data_020c648c.mUnk_000[index].mUnk_0c = 0;
-    data_020c648c.mUnk_000[index].mWave = 0;
+    gWavePlayer.mChannels[index].mKeepAlive = 0;
+    gWavePlayer.mChannels[index].mWave = 0;
 }
 
-void func_0202f00c(void) {
+// Sets the channel count (16, or mRequestedChannelCount while a song is loaded), sets flag 0x2000 and frees every
+// channel. In this build it runs once, at boot before any song and before flag 0x2000 is set, so the
+// mRequestedChannelCount branch and StopWavePlayer's body never run.
+void InitWavePlayer(void) {
     u32 i;
-    func_0202f05c();
+    StopWavePlayer();
     if ((gSystemState.mFlags & 0x1000000) == 0) {
-        data_020c648c.mUnk_180 = 0x10;
+        gWavePlayer.mChannelCount = 0x10;
     } else {
-        data_020c648c.mUnk_180 = data_020c648c.mUnk_181;
+        gWavePlayer.mChannelCount = gWavePlayer.mRequestedChannelCount;
     }
     gSystemState.mFlags |= 0x2000;
     func_020402f0();
-    for (i = 0; i < data_020c648c.mUnk_180; i++) {
-        func_0202efe4(i);
+    for (i = 0; i < gWavePlayer.mChannelCount; i++) {
+        ClearWaveChannel(i);
     }
 }
 
-void func_0202f05c(void) {
+// Stops every wave and clears flag 0x2000; never does anything in this build (InitWavePlayer, its only caller, runs
+// before the flag is set).
+void StopWavePlayer(void) {
     if (gSystemState.mFlags & 0x2000) {
-        func_0202eeec();
+        StopAllWaves();
         gSystemState.mFlags &= ~0x2000;
     }
 }
 
-void func_0202f084(void) {
+// Makes mChannelCount equal to mRequestedChannelCount, freeing the added channels or stopping the removed ones. Its
+// only caller PlayTrack sets flag 0x1000000 first and flag 0x2000 stays set from boot, so in this build the first two
+// branches never run.
+void RefreshWaveChannelCount(void) {
     u32 i;
     u32 cur;
     u32 want;
     u32 mask;
     if ((gSystemState.mFlags & 0x2000) == 0) {
-        func_0202f00c();
+        InitWavePlayer();
         return;
     }
     if ((gSystemState.mFlags & 0x1000000) == 0) {
-        data_020c648c.mUnk_181 = 0x10;
-        for (i = data_020c648c.mUnk_180; i < data_020c648c.mUnk_181; i++) {
-            func_0202efe4(i);
+        gWavePlayer.mRequestedChannelCount = 0x10;
+        for (i = gWavePlayer.mChannelCount; i < gWavePlayer.mRequestedChannelCount; i++) {
+            ClearWaveChannel(i);
         }
-        data_020c648c.mUnk_180 = data_020c648c.mUnk_181;
+        gWavePlayer.mChannelCount = gWavePlayer.mRequestedChannelCount;
         return;
     }
-    want = data_020c648c.mUnk_181;
-    cur = data_020c648c.mUnk_180;
+    want = gWavePlayer.mRequestedChannelCount;
+    cur = gWavePlayer.mChannelCount;
     if (cur == want) {
         return;
     }
     if (cur < want) {
-        for (; cur < data_020c648c.mUnk_181; cur++) {
-            func_0202efe4(cur);
+        for (; cur < gWavePlayer.mRequestedChannelCount; cur++) {
+            ClearWaveChannel(cur);
         }
-        data_020c648c.mUnk_180 = data_020c648c.mUnk_181;
+        gWavePlayer.mChannelCount = gWavePlayer.mRequestedChannelCount;
     } else {
         mask = 0;
         for (i = want; i < cur; i++) {
             mask |= 1 << i;
         }
-        func_0202ed90(mask);
-        data_020c648c.mUnk_180 = data_020c648c.mUnk_181;
+        StopWaveChannels(mask);
+        gWavePlayer.mChannelCount = gWavePlayer.mRequestedChannelCount;
     }
 }
 
 #define WAVE_STREAM_ID 0x4d2
-#define WAVE_STREAM_KEY 0x400004d2
+#define WAVE_STREAM_KEY (WAVE_ID_NO_FILE | WAVE_STREAM_ID)
 
-void func_0202f110(int a, int b, int c, int d, int e, int f) {
+// With repeat 0 the same as PlayWave. Otherwise, when id is not playing, plays it and marks its repeating channels;
+// when it plays, renews the mark of its first repeating channel and sends the pan and a changed volume. A caller keeps
+// the wave by calling this every frame: UpdateKeepAliveWaves stops a channel whose mark was not renewed.
+void PlayWaveKeepAlive(int id, int volume, int repeat, int pan, int mask, int loop) {
     u32 i;
     u32 bit;
     u32 index;
-    if (c == 0) {
-        func_0202eb64(a, b, c, d, e, (WaveLoop *) f);
+    if (repeat == 0) {
+        PlayWave(id, volume, repeat, pan, mask, (WaveLoop *) loop);
         return;
     }
-    if (func_0202ee1c(a) == 0) {
-        func_0202eb64(a, b, c, d, e, (WaveLoop *) f);
-        for (i = 0; i < data_020c648c.mUnk_180; i++) {
-            WaveChannel *ch = &data_020c648c.mUnk_000[i];
-            if (a == ch->mId && ch->mUnk_0d_2 == 1) {
-                ch->mUnk_0c = 2;
+    if (IsWavePlaying(id) == 0) {
+        PlayWave(id, volume, repeat, pan, mask, (WaveLoop *) loop);
+        for (i = 0; i < gWavePlayer.mChannelCount; i++) {
+            WaveChannel *ch = &gWavePlayer.mChannels[i];
+            if (id == ch->mId && ch->mRepeat == 1) {
+                ch->mKeepAlive = 2;
             }
         }
         return;
     }
-    for (i = 0; i < data_020c648c.mUnk_180; i++) {
-        WaveChannel *ch = &data_020c648c.mUnk_000[i];
-        if (a == ch->mId && ch->mUnk_0d_2 == 1) {
+    for (i = 0; i < gWavePlayer.mChannelCount; i++) {
+        WaveChannel *ch = &gWavePlayer.mChannels[i];
+        if (id == ch->mId && ch->mRepeat == 1) {
             index = i;
-            data_020c648c.mUnk_000[index].mUnk_0c = 2;
+            gWavePlayer.mChannels[index].mKeepAlive = 2;
             bit = 1 << i;
-            func_02040220(bit, d);
-            if (b != data_020c648c.mUnk_000[index].mUnk_14) {
-                if (data_020c648c.mUnk_000[index].mUnk_0d_1 == 1) {
-                    b = ((u32) b * 0x30) >> 8;
+            func_02040220(bit, pan);
+            if (volume != gWavePlayer.mChannels[index].mVolume) {
+                if (gWavePlayer.mChannels[index].mUnk_0d_1 == 1) {
+                    volume = ((u32) volume * 0x30) >> 8;
                 }
-                func_020401f8(bit, ((u32) b * 0x145) >> 8, 0);
-                data_020c648c.mUnk_000[index].mUnk_14 = b;
+                func_020401f8(bit, ((u32) volume * 0x145) >> 8, 0);
+                gWavePlayer.mChannels[index].mVolume = volume;
             }
             return;
         }
     }
 }
 
-void func_0202f200(void) {
+void UpdateKeepAliveWaves(void) {
     u32 mask = 0;
     u32 i;
-    for (i = 0; i < data_020c648c.mUnk_180; i++) {
-        WaveChannel *ch = &data_020c648c.mUnk_000[i];
-        if (ch->mUnk_0c == 1) {
+    for (i = 0; i < gWavePlayer.mChannelCount; i++) {
+        WaveChannel *ch = &gWavePlayer.mChannels[i];
+        if (ch->mKeepAlive == 1) {
             mask |= 1 << i;
-        } else if (ch->mUnk_0c == 2) {
-            ch->mUnk_0c = 1;
+        } else if (ch->mKeepAlive == 2) {
+            ch->mKeepAlive = 1;
         }
     }
-    func_0202ed90(mask);
+    StopWaveChannels(mask);
 }
 
-void func_0202f240(int id, int volume) {
+// Sends the timer of the last active channel playing id, scaled by scale / 0x100, to all of them (mTimer is not
+// changed). Never called in this build: PlaySeEx calls it only for a scale other than 0x100, and its only caller
+// PlaySe passes 0x100.
+void ScaleWaveTimer(int id, int scale) {
     int i;
     u32 mask = 0;
     u32 timer = 0;
-    for (i = 0; i < (u32) data_020c648c.mUnk_180; i++) {
-        WaveChannel *ch = &data_020c648c.mUnk_000[i];
+    for (i = 0; i < (u32) gWavePlayer.mChannelCount; i++) {
+        WaveChannel *ch = &gWavePlayer.mChannels[i];
         if (ch->mActive == 1 && id == ch->mId) {
             mask |= 1 << i;
             timer = ch->mTimer;
         }
     }
-    func_020401d8(mask, (timer * (u32) volume) >> 8);
+    func_020401d8(mask, (timer * (u32) scale) >> 8);
 }
 
-void func_0202f290(WaveStream *stream, const char *name, u32 rate) {
-    if (data_020c648c.mUnk_184 != 0) {
+void OpenWaveStream(WaveStream *stream, const char *name, u32 rate) {
+    if (gWavePlayer.mStreamOpen != 0) {
         OS_Terminate();
     }
-    data_020c648c.mUnk_184 = 1;
-    data_020c648c.mUnk_18c = stream;
+    gWavePlayer.mStreamOpen = 1;
+    gWavePlayer.mStream = stream;
     if (func_02042490(&stream->mFile, name) != 1) {
         OS_Terminate();
     }
@@ -409,18 +427,18 @@ void func_0202f290(WaveStream *stream, const char *name, u32 rate) {
     stream->mFrame = 0;
 }
 
-void func_0202f2e8(WaveStream *stream) {
-    if (data_020c648c.mUnk_184 != 1) {
+void CloseWaveStream(WaveStream *stream) {
+    if (gWavePlayer.mStreamOpen != 1) {
         OS_Terminate();
     }
-    func_0202edd0(WAVE_STREAM_KEY);
+    StopWave(WAVE_STREAM_KEY);
     func_020424d8(&stream->mFile);
     Free(&stream->mBuffer);
-    data_020c648c.mUnk_184 = 0;
+    gWavePlayer.mStreamOpen = 0;
 }
 
-void func_0202f31c(WaveStream *stream) {
-    if (data_020c648c.mUnk_184 != 1) {
+void UpdateWaveStream(WaveStream *stream) {
+    if (gWavePlayer.mStreamOpen != 1) {
         OS_Terminate();
     }
     if (stream->mPause != 1) {
@@ -429,8 +447,8 @@ void func_0202f31c(WaveStream *stream) {
                 stream->mCurrent = 0;
                 func_020425f4(&stream->mFile, 0, 0);
                 func_020425e4(&stream->mFile, stream->mBuffer + stream->mCurrent * stream->mChunk, stream->mChunk);
-                func_0202eb18(WAVE_STREAM_ID, 0, 100, 1, 0x40, 0xfffe, 0, stream->mBuffer, stream->mRate,
-                              stream->mChunk * 4, 1);
+                PlayWaveBuffer(WAVE_STREAM_ID, 0, 100, 1, 0x40, 0xfffe, 0, stream->mBuffer, stream->mRate,
+                               stream->mChunk * 4, 1);
             } else {
                 s32 next = (stream->mCurrent + 1) % 4;
                 u32 cur = (((stream->mRate << 8) / 60 * stream->mFrame >> 8) / stream->mChunk) & 3;
@@ -448,19 +466,19 @@ void func_0202f31c(WaveStream *stream) {
             }
             stream->mFrame++;
         } else {
-            func_0202f470(stream);
+            ResumeWaveStream(stream);
         }
     }
 }
 
-void func_0202f410(WaveStream *stream) {
+void PauseWaveStream(WaveStream *stream) {
     int index;
     u32 i;
-    if (data_020c648c.mUnk_184 != 1) {
+    if (gWavePlayer.mStreamOpen != 1) {
         OS_Terminate();
     }
     if (stream->mPause == 0) {
-        func_0202ee28(WAVE_STREAM_KEY, &index);
+        FindWaveChannel(WAVE_STREAM_KEY, &index);
         stream->mPause = 1;
         func_020401d8(1 << index, 0);
         func_020401f8(1 << index, 0, 0);
@@ -468,14 +486,14 @@ void func_0202f410(WaveStream *stream) {
         while (SND_RecvCommandReply(i) != 0) {
         }
         SND_FlushCommand(2);
-        data_020c648c.mUnk_188 = 1;
+        gWavePlayer.mStreamPaused = 1;
     }
 }
 
-void func_0202f470(WaveStream *stream) {
+void ResumeWaveStream(WaveStream *stream) {
     int index;
     u32 i;
-    if (data_020c648c.mUnk_184 != 1) {
+    if (gWavePlayer.mStreamOpen != 1) {
         OS_Terminate();
     }
     if (stream->mPause == 0) {
@@ -485,13 +503,13 @@ void func_0202f470(WaveStream *stream) {
         stream->mPause++;
         return;
     }
-    func_0202ee28(WAVE_STREAM_KEY, &index);
+    FindWaveChannel(WAVE_STREAM_KEY, &index);
     stream->mPause = 0;
-    func_020401d8(1 << index, data_020c648c.mUnk_000[index].mTimer);
-    func_020401f8(1 << index, (data_020c648c.mUnk_000[index].mUnk_14 * 0x145) >> 8, 0);
+    func_020401d8(1 << index, gWavePlayer.mChannels[index].mTimer);
+    func_020401f8(1 << index, (gWavePlayer.mChannels[index].mVolume * 0x145) >> 8, 0);
     i = 0;
     while (SND_RecvCommandReply(i) != 0) {
     }
     SND_FlushCommand(2);
-    data_020c648c.mUnk_188 = 0;
+    gWavePlayer.mStreamPaused = 0;
 }

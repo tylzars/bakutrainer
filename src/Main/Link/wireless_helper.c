@@ -12,8 +12,11 @@
 #include <Main/Link/wireless_helper.h>
 #include <Main/Link/wireless_state.h>
 
+// Wireless helper. The link is started only by WhConnectAsParent and WhConnectAsChild, whose only callers
+// (UpdateCommParent and ConnectCommAsChild) never run in this build, so none of the steps below runs either.
+
 // Names of the indication state codes, indexed by code.
-const char *data_02064108[27] = {
+const char *gWmStateCodeNames[27] = {
     "WM_STATECODE_PARENT_START",
     "N/A",
     "WM_STATECODE_BEACON_SENT",
@@ -45,58 +48,58 @@ const char *data_02064108[27] = {
 
 // The names the tables in wireless_state.c point at, defined in this order, and four layout placeholders
 // (wireless_unused0..3: nothing reads them and the link drops them). The compiler orders this file's data by size
-// together with the strings of data_02064108; with these taking part, those strings come out in the game's order.
-char data_02063f54[] = "WH_SYSSTATE_CONNECT_FAIL";
-char data_02063d08[] = "WH_SYSSTATE_IDLE";
-char data_02063d80[] = "WM_APIID_PORT_RECV";
-char data_02063dec[] = "WM_APIID_READ_STATUS";
+// together with the strings of gWmStateCodeNames; with these taking part, those strings come out in the game's order.
+char gWhSysStateConnectFailName[] = "WH_SYSSTATE_CONNECT_FAIL";
+char gWhSysStateIdleName[] = "WH_SYSSTATE_IDLE";
+char gWmApiIdPortRecvName[] = "WM_APIID_PORT_RECV";
+char gWmApiIdReadStatusName[] = "WM_APIID_READ_STATUS";
 const u8 wireless_unused2[19] = {0};
 const u8 wireless_unused0[6] = {0};
-char data_02063d30[] = "WH_SYSSTATE_STOP";
+char gWhSysStateStopName[] = "WH_SYSSTATE_STOP";
 const u8 wireless_unused1[100] = {0};
-char data_02063e34[] = "WH_SYSSTATE_CONNECTED";
-char data_02063d58[] = "WH_SYSSTATE_ERROR";
-char data_02063e04[] = "WH_SYSSTATE_SCANNING";
-char data_02063d1c[] = "WM_APIID_UNKNOWN";
-char data_02063e4c[] = "WH_SYSSTATE_KEYSHARING";
-char data_02063f0c[] = "WH_SYSSTATE_DATASHARING";
-char data_02063d44[] = "WH_SYSSTATE_BUSY";
-char data_02064088[] = "WH_SYSSTATE_MEASURECHANNEL";
-char data_02063d6c[] = "WM_APIID_PORT_SEND";
+char gWhSysStateConnectedName[] = "WH_SYSSTATE_CONNECTED";
+char gWhSysStateErrorName[] = "WH_SYSSTATE_ERROR";
+char gWhSysStateScanningName[] = "WH_SYSSTATE_SCANNING";
+char gWmApiIdUnknownName[] = "WM_APIID_UNKNOWN";
+char gWhSysStateKeySharingName[] = "WH_SYSSTATE_KEYSHARING";
+char gWhSysStateDataSharingName[] = "WH_SYSSTATE_DATASHARING";
+char gWhSysStateBusyName[] = "WH_SYSSTATE_BUSY";
+char gWhSysStateMeasureChannelName[] = "WH_SYSSTATE_MEASURECHANNEL";
+char gWmApiIdPortSendName[] = "WM_APIID_PORT_SEND";
 const u8 wireless_unused3[2] = {0};
-char data_02063da8[] = "WM_APIID_INDICATION";
+char gWmApiIdIndicationName[] = "WM_APIID_INDICATION";
 
-WMDataSharing data_020c95e0 __attribute__((aligned(32)));
-u8 data_020c8720[0x220];
-WMParentParam data_020c8420 __attribute__((aligned(32)));
-u8 data_020c8940[0x480];
+WMDataSharing gWhDataSharing __attribute__((aligned(32)));
+u8 gWhSendBuffer[0x220];
+WMParentParam gWhParentParam __attribute__((aligned(32)));
+u8 gWhRecvBuffer[0x480];
 u16 data_020c8460[0x60] __attribute__((aligned(32)));
-WMDataSharing data_020c8dc0;
+WMDataSharing gWhKeySharing;
 u8 data_020c83e0[0x30];
-u16 data_020c8520[0x100];
+u16 gWhDataSharingRecv[0x100];
 
 #pragma thumb off
 
 // Name of a state code, "N/A" outside the table.
-const char *func_020386a4(u32 code) {
-    return code < 27 ? data_02064108[code] : "N/A";
+const char *WhGetStateCodeName(u32 code) {
+    return code < 27 ? gWmStateCodeNames[code] : "N/A";
 }
 
-// Moves the link to a new state, printing the old and the new name when the debug print is set.
-void func_020386c0(int state) {
-    if (data_020c8380.mUnk_30 != 0) {
-        data_020c8380.mUnk_30("%s -> ", data_02063cdc[data_020c8380.mUnk_38]);
+// Moves the link to a new state, printing the old and the new name when the print function is set.
+void WhSetSysState(int state) {
+    if (gWirelessWork.mPrintFunc != 0) {
+        gWirelessWork.mPrintFunc("%s -> ", gWhSysStateNames[gWirelessWork.mSysState]);
     }
-    data_020c8380.mUnk_38 = state;
-    if (data_020c8380.mUnk_30 != 0) {
-        data_020c8380.mUnk_30("%s\n", data_02063cdc[state]);
+    gWirelessWork.mSysState = state;
+    if (gWirelessWork.mPrintFunc != 0) {
+        gWirelessWork.mPrintFunc("%s\n", gWhSysStateNames[state]);
     }
 }
 
-// Records an error code unless the link is already in the error state.
-void func_02038724(int error) {
-    if ((u32) (data_020c8380.mUnk_38 - WH_SYSSTATE_ERROR) > 1) {
-        data_020c8380.mUnk_24 = error;
+// Records an error code unless the link is in the error or failed state; the state itself is not changed.
+void WhSetError(int error) {
+    if ((u32) (gWirelessWork.mSysState - WH_SYSSTATE_ERROR) > 1) {
+        gWirelessWork.mError = error;
     }
 }
 
@@ -104,189 +107,191 @@ void func_02038724(int error) {
 BOOL func_02038740(void) {
     int r;
 
-    func_020386c0(WH_SYSSTATE_BUSY);
-    r = func_020468c4(func_02038780, &data_020c8420);
+    WhSetSysState(WH_SYSSTATE_BUSY);
+    r = func_020468c4(func_02038780, &gWhParentParam);
     if (r == 2) {
         return TRUE;
     }
-    func_02038724(r);
-    func_020386c0(WH_SYSSTATE_ERROR);
+    WhSetError(r);
+    WhSetSysState(WH_SYSSTATE_ERROR);
     return FALSE;
 }
 
-// Callback of the initialisation: on success sets the parent's or the child's key.
-void func_02038780(Unk_WirelessMsg *msg) {
-    if (msg->mUnk_02 != 0) {
-        func_02038724(msg->mUnk_02);
-        func_020386c0(WH_SYSSTATE_ERROR);
+// Callback of the initialisation: on success sets the parent's key when mParentWepKeyFunc is set (never in this
+// build), otherwise starts hosting.
+void func_02038780(WirelessMsg *msg) {
+    if (msg->mError != 0) {
+        WhSetError(msg->mError);
+        WhSetSysState(WH_SYSSTATE_ERROR);
         return;
     }
-    if (data_020c8380.mUnk_1c != 0) {
-        if (func_020387e4() == 0) {
-            func_020386c0(WH_SYSSTATE_ERROR);
+    if (gWirelessWork.mParentWepKeyFunc != 0) {
+        if (WhSetParentWepKey() == 0) {
+            WhSetSysState(WH_SYSSTATE_ERROR);
         }
     } else {
-        if (func_0203887c() == 0) {
-            func_020386c0(WH_SYSSTATE_ERROR);
+        if (WhStartParent() == 0) {
+            WhSetSysState(WH_SYSSTATE_ERROR);
         }
     }
 }
 
-// Generates the parent's key and sets it.
-BOOL func_020387e4(void) {
+// Generates the parent's key through mParentWepKeyFunc and sets it. Never called in this build: the function pointer
+// is never set.
+BOOL WhSetParentWepKey(void) {
     int r;
 
-    func_020386c0(WH_SYSSTATE_BUSY);
-    r = func_02047b70(func_02038844, data_020c8380.mUnk_1c(data_020c83e0, &data_020c8420), data_020c83e0);
+    WhSetSysState(WH_SYSSTATE_BUSY);
+    r = func_02047b70(WhSetParentWepKeyCallback, gWirelessWork.mParentWepKeyFunc(data_020c83e0, &gWhParentParam),
+                      data_020c83e0);
     if (r == 2) {
         return TRUE;
     }
-    func_02038724(r);
-    func_020386c0(WH_SYSSTATE_ERROR);
+    WhSetError(r);
+    WhSetSysState(WH_SYSSTATE_ERROR);
     return FALSE;
 }
 
-// Callback of the key set by func_020387e4.
-void func_02038844(Unk_WirelessMsg *msg) {
-    if (msg->mUnk_02 != 0) {
-        func_02038724(msg->mUnk_02);
-        func_020386c0(WH_SYSSTATE_ERROR);
+void WhSetParentWepKeyCallback(WirelessMsg *msg) {
+    if (msg->mError != 0) {
+        WhSetError(msg->mError);
+        WhSetSysState(WH_SYSSTATE_ERROR);
         return;
     }
-    if (func_0203887c() == 0) {
-        func_020386c0(WH_SYSSTATE_ERROR);
+    if (WhStartParent() == 0) {
+        WhSetSysState(WH_SYSSTATE_ERROR);
     }
 }
 
 // Starts hosting unless the link is already connected.
-BOOL func_0203887c(void) {
+BOOL WhStartParent(void) {
     int r;
 
-    if ((u32) (data_020c8380.mUnk_38 - WH_SYSSTATE_CONNECTED) <= 2) {
+    if ((u32) (gWirelessWork.mSysState - WH_SYSSTATE_CONNECTED) <= 2) {
         return TRUE;
     }
-    r = func_02046a4c(func_020388d4);
+    r = func_02046a4c(WhStartParentCallback);
     if (r != 2) {
-        func_02038724(r);
+        WhSetError(r);
         return FALSE;
     }
-    data_020c8380.mUnk_04 = 0;
-    data_020c8380.mUnk_02 = 1;
+    gWirelessWork.mAid = 0;
+    gWirelessWork.mAidBits = 1;
     return TRUE;
 }
 
 // Callback of hosting: follows children connecting and disconnecting.
-void func_020388d4(Unk_WirelessMsg *msg) {
-    u16 bit = 1 << msg->mUnk_10;
+void WhStartParentCallback(WirelessMsg *msg) {
+    u16 bit = 1 << msg->mChildAid;
 
-    if (msg->mUnk_02 != 0) {
-        func_02038724(msg->mUnk_02);
-        func_020386c0(WH_SYSSTATE_ERROR);
+    if (msg->mError != 0) {
+        WhSetError(msg->mError);
+        WhSetSysState(WH_SYSSTATE_ERROR);
         return;
     }
-    switch (msg->mUnk_08) {
+    switch (msg->mStateCode) {
         case WM_STATECODE_CONNECTED: {
             int r;
 
-            if (data_020c8380.mUnk_30 != 0) {
-                data_020c8380.mUnk_30("StartParent - new child (aid 0x%x) connected\n", msg->mUnk_10);
+            if (gWirelessWork.mPrintFunc != 0) {
+                gWirelessWork.mPrintFunc("StartParent - new child (aid 0x%x) connected\n", msg->mChildAid);
             }
-            if (data_020c8380.mUnk_40 != 0 && data_020c8380.mUnk_40(msg) == 0) {
-                r = func_02046b68(0, msg->mUnk_10);
+            if (gWirelessWork.mChildConnectedFunc != 0 && gWirelessWork.mChildConnectedFunc(msg) == 0) {
+                r = func_02046b68(0, msg->mChildAid);
                 if (r != 2) {
-                    func_02038724(r);
-                    func_020386c0(WH_SYSSTATE_ERROR);
+                    WhSetError(r);
+                    WhSetSysState(WH_SYSSTATE_ERROR);
                 }
                 return;
             }
-            data_020c8380.mUnk_02 |= bit;
+            gWirelessWork.mAidBits |= bit;
             return;
         }
         case WM_STATECODE_DISCONNECTED:
-            if (data_020c8380.mUnk_30 != 0) {
-                data_020c8380.mUnk_30("StartParent - child (aid 0x%x) disconnected\n", msg->mUnk_10);
+            if (gWirelessWork.mPrintFunc != 0) {
+                gWirelessWork.mPrintFunc("StartParent - child (aid 0x%x) disconnected\n", msg->mChildAid);
             }
             if (gSystemState.mUnk_230 != 0) {
-                gSystemState.mUnk_230(msg->mUnk_10);
+                gSystemState.mUnk_230(msg->mChildAid);
             }
-            data_020c8380.mUnk_02 &= ~bit;
+            gWirelessWork.mAidBits &= ~bit;
             return;
         case WM_STATECODE_DISCONNECTED_FROM_MYSELF:
-            if (data_020c8380.mUnk_30 != 0) {
-                data_020c8380.mUnk_30("StartParent - child (aid 0x%x) disconnected from myself\n", msg->mUnk_10);
+            if (gWirelessWork.mPrintFunc != 0) {
+                gWirelessWork.mPrintFunc("StartParent - child (aid 0x%x) disconnected from myself\n", msg->mChildAid);
             }
             return;
         case WM_STATECODE_PARENT_START:
-            if (func_02038a78() == 0) {
-                func_020386c0(WH_SYSSTATE_ERROR);
+            if (WhStartParentMp() == 0) {
+                WhSetSysState(WH_SYSSTATE_ERROR);
             }
             return;
         case WM_STATECODE_BEACON_SENT:
             return;
         default:
-            if (data_020c8380.mUnk_30 != 0) {
-                data_020c8380.mUnk_30("unknown indicate, state = %d\n", msg->mUnk_08);
+            if (gWirelessWork.mPrintFunc != 0) {
+                gWirelessWork.mPrintFunc("unknown indicate, state = %d\n", msg->mStateCode);
             }
             return;
     }
 }
 
 // Starts the data exchange as the host unless it is already running.
-BOOL func_02038a78(void) {
+BOOL WhStartParentMp(void) {
     int r;
 
-    if (!(data_020c8380.mUnk_38 != WH_SYSSTATE_CONNECTED && data_020c8380.mUnk_38 != WH_SYSSTATE_KEYSHARING &&
-          data_020c8380.mUnk_38 != WH_SYSSTATE_DATASHARING)) {
+    if (!(gWirelessWork.mSysState != WH_SYSSTATE_CONNECTED && gWirelessWork.mSysState != WH_SYSSTATE_KEYSHARING &&
+          gWirelessWork.mSysState != WH_SYSSTATE_DATASHARING)) {
         return TRUE;
     }
-    func_020386c0(WH_SYSSTATE_CONNECTED);
-    r = func_02046dc0(func_02038b0c, (u32) data_020c8940, (u16) data_020c8380.mUnk_3c, (u32) data_020c8720,
-                      (u16) data_020c8380.mUnk_20, 1);
+    WhSetSysState(WH_SYSSTATE_CONNECTED);
+    r = func_02046dc0(WhStartParentMpCallback, (u32) gWhRecvBuffer, (u16) gWirelessWork.mRecvBufferSize,
+                      (u32) gWhSendBuffer, (u16) gWirelessWork.mSendBufferSize, 1);
     if (r == 2) {
         return TRUE;
     }
-    func_02038724(r);
+    WhSetError(r);
     return FALSE;
 }
 
 // Callback of the host's data exchange.
-void func_02038b0c(Unk_WirelessMsg *msg) {
-    u16 err = msg->mUnk_02;
+void WhStartParentMpCallback(WirelessMsg *msg) {
+    u16 err = msg->mError;
 
     if (err != 0) {
-        func_02038724(err);
-        func_020386c0(WH_SYSSTATE_ERROR);
+        WhSetError(err);
+        WhSetSysState(WH_SYSSTATE_ERROR);
         return;
     }
-    switch (msg->mUnk_04) {
+    switch (msg->mMpStateCode) {
         case WM_STATECODE_MP_START:
-            if (data_020c8380.mUnk_34 == 2) {
-                if (data_020c8380.mUnk_38 == WH_SYSSTATE_CONNECTED) {
-                    if (func_02038c48() == 0) {
-                        if (data_020c8380.mUnk_30 != 0) {
-                            data_020c8380.mUnk_30("WH_StateInStartParentKeyShare failed\n");
+            if (gWirelessWork.mConnectMode == WH_CONNECT_MODE_PARENT_KEYSHARING) {
+                if (gWirelessWork.mSysState == WH_SYSSTATE_CONNECTED) {
+                    if (WhStartParentKeyShare() == 0) {
+                        if (gWirelessWork.mPrintFunc != 0) {
+                            gWirelessWork.mPrintFunc("WH_StateInStartParentKeyShare failed\n");
                         }
-                        func_020386c0(WH_SYSSTATE_ERROR);
+                        WhSetSysState(WH_SYSSTATE_ERROR);
                     }
                     return;
                 }
-                if (data_020c8380.mUnk_38 == WH_SYSSTATE_KEYSHARING) {
+                if (gWirelessWork.mSysState == WH_SYSSTATE_KEYSHARING) {
                     return;
                 }
-            } else if (data_020c8380.mUnk_34 == 4) {
+            } else if (gWirelessWork.mConnectMode == WH_CONNECT_MODE_PARENT_DATASHARING) {
                 // Shares data between aid 0 (the parent) and aid 1.
                 u16 mask = 3;
-                int r = func_02046fc8(&data_020c95e0, 13, mask, 84, 1);
+                int r = func_02046fc8(&gWhDataSharing, 13, mask, 84, 1);
 
                 if (r != 0) {
-                    func_02038724(r);
-                    func_020386c0(WH_SYSSTATE_ERROR);
+                    WhSetError(r);
+                    WhSetSysState(WH_SYSSTATE_ERROR);
                     return;
                 }
-                func_020386c0(WH_SYSSTATE_DATASHARING);
+                WhSetSysState(WH_SYSSTATE_DATASHARING);
                 return;
             }
-            func_020386c0(WH_SYSSTATE_CONNECTED);
+            WhSetSysState(WH_SYSSTATE_CONNECTED);
             return;
         case WM_STATECODE_MPEND_IND:
             data_020c9e04 |= 0x800;
@@ -294,266 +299,264 @@ void func_02038b0c(Unk_WirelessMsg *msg) {
         case WM_STATECODE_MP_IND:
         case WM_STATECODE_MPACK_IND:
         default:
-            if (data_020c8380.mUnk_30 != 0) {
-                data_020c8380.mUnk_30("unknown indicate, state = %d\n", msg->mUnk_04);
+            if (gWirelessWork.mPrintFunc != 0) {
+                gWirelessWork.mPrintFunc("unknown indicate, state = %d\n", msg->mMpStateCode);
             }
             return;
     }
 }
 
-// Starts sharing keys on the host.
-BOOL func_02038c48(void) {
+BOOL WhStartParentKeyShare(void) {
     int r;
 
-    func_020386c0(WH_SYSSTATE_KEYSHARING);
-    r = func_02047b48(&data_020c8dc0, 13);
+    WhSetSysState(WH_SYSSTATE_KEYSHARING);
+    r = func_02047b48(&gWhKeySharing, 13);
     if (r == 0) {
         return TRUE;
     }
-    func_02038724(r);
+    WhSetError(r);
     return FALSE;
 }
 
-// Ends the key sharing of the host, then the hosting.
-BOOL func_02038c7c(void) {
-    int r = func_02047b64(&data_020c8dc0);
+// Ends the key sharing of the host, then the host's data exchange.
+BOOL WhEndParentKeyShareAndMp(void) {
+    int r = func_02047b64(&gWhKeySharing);
 
     if (r != 0) {
-        func_02038724(r);
+        WhSetError(r);
         return FALSE;
     }
-    if (func_02038ce0() == 0) {
-        if (data_020c8380.mUnk_30 != 0) {
-            data_020c8380.mUnk_30("WH_StateInEndParentMP failed\n");
+    if (WhEndParentMp() == 0) {
+        if (gWirelessWork.mPrintFunc != 0) {
+            gWirelessWork.mPrintFunc("WH_StateInEndParentMP failed\n");
         }
-        func_0203970c();
+        WhShutDownOrFail();
         return FALSE;
     }
     return TRUE;
 }
 
-// Ends the hosting.
-BOOL func_02038ce0(void) {
+// Ends the host's data exchange.
+BOOL WhEndParentMp(void) {
     int r;
 
-    func_020386c0(WH_SYSSTATE_BUSY);
-    r = func_02046f58(func_02038d10);
+    WhSetSysState(WH_SYSSTATE_BUSY);
+    r = func_02046f58(WhEndParentMpCallback);
     if (r == 2) {
         return TRUE;
     }
-    func_02038724(r);
+    WhSetError(r);
     return FALSE;
 }
 
-// Callback of func_02038ce0.
-void func_02038d10(Unk_WirelessMsg *msg) {
-    if (msg->mUnk_02 != 0) {
-        func_02038724(msg->mUnk_02);
-        func_0203970c();
+void WhEndParentMpCallback(WirelessMsg *msg) {
+    if (msg->mError != 0) {
+        WhSetError(msg->mError);
+        WhShutDownOrFail();
         return;
     }
-    if (func_02038d60() == 0) {
-        if (data_020c8380.mUnk_30 != 0) {
-            data_020c8380.mUnk_30("WH_StateInEndParent failed\n");
+    if (WhEndParent() == 0) {
+        if (gWirelessWork.mPrintFunc != 0) {
+            gWirelessWork.mPrintFunc("WH_StateInEndParent failed\n");
         }
-        func_0203970c();
+        WhShutDownOrFail();
     }
 }
 
-// Resets the link.
-BOOL func_02038d60(void) {
-    int r = func_02046a5c(func_02038d88);
+// The step after WhEndParentMp; its callback leaves the link idle.
+BOOL WhEndParent(void) {
+    int r = func_02046a5c(WhEndParentCallback);
 
     if (r == 2) {
         return TRUE;
     }
-    func_02038724(r);
+    WhSetError(r);
     return FALSE;
 }
 
-// Callback of func_02038d60: the link is idle again.
-void func_02038d88(Unk_WirelessMsg *msg) {
-    if (msg->mUnk_02 != 0) {
-        func_02038724(msg->mUnk_02);
+// Callback of WhEndParent: the link is idle again.
+void WhEndParentCallback(WirelessMsg *msg) {
+    if (msg->mError != 0) {
+        WhSetError(msg->mError);
         return;
     }
-    func_020386c0(WH_SYSSTATE_IDLE);
+    WhSetSysState(WH_SYSSTATE_IDLE);
 }
 
 // Layout placeholder: prints the two buffer sizes; nothing calls it and the link drops it. The compiler creates
 // the two strings where they are first used, and the game has them at this point of the file's string order, well
-// before their users func_0203947c and func_02039598.
+// before their users WhConnectAsParent and WhConnectAsChild.
 void func_unused_sizes(void) {
-    data_020c8380.mUnk_30("recv buffer size = %d\n", data_020c8380.mUnk_3c);
-    data_020c8380.mUnk_30("send buffer size = %d\n", data_020c8380.mUnk_20);
+    gWirelessWork.mPrintFunc("recv buffer size = %d\n", gWirelessWork.mRecvBufferSize);
+    gWirelessWork.mPrintFunc("send buffer size = %d\n", gWirelessWork.mSendBufferSize);
 }
 
-// Generates the child's key and sets it.
-BOOL func_02038dac(void) {
+// Generates the child's key through mChildWepKeyFunc and sets it. Never called in this build: the function pointer
+// is never set.
+BOOL WhSetChildWepKey(void) {
     int r;
 
-    func_020386c0(WH_SYSSTATE_BUSY);
-    r = func_02047b70(func_02038e0c, data_020c8380.mUnk_28(data_020c83e0, data_020c8460), data_020c83e0);
+    WhSetSysState(WH_SYSSTATE_BUSY);
+    r = func_02047b70(WhSetChildWepKeyCallback, gWirelessWork.mChildWepKeyFunc(data_020c83e0, data_020c8460),
+                      data_020c83e0);
     if (r == 2) {
         return TRUE;
     }
-    func_02038724(r);
-    func_020386c0(WH_SYSSTATE_ERROR);
+    WhSetError(r);
+    WhSetSysState(WH_SYSSTATE_ERROR);
     return FALSE;
 }
 
-// Callback of the key set by func_02038dac.
-void func_02038e0c(Unk_WirelessMsg *msg) {
-    if (msg->mUnk_02 != 0) {
-        func_02038724(msg->mUnk_02);
-        func_020386c0(WH_SYSSTATE_ERROR);
+void WhSetChildWepKeyCallback(WirelessMsg *msg) {
+    if (msg->mError != 0) {
+        WhSetError(msg->mError);
+        WhSetSysState(WH_SYSSTATE_ERROR);
         return;
     }
-    if (func_02038e64() == 0) {
-        if (data_020c8380.mUnk_30 != 0) {
-            data_020c8380.mUnk_30("WH_StateOutSetChildWEPKey : startchild failed\n");
+    if (WhStartChild() == 0) {
+        if (gWirelessWork.mPrintFunc != 0) {
+            gWirelessWork.mPrintFunc("WH_StateOutSetChildWEPKey : startchild failed\n");
         }
-        func_020386c0(WH_SYSSTATE_ERROR);
+        WhSetSysState(WH_SYSSTATE_ERROR);
     }
 }
 
 // Connects to the parent whose record is in data_020c8460.
-BOOL func_02038e64(void) {
+BOOL WhStartChild(void) {
     int r;
 
-    if (!(data_020c8380.mUnk_38 != WH_SYSSTATE_CONNECTED && data_020c8380.mUnk_38 != WH_SYSSTATE_KEYSHARING &&
-          data_020c8380.mUnk_38 != WH_SYSSTATE_DATASHARING)) {
-        if (data_020c8380.mUnk_30 != 0) {
-            data_020c8380.mUnk_30("WH_StateInStartChild : already connected?\n");
+    if (!(gWirelessWork.mSysState != WH_SYSSTATE_CONNECTED && gWirelessWork.mSysState != WH_SYSSTATE_KEYSHARING &&
+          gWirelessWork.mSysState != WH_SYSSTATE_DATASHARING)) {
+        if (gWirelessWork.mPrintFunc != 0) {
+            gWirelessWork.mPrintFunc("WH_StateInStartChild : already connected?\n");
         }
         return TRUE;
     }
-    func_020386c0(WH_SYSSTATE_BUSY);
-    r = func_02046a9c(func_02038f04, data_020c8460, 0, 1, data_020c8380.mUnk_28 != 0 ? 1 : 0);
+    WhSetSysState(WH_SYSSTATE_BUSY);
+    r = func_02046a9c(WhStartChildCallback, data_020c8460, 0, 1, gWirelessWork.mChildWepKeyFunc != 0 ? 1 : 0);
     if (r == 2) {
         return TRUE;
     }
-    func_02038724(r);
+    WhSetError(r);
     return FALSE;
 }
 
-// Callback of the connection to the parent.
-void func_02038f04(Unk_WirelessMsg *msg) {
-    if (msg->mUnk_02 != 0) {
-        func_02038724(msg->mUnk_02);
-        if (msg->mUnk_02 == 12) {
+void WhStartChildCallback(WirelessMsg *msg) {
+    if (msg->mError != 0) {
+        WhSetError(msg->mError);
+        if (msg->mError == 12) {
             gSystemState.mFlags |= 0x100;
-            func_020386c0(WH_SYSSTATE_ERROR);
+            WhSetSysState(WH_SYSSTATE_ERROR);
             return;
         }
-        if (msg->mUnk_02 == 11) {
+        if (msg->mError == 11) {
             gSystemState.mFlags |= 0x100;
-            func_020386c0(WH_SYSSTATE_ERROR);
+            WhSetSysState(WH_SYSSTATE_ERROR);
             return;
         }
-        if (msg->mUnk_02 == 1) {
+        if (msg->mError == 1) {
             gSystemState.mFlags |= 0x100;
-            func_020386c0(WH_SYSSTATE_CONNECT_FAIL);
+            WhSetSysState(WH_SYSSTATE_CONNECT_FAIL);
             return;
         }
         gSystemState.mFlags |= 0x100;
-        func_020386c0(WH_SYSSTATE_ERROR);
+        WhSetSysState(WH_SYSSTATE_ERROR);
         return;
     }
-    if (msg->mUnk_08 == WM_STATECODE_BEACON_LOST) {
+    if (msg->mStateCode == WM_STATECODE_BEACON_LOST) {
         return;
     }
-    if (msg->mUnk_08 == WM_STATECODE_CONNECTED) {
-        if (data_020c8380.mUnk_30 != 0) {
-            data_020c8380.mUnk_30("Connect to Parent\n");
+    if (msg->mStateCode == WM_STATECODE_CONNECTED) {
+        if (gWirelessWork.mPrintFunc != 0) {
+            gWirelessWork.mPrintFunc("Connect to Parent\n");
         }
-        func_020386c0(WH_SYSSTATE_CONNECTED);
-        if (func_020390d4() == 0) {
-            if (data_020c8380.mUnk_30 != 0) {
-                data_020c8380.mUnk_30("WH_StateInStartChildMP failed\n");
+        WhSetSysState(WH_SYSSTATE_CONNECTED);
+        if (WhStartChildMp() == 0) {
+            if (gWirelessWork.mPrintFunc != 0) {
+                gWirelessWork.mPrintFunc("WH_StateInStartChildMP failed\n");
             }
-            func_020386c0(WH_SYSSTATE_BUSY);
+            WhSetSysState(WH_SYSSTATE_BUSY);
             return;
         }
-        data_020c8380.mUnk_04 = msg->mUnk_0a;
+        gWirelessWork.mAid = msg->mAssignedAid;
         return;
     }
-    if (msg->mUnk_08 == WM_STATECODE_CONNECT_START) {
+    if (msg->mStateCode == WM_STATECODE_CONNECT_START) {
         return;
     }
-    if (msg->mUnk_08 == WM_STATECODE_DISCONNECTED) {
-        if (data_020c8380.mUnk_30 != 0) {
-            data_020c8380.mUnk_30("Disconnected from Parent\n");
+    if (msg->mStateCode == WM_STATECODE_DISCONNECTED) {
+        if (gWirelessWork.mPrintFunc != 0) {
+            gWirelessWork.mPrintFunc("Disconnected from Parent\n");
         }
-        func_02038724(20);
-        func_020386c0(WH_SYSSTATE_ERROR);
+        WhSetError(20);
+        WhSetSysState(WH_SYSSTATE_ERROR);
         gSystemState.mFlags |= 0x100;
         return;
     }
-    if (msg->mUnk_08 == WM_STATECODE_DISCONNECTED_FROM_MYSELF) {
+    if (msg->mStateCode == WM_STATECODE_DISCONNECTED_FROM_MYSELF) {
         gSystemState.mFlags |= 0x100;
         return;
     }
-    if (data_020c8380.mUnk_30 != 0) {
-        data_020c8380.mUnk_30("unknown state %d, %s\n", msg->mUnk_08, func_020386a4(msg->mUnk_08));
+    if (gWirelessWork.mPrintFunc != 0) {
+        gWirelessWork.mPrintFunc("unknown state %d, %s\n", msg->mStateCode, WhGetStateCodeName(msg->mStateCode));
     }
-    func_020386c0(WH_SYSSTATE_ERROR);
+    WhSetSysState(WH_SYSSTATE_ERROR);
 }
 
 // Starts the data exchange as the child.
-BOOL func_020390d4(void) {
-    int r = func_02046dc0(func_02039140, (u32) data_020c8940, (u16) data_020c8380.mUnk_3c, (u32) data_020c8720,
-                          (u16) data_020c8380.mUnk_20, 1);
+BOOL WhStartChildMp(void) {
+    int r = func_02046dc0(WhStartChildMpCallback, (u32) gWhRecvBuffer, (u16) gWirelessWork.mRecvBufferSize,
+                          (u32) gWhSendBuffer, (u16) gWirelessWork.mSendBufferSize, 1);
 
     if (r == 2) {
         return TRUE;
     }
-    func_02038724(r);
+    WhSetError(r);
     return FALSE;
 }
 
 // Callback of the child's data exchange.
-void func_02039140(Unk_WirelessMsg *msg) {
-    if (msg->mUnk_02 != 0) {
-        if (msg->mUnk_02 == 15 || msg->mUnk_02 == 9 || msg->mUnk_02 == 13) {
+void WhStartChildMpCallback(WirelessMsg *msg) {
+    if (msg->mError != 0) {
+        if (msg->mError == 15 || msg->mError == 9 || msg->mError == 13) {
             return;
         }
-        func_02038724(msg->mUnk_02);
-        func_0203970c();
+        WhSetError(msg->mError);
+        WhShutDownOrFail();
         return;
     }
-    switch (msg->mUnk_04) {
+    switch (msg->mMpStateCode) {
         case WM_STATECODE_MP_START:
-            if (data_020c8380.mUnk_34 == 3) {
-                if (data_020c8380.mUnk_38 == WH_SYSSTATE_KEYSHARING) {
+            if (gWirelessWork.mConnectMode == WH_CONNECT_MODE_CHILD_KEYSHARING) {
+                if (gWirelessWork.mSysState == WH_SYSSTATE_KEYSHARING) {
                     return;
                 }
-                if (data_020c8380.mUnk_38 == WH_SYSSTATE_CONNECTED) {
-                    if (func_02039298() == 0) {
-                        if (data_020c8380.mUnk_30 != 0) {
-                            data_020c8380.mUnk_30("WH_StateInStartChildKeyShare failed\n");
+                if (gWirelessWork.mSysState == WH_SYSSTATE_CONNECTED) {
+                    if (WhStartChildKeyShare() == 0) {
+                        if (gWirelessWork.mPrintFunc != 0) {
+                            gWirelessWork.mPrintFunc("WH_StateInStartChildKeyShare failed\n");
                         }
-                        func_02039728();
+                        WhFinalize();
                     }
                     return;
                 }
-            } else if (data_020c8380.mUnk_34 == 5) {
+            } else if (gWirelessWork.mConnectMode == WH_CONNECT_MODE_CHILD_DATASHARING) {
                 // Shares data between aid 0 (the parent) and aid 1.
                 u16 mask = 3;
-                int r = func_02046fc8(&data_020c95e0, 13, mask, 84, 1);
+                int r = func_02046fc8(&gWhDataSharing, 13, mask, 84, 1);
 
                 if (r != 0) {
-                    func_02038724(r);
-                    func_02039728();
+                    WhSetError(r);
+                    WhFinalize();
                     return;
                 }
-                if (data_020c8380.mUnk_30 != 0) {
-                    data_020c8380.mUnk_30("WH_StateOutStartChildMP : WM_StartDataSharing OK\n");
+                if (gWirelessWork.mPrintFunc != 0) {
+                    gWirelessWork.mPrintFunc("WH_StateOutStartChildMP : WM_StartDataSharing OK\n");
                 }
-                func_020386c0(WH_SYSSTATE_DATASHARING);
+                WhSetSysState(WH_SYSSTATE_DATASHARING);
                 return;
             }
-            func_020386c0(WH_SYSSTATE_CONNECTED);
+            WhSetSysState(WH_SYSSTATE_CONNECTED);
             return;
         case WM_STATECODE_MP_IND:
             data_020c9e04 |= 0x800;
@@ -562,46 +565,45 @@ void func_02039140(Unk_WirelessMsg *msg) {
             break;
         case WM_STATECODE_MPEND_IND:
         default:
-            if (data_020c8380.mUnk_30 != 0) {
-                data_020c8380.mUnk_30("unknown indicate, state = %d\n", msg->mUnk_04);
+            if (gWirelessWork.mPrintFunc != 0) {
+                gWirelessWork.mPrintFunc("unknown indicate, state = %d\n", msg->mMpStateCode);
             }
             return;
     }
 }
 
-// Starts sharing keys as the child.
-BOOL func_02039298(void) {
+BOOL WhStartChildKeyShare(void) {
     int r;
 
-    if (data_020c8380.mUnk_38 == WH_SYSSTATE_KEYSHARING) {
+    if (gWirelessWork.mSysState == WH_SYSSTATE_KEYSHARING) {
         return TRUE;
     }
-    if (data_020c8380.mUnk_38 != WH_SYSSTATE_CONNECTED) {
+    if (gWirelessWork.mSysState != WH_SYSSTATE_CONNECTED) {
         return FALSE;
     }
-    func_020386c0(WH_SYSSTATE_KEYSHARING);
-    r = func_02047b48(&data_020c8dc0, 13);
+    WhSetSysState(WH_SYSSTATE_KEYSHARING);
+    r = func_02047b48(&gWhKeySharing, 13);
     if (r == 0) {
         return TRUE;
     }
-    func_02038724(r);
+    WhSetError(r);
     return FALSE;
 }
 
-// Ends the key sharing of the child, then the connection.
-BOOL func_020392f0(void) {
+// Ends the key sharing of the child, then the child's data exchange.
+BOOL WhEndChildKeyShareAndMp(void) {
     int r;
     BOOL ok;
 
-    if (data_020c8380.mUnk_38 != WH_SYSSTATE_KEYSHARING) {
+    if (gWirelessWork.mSysState != WH_SYSSTATE_KEYSHARING) {
         return FALSE;
     }
-    func_020386c0(WH_SYSSTATE_BUSY);
-    r = func_02047b64(&data_020c8dc0);
+    WhSetSysState(WH_SYSSTATE_BUSY);
+    r = func_02047b64(&gWhKeySharing);
     if (r != 0) {
-        func_02038724(r);
+        WhSetError(r);
         ok = FALSE;
-    } else if (func_02039348() == 0) {
+    } else if (WhEndChildMp() == 0) {
         ok = FALSE;
     } else {
         ok = TRUE;
@@ -609,212 +611,215 @@ BOOL func_020392f0(void) {
     return ok;
 }
 
-// Ends the connection to the host.
-BOOL func_02039348(void) {
+// Ends the child's data exchange.
+BOOL WhEndChildMp(void) {
     int r;
 
-    func_020386c0(WH_SYSSTATE_BUSY);
-    r = func_02046f58(func_02039378);
+    WhSetSysState(WH_SYSSTATE_BUSY);
+    r = func_02046f58(WhEndChildMpCallback);
     if (r == 2) {
         return TRUE;
     }
-    func_02038724(r);
+    WhSetError(r);
     return FALSE;
 }
 
-// Callback of func_02039348.
-void func_02039378(Unk_WirelessMsg *msg) {
-    if (msg->mUnk_02 != 0) {
-        func_02038724(msg->mUnk_02);
-        func_02039728();
+void WhEndChildMpCallback(WirelessMsg *msg) {
+    if (msg->mError != 0) {
+        WhSetError(msg->mError);
+        WhFinalize();
         return;
     }
-    if (func_020393ac() == 0) {
-        func_020386c0(WH_SYSSTATE_ERROR);
+    if (WhEndChild() == 0) {
+        WhSetSysState(WH_SYSSTATE_ERROR);
     }
 }
 
-// Resets the link.
-BOOL func_020393ac(void) {
+// Disconnects from aid 0 (the parent): the call the parent uses to drop a child; its callback leaves the link idle.
+BOOL WhEndChild(void) {
     int r;
 
-    func_020386c0(WH_SYSSTATE_BUSY);
-    r = func_02046b68(func_020393e4, 0);
+    WhSetSysState(WH_SYSSTATE_BUSY);
+    r = func_02046b68(WhEndChildCallback, 0);
     if (r == 2) {
         return TRUE;
     }
-    func_02038724(r);
-    func_0203970c();
+    WhSetError(r);
+    WhShutDownOrFail();
     return FALSE;
 }
 
-// Callback of func_020393ac: the link is idle again.
-void func_020393e4(Unk_WirelessMsg *msg) {
-    if (msg->mUnk_02 != 0) {
-        func_02038724(msg->mUnk_02);
+// Callback of WhEndChild: the link is idle again.
+void WhEndChildCallback(WirelessMsg *msg) {
+    if (msg->mError != 0) {
+        WhSetError(msg->mError);
         return;
     }
-    func_020386c0(WH_SYSSTATE_IDLE);
+    WhSetSysState(WH_SYSSTATE_IDLE);
 }
 
 // Shuts the link down.
-BOOL func_02039408(void) {
+BOOL WhStartShutDown(void) {
     int r;
 
-    func_020386c0(WH_SYSSTATE_BUSY);
-    r = func_0204684c(func_02039438);
+    WhSetSysState(WH_SYSSTATE_BUSY);
+    r = func_0204684c(WhShutDownCallback);
     if (r == 2) {
         return TRUE;
     }
-    func_02038724(r);
+    WhSetError(r);
     return FALSE;
 }
 
-// Callback of func_02039408.
-void func_02039438(Unk_WirelessMsg *msg) {
-    if (msg->mUnk_02 != 0) {
-        func_020386c0(WH_SYSSTATE_ERROR);
-        func_02038724(msg->mUnk_02);
+// Callback of WhStartShutDown. An error code is not recorded: the state is set to the error state first, in which
+// WhSetError does not store.
+void WhShutDownCallback(WirelessMsg *msg) {
+    if (msg->mError != 0) {
+        WhSetSysState(WH_SYSSTATE_ERROR);
+        WhSetError(msg->mError);
         return;
     }
-    func_020386c0(WH_SYSSTATE_IDLE);
+    WhSetSysState(WH_SYSSTATE_IDLE);
 }
 
-// The state of the link.
-int func_0203946c(void) {
-    return data_020c8380.mUnk_38;
+int WhGetSysState(void) {
+    return gWirelessWork.mSysState;
 }
 
-// Sets up the host with the parameters (the game id, the channel) and starts the link in the given mode (even
-// modes host, odd modes join); returns whether it started.
-int func_0203947c(int mode, u16 b, u16 c) {
-    (void) (data_020c8380.mUnk_38 == WH_SYSSTATE_IDLE || (OS_Terminate(), 0));
-    data_020c8380.mUnk_3c = 0x240;
-    data_020c8380.mUnk_20 = 0x220;
-    if (data_020c8380.mUnk_30 != 0) {
-        data_020c8380.mUnk_30("recv buffer size = %d\n", data_020c8380.mUnk_3c);
+// Sets up the host (b and c go into the parent parameter block) and starts the link in the given parent mode (the
+// even modes); returns whether it started, 0 for any other mode. Stops the system unless the link is idle.
+int WhConnectAsParent(int mode, u16 b, u16 c) {
+    (void) (gWirelessWork.mSysState == WH_SYSSTATE_IDLE || (OS_Terminate(), 0));
+    gWirelessWork.mRecvBufferSize = 0x240;
+    gWirelessWork.mSendBufferSize = 0x220;
+    if (gWirelessWork.mPrintFunc != 0) {
+        gWirelessWork.mPrintFunc("recv buffer size = %d\n", gWirelessWork.mRecvBufferSize);
     }
-    if (data_020c8380.mUnk_30 != 0) {
-        data_020c8380.mUnk_30("send buffer size = %d\n", data_020c8380.mUnk_20);
+    if (gWirelessWork.mPrintFunc != 0) {
+        gWirelessWork.mPrintFunc("send buffer size = %d\n", gWirelessWork.mSendBufferSize);
     }
-    data_020c8380.mUnk_34 = mode;
-    func_020386c0(WH_SYSSTATE_BUSY);
-    data_020c8420.mUnk_0c = b;
-    data_020c8420.mUnk_32 = c;
-    data_020c8420.mUnk_18 = func_020467bc();
-    data_020c8420.mUnk_34 = 0x200;
-    data_020c8420.mUnk_36 = 0xfe;
-    data_020c8420.mUnk_10 = 1;
-    data_020c8420.mUnk_16 = 0;
-    data_020c8420.mUnk_12 = 0;
-    data_020c8420.mUnk_0e = 1;
-    data_020c8420.mUnk_14 = mode == 2;
-    if (mode == 0 || mode == 2 || mode == 4) {
+    gWirelessWork.mConnectMode = mode;
+    WhSetSysState(WH_SYSSTATE_BUSY);
+    gWhParentParam.mUnk_0c = b;
+    gWhParentParam.mUnk_32 = c;
+    gWhParentParam.mUnk_18 = func_020467bc();
+    gWhParentParam.mUnk_34 = 0x200;
+    gWhParentParam.mUnk_36 = 0xfe;
+    gWhParentParam.mUnk_10 = 1;
+    gWhParentParam.mUnk_16 = 0;
+    gWhParentParam.mUnk_12 = 0;
+    gWhParentParam.mUnk_0e = 1;
+    gWhParentParam.mUnk_14 = mode == WH_CONNECT_MODE_PARENT_KEYSHARING;
+    if (mode == WH_CONNECT_MODE_PARENT || mode == WH_CONNECT_MODE_PARENT_KEYSHARING ||
+        mode == WH_CONNECT_MODE_PARENT_DATASHARING) {
         return func_02038740();
     }
-    if (data_020c8380.mUnk_30 != 0) {
-        data_020c8380.mUnk_30("unknown connect mode %d\n", mode);
+    if (gWirelessWork.mPrintFunc != 0) {
+        gWirelessWork.mPrintFunc("unknown connect mode %d\n", mode);
     }
     return 0;
 }
 
-// Starts the link as a child in the given mode, to the parent whose record is data.
-int func_02039598(int mode, const void *data) {
-    (void) (data_020c8380.mUnk_38 == WH_SYSSTATE_IDLE || (OS_Terminate(), 0));
-    data_020c8380.mUnk_3c = 0x480;
-    data_020c8380.mUnk_20 = 0x100;
-    if (data_020c8380.mUnk_30 != 0) {
-        data_020c8380.mUnk_30("recv buffer size = %d\n", data_020c8380.mUnk_3c);
+// Starts the link as a child in the given child mode (the odd modes), to the parent whose record is data; returns
+// whether it started, 0 for any other mode. Stops the system unless the link is idle.
+int WhConnectAsChild(int mode, const void *data) {
+    (void) (gWirelessWork.mSysState == WH_SYSSTATE_IDLE || (OS_Terminate(), 0));
+    gWirelessWork.mRecvBufferSize = 0x480;
+    gWirelessWork.mSendBufferSize = 0x100;
+    if (gWirelessWork.mPrintFunc != 0) {
+        gWirelessWork.mPrintFunc("recv buffer size = %d\n", gWirelessWork.mRecvBufferSize);
     }
-    if (data_020c8380.mUnk_30 != 0) {
-        data_020c8380.mUnk_30("send buffer size = %d\n", data_020c8380.mUnk_20);
+    if (gWirelessWork.mPrintFunc != 0) {
+        gWirelessWork.mPrintFunc("send buffer size = %d\n", gWirelessWork.mSendBufferSize);
     }
-    data_020c8380.mUnk_34 = mode;
-    func_020386c0(WH_SYSSTATE_BUSY);
-    if (mode == 1 || mode == 3 || mode == 5) {
+    gWirelessWork.mConnectMode = mode;
+    WhSetSysState(WH_SYSSTATE_BUSY);
+    if (mode == WH_CONNECT_MODE_CHILD || mode == WH_CONNECT_MODE_CHILD_KEYSHARING ||
+        mode == WH_CONNECT_MODE_CHILD_DATASHARING) {
         MI_CpuCopy8(data, data_020c8460, 0xc0);
         DC_FlushRange(data_020c8460, 0xc0);
         DC_WaitWriteBufferEmpty();
-        if (data_020c8380.mUnk_28 != 0) {
-            return func_02038dac();
+        if (gWirelessWork.mChildWepKeyFunc != 0) {
+            return WhSetChildWepKey();
         }
-        return func_02038e64();
+        return WhStartChild();
     }
-    if (data_020c8380.mUnk_30 != 0) {
-        data_020c8380.mUnk_30("unknown connect mode %d\n", mode);
+    if (gWirelessWork.mPrintFunc != 0) {
+        gWirelessWork.mPrintFunc("unknown connect mode %d\n", mode);
     }
     return 0;
 }
 
 // The data received from child n, or NULL.
-u8 *func_02039698(u32 n) {
-    return func_02047ac4(&data_020c95e0, data_020c8520, n);
+u8 *WhGetSharedData(u32 n) {
+    return func_02047ac4(&gWhDataSharing, gWhDataSharingRecv, n);
 }
 
-// Runs one step of the data exchange, passing the data to send; returns whether it went through.
-BOOL func_020396b8(void *buf) {
-    int r = func_02047264(&data_020c95e0, buf, data_020c8520);
+// Runs one step of the data exchange, passing the data to send; returns whether this frame's exchange went through
+// (result 0 or 7), not whether the sharing is done. Other results are recorded with WhSetError.
+BOOL WhUpdateDataSharing(void *buf) {
+    int r = func_02047264(&gWhDataSharing, buf, gWhDataSharingRecv);
 
     if (r == 7) {
         return TRUE;
     }
     if (r == 5) {
-        func_02038724(r);
+        WhSetError(r);
         return FALSE;
     }
     if (r == 0) {
         return TRUE;
     }
-    func_02038724(r);
+    WhSetError(r);
     return FALSE;
 }
 
 // Shuts the link down; if that cannot be started the link enters the failed state.
-void func_0203970c(void) {
-    if (func_02039408() == 0) {
-        func_020386c0(WH_SYSSTATE_FAILED);
+void WhShutDownOrFail(void) {
+    if (WhStartShutDown() == 0) {
+        WhSetSysState(WH_SYSSTATE_FAILED);
     }
 }
 
 // Ends the current connection according to the mode, then shuts the link down on failure.
-void func_02039728(void) {
-    if (data_020c8380.mUnk_38 == WH_SYSSTATE_IDLE) {
-        if (data_020c8380.mUnk_30 != 0) {
-            data_020c8380.mUnk_30("already WH_SYSSTATE_IDLE\n");
+void WhFinalize(void) {
+    if (gWirelessWork.mSysState == WH_SYSSTATE_IDLE) {
+        if (gWirelessWork.mPrintFunc != 0) {
+            gWirelessWork.mPrintFunc("already WH_SYSSTATE_IDLE\n");
         }
         return;
     }
-    if (data_020c8380.mUnk_30 != 0) {
-        data_020c8380.mUnk_30("WH_Finalize, state = %d\n", data_020c8380.mUnk_38);
+    if (gWirelessWork.mPrintFunc != 0) {
+        gWirelessWork.mPrintFunc("WH_Finalize, state = %d\n", gWirelessWork.mSysState);
     }
-    if (data_020c8380.mUnk_38 != WH_SYSSTATE_KEYSHARING && data_020c8380.mUnk_38 != WH_SYSSTATE_DATASHARING &&
-        data_020c8380.mUnk_38 != WH_SYSSTATE_CONNECTED) {
-        func_020386c0(WH_SYSSTATE_BUSY);
-        func_0203970c();
+    if (gWirelessWork.mSysState != WH_SYSSTATE_KEYSHARING && gWirelessWork.mSysState != WH_SYSSTATE_DATASHARING &&
+        gWirelessWork.mSysState != WH_SYSSTATE_CONNECTED) {
+        WhSetSysState(WH_SYSSTATE_BUSY);
+        WhShutDownOrFail();
         return;
     }
-    func_020386c0(WH_SYSSTATE_BUSY);
-    switch (data_020c8380.mUnk_34) {
-        case 3:
-            if (func_020392f0() == 0) {
-                func_0203970c();
+    WhSetSysState(WH_SYSSTATE_BUSY);
+    switch (gWirelessWork.mConnectMode) {
+        case WH_CONNECT_MODE_CHILD_KEYSHARING:
+            if (WhEndChildKeyShareAndMp() == 0) {
+                WhShutDownOrFail();
             }
             return;
-        case 1:
-        case 5:
-            if (func_02039348() == 0) {
-                func_0203970c();
+        case WH_CONNECT_MODE_CHILD:
+        case WH_CONNECT_MODE_CHILD_DATASHARING:
+            if (WhEndChildMp() == 0) {
+                WhShutDownOrFail();
             }
             return;
-        case 2:
-            if (func_02038c7c() == 0) {
-                func_0203970c();
+        case WH_CONNECT_MODE_PARENT_KEYSHARING:
+            if (WhEndParentKeyShareAndMp() == 0) {
+                WhShutDownOrFail();
             }
             return;
-        case 0:
-        case 4:
-            if (func_02038ce0() == 0) {
-                func_0203970c();
+        case WH_CONNECT_MODE_PARENT:
+        case WH_CONNECT_MODE_PARENT_DATASHARING:
+            if (WhEndParentMp() == 0) {
+                WhShutDownOrFail();
             }
             return;
         default:
@@ -823,6 +828,6 @@ void func_02039728(void) {
 }
 
 // The id the link assigned to this unit.
-u16 func_0203981c(void) {
-    return data_020c8380.mUnk_04;
+u16 WhGetAid(void) {
+    return gWirelessWork.mAid;
 }

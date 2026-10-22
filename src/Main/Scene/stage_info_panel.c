@@ -299,7 +299,7 @@ static const s32 data_02050038[STAGE_MAX] = {
 void DrawTextPanel(void) {
     u32 v;
 
-    func_0200b928(&data_020b6ee0.mTextOffsetY, 0, 4);
+    EaseToward(&data_020b6ee0.mTextOffsetY, 0, 4);
     DrawText(0x30, 0x11, data_0201a61c, GetText(0x4b), 0, 0xf0, 0xa, 2);
     v = data_020b6ee0.mProgressState;
     if (v > 2 && v < 99) {
@@ -362,15 +362,15 @@ void UpdateTextAndStageInfo(void) {
     }
     if (data_020b6ee0.mPanelState <= 1) {
         if (data_020b6ee0.mTextId != -1) {
-            func_0200b928(&p->mTextButtonOffsetY, 0, 4);
+            EaseToward(&p->mTextButtonOffsetY, 0, 4);
             func_0200bc50(0x80, p->mTextButtonOffsetY + 0xc0, 0, 0, 0x8c, 0x112, 0xd1, 0, 0, 0, 0, 0x167, 1, 0, 0, 0);
-            if (func_0200bd80(0x20000000, 0x112)) {
+            if (TestButton(0x20000000, 0x112)) {
                 SetTextAndImage(-2, 0, 0);
             }
         } else if (data_020b6ee0.mSavedTextId != -1) {
-            func_0200b928(&p->mTextButtonOffsetY, 0, 4);
+            EaseToward(&p->mTextButtonOffsetY, 0, 4);
             func_0200bc50(0x80, p->mTextButtonOffsetY + 0xc0, 0, 0, 0x8c, 0x111, 0xd3, 0, 0, 0, 0, 0x167, 1, 0, 0, 0);
-            if (func_0200bd80(0x20000000, 0x111)) {
+            if (TestButton(0x20000000, 0x111)) {
                 SetTextAndImage(-3, 0, 0);
             }
         }
@@ -391,7 +391,7 @@ void func_02011ebc(StageRec *rec, u8 index, u32 flags) {
     rec->mDistancePerFrame = 0;
     rec->mUnk_21c = 0;
     rec->mUnk_134 |= flags;
-    func_0202f110(data_0204fef0[index], 100, 0, 0x40, 0xffff, 0);
+    PlayWaveKeepAlive(data_0204fef0[index], 100, 0, 0x40, 0xffff, 0);
 }
 
 int MapRangeToIndex(int value, int low, int high, int steps) {
@@ -651,7 +651,7 @@ void UpdateGauge(u8 a, int b) {
     }
     if (data_020b6ee0.mUnk_a143 != 0) {
         if (data_020b6ee0.mUnk_a143 == 1) {
-            func_0202f110(0xdc, 100, 0, 0x40, 0xffff, 0);
+            PlayWaveKeepAlive(0xdc, 100, 0, 0x40, 0xffff, 0);
             data_020b6ee0.mUnk_a145 = 0;
             data_020b6ee0.mUnk_a140 = data_020b6ee0.mUnk_a13f;
             data_020b6ee0.mUnk_a14d = 1;
@@ -714,7 +714,7 @@ void UpdatePanel(int stage) {
             if (gSystemState.mFlags & 0x800) {
                 OS_Terminate();
             }
-            func_0200b928(&fade->mPanelButtonOffsetX, 0, 4);
+            EaseToward(&fade->mPanelButtonOffsetX, 0, 4);
             func_0200bbd0(fade->mPanelButtonOffsetX + 0xff, 0x5f, 0, 0, 0x8c, 0x5a, 0xc8, 0, 0, 0, 0, 0x167, 1, 0, 0, 0,
                           &data_020b6ee0.mUnk_a56f);
             func_0200bbd0(fade->mPanelButtonOffsetX + 0xff, 0x7d, 0, 0, 0x8c, 0xd, 0xc4, 0, 0, 0, 0, 0x167, 1, 0, 0, 0,
@@ -723,7 +723,7 @@ void UpdatePanel(int stage) {
             bottom = -1;
             break;
         case 1:
-            func_0200b928(&fade->mPanelButtonOffsetX, 0, 4);
+            EaseToward(&fade->mPanelButtonOffsetX, 0, 4);
             func_0200bbd0(fade->mPanelButtonOffsetX + 0xff, 0x23, 0, 0, 0x8c, 0xa, 0xbc, 0, 0, 0, 0, 0x167, 1, 0, 0, 0,
                           &data_020b6ee0.mUnk_a56c);
             func_0200bbd0(fade->mPanelButtonOffsetX + 0xff, 0x5f, 0, 0, 0x8c, 0xb, 0xc8, 0, 0, 0, 0, 0x167, 1, 0, 0, 0,
@@ -767,8 +767,8 @@ void UpdatePanel(int stage) {
                 DrawText(0x16, y, font, GetText(data_020b6ee0.mUnk_100e[id] + 0x229), 0, 0xf0, 0x10, 1);
             }
             DrawSprite(0x800041, 0x10, data_020b6ee0.mPanelRow * 0x16 + 0x54, 0x5f, 1);
-            if (func_0200bdac(0x80000000, 0x19, 0x1b) == 1) {
-                id = (u16) data_020c1d60.mUnk_800.mUnk_100.mUnk_04 - 0x19;
+            if (TestButtonRange(0x80000000, 0x19, 0x1b) == 1) {
+                id = (u16) gTouchInput.mTrail.mTouchState.mButtonState - 0x19;
                 if (data_020b6ee0.mPanelRow != id) {
                     data_020b6ee0.mPanelRow = id;
                 }
@@ -882,7 +882,7 @@ void UpdatePanel(int stage) {
                 rec->mUnk_21c = (0.0f - rec->mUnk_21c) * speed / 64.0f;
                 rec->mPos.y = ground;
                 if (rec->mUnk_21c >= 5000.0f) {
-                    func_0202f110(0x27, 100, 0, 0x40, 0xffff, 0);
+                    PlayWaveKeepAlive(0x27, 100, 0, 0x40, 0xffff, 0);
                 }
             }
             UpdateGauge(kind, value);
@@ -930,8 +930,9 @@ void UpdatePanel(int stage) {
     if (bottom >= 0) {
         func_0200bc50(0, 0xa1, 0, 0, 0x8c, bottom, 0xe, 0, 0, 0, 0, 0x5a, 1, 0, 0, 0);
     }
-    key = (u16) data_020c1d60.mUnk_800.mUnk_100.mUnk_04;
-    if ((data_020c1d60.mUnk_800.mUnk_100.mUnk_04 & 0x20000000) && key != 0xffff && data_020b6ee0.mButtonsEnabled == 1) {
+    key = (u16) gTouchInput.mTrail.mTouchState.mButtonState;
+    if ((gTouchInput.mTrail.mTouchState.mButtonState & 0x20000000) && key != 0xffff &&
+        data_020b6ee0.mButtonsEnabled == 1) {
         switch (key) {
             case 0xa:
                 data_020b6ee0.mPanelState = 2;
@@ -1205,7 +1206,7 @@ void UpdateSlotScreen(void) {
             }
             data_020b6ee0.mSelectedSlotIndex = i;
             data_020b13b0.mEntryCursor = -1;
-            func_0202f110(0x167, 0x64, 0, 0x40, 0xffff, 0);
+            PlayWaveKeepAlive(0x167, 0x64, 0, 0x40, 0xffff, 0);
         }
         x += 0x2d;
     }
@@ -1225,7 +1226,7 @@ void UpdateSlotScreen(void) {
                 data_020b6ee0.mSelectedStageIndex = s;
             }
             data_020b13b0.mEntryCursor = -1;
-            func_0202f110(0x167, 0x64, 0, 0x40, 0xffff, 0);
+            PlayWaveKeepAlive(0x167, 0x64, 0, 0x40, 0xffff, 0);
         }
         func_0200bc50(0x38, 0x77, 0, 0, 0xc8, 0x200, 0x11d2, GetText(0x29), data_0201a61c, 2, 0, 0x17d, 1, 0, 0, 0);
         ox += 0x80;
@@ -1249,27 +1250,27 @@ void LeaveSlotScreen(void) {
 void UpdateSlotScreenInput(void) {
     int i;
 
-    if (func_0200bd80(0x20000000, 0x109) && data_020b6ee0.mUnslottedVisible == 1) {
+    if (TestButton(0x20000000, 0x109) && data_020b6ee0.mUnslottedVisible == 1) {
         data_020b13b0.mUnslottedStageIndex = data_020b6ee0.mSelectedStageIndex =
             FindNextUnslottedStage(data_020b13b0.mUnslottedStageIndex);
-        func_0202f110(0x167, 0x64, 0, 0x40, 0xffff, 0);
+        PlayWaveKeepAlive(0x167, 0x64, 0, 0x40, 0xffff, 0);
     }
-    if (func_0200bd80(0x20000000, 0x110) && data_020b6ee0.mUnslottedVisible == 1) {
+    if (TestButton(0x20000000, 0x110) && data_020b6ee0.mUnslottedVisible == 1) {
         data_020b13b0.mUnslottedStageIndex = data_020b6ee0.mSelectedStageIndex =
             FindPrevUnslottedStage(data_020b13b0.mUnslottedStageIndex);
-        func_0202f110(0x167, 0x64, 0, 0x40, 0xffff, 0);
+        PlayWaveKeepAlive(0x167, 0x64, 0, 0x40, 0xffff, 0);
     }
-    if (func_0200bd80(0x20000000, 0x200)) {
+    if (TestButton(0x20000000, 0x200)) {
         data_020b13b0.mUnslottedStageIndex =
             SetSlotStage(data_020b6ee0.mSelectedSlotIndex, data_020b13b0.mUnslottedStageIndex);
         data_020b13b0.mSlotChanged = 1;
     }
-    if (func_0200bd80(0x20000000, 0x101)) {
+    if (TestButton(0x20000000, 0x101)) {
         data_020b6ee0.mUnk_a147 = 1;
         PushState(10);
         PopState();
     }
-    if (func_0200bd80(0x20000000, 0x102)) {
+    if (TestButton(0x20000000, 0x102)) {
         for (i = 0; i < 3; i++) {
             SetSlotStage(i, gSavedSlotStages[i]);
         }
@@ -1435,7 +1436,7 @@ void func_02013f74(int stage, int *cursor, int x, int y, int mode, int flags) {
                     DrawSprite(UpdateSprite(&data_020b6ee0.mSelectionSprite), xx, y, 0x93, mode);
                 }
             }
-            if (func_0200bd80(0x80000000, 0x500 + i)) {
+            if (TestButton(0x80000000, 0x500 + i)) {
                 *cursor = i;
             }
             x += 0x1a;
@@ -1594,7 +1595,7 @@ void RunSaveScreen(int a) {
     if (OpenPromptScreen(&local, 0) == 1) {
         timer = 0x78;
         fired = 0;
-        func_0202eeec();
+        StopAllWaves();
         // running is 1 here: VOLUME_FADE_DOWN.
         StartVolumeFade(running);
         do {

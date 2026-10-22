@@ -7,39 +7,43 @@
 extern "C" {
 #endif
 
-// Work area of the link status code: +4 is the bit set of finished steps (see func_02039c88); +0x10 and +0x18 are the
-// two buffers of the outgoing message; +0x8, +0xc, +0x10, +0x14, +0x18 and +0x1c are released when the link shuts down.
+// Work area of the link status code: mFlags is the bit set of finished steps (see WaitForLinkStep); mSendBuffer and
+// mOutMessage are the two buffers of the outgoing message; the six pointers are released when the link shuts down.
 // The code of link_indicator.c reaches the members through this object's base (offset in the load), while
 // wireless_helper.c and system_init.c / comm_link.c name the flags and buffers as their own objects (data_020c9e04,
 // data_020c9e10, data_020c9e14 and data_020c9e1c in system_init.h).
-// The block is 32-byte aligned, and the compiler does not optimise the functions that use it (func_02039ba8 keeps an
-// unused test and func_02039c88's loop is not rotated).
-typedef struct Unk_LinkBuffers {
+// The block is 32-byte aligned, and the compiler does not optimise the functions that use it (ShutDownLink keeps an
+// unused test and WaitForLinkStep's loop is not rotated).
+typedef struct LinkBuffers {
     u32 mUnk_00;
-    vu16 mUnk_04;
+    vu16 mFlags;
     void *mUnk_08;
     void *mUnk_0c;
-    void *mUnk_10;
-    u16 *mUnk_14;
-    u8 *mUnk_18;
-    u8 *mUnk_1c;
-} Unk_LinkBuffers;
+    // The data-sharing send and receive buffers (not gWhSendBuffer / gWhRecvBuffer).
+    void *mSendBuffer;
+    u16 *mRecvBuffer;
+    // Records handed out by ReserveLinkMessage (gCommSendData instead under the 0x600 flags), copied into mSendBuffer
+    // by EndLinkMessage.
+    u8 *mOutMessage;
+    // Copies of the received entries, 0x54 bytes per aid.
+    u8 *mRecvCopy;
+} LinkBuffers;
 
-extern Unk_LinkBuffers data_020c9e00 __attribute__((aligned(32)));
+extern LinkBuffers gLinkBuffers __attribute__((aligned(32)));
 
 void func_0203982c(u16 code);
-void func_02039830(int id, u32 shift, u32 index, u32 attr2, u32 attr0, int rotate, int screen);
-void func_02039908(u32 attr2, u32 attr0, int screen);
-u32 func_02039a64(void);
-void func_02039a94(void);
+void WriteIndicatorOam(int id, u32 shift, u32 index, u32 attr2, u32 attr0, int rotate, int screen);
+void UpdateCommIndicator(u32 attr2, u32 attr0, int screen);
+u32 GetIndicatorLayer(void);
+void UpdateIndicator(void);
 void func_02039b70(void);
-void func_02039ba8(void);
-BOOL func_02039c88(u32 mask, u32 timeout);
-u8 *func_02039cd4(u32 size);
-void func_02039d24(void);
-void func_02039d74(Unk_WirelessMsg *msg);
-void func_02039d98(Unk_WirelessMsg *msg);
-void func_02039db8(Unk_WirelessMsg *msg);
+void ShutDownLink(void);
+BOOL WaitForLinkStep(u32 mask, u32 timeout);
+u8 *ReserveLinkMessage(u32 size);
+void EndLinkMessage(void);
+void PacketSentCallback(WirelessMsg *msg);
+void FirstShutDownStepCallback(WirelessMsg *msg);
+void SecondShutDownStepCallback(WirelessMsg *msg);
 
 #ifdef __cplusplus
 }

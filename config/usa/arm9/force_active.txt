@@ -15,4 +15,4 @@ data_020cdbec
 # Exception unit: 0x20-byte object between its state and the context block; nothing references it.
 data_020ca9c0
 # Wireless name table that nothing references.
-data_02063cc8
+gWmApiIdNames

@@ -46,26 +46,35 @@ typedef struct Pair {
     Piece mPiece[2];
     Vec2i mPos;
     u8 mDir;
-    s32 mUnk_234;
-    u32 mUnk_238;
-    s32 mUnk_23c;
-    s16 mUnk_240;
-    u8 mUnk_242;
+    s32 mSplit;
+    // Value of gSystemState.mElapsedFrames when the pair split.
+    u32 mSplitFrame;
+    s32 mSpeed;
+    // -1 until the pair first lands; the pieces are placed when it counts down to 0.
+    s16 mLandTimer;
+    u8 mLandResetsRemaining;
 } Pair;
 
 #define BOARD_COLS 6
 #define BOARD_ROWS 10
 #define PIECE_LIST_SIZE 60
 
+// Where the second piece of a pair sits from the first (Pair.mDir): above, right, below, left; turning clockwise
+// steps through them in this order.
+#define PAIR_DIR_UP 0
+#define PAIR_DIR_RIGHT 1
+#define PAIR_DIR_DOWN 2
+#define PAIR_DIR_LEFT 3
+
 typedef struct Board {
-    u8 mUnk_00;
-    u8 mUnk_01;
+    u8 mTableRow;
+    u8 mTypeCount;
     u8 mUnk_02[2];
     s32 mUnk_04;
-    u32 mUnk_08;
+    u32 mTimer;
     s32 mUnk_0c;
-    u32 mUnk_10;
-    u32 mUnk_14;
+    u32 mScore;
+    u32 mScoreThreshold;
     u8 mUnk_18;
     u8 mUnk_19[0x194 - 0x19];
     StageInfo mStage;
@@ -75,18 +84,20 @@ typedef struct Board {
     s32 mUnk_4300;
     s32 mUnk_4304;
     s32 mUnk_4308;
-    u16 mUnk_430c;
+    u16 mRemovingCount;
     u8 mUnk_430e[0x4310 - 0x430e];
     Piece mList[PIECE_LIST_SIZE];
     u16 mCount;
-    Pair mUnk_83c4;
-    Pair mUnk_8608;
-    Sprite mUnk_884c;
-    u8 mUnk_8950;
+    Pair mPair;
+    Pair mNextPair;
+    Sprite mPairMarker;
+    u8 mPairState;
     u8 mUnk_8951[3];
-    Vec2i mUnk_8954;
-    Vec2i mUnk_895c;
-    s32 mUnk_8964;
+    // Cells (x column, y row) where PlacePiece put the pair's first and second piece; swapped when the pair splits
+    // after placing its first piece.
+    Vec2i mFirstPieceCell;
+    Vec2i mSecondPieceCell;
+    s32 mFallSpeed;
     s16 mUnk_8968;
     u16 mUnk_896a;
     u16 mUnk_896c;
@@ -95,60 +106,60 @@ typedef struct Board {
     u16 mUnk_8972;
     s32 mUnk_8974;
     s32 mUnk_8978[6];
-    s32 mUnk_8990;
-    s32 mUnk_8994;
+    s32 mPieceScore;
+    s32 mRemovedCount;
 } Board;
 
-int func_02003194(int a, int b);
-void func_020031ac(s8 col, s8 row, Vec2i *out);
-void func_020031c8(const Vec2i *pos, s8 *col, s8 *row);
+int LookupFallingBlocksValue(int a, int b);
+void CellToBoardPos(s8 col, s8 row, Vec2i *out);
+void BoardPosToCell(const Vec2i *pos, s8 *col, s8 *row);
 u16 func_020031f0(void);
 void func_02003218(u8 *p);
 u16 func_02003240(void);
 void func_02003258(u8 *p);
-u8 func_0200327c(u8 lo, u8 hi);
-void func_020032b4(Piece *p, u8 type);
-void func_020032e4(Piece *p, int x, int y, int mode, int flag);
-void func_02003338(const Piece *src, u8 col, u8 row, int unused, Vec2i *out);
-void func_020033ac(Piece *p);
-BOOL func_02003430(Piece *p);
-void func_02003488(Pair *pr);
-void func_020034ac(Pair *pr);
-void func_020034f8(const Pair *pr, Vec2i *out);
-void func_0200355c(Pair *pr, Piece *unused);
-void func_020035b0(Pair *pr);
-void func_02003670(Pair *pr);
-void func_0200373c(Pair *pr, u8 dir);
-void func_02003924(Pair *pr);
-void func_0200396c(Pair *pr);
-void func_020039bc(void);
-void func_02003a5c(void);
-void func_02003aa8(Pair *pr, int a, int b);
-BOOL func_02003b3c(Pair *pr);
-void func_02003e50(Pair *pr);
-BOOL func_02003e60(void);
-void func_02003e80(const Piece *src);
-BOOL func_02003ed8(u8 col, u8 row);
-void func_02003f08(u8 col, u8 row);
-void func_02003f2c(int level);
-void func_02003fac(u8 type);
-void func_0200400c(u8 col, u8 row);
-BOOL func_02004050(u8 col, u8 row, u8 col2, u8 row2);
-void func_020040e8(u8 col, u8 row);
-void func_0200420c(void);
-void func_02004230(void);
+u8 PickPieceType(u8 lo, u8 hi);
+void SetPieceType(Piece *p, u8 type);
+void DrawPiece(Piece *p, int x, int y, int mode, int flag);
+void PlacePiece(const Piece *src, u8 col, u8 row, int unused, Vec2i *out);
+void StartPieceRemoval(Piece *p);
+BOOL DropPiece(Piece *p);
+void ResetLandTimer(Pair *pr);
+void SwapPairPieces(Pair *pr);
+void GetPairSecondPos(const Pair *pr, Vec2i *out);
+void LandPair(Pair *pr, Piece *unused);
+void MovePairLeft(Pair *pr);
+void MovePairRight(Pair *pr);
+void TurnPairTo(Pair *pr, u8 dir);
+void TurnPairClockwise(Pair *pr);
+void TurnPairCounterclockwise(Pair *pr);
+void PickNextPair(void);
+void TakeNextPair(void);
+void DrawPair(Pair *pr, int a, int b);
+BOOL DropPair(Pair *pr);
+void DropPairUntilLanded(Pair *pr);
+BOOL IsBoardSettled(void);
+void AddFallingPiece(const Piece *src);
+BOOL IsCellEmpty(u8 col, u8 row);
+void ClearCell(u8 col, u8 row);
+void FillStartingBoard(int level);
+void RemovePiecesOfType(u8 type);
+void StartPieceFall(u8 col, u8 row);
+BOOL PiecesMatch(u8 col, u8 row, u8 col2, u8 row2);
+void RemoveMatchesAt(u8 col, u8 row);
+void RemoveAllMatches(void);
+void StartAllPieceFalls(void);
 
 // The board, the falling pairs and the round's counters.
-extern Board data_02064828;
+extern Board gBoard;
 
-void func_02004254(void);
-void func_02004304(void);
-void func_0200443c(int a);
-void func_0200445c(void);
-void func_02004720(void);
-void func_02004768(void);
-void func_02004930(void);
-int func_02004940(u8 stage);
+void DrawBoard(void);
+void UpdateBoard(void);
+void EndFallingBlocks(int a);
+void SetupFallingBlocks(void);
+void DrawFallingBlocks(void);
+void UpdateFallingBlocks(void);
+void LeaveFallingBlocks(void);
+int GetFallingBlocksScoreThreshold(u8 stage);
 
 #ifdef __cplusplus
 }

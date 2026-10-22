@@ -18,13 +18,13 @@
 #include <nitro/gx.h>
 #include <nitro/os.h>
 
-void func_0200c034(MoveObj *o, int sprite, int model, const Vec2i *pos, int e, int f, int g) {
+void SetupMoveObj(MoveObj *o, int sprite, int model, const Vec2i *pos, int e, int f, int g) {
     o->mActive = 1;
     o->mX = pos->x << 8;
     o->mY = pos->y << 8;
     o->mRepeat = g;
     o->mUnk_294 = e;
-    o->mUnk_290 = f;
+    o->mLayer = f;
     o->mSpeed = 0;
     o->mFlags = 0;
     o->mArrived = 0;
@@ -41,11 +41,11 @@ void func_0200c034(MoveObj *o, int sprite, int model, const Vec2i *pos, int e, i
         o->mFlags |= 2;
         o->mScale = 0x1000;
     }
-    func_0200c174(o, 0);
+    UpdateMoveObj(o, 0);
     ClearAnimTracks();
 }
 
-void func_0200c0dc(MoveObj *o, int speed, const Vec2i *target, int limit) {
+void StartMoveObj(MoveObj *o, int speed, const Vec2i *target, int limit) {
     o->mSpeed = speed;
     o->mTargetX = target->x << 8;
     o->mTargetY = target->y << 8;
@@ -56,7 +56,7 @@ void func_0200c0dc(MoveObj *o, int speed, const Vec2i *target, int limit) {
     o->mArrived = 0;
 }
 
-void func_0200c124(MoveObj *o, u16 lo, u16 hi) {
+void SetMoveObjTrail(MoveObj *o, u16 lo, u16 hi) {
     u16 i;
     int count = hi - lo;
     if (count >= TRAIL_LEN) {
@@ -72,12 +72,12 @@ void func_0200c124(MoveObj *o, u16 lo, u16 hi) {
     }
 }
 
-void func_0200c164(MoveObj *o) {
+void StopMoveObj(MoveObj *o) {
     o->mActive = 0;
     o->mSpeed = 0;
 }
 
-int func_0200c174(MoveObj *o, const Vec2i *pos) {
+int UpdateMoveObj(MoveObj *o, const Vec2i *pos) {
     int result = 0;
     if (o->mActive != 0) {
         int keep = 1;
@@ -162,38 +162,41 @@ int func_0200c174(MoveObj *o, const Vec2i *pos) {
     return result;
 }
 
-void func_0200c3d8(MoveObj *o, int *outX, int *outY, int *state) {
+// The screen position of the object. When y has passed the edge of *layer's screen toward the other screen
+// (y < -0x1e00 or y > 0xde00, depending on which screen is on top), it switches *layer to the other layer and moves the
+// y position by 252.
+void GetMoveObjDrawPos(MoveObj *o, int *outX, int *outY, int *layer) {
     int flag = IsLcdSwapped();
     *outX = o->mX >> 8;
     *outY = o->mY >> 8;
-    if (*state == 1) {
+    if (*layer == 1) {
         if ((flag && o->mY > 0xde00) || (!flag && o->mY < -0x1e00)) {
-            *state = 2;
+            *layer = 2;
             *outY = flag ? *outY - 252 : *outY + 252;
             return;
         }
     }
-    if (*state == 2) {
+    if (*layer == 2) {
         if ((flag && o->mY < -0x1e00) || (!flag && o->mY > 0xde00)) {
-            *state = 1;
+            *layer = 1;
             *outY = flag ? *outY + 252 : *outY - 252;
         }
     }
 }
 
-void func_0200c470(MoveObj *o) {
+void DrawMoveObj(MoveObj *o) {
     MoveObj tmp;
     DrawParams params;
     int sx;
     int sy;
-    int state;
+    int layer;
     int i;
     if (o->mActive != 0) {
         if (o->mFlags & 1) {
-            state = o->mUnk_290;
+            layer = o->mLayer;
             if (o->mSpeed == 0 || o->mUnk_2b4 != 0 || o->mX != o->mTargetX || o->mY != o->mTargetY) {
-                func_0200c3d8(o, &sx, &sy, &state);
-                func_0202de80(o->mSprite.mUnk_04, o->mX >> 8, sy, o->mUnk_294, -1, state);
+                GetMoveObjDrawPos(o, &sx, &sy, &layer);
+                func_0202de80(o->mSprite.mUnk_04, o->mX >> 8, sy, o->mUnk_294, -1, layer);
             }
             if (o->mTrailEnd - o->mTrailStart > 0) {
                 for (i = 0; i < o->mTrailEnd - o->mTrailStart; i++) {
@@ -203,7 +206,7 @@ void func_0200c470(MoveObj *o) {
                     tmp.mX = o->mTrail[i].x;
                     tmp.mY = o->mTrail[i].y;
                     tmp.mUnk_294 = o->mUnk_294 + 1 >= 255 ? 255 : o->mUnk_294 + 1;
-                    func_0200c470(&tmp);
+                    DrawMoveObj(&tmp);
                 }
             }
         }

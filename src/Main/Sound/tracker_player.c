@@ -9,7 +9,7 @@
 #include <stdio.h>
 
 // Periods per note for each of the 16 fine-tune steps.
-const u16 data_02051844[16][96] = {
+const u16 gNotePeriods[16][96] = {
     {
         0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
         0,     0,     0,     0,     0,     0,     0,     0,     0x716, 0x6b0, 0x650, 0x5f4, 0x5a0, 0x54c, 0x500, 0x4b8,
@@ -140,7 +140,7 @@ const u16 data_02051844[16][96] = {
     },
 };
 // Playback rates of the linear note scale: 768 entries per octave.
-const u32 data_02050c44[768] = {
+const u32 gPeriodRates[768] = {
     0x82ac0, 0x828dd, 0x826fa, 0x82518, 0x82337, 0x82156, 0x81f75, 0x81d95, 0x81bb5, 0x819d6, 0x817f7, 0x81618, 0x8143a,
     0x8125c, 0x8107f, 0x80ea2, 0x80cc6, 0x80aea, 0x8090f, 0x80733, 0x80559, 0x8037f, 0x801a5, 0x7ffcc, 0x7fdf3, 0x7fc1a,
     0x7fa42, 0x7f86a, 0x7f693, 0x7f4bc, 0x7f2e6, 0x7f110, 0x7ef3a, 0x7ed65, 0x7eb91, 0x7e9bc, 0x7e7e9, 0x7e615, 0x7e442,
@@ -203,28 +203,28 @@ const u32 data_02050c44[768] = {
     0x41651,
 };
 // Volume levels for the sound command, indexed 0..64.
-const s32 data_02050b40[65] = {
+const s32 gVolumeTable[65] = {
     -723, -361, -301, -266, -241, -221, -206, -192, -181, -170, -161, -153, -145, -138, -132, -126, -120,
     -115, -110, -105, -101, -97,  -93,  -89,  -85,  -82,  -78,  -75,  -72,  -69,  -66,  -63,  -60,  -58,
     -55,  -52,  -50,  -48,  -45,  -43,  -41,  -39,  -37,  -35,  -33,  -31,  -29,  -27,  -25,  -23,  -21,
     -20,  -18,  -16,  -15,  -13,  -12,  -10,  -9,   -7,   -6,   -4,   -3,   -1,   0,
 };
 // One period of a sine wave, 64 entries with amplitude 255; every channel points at it twice.
-const s16 data_02050ac0[64] = {
+const s16 gSineWave[64] = {
     0,    0x18, 0x31, 0x4a, 0x61, 0x78, 0x8d, 0xa1, 0xb4, 0xc5, 0xd4, 0xe0, 0xeb, 0xf4, 0xfa, 0xfd,
     0xff, 0xfd, 0xfa, 0xf4, 0xeb, 0xe0, 0xd4, 0xc5, 0xb4, 0xa1, 0x8d, 0x78, 0x61, 0x4a, 0x31, 0x18,
     0,    -24,  -49,  -74,  -97,  -120, -141, -161, -180, -197, -212, -224, -235, -244, -250, -253,
     -255, -253, -250, -244, -235, -224, -212, -197, -180, -161, -141, -120, -97,  -74,  -49,  -24,
 };
 // A curve falling from 255 to -255 over 64 entries.
-const s16 data_02050a40[64] = {
+const s16 gFallingWave[64] = {
     0xff, 0xfe, 0xfd, 0xfb, 0xfa, 0xf7, 0xf4, 0xef, 0xeb, 0xe5, 0xe0, 0xda, 0xd4, 0xcc, 0xc5, 0xbc,
     0xb4, 0xaa, 0xa1, 0x97, 0x8d, 0x82, 0x78, 0x6c, 0x61, 0x55, 0x4a, 0x3d, 0x31, 0x24, 0x18, 0xc,
     0,    -12,  -24,  -36,  -49,  -61,  -74,  -85,  -97,  -108, -120, -130, -141, -151, -161, -170,
     -180, -188, -197, -204, -212, -218, -224, -229, -235, -239, -244, -247, -250, -251, -253, -254,
 };
 // A square wave: 32 entries of -255, then 32 of 255.
-const s16 data_020509c0[64] = {
+const s16 gSquareWave[64] = {
     -255, -255, -255, -255, -255, -255, -255, -255, -255, -255, -255, -255, -255, -255, -255, -255,
     -255, -255, -255, -255, -255, -255, -255, -255, -255, -255, -255, -255, -255, -255, -255, -255,
     0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
@@ -234,21 +234,23 @@ const s16 data_020509c0[64] = {
 // Interrupt mask bit of the timer that drives the player.
 #define TRACKER_IRQ_TIMER2 0x20
 
-TrackerPlayer data_020c6b14;
+TrackerPlayer gTrackerPlayer;
 
 // Wave shapes the vibrato and tremolo effects select (low three bits of the parameter).
-const s16 *data_02063c9c[8] = {data_02050ac0, data_02050a40, data_020509c0, data_02050ac0,
-                               data_02050ac0, data_02050a40, data_020509c0, data_02050ac0};
+const s16 *gEffectWaves[8] = {gSineWave, gFallingWave, gSquareWave, gSineWave,
+                              gSineWave, gFallingWave, gSquareWave, gSineWave};
 
 #pragma thumb off
 
-// Loads song a (a file id) and starts it with volume c (at most 0x80; 0 while gSystemState.mUnk_493 is 0). The song
-// already loaded with nothing pending only takes the new volume. b is the number added to each sample name's number to
-// get the sample's file id (0 keeps the last one); d goes to func_02035c7c. With e == 1 while a song plays the request
-// is stored for func_020360f4 to replay. A new song's file gives the header bytes, the order table, the patterns (a
-// cell byte with bit 7 set says which of the five bytes follow; the others become 0xff, 0, 0, 0xff, 0), the instruments
-// with their two envelopes, and their samples, whose data is loaded by the number in the sample's name.
-void func_02035108(u16 a, u16 b, u8 c, u16 d, int e, int f) {
+// Loads the song in file fileId and starts it with volume (at most 0x80; 0 while gSystemState.mUnk_493 is 0). The
+// song already loaded, with the global fade at TRACKER_GLOBAL_FADE_NONE and restart 0, only takes the new volume.
+// sampleFileBase is the number added to each sample name's number to get the sample's file id (0 keeps the last one);
+// startOrder goes to StartPlayback. With fadeFirst == 1 while a song plays the request is stored and the global fade
+// started (TRACKER_GLOBAL_FADE_TO_PENDING), for UpdateTracker to play once it is done. A new song's file gives the
+// header bytes, the order table, the patterns (a cell byte with bit 7 set says which of the five bytes follow; the
+// others become 0xff, 0, 0, 0xff, 0), the instruments with their two envelopes, and their samples, whose data is
+// loaded by the number in the sample's name.
+void PlayTrack(u16 fileId, u16 sampleFileBase, u8 volume, u16 startOrder, int fadeFirst, int restart) {
     u8 name[0x17];
     u8 *patterns;
     TrackerInstrument *instruments;
@@ -261,91 +263,93 @@ void func_02035108(u16 a, u16 b, u8 c, u16 d, int e, int f) {
     TrackerSample *samples;
     u32 left;
 
-    if (c > 0x80) {
+    if (volume > 0x80) {
         OS_Terminate();
     }
     if (gSystemState.mUnk_493 == 0) {
-        c = 0;
+        volume = 0;
     }
-    if (a == data_020c6b14.mUnk_172e && data_020c6b14.mUnk_1748 == 0 && f == 0) {
-        func_02038578(c, 0);
+    if (fileId == gTrackerPlayer.mTrackFileId && gTrackerPlayer.mGlobalFadeState == TRACKER_GLOBAL_FADE_NONE &&
+        restart == 0) {
+        SetGlobalVolume(volume, 0);
         return;
     }
-    data_020c6b14.mUnk_1745 = 1;
-    if (b == 0) {
+    gTrackerPlayer.mLoading = 1;
+    if (sampleFileBase == 0) {
         if (!(gSystemState.mFlags & 0x1000000)) {
             OS_Terminate();
         }
-        b = data_020c6b14.mUnk_172c;
+        sampleFileBase = gTrackerPlayer.mSampleFileBase;
     } else {
-        data_020c6b14.mUnk_172c = b;
+        gTrackerPlayer.mSampleFileBase = sampleFileBase;
     }
-    if (data_020c6b14.mUnk_1724 == 1 && e == 1) {
-        if (data_020c6b14.mUnk_1748 != 3) {
-            data_020c6b14.mUnk_1748 = 1;
+    if (gTrackerPlayer.mPlaying == 1 && fadeFirst == 1) {
+        if (gTrackerPlayer.mGlobalFadeState != TRACKER_GLOBAL_FADE_DONE) {
+            gTrackerPlayer.mGlobalFadeState = TRACKER_GLOBAL_FADE_TO_PENDING;
         }
-        data_020c6b14.mUnk_1730 = a;
-        if (b != 0) {
-            data_020c6b14.mUnk_1732 = b;
+        gTrackerPlayer.mPendingTrackFileId = fileId;
+        if (sampleFileBase != 0) {
+            gTrackerPlayer.mPendingSampleFileBase = sampleFileBase;
         }
-        data_020c6b14.mUnk_1749 = c;
-        data_020c6b14.mUnk_173c = d;
-        data_020c6b14.mUnk_1734 = f;
-        data_020c6b14.mUnk_1745 = 0;
+        gTrackerPlayer.mPendingVolume = volume;
+        gTrackerPlayer.mPendingStartOrder = startOrder;
+        gTrackerPlayer.mPendingRestart = restart;
+        gTrackerPlayer.mLoading = 0;
         return;
     }
-    data_020c6b14.mUnk_1748 = 0;
-    if (a != data_020c6b14.mUnk_172e) {
-        func_020359d0(0);
+    gTrackerPlayer.mGlobalFadeState = TRACKER_GLOBAL_FADE_NONE;
+    if (fileId != gTrackerPlayer.mTrackFileId) {
+        ReleaseTrack(0);
     }
-    if (data_020c6b14.mUnk_1724 == 1) {
-        func_02035e40();
+    if (gTrackerPlayer.mPlaying == 1) {
+        StopPlayback();
     }
-    if (data_020c6b14.mUnk_172e == 0) {
-        if (a == 0) {
+    if (gTrackerPlayer.mTrackFileId == 0) {
+        if (fileId == 0) {
             OS_Terminate();
         }
-        data_020c6b14.mUnk_172e = a;
-        src = FindOrLoadCachedFile(data_020c6b14.mUnk_172e);
+        gTrackerPlayer.mTrackFileId = fileId;
+        src = FindOrLoadCachedFile(gTrackerPlayer.mTrackFileId);
         if (src == NULL) {
             OS_Terminate();
         }
-        data_020c6b14.mUnk_174a = (src[0x41] << 8) | src[0x40];
-        data_020c6b14.mUnk_174b = (src[0x43] << 8) | src[0x42];
-        data_020c6b14.mUnk_174c = (src[0x45] << 8) | src[0x44];
-        data_020c6b14.mUnk_174d = (src[0x47] << 8) | src[0x46];
-        data_020c6b14.mUnk_174e = (src[0x49] << 8) | src[0x48];
-        data_020c6b14.mUnk_174f = (src[0x4b] << 8) | src[0x4a];
-        data_020c6b14.mUnk_1750 = (src[0x4d] << 8) | src[0x4c];
-        data_020c6b14.mUnk_1751 = (src[0x4f] << 8) | src[0x4e];
+        gTrackerPlayer.mOrderCount = (src[0x41] << 8) | src[0x40];
+        gTrackerPlayer.mLoopOrder = (src[0x43] << 8) | src[0x42];
+        gTrackerPlayer.mChannelCount = (src[0x45] << 8) | src[0x44];
+        gTrackerPlayer.mPatternCount = (src[0x47] << 8) | src[0x46];
+        gTrackerPlayer.mInstrumentCount = (src[0x49] << 8) | src[0x48];
+        gTrackerPlayer.mFlags = (src[0x4b] << 8) | src[0x4a];
+        gTrackerPlayer.mInitialTicksPerRow = (src[0x4d] << 8) | src[0x4c];
+        gTrackerPlayer.mInitialTickRate = (src[0x4f] << 8) | src[0x4e];
         src += 0x50;
         for (i = 0; i < TRACKER_ORDER_COUNT; i++) {
-            data_020c6b14.mUnk_1752[i] = *src++;
+            gTrackerPlayer.mOrders[i] = *src++;
         }
 
-        patterns = Alloc(data_020c6b14.mUnk_174d * sizeof(TrackerPattern));
-        data_020c6b14.mUnk_04 = (TrackerPattern *) patterns;
+        patterns = Alloc(gTrackerPlayer.mPatternCount * sizeof(TrackerPattern));
+        gTrackerPlayer.mPatternBlock = (TrackerPattern *) patterns;
         if (patterns == NULL) {
             OS_Terminate();
         }
-        for (i = 0; i < data_020c6b14.mUnk_174d; i++) {
+        for (i = 0; i < gTrackerPlayer.mPatternCount; i++) {
             u32 row;
             u32 channel;
 
-            data_020c6b14.mUnk_10[i] = (TrackerPattern *) patterns;
+            gTrackerPlayer.mPatterns[i] = (TrackerPattern *) patterns;
             patterns += sizeof(TrackerPattern);
-            data_020c6b14.mUnk_10[i]->mUnk_00 = src[4];
-            data_020c6b14.mUnk_10[i]->mUnk_01 = (src[6] << 8) | src[5];
+            gTrackerPlayer.mPatterns[i]->mUnk_00 = src[4];
+            gTrackerPlayer.mPatterns[i]->mRowCount = (src[6] << 8) | src[5];
             size = (src[8] << 8) | src[7];
             src += 9;
             next = src;
-            data_020c6b14.mUnk_10[i]->mUnk_04 = Alloc(data_020c6b14.mUnk_174c * data_020c6b14.mUnk_10[i]->mUnk_01 * 5);
-            if (data_020c6b14.mUnk_10[i]->mUnk_04 == NULL) {
+            gTrackerPlayer.mPatterns[i]->mCells =
+                Alloc(gTrackerPlayer.mChannelCount * gTrackerPlayer.mPatterns[i]->mRowCount * 5);
+            if (gTrackerPlayer.mPatterns[i]->mCells == NULL) {
                 OS_Terminate();
             }
-            pattern = data_020c6b14.mUnk_10[i]->mUnk_04;
-            for (row = 0; row < data_020c6b14.mUnk_10[i]->mUnk_01; row++) {
-                for (channel = 0; channel < data_020c6b14.mUnk_174c; channel++) {
+            pattern = gTrackerPlayer.mPatterns[i]->mCells;
+            for (row = 0; row < gTrackerPlayer.mPatterns[i]->mRowCount; row++) {
+                for (channel = 0; channel < gTrackerPlayer.mChannelCount; channel++) {
                     u8 flags = *src++;
 
                     if (flags & 0x80) {
@@ -388,82 +392,82 @@ void func_02035108(u16 a, u16 b, u8 c, u16 d, int e, int f) {
             src = next + size;
         }
 
-        instruments = Alloc(data_020c6b14.mUnk_174e * sizeof(TrackerInstrument));
-        data_020c6b14.mUnk_08 = instruments;
+        instruments = Alloc(gTrackerPlayer.mInstrumentCount * sizeof(TrackerInstrument));
+        gTrackerPlayer.mInstrumentBlock = instruments;
         if (instruments == NULL) {
             OS_Terminate();
         }
-        left = data_020c6b14.mUnk_174e * 2;
+        left = gTrackerPlayer.mInstrumentCount * 2;
         samples = Alloc(left * sizeof(TrackerSample));
-        data_020c6b14.mUnk_0c = samples;
+        gTrackerPlayer.mSampleBlock = samples;
         if (samples == NULL) {
             OS_Terminate();
         }
-        for (i = 0; i < data_020c6b14.mUnk_174e; i++) {
+        for (i = 0; i < gTrackerPlayer.mInstrumentCount; i++) {
             u8 *start;
             u32 header;
 
             start = src;
-            data_020c6b14.mUnk_410[i] = instruments;
+            gTrackerPlayer.mInstruments[i] = instruments;
             instruments++;
             header = (src[3] << 24) | (src[2] << 16) | (src[1] << 8) | src[0];
-            data_020c6b14.mUnk_410[i]->mUnk_26c = (src[0x1c] << 8) | src[0x1b];
-            if (data_020c6b14.mUnk_410[i]->mUnk_26c != 0) {
+            gTrackerPlayer.mInstruments[i]->mSampleCount = (src[0x1c] << 8) | src[0x1b];
+            if (gTrackerPlayer.mInstruments[i]->mSampleCount != 0) {
                 src += 0x21;
                 for (j = 0; j < 0x60; j++) {
-                    data_020c6b14.mUnk_410[i]->mUnk_26d[j] = *src++;
+                    gTrackerPlayer.mInstruments[i]->mNoteSamples[j] = *src++;
                 }
                 for (j = 0; j < 12; j++) {
-                    data_020c6b14.mUnk_410[i]->mUnk_200.mUnk_00[j] = (src[1] << 8) | src[0];
-                    data_020c6b14.mUnk_410[i]->mUnk_200.mUnk_18[j] = (src[3] << 8) | src[2];
+                    gTrackerPlayer.mInstruments[i]->mVolumeEnvelope.mPointTickPos[j] = (src[1] << 8) | src[0];
+                    gTrackerPlayer.mInstruments[i]->mVolumeEnvelope.mPointValues[j] = (src[3] << 8) | src[2];
                     src += 4;
                 }
                 for (j = 0; j < 12; j++) {
-                    data_020c6b14.mUnk_410[i]->mUnk_236.mUnk_00[j] = (src[1] << 8) | src[0];
-                    data_020c6b14.mUnk_410[i]->mUnk_236.mUnk_18[j] = (src[3] << 8) | src[2];
+                    gTrackerPlayer.mInstruments[i]->mPanEnvelope.mPointTickPos[j] = (src[1] << 8) | src[0];
+                    gTrackerPlayer.mInstruments[i]->mPanEnvelope.mPointValues[j] = (src[3] << 8) | src[2];
                     src += 4;
                 }
-                data_020c6b14.mUnk_410[i]->mUnk_200.mUnk_30 = src[0];
-                data_020c6b14.mUnk_410[i]->mUnk_236.mUnk_30 = src[1];
-                data_020c6b14.mUnk_410[i]->mUnk_200.mUnk_31 = src[2];
-                data_020c6b14.mUnk_410[i]->mUnk_200.mUnk_32 = src[3];
-                data_020c6b14.mUnk_410[i]->mUnk_200.mUnk_33 = src[4];
-                data_020c6b14.mUnk_410[i]->mUnk_236.mUnk_31 = src[5];
-                data_020c6b14.mUnk_410[i]->mUnk_236.mUnk_32 = src[6];
-                data_020c6b14.mUnk_410[i]->mUnk_236.mUnk_33 = src[7];
-                data_020c6b14.mUnk_410[i]->mUnk_200.mUnk_34 = src[8];
-                data_020c6b14.mUnk_410[i]->mUnk_236.mUnk_34 = src[9];
-                data_020c6b14.mUnk_410[i]->mUnk_2cd = src[10];
-                data_020c6b14.mUnk_410[i]->mUnk_2ce = src[11];
-                data_020c6b14.mUnk_410[i]->mUnk_2cf = src[12];
-                data_020c6b14.mUnk_410[i]->mUnk_2d0 = src[13];
-                data_020c6b14.mUnk_410[i]->mUnk_2d2 = ((src[15] << 8) | src[14]) * 2;
+                gTrackerPlayer.mInstruments[i]->mVolumeEnvelope.mPointCount = src[0];
+                gTrackerPlayer.mInstruments[i]->mPanEnvelope.mPointCount = src[1];
+                gTrackerPlayer.mInstruments[i]->mVolumeEnvelope.mSustainPoint = src[2];
+                gTrackerPlayer.mInstruments[i]->mVolumeEnvelope.mLoopStartPoint = src[3];
+                gTrackerPlayer.mInstruments[i]->mVolumeEnvelope.mLoopEndPoint = src[4];
+                gTrackerPlayer.mInstruments[i]->mPanEnvelope.mSustainPoint = src[5];
+                gTrackerPlayer.mInstruments[i]->mPanEnvelope.mLoopStartPoint = src[6];
+                gTrackerPlayer.mInstruments[i]->mPanEnvelope.mLoopEndPoint = src[7];
+                gTrackerPlayer.mInstruments[i]->mVolumeEnvelope.mFlags = src[8];
+                gTrackerPlayer.mInstruments[i]->mPanEnvelope.mFlags = src[9];
+                gTrackerPlayer.mInstruments[i]->mUnk_2cd = src[10];
+                gTrackerPlayer.mInstruments[i]->mUnk_2ce = src[11];
+                gTrackerPlayer.mInstruments[i]->mUnk_2cf = src[12];
+                gTrackerPlayer.mInstruments[i]->mUnk_2d0 = src[13];
+                gTrackerPlayer.mInstruments[i]->mFadeOutPerTick = ((src[15] << 8) | src[14]) * 2;
                 src += 16;
                 src += header - (src - start);
-                for (j = 0; j < data_020c6b14.mUnk_410[i]->mUnk_26c; j++) {
+                for (j = 0; j < gTrackerPlayer.mInstruments[i]->mSampleCount; j++) {
                     if (left == 0) {
                         OS_Terminate();
                     }
                     left--;
-                    data_020c6b14.mUnk_410[i]->mUnk_000[j] = samples;
+                    gTrackerPlayer.mInstruments[i]->mSamples[j] = samples;
                     samples++;
-                    data_020c6b14.mUnk_410[i]->mUnk_000[j]->mUnk_00 =
+                    gTrackerPlayer.mInstruments[i]->mSamples[j]->mLength =
                         (src[3] << 24) | (src[2] << 16) | (src[1] << 8) | src[0];
-                    data_020c6b14.mUnk_410[i]->mUnk_000[j]->mUnk_04 =
+                    gTrackerPlayer.mInstruments[i]->mSamples[j]->mLoopStart =
                         (src[7] << 24) | (src[6] << 16) | (src[5] << 8) | src[4];
-                    data_020c6b14.mUnk_410[i]->mUnk_000[j]->mUnk_08 =
+                    gTrackerPlayer.mInstruments[i]->mSamples[j]->mLoopLength =
                         (src[11] << 24) | (src[10] << 16) | (src[9] << 8) | src[8];
-                    data_020c6b14.mUnk_410[i]->mUnk_000[j]->mUnk_12 = src[12];
-                    data_020c6b14.mUnk_410[i]->mUnk_000[j]->mUnk_13 = src[13];
-                    data_020c6b14.mUnk_410[i]->mUnk_000[j]->mUnk_14 = src[14];
-                    data_020c6b14.mUnk_410[i]->mUnk_000[j]->mUnk_16 = src[15];
-                    data_020c6b14.mUnk_410[i]->mUnk_000[j]->mUnk_15 = src[16];
-                    if (data_020c6b14.mUnk_410[i]->mUnk_000[j]->mUnk_00 != 0) {
+                    gTrackerPlayer.mInstruments[i]->mSamples[j]->mVolume = src[12];
+                    gTrackerPlayer.mInstruments[i]->mSamples[j]->mFinetune = src[13];
+                    gTrackerPlayer.mInstruments[i]->mSamples[j]->mFlags = src[14];
+                    gTrackerPlayer.mInstruments[i]->mSamples[j]->mPan = src[15];
+                    gTrackerPlayer.mInstruments[i]->mSamples[j]->mNoteOffset = src[16];
+                    if (gTrackerPlayer.mInstruments[i]->mSamples[j]->mLength != 0) {
                         MI_CpuCopy8(src + 0x12, name, 0x16);
                         name[0x16] = 0;
-                        data_020c6b14.mUnk_410[i]->mUnk_000[j]->mUnk_10 = func_02035bcc(name, b);
-                        data_020c6b14.mUnk_410[i]->mUnk_000[j]->mUnk_0c =
-                            LoadFile(data_020c6b14.mUnk_410[i]->mUnk_000[j]->mUnk_10);
+                        gTrackerPlayer.mInstruments[i]->mSamples[j]->mFileId = AddFirstDecimal(name, sampleFileBase);
+                        gTrackerPlayer.mInstruments[i]->mSamples[j]->mData =
+                            LoadFile(gTrackerPlayer.mInstruments[i]->mSamples[j]->mFileId);
                     }
                     src += 0x28;
                 }
@@ -472,83 +476,84 @@ void func_02035108(u16 a, u16 b, u8 c, u16 d, int e, int f) {
             }
         }
     }
-    data_020c6b14.mUnk_1744 = 16 - data_020c6b14.mUnk_174c;
-    data_020c6b14.mUnk_1718 = 0;
+    gTrackerPlayer.mFirstChannel = 16 - gTrackerPlayer.mChannelCount;
+    gTrackerPlayer.mFramesSinceIrq = 0;
     gSystemState.mFlags |= 0x1000000;
-    data_020c648c.mUnk_181 = data_020c6b14.mUnk_1744;
-    func_0202f084();
-    func_02035c7c(c, (s16) d);
-    data_020c6b14.mUnk_1745 = 0;
+    gWavePlayer.mRequestedChannelCount = gTrackerPlayer.mFirstChannel;
+    RefreshWaveChannelCount();
+    StartPlayback(volume, (s16) startOrder);
+    gTrackerPlayer.mLoading = 0;
 }
 
-// Releases everything the loaded song allocated and resets the player; with a == 1 while a song plays it
-// only requests a fade-out (mode 2).
-void func_020359d0(int a) {
+// Releases everything the loaded song allocated and resets the player; with fadeOut == 1 while a song plays it only
+// starts the global fade (TRACKER_GLOBAL_FADE_TO_RELEASE), except in TRACKER_GLOBAL_FADE_DONE, where it releases at
+// once.
+void ReleaseTrack(int fadeOut) {
     u32 i;
     u32 j;
 
-    data_020c6b14.mUnk_1746 = 1;
-    if (data_020c6b14.mUnk_1724 == 1 && a == 1) {
-        if (data_020c6b14.mUnk_1748 != 3) {
-            data_020c6b14.mUnk_1748 = 2;
-            data_020c6b14.mUnk_1746 = 0;
+    gTrackerPlayer.mReleasing = 1;
+    if (gTrackerPlayer.mPlaying == 1 && fadeOut == 1) {
+        if (gTrackerPlayer.mGlobalFadeState != TRACKER_GLOBAL_FADE_DONE) {
+            gTrackerPlayer.mGlobalFadeState = TRACKER_GLOBAL_FADE_TO_RELEASE;
+            gTrackerPlayer.mReleasing = 0;
             return;
         }
     } else {
-        data_020c6b14.mUnk_1748 = 0;
+        gTrackerPlayer.mGlobalFadeState = TRACKER_GLOBAL_FADE_NONE;
     }
-    if (data_020c6b14.mUnk_1724 == 1) {
-        func_02035e40();
+    if (gTrackerPlayer.mPlaying == 1) {
+        StopPlayback();
     }
     for (i = 0; i < TRACKER_INSTRUMENT_COUNT; i++) {
-        if (data_020c6b14.mUnk_410[i] != 0) {
-            for (j = 0; j < data_020c6b14.mUnk_410[i]->mUnk_26c; j++) {
-                if (data_020c6b14.mUnk_410[i]->mUnk_000[j]->mUnk_0c != 0) {
-                    Free(&data_020c6b14.mUnk_410[i]->mUnk_000[j]->mUnk_0c);
+        if (gTrackerPlayer.mInstruments[i] != 0) {
+            for (j = 0; j < gTrackerPlayer.mInstruments[i]->mSampleCount; j++) {
+                if (gTrackerPlayer.mInstruments[i]->mSamples[j]->mData != 0) {
+                    Free(&gTrackerPlayer.mInstruments[i]->mSamples[j]->mData);
                 }
-                data_020c6b14.mUnk_410[i]->mUnk_000[j] = 0;
+                gTrackerPlayer.mInstruments[i]->mSamples[j] = 0;
             }
-            data_020c6b14.mUnk_410[i] = 0;
+            gTrackerPlayer.mInstruments[i] = 0;
         }
     }
-    if (data_020c6b14.mUnk_0c != 0) {
-        Free(&data_020c6b14.mUnk_0c);
+    if (gTrackerPlayer.mSampleBlock != 0) {
+        Free(&gTrackerPlayer.mSampleBlock);
     }
-    if (data_020c6b14.mUnk_08 != 0) {
-        Free(&data_020c6b14.mUnk_08);
+    if (gTrackerPlayer.mInstrumentBlock != 0) {
+        Free(&gTrackerPlayer.mInstrumentBlock);
     }
     for (i = 0; i < TRACKER_PATTERN_COUNT; i++) {
-        if (data_020c6b14.mUnk_10[i] != 0) {
-            Free(&data_020c6b14.mUnk_10[i]->mUnk_04);
-            data_020c6b14.mUnk_10[i] = 0;
+        if (gTrackerPlayer.mPatterns[i] != 0) {
+            Free(&gTrackerPlayer.mPatterns[i]->mCells);
+            gTrackerPlayer.mPatterns[i] = 0;
         }
     }
-    if (data_020c6b14.mUnk_04 != 0) {
-        Free(&data_020c6b14.mUnk_04);
+    if (gTrackerPlayer.mPatternBlock != 0) {
+        Free(&gTrackerPlayer.mPatternBlock);
     }
-    data_020c6b14.mUnk_1748 = 0;
-    data_020c6b14.mUnk_172e = 0;
-    data_020c6b14.mUnk_1744 = 0;
-    data_020c6b14.mUnk_1747 = -128;
-    data_020c6b14.mUnk_1724 = 0;
-    data_020c6b14.mUnk_174a = 0;
-    data_020c6b14.mUnk_174b = 0;
-    data_020c6b14.mUnk_174c = 0;
-    data_020c6b14.mUnk_174d = 0;
-    data_020c6b14.mUnk_174e = 0;
-    data_020c6b14.mUnk_174f = 0;
-    data_020c6b14.mUnk_1750 = 0;
-    data_020c6b14.mUnk_1751 = 0;
+    gTrackerPlayer.mGlobalFadeState = TRACKER_GLOBAL_FADE_NONE;
+    gTrackerPlayer.mTrackFileId = 0;
+    gTrackerPlayer.mFirstChannel = 0;
+    gTrackerPlayer.mGlobalVolume = -128;
+    gTrackerPlayer.mPlaying = 0;
+    gTrackerPlayer.mOrderCount = 0;
+    gTrackerPlayer.mLoopOrder = 0;
+    gTrackerPlayer.mChannelCount = 0;
+    gTrackerPlayer.mPatternCount = 0;
+    gTrackerPlayer.mInstrumentCount = 0;
+    gTrackerPlayer.mFlags = 0;
+    gTrackerPlayer.mInitialTicksPerRow = 0;
+    gTrackerPlayer.mInitialTickRate = 0;
     for (i = 0; i < TRACKER_ORDER_COUNT; i++) {
-        data_020c6b14.mUnk_1752[i] = 0;
+        gTrackerPlayer.mOrders[i] = 0;
     }
-    data_020c6b14.mUnk_1718 = 0;
+    gTrackerPlayer.mFramesSinceIrq = 0;
     gSystemState.mFlags &= ~0x1000000;
-    data_020c6b14.mUnk_1746 = 0;
+    gTrackerPlayer.mReleasing = 0;
 }
 
 // Returns base plus the first decimal number found in text.
-u16 func_02035bcc(const u8 *text, int base) {
+u16 AddFirstDecimal(const u8 *text, int base) {
     int value = 0;
     int start = 0;
     int end;
@@ -577,180 +582,184 @@ u16 func_02035bcc(const u8 *text, int base) {
 
 // Resets the 32 channel states and the timing state for the loaded song, then arms the timer interrupt
 // and calls the player's callback with 0.
-void func_02035c7c(u8 a, s16 b) {
+void StartPlayback(u8 volume, s16 startOrder) {
     u32 mask = 0;
     u32 i;
     u32 k;
 
-    if (data_020c6b14.mUnk_174c == 0) {
+    if (gTrackerPlayer.mChannelCount == 0) {
         OS_Terminate();
     }
     func_020402f0();
-    for (i = 0; i < data_020c6b14.mUnk_174c; i++) {
-        mask |= 1 << (data_020c6b14.mUnk_1744 + i);
+    for (i = 0; i < gTrackerPlayer.mChannelCount; i++) {
+        mask |= 1 << (gTrackerPlayer.mFirstChannel + i);
     }
     func_02040198(mask, 0);
-    data_020c6b14.mUnk_1747 = a;
+    gTrackerPlayer.mGlobalVolume = volume;
     for (i = 0; i < TRACKER_CHANNEL_COUNT; i++) {
-        TrackerChannel *c = &data_020c6b14.mUnk_610[i];
-        c->mUnk_10 = 0;
-        c->mUnk_14 = 255;
-        c->mUnk_15 = 0;
-        c->mUnk_17 = 255;
-        c->mUnk_16 = (u8) c->mUnk_17;
-        c->mUnk_1a = 0;
-        c->mUnk_00 = 0;
-        c->mUnk_04 = 0;
-        c->mUnk_1c = 0;
-        c->mUnk_1d = 0;
-        c->mUnk_06 = 0;
-        c->mUnk_1e = 0;
-        c->mUnk_20 = 0;
-        c->mUnk_21 = 0;
-        c->mUnk_08 = data_02050ac0;
-        c->mUnk_22 = 0;
-        c->mUnk_23 = 0;
-        c->mUnk_0c = data_02050ac0;
-        c->mUnk_24 = 0;
+        TrackerChannel *c = &gTrackerPlayer.mChannels[i];
+        c->mNoteOff = 0;
+        c->mNote = 255;
+        c->mInstrumentHandle = 0;
+        c->mVolumeColumnEffect = 255;
+        c->mEffect = (u8) c->mVolumeColumnEffect;
+        c->mVolumeColumnEffectParam = 0;
+        c->mSample = 0;
+        c->mPeriod = 0;
+        c->mArpeggioTicks = 0;
+        c->mWaveIndex = 0;
+        c->mTargetPeriod = 0;
+        c->mToneSlidePerTick = 0;
+        c->mVibratoPerTick = 0;
+        c->mVibratoDepth = 0;
+        c->mVibratoWave = gSineWave;
+        c->mTremoloPerTick = 0;
+        c->mTremoloDepth = 0;
+        c->mTremoloWave = gSineWave;
+        c->mVolume = 0;
         c->mUnk_25 = 128;
-        c->mUnk_26 = 128;
-        c->mUnk_48 = 0x10000;
+        c->mPan = 128;
+        c->mFadeOutVolume = 0x10000;
         for (k = 0; k < 14; k++) {
-            c->mUnk_6a[k] = 1;
+            c->mLastParams[k] = 1;
         }
     }
-    data_020c6b14.mUnk_1852 = data_020c6b14.mUnk_1750;
-    data_020c6b14.mUnk_1856 = data_020c6b14.mUnk_1750 - 1;
-    data_020c6b14.mUnk_1858 = 0;
-    data_020c6b14.mUnk_1853 = data_020c6b14.mUnk_1751;
-    data_020c6b14.mUnk_171c = 8192000 / (data_020c6b14.mUnk_1751 * 50);
-    data_020c6b14.mUnk_1720 = 0;
-    data_020c6b14.mUnk_1738 = b - 1;
-    data_020c6b14.mUnk_173a = -1;
-    data_020c6b14.mUnk_1854 = 255;
-    data_020c6b14.mUnk_1740 = 0;
-    data_020c6b14.mUnk_1742 = 1;
-    data_020c6b14.mUnk_1724 = 1;
-    data_020c6b14.mUnk_1728 = 0;
+    gTrackerPlayer.mTicksPerRow = gTrackerPlayer.mInitialTicksPerRow;
+    gTrackerPlayer.mTickIndex = gTrackerPlayer.mInitialTicksPerRow - 1;
+    gTrackerPlayer.mRowDelayTickCount = 0;
+    gTrackerPlayer.mTickRate = gTrackerPlayer.mInitialTickRate;
+    gTrackerPlayer.mTickLength = 8192000 / (gTrackerPlayer.mInitialTickRate * 50);
+    gTrackerPlayer.mTickTime = 0;
+    gTrackerPlayer.mOrderIndex = startOrder - 1;
+    gTrackerPlayer.mJumpOrderIndex = -1;
+    gTrackerPlayer.mPatternIndex = 255;
+    gTrackerPlayer.mLastRow = 0;
+    gTrackerPlayer.mRowIndex = 1;
+    gTrackerPlayer.mPlaying = 1;
+    gTrackerPlayer.mUnk_1728 = 0;
     func_02036194();
-    func_02035f2c();
-    if (data_020c6b14.mUnk_00 != 0) {
-        data_020c6b14.mUnk_00(0);
+    StartTrackerTimer();
+    if (gTrackerPlayer.mCallback != 0) {
+        gTrackerPlayer.mCallback(0);
     }
 }
 
 // Stops the timer and the hardware channels, then calls the player's callback with 1.
-void func_02035e40(void) {
-    func_02035fc4();
-    func_02035e7c();
-    data_020c6b14.mUnk_1724 = 0;
-    if (data_020c6b14.mUnk_00 != 0) {
-        data_020c6b14.mUnk_00(1);
+void StopPlayback(void) {
+    StopTrackerTimer();
+    StopTrackerChannels();
+    gTrackerPlayer.mPlaying = 0;
+    if (gTrackerPlayer.mCallback != 0) {
+        gTrackerPlayer.mCallback(1);
     }
 }
 
 // Sends the stop command to each hardware channel of the song, then sends the combined mask.
-void func_02035e7c(void) {
+void StopTrackerChannels(void) {
     u32 mask = 0;
     u32 i;
 
-    for (i = 0; i < data_020c6b14.mUnk_174c; i++) {
-        func_020400f4(1 << (data_020c6b14.mUnk_1744 + i), 0, 0, 0);
+    for (i = 0; i < gTrackerPlayer.mChannelCount; i++) {
+        func_020400f4(1 << (gTrackerPlayer.mFirstChannel + i), 0, 0, 0);
         while (SND_RecvCommandReply(0) != 0) {
         }
         SND_FlushCommand(2);
     }
-    for (i = 0; i < data_020c6b14.mUnk_174c; i++) {
-        mask |= 1 << (data_020c6b14.mUnk_1744 + i);
+    for (i = 0; i < gTrackerPlayer.mChannelCount; i++) {
+        mask |= 1 << (gTrackerPlayer.mFirstChannel + i);
     }
     func_020401b8(mask, 0);
 }
 
-// Installs the timer interrupt handler and starts the timer at the rate the flags select.
-void func_02035f2c(void) {
-    OS_SetIrqFunction(TRACKER_IRQ_TIMER2, func_02035fd4);
+// Installs the timer interrupt handler and starts the timer at the rate the flags select; with
+// TRACKER_TIMER_AUTO_FINE it first sets TRACKER_TIMER_FINE unless the tick rate is 125, and clears it otherwise.
+void StartTrackerTimer(void) {
+    OS_SetIrqFunction(TRACKER_IRQ_TIMER2, HandleTrackerIrq);
     OS_EnableIrqMask(TRACKER_IRQ_TIMER2);
-    if (data_020c6b14.mUnk_1710 & 2) {
-        if (data_020c6b14.mUnk_1853 != 125) {
-            data_020c6b14.mUnk_1710 |= 1;
+    if (gTrackerPlayer.mTimerFlags & TRACKER_TIMER_AUTO_FINE) {
+        if (gTrackerPlayer.mTickRate != 125) {
+            gTrackerPlayer.mTimerFlags |= TRACKER_TIMER_FINE;
         } else {
-            data_020c6b14.mUnk_1710 &= ~1;
+            gTrackerPlayer.mTimerFlags &= ~TRACKER_TIMER_FINE;
         }
     }
-    if (data_020c6b14.mUnk_1710 & 1) {
-        data_020c6b14.mUnk_1714 = 0x147;
+    if (gTrackerPlayer.mTimerFlags & TRACKER_TIMER_FINE) {
+        gTrackerPlayer.mTimePerIrq = 0x147;
         func_0203f004(2, 654, 2);
     } else {
-        data_020c6b14.mUnk_1714 = 0x51e;
+        gTrackerPlayer.mTimePerIrq = 0x51e;
         func_0203f004(2, 0xa3a, 2);
     }
 }
 
-void func_02035fc4(void) {
+void StopTrackerTimer(void) {
     func_0203f024(2);
 }
 
-// Timer interrupt handler: runs one player tick, or steps the fade-out while stopping (modes 1 and 2).
-void func_02035fd4(void) {
-    data_020c6b14.mUnk_1718 = 0;
-    if (data_020c6b14.mUnk_1728 == 1) {
+// Timer interrupt handler. With the global fade at TRACKER_GLOBAL_FADE_NONE it runs AdvanceTracker; in
+// TRACKER_GLOBAL_FADE_TO_PENDING and TRACKER_GLOBAL_FADE_TO_RELEASE it lowers the global volume by 4 and runs
+// AdvanceTracker until the volume is below 4, then TO_PENDING becomes TRACKER_GLOBAL_FADE_DONE and TO_RELEASE calls
+// the player's callback with 3 and releases the song; either way the timer is left stopped.
+void HandleTrackerIrq(void) {
+    gTrackerPlayer.mFramesSinceIrq = 0;
+    if (gTrackerPlayer.mUnk_1728 == 1) {
         *(vu32 *) (HW_DTCM + 0x3ff8) |= TRACKER_IRQ_TIMER2;
-        func_02035fc4();
-        func_02035f2c();
+        StopTrackerTimer();
+        StartTrackerTimer();
         return;
     }
-    if (data_020c6b14.mUnk_1724 == 1 && data_020c6b14.mUnk_1745 == 0 && data_020c6b14.mUnk_1746 == 0) {
-        u8 mode = data_020c6b14.mUnk_1748;
+    if (gTrackerPlayer.mPlaying == 1 && gTrackerPlayer.mLoading == 0 && gTrackerPlayer.mReleasing == 0) {
+        u8 fadeState = gTrackerPlayer.mGlobalFadeState;
         u8 vol;
 
-        if (mode == 0) {
+        if (fadeState == TRACKER_GLOBAL_FADE_NONE) {
             *(vu32 *) (HW_DTCM + 0x3ff8) |= TRACKER_IRQ_TIMER2;
-            func_02035fc4();
-            func_02036198();
-            func_02035f2c();
+            StopTrackerTimer();
+            AdvanceTracker();
+            StartTrackerTimer();
             return;
         }
-        // Only modes 1 and 2 (fading out) go on.
-        if ((u8) (mode + 255) > 1) {
+        // Only TRACKER_GLOBAL_FADE_TO_PENDING and TRACKER_GLOBAL_FADE_TO_RELEASE (fading) go on.
+        if ((u8) (fadeState + 255) > 1) {
             return;
         }
         *(vu32 *) (HW_DTCM + 0x3ff8) |= TRACKER_IRQ_TIMER2;
-        func_02035fc4();
-        vol = func_02038694();
+        StopTrackerTimer();
+        vol = GetGlobalVolume();
         if (vol >= 4) {
-            func_02038578(vol - 4, 1);
-            func_02036198();
-            func_02035f2c();
+            SetGlobalVolume(vol - 4, 1);
+            AdvanceTracker();
+            StartTrackerTimer();
             return;
         }
-        if (data_020c6b14.mUnk_1748 == 1) {
-            data_020c6b14.mUnk_1748 = 3;
+        if (gTrackerPlayer.mGlobalFadeState == TRACKER_GLOBAL_FADE_TO_PENDING) {
+            gTrackerPlayer.mGlobalFadeState = TRACKER_GLOBAL_FADE_DONE;
             return;
         }
-        if (data_020c6b14.mUnk_00 != 0) {
-            data_020c6b14.mUnk_00(3);
+        if (gTrackerPlayer.mCallback != 0) {
+            gTrackerPlayer.mCallback(3);
         }
-        func_020359d0(0);
+        ReleaseTrack(0);
     }
 }
 
-// Frame update: counts the frames a stop has been pending and, in mode 3, calls the player's callback with 2
-// and starts the next song.
-void func_020360f4(void) {
-    if (data_020c6b14.mUnk_1748 != 0) {
-        data_020c6b14.mUnk_1718++;
-        if (data_020c6b14.mUnk_1718 > 8) {
-            func_020359d0(0);
+// Frame update: while a global fade state is set, counts the frames since the last timer interrupt and releases the
+// song after more than 8; in TRACKER_GLOBAL_FADE_DONE calls the player's callback with 2 and plays the pending request.
+void UpdateTracker(void) {
+    if (gTrackerPlayer.mGlobalFadeState != TRACKER_GLOBAL_FADE_NONE) {
+        gTrackerPlayer.mFramesSinceIrq++;
+        if (gTrackerPlayer.mFramesSinceIrq > 8) {
+            ReleaseTrack(0);
         }
     }
-    if (data_020c6b14.mUnk_1748 != 3) {
+    if (gTrackerPlayer.mGlobalFadeState != TRACKER_GLOBAL_FADE_DONE) {
         return;
     }
-    if (data_020c6b14.mUnk_00 != 0) {
-        data_020c6b14.mUnk_00(2);
+    if (gTrackerPlayer.mCallback != 0) {
+        gTrackerPlayer.mCallback(2);
     }
-    func_02035108(data_020c6b14.mUnk_1730, data_020c6b14.mUnk_1732, data_020c6b14.mUnk_1749, data_020c6b14.mUnk_173c, 0,
-                  data_020c6b14.mUnk_1734);
+    PlayTrack(gTrackerPlayer.mPendingTrackFileId, gTrackerPlayer.mPendingSampleFileBase, gTrackerPlayer.mPendingVolume,
+              gTrackerPlayer.mPendingStartOrder, 0, gTrackerPlayer.mPendingRestart);
 }
 
 void func_02036194(void) {}
@@ -761,7 +770,7 @@ void func_02036194(void) {}
 // applied; on the other ticks the running effects and envelopes update period, volume and pan. The changes go to the
 // sound driver as channel commands. With flag 0x400 of gSystemState.mUnk_2c8 each channel's effect parameter is
 // formatted for display.
-void func_02036198(void) {
+void AdvanceTracker(void) {
     s8 globalVol;
     char text[3];
     BOOL volChanged;
@@ -794,28 +803,28 @@ void func_02036198(void) {
     u32 k;
 
     volChanged = FALSE;
-    globalVol = data_020c6b14.mUnk_1747;
-    data_020c6b14.mUnk_1720 += data_020c6b14.mUnk_1714;
-    if (data_020c6b14.mUnk_1720 >= data_020c6b14.mUnk_171c) {
-        data_020c6b14.mUnk_1720 -= data_020c6b14.mUnk_171c;
+    globalVol = gTrackerPlayer.mGlobalVolume;
+    gTrackerPlayer.mTickTime += gTrackerPlayer.mTimePerIrq;
+    if (gTrackerPlayer.mTickTime >= gTrackerPlayer.mTickLength) {
+        gTrackerPlayer.mTickTime -= gTrackerPlayer.mTickLength;
         nextRow = -1;
-        data_020c6b14.mUnk_1856++;
-        if (data_020c6b14.mUnk_1856 >= data_020c6b14.mUnk_1852 + data_020c6b14.mUnk_1858) {
-            data_020c6b14.mUnk_1856 = 0;
+        gTrackerPlayer.mTickIndex++;
+        if (gTrackerPlayer.mTickIndex >= gTrackerPlayer.mTicksPerRow + gTrackerPlayer.mRowDelayTickCount) {
+            gTrackerPlayer.mTickIndex = 0;
         }
-        if (data_020c6b14.mUnk_1856 == 0) {
-            data_020c6b14.mUnk_1858 = 0;
-            if (data_020c6b14.mUnk_1742 > data_020c6b14.mUnk_1740) {
-                data_020c6b14.mUnk_1742 = 0;
-                func_02037c10();
+        if (gTrackerPlayer.mTickIndex == 0) {
+            gTrackerPlayer.mRowDelayTickCount = 0;
+            if (gTrackerPlayer.mRowIndex > gTrackerPlayer.mLastRow) {
+                gTrackerPlayer.mRowIndex = 0;
+                AdvanceOrder();
             }
             // Five bytes per cell, one cell per channel.
-            cell = (u8 *) data_020c6b14.mUnk_10[data_020c6b14.mUnk_1854]->mUnk_04 +
-                   data_020c6b14.mUnk_1742 * data_020c6b14.mUnk_174c * 5;
-            for (i = 0; i < data_020c6b14.mUnk_174c; i++) {
-                c = &data_020c6b14.mUnk_610[i];
+            cell = (u8 *) gTrackerPlayer.mPatterns[gTrackerPlayer.mPatternIndex]->mCells +
+                   gTrackerPlayer.mRowIndex * gTrackerPlayer.mChannelCount * 5;
+            for (i = 0; i < gTrackerPlayer.mChannelCount; i++) {
+                c = &gTrackerPlayer.mChannels[i];
                 trigger = FALSE;
-                c->mUnk_4c = 0;
+                c->mStartKind = 0;
                 effect = TRACKER_FX_NONE;
                 note = cell[0];
                 periodUpd = FALSE;
@@ -838,15 +847,15 @@ void func_02036198(void) {
                         lo = param & 0xf;
                         switch (cellEffect) {
                             case TRACKER_FX_ORDER_JUMP:
-                                if (data_020c6b14.mUnk_00 != 0 && cellParam <= data_020c6b14.mUnk_1738) {
-                                    data_020c6b14.mUnk_00(4);
+                                if (gTrackerPlayer.mCallback != 0 && cellParam <= gTrackerPlayer.mOrderIndex) {
+                                    gTrackerPlayer.mCallback(4);
                                 }
-                                data_020c6b14.mUnk_1742 = data_020c6b14.mUnk_1740;
-                                data_020c6b14.mUnk_1738 = cellParam - 1;
+                                gTrackerPlayer.mRowIndex = gTrackerPlayer.mLastRow;
+                                gTrackerPlayer.mOrderIndex = cellParam - 1;
                                 break;
                             case TRACKER_FX_ROW_BREAK:
                                 param = hi * 10 + lo;
-                                if (param < data_020c6b14.mUnk_1740) {
+                                if (param < gTrackerPlayer.mLastRow) {
                                     nextRow = param;
                                 } else {
                                     nextRow = 0;
@@ -855,72 +864,72 @@ void func_02036198(void) {
                             case TRACKER_FX_SPEED:
                                 if (cellParam < 32) {
                                     if (cellParam != 0) {
-                                        data_020c6b14.mUnk_1852 = cellParam;
+                                        gTrackerPlayer.mTicksPerRow = cellParam;
                                     }
                                 } else {
-                                    data_020c6b14.mUnk_1853 = cellParam;
-                                    data_020c6b14.mUnk_171c = 8192000 / (data_020c6b14.mUnk_1853 * 50);
+                                    gTrackerPlayer.mTickRate = cellParam;
+                                    gTrackerPlayer.mTickLength = 8192000 / (gTrackerPlayer.mTickRate * 50);
                                 }
                                 break;
                         }
                     }
                     if (inst != 0) {
-                        if (inst > data_020c6b14.mUnk_174e) {
+                        if (inst > gTrackerPlayer.mInstrumentCount) {
                             OS_Terminate();
                         }
-                        if (data_020c6b14.mUnk_410[inst - 1]->mUnk_26c == 0) {
+                        if (gTrackerPlayer.mInstruments[inst - 1]->mSampleCount == 0) {
                             OS_Terminate();
                         }
                         instPresent = TRUE;
-                        if (c->mUnk_15 != inst || c->mUnk_10 == 1) {
-                            c->mUnk_15 = inst;
+                        if (c->mInstrumentHandle != inst || c->mNoteOff == 1) {
+                            c->mInstrumentHandle = inst;
                             instChanged = TRUE;
                         }
-                        c->mUnk_1d = 0;
+                        c->mWaveIndex = 0;
                         trigger = TRUE;
                     } else {
-                        inst = c->mUnk_15;
+                        inst = c->mInstrumentHandle;
                     }
                     if (note == TRACKER_NOTE_NONE) {
-                        note = c->mUnk_14;
+                        note = c->mNote;
                     } else {
-                        c->mUnk_14 = note;
+                        c->mNote = note;
                         notePresent = TRUE;
-                        c->mUnk_1d = 0;
+                        c->mWaveIndex = 0;
                         trigger = notePresent;
                     }
-                    if (note != TRACKER_NOTE_NONE && inst != 0 && inst <= data_020c6b14.mUnk_174e) {
+                    if (note != TRACKER_NOTE_NONE && inst != 0 && inst <= gTrackerPlayer.mInstrumentCount) {
                         if (cellEffect == TRACKER_FX_EXTENDED && lo == TRACKER_FXE_FINETUNE) {
-                            TrackerInstrument *in = data_020c6b14.mUnk_410[inst - 1];
+                            TrackerInstrument *in = gTrackerPlayer.mInstruments[inst - 1];
 
-                            in->mUnk_000[in->mUnk_26d[note - 1]]->mUnk_13 = lo;
+                            in->mSamples[in->mNoteSamples[note - 1]]->mFinetune = lo;
                         }
                         if (trigger == TRUE) {
                             inst--;
                             note--;
-                            if (data_020c6b14.mUnk_410[inst]->mUnk_26d[note] >=
-                                data_020c6b14.mUnk_410[inst]->mUnk_26c) {
+                            if (gTrackerPlayer.mInstruments[inst]->mNoteSamples[note] >=
+                                gTrackerPlayer.mInstruments[inst]->mSampleCount) {
                                 OS_Terminate();
                             }
-                            c->mUnk_00 =
-                                data_020c6b14.mUnk_410[inst]->mUnk_000[data_020c6b14.mUnk_410[inst]->mUnk_26d[note]];
-                            if (c->mUnk_00 == 0) {
+                            c->mSample = gTrackerPlayer.mInstruments[inst]
+                                             ->mSamples[gTrackerPlayer.mInstruments[inst]->mNoteSamples[note]];
+                            if (c->mSample == 0) {
                                 OS_Terminate();
                             }
                             if (instPresent == TRUE) {
                                 volUpd = TRUE;
                                 panUpd = TRUE;
-                                c->mUnk_24 = c->mUnk_00->mUnk_12;
-                                c->mUnk_26 = c->mUnk_00->mUnk_16;
+                                c->mVolume = c->mSample->mVolume;
+                                c->mPan = c->mSample->mPan;
                             }
-                            period = func_02037eac((u8) (note + c->mUnk_00->mUnk_15), c->mUnk_00->mUnk_13);
+                            period = GetNotePeriod((u8) (note + c->mSample->mNoteOffset), c->mSample->mFinetune);
                         } else {
-                            period = c->mUnk_04;
+                            period = c->mPeriod;
                         }
-                        c->mUnk_17 = TRACKER_FX_NONE;
-                        c->mUnk_16 = TRACKER_FX_NONE;
-                        c->mUnk_1a = 0;
-                        c->mUnk_18 = 0;
+                        c->mVolumeColumnEffect = TRACKER_FX_NONE;
+                        c->mEffect = TRACKER_FX_NONE;
+                        c->mVolumeColumnEffectParam = 0;
+                        c->mEffectParam = 0;
                         // Pass 0 applies the volume column, pass 1 the effect column.
                         for (k = 0; k < 2; k++) {
                             effect = TRACKER_FX_NONE;
@@ -941,9 +950,9 @@ void func_02036198(void) {
                                     effect = TRACKER_FX_EXTENDED;
                                     param = 0xa0 | (vol & 0xf);
                                 } else if (vol >= 0xa0 && vol <= 0xb0) {
-                                    c->mUnk_20 = vol & 0xf;
+                                    c->mVibratoPerTick = vol & 0xf;
                                 } else if (vol >= 0xb0 && vol <= 0xc0) {
-                                    c->mUnk_21 = vol & 0xf;
+                                    c->mVibratoDepth = vol & 0xf;
                                 } else if (vol >= 0xc0 && vol < 0xd0) {
                                     effect = TRACKER_FX_PAN;
                                     param = (vol & 0xf) << 4;
@@ -972,100 +981,100 @@ void func_02036198(void) {
                             switch (effect) {
                                 case TRACKER_FX_ARPEGGIO:
                                     if (param != 0) {
-                                        c->mUnk_16 = effect;
-                                        c->mUnk_18 = param;
-                                        c->mUnk_1c = 0;
+                                        c->mEffect = effect;
+                                        c->mEffectParam = param;
+                                        c->mArpeggioTicks = 0;
                                     }
                                     break;
                                 case TRACKER_FX_SLIDE_UP:
                                     if (param != 0) {
-                                        c->mUnk_6a[0] = param;
+                                        c->mLastParams[0] = param;
                                     } else {
-                                        param = c->mUnk_6a[0];
+                                        param = c->mLastParams[0];
                                     }
-                                    c->mUnk_16 = effect;
-                                    c->mUnk_18 = param;
-                                    if (data_020c6b14.mUnk_174f & 1) {
-                                        c->mUnk_18 <<= 2;
+                                    c->mEffect = effect;
+                                    c->mEffectParam = param;
+                                    if (gTrackerPlayer.mFlags & 1) {
+                                        c->mEffectParam <<= 2;
                                     }
                                     break;
                                 case TRACKER_FX_SLIDE_DOWN:
                                     if (param != 0) {
-                                        c->mUnk_6a[1] = param;
+                                        c->mLastParams[1] = param;
                                     } else {
-                                        param = c->mUnk_6a[1];
+                                        param = c->mLastParams[1];
                                     }
-                                    c->mUnk_16 = effect;
-                                    c->mUnk_18 = param;
-                                    if (data_020c6b14.mUnk_174f & 1) {
-                                        c->mUnk_18 <<= 2;
+                                    c->mEffect = effect;
+                                    c->mEffectParam = param;
+                                    if (gTrackerPlayer.mFlags & 1) {
+                                        c->mEffectParam <<= 2;
                                     }
                                     break;
                                 case TRACKER_FX_TONE_SLIDE:
                                 case TRACKER_FX_TONE_SLIDE_VOL:
                                     if (param != 0) {
                                         if (effect == TRACKER_FX_TONE_SLIDE) {
-                                            c->mUnk_6a[2] = param;
+                                            c->mLastParams[2] = param;
                                         } else {
-                                            c->mUnk_6a[4] = param;
+                                            c->mLastParams[4] = param;
                                         }
                                     } else {
                                         if (effect == TRACKER_FX_TONE_SLIDE) {
-                                            param = c->mUnk_6a[2];
+                                            param = c->mLastParams[2];
                                         } else {
-                                            param = c->mUnk_6a[4];
+                                            param = c->mLastParams[4];
                                         }
                                     }
                                     if (k != 0) {
-                                        c->mUnk_16 = effect;
-                                        c->mUnk_18 = param;
+                                        c->mEffect = effect;
+                                        c->mEffectParam = param;
                                     } else {
-                                        c->mUnk_17 = effect;
-                                        c->mUnk_1a = param;
+                                        c->mVolumeColumnEffect = effect;
+                                        c->mVolumeColumnEffectParam = param;
                                     }
                                     if (notePresent == TRUE && period != 0) {
-                                        c->mUnk_06 = period;
+                                        c->mTargetPeriod = period;
                                     }
                                     if (param != 0 && effect == TRACKER_FX_TONE_SLIDE) {
-                                        c->mUnk_1e = param;
-                                        if (data_020c6b14.mUnk_174f & 1) {
-                                            c->mUnk_1e <<= 2;
+                                        c->mToneSlidePerTick = param;
+                                        if (gTrackerPlayer.mFlags & 1) {
+                                            c->mToneSlidePerTick <<= 2;
                                         }
                                     }
                                     porta = TRUE;
                                     break;
                                 case TRACKER_FX_VIBRATO:
                                     if (param != 0) {
-                                        c->mUnk_6a[3] = param;
+                                        c->mLastParams[3] = param;
                                     } else {
-                                        param = c->mUnk_6a[3];
+                                        param = c->mLastParams[3];
                                         hi = (param & 0xf0) >> 4;
                                         lo = param & 0xf;
                                     }
-                                    c->mUnk_16 = effect;
-                                    c->mUnk_18 = param;
+                                    c->mEffect = effect;
+                                    c->mEffectParam = param;
                                     if (hi != 0 && lo != 0) {
-                                        c->mUnk_20 = hi;
-                                        c->mUnk_21 = lo;
+                                        c->mVibratoPerTick = hi;
+                                        c->mVibratoDepth = lo;
                                     }
                                     break;
                                 case TRACKER_FX_PAN:
-                                    c->mUnk_26 = param;
+                                    c->mPan = param;
                                     panUpd = TRUE;
                                     break;
                                 case TRACKER_FX_TREMOLO:
                                     if (param != 0) {
-                                        c->mUnk_6a[6] = param;
+                                        c->mLastParams[6] = param;
                                     } else {
-                                        param = c->mUnk_6a[6];
+                                        param = c->mLastParams[6];
                                         hi = (param & 0xf0) >> 4;
                                         lo = param & 0xf;
                                     }
-                                    c->mUnk_16 = effect;
-                                    c->mUnk_18 = param;
+                                    c->mEffect = effect;
+                                    c->mEffectParam = param;
                                     if (hi != 0 && lo != 0) {
-                                        c->mUnk_22 = hi;
-                                        c->mUnk_23 = lo;
+                                        c->mTremoloPerTick = hi;
+                                        c->mTremoloDepth = lo;
                                     }
                                     break;
                                 case TRACKER_FX_SAMPLE_OFFSET:
@@ -1076,67 +1085,69 @@ void func_02036198(void) {
                                     break;
                                 case TRACKER_FX_VIBRATO_VOL:
                                     if (param != 0) {
-                                        c->mUnk_6a[5] = param;
+                                        c->mLastParams[5] = param;
                                     } else {
-                                        param = c->mUnk_6a[5];
+                                        param = c->mLastParams[5];
                                     }
-                                    c->mUnk_16 = effect;
-                                    c->mUnk_18 = param;
+                                    c->mEffect = effect;
+                                    c->mEffectParam = param;
                                     break;
                                 case TRACKER_FX_VOL_SLIDE:
                                     if (param != 0) {
-                                        c->mUnk_6a[7] = param;
+                                        c->mLastParams[7] = param;
                                     } else {
-                                        param = c->mUnk_6a[7];
+                                        param = c->mLastParams[7];
                                     }
                                     if (k != 0) {
-                                        c->mUnk_16 = effect;
-                                        c->mUnk_18 = param;
+                                        c->mEffect = effect;
+                                        c->mEffectParam = param;
                                     } else {
-                                        c->mUnk_17 = effect;
-                                        c->mUnk_1a = param;
+                                        c->mVolumeColumnEffect = effect;
+                                        c->mVolumeColumnEffectParam = param;
                                     }
                                     break;
                                 case TRACKER_FX_VOLUME:
                                     if (param > 64) {
                                         param = 64;
                                     }
-                                    c->mUnk_24 = param;
+                                    c->mVolume = param;
                                     volUpd = TRUE;
                                     break;
                                 case TRACKER_FX_EXTENDED:
-                                    c->mUnk_16 = effect;
-                                    c->mUnk_18 = param;
+                                    c->mEffect = effect;
+                                    c->mEffectParam = param;
                                     switch (hi) {
                                         case TRACKER_FXE_VIBRATO_WAVE:
-                                            c->mUnk_08 = data_02063c9c[lo & 7];
+                                            c->mVibratoWave = gEffectWaves[lo & 7];
                                             break;
                                         case TRACKER_FXE_TREMOLO_WAVE:
-                                            c->mUnk_0c = data_02063c9c[lo & 7];
+                                            c->mTremoloWave = gEffectWaves[lo & 7];
                                             break;
                                         case TRACKER_FXE_RETRIGGER:
-                                            c->mUnk_4c = TRACKER_START_RETRIGGER;
-                                            c->mUnk_4d = 0;
-                                            c->mUnk_4e = lo;
+                                            c->mStartKind = TRACKER_START_RETRIGGER;
+                                            c->mStartTicks = 0;
+                                            c->mStartTickCount = lo;
                                             break;
                                         case TRACKER_FXE_PAN:
-                                            c->mUnk_26 = lo << 4;
+                                            c->mPan = lo << 4;
                                             panUpd = TRUE;
                                             break;
                                         case TRACKER_FXE_NOTE_DELAY:
-                                            c->mUnk_4c = TRACKER_START_DELAYED;
-                                            c->mUnk_4d = 0;
-                                            c->mUnk_4e = lo;
+                                            c->mStartKind = TRACKER_START_DELAYED;
+                                            c->mStartTicks = 0;
+                                            c->mStartTickCount = lo;
                                             break;
                                         case TRACKER_FXE_ROW_DELAY:
                                             if (lo != 0) {
-                                                data_020c6b14.mUnk_1858 = (lo - 1) * data_020c6b14.mUnk_1852;
+                                                gTrackerPlayer.mRowDelayTickCount =
+                                                    (lo - 1) * gTrackerPlayer.mTicksPerRow;
                                             }
                                             break;
                                     }
                                     break;
                                 case TRACKER_FX_GLOBAL_VOLUME:
-                                    if (data_020c6b14.mUnk_1748 != 1 && data_020c6b14.mUnk_1748 != 2) {
+                                    if (gTrackerPlayer.mGlobalFadeState != TRACKER_GLOBAL_FADE_TO_PENDING &&
+                                        gTrackerPlayer.mGlobalFadeState != TRACKER_GLOBAL_FADE_TO_RELEASE) {
                                         globalVol = param << 1;
                                         if (globalVol > 128) {
                                             globalVol = 128;
@@ -1145,170 +1156,172 @@ void func_02036198(void) {
                                     }
                                     break;
                                 case TRACKER_FX_GLOBAL_VOL_SLIDE:
-                                    if (data_020c6b14.mUnk_1748 != 1 && data_020c6b14.mUnk_1748 != 2) {
+                                    if (gTrackerPlayer.mGlobalFadeState != TRACKER_GLOBAL_FADE_TO_PENDING &&
+                                        gTrackerPlayer.mGlobalFadeState != TRACKER_GLOBAL_FADE_TO_RELEASE) {
                                         if (param != 0) {
-                                            c->mUnk_6a[12] = param;
+                                            c->mLastParams[12] = param;
                                         } else {
-                                            param = c->mUnk_6a[12];
+                                            param = c->mLastParams[12];
                                         }
-                                        c->mUnk_16 = effect;
-                                        c->mUnk_18 = param;
+                                        c->mEffect = effect;
+                                        c->mEffectParam = param;
                                     }
                                     break;
                                 case TRACKER_FX_PAN_SLIDE:
                                     if (param != 0) {
-                                        c->mUnk_6a[13] = param;
+                                        c->mLastParams[13] = param;
                                     } else {
-                                        param = c->mUnk_6a[13];
+                                        param = c->mLastParams[13];
                                     }
                                     if (k != 0) {
-                                        c->mUnk_16 = effect;
-                                        c->mUnk_18 = param;
+                                        c->mEffect = effect;
+                                        c->mEffectParam = param;
                                     } else {
-                                        c->mUnk_17 = effect;
-                                        c->mUnk_1a = param;
+                                        c->mVolumeColumnEffect = effect;
+                                        c->mVolumeColumnEffectParam = param;
                                     }
                                     break;
                             }
                         }
                         if (porta == FALSE) {
-                            c->mUnk_04 = period;
+                            c->mPeriod = period;
                         } else {
-                            period = c->mUnk_04;
+                            period = c->mPeriod;
                         }
-                        volume = c->mUnk_24;
+                        volume = c->mVolume;
                         if (porta == TRUE && instChanged == FALSE) {
                             trigger = FALSE;
                         }
                         // First-tick part of the two stored effects.
                         for (k = 0; k < 2; k++) {
                             if (k == 0) {
-                                param = c->mUnk_1a;
-                                effect = c->mUnk_17;
+                                param = c->mVolumeColumnEffectParam;
+                                effect = c->mVolumeColumnEffect;
                             } else {
-                                param = c->mUnk_18;
-                                effect = c->mUnk_16;
+                                param = c->mEffectParam;
+                                effect = c->mEffect;
                             }
                             hi = (param & 0xf0) >> 4;
                             lo = param & 0xf;
                             switch (effect) {
                                 case TRACKER_FX_ARPEGGIO:
-                                    period = c->mUnk_04;
+                                    period = c->mPeriod;
                                     periodUpd = TRUE;
                                     break;
                                 case TRACKER_FX_SLIDE_UP:
-                                    if (data_020c6b14.mUnk_174f & 1) {
-                                        c->mUnk_04 -= param;
-                                        if (c->mUnk_04 < TRACKER_PERIOD_MIN) {
-                                            c->mUnk_04 = TRACKER_PERIOD_MIN;
+                                    if (gTrackerPlayer.mFlags & 1) {
+                                        c->mPeriod -= param;
+                                        if (c->mPeriod < TRACKER_PERIOD_MIN) {
+                                            c->mPeriod = TRACKER_PERIOD_MIN;
                                         }
                                     }
-                                    period = c->mUnk_04;
+                                    period = c->mPeriod;
                                     periodUpd = TRUE;
                                     break;
                                 case TRACKER_FX_SLIDE_DOWN:
-                                    if (data_020c6b14.mUnk_174f & 1) {
-                                        c->mUnk_04 += param;
+                                    if (gTrackerPlayer.mFlags & 1) {
+                                        c->mPeriod += param;
                                     }
-                                    period = c->mUnk_04;
+                                    period = c->mPeriod;
                                     periodUpd = TRUE;
                                     break;
                                 case TRACKER_FX_TONE_SLIDE:
                                 case TRACKER_FX_TONE_SLIDE_VOL:
-                                    period = c->mUnk_04;
+                                    period = c->mPeriod;
                                     periodUpd = TRUE;
                                     if (effect == TRACKER_FX_TONE_SLIDE_VOL) {
-                                        func_02037df8(c, (s8) hi, (s8) lo);
-                                        volume = c->mUnk_24;
+                                        ApplyVolumeSlide(c, (s8) hi, (s8) lo);
+                                        volume = c->mVolume;
                                         volUpd = TRUE;
                                     }
                                     break;
                                 case TRACKER_FX_VIBRATO:
                                 case TRACKER_FX_VIBRATO_VOL:
-                                    period = func_02037d38(c);
+                                    period = ApplyVibrato(c);
                                     periodUpd = TRUE;
                                     if (effect == TRACKER_FX_VIBRATO_VOL) {
-                                        func_02037df8(c, (s8) hi, (s8) lo);
-                                        volume = c->mUnk_24;
+                                        ApplyVolumeSlide(c, (s8) hi, (s8) lo);
+                                        volume = c->mVolume;
                                         volUpd = TRUE;
                                     }
                                     break;
                                 case TRACKER_FX_TREMOLO:
-                                    volume = func_02037dac(c);
+                                    volume = ApplyTremolo(c);
                                     volUpd = TRUE;
                                     break;
                                 case TRACKER_FX_VOL_SLIDE:
-                                    func_02037df8(c, (s8) hi, (s8) lo);
-                                    volume = c->mUnk_24;
+                                    ApplyVolumeSlide(c, (s8) hi, (s8) lo);
+                                    volume = c->mVolume;
                                     volUpd = TRUE;
                                     break;
                                 case TRACKER_FX_EXTENDED:
                                     switch (hi) {
                                         case TRACKER_FXE_FINE_SLIDE_UP:
                                             if (lo != 0) {
-                                                c->mUnk_6a[8] = lo;
+                                                c->mLastParams[8] = lo;
                                             } else {
-                                                lo = c->mUnk_6a[8];
+                                                lo = c->mLastParams[8];
                                             }
-                                            if (data_020c6b14.mUnk_174f & 1) {
-                                                c->mUnk_04 -= lo << 2;
+                                            if (gTrackerPlayer.mFlags & 1) {
+                                                c->mPeriod -= lo << 2;
                                             } else {
-                                                c->mUnk_04 -= lo;
+                                                c->mPeriod -= lo;
                                             }
-                                            if (c->mUnk_04 < TRACKER_PERIOD_MIN) {
-                                                c->mUnk_04 = TRACKER_PERIOD_MIN;
+                                            if (c->mPeriod < TRACKER_PERIOD_MIN) {
+                                                c->mPeriod = TRACKER_PERIOD_MIN;
                                             }
-                                            period = c->mUnk_04;
+                                            period = c->mPeriod;
                                             periodUpd = TRUE;
                                             break;
                                         case TRACKER_FXE_FINE_SLIDE_DOWN:
                                             if (lo != 0) {
-                                                c->mUnk_6a[9] = lo;
+                                                c->mLastParams[9] = lo;
                                             } else {
-                                                lo = c->mUnk_6a[9];
+                                                lo = c->mLastParams[9];
                                             }
-                                            if (data_020c6b14.mUnk_174f & 1) {
-                                                c->mUnk_04 += lo << 2;
+                                            if (gTrackerPlayer.mFlags & 1) {
+                                                c->mPeriod += lo << 2;
                                             } else {
-                                                c->mUnk_04 += lo;
+                                                c->mPeriod += lo;
                                             }
-                                            period = c->mUnk_04;
+                                            period = c->mPeriod;
                                             periodUpd = TRUE;
                                             break;
                                         case TRACKER_FXE_FINE_VOL_UP:
                                             if (lo != 0) {
-                                                c->mUnk_6a[10] = lo;
+                                                c->mLastParams[10] = lo;
                                             } else {
-                                                lo = c->mUnk_6a[10];
+                                                lo = c->mLastParams[10];
                                             }
                                             if (lo != 0) {
-                                                func_02037df8(c, (s8) lo, 0);
-                                                volume = c->mUnk_24;
+                                                ApplyVolumeSlide(c, (s8) lo, 0);
+                                                volume = c->mVolume;
                                                 volUpd = TRUE;
                                             }
                                             break;
                                         case TRACKER_FXE_FINE_VOL_DOWN:
                                             if (lo != 0) {
-                                                c->mUnk_6a[11] = lo;
+                                                c->mLastParams[11] = lo;
                                             } else {
-                                                lo = c->mUnk_6a[11];
+                                                lo = c->mLastParams[11];
                                             }
                                             if (lo != 0) {
-                                                func_02037df8(c, 0, (s8) lo);
-                                                volume = c->mUnk_24;
+                                                ApplyVolumeSlide(c, 0, (s8) lo);
+                                                volume = c->mVolume;
                                                 volUpd = TRUE;
                                             }
                                             break;
                                     }
                                     break;
                                 case TRACKER_FX_GLOBAL_VOL_SLIDE:
-                                    if (data_020c6b14.mUnk_1748 != 1 && data_020c6b14.mUnk_1748 != 2) {
-                                        func_02037e70(&globalVol, (s8) hi, (s8) lo);
+                                    if (gTrackerPlayer.mGlobalFadeState != TRACKER_GLOBAL_FADE_TO_PENDING &&
+                                        gTrackerPlayer.mGlobalFadeState != TRACKER_GLOBAL_FADE_TO_RELEASE) {
+                                        ApplyGlobalVolumeSlide(&globalVol, (s8) hi, (s8) lo);
                                         volChanged = TRUE;
                                     }
                                     break;
                                 case TRACKER_FX_PAN_SLIDE:
-                                    func_02037e34(c, (s8) hi, (s8) lo);
+                                    ApplyPanSlide(c, (s8) hi, (s8) lo);
                                     panUpd = TRUE;
                                     break;
                             }
@@ -1319,110 +1332,115 @@ void func_02036198(void) {
                             TrackerSample *s;
                             u32 data;
 
-                            freq = func_02037efc(period, (data_020c6b14.mUnk_174f & 1) ? TRUE : FALSE);
-                            c->mUnk_10 = 0;
+                            freq = GetPeriodRate(period, (gTrackerPlayer.mFlags & 1) ? TRUE : FALSE);
+                            c->mNoteOff = 0;
                             if (cellEffect != TRACKER_FX_ENV_POS) {
-                                func_02037f5c(&data_020c6b14, c, TRACKER_ENV_VOLUME);
-                                func_02037f5c(&data_020c6b14, c, TRACKER_ENV_PAN);
+                                StartEnvelope(&gTrackerPlayer, c, TRACKER_ENV_VOLUME);
+                                StartEnvelope(&gTrackerPlayer, c, TRACKER_ENV_PAN);
                             } else {
-                                func_020382c0(&data_020c6b14, c, TRACKER_ENV_VOLUME, cellParam);
-                                func_020382c0(&data_020c6b14, c, TRACKER_ENV_PAN, cellParam);
+                                SetEnvelopePosition(&gTrackerPlayer, c, TRACKER_ENV_VOLUME, cellParam);
+                                SetEnvelopePosition(&gTrackerPlayer, c, TRACKER_ENV_PAN, cellParam);
                             }
-                            c->mUnk_48 = 0x10000;
-                            chVol = func_02040b60(data_02050b40[func_020384f8(
-                                (s8) volume, c->mUnk_28.mUnk_04, c->mUnk_48, data_020c6b14.mUnk_1747, c->mUnk_25)]);
-                            if (c->mUnk_4c != TRACKER_START_DELAYED) {
-                                func_020400f4(1 << (data_020c6b14.mUnk_1744 + i), 0, 0, 0);
+                            c->mFadeOutVolume = 0x10000;
+                            chVol = func_02040b60(gVolumeTable[ComputeVolumeIndex(
+                                (s8) volume, c->mVolumeEnvState.mValue, c->mFadeOutVolume, gTrackerPlayer.mGlobalVolume,
+                                c->mUnk_25)]);
+                            if (c->mStartKind != TRACKER_START_DELAYED) {
+                                func_020400f4(1 << (gTrackerPlayer.mFirstChannel + i), 0, 0, 0);
                             }
-                            s = c->mUnk_00;
+                            s = c->mSample;
                             // A sample without a loop plays once from the offset; a looped one plays from its start.
-                            if ((s->mUnk_14 & 3) == 0 || s->mUnk_08 == 0) {
-                                if (sampleOffset >= s->mUnk_00) {
+                            if ((s->mFlags & 3) == 0 || s->mLoopLength == 0) {
+                                if (sampleOffset >= s->mLength) {
                                     goto next;
                                 }
-                                data = (u32) s->mUnk_0c;
+                                data = (u32) s->mData;
                                 if (data == 0) {
                                     goto next;
                                 }
-                                if (c->mUnk_4c != 0) {
-                                    c->mUnk_4f = (s->mUnk_14 & 0x10) ? TRUE : FALSE;
-                                    c->mUnk_54 = data + sampleOffset;
-                                    c->mUnk_58 = (c->mUnk_00->mUnk_00 - sampleOffset) >> 2;
-                                    c->mUnk_5c = 0;
-                                    c->mUnk_52 = chVol;
+                                if (c->mStartKind != 0) {
+                                    c->mUnk_4f = (s->mFlags & 0x10) ? TRUE : FALSE;
+                                    c->mStartData = data + sampleOffset;
+                                    c->mUnk_58 = (c->mSample->mLength - sampleOffset) >> 2;
+                                    c->mStartLoopLength = 0;
+                                    c->mStartVolume = chVol;
                                     c->mUnk_60 = 0xffb0ff / freq;
-                                    c->mUnk_50 = func_02038524(c->mUnk_26, c->mUnk_38.mUnk_04) >> 1;
+                                    c->mStartPan = ComputePan(c->mPan, c->mPanEnvState.mValue) >> 1;
                                 }
-                                if (c->mUnk_4c == TRACKER_START_DELAYED) {
+                                if (c->mStartKind == TRACKER_START_DELAYED) {
                                     goto next;
                                 }
                                 c->mUnk_64 = 0xffb0ff / freq;
                                 c->mUnk_68 = chVol;
-                                func_02040240(data_020c6b14.mUnk_1744 + i, (c->mUnk_00->mUnk_14 & 0x10) ? TRUE : FALSE,
-                                              data + sampleOffset, 2, 0, (c->mUnk_00->mUnk_00 - sampleOffset) >> 2,
-                                              c->mUnk_68 & 0xff, c->mUnk_68 >> 8, c->mUnk_64,
-                                              func_02038524(c->mUnk_26, c->mUnk_38.mUnk_04) >> 1);
-                                func_020400cc(1 << (data_020c6b14.mUnk_1744 + i), 0, 0, 0);
+                                func_02040240(gTrackerPlayer.mFirstChannel + i,
+                                              (c->mSample->mFlags & 0x10) ? TRUE : FALSE, data + sampleOffset, 2, 0,
+                                              (c->mSample->mLength - sampleOffset) >> 2, c->mUnk_68 & 0xff,
+                                              c->mUnk_68 >> 8, c->mUnk_64,
+                                              ComputePan(c->mPan, c->mPanEnvState.mValue) >> 1);
+                                func_020400cc(1 << (gTrackerPlayer.mFirstChannel + i), 0, 0, 0);
                             } else {
-                                data = (u32) s->mUnk_0c;
+                                data = (u32) s->mData;
                                 if (data == 0) {
                                     goto next;
                                 }
-                                if (c->mUnk_4c != 0) {
-                                    c->mUnk_4f = (s->mUnk_14 & 0x10) ? TRUE : FALSE;
-                                    c->mUnk_54 = data;
-                                    c->mUnk_58 = c->mUnk_00->mUnk_04 >> 2;
-                                    c->mUnk_5c = c->mUnk_00->mUnk_08 >> 2;
-                                    c->mUnk_52 = chVol;
+                                if (c->mStartKind != 0) {
+                                    c->mUnk_4f = (s->mFlags & 0x10) ? TRUE : FALSE;
+                                    c->mStartData = data;
+                                    c->mUnk_58 = c->mSample->mLoopStart >> 2;
+                                    c->mStartLoopLength = c->mSample->mLoopLength >> 2;
+                                    c->mStartVolume = chVol;
                                     c->mUnk_60 = 0xffb0ff / freq;
-                                    c->mUnk_50 = func_02038524(c->mUnk_26, c->mUnk_38.mUnk_04) >> 1;
+                                    c->mStartPan = ComputePan(c->mPan, c->mPanEnvState.mValue) >> 1;
                                 }
-                                if (c->mUnk_4c == TRACKER_START_DELAYED) {
+                                if (c->mStartKind == TRACKER_START_DELAYED) {
                                     goto next;
                                 }
                                 c->mUnk_64 = 0xffb0ff / freq;
                                 c->mUnk_68 = chVol;
-                                s = c->mUnk_00;
-                                func_02040240(data_020c6b14.mUnk_1744 + i, (s->mUnk_14 & 0x10) ? TRUE : FALSE, data, 1,
-                                              s->mUnk_04 >> 2, s->mUnk_08 >> 2, c->mUnk_68 & 0xff, c->mUnk_68 >> 8,
-                                              c->mUnk_64, func_02038524(c->mUnk_26, c->mUnk_38.mUnk_04) >> 1);
-                                func_020400cc(1 << (data_020c6b14.mUnk_1744 + i), 0, 0, 0);
+                                s = c->mSample;
+                                func_02040240(gTrackerPlayer.mFirstChannel + i, (s->mFlags & 0x10) ? TRUE : FALSE, data,
+                                              1, s->mLoopStart >> 2, s->mLoopLength >> 2, c->mUnk_68 & 0xff,
+                                              c->mUnk_68 >> 8, c->mUnk_64,
+                                              ComputePan(c->mPan, c->mPanEnvState.mValue) >> 1);
+                                func_020400cc(1 << (gTrackerPlayer.mFirstChannel + i), 0, 0, 0);
                             }
                         } else {
                             BOOL changed;
 
                             if (cellEffect != TRACKER_FX_ENV_POS) {
-                                changed = func_020380b8(&data_020c6b14, c, TRACKER_ENV_VOLUME, FALSE) |
-                                          func_02038464(&data_020c6b14, c);
+                                changed = AdvanceEnvelope(&gTrackerPlayer, c, TRACKER_ENV_VOLUME, FALSE) |
+                                          AdvanceFadeOut(&gTrackerPlayer, c);
                             } else {
-                                func_020382c0(&data_020c6b14, c, TRACKER_ENV_VOLUME, cellParam);
+                                SetEnvelopePosition(&gTrackerPlayer, c, TRACKER_ENV_VOLUME, cellParam);
                                 changed = TRUE;
                             }
                             if (changed == TRUE && volUpd == FALSE) {
-                                volume = c->mUnk_24;
+                                volume = c->mVolume;
                                 volUpd = TRUE;
                             }
                             if (cellEffect != TRACKER_FX_ENV_POS) {
-                                if (func_020380b8(&data_020c6b14, c, TRACKER_ENV_PAN, FALSE) == TRUE) {
+                                if (AdvanceEnvelope(&gTrackerPlayer, c, TRACKER_ENV_PAN, FALSE) == TRUE) {
                                     panUpd = TRUE;
                                 }
                             } else {
-                                func_020382c0(&data_020c6b14, c, TRACKER_ENV_PAN, cellParam);
+                                SetEnvelopePosition(&gTrackerPlayer, c, TRACKER_ENV_PAN, cellParam);
                                 panUpd = TRUE;
                             }
                             if (periodUpd == TRUE) {
                                 c->mUnk_64 =
-                                    0xffb0ff / func_02037efc(period, (data_020c6b14.mUnk_174f & 1) ? TRUE : FALSE);
-                                func_020401d8(1 << (data_020c6b14.mUnk_1744 + i), c->mUnk_64);
+                                    0xffb0ff / GetPeriodRate(period, (gTrackerPlayer.mFlags & 1) ? TRUE : FALSE);
+                                func_020401d8(1 << (gTrackerPlayer.mFirstChannel + i), c->mUnk_64);
                             }
                             if (volUpd == TRUE) {
-                                c->mUnk_68 = func_02040b60(data_02050b40[func_020384f8(
-                                    (s8) volume, c->mUnk_28.mUnk_04, c->mUnk_48, data_020c6b14.mUnk_1747, c->mUnk_25)]);
-                                func_020401f8(1 << (data_020c6b14.mUnk_1744 + i), c->mUnk_68 & 0xff, c->mUnk_68 >> 8);
+                                c->mUnk_68 = func_02040b60(gVolumeTable[ComputeVolumeIndex(
+                                    (s8) volume, c->mVolumeEnvState.mValue, c->mFadeOutVolume,
+                                    gTrackerPlayer.mGlobalVolume, c->mUnk_25)]);
+                                func_020401f8(1 << (gTrackerPlayer.mFirstChannel + i), c->mUnk_68 & 0xff,
+                                              c->mUnk_68 >> 8);
                             }
                             if (panUpd == TRUE) {
-                                func_02040220(1 << (data_020c6b14.mUnk_1744 + i),
-                                              func_02038524(c->mUnk_26, c->mUnk_38.mUnk_04) >> 1);
+                                func_02040220(1 << (gTrackerPlayer.mFirstChannel + i),
+                                              ComputePan(c->mPan, c->mPanEnvState.mValue) >> 1);
                             }
                             if (gSystemState.mUnk_2c8 & 0x400) {
                                 // The debug display flag is tested here, but nothing in this branch formats the
@@ -1439,17 +1457,18 @@ void func_02036198(void) {
                 } else {
                     BOOL changed;
 
-                    c->mUnk_10 = 1;
-                    changed =
-                        func_020380b8(&data_020c6b14, c, TRACKER_ENV_VOLUME, TRUE) | func_02038464(&data_020c6b14, c);
+                    c->mNoteOff = 1;
+                    changed = AdvanceEnvelope(&gTrackerPlayer, c, TRACKER_ENV_VOLUME, TRUE) |
+                              AdvanceFadeOut(&gTrackerPlayer, c);
                     if (changed == TRUE) {
-                        c->mUnk_68 = func_02040b60(data_02050b40[func_020384f8(
-                            c->mUnk_24, c->mUnk_28.mUnk_04, c->mUnk_48, data_020c6b14.mUnk_1747, c->mUnk_25)]);
-                        func_020401f8(1 << (data_020c6b14.mUnk_1744 + i), c->mUnk_68 & 0xff, c->mUnk_68 >> 8);
+                        c->mUnk_68 = func_02040b60(
+                            gVolumeTable[ComputeVolumeIndex(c->mVolume, c->mVolumeEnvState.mValue, c->mFadeOutVolume,
+                                                            gTrackerPlayer.mGlobalVolume, c->mUnk_25)]);
+                        func_020401f8(1 << (gTrackerPlayer.mFirstChannel + i), c->mUnk_68 & 0xff, c->mUnk_68 >> 8);
                     }
-                    if (func_020380b8(&data_020c6b14, c, TRACKER_ENV_PAN, TRUE) == TRUE) {
-                        func_02040220(1 << (data_020c6b14.mUnk_1744 + i),
-                                      func_02038524(c->mUnk_26, c->mUnk_38.mUnk_04) >> 1);
+                    if (AdvanceEnvelope(&gTrackerPlayer, c, TRACKER_ENV_PAN, TRUE) == TRUE) {
+                        func_02040220(1 << (gTrackerPlayer.mFirstChannel + i),
+                                      ComputePan(c->mPan, c->mPanEnvState.mValue) >> 1);
                     }
                 }
             next:
@@ -1462,13 +1481,13 @@ void func_02036198(void) {
                 }
                 cell += 5;
             }
-            data_020c6b14.mUnk_1742++;
+            gTrackerPlayer.mRowIndex++;
             if (nextRow != -1) {
-                data_020c6b14.mUnk_1742 = nextRow;
-                func_02037c10();
+                gTrackerPlayer.mRowIndex = nextRow;
+                AdvanceOrder();
             }
         } else {
-            for (i = 0; i < data_020c6b14.mUnk_174c; i++) {
+            for (i = 0; i < gTrackerPlayer.mChannelCount; i++) {
                 u8 tickEffect;
                 u8 tickParam;
                 u8 tickHi;
@@ -1476,141 +1495,145 @@ void func_02036198(void) {
                 u8 tickVolume;
                 BOOL tickPeriodUpd;
 
-                c = &data_020c6b14.mUnk_610[i];
+                c = &gTrackerPlayer.mChannels[i];
                 tickPeriodUpd = FALSE;
                 volUpd = FALSE;
                 tickPanUpd = FALSE;
                 // A delayed note starts, or a retriggered one restarts, when its tick count is reached.
-                if (c->mUnk_4c != 0) {
-                    if (++c->mUnk_4d == c->mUnk_4e) {
-                        if (c->mUnk_4c != TRACKER_START_DELAYED) {
-                            c->mUnk_4d = 0;
+                if (c->mStartKind != 0) {
+                    if (++c->mStartTicks == c->mStartTickCount) {
+                        if (c->mStartKind != TRACKER_START_DELAYED) {
+                            c->mStartTicks = 0;
                         } else {
-                            c->mUnk_4c = 0;
+                            c->mStartKind = 0;
                         }
-                        func_020400f4(1 << (data_020c6b14.mUnk_1744 + i), 0, 0, 0);
-                        if (c->mUnk_5c == 0) {
-                            func_02040240(data_020c6b14.mUnk_1744 + i, c->mUnk_4f, c->mUnk_54, 2, 0, c->mUnk_58,
-                                          c->mUnk_52 & 0xff, c->mUnk_52 >> 8, c->mUnk_60, c->mUnk_50);
+                        func_020400f4(1 << (gTrackerPlayer.mFirstChannel + i), 0, 0, 0);
+                        if (c->mStartLoopLength == 0) {
+                            func_02040240(gTrackerPlayer.mFirstChannel + i, c->mUnk_4f, c->mStartData, 2, 0, c->mUnk_58,
+                                          c->mStartVolume & 0xff, c->mStartVolume >> 8, c->mUnk_60, c->mStartPan);
                         } else {
-                            func_02040240(data_020c6b14.mUnk_1744 + i, c->mUnk_4f, c->mUnk_54, 1, c->mUnk_58,
-                                          c->mUnk_5c, c->mUnk_52 & 0xff, c->mUnk_52 >> 8, c->mUnk_60, c->mUnk_50);
+                            func_02040240(gTrackerPlayer.mFirstChannel + i, c->mUnk_4f, c->mStartData, 1, c->mUnk_58,
+                                          c->mStartLoopLength, c->mStartVolume & 0xff, c->mStartVolume >> 8, c->mUnk_60,
+                                          c->mStartPan);
                         }
-                        func_020400cc(1 << (data_020c6b14.mUnk_1744 + i), 0, 0, 0);
+                        func_020400cc(1 << (gTrackerPlayer.mFirstChannel + i), 0, 0, 0);
                     }
                 }
                 for (tickK = 0; tickK < 2; tickK++) {
                     if (tickK == 0) {
-                        tickParam = c->mUnk_1a;
-                        tickEffect = c->mUnk_17;
+                        tickParam = c->mVolumeColumnEffectParam;
+                        tickEffect = c->mVolumeColumnEffect;
                     } else {
-                        tickParam = c->mUnk_18;
-                        tickEffect = c->mUnk_16;
+                        tickParam = c->mEffectParam;
+                        tickEffect = c->mEffect;
                     }
                     tickHi = (tickParam & 0xf0) >> 4;
                     tickLo = tickParam & 0xf;
                     switch (tickEffect) {
                         case TRACKER_FX_ARPEGGIO:
-                            note = c->mUnk_14 - 1;
-                            switch ((u8) (c->mUnk_1c % 3)) {
+                            note = c->mNote - 1;
+                            switch ((u8) (c->mArpeggioTicks % 3)) {
                                 case 0:
-                                    period = func_02037eac((u8) (note + c->mUnk_00->mUnk_15), c->mUnk_00->mUnk_13);
+                                    period =
+                                        GetNotePeriod((u8) (note + c->mSample->mNoteOffset), c->mSample->mFinetune);
                                     break;
                                 case 1:
-                                    period =
-                                        func_02037eac((u8) (note + tickHi + c->mUnk_00->mUnk_15), c->mUnk_00->mUnk_13);
+                                    period = GetNotePeriod((u8) (note + tickHi + c->mSample->mNoteOffset),
+                                                           c->mSample->mFinetune);
                                     break;
                                 case 2:
-                                    period =
-                                        func_02037eac((u8) (note + tickLo + c->mUnk_00->mUnk_15), c->mUnk_00->mUnk_13);
+                                    period = GetNotePeriod((u8) (note + tickLo + c->mSample->mNoteOffset),
+                                                           c->mSample->mFinetune);
                                     break;
                             }
-                            c->mUnk_1c++;
+                            c->mArpeggioTicks++;
                             tickPeriodUpd = TRUE;
                             break;
                         case TRACKER_FX_SLIDE_UP:
-                            c->mUnk_04 -= tickParam;
-                            if (c->mUnk_04 < TRACKER_PERIOD_MIN) {
-                                c->mUnk_04 = TRACKER_PERIOD_MIN;
+                            c->mPeriod -= tickParam;
+                            if (c->mPeriod < TRACKER_PERIOD_MIN) {
+                                c->mPeriod = TRACKER_PERIOD_MIN;
                             }
                             tickPeriodUpd = TRUE;
-                            period = c->mUnk_04;
+                            period = c->mPeriod;
                             break;
                         case TRACKER_FX_SLIDE_DOWN:
-                            c->mUnk_04 += tickParam;
+                            c->mPeriod += tickParam;
                             tickPeriodUpd = TRUE;
-                            period = c->mUnk_04;
+                            period = c->mPeriod;
                             break;
                         case TRACKER_FX_TONE_SLIDE:
                         case TRACKER_FX_TONE_SLIDE_VOL:
-                            func_02037cdc(c);
-                            period = c->mUnk_04;
+                            ApplyToneSlide(c);
+                            period = c->mPeriod;
                             tickPeriodUpd = TRUE;
                             if (tickEffect == TRACKER_FX_TONE_SLIDE_VOL) {
-                                func_02037df8(c, (s8) tickHi, (s8) tickLo);
-                                tickVolume = c->mUnk_24;
+                                ApplyVolumeSlide(c, (s8) tickHi, (s8) tickLo);
+                                tickVolume = c->mVolume;
                                 volUpd = TRUE;
                             }
                             break;
                         case TRACKER_FX_VIBRATO:
                         case TRACKER_FX_VIBRATO_VOL:
-                            period = func_02037d38(c);
+                            period = ApplyVibrato(c);
                             tickPeriodUpd = TRUE;
                             if (tickEffect == TRACKER_FX_VIBRATO_VOL) {
-                                func_02037df8(c, (s8) tickHi, (s8) tickLo);
-                                tickVolume = c->mUnk_24;
+                                ApplyVolumeSlide(c, (s8) tickHi, (s8) tickLo);
+                                tickVolume = c->mVolume;
                                 volUpd = TRUE;
                             }
                             break;
                         case TRACKER_FX_TREMOLO:
-                            tickVolume = func_02037dac(c);
+                            tickVolume = ApplyTremolo(c);
                             volUpd = TRUE;
                             break;
                         case TRACKER_FX_VOL_SLIDE:
-                            func_02037df8(c, (s8) tickHi, (s8) tickLo);
-                            tickVolume = c->mUnk_24;
+                            ApplyVolumeSlide(c, (s8) tickHi, (s8) tickLo);
+                            tickVolume = c->mVolume;
                             volUpd = TRUE;
                             break;
                         case TRACKER_FX_EXTENDED:
-                            if (tickHi == TRACKER_FXE_NOTE_CUT && data_020c6b14.mUnk_1856 >= tickLo) {
-                                c->mUnk_24 = 0;
+                            if (tickHi == TRACKER_FXE_NOTE_CUT && gTrackerPlayer.mTickIndex >= tickLo) {
+                                c->mVolume = 0;
                                 tickVolume = 0;
                                 volUpd = TRUE;
                             }
                             break;
                         case TRACKER_FX_GLOBAL_VOL_SLIDE:
-                            if (data_020c6b14.mUnk_1748 != 1 && data_020c6b14.mUnk_1748 != 2) {
-                                func_02037e70(&globalVol, (s8) tickHi, (s8) tickLo);
+                            if (gTrackerPlayer.mGlobalFadeState != TRACKER_GLOBAL_FADE_TO_PENDING &&
+                                gTrackerPlayer.mGlobalFadeState != TRACKER_GLOBAL_FADE_TO_RELEASE) {
+                                ApplyGlobalVolumeSlide(&globalVol, (s8) tickHi, (s8) tickLo);
                                 volChanged = TRUE;
                             }
                             break;
                         case TRACKER_FX_PAN_SLIDE:
-                            func_02037e34(c, (s8) tickHi, (s8) tickLo);
+                            ApplyPanSlide(c, (s8) tickHi, (s8) tickLo);
                             tickPanUpd = TRUE;
                             break;
                     }
                 }
-                if ((func_020380b8(&data_020c6b14, c, TRACKER_ENV_VOLUME, FALSE) | func_02038464(&data_020c6b14, c)) ==
-                        TRUE &&
+                if ((AdvanceEnvelope(&gTrackerPlayer, c, TRACKER_ENV_VOLUME, FALSE) |
+                     AdvanceFadeOut(&gTrackerPlayer, c)) == TRUE &&
                     volUpd == FALSE) {
-                    tickVolume = c->mUnk_24;
+                    tickVolume = c->mVolume;
                     volUpd = TRUE;
                 }
-                if (func_020380b8(&data_020c6b14, c, TRACKER_ENV_PAN, FALSE) == TRUE) {
+                if (AdvanceEnvelope(&gTrackerPlayer, c, TRACKER_ENV_PAN, FALSE) == TRUE) {
                     tickPanUpd = TRUE;
                 }
                 if (tickPeriodUpd == TRUE) {
-                    c->mUnk_64 = 0xffb0ff / func_02037efc(period, (data_020c6b14.mUnk_174f & 1) ? TRUE : FALSE);
-                    func_020401d8(1 << (data_020c6b14.mUnk_1744 + i), c->mUnk_64);
+                    c->mUnk_64 = 0xffb0ff / GetPeriodRate(period, (gTrackerPlayer.mFlags & 1) ? TRUE : FALSE);
+                    func_020401d8(1 << (gTrackerPlayer.mFirstChannel + i), c->mUnk_64);
                 }
                 if (volUpd == TRUE) {
-                    c->mUnk_68 = func_02040b60(data_02050b40[func_020384f8(
-                        (s8) tickVolume, c->mUnk_28.mUnk_04, c->mUnk_48, data_020c6b14.mUnk_1747, c->mUnk_25)]);
-                    func_020401f8(1 << (data_020c6b14.mUnk_1744 + i), c->mUnk_68 & 0xff, c->mUnk_68 >> 8);
+                    c->mUnk_68 = func_02040b60(
+                        gVolumeTable[ComputeVolumeIndex((s8) tickVolume, c->mVolumeEnvState.mValue, c->mFadeOutVolume,
+                                                        gTrackerPlayer.mGlobalVolume, c->mUnk_25)]);
+                    func_020401f8(1 << (gTrackerPlayer.mFirstChannel + i), c->mUnk_68 & 0xff, c->mUnk_68 >> 8);
                 }
                 if (tickPanUpd == TRUE) {
-                    func_02040220(1 << (data_020c6b14.mUnk_1744 + i),
-                                  func_02038524(c->mUnk_26, c->mUnk_38.mUnk_04) >> 1);
+                    func_02040220(1 << (gTrackerPlayer.mFirstChannel + i),
+                                  ComputePan(c->mPan, c->mPanEnvState.mValue) >> 1);
                 }
             }
         }
@@ -1619,107 +1642,106 @@ void func_02036198(void) {
     }
     SND_FlushCommand(2);
     if (volChanged == TRUE) {
-        func_02038578(globalVol, 0);
+        SetGlobalVolume(globalVol, 0);
     }
 }
 
 // Advances to the next order position (or the jump target), stops the voices when the song ends or loops and
 // loads the pattern's row count.
-void func_02037c10(void) {
-    if (data_020c6b14.mUnk_173a != -1) {
-        data_020c6b14.mUnk_1738 = data_020c6b14.mUnk_173a;
-        data_020c6b14.mUnk_173a = -1;
-        if (data_020c6b14.mUnk_173e == 1) {
-            func_02035e7c();
+void AdvanceOrder(void) {
+    if (gTrackerPlayer.mJumpOrderIndex != -1) {
+        gTrackerPlayer.mOrderIndex = gTrackerPlayer.mJumpOrderIndex;
+        gTrackerPlayer.mJumpOrderIndex = -1;
+        if (gTrackerPlayer.mUnk_173e == 1) {
+            StopTrackerChannels();
         }
     } else {
-        data_020c6b14.mUnk_1738 = data_020c6b14.mUnk_1738 + 1;
+        gTrackerPlayer.mOrderIndex = gTrackerPlayer.mOrderIndex + 1;
     }
-    if (data_020c6b14.mUnk_1738 >= data_020c6b14.mUnk_174a) {
-        func_02035e7c();
-        data_020c6b14.mUnk_1738 = data_020c6b14.mUnk_174b;
-        if (data_020c6b14.mUnk_00 != 0) {
-            data_020c6b14.mUnk_00(4);
+    if (gTrackerPlayer.mOrderIndex >= gTrackerPlayer.mOrderCount) {
+        StopTrackerChannels();
+        gTrackerPlayer.mOrderIndex = gTrackerPlayer.mLoopOrder;
+        if (gTrackerPlayer.mCallback != 0) {
+            gTrackerPlayer.mCallback(4);
         }
     }
-    data_020c6b14.mUnk_1854 = data_020c6b14.mUnk_1752[data_020c6b14.mUnk_1738];
-    data_020c6b14.mUnk_1740 = data_020c6b14.mUnk_10[data_020c6b14.mUnk_1854]->mUnk_01 - 1;
+    gTrackerPlayer.mPatternIndex = gTrackerPlayer.mOrders[gTrackerPlayer.mOrderIndex];
+    gTrackerPlayer.mLastRow = gTrackerPlayer.mPatterns[gTrackerPlayer.mPatternIndex]->mRowCount - 1;
 }
 
-// Moves the channel's period toward its target by the slide speed.
-void func_02037cdc(TrackerChannel *c) {
-    if (c->mUnk_04 < c->mUnk_06) {
-        c->mUnk_04 = c->mUnk_04 + c->mUnk_1e;
-        if (c->mUnk_04 > c->mUnk_06) {
-            c->mUnk_04 = c->mUnk_06;
+void ApplyToneSlide(TrackerChannel *c) {
+    if (c->mPeriod < c->mTargetPeriod) {
+        c->mPeriod = c->mPeriod + c->mToneSlidePerTick;
+        if (c->mPeriod > c->mTargetPeriod) {
+            c->mPeriod = c->mTargetPeriod;
         }
     }
-    if (c->mUnk_04 > c->mUnk_06) {
-        c->mUnk_04 = c->mUnk_04 - c->mUnk_1e;
-        if (c->mUnk_04 < c->mUnk_06) {
-            c->mUnk_04 = c->mUnk_06;
+    if (c->mPeriod > c->mTargetPeriod) {
+        c->mPeriod = c->mPeriod - c->mToneSlidePerTick;
+        if (c->mPeriod < c->mTargetPeriod) {
+            c->mPeriod = c->mTargetPeriod;
         }
     }
 }
 
 // Period with the vibrato offset from the channel's wave table added; steps the wave position.
-u16 func_02037d38(TrackerChannel *c) {
-    u16 period = c->mUnk_04;
+u16 ApplyVibrato(TrackerChannel *c) {
+    u16 period = c->mPeriod;
 
-    if (data_020c6b14.mUnk_174f & 1) {
-        period += (c->mUnk_21 * c->mUnk_08[c->mUnk_1d]) >> 5;
+    if (gTrackerPlayer.mFlags & 1) {
+        period += (c->mVibratoDepth * c->mVibratoWave[c->mWaveIndex]) >> 5;
     } else {
-        period += (c->mUnk_21 * c->mUnk_08[c->mUnk_1d]) >> 7;
+        period += (c->mVibratoDepth * c->mVibratoWave[c->mWaveIndex]) >> 7;
     }
-    c->mUnk_1d += c->mUnk_20;
-    c->mUnk_1d &= 0x3f;
+    c->mWaveIndex += c->mVibratoPerTick;
+    c->mWaveIndex &= 0x3f;
     return period;
 }
 
 // Volume with the tremolo offset added (capped at 64); steps the wave position.
-u8 func_02037dac(TrackerChannel *c) {
-    u8 v = (u8) c->mUnk_24 + ((c->mUnk_23 * c->mUnk_0c[c->mUnk_1d]) >> 6);
+u8 ApplyTremolo(TrackerChannel *c) {
+    u8 v = (u8) c->mVolume + ((c->mTremoloDepth * c->mTremoloWave[c->mWaveIndex]) >> 6);
 
     if (v > 64) {
         v = 64;
     }
-    c->mUnk_1d += c->mUnk_22;
-    c->mUnk_1d &= 0x3f;
+    c->mWaveIndex += c->mTremoloPerTick;
+    c->mWaveIndex &= 0x3f;
     return v;
 }
 
 // Volume slide: adds up when it is non-zero, subtracts down otherwise; kept within 0..64.
-void func_02037df8(TrackerChannel *c, int up, int down) {
+void ApplyVolumeSlide(TrackerChannel *c, int up, int down) {
     if (up != 0) {
-        c->mUnk_24 = c->mUnk_24 + up;
+        c->mVolume = c->mVolume + up;
     } else {
-        c->mUnk_24 = c->mUnk_24 - down;
+        c->mVolume = c->mVolume - down;
     }
-    if (c->mUnk_24 < 0) {
-        c->mUnk_24 = 0;
+    if (c->mVolume < 0) {
+        c->mVolume = 0;
     }
-    if (c->mUnk_24 > 64) {
-        c->mUnk_24 = 64;
+    if (c->mVolume > 64) {
+        c->mVolume = 64;
     }
 }
 
 // Panning slide: adds up when it is non-zero, subtracts down otherwise; kept within 0..255.
-void func_02037e34(TrackerChannel *c, int up, int down) {
+void ApplyPanSlide(TrackerChannel *c, int up, int down) {
     if (up != 0) {
-        c->mUnk_26 = c->mUnk_26 + up;
+        c->mPan = c->mPan + up;
     } else {
-        c->mUnk_26 = c->mUnk_26 - down;
+        c->mPan = c->mPan - down;
     }
-    if (c->mUnk_26 < 0) {
-        c->mUnk_26 = 0;
+    if (c->mPan < 0) {
+        c->mPan = 0;
     }
-    if (c->mUnk_26 > 255) {
-        c->mUnk_26 = 255;
+    if (c->mPan > 255) {
+        c->mPan = 255;
     }
 }
 
 // Master volume slide in steps of two: adds up when it is non-zero, subtracts down otherwise; kept within 0..128.
-void func_02037e70(s8 *v, int up, int down) {
+void ApplyGlobalVolumeSlide(s8 *v, int up, int down) {
     if (up != 0) {
         *v = *v + up * 2;
     } else {
@@ -1734,118 +1756,120 @@ void func_02037e70(s8 *v, int up, int down) {
 }
 
 // Period of a note at a fine-tune value: linear scale or the period table, by the song's flag.
-u16 func_02037eac(int note, int finetune) {
-    if ((data_020c6b14.mUnk_174f & 1) == 0) {
-        return data_02051844[(finetune >> 4) + 8][note];
+u16 GetNotePeriod(int note, int finetune) {
+    if ((gTrackerPlayer.mFlags & 1) == 0) {
+        return gNotePeriods[(finetune >> 4) + 8][note];
     }
     return 7680 - note * 64 - (finetune >> 1);
 }
 
 // Playback rate of a period: a clock divided by twice the period, or with the linear flag the table entry
 // shifted down by the octave.
-u32 func_02037efc(int period, int linear) {
+u32 GetPeriodRate(int period, int linear) {
     if (linear == 0) {
         return 7093789 / (period * 2);
     }
-    return data_02050c44[period % 768] >> (period / 768);
+    return gPeriodRates[period % 768] >> (period / 768);
 }
 
 // Starts the volume (type 0) or panning (type 1) envelope of a channel's instrument; without a usable instrument
 // the level is set to its default.
-void func_02037f5c(TrackerPlayer *p, TrackerChannel *c, int type) {
+void StartEnvelope(TrackerPlayer *p, TrackerChannel *c, int type) {
     TrackerEnvelope *env;
     TrackerEnvState *st;
-    u8 inst = c->mUnk_15;
+    u8 inst = c->mInstrumentHandle;
 
-    if (inst != 0 && inst <= data_020c6b14.mUnk_174e) {
+    if (inst != 0 && inst <= gTrackerPlayer.mInstrumentCount) {
         switch (type) {
             case TRACKER_ENV_VOLUME:
-                st = &c->mUnk_28;
-                env = &p->mUnk_410[inst - 1]->mUnk_200;
-                st->mUnk_04 = TRACKER_ENV_VOLUME_LEVEL;
+                st = &c->mVolumeEnvState;
+                env = &p->mInstruments[inst - 1]->mVolumeEnvelope;
+                st->mValue = TRACKER_ENV_VOLUME_LEVEL;
                 break;
             case TRACKER_ENV_PAN:
-                st = &c->mUnk_38;
-                env = &p->mUnk_410[inst - 1]->mUnk_236;
-                st->mUnk_04 = TRACKER_ENV_PAN_LEVEL;
+                st = &c->mPanEnvState;
+                env = &p->mInstruments[inst - 1]->mPanEnvelope;
+                st->mValue = TRACKER_ENV_PAN_LEVEL;
                 break;
         }
-        if ((env->mUnk_34 & TRACKER_ENV_ON) == 0 || env->mUnk_30 <= 1) {
+        if ((env->mFlags & TRACKER_ENV_ON) == 0 || env->mPointCount <= 1) {
             return;
         }
-        st->mUnk_00 = 0;
-        st->mUnk_02 = env->mUnk_00[st->mUnk_00];
-        if (env->mUnk_00[st->mUnk_00 + 1] - st->mUnk_02 > 0) {
-            st->mUnk_04 = env->mUnk_18[st->mUnk_00] << 8;
-            st->mUnk_08 = (env->mUnk_18[st->mUnk_00 + 1] << 8) - st->mUnk_04;
-            st->mUnk_08 = st->mUnk_08 / (env->mUnk_00[st->mUnk_00 + 1] - st->mUnk_02);
+        st->mPointIndex = 0;
+        st->mTickPos = env->mPointTickPos[st->mPointIndex];
+        if (env->mPointTickPos[st->mPointIndex + 1] - st->mTickPos > 0) {
+            st->mValue = env->mPointValues[st->mPointIndex] << 8;
+            st->mValuePerTick = (env->mPointValues[st->mPointIndex + 1] << 8) - st->mValue;
+            st->mValuePerTick = st->mValuePerTick / (env->mPointTickPos[st->mPointIndex + 1] - st->mTickPos);
         } else {
-            st->mUnk_02 = st->mUnk_02 - 1;
-            st->mUnk_04 = env->mUnk_18[st->mUnk_00 + 1] << 8;
-            st->mUnk_08 = 0;
+            st->mTickPos = st->mTickPos - 1;
+            st->mValue = env->mPointValues[st->mPointIndex + 1] << 8;
+            st->mValuePerTick = 0;
         }
-        st->mUnk_0c = 0;
+        st->mNoteOff = 0;
     } else {
         switch (type) {
             case TRACKER_ENV_VOLUME:
-                c->mUnk_28.mUnk_04 = TRACKER_ENV_VOLUME_LEVEL;
+                c->mVolumeEnvState.mValue = TRACKER_ENV_VOLUME_LEVEL;
                 break;
             case TRACKER_ENV_PAN:
-                c->mUnk_38.mUnk_04 = TRACKER_ENV_PAN_LEVEL;
+                c->mPanEnvState.mValue = TRACKER_ENV_PAN_LEVEL;
                 break;
         }
     }
 }
 
-// Advances an envelope by one frame (holding at the sustain point until keyOff is 1, looping when the envelope
-// loops); returns 1 when the level's whole part changed.
-int func_020380b8(TrackerPlayer *p, TrackerChannel *c, int type, int keyOff) {
+// Advances an envelope by one tick (holding at the sustain point until keyOff is 1, looping when the envelope
+// loops); returns 1 when the value's whole part changed.
+int AdvanceEnvelope(TrackerPlayer *p, TrackerChannel *c, int type, int keyOff) {
     TrackerEnvelope *env;
     TrackerEnvState *st;
     u32 before;
-    u8 inst = c->mUnk_15;
+    u8 inst = c->mInstrumentHandle;
 
-    if (inst != 0 && inst <= data_020c6b14.mUnk_174e) {
+    if (inst != 0 && inst <= gTrackerPlayer.mInstrumentCount) {
         switch (type) {
             case TRACKER_ENV_VOLUME:
-                st = &c->mUnk_28;
-                env = &p->mUnk_410[inst - 1]->mUnk_200;
+                st = &c->mVolumeEnvState;
+                env = &p->mInstruments[inst - 1]->mVolumeEnvelope;
                 break;
             case TRACKER_ENV_PAN:
-                st = &c->mUnk_38;
-                env = &p->mUnk_410[inst - 1]->mUnk_236;
+                st = &c->mPanEnvState;
+                env = &p->mInstruments[inst - 1]->mPanEnvelope;
                 break;
         }
-        if ((env->mUnk_34 & TRACKER_ENV_ON) && env->mUnk_30 > 1) {
+        if ((env->mFlags & TRACKER_ENV_ON) && env->mPointCount > 1) {
             if (keyOff == 1) {
-                st->mUnk_0c = 1;
+                st->mNoteOff = 1;
             }
-            if (st->mUnk_00 < env->mUnk_30 - 1) {
-                if (st->mUnk_0c == 1 || st->mUnk_00 != env->mUnk_31 || (env->mUnk_34 & TRACKER_ENV_SUSTAIN) == 0) {
-                    before = st->mUnk_04 >> 8;
-                    st->mUnk_04 = st->mUnk_04 + st->mUnk_08;
-                    st->mUnk_02 = st->mUnk_02 + 1;
-                    if (st->mUnk_02 == env->mUnk_00[st->mUnk_00 + 1]) {
-                        st->mUnk_00++;
-                        if (env->mUnk_34 & TRACKER_ENV_LOOP) {
-                            if (st->mUnk_00 == env->mUnk_33) {
-                                st->mUnk_00 = env->mUnk_32;
+            if (st->mPointIndex < env->mPointCount - 1) {
+                if (st->mNoteOff == 1 || st->mPointIndex != env->mSustainPoint ||
+                    (env->mFlags & TRACKER_ENV_SUSTAIN) == 0) {
+                    before = st->mValue >> 8;
+                    st->mValue = st->mValue + st->mValuePerTick;
+                    st->mTickPos = st->mTickPos + 1;
+                    if (st->mTickPos == env->mPointTickPos[st->mPointIndex + 1]) {
+                        st->mPointIndex++;
+                        if (env->mFlags & TRACKER_ENV_LOOP) {
+                            if (st->mPointIndex == env->mLoopEndPoint) {
+                                st->mPointIndex = env->mLoopStartPoint;
                             }
                         }
-                        if (st->mUnk_00 < env->mUnk_30 - 1) {
-                            st->mUnk_02 = env->mUnk_00[st->mUnk_00];
-                            if (env->mUnk_00[st->mUnk_00 + 1] - st->mUnk_02 > 0) {
-                                st->mUnk_04 = env->mUnk_18[st->mUnk_00] << 8;
-                                st->mUnk_08 = (env->mUnk_18[st->mUnk_00 + 1] << 8) - st->mUnk_04;
-                                st->mUnk_08 = st->mUnk_08 / (env->mUnk_00[st->mUnk_00 + 1] - st->mUnk_02);
+                        if (st->mPointIndex < env->mPointCount - 1) {
+                            st->mTickPos = env->mPointTickPos[st->mPointIndex];
+                            if (env->mPointTickPos[st->mPointIndex + 1] - st->mTickPos > 0) {
+                                st->mValue = env->mPointValues[st->mPointIndex] << 8;
+                                st->mValuePerTick = (env->mPointValues[st->mPointIndex + 1] << 8) - st->mValue;
+                                st->mValuePerTick =
+                                    st->mValuePerTick / (env->mPointTickPos[st->mPointIndex + 1] - st->mTickPos);
                             } else {
-                                st->mUnk_02 = st->mUnk_02 - 1;
-                                st->mUnk_04 = env->mUnk_18[st->mUnk_00 + 1] << 8;
-                                st->mUnk_08 = 0;
+                                st->mTickPos = st->mTickPos - 1;
+                                st->mValue = env->mPointValues[st->mPointIndex + 1] << 8;
+                                st->mValuePerTick = 0;
                             }
                         }
                     }
-                    return before != (st->mUnk_04 >> 8);
+                    return before != (st->mValue >> 8);
                 }
                 return 0;
             }
@@ -1856,78 +1880,79 @@ int func_020380b8(TrackerPlayer *p, TrackerChannel *c, int type, int keyOff) {
     return 0;
 }
 
-// Places an envelope at frame pos: finds the segment, sets the level and the per-frame step.
-void func_020382c0(TrackerPlayer *p, TrackerChannel *c, int type, u16 pos) {
+// Places an envelope at tick position pos: finds the segment, sets the value and the per-tick step.
+void SetEnvelopePosition(TrackerPlayer *p, TrackerChannel *c, int type, u16 pos) {
     TrackerEnvelope *env;
     TrackerEnvState *st;
-    u8 inst = c->mUnk_15;
+    u8 inst = c->mInstrumentHandle;
 
-    if (inst == 0 || inst > data_020c6b14.mUnk_174e) {
+    if (inst == 0 || inst > gTrackerPlayer.mInstrumentCount) {
         return;
     }
     switch (type) {
         case TRACKER_ENV_VOLUME:
-            st = &c->mUnk_28;
-            env = &p->mUnk_410[inst - 1]->mUnk_200;
+            st = &c->mVolumeEnvState;
+            env = &p->mInstruments[inst - 1]->mVolumeEnvelope;
             break;
         case TRACKER_ENV_PAN:
-            st = &c->mUnk_38;
-            env = &p->mUnk_410[inst - 1]->mUnk_236;
+            st = &c->mPanEnvState;
+            env = &p->mInstruments[inst - 1]->mPanEnvelope;
             break;
     }
-    if ((env->mUnk_34 & TRACKER_ENV_ON) == 0 || env->mUnk_30 <= 1) {
+    if ((env->mFlags & TRACKER_ENV_ON) == 0 || env->mPointCount <= 1) {
         return;
     }
-    st->mUnk_00 = 0;
+    st->mPointIndex = 0;
     for (;;) {
-        if (st->mUnk_00 == env->mUnk_30 - 1) {
+        if (st->mPointIndex == env->mPointCount - 1) {
             break;
         }
-        if (pos < env->mUnk_00[st->mUnk_00 + 1]) {
+        if (pos < env->mPointTickPos[st->mPointIndex + 1]) {
             break;
         }
-        st->mUnk_00 = st->mUnk_00 + 1;
+        st->mPointIndex = st->mPointIndex + 1;
     }
-    if (st->mUnk_00 == env->mUnk_30 - 1) {
-        st->mUnk_02 = env->mUnk_00[st->mUnk_00];
-        st->mUnk_04 = env->mUnk_18[st->mUnk_00] << 8;
-        st->mUnk_08 = 0;
+    if (st->mPointIndex == env->mPointCount - 1) {
+        st->mTickPos = env->mPointTickPos[st->mPointIndex];
+        st->mValue = env->mPointValues[st->mPointIndex] << 8;
+        st->mValuePerTick = 0;
         return;
     }
-    if (env->mUnk_00[st->mUnk_00 + 1] - st->mUnk_02 > 0) {
-        st->mUnk_04 = env->mUnk_18[st->mUnk_00] << 8;
-        st->mUnk_08 = (env->mUnk_18[st->mUnk_00 + 1] << 8) - st->mUnk_04;
-        st->mUnk_08 = st->mUnk_08 / (env->mUnk_00[st->mUnk_00 + 1] - env->mUnk_00[st->mUnk_00]);
-        st->mUnk_02 = pos;
-        st->mUnk_04 = st->mUnk_08 * (st->mUnk_02 - env->mUnk_00[st->mUnk_00]) + st->mUnk_04;
+    if (env->mPointTickPos[st->mPointIndex + 1] - st->mTickPos > 0) {
+        st->mValue = env->mPointValues[st->mPointIndex] << 8;
+        st->mValuePerTick = (env->mPointValues[st->mPointIndex + 1] << 8) - st->mValue;
+        st->mValuePerTick =
+            st->mValuePerTick / (env->mPointTickPos[st->mPointIndex + 1] - env->mPointTickPos[st->mPointIndex]);
+        st->mTickPos = pos;
+        st->mValue = st->mValuePerTick * (st->mTickPos - env->mPointTickPos[st->mPointIndex]) + st->mValue;
     } else {
-        st->mUnk_04 = env->mUnk_18[st->mUnk_00 + 1] << 8;
-        st->mUnk_08 = 0;
-        st->mUnk_02 = pos - 1;
+        st->mValue = env->mPointValues[st->mPointIndex + 1] << 8;
+        st->mValuePerTick = 0;
+        st->mTickPos = pos - 1;
     }
 }
 
 // After key-off, lowers the channel's fade-out level by the instrument's fade step (or clears it without a
 // volume envelope); returns 1 when the level changed.
-int func_02038464(TrackerPlayer *p, TrackerChannel *c) {
+int AdvanceFadeOut(TrackerPlayer *p, TrackerChannel *c) {
     TrackerInstrument *instr;
     s32 before;
     u8 inst;
 
-    if (c->mUnk_10 == 1) {
-        inst = c->mUnk_15;
-        if (inst != 0 && inst <= data_020c6b14.mUnk_174e) {
-            instr = p->mUnk_410[inst - 1];
-            before = c->mUnk_48;
-            if (instr->mUnk_200.mUnk_34 & TRACKER_ENV_ON) {
-                c->mUnk_48 = before - instr->mUnk_2d2;
-                if (c->mUnk_48 <= 0) {
-                    c->mUnk_48 = 0;
+    if (c->mNoteOff == 1) {
+        inst = c->mInstrumentHandle;
+        if (inst != 0 && inst <= gTrackerPlayer.mInstrumentCount) {
+            instr = p->mInstruments[inst - 1];
+            before = c->mFadeOutVolume;
+            if (instr->mVolumeEnvelope.mFlags & TRACKER_ENV_ON) {
+                c->mFadeOutVolume = before - instr->mFadeOutPerTick;
+                if (c->mFadeOutVolume <= 0) {
+                    c->mFadeOutVolume = 0;
                 }
             } else {
-                c->mUnk_48 = 0;
+                c->mFadeOutVolume = 0;
             }
-            return before != c->mUnk_48;
+            return before != c->mFadeOutVolume;
         }
         return 0;
     }
@@ -1936,12 +1961,12 @@ int func_02038464(TrackerPlayer *p, TrackerChannel *c) {
 
 // Table index (0..64) of a channel's output volume: channel volume, volume envelope level, fade-out level and
 // master volume multiplied together.
-int func_020384f8(int vol, u16 env, int fade, u8 master, u8 chanVol) {
+int ComputeVolumeIndex(int vol, u16 env, int fade, u8 master, u8 chanVol) {
     return ((((fade * master) >> 16) * (((vol * chanVol) >> 7 << 3) * env >> 16)) >> 8);
 }
 
 // Panning (0..255) after the panning envelope level is applied, weighted toward the middle.
-u32 func_02038524(int pan, u16 level) {
+u32 ComputePan(int pan, u16 level) {
     int v = pan + (((level >> 8) - 32) * (128 - abs(pan - 128))) / 32;
 
     if ((v < 255 ? v : 255) < 0) {
@@ -1952,7 +1977,7 @@ u32 func_02038524(int pan, u16 level) {
 
 // Sets the master volume (0 unless the system flag allows sound, at most 128) and, while a song plays, sends the
 // new volume of each active hardware channel.
-void func_02038578(u8 volume, int mode) {
+void SetGlobalVolume(u8 volume, int mode) {
     u32 mask;
     u32 i;
 
@@ -1962,21 +1987,21 @@ void func_02038578(u8 volume, int mode) {
     if (volume > 128) {
         volume = 128;
     }
-    data_020c6b14.mUnk_1747 = volume;
-    if (data_020c6b14.mUnk_1724 != 1) {
+    gTrackerPlayer.mGlobalVolume = volume;
+    if (gTrackerPlayer.mPlaying != 1) {
         return;
     }
-    if (data_020c6b14.mUnk_1748 != 0 && mode != 1) {
+    if (gTrackerPlayer.mGlobalFadeState != TRACKER_GLOBAL_FADE_NONE && mode != 1) {
         return;
     }
     mask = func_02040a90();
-    for (i = 0; i < data_020c6b14.mUnk_174c; i++) {
-        if (mask & (1 << (data_020c6b14.mUnk_1744 + i))) {
-            TrackerChannel *c = &data_020c6b14.mUnk_610[i];
+    for (i = 0; i < gTrackerPlayer.mChannelCount; i++) {
+        if (mask & (1 << (gTrackerPlayer.mFirstChannel + i))) {
+            TrackerChannel *c = &gTrackerPlayer.mChannels[i];
 
-            c->mUnk_68 = func_02040b60(data_02050b40[func_020384f8(c->mUnk_24, c->mUnk_28.mUnk_04, c->mUnk_48,
-                                                                   data_020c6b14.mUnk_1747, c->mUnk_25)]);
-            func_020401f8(1 << (data_020c6b14.mUnk_1744 + i), c->mUnk_68 & 0xff, c->mUnk_68 >> 8);
+            c->mUnk_68 = func_02040b60(gVolumeTable[ComputeVolumeIndex(
+                c->mVolume, c->mVolumeEnvState.mValue, c->mFadeOutVolume, gTrackerPlayer.mGlobalVolume, c->mUnk_25)]);
+            func_020401f8(1 << (gTrackerPlayer.mFirstChannel + i), c->mUnk_68 & 0xff, c->mUnk_68 >> 8);
         }
     }
     while (SND_RecvCommandReply(0) != 0) {
@@ -1984,8 +2009,8 @@ void func_02038578(u8 volume, int mode) {
     SND_FlushCommand(2);
 }
 
-u8 func_02038694(void) {
-    return data_020c6b14.mUnk_1747;
+u8 GetGlobalVolume(void) {
+    return gTrackerPlayer.mGlobalVolume;
 }
 
 #pragma thumb on

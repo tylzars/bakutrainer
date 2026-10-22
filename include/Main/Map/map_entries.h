@@ -172,7 +172,7 @@ typedef struct Unk_020c6144 {
     u8 mUnk_58[0x5a - 0x58];
     u8 mUnk_5a;
     // The lights that are on, one bit per light number. No writer keeps earlier bits (SetLight0 stores 1,
-    // ClearLightMask 0, func_0200be50 clears it before setting bit `num`), so in this build it holds 0 or a single bit.
+    // ClearLightMask 0, SetLight clears it before setting bit `num`), so in this build it holds 0 or a single bit.
     u8 mLightMask;
     u8 mUnk_5c;
     u8 mUnk_5d[3];
@@ -229,7 +229,7 @@ typedef struct CameraState {
     Unk_020c6144 mUnk_2dc;
 } CameraState;
 
-// The map object (0x2368 bytes of .bss, up to data_020c61ac): two bit sets, indexed by cell number (mUnk_24) and by
+// The map object (0x2368 bytes of .bss, up to gScriptWork): two bit sets, indexed by cell number (mUnk_24) and by
 // position in a rectangle (mUnk_28), the squared distance limits, the sorted pair table with its search step, the
 // buffers the map code allocates, the view matrices (0x6c computed from 0x3c, with its translation at 0x90, and the
 // projection at 0x9c), the placed objects and, right after the 20 records, the camera. Every file reaches the

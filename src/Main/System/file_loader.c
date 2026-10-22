@@ -355,26 +355,26 @@ u32 GetFileOffset(u32 index) {
 // Sends a request packet (tag 0x50) until a reply arrives with tag 0x52, the expected sequence byte and the value 1;
 // the reply carries the table's size, the table is then read from the start of the file system.
 void LoadFileTable(void) {
-    u8 *reply = data_020c68e0;
-    u8 *cmd = data_020c67e0;
+    u8 *reply = gCommRecords;
+    u8 *cmd = gCommSendData;
 
     for (;;) {
         cmd[0] = 0x50;
         cmd[2] = 0;
         *(u16 *) (cmd + 4) = 1;
         UpdateSystemAndWait();
-        if (data_020c66e0[0] == 0) {
+        if (gCommRecordReceived[0] == 0) {
             continue;
         }
         if (reply[0] != 0x52) {
             continue;
         }
-        if (reply[2] != func_0203981c() || *(u16 *) (reply + 4) != 1) {
+        if (reply[2] != WhGetAid() || *(u16 *) (reply + 4) != 1) {
             continue;
         }
         break;
     }
-    gSystemState.mFileTableSize = func_02034cf0(reply + 14);
+    gSystemState.mFileTableSize = ReadU32FromHalfwords(reply + 14);
     gSystemState.mFileTable = AllocWithFlags(gSystemState.mFileTableSize, 3);
     SeekBank(0);
     ReadBank(gSystemState.mFileTable, gSystemState.mFileTableSize);

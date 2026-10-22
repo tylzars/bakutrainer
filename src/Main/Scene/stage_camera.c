@@ -88,9 +88,9 @@ void UpdateStageCamera(int stage) {
     data_020b6ee0.mUnk_a574.mUnk_00.x = data_020b6ee0.mUnk_a574.mUnk_0c.x - 600 * FX_SinCosTable_[0];
     data_020b6ee0.mUnk_a574.mUnk_00.z = data_020b6ee0.mUnk_a574.mUnk_0c.z + 600 * FX_SinCosTable_[1];
     data_020b6ee0.mUnk_a574.mUnk_00.y = data_020b6ee0.mUnk_a574.mUnk_0c.y + 0x3e8000;
-    func_0200b960(&gMapState.mCamera.mLookAtGoal, data_020b6ee0.mUnk_a574.mUnk_0c,
+    EaseVecToward(&gMapState.mCamera.mLookAtGoal, data_020b6ee0.mUnk_a574.mUnk_0c,
                   data_020b6ee0.mUnk_a574.mCameraEaseDivisor);
-    func_0200b960(&gMapState.mCamera.mPosGoal, data_020b6ee0.mUnk_a574.mUnk_00,
+    EaseVecToward(&gMapState.mCamera.mPosGoal, data_020b6ee0.mUnk_a574.mUnk_00,
                   data_020b6ee0.mUnk_a574.mCameraEaseDivisor);
     EaseCameraToGoals();
 }
@@ -154,7 +154,7 @@ void func_02016008(int stage) {
                     f->mNearFrames = 0;
                     func_02018840(rec, 0x14, i);
                     f->mModel.mUnk_134 |= 2;
-                    func_0202f110(0x2b, 0x64, 0, 0x40, 0xffff, 0);
+                    PlayWaveKeepAlive(0x2b, 0x64, 0, 0x40, 0xffff, 0);
                 }
             } else {
                 f->mNearFrames = 0;
@@ -184,13 +184,13 @@ void func_02016008(int stage) {
                 rec->mPos.z = az + (f->mPosZ << 9);
                 rec->mMoveAngle = AngleOfVector(rec->mPos.x / 512 - f->mPosX, rec->mPos.z / 512 - f->mPosZ);
                 rec->mDistancePerFrame += 0x4000;
-                func_0202f110(0x28, 0x64, 0, 0x40, 0xffff, 0);
+                PlayWaveKeepAlive(0x28, 0x64, 0, 0x40, 0xffff, 0);
                 break;
             }
             case 0x23:
                 rec->mMoveAngle = ((f->mUnk_184 + 1) & 3) << 14;
                 rec->mDistancePerFrame = 0x14000;
-                func_0202f110(1, 0x64, 0, 0x40, 0xffff, 0);
+                PlayWaveKeepAlive(1, 0x64, 0, 0x40, 0xffff, 0);
                 break;
             case 0x28:
                 moved = 1;
@@ -200,7 +200,7 @@ void func_02016008(int stage) {
                     int j;
 
                     SetFaded(moved);
-                    func_0202f110(0x59, 0x64, 0, 0x40, 0xffff, 0);
+                    PlayWaveKeepAlive(0x59, 0x64, 0, 0x40, 0xffff, 0);
                     rec->mDistancePerFrame = 0;
                     for (j = 0; j < data_020b6ee0.mUnk_5a54; j++, p++) {
                         if (p->mKind == 0x28 && p->mUnk_186 == key) {
@@ -309,7 +309,7 @@ void func_020164e0(int stage) {
         if (obj->mKind == 0x1e) {
             func_02018840(rec, 0x1e, found);
             obj->mPresent = 0;
-            func_0202f110(0xe0, 0x64, 0, 0x40, 0xffff, 0);
+            PlayWaveKeepAlive(0xe0, 0x64, 0, 0x40, 0xffff, 0);
         }
     }
 }
@@ -543,9 +543,9 @@ void UpdateFollower(FollowerGroup *followers, int index, u16 angle) {
                 if (data_020b6ee0.mUnk_0008[data_020b6ee0.mFixedTargetObjectIndex].mUnk_186 == 0) {
                     func_02031c98(data_020b6ee0.mUnk_0c4c, 0, 0);
                     data_020b6ee0.mUnk_0008[data_020b6ee0.mFixedTargetObjectIndex].mModel.mUnk_134 |= 2;
-                    func_0202f110(0xdb, 0x64, 0, 0x40, 0xffff, 0);
+                    PlayWaveKeepAlive(0xdb, 0x64, 0, 0x40, 0xffff, 0);
                 } else {
-                    func_0202f110(0xdd, 0x64, 0, 0x40, 0xffff, 0);
+                    PlayWaveKeepAlive(0xdd, 0x64, 0, 0x40, 0xffff, 0);
                 }
                 data_020b6ee0.mFollowerEntries[f->mFollowerEntryIndex].mPresent = 0;
                 data_020b6ee0.mFollowerEntries[f->mFollowerEntryIndex].mInRange = 0;
@@ -703,7 +703,7 @@ int SelectStageOnTap(int stage, int *out) {
             if ((int) Length2d(gSystemState.mTouchX - data_020b6ee0.mUnk_a574.mTouchPressX,
                                gSystemState.mTouchY - data_020b6ee0.mUnk_a574.mTouchPressY) < 6) {
                 *out = stage;
-                func_0202f110(0x167, 0x64, 0, 0x40, 0xffff, 0);
+                PlayWaveKeepAlive(0x167, 0x64, 0, 0x40, 0xffff, 0);
                 return 1;
             }
         }
@@ -785,12 +785,10 @@ void UpdateStageMotion(int index, int *sel, int flags) {
     if (!(flags & 1)) {
         if (index == *sel) {
             if (gSystemState.mTouchReleased) {
-                int n = data_020c1d60.mUnk_800.mUnk_100.mUnk_10 - 1;
+                int n = gTouchInput.mTrail.mTouchState.mTrailCount - 1;
                 if (n < 30 && n > 1) {
-                    s32 dx =
-                        (data_020c1d60.mUnk_800.mUnk_000[n].mUnk_0 - data_020c1d60.mUnk_800.mUnk_000[0].mUnk_0) / 4;
-                    s32 dy =
-                        (data_020c1d60.mUnk_800.mUnk_000[n].mUnk_1 - data_020c1d60.mUnk_800.mUnk_000[0].mUnk_1) / 4;
+                    s32 dx = (gTouchInput.mTrail.mPoints[n].mX - gTouchInput.mTrail.mPoints[0].mX) / 4;
+                    s32 dy = (gTouchInput.mTrail.mPoints[n].mY - gTouchInput.mTrail.mPoints[0].mY) / 4;
                     int len = Length2d(dx, dy);
                     if (len > 8) {
                         dx = (dx << 3) / len;
@@ -804,12 +802,11 @@ void UpdateStageMotion(int index, int *sel, int flags) {
                     rec->mDistancePerFrame = len < 0x14000 ? len : 0x14000;
                 }
             } else if (gSystemState.mTouchDown) {
-                int n = data_020c1d60.mUnk_800.mUnk_100.mUnk_10 - 1;
+                int n = gTouchInput.mTrail.mTouchState.mTrailCount - 1;
                 if (n > 4) {
-                    if ((int) Length2d(data_020c1d60.mUnk_800.mUnk_000[n].mUnk_0 -
-                                           (data_020c1d60.mUnk_800.mUnk_000 + n - 4)->mUnk_0,
-                                       data_020c1d60.mUnk_800.mUnk_000[n].mUnk_1 -
-                                           (data_020c1d60.mUnk_800.mUnk_000 + n - 4)->mUnk_1) < 4) {
+                    if ((int) Length2d(gTouchInput.mTrail.mPoints[n].mX - (gTouchInput.mTrail.mPoints + n - 4)->mX,
+                                       gTouchInput.mTrail.mPoints[n].mY - (gTouchInput.mTrail.mPoints + n - 4)->mY) <
+                        4) {
                         rec->mDistancePerFrame -= 3276.8;
                     }
                 }
@@ -836,7 +833,8 @@ void UpdateStageMotion(int index, int *sel, int flags) {
         ground = GetFloorHeightEx(rec->mPos.x, rec->mPos.z, rec->mPos.y + 0xc800, 0, 0, NULL, &push) + 0x32000;
     }
     if (rec->mDistancePerFrame != 0) {
-        func_0202f110(0x1c4, MapRangeFromZero(abs(rec->mDistancePerFrame >> 12), 0x20, 0, 0x4b), 1, 0x40, 0xffff, 0);
+        PlayWaveKeepAlive(0x1c4, MapRangeFromZero(abs(rec->mDistancePerFrame >> 12), 0x20, 0, 0x4b), 1, 0x40, 0xffff,
+                          0);
     }
     if (push.y != 0x1000) {
         rec->mPos.x += push.x;
@@ -888,7 +886,7 @@ void UpdateStageMotion(int index, int *sel, int flags) {
                     other->mDistancePerFrame = 0;
                 }
             }
-            func_0202f110(0x30, 100, 0, 0x40, 0xffff, 0);
+            PlayWaveKeepAlive(0x30, 100, 0, 0x40, 0xffff, 0);
             if ((u32) data_020b6ee0.mProgressState >= 99) {
                 AddPercent(rec, -4, 0, 0);
                 AddPercent(other, -4, 0, 0);
@@ -919,7 +917,7 @@ void UpdateStageMotion(int index, int *sel, int flags) {
         return;
     }
     base = func_0203129c();
-    func_0202f110(0x30, 100, 0, 0x40, 0xffff, 0);
+    PlayWaveKeepAlive(0x30, 100, 0, 0x40, 0xffff, 0);
     turn = Cross2d(gMapState.mCamera.mUnk_14.x, gMapState.mCamera.mUnk_14.z, gMapState.mCamera.mUnk_20.x,
                    gMapState.mCamera.mUnk_20.z, old.x / 512, old.z / 512);
     turn = turn != 0 ? (turn >> 31) | 1 : 0;
@@ -983,7 +981,7 @@ void UpdateStageMotion(int index, int *sel, int flags) {
         if (data_020b6ee0.mUnk_0008[i].mUnk_186 < 0) {
             func_02031c98(gMapState.mCamera.mUnk_10, 0, 0);
             data_020b6ee0.mUnk_0008[i].mModel.mUnk_134 |= 2;
-            func_0202f110(0xda, 100, 0, 0x40, 0xffff, 0);
+            PlayWaveKeepAlive(0xda, 100, 0, 0x40, 0xffff, 0);
         } else {
             data_020b6ee0.mUnk_0008[i].mModel.mUnk_134 |= 1;
         }
@@ -1327,7 +1325,7 @@ void func_0201896c(void) {
         RunSaveScreen(0);
         data_020b6ee0.mSaveRequested = 0;
     }
-    func_0200c164(&data_020b6ee0.mMoveObj);
+    StopMoveObj(&data_020b6ee0.mMoveObj);
 }
 
 int CompareKeysDescending(const u16 *a, const u16 *b) {
@@ -1539,12 +1537,10 @@ void UpdateStageInput(void) {
     if (data_020b6ee0.mPanelState == 0 || data_020b6ee0.mPanelState == 1 || data_020b6ee0.mPanelState == 2 ||
         (u8) (data_020b6ee0.mPanelState + 250) <= 2) {
         if (gSystemState.mTouchPressed == 1) {
-            if (!func_0200bd80(0x80000000, 0x5a) && !func_0200bd80(0x80000000, 0xa) &&
-                !func_0200bd80(0x80000000, 0xb) && !func_0200bd80(0x80000000, 0xc) && !func_0200bd80(0x80000000, 0xd) &&
-                !func_0200bd80(0x80000000, 0xe) && !func_0200bd80(0x80000000, 0xf) &&
-                !func_0200bd80(0x80000000, 0x10) && !func_0200bd80(0x80000000, 0x11) &&
-                !func_0200bd80(0x80000000, 0x21) && !func_0200bd80(0x80000000, 0x111) &&
-                !func_0200bd80(0x80000000, 0x112)) {
+            if (!TestButton(0x80000000, 0x5a) && !TestButton(0x80000000, 0xa) && !TestButton(0x80000000, 0xb) &&
+                !TestButton(0x80000000, 0xc) && !TestButton(0x80000000, 0xd) && !TestButton(0x80000000, 0xe) &&
+                !TestButton(0x80000000, 0xf) && !TestButton(0x80000000, 0x10) && !TestButton(0x80000000, 0x11) &&
+                !TestButton(0x80000000, 0x21) && !TestButton(0x80000000, 0x111) && !TestButton(0x80000000, 0x112)) {
                 data_020b6ee0.mButtonsEnabled = 0;
             }
         }
@@ -1726,7 +1722,7 @@ void func_02019788(void) {
 
 // Finds the mUnk_9024 entry within range of the record's position (func_02019874). If it is kind 1, removes it, starts
 // the move object from the record's screen point (UpdateStageMoveObject adds 10 percent to the record when it ends),
-// plays sound 0xe0 (func_0202f110) and sets mUnk_a570. Called for the selected stage in panel states 0..2 and 5.
+// plays sound 0xe0 (PlayWaveKeepAlive) and sets mUnk_a570. Called for the selected stage in panel states 0..2 and 5.
 void func_02019800(StageRec *rec) {
     int i = func_02019874(&rec->mPos);
 
@@ -1736,7 +1732,7 @@ void func_02019800(StageRec *rec) {
         if (e->mKind == 1) {
             func_02019750(i);
             StartStageMoveObject(rec, rec->mScreenX, rec->mScreenY, 0x3e, 0x5e, 1);
-            func_0202f110(0xe0, 0x64, 0, 0x40, 0xffff, 0);
+            PlayWaveKeepAlive(0xe0, 0x64, 0, 0x40, 0xffff, 0);
             data_020b6ee0.mUnk_a570 = 1;
         }
     }
@@ -1812,8 +1808,8 @@ void DrawStageSprite(StageRec *rec, int index, int sprite, int mulX, int mulY, i
         }
         mulX = mulX * scale;
         mulY = mulY * scale;
-        func_0200b928(&e->x, mulX, 8);
-        func_0200b928(&e->y, mulY, 8);
+        EaseToward(&e->x, mulX, 8);
+        EaseToward(&e->y, mulY, 8);
         if (sprite != 0) {
             DrawSprite(sprite, rec->mScreenX + e->x / 512, rec->mScreenY - e->y / 512, width, 1);
         }
@@ -1832,16 +1828,16 @@ void StartStageMoveObject(StageRec *rec, int x, int y, int c, int d, int mode) {
     pos.x = mode == 1 ? x : r;
     pos.y = mode == 1 ? y : 0x5e;
     pos.y += mode == 1 ? 0 : -252;
-    func_0200c034(o, 0x1f, -1, &pos, 0x3c, 1, 1);
-    func_0200c124(o, 1, 7);
+    SetupMoveObj(o, 0x1f, -1, &pos, 0x3c, 1, 1);
+    SetMoveObjTrail(o, 1, 7);
     pos.x = mode == 1 ? r : x;
     pos.y = mode == 1 ? 0x5e : y;
     pos.y += mode == 1 ? -252 : 0;
-    func_0200c0dc(o, 0x800, &pos, 0);
+    StartMoveObj(o, 0x800, &pos, 0);
 }
 
 void func_02019ad8(void) {
-    func_0200c164(&data_020b6ee0.mMoveObj);
+    StopMoveObj(&data_020b6ee0.mMoveObj);
     ClearObjSlots();
 }
 
@@ -1850,9 +1846,9 @@ void UpdateStageMoveObject(void) {
     MoveObj *o = &data_020b6ee0.mMoveObj;
 
     if (o->mActive == 1) {
-        func_0200c174(o, 0);
+        UpdateMoveObj(o, 0);
         if (o->mActive == 1) {
-            func_0200c470(o);
+            DrawMoveObj(o);
             return;
         }
         if (o->mUnk_310 == 0) {
@@ -1881,7 +1877,7 @@ void UpdateMapCursorAndCamera(VecFx32 *a, VecFx32 *b) {
     data_020b6ee0.mUnk_a574.mUnk_00.x = b->x;
     data_020b6ee0.mUnk_a574.mUnk_00.y = b->y;
     data_020b6ee0.mUnk_a574.mUnk_00.z = b->z;
-    func_0200b928(&p->mBlend, p->mTargetBlend, 0x20);
+    EaseToward(&p->mBlend, p->mTargetBlend, 0x20);
     if (p->mBlend != 0x200) {
         data_020b6ee0.mUnk_a574.mUnk_00.x =
             (data_020b6ee0.mUnk_a574.mUnk_0c.x - data_020b6ee0.mUnk_a574.mUnk_00.x) * p->mBlend / 512;
@@ -1893,8 +1889,8 @@ void UpdateMapCursorAndCamera(VecFx32 *a, VecFx32 *b) {
         data_020b6ee0.mUnk_a574.mUnk_00.y = data_020b6ee0.mUnk_a574.mUnk_0c.y - data_020b6ee0.mUnk_a574.mUnk_00.y;
         data_020b6ee0.mUnk_a574.mUnk_00.z = data_020b6ee0.mUnk_a574.mUnk_0c.z - data_020b6ee0.mUnk_a574.mUnk_00.z;
     }
-    func_0200b960(&gMapState.mCamera.mPos, data_020b6ee0.mUnk_a574.mUnk_00, data_020b6ee0.mUnk_a574.mCameraEaseDivisor);
-    func_0200b960(&gMapState.mCamera.mLookAt, data_020b6ee0.mUnk_a574.mUnk_0c,
+    EaseVecToward(&gMapState.mCamera.mPos, data_020b6ee0.mUnk_a574.mUnk_00, data_020b6ee0.mUnk_a574.mCameraEaseDivisor);
+    EaseVecToward(&gMapState.mCamera.mLookAt, data_020b6ee0.mUnk_a574.mUnk_0c,
                   data_020b6ee0.mUnk_a574.mCameraEaseDivisor);
     func_02033b8c();
     func_02033520();
@@ -1907,8 +1903,8 @@ void UpdateMapCursorAndCamera(VecFx32 *a, VecFx32 *b) {
     } else {
         p->mDelayTimer--;
     }
-    if (gSystemState.mTouchDown == 1 && func_0200bd80(0x40000000, 0x101) == 0 &&
-        func_0200bd80(0x40000000, 0x102) == 0 && data_020b6ee0.mButtonsEnabled == 0 && p->mNodeInfoHidden == 1) {
+    if (gSystemState.mTouchDown == 1 && TestButton(0x40000000, 0x101) == 0 && TestButton(0x40000000, 0x102) == 0 &&
+        data_020b6ee0.mButtonsEnabled == 0 && p->mNodeInfoHidden == 1) {
         s32 dx;
         s32 dy;
 
@@ -1937,8 +1933,8 @@ void UpdateMapCursorAndCamera(VecFx32 *a, VecFx32 *b) {
             p->mCursor.mPos.z = v.z + dz;
         }
     }
-    func_0200b928(&p->mCursorXPerFrame, 0, 0x10);
-    func_0200b928(&p->mCursorZPerFrame, 0, 0x10);
+    EaseToward(&p->mCursorXPerFrame, 0, 0x10);
+    EaseToward(&p->mCursorZPerFrame, 0, 0x10);
     {
         s32 d = (p->mCursor.mPos.z - a->z) / 16;
 
@@ -1992,6 +1988,6 @@ void SetupMapMenu(void) {
     p->mDelayTimer = 0xb4;
     StartModel(&p->mReachedNodeModel, 0xde5, 0xde4, 2, 0);
     if ((u32) data_020b6ee0.mProgressState > 0xc) {
-        func_0202f110(0x59, 0x64, 0, 0x40, 0xffff, 0);
+        PlayWaveKeepAlive(0x59, 0x64, 0, 0x40, 0xffff, 0);
     }
 }

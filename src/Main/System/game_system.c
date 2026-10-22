@@ -97,7 +97,7 @@ const StateFunc gStateLeaveFuncs[STATE_COUNT] = {
     func_0201133c,
     LeavePrompt,
     func_020186cc,
-    func_02015d34,
+    LeaveThreeInRow,
     LeaveMapMenu,
     LeaveRecap,
     NULL,
@@ -107,9 +107,9 @@ const StateFunc gStateLeaveFuncs[STATE_COUNT] = {
     LeaveLangMenu,
     LeaveModeSelect,
     LeaveScene,
-    func_0200b884,
+    LeaveParticleGame,
     LeaveField,
-    func_02004930,
+    LeaveFallingBlocks,
     LeaveResultScreen,
     LeaveBattleScreen,
     func_0200a3f4,
@@ -124,7 +124,7 @@ const StateFunc gStateEnterFuncs[STATE_COUNT] = {
     SetupStateMenu,
     SetupPrompt,
     func_020182cc,
-    func_02015cd4,
+    SetupThreeInRow,
     SetupMapMenu,
     SetupRecap,
     NULL,
@@ -134,9 +134,9 @@ const StateFunc gStateEnterFuncs[STATE_COUNT] = {
     SetupLangMenu,
     SetupModeSelect,
     SetupScene,
-    func_0200b278,
+    SetupParticleGame,
     SetupField,
-    func_0200445c,
+    SetupFallingBlocks,
     SetupResultScreen,
     SetupBattleScreen,
     func_0200a384,
@@ -151,7 +151,7 @@ const StateFunc gStateUpdateFuncs[STATE_COUNT] = {
     UpdateStateMenu,
     UpdatePrompt,
     func_02018558,
-    func_02015d2c,
+    UpdateThreeInRow,
     UpdateMapMenu,
     UpdateRecap,
     NULL,
@@ -161,9 +161,9 @@ const StateFunc gStateUpdateFuncs[STATE_COUNT] = {
     UpdateLangMenu,
     UpdateModeSelect,
     UpdateScene,
-    func_0200b610,
+    UpdateParticleGame,
     UpdateField,
-    func_02004768,
+    UpdateFallingBlocks,
     UpdateResultScreen,
     UpdateBattleScreen,
     func_0200a3fc,
@@ -177,7 +177,7 @@ const StateFunc gStateUpdateFuncs[STATE_COUNT] = {
 
 // The play functions below keep each entry's gap counters (mCurrentGap, mCallsSincePlay) in the table itself. Every
 // entry has one non-zero id, no gap, no random gap and mUnk_05 0, so in this build the random pick always takes
-// mIds[0], every call plays (both counters stay 0) and PlayObjectSe never takes its func_0202f110 path.
+// mIds[0], every call plays (both counters stay 0) and PlayObjectSe never takes its PlayWaveKeepAlive path.
 const SeEntry gSeEntries[SE_COUNT] = {
     {1, 0x64, 0x40, 0, {0, 0}, 0, 0, 0, 0, {0x167, 0, 0, 0, 0, 0}},
     {1, 0x64, 0x40, 0, {0, 0}, 0, 0, 0, 0, {0x2d, 0, 0, 0, 0, 0}},
@@ -578,17 +578,17 @@ void DrawPromptScreen(void) {
 // Runs the prompt screen: slides the buttons in, waits for a button, slides them out and restores the display; the
 // track volume fades down meanwhile and back up after. The second button also clears data_020b6ee0.mNodeState,
 // releases the microphone, runs RunSaveScreen(0) and requests state 1. Key bit 3 ends it without a button once both
-// screens' fade states are FADE_STATE_CLEAR (and data_020c6b14.mUnk_1748 is 0).
+// screens' fade states are FADE_STATE_CLEAR (and the tracker's global fade is TRACKER_GLOBAL_FADE_NONE).
 void RunPromptScreen(void) {
     int result;
     int done = 0;
     int running = 1;
 
     if (OpenPromptScreen(&result, 0) == 1) {
-        func_0202eeec();
+        StopAllWaves();
         StartVolumeFade(VOLUME_FADE_DOWN);
         do {
-            if (IsFadeState(3, FADE_STATE_CLEAR) == 1 && data_020c6b14.mUnk_1748 == 0 &&
+            if (IsFadeState(3, FADE_STATE_CLEAR) == 1 && gTrackerPlayer.mGlobalFadeState == TRACKER_GLOBAL_FADE_NONE &&
                 (gSystemState.mKeysPressed & 8)) {
                 running = 0;
             }
@@ -641,11 +641,11 @@ void RunPromptScreen(void) {
                 }
             }
             DrawPromptScreen();
-            if (func_0200bd80(0x20000000, PROMPT_SCREEN_BUTTON_FIRST)) {
+            if (TestButton(0x20000000, PROMPT_SCREEN_BUTTON_FIRST)) {
                 gPromptScreen.mState = PROMPT_SCREEN_STATE_SLIDE_OUT;
                 gPromptScreen.mReleasedButtonId = PROMPT_SCREEN_BUTTON_FIRST;
             }
-            if (func_0200bd80(0x20000000, PROMPT_SCREEN_BUTTON_SECOND)) {
+            if (TestButton(0x20000000, PROMPT_SCREEN_BUTTON_SECOND)) {
                 gPromptScreen.mState = PROMPT_SCREEN_STATE_SLIDE_OUT;
                 gPromptScreen.mReleasedButtonId = PROMPT_SCREEN_BUTTON_SECOND;
             }
@@ -740,7 +740,7 @@ void InitSoundCtl(u32 track, s32 volume) {
     if (track >= 9) {
         OS_Terminate();
     }
-    data_020c6b14.mUnk_1710 |= 2;
+    gTrackerPlayer.mTimerFlags |= TRACKER_TIMER_AUTO_FINE;
     ctl->mNextTrack = 0;
     ctl->mTrack = 0;
     ctl->mNextVolume = volume;
@@ -755,31 +755,31 @@ void UpdateSoundCtl(void) {
     SoundCtl *ctl = &gSoundCtl;
     u8 volume;
 
-    if (data_020c6b14.mUnk_1748 != 0) {
+    if (gTrackerPlayer.mGlobalFadeState != TRACKER_GLOBAL_FADE_NONE) {
         return;
     }
-    volume = data_020c6b14.mUnk_1724 == 1 ? func_02038694() : ctl->mTargetVolume;
-    if (data_020c6b14.mUnk_1724 == 0 && ctl->mTrack != 0) {
+    volume = gTrackerPlayer.mPlaying == 1 ? GetGlobalVolume() : ctl->mTargetVolume;
+    if (gTrackerPlayer.mPlaying == 0 && ctl->mTrack != 0) {
         ctl->mTrack = 0;
     }
     switch (ctl->mVolumeFadeState) {
         case VOLUME_FADE_DOWN:
             if (volume != 0) {
-                func_02038578(volume - 1, 0);
+                SetGlobalVolume(volume - 1, 0);
             } else {
                 ctl->mVolumeFadeState = VOLUME_FADE_NONE;
             }
             break;
         case VOLUME_FADE_DOWN_TO_TARGET:
             if (volume > ctl->mTargetVolume) {
-                func_02038578(volume - 1, 0);
+                SetGlobalVolume(volume - 1, 0);
             } else {
                 ctl->mVolumeFadeState = VOLUME_FADE_NONE;
             }
             break;
         case VOLUME_FADE_UP:
             if (volume < ctl->mTargetVolume) {
-                func_02038578(volume + 1, 0);
+                SetGlobalVolume(volume + 1, 0);
             } else {
                 ctl->mVolumeFadeState = VOLUME_FADE_NONE;
             }
@@ -799,12 +799,12 @@ void UpdateSoundCtl(void) {
             OS_Terminate();
         }
         if (ctl->mTrack == 0) {
-            func_020359d0(1);
+            ReleaseTrack(1);
             return;
         }
         {
             static const u16 ids[9] = {0, 362, 49, 364, 363, 216, 92, 228, 227};
-            func_02035108(ids[ctl->mTrack], 0x10d7, ctl->mTargetVolume, 0, 1, 0);
+            PlayTrack(ids[ctl->mTrack], 0x10d7, ctl->mTargetVolume, 0, 1, 0);
         }
     }
 }
@@ -858,9 +858,9 @@ void PlaySeEx(u32 index, u16 volume, int b, int c, u32 d) {
     }
     id = e->mIds[pick];
     if (id != 0 && e->mCallsSincePlay >= e->mCurrentGap) {
-        func_0202eb64(id, volume, 0, e->mPan, 0xffff, 0);
+        PlayWave(id, volume, 0, e->mPan, 0xffff, 0);
         if (b != 0x100) {
-            func_0202f240(id, b);
+            ScaleWaveTimer(id, b);
         }
         e->mCallsSincePlay = 0;
         e->mCurrentGap = c;
@@ -893,7 +893,7 @@ void PlayObjectSe(void *obj) {
         }
         e = (SeEntry *) &gSeEntries[index];
         if (e->mUnk_05 == 1) {
-            func_0202f110(e->mIds[0], e->mVolume, 1, e->mPan, 0xffff, 0);
+            PlayWaveKeepAlive(e->mIds[0], e->mVolume, 1, e->mPan, 0xffff, 0);
             return;
         }
         PlaySe(index);
@@ -1221,7 +1221,7 @@ void UpdateStateMenu(void) {
     }
     if (gStateMenu.mCardPage == 1) {
         func_0200bc50(0xe9, 0x30, 0, 0, 0x8c, 0x202, 0xd7, "Card", 0, 2, 0, 0, 1, 0, 0, 0);
-        if (func_0200bd80(0x20000000, 0x202)) {
+        if (TestButton(0x20000000, 0x202)) {
             memset(data_020b10d4.mTableEntryIds, -1, 10);
             PickTableEntries(&data_020b10d4);
         }
@@ -1252,10 +1252,10 @@ void UpdateStateMenu(void) {
     } else {
         func_0200bc50(0xe9, 0x30, 0, 0, 0x8c, 0x200, 0xd7, "Save", 0, 2, 0, 0, 1, 0, 0, 0);
         func_0200bc50(0xe9, 0x4e, 0, 0, 0x8c, 0x201, 0xd7, "Load", 0, 2, 0, 0, 1, 0, 0, 0);
-        if (func_0200bd80(0x20000000, 0x200)) {
+        if (TestButton(0x20000000, 0x200)) {
             RunSaveScreen(0);
         }
-        if (func_0200bd80(0x20000000, 0x201)) {
+        if (TestButton(0x20000000, 0x201)) {
             ResetAndReadSaveSlot();
         }
         rows = 0;

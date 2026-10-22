@@ -74,10 +74,10 @@ u16 GetBlockCount(void) {
     return gTextureBlocks.mBlockCount;
 }
 
-// Number of OAM entries to fill with 0x200 for a layer: 128, or fewer on the screen that func_02039a64 reports when
+// Number of OAM entries to fill with 0x200 for a layer: 128, or fewer on the screen that GetIndicatorLayer reports when
 // the flag byte or bit 9 of the system flags is set.
 u32 GetOamFillCount(int layer) {
-    if (layer == func_02039a64()) {
+    if (layer == GetIndicatorLayer()) {
         if (gSystemState.mUnk_250.mUnk_28[0] != 0) {
             return 0x7e;
         }

@@ -4,7 +4,7 @@
 
 #pragma thumb off
 
-void func_020223e8(u32 t, u32 shift, u16 *cur, const u16 *target) {
+void BlendAngles(u32 t, u32 shift, u16 *cur, const u16 *target) {
     int d[3];
     int e[3];
     u16 alt[3];
@@ -54,7 +54,7 @@ void func_020223e8(u32 t, u32 shift, u16 *cur, const u16 *target) {
     }
 }
 
-void func_0202258c(int t, int shift, s32 *dst, const s32 *target) {
+void BlendVec3(int t, int shift, s32 *dst, const s32 *target) {
     dst[0] = dst[0] + ((t * (target[0] - dst[0])) >> shift);
     dst[1] = dst[1] + ((t * (target[1] - dst[1])) >> shift);
     dst[2] = dst[2] + ((t * (target[2] - dst[2])) >> shift);

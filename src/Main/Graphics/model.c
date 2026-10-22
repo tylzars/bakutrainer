@@ -186,7 +186,7 @@ void ReadAnimTrackNode(u16 *rot, s32 *pos, s32 *vec, u32 node, u32 track) {
         tmpRot[0] = ((s16 *) hdr)[(f->mUnk_0c[0].mUnk_0 > 1 ? next : 0) + (f->mUnk_0c[0].mUnk_2 >> 1)];
         tmpRot[1] = ((s16 *) hdr)[(f->mUnk_0c[1].mUnk_0 > 1 ? next : 0) + (f->mUnk_0c[1].mUnk_2 >> 1)];
         tmpRot[2] = ((s16 *) hdr)[(f->mUnk_0c[2].mUnk_0 > 1 ? next : 0) + (f->mUnk_0c[2].mUnk_2 >> 1)];
-        func_020223e8(t, 8, rot, tmpRot);
+        BlendAngles(t, 8, rot, tmpRot);
     }
     if (pos != NULL) {
         if (!(hdr->mUnk_0 & 2)) {
@@ -198,13 +198,13 @@ void ReadAnimTrackNode(u16 *rot, s32 *pos, s32 *vec, u32 node, u32 track) {
             tmpPos[1] = ((s32 *) hdr)[(f->mUnk_18[1].mUnk_0 > 1 ? next : 0) + (f->mUnk_18[1].mUnk_2 >> 2)];
             tmpPos[2] = ((s32 *) hdr)[(f->mUnk_18[2].mUnk_0 > 1 ? next : 0) + (f->mUnk_18[2].mUnk_2 >> 2)];
         }
-        func_0202258c(t, 8, pos, tmpPos);
+        BlendVec3(t, 8, pos, tmpPos);
     }
     if (vec != NULL) {
         tmpVec[0] = ((s16 *) hdr)[(f->mUnk_00[0].mUnk_0 > 1 ? next : 0) + (f->mUnk_00[0].mUnk_2 >> 1)];
         tmpVec[1] = ((s16 *) hdr)[(f->mUnk_00[1].mUnk_0 > 1 ? next : 0) + (f->mUnk_00[1].mUnk_2 >> 1)];
         tmpVec[2] = ((s16 *) hdr)[(f->mUnk_00[2].mUnk_0 > 1 ? next : 0) + (f->mUnk_00[2].mUnk_2 >> 1)];
-        func_0202258c(t, 8, vec, tmpVec);
+        BlendVec3(t, 8, vec, tmpVec);
     }
 }
 
@@ -259,10 +259,10 @@ void ComputePoseMatrices(int from, int node) {
         if (data_020c31dc.mUnk_48 != 0) {
             done = 0;
             ApplyAnimTrack(1, tmpRot, tmpPos, tmpScale, node, &done, n);
-            func_020223e8(data_020c31dc.mUnk_48, 4, rot, tmpRot);
-            func_0202258c(data_020c31dc.mUnk_48, 4, scale, tmpScale);
+            BlendAngles(data_020c31dc.mUnk_48, 4, rot, tmpRot);
+            BlendVec3(data_020c31dc.mUnk_48, 4, scale, tmpScale);
             if (data_020c31dc.mUnk_45 == 0 || node > data_020c31dc.mStopNodeIndex) {
-                func_0202258c(data_020c31dc.mUnk_48, 4, pos, tmpPos);
+                BlendVec3(data_020c31dc.mUnk_48, 4, pos, tmpPos);
             }
         }
         pos[0] = pos[0] >> data_020c31dc.mModelShift;

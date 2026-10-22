@@ -57,14 +57,14 @@ void UpdateMapMenu(void) {
         }
         if (i < data_020b6ee0.mReachedNodeIndex || i == data_020b6ee0.mReachedNodeIndex) {
             func_02031fc4(i + MAP_NODE_POS_ID, &pos);
-            if (func_0200baf8(&p->mCursor.mPos, &pos) < 0x3200) {
+            if (MaxAbsDeltaXz(&p->mCursor.mPos, &pos) < 0x3200) {
                 data_020b6ee0.mSelectedNodeIndex = i;
             }
         }
     }
     if (data_020b6ee0.mSelectedNodeIndex != -1 && p->mDelayTimer == 0) {
         if (data_020b6ee0.mSelectedNodeIndex != prevSel) {
-            func_0202f110(0x167, 0x64, 0, 0x40, 0xffff, 0);
+            PlayWaveKeepAlive(0x167, 0x64, 0, 0x40, 0xffff, 0);
         }
         if (p->mCursorSnapped == 0) {
             func_02031fc4(data_020b6ee0.mSelectedNodeIndex + MAP_NODE_POS_ID, &pos);
@@ -108,7 +108,7 @@ void UpdateMapMenu(void) {
                     DrawText(j * 0x37 + 0x13, 0x56, data_0201a6bc, buf, 0, 0x60, 0, 2);
                 }
             }
-            func_0200b928(&q->mMapButtonOffsetX, 0, 4);
+            EaseToward(&q->mMapButtonOffsetX, 0, 4);
             func_0200bb14(q->mMapButtonOffsetX + 0xff, 0xa1, 0x101, 0x15, 0, 0, 0x17d, 1);
             func_0200bb14(-q->mMapButtonOffsetX, 0xa1, 0x102, 0xe, 0, 0, 0x5a, 1);
         } else {
@@ -119,7 +119,7 @@ void UpdateMapMenu(void) {
         DrawText(0x5a, 0x5a, data_0201a64e, GetText(0x47), 2, 0xc8, 0x10, 2);
     }
     if (p->mNodeInfoHidden == 1) {
-        func_0200b928(&q->mMapButtonOffsetX, 0, 4);
+        EaseToward(&q->mMapButtonOffsetX, 0, 4);
         func_0200bb14(-q->mMapButtonOffsetX, 0xa1, 0x102, 0xe, 0, 0, 0x5a, 1);
     }
     UpdateMapMenuInput();
@@ -133,13 +133,13 @@ void LeaveMapMenu(void) {
 void UpdateMapMenuInput(void) {
     MapMenu *p = &data_020b6ee0.mMapMenu;
     Unk_020c1454 *q = &data_020b6ee0.mUnk_a574;
-    if (func_0200bd80(0x20000000, 0x101)) {
+    if (TestButton(0x20000000, 0x101)) {
         p->mNodeInfoHidden = 1;
         p->mTargetBlend = 0x200;
         data_020b6ee0.mNodeState = 1;
         SetStateFlag(1);
     }
-    if (func_0200bd80(0x20000000, 0x102)) {
+    if (TestButton(0x20000000, 0x102)) {
         if (p->mNodeInfoHidden == 0) {
             p->mNodeInfoHidden = 1;
             p->mTargetBlend = 0x200;
@@ -150,7 +150,7 @@ void UpdateMapMenuInput(void) {
         }
     }
     if (gSystemState.mTouchPressed == 1) {
-        if (func_0200bd80(0x80000000, 0x101) == 0 && func_0200bd80(0x80000000, 0x102) == 0) {
+        if (TestButton(0x80000000, 0x101) == 0 && TestButton(0x80000000, 0x102) == 0) {
             data_020b6ee0.mUnk_a574.mCameraEaseDivisor = 0x10;
             data_020b6ee0.mButtonsEnabled = 0;
             p->mDelayTimer = 0;
@@ -193,7 +193,7 @@ void UpdateRecap(void) {
         DrawSprite(0x1088, 0x7f, 0x62, 0x66, 1);
     }
     func_0200bb14(0xff, 0xa1, 0x101, 0x15, 0, 0, 0x17d, 1);
-    if (func_0200bd80(0x20000000, 0x101)) {
+    if (TestButton(0x20000000, 0x101)) {
         SetStateFlag(1);
     }
 }

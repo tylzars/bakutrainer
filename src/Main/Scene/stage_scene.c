@@ -108,8 +108,8 @@ void UpdateSceneCamera(void) {
     b.z = MapRange(gScene->mEndTimer, 0, gScene->mEndTimerMax, gScene->mUnk_5d8.z >> 8,
                    gScene->mUnk_5c0.z >> 8)
           << 8;
-    func_0200b960(&cam->mUnk_204, a, 4);
-    func_0200b960(&cam->mUnk_228, b, 4);
+    EaseVecToward(&cam->mUnk_204, a, 4);
+    EaseVecToward(&cam->mUnk_228, b, 4);
     if (gScene->mShakeTimer != 0) {
         gScene->mShakeTimer--;
         gScene->mShakeFrameIndex = (gScene->mShakeFrameIndex + 1) % 3;
@@ -191,7 +191,7 @@ void UpdateScene(void) {
     }
     UpdateSceneCamera();
     DrawScene();
-    func_0200b960(&gScene->mUnk_3a8.mPos, gScene->mBasePos, 12);
+    EaseVecToward(&gScene->mUnk_3a8.mPos, gScene->mBasePos, 12);
     switch (data_020b10fc.mSceneState) {
         case SCENE_STATE_START:
             AddPopups();
@@ -305,7 +305,7 @@ void AddPopups(void) {
         n = 0;
         if (gScene->mUnk_62c > gScene->mUnk_628) {
             gScene->mUnk_62c = 0;
-            slot = func_0200bf68(&mask);
+            slot = TakeRandomClearBit(&mask);
             StartPopup(slot, 1, slot);
             n++;
         }
@@ -318,7 +318,7 @@ void AddPopups(void) {
             while (cum[k] < roll) {
                 k++;
             }
-            slot = func_0200bf68(&mask);
+            slot = TakeRandomClearBit(&mask);
             StartPopup(slot, k, slot);
         }
     }
@@ -368,7 +368,8 @@ void UpdatePopups(void) {
                 break;
             case POPUP_STATE_APPEAR:
                 e->mAppearTimer--;
-                func_0202de80(func_0200bfc4(e->mAppearTimer, e->mAppearFrameCount, 0, 0, 6) + 0xe85, x, y, 0xbe, -1, 1);
+                func_0202de80(MapRangeClamped(e->mAppearTimer, e->mAppearFrameCount, 0, 0, 6) + 0xe85, x, y, 0xbe, -1,
+                              1);
                 if (e->mAppearTimer <= 2) {
                     redraw = 1;
                 }
@@ -385,7 +386,7 @@ void UpdatePopups(void) {
                 break;
             case POPUP_STATE_DISAPPEAR:
                 e->mDisappearTimer--;
-                func_0202de80(func_0200bfc4(e->mDisappearTimer, e->mDisappearFrameCount, 0, 6, 0) + 0xe85, x, y, 0xbe,
+                func_0202de80(MapRangeClamped(e->mDisappearTimer, e->mDisappearFrameCount, 0, 6, 0) + 0xe85, x, y, 0xbe,
                               -1, 1);
                 if (e->mDisappearTimer <= 0) {
                     e->mState = POPUP_STATE_FREE;
@@ -412,8 +413,8 @@ void UpdatePopups(void) {
         }
     }
     if (data_020b10fc.mSceneState < SCENE_STATE_POPUPS_ONLY && gSystemState.mTouchPressed) {
-        if (func_0200bdac(0x80000000, 0x100, 0x108)) {
-            HandlePopupTouch(&gScene->mSlots[(u16) data_020c1d60.mUnk_800.mUnk_100.mUnk_04 - 0x100]);
+        if (TestButtonRange(0x80000000, 0x100, 0x108)) {
+            HandlePopupTouch(&gScene->mSlots[(u16) gTouchInput.mTrail.mTouchState.mButtonState - 0x100]);
         }
     }
 }
@@ -436,22 +437,22 @@ void HandlePopupTouch(PopupSlot *slot) {
             data_020b10fc.mSceneState = SCENE_STATE_POPUPS_ONLY;
         }
         StartShake(200);
-        func_0202f110(0x72, 100, 0, 0x40, 0xffff, 0);
+        PlayWaveKeepAlive(0x72, 100, 0, 0x40, 0xffff, 0);
     } else if (slot->mKind == 1) {
         gScene->mEndTimer += gScene->mUnk_65c;
         gScene->mEndTimer =
             gScene->mEndTimer < gScene->mEndTimerMax ? gScene->mEndTimer : gScene->mEndTimerMax;
-        func_0202f110(0x75, 100, 0, 0x40, 0xffff, 0);
+        PlayWaveKeepAlive(0x75, 100, 0, 0x40, 0xffff, 0);
     } else if (slot->mKind == 2) {
         AddCappedAt999Shifted(&gScene->mScore, gScene->mUnk_658, 0);
         ShowNumber(gScene->mUnk_658, &pos);
         gScene->mUnk_3a8.mPos.z = gScene->mBasePos.z - 0xc800;
-        func_0202f110(0x74, 100, 0, 0x40, 0xffff, 0);
+        PlayWaveKeepAlive(0x74, 100, 0, 0x40, 0xffff, 0);
     } else {
         AddCappedAt999Shifted(&gScene->mScore, gScene->mUnk_660, 0);
         ShowNumber(gScene->mUnk_660, &pos);
         gScene->mUnk_3a8.mPos.z = gScene->mBasePos.z - 0xc800;
-        func_0202f110(0x73, 100, 0, 0x40, 0xffff, 0);
+        PlayWaveKeepAlive(0x73, 100, 0, 0x40, 0xffff, 0);
     }
 }
 
@@ -512,7 +513,7 @@ void DrawNumber(void) {
         if (y <= 20) {
             y = 20;
         }
-        func_0200bffc(x, y, p->mNumber, data_0201a680, 2, 1);
+        DrawDecimal(x, y, p->mNumber, data_0201a680, 2, 1);
     }
 }
 

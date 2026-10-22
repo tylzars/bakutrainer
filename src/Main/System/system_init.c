@@ -219,7 +219,7 @@ void InitSystemEx(u32 a, int b, int c) {
     func_0204445c(&gPmCallbackInfo);
     func_020402f0();
     *(vu16 *) 0x04000304 &= ~0xc;
-    gSystemState.mUnk_24c = func_02034a60;
+    gSystemState.mUnk_24c = ShowCommError;
     gSystemState.mUnk_280 = 0;
     gSystemState.mUnk_2a4[0] = 0;
     gSystemState.mUnk_240 = 0;
@@ -239,7 +239,7 @@ void InitSystemEx(u32 a, int b, int c) {
 // One frame of the system step, including the wait for the next frame; in the link error state (-2) it never returns.
 void UpdateSystemAndWait(void) {
     UpdateSystem(0);
-    func_02034be4();
+    HaltOnCommError();
 }
 
 void UpdateSystem(int flags) {
@@ -251,7 +251,7 @@ void UpdateSystem(int flags) {
     int i;
     int single;
     if (gSystemState.mUnk_2c8 & 0x400000) {
-        if (func_02035058() == 0) {
+        if (IsCommReading() == 0) {
             func_0202e8e4();
         }
     }
@@ -281,7 +281,7 @@ void UpdateSystem(int flags) {
         }
     }
     if ((gSystemState.mFlags & 0x10000080) == 0x10000080) {
-        if (func_02035058() == 0) {
+        if (IsCommReading() == 0) {
             ClearTrackCount();
             if (gMapState.mCamera.mUnk_2dc.mUnk_4a == 0 && !(gSystemState.mFlags & 0x10000)) {
                 *(vu32 *) HW_SWAP_BUFFERS = 3;
@@ -291,7 +291,7 @@ void UpdateSystem(int flags) {
         }
     }
     if (single == 0 && (gSystemState.mFlags & 0x2000)) {
-        func_0202ef24();
+        UpdateWaves();
     }
     func_0202ad4c();
     ProcessTransfers(1);
@@ -340,7 +340,7 @@ void UpdateSystem(int flags) {
             gSystemState.mTouchDown = gSystemState.mTouchSample;
             if (gSystemState.mTouchReleased == 1) {
                 gSystemState.mTouchReleaseTimer = 8;
-                if (data_020c1d60.mUnk_800.mUnk_100.mUnk_10 < 10) {
+                if (gTouchInput.mTrail.mTouchState.mTrailCount < 10) {
                     if (LengthSquared2d(gSystemState.mTouchMaxX - gSystemState.mTouchMinX,
                                         gSystemState.mTouchMaxY - gSystemState.mTouchMinY) < 0x19) {
                         gSystemState.mUnk_2ac_3 = 1;
@@ -382,7 +382,7 @@ void UpdateSystem(int flags) {
             }
         }
         if (gSystemState.mFlags & 0x800000) {
-            data_020c1d60.mUnk_800.mUnk_100.mUnk_04 = UpdateTouchButtons(0xffff);
+            gTouchInput.mTrail.mTouchState.mButtonState = UpdateTouchButtons(0xffff);
         }
         ClearTouchButtons();
     }
@@ -391,11 +391,11 @@ void UpdateSystem(int flags) {
             gSystemState.mFlags &= ~0x100;
             if ((gSystemState.mFlags & 0x600) || gSystemState.mUnk_2a4[1] > 1) {
                 if (gSystemState.mFlags & 0x200) {
-                    func_02039ba8();
-                    func_02034a44();
+                    ShutDownLink();
+                    ClearCommSendData();
                     gSystemState.mUnk_2a4[1] = -2;
                 } else {
-                    func_02039ba8();
+                    ShutDownLink();
                 }
             }
         }
@@ -416,10 +416,10 @@ void UpdateSystem(int flags) {
                 gSystemState.mFlags |= 0x100;
             } else if (gSystemState.mUnk_2a6_1) {
                 func_02039b70();
-                func_02001120();
+                ShutDownComm();
             } else if (gSystemState.mUnk_2a6_0) {
                 func_02039b70();
-                func_02039ba8();
+                ShutDownLink();
             }
             func_0204028c(0);
             while (SND_RecvCommandReply(0) != 0) {
@@ -430,13 +430,13 @@ void UpdateSystem(int flags) {
                 int found = 0;
                 func_0202ad34();
                 func_0202ad54();
-                if (data_020c648c.mUnk_184 == 1 && data_020c648c.mUnk_188 == 0) {
+                if (gWavePlayer.mStreamOpen == 1 && gWavePlayer.mStreamPaused == 0) {
                     found = 1;
-                    func_0202f2e8(data_020c648c.mUnk_18c);
+                    CloseWaveStream(gWavePlayer.mStream);
                 }
                 func_02043e88(0xc, 0, 0);
                 if (found == 1) {
-                    func_0202f290(data_020c648c.mUnk_18c, data_020c648c.mUnk_18c->mName, data_020c648c.mUnk_18c->mRate);
+                    OpenWaveStream(gWavePlayer.mStream, gWavePlayer.mStream->mName, gWavePlayer.mStream->mRate);
                 }
                 func_0202ad38();
                 if (save & 4) {
@@ -446,15 +446,15 @@ void UpdateSystem(int flags) {
         }
         if (gSystemState.mFlags & 0x200) {
             data_020c9e04 &= ~0x800;
-            func_02034c38();
-            func_02039d24();
+            UpdateCommChild();
+            EndLinkMessage();
         } else if (gSystemState.mFlags & 0x400) {
             data_020c9e04 &= ~0x800;
-            func_02039d24();
-            func_02001170();
+            EndLinkMessage();
+            UpdateCommParent();
         } else if (gSystemState.mUnk_2a4[1] > 1) {
             int offset;
-            func_02039d24();
+            EndLinkMessage();
             gSystemState.mUnk_2a8 = func_02047264(&data_020c9e60, data_020c9e10, data_020c9e14);
             data_020c9e04 &= ~0x800;
             gSystemState.mUnk_288 = 0;
@@ -468,27 +468,27 @@ void UpdateSystem(int flags) {
                 }
                 offset += 0x54;
             }
-            func_02034a08();
+            CountUnchangedSlotMask();
         }
     } else {
         gSystemState.mUnk_2a3--;
     }
     single = flags & 1;
     if (single == 0) {
-        func_02039a94();
+        UpdateIndicator();
     }
     if (single == 0) {
         UpdateFade();
         WriteOam(1);
         WriteOam(2);
-        if (func_02035058() == 0 && (flags & 2) == 0) {
+        if (IsCommReading() == 0 && (flags & 2) == 0) {
             UpdateKeys();
         }
         if (gSystemState.mFlags & 0x2000) {
-            func_0202efd4();
+            DrainCommandReplies();
         }
         if (gSystemState.mFlags & 0x1000000) {
-            func_020360f4();
+            UpdateTracker();
             func_02036194();
         }
         func_0202ad3c();
@@ -698,7 +698,7 @@ void QueueTransferEx(u32 file, u32 src, u32 dst, u32 size, u32 unpackedSize, u8 
     if (unpackedSize == 0) {
         unpackedSize = size;
     }
-    if (func_02035058() == 0) {
+    if (IsCommReading() == 0) {
         limit = gSystemState.mTransferLimit;
     } else {
         limit = (u32) gSystemState.mTransferLimit >> 1;
@@ -732,7 +732,7 @@ void QueueTransfer(u16 file, u32 src, u32 dst, u32 size) {
 
 // Empties the transfer queue when the system is not busy.
 void ClearTransferQueue(void) {
-    if (func_02035058() == 0) {
+    if (IsCommReading() == 0) {
         gSystemState.mTransferCount = 0;
         gSystemState.mTransferSize = 0;
     }
@@ -799,7 +799,7 @@ void ProcessTransfers(int flags) {
     u8 *tex;
     u32 n;
 
-    busy = func_02035058();
+    busy = IsCommReading();
     if (gSystemState.mTransferCount == 0) {
         return;
     }
@@ -1244,7 +1244,7 @@ void ReadBank(void *dst, u32 size) {
     int j;
     u32 len;
     u32 sum;
-    u8 *cmd = data_020c67e0;
+    u8 *cmd = gCommSendData;
 
     if ((gSystemState.mFlags & 0x200) == 0) {
         func_020425e4(&gBankFile, dst, size);
@@ -1283,10 +1283,10 @@ restart:
                     len = gSystemState.mUnk_250.mUnk_04;
                 }
                 cmd[0] = 0x51;
-                func_02034ce0(gSystemState.mUnk_250.mUnk_00 + 0x1f7 * i, cmd + 6);
-                func_02034ce0(len, cmd + 2);
+                WriteU32AsHalfwords(gSystemState.mUnk_250.mUnk_00 + 0x1f7 * i, cmd + 6);
+                WriteU32AsHalfwords(len, cmd + 2);
                 state = 5;
-                if (func_02034cf0(cmd + 6) <= gSystemState.mUnk_250.mUnk_00 + gSystemState.mUnk_250.mUnk_04) {
+                if (ReadU32FromHalfwords(cmd + 6) <= gSystemState.mUnk_250.mUnk_00 + gSystemState.mUnk_250.mUnk_04) {
                 } else {
                     goto restart;
                 }
@@ -3243,13 +3243,13 @@ int func_02020890(void) {
 void SetTouchButtonSoundsAndKeys(int flags, u16 a, u16 b, u16 c) {
     int index;
     if ((flags & TOUCH_ADD_FRONT) == 0) {
-        index = data_020c1d60.mUnk_800.mUnk_100.mUnk_08 - 1;
+        index = gTouchInput.mTrail.mTouchState.mButtonCount - 1;
     } else {
         index = 0;
     }
-    data_020c1d60.mUnk_000[index].mUnk_c = b;
-    data_020c1d60.mUnk_000[index].mUnk_a = a;
-    data_020c1d60.mUnk_000[index].mUnk_e = c;
+    gTouchInput.mButtons[index].mReleaseSoundId = b;
+    gTouchInput.mButtons[index].mPressSoundId = a;
+    gTouchInput.mButtons[index].mKeys = c;
 }
 
 // Under SYSTEM_TOUCH_LOCK no button is added, but the sounds and key mask are still written to the newest button
@@ -3270,8 +3270,8 @@ void AddTouchButton(int id, int x, int y, int a, int b, int c) {
     s32 rect[4];
     int index;
     int shifting;
-    Unk_TouchButton *button;
-    if (data_020c1d60.mUnk_800.mUnk_100.mUnk_08 >= TOUCH_BUTTON_COUNT) {
+    TouchButton *button;
+    if (gTouchInput.mTrail.mTouchState.mButtonCount >= TOUCH_BUTTON_COUNT) {
         OS_Terminate();
     }
     if (gSystemState.mFlags & SYSTEM_TOUCH_LOCK) {
@@ -3279,44 +3279,44 @@ void AddTouchButton(int id, int x, int y, int a, int b, int c) {
     }
     shifting = id & TOUCH_ADD_FRONT;
     if (shifting == 0) {
-        index = data_020c1d60.mUnk_800.mUnk_100.mUnk_08;
+        index = gTouchInput.mTrail.mTouchState.mButtonCount;
     } else {
-        index = data_020c1d60.mUnk_800.mUnk_100.mUnk_08++;
+        index = gTouchInput.mTrail.mTouchState.mButtonCount++;
         while (index != 0) {
-            data_020c1d60.mUnk_000[index] = data_020c1d60.mUnk_000[index - 1];
+            gTouchInput.mButtons[index] = gTouchInput.mButtons[index - 1];
             index--;
         }
     }
-    button = &data_020c1d60.mUnk_000[index];
-    button->mUnk_c = 0;
-    button->mUnk_a = 0;
-    button->mUnk_e = 0;
+    button = &gTouchInput.mButtons[index];
+    button->mReleaseSoundId = 0;
+    button->mPressSoundId = 0;
+    button->mKeys = 0;
     if (c == -1) {
-        button->mUnk_2 = y;
-        button->mUnk_6 = b;
-        button->mUnk_0 = x;
-        button->mUnk_4 = a;
+        button->mMinY = y;
+        button->mMaxY = b;
+        button->mMinX = x;
+        button->mMaxX = a;
     } else if (!(id & TOUCH_SHAPE)) {
         if (GetSpriteRect(c, 0, rect) == 0) {
             return;
         }
-        button->mUnk_2 = y + rect[1];
-        button->mUnk_6 = y + rect[3];
-        button->mUnk_0 = x + rect[0];
-        button->mUnk_4 = x + rect[2];
+        button->mMinY = y + rect[1];
+        button->mMaxY = y + rect[3];
+        button->mMinX = x + rect[0];
+        button->mMaxX = x + rect[2];
     } else {
-        button->mUnk_0 = x;
-        button->mUnk_2 = y;
-        button->mUnk_6 = c;
+        button->mMinX = x;
+        button->mMinY = y;
+        button->mMaxY = c;
     }
-    if (data_020c1d60.mUnk_800.mUnk_100.mUnk_16 != 0) {
+    if (gTouchInput.mTrail.mTouchState.mCornerSpriteId != 0) {
         int mode = IsLcdSwapped() == 1 ? 2 : 1;
-        DrawSprite(data_020c1d60.mUnk_800.mUnk_100.mUnk_16, button->mUnk_0, button->mUnk_2, 0, mode);
-        DrawSprite(data_020c1d60.mUnk_800.mUnk_100.mUnk_16, button->mUnk_4, button->mUnk_6, 0, mode);
+        DrawSprite(gTouchInput.mTrail.mTouchState.mCornerSpriteId, button->mMinX, button->mMinY, 0, mode);
+        DrawSprite(gTouchInput.mTrail.mTouchState.mCornerSpriteId, button->mMaxX, button->mMaxY, 0, mode);
     }
-    button->mUnk_8 = id;
+    button->mId = id;
     if (shifting == 0) {
-        data_020c1d60.mUnk_800.mUnk_100.mUnk_08++;
+        gTouchInput.mTrail.mTouchState.mButtonCount++;
     }
 }
 
@@ -3375,13 +3375,13 @@ int IsPointInShape(int x, int y, int shape, int px, int py) {
 }
 
 void ClearTouchButtons(void) {
-    data_020c1d60.mUnk_800.mUnk_100.mUnk_08 = 0;
+    gTouchInput.mTrail.mTouchState.mButtonCount = 0;
 }
 
 // Polls the touch screen and the keys and returns the button state: the button id in the low half and the
 // TOUCH_* flags above it. It then empties the button list and plays the hit button's sound on a press or release.
 u32 UpdateTouchButtons(u32 mask) {
-    u32 result = data_020c1d60.mUnk_800.mUnk_100.mUnk_12;
+    u32 result = gTouchInput.mTrail.mTouchState.mHitId;
     u32 wanted = result;
     int hit = -1;
     u8 pos[2];
@@ -3390,81 +3390,81 @@ u32 UpdateTouchButtons(u32 mask) {
         wanted = mask;
     }
     if (ReadTouchAndAppendTrail(&pos[1], &pos[0]) == 1) {
-        for (i = 0; i < data_020c1d60.mUnk_800.mUnk_100.mUnk_08; i++) {
-            Unk_TouchButton *button = &data_020c1d60.mUnk_000[i];
-            if (!(button->mUnk_8 & TOUCH_SHAPE)) {
-                if (pos[0] >= button->mUnk_2 && pos[0] <= button->mUnk_6 && pos[1] >= button->mUnk_0 &&
-                    pos[1] <= button->mUnk_4) {
+        for (i = 0; i < gTouchInput.mTrail.mTouchState.mButtonCount; i++) {
+            TouchButton *button = &gTouchInput.mButtons[i];
+            if (!(button->mId & TOUCH_SHAPE)) {
+                if (pos[0] >= button->mMinY && pos[0] <= button->mMaxY && pos[1] >= button->mMinX &&
+                    pos[1] <= button->mMaxX) {
                     hit = i;
-                    data_020c1d60.mUnk_800.mUnk_100.mUnk_12 = data_020c1d60.mUnk_000[i].mUnk_8 & 0x7fff;
+                    gTouchInput.mTrail.mTouchState.mHitId = gTouchInput.mButtons[i].mId & 0x7fff;
                     break;
                 }
-            } else if (IsTouchInShape(button->mUnk_0, button->mUnk_2, button->mUnk_6)) {
+            } else if (IsTouchInShape(button->mMinX, button->mMinY, button->mMaxY)) {
                 hit = i;
-                data_020c1d60.mUnk_800.mUnk_100.mUnk_12 = data_020c1d60.mUnk_000[i].mUnk_8 & 0x7fff;
+                gTouchInput.mTrail.mTouchState.mHitId = gTouchInput.mButtons[i].mId & 0x7fff;
                 break;
             }
         }
-        if (i == data_020c1d60.mUnk_800.mUnk_100.mUnk_08) {
-            data_020c1d60.mUnk_800.mUnk_100.mUnk_12 = TOUCH_NONE;
+        if (i == gTouchInput.mTrail.mTouchState.mButtonCount) {
+            gTouchInput.mTrail.mTouchState.mHitId = TOUCH_NONE;
         }
-        result = data_020c1d60.mUnk_800.mUnk_100.mUnk_12 | TOUCH_DOWN;
-        if (data_020c1d60.mUnk_800.mUnk_100.mUnk_14 == 0 ||
-            (wanted != data_020c1d60.mUnk_800.mUnk_100.mUnk_12 && !(gSystemState.mFlags & SYSTEM_TOUCH_QUIET))) {
+        result = gTouchInput.mTrail.mTouchState.mHitId | TOUCH_DOWN;
+        if (gTouchInput.mTrail.mTouchState.mPrevDown == 0 ||
+            (wanted != gTouchInput.mTrail.mTouchState.mHitId && !(gSystemState.mFlags & SYSTEM_TOUCH_QUIET))) {
             result |= TOUCH_PRESSED;
-            if (wanted == data_020c1d60.mUnk_800.mUnk_100.mUnk_12) {
+            if (wanted == gTouchInput.mTrail.mTouchState.mHitId) {
                 result |= TOUCH_REPEAT;
-                if (gSystemState.mElapsedFrames - data_020c1d60.mUnk_800.mUnk_100.mUnk_0c < TOUCH_QUICK_FRAMES) {
+                if (gSystemState.mElapsedFrames - gTouchInput.mTrail.mTouchState.mPressFrame < TOUCH_QUICK_FRAMES) {
                     result |= TOUCH_QUICK;
                 }
             }
-            if (data_020c1d60.mUnk_800.mUnk_100.mUnk_14 == 0) {
-                data_020c1d60.mUnk_800.mUnk_100.mUnk_0c = gSystemState.mElapsedFrames;
+            if (gTouchInput.mTrail.mTouchState.mPrevDown == 0) {
+                gTouchInput.mTrail.mTouchState.mPressFrame = gSystemState.mElapsedFrames;
             }
         }
-        data_020c1d60.mUnk_800.mUnk_100.mUnk_14 = 1;
+        gTouchInput.mTrail.mTouchState.mPrevDown = 1;
     } else {
-        if (data_020c1d60.mUnk_800.mUnk_100.mUnk_14 == 1) {
+        if (gTouchInput.mTrail.mTouchState.mPrevDown == 1) {
             result |= TOUCH_RELEASED;
-            for (i = 0; i < data_020c1d60.mUnk_800.mUnk_100.mUnk_08; i++) {
-                if ((u16) result == data_020c1d60.mUnk_000[i].mUnk_8) {
+            for (i = 0; i < gTouchInput.mTrail.mTouchState.mButtonCount; i++) {
+                if ((u16) result == gTouchInput.mButtons[i].mId) {
                     hit = i;
                     break;
                 }
             }
         }
-        data_020c1d60.mUnk_800.mUnk_100.mUnk_14 = 0;
+        gTouchInput.mTrail.mTouchState.mPrevDown = 0;
     }
     if ((result & (TOUCH_DOWN | TOUCH_PRESSED | TOUCH_RELEASED)) == 0) {
         if ((u16) (gSystemState.mKeysDown | gSystemState.mKeysPressed | gSystemState.mKeysReleased) != 0) {
-            for (i = 0; i < data_020c1d60.mUnk_800.mUnk_100.mUnk_08; i++) {
-                u16 keys = data_020c1d60.mUnk_000[i].mUnk_e;
+            for (i = 0; i < gTouchInput.mTrail.mTouchState.mButtonCount; i++) {
+                u16 keys = gTouchInput.mButtons[i].mKeys;
                 if (keys != 0) {
                     if (gSystemState.mKeysDown & keys) {
-                        result = (result & 0xffff0000) | data_020c1d60.mUnk_000[i].mUnk_8 | TOUCH_DOWN;
+                        result = (result & 0xffff0000) | gTouchInput.mButtons[i].mId | TOUCH_DOWN;
                     }
                     if (gSystemState.mKeysPressed & keys) {
-                        result = (result & 0xffff0000) | data_020c1d60.mUnk_000[i].mUnk_8 | TOUCH_PRESSED;
+                        result = (result & 0xffff0000) | gTouchInput.mButtons[i].mId | TOUCH_PRESSED;
                     }
                     if (keys & gSystemState.mKeysReleased) {
-                        result = (result & 0xffff0000) | data_020c1d60.mUnk_000[i].mUnk_8 | TOUCH_RELEASED;
+                        result = (result & 0xffff0000) | gTouchInput.mButtons[i].mId | TOUCH_RELEASED;
                     }
                 }
             }
         }
     }
-    data_020c1d60.mUnk_800.mUnk_100.mUnk_08 = 0;
+    gTouchInput.mTrail.mTouchState.mButtonCount = 0;
     if (hit != -1 && (u16) result != TOUCH_NONE) {
         if (result & TOUCH_RELEASED) {
-            if (data_020c1d60.mUnk_000[hit].mUnk_c != 0) {
-                func_0202eb64(data_020c1d60.mUnk_000[hit].mUnk_c, 100, 0, 0x40, TOUCH_NONE, 0);
-                if (data_020c1d60.mUnk_000[hit].mUnk_a != 0) {
-                    func_0202edd0(data_020c1d60.mUnk_000[hit].mUnk_a);
+            if (gTouchInput.mButtons[hit].mReleaseSoundId != 0) {
+                PlayWave(gTouchInput.mButtons[hit].mReleaseSoundId, 100, 0, 0x40, TOUCH_NONE, 0);
+                if (gTouchInput.mButtons[hit].mPressSoundId != 0) {
+                    StopWave(gTouchInput.mButtons[hit].mPressSoundId);
                 }
             }
         } else if (result & TOUCH_PRESSED) {
-            if (data_020c1d60.mUnk_000[hit].mUnk_a != 0) {
-                func_0202eb64(data_020c1d60.mUnk_000[hit].mUnk_a, 100, 0, 0x40, TOUCH_NONE, 0);
+            if (gTouchInput.mButtons[hit].mPressSoundId != 0) {
+                PlayWave(gTouchInput.mButtons[hit].mPressSoundId, 100, 0, 0x40, TOUCH_NONE, 0);
             }
         }
     }
@@ -3472,18 +3472,18 @@ u32 UpdateTouchButtons(u32 mask) {
 }
 
 void ResetTouchTrail(void) {
-    data_020c1d60.mUnk_800.mUnk_100.mUnk_18 = 0;
-    data_020c1d60.mUnk_800.mUnk_100.mUnk_10 = 0;
-    MIi_CpuClear16(0xffff, data_020c1d60.mUnk_800.mUnk_000, sizeof(data_020c1d60.mUnk_800.mUnk_000));
+    gTouchInput.mTrail.mTouchState.mUnk_18 = 0;
+    gTouchInput.mTrail.mTouchState.mTrailCount = 0;
+    MIi_CpuClear16(0xffff, gTouchInput.mTrail.mPoints, sizeof(gTouchInput.mTrail.mPoints));
 }
 
 void ResetTouchButtons(u16 a, int b) {
-    data_020c1d60.mUnk_800.mUnk_100.mUnk_12 = TOUCH_NONE;
-    data_020c1d60.mUnk_800.mUnk_100.mUnk_08 = 0;
-    data_020c1d60.mUnk_800.mUnk_100.mUnk_14 = 0;
-    data_020c1d60.mUnk_800.mUnk_100.mUnk_0c = 0;
-    data_020c1d60.mUnk_800.mUnk_100.mUnk_16 = a;
-    data_020c1d60.mUnk_800.mUnk_100.mUnk_04 = TOUCH_NONE;
+    gTouchInput.mTrail.mTouchState.mHitId = TOUCH_NONE;
+    gTouchInput.mTrail.mTouchState.mButtonCount = 0;
+    gTouchInput.mTrail.mTouchState.mPrevDown = 0;
+    gTouchInput.mTrail.mTouchState.mPressFrame = 0;
+    gTouchInput.mTrail.mTouchState.mCornerSpriteId = a;
+    gTouchInput.mTrail.mTouchState.mButtonState = TOUCH_NONE;
     ResetTouchTrail();
 }
 
@@ -3495,27 +3495,27 @@ int ReadTouchAndAppendTrail(u8 *x, u8 *y) {
         if (y != 0) {
             *y = 0xff;
         }
-        if (data_020c1d60.mUnk_800.mUnk_100.mUnk_18 == 1) {
-            data_020c1d60.mUnk_800.mUnk_100.mUnk_00[2] = gSystemState.mTouchX;
-            data_020c1d60.mUnk_800.mUnk_100.mUnk_00[3] = gSystemState.mTouchY;
-            data_020c1d60.mUnk_800.mUnk_100.mUnk_18 = 2;
-        } else if (data_020c1d60.mUnk_800.mUnk_100.mUnk_18 == 2) {
-            data_020c1d60.mUnk_800.mUnk_100.mUnk_18 = 3;
+        if (gTouchInput.mTrail.mTouchState.mUnk_18 == 1) {
+            gTouchInput.mTrail.mTouchState.mUnk_00[2] = gSystemState.mTouchX;
+            gTouchInput.mTrail.mTouchState.mUnk_00[3] = gSystemState.mTouchY;
+            gTouchInput.mTrail.mTouchState.mUnk_18 = 2;
+        } else if (gTouchInput.mTrail.mTouchState.mUnk_18 == 2) {
+            gTouchInput.mTrail.mTouchState.mUnk_18 = 3;
         }
         return 0;
     }
-    if (data_020c1d60.mUnk_800.mUnk_100.mUnk_18 != 1) {
+    if (gTouchInput.mTrail.mTouchState.mUnk_18 != 1) {
         ResetTouchTrail();
-        data_020c1d60.mUnk_800.mUnk_100.mUnk_00[0] = gSystemState.mTouchX;
-        data_020c1d60.mUnk_800.mUnk_100.mUnk_00[1] = gSystemState.mTouchY;
-        data_020c1d60.mUnk_800.mUnk_100.mUnk_18 = 1;
+        gTouchInput.mTrail.mTouchState.mUnk_00[0] = gSystemState.mTouchX;
+        gTouchInput.mTrail.mTouchState.mUnk_00[1] = gSystemState.mTouchY;
+        gTouchInput.mTrail.mTouchState.mUnk_18 = 1;
     }
     {
         u8 px = gSystemState.mTouchX;
-        u32 n = data_020c1d60.mUnk_800.mUnk_100.mUnk_10;
-        data_020c1d60.mUnk_800.mUnk_000[n].mUnk_0 = px;
-        data_020c1d60.mUnk_800.mUnk_000[n].mUnk_1 = gSystemState.mTouchY;
-        data_020c1d60.mUnk_800.mUnk_100.mUnk_10 = (data_020c1d60.mUnk_800.mUnk_100.mUnk_10 + 1) & 0x7f;
+        u32 n = gTouchInput.mTrail.mTouchState.mTrailCount;
+        gTouchInput.mTrail.mPoints[n].mX = px;
+        gTouchInput.mTrail.mPoints[n].mY = gSystemState.mTouchY;
+        gTouchInput.mTrail.mTouchState.mTrailCount = (gTouchInput.mTrail.mTouchState.mTrailCount + 1) & 0x7f;
         if (x != 0) {
             *x = px;
         }

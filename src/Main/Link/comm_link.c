@@ -20,6 +20,10 @@
 
 Unk_020c6adc data_020c6adc;
 
+// The file link over the wireless helper. It does not run in this build: its per-frame steps (UpdateCommChild here,
+// UpdateCommParent in arm_system.c) are called only while gSystemState.mFlags has 0x200 or 0x400 set, and nothing
+// sets either flag; the error state that HaltOnCommError waits for is entered only under 0x200 as well.
+
 // The link keeps COMM_SLOTS received records of COMM_RECORD_SIZE bytes, indexed by slot.
 #define COMM_SLOTS 16
 #define COMM_RECORD_SIZE 254
@@ -49,35 +53,35 @@ typedef struct Unk_CommRecord {
 
 #pragma thumb off
 
-// With the link in state 5 and the state check passed, reads each of the 16 slots: a slot that holds data has its
-// record stored in data_020c68e0 and its flag set (data_020c66e0, and a bit in the mask at gSystemState.mUnk_288);
-// then func_02034a08 follows the mask.
-void func_02034954(void) {
+// With the link in WH_SYSSTATE_DATASHARING and this frame's exchange gone through, reads each of the 16 slots: a slot
+// that holds data has its record stored in gCommRecords and its flag set (gCommRecordReceived, and a bit in the mask at
+// gSystemState.mUnk_288); then CountUnchangedSlotMask follows the mask.
+void ExchangeCommRecords(void) {
     u16 i;
 
-    if (func_0203946c() != 5) {
+    if (WhGetSysState() != WH_SYSSTATE_DATASHARING) {
         return;
     }
-    if (func_020396b8(data_020c67e0) == 0) {
+    if (WhUpdateDataSharing(gCommSendData) == 0) {
         return;
     }
     *data_020c66d4->mUnk_4 = 0;
     gSystemState.mUnk_288 = 0;
     for (i = 0; i < COMM_SLOTS; i++) {
-        void *src = func_02039698(i);
+        void *src = WhGetSharedData(i);
         if (src != NULL) {
-            MI_CpuCopy8(src, data_020c68e0 + i * COMM_RECORD_SIZE, COMM_RECORD_SIZE);
-            data_020c66e0[i] = 1;
+            MI_CpuCopy8(src, gCommRecords + i * COMM_RECORD_SIZE, COMM_RECORD_SIZE);
+            gCommRecordReceived[i] = 1;
             gSystemState.mUnk_288 |= 1 << i;
         } else {
-            data_020c66e0[i] = 0;
+            gCommRecordReceived[i] = 0;
         }
     }
-    func_02034a08();
+    CountUnchangedSlotMask();
 }
 
 // Counts (up to 0x800) the calls for which the slot mask has not changed.
-void func_02034a08(void) {
+void CountUnchangedSlotMask(void) {
     if (gSystemState.mUnk_288 != gSystemState.mUnk_28a) {
         gSystemState.mUnk_28a = gSystemState.mUnk_288;
         gSystemState.mUnk_28c = 0;
@@ -86,15 +90,15 @@ void func_02034a08(void) {
     }
 }
 
-// Clears the command buffer.
-void func_02034a44(void) {
-    memset(data_020c67e0, 0, 0xfe);
+void ClearCommSendData(void) {
+    memset(gCommSendData, 0, 0xfe);
 }
 
-// Link error handler (the callback in gSystemState.mUnk_24c): with 0 it restores the display set-up; otherwise it
-// shows a message that the wireless communication failed, in the owner's language (2 French, 3 German, 4 Italian,
-// 5 Spanish, English otherwise).
-void func_02034a60(int a) {
+// Link error handler (the callback in gSystemState.mUnk_24c, run only by HaltOnCommError, so never in this build):
+// with 0 it tears down the display, the track and the waves; otherwise it opens the text screen and prints a message
+// that the wireless communication failed, in the owner's language (2 French, 3 German, 4 Italian, 5 Spanish, English
+// otherwise).
+void ShowCommError(int a) {
     OSOwnerInfo info;
 
     if (a == 0) {
@@ -107,8 +111,8 @@ void func_02034a60(int a) {
         gSystemState.mFlags &= ~0x20000;
         SetFadeClear(2);
         SetLcdSwap(1);
-        func_020359d0(0);
-        func_0202eeec();
+        ReleaseTrack(0);
+        StopAllWaves();
         return;
     }
     OS_GetOwnerInfo(&info);
@@ -138,8 +142,9 @@ void func_02034a60(int a) {
     }
 }
 
-// When the error state (-2) is set: runs the handler with 0, then runs it with 1 and the frame update forever.
-void func_02034be4(void) {
+// When the error state (-2) is set: runs the handler with 0, then runs it with 1 and the frame update forever. In this
+// build the error state is never set, so it returns at once.
+void HaltOnCommError(void) {
     if (gSystemState.mUnk_2a4[1] != -2) {
         return;
     }
@@ -150,54 +155,51 @@ void func_02034be4(void) {
     }
 }
 
-// Per-frame step of the link by its state.
-void func_02034c38(void) {
-    switch (func_0203946c()) {
-        case 0:
-        case 2:
-        case 3:
-        case 7:
+void UpdateCommChild(void) {
+    switch (WhGetSysState()) {
+        case WH_SYSSTATE_STOP:
+        case WH_SYSSTATE_SCANNING:
+        case WH_SYSSTATE_BUSY:
+        case WH_SYSSTATE_MEASURECHANNEL:
             break;
-        case 8:
-            func_0203970c();
+        case WH_SYSSTATE_CONNECT_FAIL:
+            WhShutDownOrFail();
             break;
-        case 1:
+        case WH_SYSSTATE_IDLE:
             if (gSystemState.mUnk_2a2 < 5) {
-                func_02034cc4();
+                ConnectCommAsChild();
                 gSystemState.mUnk_2a2++;
                 break;
             }
-        case 9:
+        case WH_SYSSTATE_ERROR:
             func_02034cdc();
             break;
-        case 4:
-        case 5:
-        case 6:
+        case WH_SYSSTATE_CONNECTED:
+        case WH_SYSSTATE_DATASHARING:
+        case WH_SYSSTATE_KEYSHARING:
             gSystemState.mUnk_2a2 = 0;
-            func_02034954();
+            ExchangeCommRecords();
             break;
     }
 }
 
-void func_02034cc4(void) {
-    func_02039598(5, data_020c6720);
+void ConnectCommAsChild(void) {
+    WhConnectAsChild(WH_CONNECT_MODE_CHILD_DATASHARING, data_020c6720);
 }
 
 void func_02034cdc(void) {}
 
-// Stores a 32-bit value as two halfwords.
-void func_02034ce0(u32 value, void *dst) {
+void WriteU32AsHalfwords(u32 value, void *dst) {
     ((u16 *) dst)[0] = value;
     ((u16 *) dst)[1] = value >> 16;
 }
 
-// Reads a 32-bit value stored as two halfwords.
-u32 func_02034cf0(void *src) {
+u32 ReadU32FromHalfwords(void *src) {
     return ((u16 *) src)[0] + (((u16 *) src)[1] << 16);
 }
 
 // Stores a 32-bit value as four bytes, low byte first.
-void func_02034d00(u32 value, u8 *dst) {
+void WriteU32Bytes(u32 value, u8 *dst) {
     u32 i;
     for (i = 0; i < 4; i++) {
         dst[i] = value;
@@ -210,7 +212,7 @@ void func_02034d00(u32 value, u8 *dst) {
 // when the send is accepted the position advances, and the transfer ends when nothing is left. For each received
 // record it answers a request (COMM_REQUEST) with a reply carrying two values of the file table and the table's
 // size, and queues a range message (COMM_RANGE) unless it overlaps another queued transfer.
-void func_02034d1c(void) {
+void ServeCommFiles(void) {
     u8 order[4];
     u32 i;
     u32 n;
@@ -239,19 +241,19 @@ void func_02034d1c(void) {
     for (i = 0; i < 1; i++) {
         idxA = order[i];
         if (gSystemState.mUnk_250.mUnk_10[idxA] == COMM_PENDING && (data_020c9e04 & COMM_BUSY) == 0) {
-            buf = data_020c66d4->mUnk_8;
+            buf = data_020c66d4->mPacket;
             len = c->mUnk_1c[idxA];
 
             if (len >= COMM_CHUNK) {
                 len = COMM_CHUNK;
             }
             buf[0] = COMM_PENDING;
-            func_02034d00(c->mUnk_14[idxA], buf + 1);
+            WriteU32Bytes(c->mUnk_14[idxA], buf + 1);
             func_020425f4(&gBankFile, c->mUnk_14[idxA], 0);
             func_020425e4(&gBankFile, buf + 5, len);
             data_020c9e04 |= COMM_BUSY;
-            buf = data_020c66d4->mUnk_8;
-            if (func_02046e28(func_02039d74, 0, buf, len + 5, 3, 10, 0) == 2) {
+            buf = data_020c66d4->mPacket;
+            if (func_02046e28(PacketSentCallback, 0, buf, len + 5, 3, 10, 0) == 2) {
                 c->mUnk_14[idxA] += len;
                 c->mUnk_1c[idxA] -= len;
                 if (c->mUnk_1c[idxA] == 0) {
@@ -263,27 +265,27 @@ void func_02034d1c(void) {
     }
     for (i = 0; i < 1; i++) {
         idxB = order[i];
-        rec = (Unk_CommRecord *) (data_020c68e0 + idxB * COMM_RECORD_SIZE);
-        if (data_020c66e0[idxB] == 0) {
+        rec = (Unk_CommRecord *) (gCommRecords + idxB * COMM_RECORD_SIZE);
+        if (gCommRecordReceived[idxB] == 0) {
             continue;
         }
         switch (rec->mUnk_0) {
             case COMM_REQUEST: {
                 gSystemState.mUnk_296 = 0;
-                buf2 = func_02039cd4(0x12);
+                buf2 = ReserveLinkMessage(0x12);
                 rec->mUnk_0 = 0;
                 buf2[0] = COMM_REPLY;
                 buf2[2] = idxB;
                 *(u16 *) (buf2 + 4) = rec->mUnk_4;
-                func_02034ce0(((FileEntry *) gSystemState.mFileTable)[rec->mUnk_4].mOffset, buf2 + 6);
-                func_02034ce0(((FileEntry *) gSystemState.mFileTable)[rec->mUnk_4].mStoredSize, buf2 + 10);
-                func_02034ce0(gSystemState.mFileTableSize, buf2 + 14);
+                WriteU32AsHalfwords(((FileEntry *) gSystemState.mFileTable)[rec->mUnk_4].mOffset, buf2 + 6);
+                WriteU32AsHalfwords(((FileEntry *) gSystemState.mFileTable)[rec->mUnk_4].mStoredSize, buf2 + 10);
+                WriteU32AsHalfwords(gSystemState.mFileTableSize, buf2 + 14);
                 (void) ((gSystemState.mUnk_2c8 & COMM_TRACE) ? 0 : 0);
                 break;
             }
             case COMM_RANGE:
-                a = func_02034cf0((u8 *) rec + 6);
-                b = func_02034cf0((u8 *) rec + 2);
+                a = ReadU32FromHalfwords((u8 *) rec + 6);
+                b = ReadU32FromHalfwords((u8 *) rec + 2);
                 rec->mUnk_0 = 0;
                 state = COMM_PENDING;
                 for (j = 1; j < 2; j++) {
@@ -312,10 +314,10 @@ void func_02034d1c(void) {
 }
 
 // 1 when the file access goes through the link: bit 9 of the system flags is set and either data is still to be
-// received or the command buffer's high nibble is 5.
-int func_02035058(void) {
+// received or the send buffer's high nibble is 5. In this build the flag is never set, so it returns 0.
+int IsCommReading(void) {
     if (gSystemState.mFlags & 0x200) {
-        if (gSystemState.mUnk_250.mUnk_08 != 0 || (data_020c67e0[0] >> 4) == 5) {
+        if (gSystemState.mUnk_250.mUnk_08 != 0 || (gCommSendData[0] >> 4) == 5) {
             return 1;
         }
     }

@@ -35,7 +35,7 @@ typedef struct SeEntry {
     u16 mIdCount;
     u16 mVolume;
     u8 mPan;
-    // 1 sends PlayObjectSe to func_0202f110 instead of PlaySe; 0 in every entry of gSeEntries.
+    // 1 sends PlayObjectSe to PlayWaveKeepAlive instead of PlaySe; 0 in every entry of gSeEntries.
     u8 mUnk_05;
     u8 mUnk_06[2];
     u32 mGap;

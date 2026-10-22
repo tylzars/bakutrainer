@@ -272,7 +272,7 @@ void ApplyFieldObject(FieldObject *p) {
             }
             p->mType = 0;
             StartDriveMinusX(250 << 10, 250 << 1);
-            func_0202f110(48, 100, 0, 64, 0xffff, 0);
+            PlayWaveKeepAlive(48, 100, 0, 64, 0xffff, 0);
             if (p->mKind == 2) {
                 p = &gFieldObjects.mList[p->mListIndex];
             }
@@ -288,7 +288,7 @@ void ApplyFieldObject(FieldObject *p) {
                 break;
             }
             p->mType = 0;
-            func_0202f110(1, 100, 0, 64, 0xffff, 0);
+            PlayWaveKeepAlive(1, 100, 0, 64, 0xffff, 0);
             return;
         case 4:
             if (p->mType == 0) {
@@ -299,7 +299,7 @@ void ApplyFieldObject(FieldObject *p) {
             AddCappedAt5999(&gFieldObjects.mEndTimer, 60000 * gFieldObjects.mAddSeconds / 1000);
             sprintf(text, "+%d'", gFieldObjects.mAddSeconds);
             AddTextObjSlot(text, 2, data_0201a61c, 30, pos[0], pos[1], 0, -128, 100, 1, 0);
-            func_0202f110(117, 100, 0, 64, 0xffff, 0);
+            PlayWaveKeepAlive(117, 100, 0, 64, 0xffff, 0);
             break;
     }
 }
@@ -560,7 +560,7 @@ void UpdateField(void) {
             } else if (gSystemState.mKeysDown & 0x80) {
                 gFieldObjects.mOffsetSpeedY += 50 << 12;
             } else {
-                func_0200b9cc(&gFieldObjects.mOffsetSpeedY, 50 << 12);
+                MoveTowardZero(&gFieldObjects.mOffsetSpeedY, 50 << 12);
             }
         }
         if (IsXInputEnabled()) {
@@ -576,19 +576,19 @@ void UpdateField(void) {
             } else if (gSystemState.mKeysDown & 0x10) {
                 gFieldObjects.mOffsetSpeedX += 25 << 12;
             } else {
-                func_0200b9cc(&gFieldObjects.mOffsetSpeedX, 25 << 12);
+                MoveTowardZero(&gFieldObjects.mOffsetSpeedX, 25 << 12);
             }
         } else {
             switch (gFieldObjects.mDrivePlusX) {
                 case 0:
                     if (gFieldObjects.mDriveTimer != 0) {
-                        func_0200b9cc(&gFieldObjects.mOffsetSpeedY, 50 << 12);
+                        MoveTowardZero(&gFieldObjects.mOffsetSpeedY, 50 << 12);
                         gFieldObjects.mDriveTimer--;
                         if (gFieldObjects.mStageOffset.mX >
                             gFieldObjects.mDriveStartOffset.mX - gFieldObjects.mDriveDistance) {
                             gFieldObjects.mOffsetSpeedX -= 50 << 12;
                         } else {
-                            func_0200b9cc(&gFieldObjects.mOffsetSpeedX, 25 << 12);
+                            MoveTowardZero(&gFieldObjects.mOffsetSpeedX, 25 << 12);
                         }
                     } else {
                         gFieldObjects.mOffsetSpeedX = 0;
@@ -605,7 +605,7 @@ void UpdateField(void) {
                             gFieldObjects.mDriveStartOffset.mX + gFieldObjects.mDriveDistance) {
                             gFieldObjects.mOffsetSpeedX += 50 << 12;
                         } else {
-                            func_0200b9cc(&gFieldObjects.mOffsetSpeedX, 25 << 12);
+                            MoveTowardZero(&gFieldObjects.mOffsetSpeedX, 25 << 12);
                         }
                     } else if (gFieldObjects.mStageOffset.mX > gFieldObjects.mDriveStartOffset.mX) {
                         gFieldObjects.mOffsetSpeedX -= 25 << 12;
@@ -623,11 +623,11 @@ void UpdateField(void) {
     gFieldObjects.mStagePos = gMapState.mCamera.mUnk_9c.mUnk_228;
     gFieldObjects.mStagePos.x += gFieldObjects.mStageOffset.mX;
     gFieldObjects.mStagePos.z += gFieldObjects.mStageOffset.mY;
-    func_0200b928(&gFieldObjects.mScrollSpeed,
-                  MapRange(gFieldObjects.mStageOffset.mX / (50 << 10), -31, 1, gFieldObjects.mMinScrollSpeed >> 8,
-                           gFieldObjects.mMaxScrollSpeed >> 8)
-                      << 8,
-                  2);
+    EaseToward(&gFieldObjects.mScrollSpeed,
+               MapRange(gFieldObjects.mStageOffset.mX / (50 << 10), -31, 1, gFieldObjects.mMinScrollSpeed >> 8,
+                        gFieldObjects.mMaxScrollSpeed >> 8)
+                   << 8,
+               2);
     MoveListObjects();
     ApplyObjectsAtStage();
     if (gFieldObjects.mEndTimer != 0) {

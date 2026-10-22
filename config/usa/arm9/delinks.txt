@@ -555,7 +555,7 @@ src/Main/Minigame/stage_minigame.c:
     .data       start:0x02063930 end:0x02063940
     .bss        start:0x02099770 end:0x020ab7e0
 
-// provisional: the start; nothing before 0x0200b898 calls the helpers, func_0200b994 calls func_0200b928
+// provisional: the start; nothing before 0x0200b898 calls the helpers, EaseAngleToward calls EaseToward
 src/Main/Unknown/game_util.c:
     complete
     .text       start:0x0200b898 end:0x0200c034
@@ -673,7 +673,7 @@ src/Main/System/engine_asm.s:
     complete
     .text       start:0x02027398 end:0x02028e5c
 
-// the script reader on data_020c61ac; it ends with func_0202a1ec (last pool word at 0x0202ad30), where the ARM run
+// the script reader on gScriptWork; it ends with UpdateScript (last pool word at 0x0202ad30), where the ARM run
 // of texture_blocks.c starts
 src/Main/Script/script_records.c:
     complete
@@ -693,13 +693,13 @@ src/Main/Graphics/sprite_script.c:
     complete
     .text       start:0x0202db1c end:0x0202de94
 
-// provisional: the ARM file cache and loader on gFileCache (defined here), up to the wave player's func_0202ea50
+// provisional: the ARM file cache and loader on gFileCache (defined here), up to the wave player's ClaimWaveChannel
 src/Main/System/file_loader.c:
     complete
     .text       start:0x0202de94 end:0x0202ea50
     .bss        start:0x020c6470 end:0x020c648c
 
-// provisional: the wave player on data_020c648c (16 channels and the channel count at 0x180); func_0202ea50 (ARM)
+// provisional: the wave player on gWavePlayer (16 channels and the channel count at 0x180); ClaimWaveChannel (ARM)
 // claims its channels; the wave stream (from 0x0202f110) uses the same object; ARM code resumes at 0x0202f500
 src/Main/Sound/wave_player.c:
     complete
@@ -739,21 +739,21 @@ src/Main/System/align_util.c:
     complete
     .text       start:0x02034918 end:0x02034954
 
-// the link buffers data_020c66d4..data_020c68e0 (ascending sizes; arm_system.c is the one file using all five);
+// the link buffers data_020c66d4..gCommRecords (ascending sizes; arm_system.c is the one file using all five);
 // the unit's code sits apart from it, in arm_system_slot.c's place (lcf_edits.txt)
 src/Main/Unknown/arm_system.c:
     complete
     .bss        start:0x020c66d4 end:0x020c6adc
 
-// provisional: the wireless link's per-frame step, record exchange and error screen (data_020c66d4..data_020c68e0,
-// gSystemState.mUnk_250/mUnk_288) and the error screen's strings; func_02035108 after it is the tracker's
+// provisional: the wireless link's per-frame step, record exchange and error screen (data_020c66d4..gCommRecords,
+// gSystemState.mUnk_250/mUnk_288) and the error screen's strings; PlayTrack after it is the tracker's
 src/Main/Link/comm_link.c:
     complete
     .text       start:0x02034954 end:0x02035108
     .data       start:0x02063b58 end:0x02063c9c
     .bss        start:0x020c6adc end:0x020c6b14
 
-// provisional: the music tracker player on data_020c6b14 (defined here): from its song loader (the code before it
+// provisional: the music tracker player on gTrackerPlayer (defined here): from its song loader (the code before it
 // uses other objects) up to the wireless helpers at 0x020386a4, with the tick's wave table and strings in .data
 src/Main/Sound/tracker_player.c:
     complete
@@ -762,15 +762,15 @@ src/Main/Sound/tracker_player.c:
     .data       start:0x02063c9c end:0x02063cc8
     .bss        start:0x020c6b14 end:0x020c8380
 
-// the link's work state data_020c8380 and the two name tables: no code; data_02063cc8 (nothing references it)
-// and data_02063cdc come before the size-sorted strings of wireless_helper.c, and the 0x60-byte data_020c8380
+// the link's work state gWirelessWork and the two name tables: no code; gWmApiIdNames (nothing references it)
+// and gWhSysStateNames come before the size-sorted strings of wireless_helper.c, and the 0x60-byte gWirelessWork
 // before its 0x30..0x820-byte buffers (one file sorts its objects by size)
 src/Main/Link/wireless_state.c:
     complete
     .data       start:0x02063cc8 end:0x02063d04
     .bss        start:0x020c8380 end:0x020c83e0
 
-// the wireless helper state machine (ARM) with the WM buffers data_020c83e0..data_020c95e0, the state names and
+// the wireless helper state machine (ARM) with the WM buffers data_020c83e0..gWhDataSharing, the state names and
 // the debug strings
 src/Main/Link/wireless_helper.c:
     complete
@@ -778,7 +778,7 @@ src/Main/Link/wireless_helper.c:
     .data       start:0x02063d04 end:0x02064448
     .bss        start:0x020c83e0 end:0x020c9e00
 
-// the link indicator and shutdown (Thumb) on data_020c9e00, up to the SDK at 0x02039dd8: it reaches the block
+// the link indicator and shutdown (Thumb) on gLinkBuffers, up to the SDK at 0x02039dd8: it reaches the block
 // through its base where wireless_helper.c names the members as objects
 src/Main/Link/link_indicator.c:
     complete
