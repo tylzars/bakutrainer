@@ -658,10 +658,12 @@ src/Main/Graphics/vram_cache.c:
     .text       start:0x020225dc end:0x0202350c
 
 // provisional: the .rodata 0x02050898-0x020508d8 of the ARM pose code, the ARM render code and func_02025f58 ascends
-// by size as one file's, and the Thumb code after it follows with no gap and calls both ways
+// by size as one file's, and the Thumb code after it follows with no gap and calls both ways. Its .bss starts at
+// 0x020c31ac, where the size order restarts (0x30 after the 0xb30-byte data_020c267c), and ascends to 0x020c61ac
 src/Main/Graphics/model.c:
     .text       start:0x0202350c end:0x02027398
     .rodata     start:0x02050898 end:0x020508d8
+    .bss        start:0x020c31ac end:0x020c61ac
 
 // hand-written: shared literal pools, branches into other routines and register interfaces tie it together;
 // it may be split at 0x020280dc, 0x02028150, 0x02028250, 0x02028928, 0x02028d48 or 0x02028df4

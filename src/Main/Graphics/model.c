@@ -18,10 +18,14 @@
 #include <Main/Map/map_entries.h>
 #include <Main/System/align_util.h>
 
-// Matrices of the model code: the working matrix and the matrix of each pose node (0xc00
-// bytes up to the next object).
-extern MtxFx43 data_020c31ac;
-extern MtxFx43 data_020c3244[64];
+// This file's .bss (ascending sizes as one file's): the working matrix, data_020c31dc, the map state and the matrix
+// of each pose node. Objects without an initialiser join the compiler's size order of this
+// file's data after the others, in reverse definition order; this order (with data_02050898 defined below, before
+// its users) puts the vector initialisers of func_02023ff0 and func_020240ec in the game's .rodata order.
+MtxFx43 data_020c31ac;
+Unk_020c31dc data_020c31dc;
+MapState data_020c3e44;
+MtxFx43 data_020c3244[64];
 
 typedef struct Unk_PoseChannel {
     u16 mUnk_0;
@@ -39,9 +43,6 @@ typedef struct Unk_PoseAnim {
     u8 mUnk_2[6];
     Unk_PoseFrame mUnk_8[1];
 } Unk_PoseAnim;
-
-// Texture size code of a power-of-two size, indexed by log2(size) - 3.
-static const u8 data_02050898[8] = {0, 1, 2, 3, 4, 5, 6, 7};
 
 static inline void PutTrans(fx32 x, fx32 y, fx32 z) {
     reg_G3X_MTX_TRANS = x;
@@ -414,6 +415,9 @@ void func_02024368(Model *obj, int x, int y, int scale, u16 angle, int flags) {
     func_020262a0(obj);
     func_02024b5c(obj->mUnk_170, &params, obj, flags);
 }
+
+// Texture size code of a power-of-two size, indexed by log2(size) - 3.
+static const u8 data_02050898[8] = {0, 1, 2, 3, 4, 5, 6, 7};
 
 void func_020243c0(int id, fx32 x, fx32 y, fx32 z, u16 angle, fx32 sx, fx32 sy, u32 alpha) {
     MtxFx33 rot;
