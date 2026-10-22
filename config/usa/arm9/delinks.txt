@@ -662,6 +662,7 @@ src/Main/Graphics/vram_cache.c:
 // by size as one file's, and the Thumb code after it follows with no gap and calls both ways. Its .bss starts at
 // 0x020c31ac, where the size order restarts (0x30 after the 0xb30-byte data_020c267c), and ascends to 0x020c61ac
 src/Main/Graphics/model.c:
+    complete
     .text       start:0x0202350c end:0x02027398
     .rodata     start:0x02050898 end:0x020508d8
     .bss        start:0x020c31ac end:0x020c61ac

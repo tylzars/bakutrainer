@@ -1885,8 +1885,8 @@ data_020502b8 kind:data(byte[64]) addr:0x020502b8
 data_020502f8 kind:data(byte[128]) addr:0x020502f8
 data_02050378 kind:data(short[128]) addr:0x02050378
 data_02050478 kind:data(any) addr:0x02050478
-data_02050898 kind:data(byte[8]) addr:0x02050898
-data_020508a0 kind:data(any) addr:0x020508a0
+data_02050898 kind:data(byte[8]) addr:0x02050898 local
+@2070 kind:data(any) addr:0x020508a0 local
 @2013 kind:data(short[1]) addr:0x020508d8 local
 data_020508dc kind:data(byte[4]) addr:0x020508dc local
 data_020508e0 kind:data(byte[150]) addr:0x020508e0 local

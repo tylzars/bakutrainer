@@ -638,6 +638,13 @@ s32 func_02024b2c(const u32 *data, const DrawParams *p) {
     return p->mUnk_28 >> -s;
 }
 
+// The table loads in the order cos2, sin2, cos0, sin0, cos1, sin1 give the index and load block, `y` holding
+// height << 16 gives the texture scale block, and `cur += 0x38` placed right before each DC_StoreRange keeps the
+// argument copy into r0 behind the material and polygon stores. The sh0 statement written after the six table
+// loads, with the sy/sz copies before the if, gives the shift block (the `16 << sh0` shift is scheduled after the
+// two products and the .bss address load, so the 16 lands in r8). The material colours dif and amb held in the dead
+// locals y and x give the material block's registers, and the texture key index held in the dead local sc, declared
+// long, gives the stack slots (an int index takes the other slot).
 void func_02024b5c(u32 id, void *params, void *obj, int flags) {
     DrawParams *p = params;
     Model *model = obj;
@@ -656,7 +663,7 @@ void func_02024b5c(u32 id, void *params, void *obj, int flags) {
     u32 lightOfs;
     int angOfs;
     ModelPart *mesh;
-    s32 sc;
+    long sc;
     ModelPart *src;
     int mode;
     u16 ang;
@@ -878,8 +885,8 @@ void func_02024b5c(u32 id, void *params, void *obj, int flags) {
             texMask = p->mUnk_2c & mesh->mUnk_04;
             srtMask = p->mUnk_30 & mesh->mUnk_08;
             if (texMask != 0 && (model == NULL || model->mUnk_172_12 == 0)) {
-                k = 31 - func_02028250(texMask);
-                anim = (const ModelFrameAnim *) ((u32) texAnim + 2 + texAnim->mEntries[k].mOffset * 2);
+                sc = 31 - func_02028250(texMask);
+                anim = (const ModelFrameAnim *) ((u32) texAnim + 2 + texAnim->mEntries[sc].mOffset * 2);
                 if (flags & 0x20) {
                     frame = (u32) flags >> 26;
                 } else {
@@ -890,7 +897,7 @@ void func_02024b5c(u32 id, void *params, void *obj, int flags) {
                     } else {
                         frame = func_02024b14(p);
                     }
-                    frame = ((u32) (frame << 8) / texAnim->mEntries[k].mDiv) % anim->mCount;
+                    frame = ((u32) (frame << 8) / texAnim->mEntries[sc].mDiv) % anim->mCount;
                 }
                 tex = func_020229b4(anim->mFrames[frame].mUnk_04 + (anim->mFrames[frame].mUnk_06 << 16),
                                     anim->mFrames[frame].mUnk_00, func_02025f58(sizeS, sizeT, fmt),
