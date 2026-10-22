@@ -12,7 +12,7 @@ extern "C" {
 #define MIC_MAX_BANDS 8
 #define MIC_HISTORY 16
 
-void InitMic(int size, int b);
+void SetupMic(int size, int b);
 void func_02021054(int a);
 void StartMicSampling(int rate, int type);
 void StopMicSampling(void);

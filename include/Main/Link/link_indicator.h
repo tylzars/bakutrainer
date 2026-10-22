@@ -32,8 +32,8 @@ typedef struct LinkBuffers {
 extern LinkBuffers gLinkBuffers __attribute__((aligned(32)));
 
 void func_0203982c(u16 code);
-void WriteIndicatorOam(int id, u32 shift, u32 index, u32 attr2, u32 attr0, int rotate, int screen);
-void UpdateCommIndicator(u32 attr2, u32 attr0, int screen);
+void WriteIndicatorOam(int id, u32 shift, u32 index, u32 attr1, u32 attr0, int rotate, int layer);
+void UpdateCommIndicator(u32 attr1, u32 attr0, int screen);
 u32 GetIndicatorLayer(void);
 void UpdateIndicator(void);
 void func_02039b70(void);

@@ -88,9 +88,9 @@ u32 NormalizeSpace(u32 code) {
     return code;
 }
 
-void DrawText(int x, int y, const void *font, const char *text, int align, int width, int height, int mode) {
+void DrawText(int x, int y, const void *font, const char *text, int align, int width, int height, int layer) {
     const void *f = font;
-    DrawTextEx(x, y, (const FontRange *const *) &f, 0, (const u8 *) text, 0, align, width, height, mode);
+    DrawTextEx(x, y, (const FontRange *const *) &f, 0, (const u8 *) text, 0, align, width, height, layer);
 }
 
 // The `const u16 *` read into c keeps the glyph's own *q load (without the cast the compiler merges it with the load
@@ -99,7 +99,7 @@ void DrawText(int x, int y, const void *font, const char *text, int align, int w
 // stack slots in the original's order. i is an unsigned long: as u32 it changes the saved registers and the stack
 // frame.
 int DrawTextEx(int x, int y, const FontRange *const *fonts, u8 fontIndex, const u8 *text, u16 angle, u32 flags,
-               u32 width, int height, int mode) {
+               u32 width, int height, int layer) {
     u8 widths[0x400];
     u16 chars[0x400];
     u16 glyphs[0x400];
@@ -152,10 +152,10 @@ int DrawTextEx(int x, int y, const FontRange *const *fonts, u8 fontIndex, const 
     if (ok == 0) {
         OS_Terminate();
     }
-    if (mode != 1 && mode != 2) {
+    if (layer != 1 && layer != 2) {
         OS_Terminate();
     }
-    if (mode != 1 && (flags & TEXT_ROTATE)) {
+    if (layer != 1 && (flags & TEXT_ROTATE)) {
         OS_Terminate();
     }
     if (flags & TEXT_BOUNDS) {
@@ -380,9 +380,9 @@ int DrawTextEx(int x, int y, const FontRange *const *fonts, u8 fontIndex, const 
                                 if (dirMode != 0) {
                                     OS_Terminate();
                                 }
-                                DrawSprite((glyphHigh + 0x100000) | glyphs[i], px, py, 0, mode);
+                                DrawSprite((glyphHigh + 0x100000) | glyphs[i], px, py, 0, layer);
                             } else {
-                                DrawSprite(glyphHigh + (glyphs[i] + (hilite ? 0x40000 : 0)), px, py, pal + odd, mode);
+                                DrawSprite(glyphHigh + (glyphs[i] + (hilite ? 0x40000 : 0)), px, py, pal + odd, layer);
                             }
                             if (flags & TEXT_BOUNDS) {
                                 GetSpriteRect(glyphHigh + glyphs[i], 0, rect);
@@ -436,12 +436,12 @@ int DrawTextEx(int x, int y, const FontRange *const *fonts, u8 fontIndex, const 
     return (flags & TEXT_NO_WIDTH) ? 0 : result;
 }
 
-const u8 *func_02021dd8(u16 block, int id) {
-    const u8 *table = (const u8 *) FindOrLoadCachedFile(block);
-    if ((u32) id < 2) {
+const u8 *func_02021dd8(u16 id, int index) {
+    const u8 *table = (const u8 *) FindOrLoadCachedFile(id);
+    if ((u32) index < 2) {
         OS_Terminate();
     }
-    return table + (id - 2) * 4 + 0x10;
+    return table + (index - 2) * 4 + 0x10;
 }
 
 const u8 *func_02021df4(u32 base, const u8 *entry) {
@@ -458,8 +458,8 @@ int GetFileValueType(u16 id, int index) {
     return entry[0];
 }
 
-const u8 *GetFileString(u16 block, int id) {
-    const u8 *entry = func_02021dd8(block, id);
+const u8 *GetFileString(u16 id, int index) {
+    const u8 *entry = func_02021dd8(id, index);
     BOOL ok = 1;
     if (entry[0] != 4 && entry[0] != 1) {
         ok = 0;
@@ -467,7 +467,7 @@ const u8 *GetFileString(u16 block, int id) {
     if (ok == 0) {
         OS_Terminate();
     }
-    return func_02021df4(block, entry);
+    return func_02021df4(id, entry);
 }
 
 int GetFileValue(u16 id, int index) {
@@ -487,8 +487,8 @@ int GetFileValue(u16 id, int index) {
     return p[0] + ((p[1] << 8) + ((p[3] << 24) + (p[2] << 16)));
 }
 
-void CopyFileString(int block, int id, u8 *dst, int flags, ...) {
-    const u8 *src = GetFileString(block, id);
+void CopyFileString(int id, int index, u8 *dst, int flags, ...) {
+    const u8 *src = GetFileString(id, index);
     if (flags & 1) {
         u8 saved = gSystemState.mUnk_318;
         gSystemState.mUnk_318 = 1;
@@ -504,19 +504,19 @@ void CopyFileString(int block, int id, u8 *dst, int flags, ...) {
     *dst = 0;
 }
 
-int CountFileStringChars(u16 block, int id, int flags) {
+int CountFileStringChars(u16 id, int index, int flags) {
     u8 buf[0x80];
     const u8 *p;
     int count = 0;
-    int mode = GetFileValueType(block, id);
-    if (mode == 4 || mode == 1) {
+    int type = GetFileValueType(id, index);
+    if (type == 4 || type == 1) {
         if (flags & 2) {
             p = buf;
-            CopyFileString(block, id, buf, 1);
+            CopyFileString(id, index, buf, 1);
         } else {
-            p = GetFileString(block, id);
+            p = GetFileString(id, index);
         }
-        if (mode == 4) {
+        if (type == 4) {
             u32 ch = *p++;
             if (ch != 0) {
                 do {

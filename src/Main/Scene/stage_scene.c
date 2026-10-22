@@ -164,15 +164,15 @@ void SetupScene(void) {
 }
 
 void UpdateScene(void) {
-    u8 mode;
+    u8 slideState;
     int busy;
     func_020059cc(gScene->mScore);
-    mode = GetModeSlideState();
-    if (mode != MODE_SLIDE_STATE_NONE) {
+    slideState = GetModeSlideState();
+    if (slideState != MODE_SLIDE_STATE_NONE) {
         UpdateSceneCamera();
         DrawScene();
         busy = UpdateModeSlide(1);
-        if (mode == MODE_SLIDE_STATE_END && busy == 0) {
+        if (slideState == MODE_SLIDE_STATE_END && busy == 0) {
             StartResultScreen(GetScoreThresholdMet(), gScene->mScore);
         }
         return;
@@ -203,7 +203,7 @@ void UpdateScene(void) {
             break;
         case SCENE_STATE_END:
             if (gScene->mUnk_230.mUnk_172_9) {
-                StartModeSlide(0, gScene->mScore >= gScene->mUnk_630);
+                StartModeSlide(0, gScene->mScore >= gScene->mScoreThreshold);
             }
             break;
     }
@@ -449,7 +449,7 @@ void LoadSceneValues(void) {
     gScene->mEndTimer = GetFileValue(0xd63, base + 2) * 60;
     gScene->mEndTimerMax = gScene->mEndTimer;
     base = (data_020b10fc.mTableRow + 1) * 3;
-    gScene->mUnk_630 = GetFileValue(0xd63, base);
+    gScene->mScoreThreshold = GetFileValue(0xd63, base);
     base = data_020b10fc.mTableRow * 3;
     gScene->mUnk_624 = GetFileValue(0xd63, base + 4);
     base = data_020b10fc.mTableRow * 11;
@@ -504,6 +504,6 @@ void DrawNumber(void) {
     }
 }
 
-int func_0200d6b0(u8 stage) {
-    return GetFileValue(0xd63, (stage + 1) * 3);
+int GetSceneScoreThreshold(u8 tableRow) {
+    return GetFileValue(0xd63, (tableRow + 1) * 3);
 }

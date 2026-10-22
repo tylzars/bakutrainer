@@ -31,7 +31,8 @@ typedef struct FileCache FileCache;
 typedef void (*FileCacheLoad)(u32 id, FileCacheNode *node, u32 size, u32 offset);
 
 // A cache of loaded file data: a hash table of 1 << mHashBits slots, a list of nodes, the callback that loads an entry
-// and the number of bytes held against a limit.
+// and the number of bytes held against a limit. Both limits can be reached: LoadCacheEntry drops entries only while
+// mByteCount is above mByteLimit or mEntryCount above mEntryLimit.
 struct FileCache {
     FileCacheSlot *mSlots;
     FileCacheNode *mNodes;

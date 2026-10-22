@@ -256,11 +256,11 @@ void func_0200a5f0(void) {
     }
 }
 
-int LookupParticleKindValue(int a, int b) {
+int GetParticleKindValue(int a, int b) {
     return GetFileValue(0xd5f, b + a * 10);
 }
 
-int LookupParticleGameValue(int a, int b) {
+int GetParticleGameValue(int a, int b) {
     return GetFileValue(0xd60, b + a * 20);
 }
 
@@ -442,10 +442,10 @@ void ApplyParticleNearHit(Particle *p) {
         case 1:
         case 2: {
             u32 loss = 60000 * gParticleGame.mKindSeconds[p->mKind] / 1000;
-            if (loss >= gParticleGame.mTimer) {
-                gParticleGame.mTimer = 1;
+            if (loss >= gParticleGame.mEndTimer) {
+                gParticleGame.mEndTimer = 1;
             } else {
-                gParticleGame.mTimer -= loss;
+                gParticleGame.mEndTimer -= loss;
             }
             sprintf(buf, "-%d'", gParticleGame.mKindSeconds[p->mKind]);
             AddTextObjSlot(buf, 2, data_0201a61c, 30, p->mPos.x >> 8, p->mPos.y >> 8, 0, -128, 100, 1, 0);
@@ -459,7 +459,7 @@ void ApplyParticleNearHit(Particle *p) {
             PlayWaveKeepAlive(224, 100, 0, 64, 0xffff, 0);
             break;
         case 4:
-            AddCappedAt5999(&gParticleGame.mTimer, 60000 * gParticleGame.mKindSeconds[p->mKind] / 1000);
+            AddCappedAt5999(&gParticleGame.mEndTimer, 60000 * gParticleGame.mKindSeconds[p->mKind] / 1000);
             sprintf(buf, "+%d'", gParticleGame.mKindSeconds[p->mKind]);
             AddTextObjSlot(buf, 2, data_0201a61c, 30, p->mPos.x >> 8, p->mPos.y >> 8, 0, -128, 100, 1, 0);
             RemoveParticle(p, 0);
@@ -626,38 +626,38 @@ void SetupParticleGame(void) {
         gParticleGame.mParts[i].mPresent = 0;
     }
     gParticleGame.mCount = 0;
-    gParticleGame.mKindScores[0] = LookupParticleKindValue(0, 2);
-    gParticleGame.mKindSeconds[0] = LookupParticleKindValue(0, 3);
-    gParticleGame.mKindScores[1] = LookupParticleKindValue(0, 4);
-    gParticleGame.mKindSeconds[1] = LookupParticleKindValue(0, 5);
-    gParticleGame.mKindScores[2] = LookupParticleKindValue(0, 6);
-    gParticleGame.mKindSeconds[2] = LookupParticleKindValue(0, 7);
-    gParticleGame.mKindScores[3] = LookupParticleKindValue(0, 8);
-    gParticleGame.mKindSeconds[3] = LookupParticleKindValue(0, 9);
-    gParticleGame.mKindScores[4] = LookupParticleKindValue(0, 10);
-    gParticleGame.mKindSeconds[4] = LookupParticleKindValue(0, 11);
-    gParticleGame.mParticleLimit = LookupParticleGameValue(data_020b10fc.mTableRow, 2);
-    gParticleGame.mTimerStart = LookupParticleGameValue(data_020b10fc.mTableRow, 3) * 60000 / 1000;
-    gParticleGame.mScoreThreshold = LookupParticleGameValue(data_020b10fc.mTableRow, 4);
-    gParticleGame.mSpawnDelayMin = LookupParticleGameValue(data_020b10fc.mTableRow, 5) * 60 / 1000;
-    gParticleGame.mSpawnDelayLimit = LookupParticleGameValue(data_020b10fc.mTableRow, 6) * 60 / 1000;
-    gParticleGame.mWeights[0][0] = LookupParticleGameValue(data_020b10fc.mTableRow, 7);
-    gParticleGame.mWeights[1][0] = LookupParticleGameValue(data_020b10fc.mTableRow, 8);
-    gParticleGame.mWeights[2][0] = LookupParticleGameValue(data_020b10fc.mTableRow, 9);
-    gParticleGame.mWeights[0][1] = LookupParticleGameValue(data_020b10fc.mTableRow, 10);
-    gParticleGame.mWeights[1][1] = LookupParticleGameValue(data_020b10fc.mTableRow, 11);
-    gParticleGame.mWeights[2][1] = LookupParticleGameValue(data_020b10fc.mTableRow, 12);
-    gParticleGame.mWeights[0][2] = LookupParticleGameValue(data_020b10fc.mTableRow, 13);
-    gParticleGame.mWeights[1][2] = LookupParticleGameValue(data_020b10fc.mTableRow, 14);
-    gParticleGame.mWeights[2][2] = LookupParticleGameValue(data_020b10fc.mTableRow, 15);
-    gParticleGame.mWeights[0][3] = LookupParticleGameValue(data_020b10fc.mTableRow, 16);
-    gParticleGame.mWeights[1][3] = LookupParticleGameValue(data_020b10fc.mTableRow, 17);
-    gParticleGame.mWeights[2][3] = LookupParticleGameValue(data_020b10fc.mTableRow, 18);
-    gParticleGame.mWeights[0][4] = LookupParticleGameValue(data_020b10fc.mTableRow, 19);
-    gParticleGame.mWeights[1][4] = LookupParticleGameValue(data_020b10fc.mTableRow, 20);
-    gParticleGame.mWeights[2][4] = LookupParticleGameValue(data_020b10fc.mTableRow, 21);
+    gParticleGame.mKindScores[0] = GetParticleKindValue(0, 2);
+    gParticleGame.mKindSeconds[0] = GetParticleKindValue(0, 3);
+    gParticleGame.mKindScores[1] = GetParticleKindValue(0, 4);
+    gParticleGame.mKindSeconds[1] = GetParticleKindValue(0, 5);
+    gParticleGame.mKindScores[2] = GetParticleKindValue(0, 6);
+    gParticleGame.mKindSeconds[2] = GetParticleKindValue(0, 7);
+    gParticleGame.mKindScores[3] = GetParticleKindValue(0, 8);
+    gParticleGame.mKindSeconds[3] = GetParticleKindValue(0, 9);
+    gParticleGame.mKindScores[4] = GetParticleKindValue(0, 10);
+    gParticleGame.mKindSeconds[4] = GetParticleKindValue(0, 11);
+    gParticleGame.mParticleLimit = GetParticleGameValue(data_020b10fc.mTableRow, 2);
+    gParticleGame.mEndFrameCount = GetParticleGameValue(data_020b10fc.mTableRow, 3) * 60000 / 1000;
+    gParticleGame.mScoreThreshold = GetParticleGameValue(data_020b10fc.mTableRow, 4);
+    gParticleGame.mSpawnDelayMin = GetParticleGameValue(data_020b10fc.mTableRow, 5) * 60 / 1000;
+    gParticleGame.mSpawnDelayLimit = GetParticleGameValue(data_020b10fc.mTableRow, 6) * 60 / 1000;
+    gParticleGame.mWeights[0][0] = GetParticleGameValue(data_020b10fc.mTableRow, 7);
+    gParticleGame.mWeights[1][0] = GetParticleGameValue(data_020b10fc.mTableRow, 8);
+    gParticleGame.mWeights[2][0] = GetParticleGameValue(data_020b10fc.mTableRow, 9);
+    gParticleGame.mWeights[0][1] = GetParticleGameValue(data_020b10fc.mTableRow, 10);
+    gParticleGame.mWeights[1][1] = GetParticleGameValue(data_020b10fc.mTableRow, 11);
+    gParticleGame.mWeights[2][1] = GetParticleGameValue(data_020b10fc.mTableRow, 12);
+    gParticleGame.mWeights[0][2] = GetParticleGameValue(data_020b10fc.mTableRow, 13);
+    gParticleGame.mWeights[1][2] = GetParticleGameValue(data_020b10fc.mTableRow, 14);
+    gParticleGame.mWeights[2][2] = GetParticleGameValue(data_020b10fc.mTableRow, 15);
+    gParticleGame.mWeights[0][3] = GetParticleGameValue(data_020b10fc.mTableRow, 16);
+    gParticleGame.mWeights[1][3] = GetParticleGameValue(data_020b10fc.mTableRow, 17);
+    gParticleGame.mWeights[2][3] = GetParticleGameValue(data_020b10fc.mTableRow, 18);
+    gParticleGame.mWeights[0][4] = GetParticleGameValue(data_020b10fc.mTableRow, 19);
+    gParticleGame.mWeights[1][4] = GetParticleGameValue(data_020b10fc.mTableRow, 20);
+    gParticleGame.mWeights[2][4] = GetParticleGameValue(data_020b10fc.mTableRow, 21);
     gParticleGame.mUnk_0000 = 0;
-    gParticleGame.mTimer = gParticleGame.mTimerStart;
+    gParticleGame.mEndTimer = gParticleGame.mEndFrameCount;
     gParticleGame.mScore = 0;
     gParticleGame.mSpawnTimer = 180;
     StartModeSlide(1, 0);
@@ -665,7 +665,7 @@ void SetupParticleGame(void) {
 
 void DrawParticleGame(void) {
     func_0201168c(data_020b6ee0.mSelectedStageIndex, gParticleGame.mScore, gModeSelectState.mScoreThreshold,
-                  gParticleGame.mTimer, 2);
+                  gParticleGame.mEndTimer, 2);
     func_0200aa68(gParticleGame.mInfo.mKind + 0xd28, 256, 0, 0x1000, 0x1000, 0, 255, 256);
     func_0200aa68(gParticleGame.mInfo.mStageId + 0xd31, gParticleGame.mX >> 8, gParticleGame.mY >> 8, 0, 0x6000,
                   gParticleGame.mAngle, 255, 0);
@@ -676,14 +676,14 @@ void DrawParticleGame(void) {
 }
 
 void UpdateParticleGame(void) {
-    u8 state;
+    u8 slideState;
     func_020059cc(gParticleGame.mScore);
-    state = GetModeSlideState();
-    if (state != MODE_SLIDE_STATE_NONE) {
-        int result;
+    slideState = GetModeSlideState();
+    if (slideState != MODE_SLIDE_STATE_NONE) {
+        int busy;
         DrawParticleGame();
-        result = UpdateModeSlide(1);
-        if (state == MODE_SLIDE_STATE_END && result == 0) {
+        busy = UpdateModeSlide(1);
+        if (slideState == MODE_SLIDE_STATE_END && busy == 0) {
             StartResultScreen(GetScoreThresholdMet(), gParticleGame.mScore);
         }
         return;
@@ -789,7 +789,7 @@ void UpdateParticleGame(void) {
         gParticleGame.mAngle = angle;
     }
     UpdateParticles();
-    if (--gParticleGame.mTimer == 0) {
+    if (--gParticleGame.mEndTimer == 0) {
         StartModeSlide(0, gParticleGame.mScore >= gParticleGame.mScoreThreshold);
     }
     SpawnParticles();
@@ -800,6 +800,6 @@ void LeaveParticleGame(void) {
     func_020102f8();
 }
 
-int GetParticleGameScoreThreshold(u8 stage) {
-    return LookupParticleGameValue(stage, 4);
+int GetParticleGameScoreThreshold(u8 tableRow) {
+    return GetParticleGameValue(tableRow, 4);
 }

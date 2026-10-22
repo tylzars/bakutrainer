@@ -24,7 +24,7 @@ static const s32 sModeStates[5] = {14, 15, 16, 17, 4};
 static const s32 sModePrompts[5] = {41, 40, 42, 43, 44};
 static const s32 sModeButtonIds[5] = {0x301, 0x300, 0x302, 0x304, 0x303};
 
-u32 gPrevTimeLeft = 1800;
+u32 gPrevTimeRemaining = 1800;
 
 // Selects mode 'mode' and stores its score threshold for the selected stage's grade (row grade - 1 of the mode's
 // table; 0 for a mode outside 0..4) and its best score.
@@ -39,7 +39,7 @@ void SelectMode(int mode) {
     data_020b10fc.mMode = mode;
     switch (mode) {
         case 0:
-            gModeSelectState.mScoreThreshold = func_0200d6b0(tableRow);
+            gModeSelectState.mScoreThreshold = GetSceneScoreThreshold(tableRow);
             break;
         case 1:
             gModeSelectState.mScoreThreshold = GetParticleGameScoreThreshold(tableRow);
@@ -167,13 +167,13 @@ void AddCappedAt5999(u32 *value, u32 add) {
 
 // Stores the new time value; plays the countdown sound when it falls below one of the thresholds and returns 1 while
 // the value is nonzero, at most 600 and the clock low bits are at most 8.
-int UpdateTimeLeft(u32 value) {
-    u32 prev = gPrevTimeLeft;
+int UpdateTimeRemaining(u32 value) {
+    u32 prev = gPrevTimeRemaining;
     if ((prev >= 600 && value < 600) || (prev >= 300 && value < 300) || (prev >= 240 && value < 240) ||
         (prev >= 180 && value < 180) || (prev >= 120 && value < 120) || (prev >= 60 && value < 60)) {
         PlayWaveKeepAlive(361, 100, 0, 64, 0xffff, 0);
     }
-    gPrevTimeLeft = value;
+    gPrevTimeRemaining = value;
     if (value <= 600 && value != 0 && (gSystemState.mElapsedFrames & 0x1f) <= 8) {
         return 1;
     }
@@ -195,7 +195,7 @@ void StartModeSlide(int a, int b) {
     }
 }
 
-int UpdateModeSlide(int mode) {
+int UpdateModeSlide(int layer) {
     s32 v;
     switch (gModeSelectState.mSlideState) {
         case MODE_SLIDE_STATE_START:
@@ -219,7 +219,7 @@ int UpdateModeSlide(int mode) {
                     return 0;
                 }
             }
-            DrawSprite(data_020b1084.mLanguage + 0xe77, (gModeSelectState.mSlideX >> 8) + 128, 96, 10, mode);
+            DrawSprite(data_020b1084.mLanguage + 0xe77, (gModeSelectState.mSlideX >> 8) + 128, 96, 10, layer);
             return 1;
         case MODE_SLIDE_STATE_END: {
             int id = gModeSelectState.mScoreThresholdMet == 1 ? 0xec5 : 0xe7d;
@@ -235,7 +235,7 @@ int UpdateModeSlide(int mode) {
             } else {
                 return 0;
             }
-            DrawSprite(id + data_020b1084.mLanguage, (gModeSelectState.mSlideX >> 8) + 128, 96, 10, mode);
+            DrawSprite(id + data_020b1084.mLanguage, (gModeSelectState.mSlideX >> 8) + 128, 96, 10, layer);
             return 1;
         }
         default:

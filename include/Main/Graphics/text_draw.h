@@ -15,6 +15,8 @@ extern "C" {
 #define TEXT_SINGLE_LINE 0x80
 #define TEXT_ROTATE 0x100
 #define TEXT_ALT_DRAW 0x200
+// Measures and draws only the characters before gSystemState.mUnk_30c (spaces not counted); the character at that
+// position is not drawn.
 #define TEXT_LIMIT 0x400
 #define TEXT_BOUNDS 0x800
 #define TEXT_LINE_WINDOW 0x1000
@@ -33,16 +35,16 @@ typedef struct FontRange {
 u16 ReadTextChar(const u8 **text);
 void WriteTextChar(u8 **out, u32 code);
 u32 NormalizeSpace(u32 code);
-void DrawText(int x, int y, const void *font, const char *text, int align, int width, int height, int mode);
+void DrawText(int x, int y, const void *font, const char *text, int align, int width, int height, int layer);
 int DrawTextEx(int x, int y, const FontRange *const *fonts, u8 fontIndex, const u8 *text, u16 angle, u32 flags,
-               u32 width, int height, int mode);
-const u8 *func_02021dd8(u16 block, int id);
+               u32 width, int height, int layer);
+const u8 *func_02021dd8(u16 id, int index);
 const u8 *func_02021df4(u32 base, const u8 *entry);
 int GetFileValueType(u16 id, int index);
-const u8 *GetFileString(u16 block, int id);
+const u8 *GetFileString(u16 id, int index);
 int GetFileValue(u16 id, int index);
-void CopyFileString(int block, int id, u8 *dst, int flags, ...);
-int CountFileStringChars(u16 block, int id, int flags);
+void CopyFileString(int id, int index, u8 *dst, int flags, ...);
+int CountFileStringChars(u16 id, int index, int flags);
 void func_02021fa8(const char *fmt, ...);
 
 #ifdef __cplusplus

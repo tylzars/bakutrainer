@@ -19,7 +19,7 @@
 #include <nitro/os.h>
 
 void SetupMoveObj(MoveObj *o, int sprite, int model, const Vec2i *pos, int e, int f, int g) {
-    o->mActive = 1;
+    o->mPresent = 1;
     o->mX = pos->x << 8;
     o->mY = pos->y << 8;
     o->mRepeat = g;
@@ -73,13 +73,13 @@ void SetMoveObjTrail(MoveObj *o, u16 lo, u16 hi) {
 }
 
 void StopMoveObj(MoveObj *o) {
-    o->mActive = 0;
+    o->mPresent = 0;
     o->mSpeed = 0;
 }
 
 int UpdateMoveObj(MoveObj *o, const Vec2i *pos) {
     int result = 0;
-    if (o->mActive != 0) {
+    if (o->mPresent != 0) {
         int keep = 1;
         if (o->mFlags & 1) {
             UpdateSprite(o);
@@ -156,7 +156,7 @@ int UpdateMoveObj(MoveObj *o, const Vec2i *pos) {
             }
         }
         if (keep && o->mRepeat == 0) {
-            o->mActive = 0;
+            o->mPresent = 0;
         }
     }
     return result;
@@ -191,7 +191,7 @@ void DrawMoveObj(MoveObj *o) {
     int sy;
     int layer;
     int i;
-    if (o->mActive != 0) {
+    if (o->mPresent != 0) {
         if (o->mFlags & 1) {
             layer = o->mLayer;
             if (o->mSpeed == 0 || o->mUnk_2b4 != 0 || o->mX != o->mTargetX || o->mY != o->mTargetY) {

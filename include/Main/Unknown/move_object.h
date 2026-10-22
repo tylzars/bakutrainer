@@ -96,7 +96,7 @@ typedef struct MoveObj {
     Model mModel;
     u8 mFlags;
     u8 mUnk_27d[3];
-    s32 mActive;
+    s32 mPresent;
     s32 mRepeat;
     s32 mX;
     s32 mY;

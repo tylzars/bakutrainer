@@ -86,7 +86,7 @@ void StartScript(int index) {
     gScriptWork.mEofFlags = 0;
     gScriptWork.mTextIncomplete = 0;
     gScriptWork.mUnk_1c_2 = 0;
-    gScriptWork.mUnk_280.mPendingImageTargets[0] = gScriptWork.mUnk_280.mPendingImageTargets[1] = 0;
+    gScriptWork.mUnk_280.mPendingImageLayers[0] = gScriptWork.mUnk_280.mPendingImageLayers[1] = 0;
     gScriptWork.mUnk_280.mUnk_1c = 0;
     gScriptWork.mWaitTimer = 0;
     for (i = 0; i < 0x20; i++) {
@@ -513,8 +513,8 @@ void AddScriptSprite(u8 *text, int mode) {
     cmd->mUnk_1a = buf[3];
     cmd->mDelayTimer = buf[5];
     cmd->mUnk_18 = buf[6];
-    cmd->mAnimFramesLeft = buf[7];
-    cmd->mAnimFrameCount = cmd->mAnimFramesLeft;
+    cmd->mAnimFramesRemaining = buf[7];
+    cmd->mAnimFrameCount = cmd->mAnimFramesRemaining;
     cmd->mFramesPerAnimFrame = buf[8];
     cmd->mAnimFrameFrames = 0;
     cmd->mUnk_0c = buf[9] * 100;
@@ -763,19 +763,19 @@ void func_02029aac(u8 *text, int flag) {
     }
 }
 
-// Reads a value and a mode; odd modes store the value in mPendingImageIndexes[0] with the mode in
-// mPendingImageTargets[0], even modes store it in mPendingImageIndexes[1] and set mPendingImageTargets[1] to 2.
+// Reads a value and a mode; odd modes store the value in mPendingImageIndices[0] with the mode in
+// mPendingImageLayers[0], even modes store it in mPendingImageIndices[1] and set mPendingImageLayers[1] to 2.
 void ScriptCmdScreen(u8 *text) {
     s16 v[4];
     if (ClearAndEvaluate(v, text, 8) > 2) {
         OS_Terminate();
     }
     if (v[1] & 1) {
-        gScriptWork.mUnk_280.mPendingImageIndexes[0] = v[0];
-        gScriptWork.mUnk_280.mPendingImageTargets[0] = v[1];
+        gScriptWork.mUnk_280.mPendingImageIndices[0] = v[0];
+        gScriptWork.mUnk_280.mPendingImageLayers[0] = v[1];
     } else {
-        gScriptWork.mUnk_280.mPendingImageIndexes[1] = v[0];
-        gScriptWork.mUnk_280.mPendingImageTargets[1] = 2;
+        gScriptWork.mUnk_280.mPendingImageIndices[1] = v[0];
+        gScriptWork.mUnk_280.mPendingImageLayers[1] = 2;
     }
 }
 
@@ -1183,21 +1183,21 @@ void UpdateScript(int (*callback)(void)) {
         }
         gScriptWork.mSpritesBusy = 0;
         for (i = 0; i < 2; i++) {
-            if (gScriptWork.mUnk_280.mPendingImageTargets[i] != 0) {
-                u16 image = data_0204e20c[gScriptWork.mUnk_280.mPendingImageIndexes[i]];
-                SetFaded(gScriptWork.mUnk_280.mPendingImageTargets[i]);
-                LoadImage(image, gScriptWork.mUnk_280.mPendingImageTargets[i]);
-                if (gScriptWork.mUnk_280.mPendingImageTargets[i] == 1) {
+            if (gScriptWork.mUnk_280.mPendingImageLayers[i] != 0) {
+                u16 image = data_0204e20c[gScriptWork.mUnk_280.mPendingImageIndices[i]];
+                SetFaded(gScriptWork.mUnk_280.mPendingImageLayers[i]);
+                LoadImage(image, gScriptWork.mUnk_280.mPendingImageLayers[i]);
+                if (gScriptWork.mUnk_280.mPendingImageLayers[i] == 1) {
                     gScriptWork.mUnk_280.mUnk_1c = 0;
                     gScriptWork.mUnk_280.mUnk_2c = image;
                     flag = 1;
-                } else if (gScriptWork.mUnk_280.mPendingImageTargets[i] == 2) {
+                } else if (gScriptWork.mUnk_280.mPendingImageLayers[i] == 2) {
                     gScriptWork.mUnk_280.mUnk_2e = image;
-                } else if (gScriptWork.mUnk_280.mPendingImageTargets[i] == 3) {
+                } else if (gScriptWork.mUnk_280.mPendingImageLayers[i] == 3) {
                     flag = 1;
                     gScriptWork.mUnk_280.mUnk_2c = gScriptWork.mUnk_280.mUnk_2e = image;
                 }
-                gScriptWork.mUnk_280.mPendingImageTargets[i] = 0;
+                gScriptWork.mUnk_280.mPendingImageLayers[i] = 0;
             }
             if (flag == 1 && (gSystemState.mFlags & 0x80)) {
                 func_02024208();
@@ -1252,15 +1252,15 @@ void UpdateScript(int (*callback)(void)) {
                 if (cmd->mAnimFrameFrames == cmd->mFramesPerAnimFrame) {
                     cmd->mDrawId++;
                     cmd->mAnimFrameFrames = 0;
-                    cmd->mAnimFramesLeft--;
-                    if (cmd->mAnimFramesLeft == 0) {
+                    cmd->mAnimFramesRemaining--;
+                    if (cmd->mAnimFramesRemaining == 0) {
                         if (cmd->mUnk_21_1 == 0) {
                             cmd->mDrawId--;
                             cmd->mFramesPerAnimFrame = 0;
                         } else {
                             gScriptWork.mSpritesBusy = 0;
                             cmd->mDrawId -= cmd->mAnimFrameCount;
-                            cmd->mAnimFramesLeft = cmd->mAnimFrameCount;
+                            cmd->mAnimFramesRemaining = cmd->mAnimFrameCount;
                         }
                     }
                 }

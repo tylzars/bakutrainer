@@ -160,20 +160,20 @@ void func_0200bbd0(int a, int b, int c, int d, int e, int f, int g, const char *
 
 void func_0200bc50(int a, int b, int c, int d, int e, int f, int g, const char *h, const void *i, int j, int k, int l,
                    int m, int n, int o, int p) {
-    int mode = IsLcdSwapped() ? 2 : 1;
+    int layer = IsLcdSwapped() ? 2 : 1;
     int g2 = g;
     if (o == 0 && data_020b6ee0.mButtonsEnabled != 0 && p == 0) {
         g2 = g + (gTouchInput.mTrail.mTouchState.mButtonState == f + 0x40000000);
     }
     if (n == 0 && (p != 1 || gTouchInput.mTrail.mTouchState.mButtonState == f + 0x40000000)) {
-        func_0202de80(g2, a, b, e, -1, mode);
+        func_0202de80(g2, a, b, e, -1, layer);
     }
     if (h != 0) {
         const void *font = i;
         if (font == 0) {
             font = data_0201a6c6;
         }
-        DrawText(a, b, font, h, j, 200, 16, mode);
+        DrawText(a, b, font, h, j, 200, 16, layer);
     }
     if (m == 1) {
         if (c != 0) {
@@ -306,8 +306,8 @@ int MapRangeClamped(int a, int b, int c, int d, int e) {
     return (r < hi ? r : hi) < lo ? lo : (r < hi ? r : hi);
 }
 
-void DrawDecimal(int x, int y, int value, const void *font, int align, int mode) {
+void DrawDecimal(int x, int y, int value, const void *font, int align, int layer) {
     char buf[16];
     *FormatDecimal(value, buf) = 0;
-    DrawText(x, y, font, buf, align, 100, 10, mode);
+    DrawText(x, y, font, buf, align, 100, 10, layer);
 }

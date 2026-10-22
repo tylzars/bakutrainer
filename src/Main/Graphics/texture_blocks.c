@@ -134,22 +134,22 @@ void GetTexInfo(u32 index, TexInfo *out, u32 sub) {
 // Frees the run of VRAM units that starts at unit `index` of a layer's block heap: merges it with a free neighbour
 // on each side, links it into the free list, which is ordered by size, and returns the merged run's length in units.
 u16 FreeLayerBlock(u32 index, int layer) {
-    TextureLayer *half = &gTextureBlocks.mLayers[layer == 2];
-    Unk_PoolRange *n = half->mBlocks;
+    TextureLayer *textureLayer = &gTextureBlocks.mLayers[layer == 2];
+    Unk_PoolRange *n = textureLayer->mBlocks;
     u32 next;
     u32 prev;
     u32 size;
 
     n[index].mUnk_0 &= ~POOL_BLOCK_USED;
     next = index + n[index].mUnk_0;
-    if (next < half->mUnitCount && (n[next].mUnk_0 & POOL_BLOCK_USED) == 0) {
+    if (next < textureLayer->mUnitCount && (n[next].mUnk_0 & POOL_BLOCK_USED) == 0) {
         n[index].mUnk_0 += n[next].mUnk_0;
         n[index + n[index].mUnk_0].mUnk_6 = index;
         n[n[next].mNext].mPrev = n[next].mPrev;
         n[n[next].mPrev].mNext = n[next].mNext;
     }
     prev = n[index].mUnk_6;
-    if (prev < half->mUnitCount && (n[prev].mUnk_0 & POOL_BLOCK_USED) == 0) {
+    if (prev < textureLayer->mUnitCount && (n[prev].mUnk_0 & POOL_BLOCK_USED) == 0) {
         n[prev].mUnk_0 += n[index].mUnk_0;
         index = prev;
         n[index + n[index].mUnk_0].mUnk_6 = index;
@@ -158,7 +158,7 @@ u16 FreeLayerBlock(u32 index, int layer) {
     }
     size = n[index].mUnk_0;
     if (size < 4) {
-        prev = half->mUnitCount + 1;
+        prev = textureLayer->mUnitCount + 1;
         next = n[prev].mPrev;
         while (size > n[next].mUnk_0) {
             prev = next;
@@ -169,7 +169,7 @@ u16 FreeLayerBlock(u32 index, int layer) {
         n[prev].mPrev = index;
         n[next].mNext = index;
     } else {
-        u32 q = half->mUnitCount;
+        u32 q = textureLayer->mUnitCount;
         u32 p = n[q].mNext;
         while (size < n[p].mUnk_0) {
             q = p;
@@ -188,13 +188,13 @@ u16 FreeLayerBlock(u32 index, int layer) {
 // entry that has no path left and was marked removed (-2) becomes free again (-1). The key's own entry becomes
 // free if no path goes through it, removed otherwise.
 void RemoveLayerKey(int layer, u32 key) {
-    TextureLayer *half = &gTextureBlocks.mLayers[layer == 2];
+    TextureLayer *textureLayer = &gTextureBlocks.mLayers[layer == 2];
     unsigned long idx = key & 0x3ff; // unsigned long, not u32: the compiler's output needs it (register choice)
     u32 step = gHashSteps[(key >> 10) & 0x7f];
     TextureSlot *e;
 
     for (;;) {
-        e = &half->mSlots[idx];
+        e = &textureLayer->mSlots[idx];
         if (key == e->mKey) {
             if (e->mPathCount == 0) {
                 e->mKey = -1;
@@ -206,8 +206,8 @@ void RemoveLayerKey(int layer, u32 key) {
         if (e->mPathCount == 0) {
             OS_Terminate();
         }
-        half->mSlots[idx].mPathCount--;
-        e = &half->mSlots[idx];
+        textureLayer->mSlots[idx].mPathCount--;
+        e = &textureLayer->mSlots[idx];
         if (e->mPathCount == 0 && e->mKey == -2) {
             e->mKey = -1;
         }
@@ -219,20 +219,20 @@ void RemoveLayerKey(int layer, u32 key) {
 // both callers): drops its hash entry, frees its run of units and moves the entry to the head of the free chain
 // after the list's sentinel (entry 1). Returns the length FreeLayerBlock reports.
 u16 RemoveLeastRecentLayerCacheEntry(u32 index, int layer) {
-    TextureLayer *half = &gTextureBlocks.mLayers[layer == 2];
-    s32 key = half->mSlots[half->mNodes[index].mUnk_0].mKey;
+    TextureLayer *textureLayer = &gTextureBlocks.mLayers[layer == 2];
+    s32 key = textureLayer->mSlots[textureLayer->mNodes[index].mUnk_0].mKey;
     u16 size;
 
     if (key < 0) {
         OS_Terminate();
     }
-    half->mEntryCount--;
+    textureLayer->mEntryCount--;
     RemoveLayerKey(layer, key);
-    size = FreeLayerBlock(half->mNodes[index].mUnk_6, layer);
-    half->mNodes[1].mNext = half->mNodes[index].mNext;
-    half->mNodes[half->mNodes[index].mNext].mPrev = 1;
-    half->mNodes[index].mPrev = half->mNodes[1].mPrev;
-    half->mNodes[1].mPrev = index;
+    size = FreeLayerBlock(textureLayer->mNodes[index].mUnk_6, layer);
+    textureLayer->mNodes[1].mNext = textureLayer->mNodes[index].mNext;
+    textureLayer->mNodes[textureLayer->mNodes[index].mNext].mPrev = 1;
+    textureLayer->mNodes[index].mPrev = textureLayer->mNodes[1].mPrev;
+    textureLayer->mNodes[1].mPrev = index;
     return size;
 }
 
@@ -257,7 +257,7 @@ u16 FindOrLoadLayerBlock(u32 code, u32 key, u32 sub, u32 mode, u32 count, int la
     unsigned long entry; // unsigned long, not u32: the compiler's output needs it (stack slot order)
     s32 stored;
     u32 val;
-    TextureLayer *half = &gTextureBlocks.mLayers[layer == 2];
+    TextureLayer *textureLayer = &gTextureBlocks.mLayers[layer == 2];
     u32 step;
     u32 n;
     int home;
@@ -292,37 +292,37 @@ u16 FindOrLoadLayerBlock(u32 code, u32 key, u32 sub, u32 mode, u32 count, int la
     home = key & 0x3ff;
     pos = home;
     for (;;) {
-        stored = half->mSlots[pos].mKey;
+        stored = textureLayer->mSlots[pos].mKey;
         steps++;
         if (stored == key) {
             if (freePos != -1) {
                 n = pos;
                 while (n != freePos) {
                     n = (n - step) & 0x3ff;
-                    half->mSlots[n].mPathCount--;
-                    he = &half->mSlots[n];
+                    textureLayer->mSlots[n].mPathCount--;
+                    he = &textureLayer->mSlots[n];
                     if (he->mPathCount == 0 && he->mKey == -2) {
                         he->mKey = -1;
                     }
                 }
-                half->mSlots[freePos].mUnk_0[0] = half->mSlots[pos].mUnk_0[0];
-                half->mSlots[freePos].mUnk_0[1] = half->mSlots[pos].mUnk_0[1];
-                half->mSlots[freePos].mKey = half->mSlots[pos].mKey;
-                half->mSlots[freePos].mNodeIndex = half->mSlots[pos].mNodeIndex;
-                he = &half->mSlots[pos];
+                textureLayer->mSlots[freePos].mUnk_0[0] = textureLayer->mSlots[pos].mUnk_0[0];
+                textureLayer->mSlots[freePos].mUnk_0[1] = textureLayer->mSlots[pos].mUnk_0[1];
+                textureLayer->mSlots[freePos].mKey = textureLayer->mSlots[pos].mKey;
+                textureLayer->mSlots[freePos].mNodeIndex = textureLayer->mSlots[pos].mNodeIndex;
+                he = &textureLayer->mSlots[pos];
                 he->mKey = he->mPathCount == 0 ? -1 : -2;
                 pos = freePos;
             }
-            entry = half->mSlots[pos].mNodeIndex;
-            half->mNodes[entry].mUnk_0 = pos;
-            MoveIndexNodeToEnd((IndexNode *) half->mNodes, entry);
+            entry = textureLayer->mSlots[pos].mNodeIndex;
+            textureLayer->mNodes[entry].mUnk_0 = pos;
+            MoveIndexNodeToEnd((IndexNode *) textureLayer->mNodes, entry);
             if (loaded == 1) {
                 u32 addr = (layer == 1 ? 0x6400000 : 0x6600000) +
-                           ((half->mNodes[entry].mUnk_6 * (1 << half->mUnitShift)) << 5);
+                           ((textureLayer->mNodes[entry].mUnk_6 * (1 << textureLayer->mUnitShift)) << 5);
 
                 MIi_CpuCopy32(gTextureBlocks.mUnk_004, (void *) addr, GetSizeCodeBytes(code, mode));
-                half->mSlots[pos].mUnk_0[0] = 0x76543210;
-                half->mSlots[pos].mUnk_0[1] = 0xfedcba98;
+                textureLayer->mSlots[pos].mUnk_0[0] = 0x76543210;
+                textureLayer->mSlots[pos].mUnk_0[1] = 0xfedcba98;
             }
             if (mode > 1) {
                 OS_Terminate();
@@ -331,17 +331,17 @@ u16 FindOrLoadLayerBlock(u32 code, u32 key, u32 sub, u32 mode, u32 count, int la
                 u8 *cur;
                 u32 *words;
 
-                cur = &half->mUnk_115[half->mUnk_516 - count];
-                words = half->mSlots[pos].mUnk_0;
+                cur = &textureLayer->mUnk_115[textureLayer->mUnk_516 - count];
+                words = textureLayer->mSlots[pos].mUnk_0;
                 for (i = 0; i < count; i++) {
                     val = (words[(i * 4) >> 5] >> ((i * 4) & 0x1f)) & 0xf;
                     if (val != *cur++) {
                         u8 buf[16];
                         u32 addr = (layer == 1 ? 0x6400000 : 0x6600000) +
-                                   ((half->mNodes[entry].mUnk_6 * (1 << half->mUnitShift)) << 5);
+                                   ((textureLayer->mNodes[entry].mUnk_6 * (1 << textureLayer->mUnitShift)) << 5);
                         int size = GetSizeCodeBytes(code, mode);
 
-                        cur = &half->mUnk_115[half->mUnk_516 - count];
+                        cur = &textureLayer->mUnk_115[textureLayer->mUnk_516 - count];
                         for (i = 0; i < count; i++) {
                             u32 w = (i * 4) >> 5;
                             u32 sh = (i * 4) & 0x1f;
@@ -354,35 +354,35 @@ u16 FindOrLoadLayerBlock(u32 code, u32 key, u32 sub, u32 mode, u32 count, int la
                     }
                 }
             }
-            return half->mNodes[entry].mUnk_6;
+            return textureLayer->mNodes[entry].mUnk_6;
         }
         if (stored == -2 && freePos == -1) {
             freePos = pos;
         } else if (stored == -1 || freePos == pos) {
-            half->mEntryCount++;
-            entry = half->mNodes[1].mPrev;
-            half->mNodes[1].mPrev = half->mNodes[entry].mPrev;
-            half->mNodes[entry].mPrev = half->mNodes[0].mPrev;
-            half->mNodes[entry].mNext = 0;
-            half->mNodes[0].mPrev = entry;
-            half->mNodes[half->mNodes[entry].mPrev].mNext = entry;
-            half->mSlots[pos].mKey = key;
-            half->mSlots[pos].mNodeIndex = entry;
-            half->mNodes[entry].mUnk_0 = pos;
+            textureLayer->mEntryCount++;
+            entry = textureLayer->mNodes[1].mPrev;
+            textureLayer->mNodes[1].mPrev = textureLayer->mNodes[entry].mPrev;
+            textureLayer->mNodes[entry].mPrev = textureLayer->mNodes[0].mPrev;
+            textureLayer->mNodes[entry].mNext = 0;
+            textureLayer->mNodes[0].mPrev = entry;
+            textureLayer->mNodes[textureLayer->mNodes[entry].mPrev].mNext = entry;
+            textureLayer->mSlots[pos].mKey = key;
+            textureLayer->mSlots[pos].mNodeIndex = entry;
+            textureLayer->mNodes[entry].mUnk_0 = pos;
             n = pos;
             while (n != home) {
                 n = (n - step) & 0x3ff;
-                half->mSlots[n].mPathCount++;
+                textureLayer->mSlots[n].mPathCount++;
             }
             if (steps > 20) {
-                half->mUnk_57c = 1;
+                textureLayer->mUnk_57c = 1;
             }
             if (mode > 1) {
                 OS_Terminate();
             }
             if (mode == 0) {
-                vals = &half->mUnk_115[half->mUnk_516 - count];
-                map = half->mSlots[pos].mUnk_0;
+                vals = &textureLayer->mUnk_115[textureLayer->mUnk_516 - count];
+                map = textureLayer->mSlots[pos].mUnk_0;
                 for (k = 0; k < count; k++) {
                     u32 w = (k * 4) >> 5;
                     u32 sh = (k * 4) & 0x1f;
@@ -396,24 +396,24 @@ u16 FindOrLoadLayerBlock(u32 code, u32 key, u32 sub, u32 mode, u32 count, int la
     }
 
     n = data_02050978[code] << (mode == 0);
-    n = ((n - 1) >> half->mUnitShift) + 1;
-    heap = half->mBlocks;
+    n = ((n - 1) >> textureLayer->mUnitShift) + 1;
+    heap = textureLayer->mBlocks;
     for (;;) {
         blk = -1;
-        next = heap[half->mUnitCount].mNext;
+        next = heap[textureLayer->mUnitCount].mNext;
         while (n <= heap[next].mUnk_0) {
             blk = next;
             next = heap[next].mNext;
         }
-        if (half->mEntryCount > 0x2fe) {
-            RemoveLeastRecentLayerCacheEntry(half->mNodes[1].mNext, layer);
+        if (textureLayer->mEntryCount > 0x2fe) {
+            RemoveLeastRecentLayerCacheEntry(textureLayer->mNodes[1].mNext, layer);
         }
         if (blk != -1) {
             break;
         }
         i = 1;
         do {
-            i = half->mNodes[i].mNext;
+            i = textureLayer->mNodes[i].mNext;
         } while (RemoveLeastRecentLayerCacheEntry(i, layer) < n);
     }
     {
@@ -422,16 +422,17 @@ u16 FindOrLoadLayerBlock(u32 code, u32 key, u32 sub, u32 mode, u32 count, int la
         heap[blk].mUnk_0 = n + POOL_BLOCK_USED;
         rest -= n;
         if (mode == 0) {
-            half->mUnk_014[half->mUnk_114] = half->mUnk_516 - count;
+            textureLayer->mUnk_014[textureLayer->mUnk_114] = textureLayer->mUnk_516 - count;
             QueueTransferEx(gTextureBlocks.mBlockFile, key,
-                            (layer == 1 ? 0x6400000 : 0x6600000) + ((blk * (1 << half->mUnitShift)) << 5),
-                            (n * (1 << half->mUnitShift)) << 5, 0, 0, (half->mUnk_114++ << 1) | (layer == 2));
+                            (layer == 1 ? 0x6400000 : 0x6600000) + ((blk * (1 << textureLayer->mUnitShift)) << 5),
+                            (n * (1 << textureLayer->mUnitShift)) << 5, 0, 0,
+                            (textureLayer->mUnk_114++ << 1) | (layer == 2));
         } else {
             QueueTransfer(gTextureBlocks.mBlockFile, key,
-                          (layer == 1 ? 0x6400000 : 0x6600000) + ((blk * (1 << half->mUnitShift)) << 5),
-                          (n * (1 << half->mUnitShift)) << 5);
+                          (layer == 1 ? 0x6400000 : 0x6600000) + ((blk * (1 << textureLayer->mUnitShift)) << 5),
+                          (n * (1 << textureLayer->mUnitShift)) << 5);
         }
-        half->mNodes[entry].mUnk_6 = blk;
+        textureLayer->mNodes[entry].mUnk_6 = blk;
         node = &heap[blk];
         before = node->mPrev;
         heap[node->mNext].mPrev = before;
@@ -460,76 +461,76 @@ u16 FindOrLoadLayerBlock(u32 code, u32 key, u32 sub, u32 mode, u32 count, int la
 // a chain table (mUnk_57b == 1), that table's links. Also clears the long-search flag and
 // gSystemState.mUnk_250.mUnk_28[0].
 void ResetTextureLayer(int layer) {
-    TextureLayer *half = &gTextureBlocks.mLayers[layer == 2];
+    TextureLayer *textureLayer = &gTextureBlocks.mLayers[layer == 2];
     int i;
     Unk_PoolRange *n;
     u32 m;
 
     ResetOam(layer);
-    half->mNodes[0].mUnk_0 = 0x55aa;
-    half->mNodes[0].mUnk_6 = 0x55aa;
-    half->mNodes[1].mUnk_0 = 0x55aa;
-    half->mNodes[1].mUnk_6 = 0x55aa;
-    half->mNodes[0].mPrev = 1;
-    half->mNodes[1].mNext = 0;
-    half->mNodes[1].mPrev = 2;
-    half->mEntryCount = 0;
-    for (i = half->mNodes[1].mPrev; i < 0x302; i++) {
-        half->mNodes[i].mPrev = i + 1;
-        half->mNodes[i].mUnk_0 = 0xffff;
+    textureLayer->mNodes[0].mUnk_0 = 0x55aa;
+    textureLayer->mNodes[0].mUnk_6 = 0x55aa;
+    textureLayer->mNodes[1].mUnk_0 = 0x55aa;
+    textureLayer->mNodes[1].mUnk_6 = 0x55aa;
+    textureLayer->mNodes[0].mPrev = 1;
+    textureLayer->mNodes[1].mNext = 0;
+    textureLayer->mNodes[1].mPrev = 2;
+    textureLayer->mEntryCount = 0;
+    for (i = textureLayer->mNodes[1].mPrev; i < 0x302; i++) {
+        textureLayer->mNodes[i].mPrev = i + 1;
+        textureLayer->mNodes[i].mUnk_0 = 0xffff;
     }
     for (i = 0; i < 0x400; i++) {
-        half->mSlots[i].mKey = -1;
-        half->mSlots[i].mPathCount = 0;
+        textureLayer->mSlots[i].mKey = -1;
+        textureLayer->mSlots[i].mPathCount = 0;
     }
     if (gSystemState.mFlags & layer) {
-        Free(&half->mBlocks);
+        Free(&textureLayer->mBlocks);
     }
-    half->mBlocks = Alloc((half->mUnitCount + 2) << 3);
-    m = half->mUnitCount;
-    n = half->mBlocks;
+    textureLayer->mBlocks = Alloc((textureLayer->mUnitCount + 2) << 3);
+    m = textureLayer->mUnitCount;
+    n = textureLayer->mBlocks;
     n[0].mUnk_0 = m;
-    half->mBlocks[0].mUnk_6 = 0xffff;
-    half->mBlocks[0].mPrev = half->mUnitCount;
-    half->mBlocks[0].mNext = half->mUnitCount + 1;
-    half->mBlocks[half->mUnitCount].mUnk_0 = 0xffff;
-    half->mBlocks[half->mUnitCount].mNext = 0;
-    half->mBlocks[half->mUnitCount].mPrev = 0xffff;
-    half->mBlocks[half->mUnitCount + 1].mUnk_0 = 0;
-    half->mBlocks[half->mUnitCount + 1].mNext = 0xffff;
-    half->mBlocks[half->mUnitCount + 1].mPrev = 0;
+    textureLayer->mBlocks[0].mUnk_6 = 0xffff;
+    textureLayer->mBlocks[0].mPrev = textureLayer->mUnitCount;
+    textureLayer->mBlocks[0].mNext = textureLayer->mUnitCount + 1;
+    textureLayer->mBlocks[textureLayer->mUnitCount].mUnk_0 = 0xffff;
+    textureLayer->mBlocks[textureLayer->mUnitCount].mNext = 0;
+    textureLayer->mBlocks[textureLayer->mUnitCount].mPrev = 0xffff;
+    textureLayer->mBlocks[textureLayer->mUnitCount + 1].mUnk_0 = 0;
+    textureLayer->mBlocks[textureLayer->mUnitCount + 1].mNext = 0xffff;
+    textureLayer->mBlocks[textureLayer->mUnitCount + 1].mPrev = 0;
     for (i = 0; i < 0x10; i++) {
-        half->mUnk_534[i].mKey = 0xffff;
-        half->mUnk_534[i].mPaletteIndex = i;
+        textureLayer->mUnk_534[i].mKey = 0xffff;
+        textureLayer->mUnk_534[i].mPaletteIndex = i;
     }
-    half->mUnk_114 = 1;
-    half->mUnk_516 = 1;
+    textureLayer->mUnk_114 = 1;
+    textureLayer->mUnk_516 = 1;
     gSystemState.mUnk_250.mUnk_28[0] = 0;
-    half->mUnk_57c = 0;
-    if (half->mUnk_57b == 1) {
+    textureLayer->mUnk_57c = 0;
+    if (textureLayer->mUnk_57b == 1) {
         for (i = 0; i < 0x100; i++) {
-            half->mUnk_518[i].mKey = 0xfffe;
-            half->mUnk_518[i].mUnk_6 = i;
-            half->mUnk_518[i].mChainPrev = 0xff;
-            half->mUnk_518[i].mChainNext = 0xff;
-            half->mUnk_518[i].mPrev = i - 1;
-            half->mUnk_518[i].mNext = i + 1;
+            textureLayer->mUnk_518[i].mKey = 0xfffe;
+            textureLayer->mUnk_518[i].mUnk_6 = i;
+            textureLayer->mUnk_518[i].mChainPrev = 0xff;
+            textureLayer->mUnk_518[i].mChainNext = 0xff;
+            textureLayer->mUnk_518[i].mPrev = i - 1;
+            textureLayer->mUnk_518[i].mNext = i + 1;
         }
         for (i = 0; i < 0x10; i++) {
-            half->mUnk_51c[i] = 0x10;
+            textureLayer->mUnk_51c[i] = 0x10;
         }
-        half->mUnk_51c[15] = 0xf;
+        textureLayer->mUnk_51c[15] = 0xf;
     }
 }
 
-// Sets up a layer: checks the engine number `e` (1 = main, 2 = sub) and the mode `d` (low 6 bits; bit 7 selects
+// Sets up a layer: checks the layer `e` (1 = main engine, 2 = sub engine) and the mode `d` (low 6 bits; bit 7 selects
 // the chain tables), programs the engine's display control register and VRAM banks, allocates the layer's tables
 // unless the layer is already set up, reads the header of packed file `b` and loads the block table from file `a`
 // unless files `b`/`c` are already loaded ("PACK" files keep their offsets in memory, "EZ10" files are read on
 // demand), then resets the layer.
 void SetupTextureLayer(int a, int b, int c, u32 d, int e) {
     u32 sub = d >> 7;
-    TextureLayer *half = &gTextureBlocks.mLayers[e == 2];
+    TextureLayer *textureLayer = &gTextureBlocks.mLayers[e == 2];
     u32 mask = e == 1 ? 1 : 2;
     vu32 *reg = e == 1 ? (vu32 *) 0x4000000 : (vu32 *) 0x4001000;
     int size;
@@ -547,21 +548,21 @@ void SetupTextureLayer(int a, int b, int c, u32 d, int e) {
         OS_Terminate();
     }
     gSystemState.mFlags &= ~0xc0000;
-    half->mUnitCount = (e == 2 && d == 0) ? 0x200 : 0x400;
+    textureLayer->mUnitCount = (e == 2 && d == 0) ? 0x200 : 0x400;
     if (e & 1) {
         v = *(vu32 *) 0x4000000;
         v = (v & 0x7f1fefcf) | (0x1030 | (sub << 31));
         *(vu32 *) 0x4000000 = v;
-        half->mUnk_57b = sub;
+        textureLayer->mUnk_57b = sub;
     }
     if (e & 2) {
         v = *(vu32 *) 0x4001000;
         v = (v & 0x7f3fefef) | (0x1010 | (sub << 31));
         *(vu32 *) 0x4001000 = v;
-        half->mUnk_57b = sub;
+        textureLayer->mUnk_57b = sub;
     }
     if (!(gSystemState.mFlags & mask)) {
-        half->mUnitShift = d;
+        textureLayer->mUnitShift = d;
         size = 0x20 << d;
         v = *reg;
         v = (v & ~0x300000) | (d << 20);
@@ -569,22 +570,22 @@ void SetupTextureLayer(int a, int b, int c, u32 d, int e) {
         if (sub == 1) {
             ReallocVramBanks(e == 1 ? 5 : 9, 0x10, -1);
         }
-        if (half->mUnitCount < 0x400) {
+        if (textureLayer->mUnitCount < 0x400) {
             size >>= 1;
         }
         ReallocVramBanks(e == 1 ? 3 : 7, size, -1);
-        Free(half);
-        Free(&half->mSortKeys);
-        Free(&half->mMats);
-        Free(&half->mSlots);
-        Free(&half->mNodes);
-        half->mOam = Alloc(0x400);
-        half->mSortKeys = Alloc(0x80);
-        half->mOamCount = 0;
-        half->mMats = Alloc(0x100);
-        half->mMatCount = 0;
-        half->mSlots = Alloc(0x4000);
-        half->mNodes = Alloc(0x1810);
+        Free(textureLayer);
+        Free(&textureLayer->mSortKeys);
+        Free(&textureLayer->mMats);
+        Free(&textureLayer->mSlots);
+        Free(&textureLayer->mNodes);
+        textureLayer->mOam = Alloc(0x400);
+        textureLayer->mSortKeys = Alloc(0x80);
+        textureLayer->mOamCount = 0;
+        textureLayer->mMats = Alloc(0x100);
+        textureLayer->mMatCount = 0;
+        textureLayer->mSlots = Alloc(0x4000);
+        textureLayer->mNodes = Alloc(0x1810);
     }
     if (!(gTextureBlocks.mBlockFile == b && gTextureBlocks.mPaletteFile == c && gTextureBlocks.mBlockTable != 0)) {
         if (!(gTextureBlocks.mBlockFile == b && gTextureBlocks.mPaletteFile == c)) {
@@ -614,12 +615,12 @@ void SetupTextureLayer(int a, int b, int c, u32 d, int e) {
         gTextureBlocks.mBlockFile = b;
         gTextureBlocks.mBlockCount = (gTextureBlocks.mBlockTable[4] - 0x10) >> 2;
     }
-    Free(&half->mUnk_52c);
-    Free(&half->mUnk_518);
+    Free(&textureLayer->mUnk_52c);
+    Free(&textureLayer->mUnk_518);
     if (sub == 1) {
-        half->mUnk_518 = Alloc(0x800);
-        half->mUnk_52c = Alloc(gTextureBlocks.mPaletteCount + 0x200);
-        memset(half->mUnk_52c, 0xff, gTextureBlocks.mPaletteCount + 0x200);
+        textureLayer->mUnk_518 = Alloc(0x800);
+        textureLayer->mUnk_52c = Alloc(gTextureBlocks.mPaletteCount + 0x200);
+        memset(textureLayer->mUnk_52c, 0xff, gTextureBlocks.mPaletteCount + 0x200);
     }
     gSystemState.mFlags |= mask;
     ResetTextureLayer(e);
@@ -694,21 +695,21 @@ void func_0202c2f0(void *dst, const void *src, u32 w, u32 h, BOOL mode) {
 }
 
 // Expands the tiles of `src` (`w` tiles wide, 4 or 8 bits per pixel by the entry's byte 13) into 16-bit colours
-// at the entry's destination: every non-zero pixel is looked up in the palette memory of the engine the
-// destination belongs to and written with bit 15 set; the rows of the destination are GetLayerWidth(engine)
+// at the entry's destination: every non-zero pixel is looked up in the palette memory of the layer the
+// destination belongs to and written with bit 15 set; the rows of the destination are GetLayerWidth(layer)
 // halfwords apart. Sets the entry's palette byte to 0xff. In the 8-bit branch the test uses the low four bits of
 // the pixel but the palette index is the whole byte.
 void func_0202c3e0(Transfer *entry, const void *src, u32 w) {
     u32 dst = entry->mDst;
     u32 size = entry->mSize;
-    int engine = (dst >> 20) == 0x60 ? 1 : 2;
-    int stride = GetLayerWidth(engine);
+    int layer = (dst >> 20) == 0x60 ? 1 : 2;
+    int stride = GetLayerWidth(layer);
     const u32 *s = src;
     u32 j;
     int k;
 
     if (entry->mUnk_13 == 0) {
-        const u16 *pal = (const u16 *) ((engine == 1 ? 0x5000200 : 0x5000600) + (entry->mUnk_12 >> 4) * 32);
+        const u16 *pal = (const u16 *) ((layer == 1 ? 0x5000200 : 0x5000600) + (entry->mUnk_12 >> 4) * 32);
         if (size != 0) {
             do {
                 u32 row = dst;
@@ -727,7 +728,7 @@ void func_0202c3e0(Transfer *entry, const void *src, u32 w) {
             } while (size != 0);
         }
     } else {
-        const u16 *pal = (const u16 *) (engine == 1 ? 0x5000200 : 0x5000600);
+        const u16 *pal = (const u16 *) (layer == 1 ? 0x5000200 : 0x5000600);
         if (size != 0) {
             do {
                 u32 row = dst;
@@ -751,28 +752,28 @@ void func_0202c3e0(Transfer *entry, const void *src, u32 w) {
 
 // Moves entry `i` of a layer's chain table to the end of the list threaded through mPrev and mNext; entry 255 is the
 // list's anchor.
-void MoveChainEntryToListEnd(u32 i, TextureLayer *half) {
-    half->mUnk_518[half->mUnk_518[i].mPrev].mNext = half->mUnk_518[i].mNext;
-    half->mUnk_518[half->mUnk_518[i].mNext].mPrev = half->mUnk_518[i].mPrev;
-    half->mUnk_518[i].mPrev = half->mUnk_518[255].mPrev;
-    half->mUnk_518[i].mNext = 0xff;
-    half->mUnk_518[255].mPrev = (u8) i;
-    half->mUnk_518[half->mUnk_518[i].mPrev].mNext = (u8) i;
+void MoveChainEntryToListEnd(u32 i, TextureLayer *textureLayer) {
+    textureLayer->mUnk_518[textureLayer->mUnk_518[i].mPrev].mNext = textureLayer->mUnk_518[i].mNext;
+    textureLayer->mUnk_518[textureLayer->mUnk_518[i].mNext].mPrev = textureLayer->mUnk_518[i].mPrev;
+    textureLayer->mUnk_518[i].mPrev = textureLayer->mUnk_518[255].mPrev;
+    textureLayer->mUnk_518[i].mNext = 0xff;
+    textureLayer->mUnk_518[255].mPrev = (u8) i;
+    textureLayer->mUnk_518[textureLayer->mUnk_518[i].mPrev].mNext = (u8) i;
 }
 
 // Looks for the entry of block `key` whose slot (high nibble of byte 6) is `val`: the chain starts at
-// half->mUnk_52c[key] and continues through each entry's mChainNext. Returns 0xff when there is none.
-u32 FindChainEntry(u32 key, u32 val, TextureLayer *half) {
-    u32 n = half->mUnk_52c[key];
+// textureLayer->mUnk_52c[key] and continues through each entry's mChainNext. Returns 0xff when there is none.
+u32 FindChainEntry(u32 key, u32 val, TextureLayer *textureLayer) {
+    u32 n = textureLayer->mUnk_52c[key];
 
     if (n == 0xff) {
         return 0xff;
     }
     do {
-        if (val == half->mUnk_518[n].mUnk_6 >> 4) {
+        if (val == textureLayer->mUnk_518[n].mUnk_6 >> 4) {
             return n;
         }
-        n = half->mUnk_518[n].mChainNext;
+        n = textureLayer->mUnk_518[n].mChainNext;
     } while (n != 0xff);
     return 0xff;
 }
@@ -780,43 +781,44 @@ u32 FindChainEntry(u32 key, u32 val, TextureLayer *half) {
 // Takes the oldest entry of slot `val` from the list (MoveChainEntryToListEnd), loads block `key` into the 32 bytes
 // that entry names (from the file when `key` is below the file's block count, otherwise from the preloaded block at
 // gTextureBlocks.mUnk_008 + index * 32), chains the entry at the end of key `key`'s chain and returns its number.
-u32 func_0202c5fc(u32 index, u32 key, u32 val, TextureLayer *half) {
-    u32 n = half->mUnk_518[255].mNext;
+u32 func_0202c5fc(u32 index, u32 key, u32 val, TextureLayer *textureLayer) {
+    u32 n = textureLayer->mUnk_518[255].mNext;
     u32 sel;
     PaletteChainEntry *t;
     u32 prev;
     u32 next;
 
-    while (val != half->mUnk_518[n].mUnk_6 >> 4) {
-        n = half->mUnk_518[n].mNext;
+    while (val != textureLayer->mUnk_518[n].mUnk_6 >> 4) {
+        n = textureLayer->mUnk_518[n].mNext;
     }
-    half->mUnk_51c[val]--;
-    MoveChainEntryToListEnd(n, half);
-    sel = (&gTextureBlocks.mLayers[1] == half) ? 9 : 5;
+    textureLayer->mUnk_51c[val]--;
+    MoveChainEntryToListEnd(n, textureLayer);
+    sel = (&gTextureBlocks.mLayers[1] == textureLayer) ? 9 : 5;
     if (key < gTextureBlocks.mPaletteCount) {
-        QueueTransfer(gTextureBlocks.mPaletteFile, key << 5, (half->mUnk_518[n].mUnk_6 << 5) + (sel << 28), 0x20);
-    } else {
-        QueueTransfer(0, (u32) (gTextureBlocks.mUnk_008 + (index << 5)), (half->mUnk_518[n].mUnk_6 << 5) + (sel << 28),
+        QueueTransfer(gTextureBlocks.mPaletteFile, key << 5, (textureLayer->mUnk_518[n].mUnk_6 << 5) + (sel << 28),
                       0x20);
-    }
-    prev = half->mUnk_52c[key];
-    if (prev == 0xff) {
-        half->mUnk_52c[key] = n;
-        half->mUnk_518[n].mKey = key;
-        half->mUnk_518[n].mChainPrev = 0xff;
-        half->mUnk_518[n].mChainNext = 0xff;
     } else {
-        t = half->mUnk_518;
+        QueueTransfer(0, (u32) (gTextureBlocks.mUnk_008 + (index << 5)),
+                      (textureLayer->mUnk_518[n].mUnk_6 << 5) + (sel << 28), 0x20);
+    }
+    prev = textureLayer->mUnk_52c[key];
+    if (prev == 0xff) {
+        textureLayer->mUnk_52c[key] = n;
+        textureLayer->mUnk_518[n].mKey = key;
+        textureLayer->mUnk_518[n].mChainPrev = 0xff;
+        textureLayer->mUnk_518[n].mChainNext = 0xff;
+    } else {
+        t = textureLayer->mUnk_518;
         next = t[prev].mChainNext;
         while (next != 0xff) {
             prev = next;
             next = t[next].mChainNext;
         }
         t[prev].mChainNext = n;
-        half->mUnk_518[n].mChainPrev = prev;
-        half->mUnk_518[n].mKey = 0xffff;
+        textureLayer->mUnk_518[n].mChainPrev = prev;
+        textureLayer->mUnk_518[n].mKey = 0xffff;
     }
-    return half->mUnk_518[n].mUnk_6;
+    return textureLayer->mUnk_518[n].mUnk_6;
 }
 
 // Makes the `n` consecutive blocks starting at keys[0] (or the `n` keys listed there when keys[0] is below the
@@ -824,8 +826,8 @@ u32 func_0202c5fc(u32 index, u32 key, u32 val, TextureLayer *half) {
 // the slot that needs the fewest loads and has room, evicting the oldest entries until one has. Each key is then
 // looked up or loaded (FindChainEntry, func_0202c5fc) and its entry's low nibble appended to the layer's index list
 // (mUnk_115, count in mUnk_516). Returns the slot. `a` is not used.
-s32 func_0202c778(u16 *keys, int a, u32 n, int engine) {
-    TextureLayer *half = &gTextureBlocks.mLayers[engine == 2];
+s32 func_0202c778(u16 *keys, int a, u32 n, int layer) {
+    TextureLayer *textureLayer = &gTextureBlocks.mLayers[layer == 2];
     u32 node2;
     u8 count[16];
     int min;
@@ -848,11 +850,11 @@ s32 func_0202c778(u16 *keys, int a, u32 n, int engine) {
     }
     for (i = 0; i < n; i++) {
         key = list[i];
-        node = half->mUnk_52c[key];
+        node = textureLayer->mUnk_52c[key];
         avail = 0;
         while (node != 0xff) {
-            avail |= 1 << (half->mUnk_518[node].mUnk_6 >> 4);
-            node = half->mUnk_518[node].mChainNext;
+            avail |= 1 << (textureLayer->mUnk_518[node].mUnk_6 >> 4);
+            node = textureLayer->mUnk_518[node].mChainNext;
         }
         mask &= avail;
     }
@@ -861,10 +863,10 @@ s32 func_0202c778(u16 *keys, int a, u32 n, int engine) {
     } else {
         MI_CpuClear32(count, 16);
         for (i = 0; i < n; i++) {
-            node = half->mUnk_52c[list[i]];
+            node = textureLayer->mUnk_52c[list[i]];
             while (node != 0xff) {
-                count[half->mUnk_518[node].mUnk_6 >> 4]++;
-                node = half->mUnk_518[node].mChainNext;
+                count[textureLayer->mUnk_518[node].mUnk_6 >> 4]++;
+                node = textureLayer->mUnk_518[node].mChainNext;
             }
         }
         for (;;) {
@@ -872,7 +874,7 @@ s32 func_0202c778(u16 *keys, int a, u32 n, int engine) {
             min = 32;
             for (j = 0; j < 16; j++) {
                 int need = n - count[j];
-                if (need <= half->mUnk_51c[j]) {
+                if (need <= textureLayer->mUnk_51c[j]) {
                     if (need < min) {
                         min = need;
                         slot = j;
@@ -882,30 +884,30 @@ s32 func_0202c778(u16 *keys, int a, u32 n, int engine) {
             if (slot != -1) {
                 break;
             }
-            node = half->mUnk_518[255].mNext;
-            while (half->mUnk_518[node].mKey == 0xfffe) {
-                node = half->mUnk_518[node].mNext;
+            node = textureLayer->mUnk_518[255].mNext;
+            while (textureLayer->mUnk_518[node].mKey == 0xfffe) {
+                node = textureLayer->mUnk_518[node].mNext;
             }
-            if (half->mUnk_518[node].mKey != 0xffff) {
-                half->mUnk_52c[half->mUnk_518[node].mKey] = half->mUnk_518[node].mChainNext;
+            if (textureLayer->mUnk_518[node].mKey != 0xffff) {
+                textureLayer->mUnk_52c[textureLayer->mUnk_518[node].mKey] = textureLayer->mUnk_518[node].mChainNext;
             }
-            half->mUnk_518[node].mChainPrev = 0xff;
-            half->mUnk_518[node].mChainNext = 0xff;
-            half->mUnk_518[node].mKey = 0xfffe;
-            half->mUnk_51c[half->mUnk_518[node].mUnk_6 >> 4]++;
+            textureLayer->mUnk_518[node].mChainPrev = 0xff;
+            textureLayer->mUnk_518[node].mChainNext = 0xff;
+            textureLayer->mUnk_518[node].mKey = 0xfffe;
+            textureLayer->mUnk_51c[textureLayer->mUnk_518[node].mUnk_6 >> 4]++;
         }
     }
     for (i = 0; i < n; i++) {
-        node2 = FindChainEntry(list[i], slot, half);
+        node2 = FindChainEntry(list[i], slot, textureLayer);
         if (node2 == 0xff) {
-            node2 = func_0202c5fc(i, list[i], slot, half);
+            node2 = func_0202c5fc(i, list[i], slot, textureLayer);
         }
-        if (half->mUnk_516 >= 0x400) {
+        if (textureLayer->mUnk_516 >= 0x400) {
             OS_Terminate();
         }
-        idx = half->mUnk_516;
-        half->mUnk_516++;
-        half->mUnk_115[idx] = half->mUnk_518[node2].mUnk_6 & 0xf;
+        idx = textureLayer->mUnk_516;
+        textureLayer->mUnk_516++;
+        textureLayer->mUnk_115[idx] = textureLayer->mUnk_518[node2].mUnk_6 & 0xf;
     }
     return slot;
 }
@@ -931,15 +933,15 @@ typedef struct Mat4 {
 // the preloaded block count comes from the list at ids, which advances; any other key is the first key plus its
 // position and is read from the block data) it finds or loads each palette and returns the last slot. With flag
 // 0 the slots are also appended to the layer's record, and a record that repeats the run before it is removed again.
-s32 func_0202ca80(u16 *ids, int flag, u32 count, int mode) {
-    TextureLayer *half = &gTextureBlocks.mLayers[mode == 2];
-    int base = half->mUnk_516;
+s32 func_0202ca80(u16 *ids, int flag, u32 count, int layer) {
+    TextureLayer *textureLayer = &gTextureBlocks.mLayers[layer == 2];
+    int base = textureLayer->mUnk_516;
     int s;
     u32 i;
     s32 ret;
 
-    if (flag == 0 && half->mUnk_57b == 1) {
-        ret = func_0202c778(ids, flag, count, mode);
+    if (flag == 0 && textureLayer->mUnk_57b == 1) {
+        ret = func_0202c778(ids, flag, count, layer);
     } else {
         for (i = 0; i < count; i++) {
             u32 key;
@@ -953,7 +955,7 @@ s32 func_0202ca80(u16 *ids, int flag, u32 count, int mode) {
             }
             miss = 1;
             for (s = 0; s < 16; s++) {
-                u32 k = half->mUnk_534[s].mKey;
+                u32 k = textureLayer->mUnk_534[s].mKey;
                 if (key == k) {
                     miss = 0;
                     break;
@@ -968,39 +970,39 @@ s32 func_0202ca80(u16 *ids, int flag, u32 count, int mode) {
                 if (s >= 15) {
                     s = 15;
                 }
-                keep = half->mUnk_534[s].mPaletteIndex & 0xff;
-                for (p = (u32 *) &half->mUnk_534[s]; s > 0; s--) {
+                keep = textureLayer->mUnk_534[s].mPaletteIndex & 0xff;
+                for (p = (u32 *) &textureLayer->mUnk_534[s]; s > 0; s--) {
                     *p = p[-1];
                     p--;
                 }
-                half->mUnk_534[0].mPaletteIndex = keep;
+                textureLayer->mUnk_534[0].mPaletteIndex = keep;
                 s = 0;
             }
-            half->mUnk_534[s].mKey = key;
+            textureLayer->mUnk_534[s].mKey = key;
             if (miss == 1) {
-                u32 pal = (mode == 2) ? 0x400 : 0;
+                u32 pal = (layer == 2) ? 0x400 : 0;
                 if (key < gTextureBlocks.mPaletteCount) {
                     QueueTransfer(gTextureBlocks.mPaletteFile, key * 32,
-                                  VRAM_PLTT_BG + pal + half->mUnk_534[s].mPaletteIndex * 32, 0x20);
+                                  VRAM_PLTT_BG + pal + textureLayer->mUnk_534[s].mPaletteIndex * 32, 0x20);
                 } else {
                     QueueTransfer(0, (u32) gTextureBlocks.mUnk_008 + i * 32,
-                                  VRAM_PLTT_BG + pal + half->mUnk_534[s].mPaletteIndex * 32, 0x20);
+                                  VRAM_PLTT_BG + pal + textureLayer->mUnk_534[s].mPaletteIndex * 32, 0x20);
                 }
             }
-            ret = half->mUnk_534[s].mPaletteIndex;
+            ret = textureLayer->mUnk_534[s].mPaletteIndex;
             if (flag == 0) {
-                if (half->mUnk_516 >= 0x400) {
+                if (textureLayer->mUnk_516 >= 0x400) {
                     OS_Terminate();
                 }
-                half->mUnk_115[half->mUnk_516++] = ret;
+                textureLayer->mUnk_115[textureLayer->mUnk_516++] = ret;
             }
         }
     }
     if (flag == 0) {
-        int d = half->mUnk_516 - base;
+        int d = textureLayer->mUnk_516 - base;
         if (base >= d) {
-            if (memcmp(&half->mUnk_115[base - d], &half->mUnk_115[base], d) == 0) {
-                half->mUnk_516 = base;
+            if (memcmp(&textureLayer->mUnk_115[base - d], &textureLayer->mUnk_115[base], d) == 0) {
+                textureLayer->mUnk_516 = base;
             }
         }
     }
@@ -1040,7 +1042,7 @@ u8 GetMatCount(int layer) {
 // Finds or appends the matrix for an angle and two scales (16.12 fixed point, as four halfwords) in a layer's matrix
 // list (layer 2 when flags bit 1 is set) and returns its index.
 u32 FindOrAddMat(int angle, int sx, int sy, u32 flags) {
-    TextureLayer *half = &gTextureBlocks.mLayers[(flags & 2) != 0];
+    TextureLayer *textureLayer = &gTextureBlocks.mLayers[(flags & 2) != 0];
     int ix = 0x10000 / sx;
     int iy = ix;
     s32 idx;
@@ -1058,8 +1060,8 @@ u32 FindOrAddMat(int angle, int sx, int sy, u32 flags) {
     m[2] = (iy * -FX_SinCosTable_[idx]) >> 12;
     m[3] = (iy * FX_SinCosTable_[idx + 1]) >> 12;
     w = (u32 *) m;
-    p = (u32 *) half->mMats;
-    for (j = 0; j < half->mMatCount; j++) {
+    p = (u32 *) textureLayer->mMats;
+    for (j = 0; j < textureLayer->mMatCount; j++) {
         if (p[0] == w[0] && p[1] == w[1]) {
             return j;
         }
@@ -1067,15 +1069,16 @@ u32 FindOrAddMat(int angle, int sx, int sy, u32 flags) {
     }
     p[0] = w[0];
     p[1] = w[1];
-    return ++half->mMatCount - 1;
+    return ++textureLayer->mMatCount - 1;
 }
 
-// Draws sprite id at x, y with width w on a layer, unrotated and at full scale (0x100).
-void DrawSprite(int id, int x, int y, int w, int mode) {
-    DrawSpriteEx(id, x, y, w, 0, 0x100, 0x100, mode);
+// Draws sprite id at x, y on a layer, unrotated and at full scale (0x100); w gives the priority (w >> 8) and the sort
+// key (its low byte), as in DrawSpriteEx.
+void DrawSprite(int id, int x, int y, int w, int layer) {
+    DrawSpriteEx(id, x, y, w, 0, 0x100, 0x100, layer);
 }
 
-// Draws sprite `id` of a layer (mode 1 or 2) at x, y. The low 16 bits of id select the block; bits 16 and 17 flip
+// Draws sprite `id` of a layer (layer 1 or 2) at x, y. The low 16 bits of id select the block; bits 16 and 17 flip
 // it horizontally and vertically, bit 18 sets the semi-transparent mode, bit 19 the double size of a rotated
 // sprite, bit 20 copies the tiles straight into the layer's background VRAM instead, bit 21 draws nothing and keeps
 // the tile and palette of the first record it reaches in mUnk_b28 and mUnk_b2c, bit 22 sets attribute 2 bit 11,
@@ -1084,7 +1087,7 @@ void DrawSprite(int id, int x, int y, int w, int mode) {
 // matrix. The checks that stop the system are written as `(void) (cond || (OS_Terminate(), 0))` because the
 // compiler's output needs it: the expression form computes each condition's value and loads the 0, which an `if`
 // drops.
-void DrawSpriteEx(int id, int x, int y, int w, int angle, int sx, int sy, int mode) {
+void DrawSpriteEx(int id, int x, int y, int w, int angle, int sx, int sy, int layer) {
     u32 bit;
     u32 flags;
     u32 aff;
@@ -1102,12 +1105,12 @@ void DrawSpriteEx(int id, int x, int y, int w, int angle, int sx, int sy, int mo
     u32 n;
     int prio;
     s8 rect[8];
-    TextureLayer *half;
+    TextureLayer *textureLayer;
 
     key = id;
     flags = id & 0xffff0000;
-    bit = mode == 1 ? 1 : 2;
-    half = &gTextureBlocks.mLayers[mode == 2];
+    bit = layer == 1 ? 1 : 2;
+    textureLayer = &gTextureBlocks.mLayers[layer == 2];
     aff = -1;
     (void) ((gSystemState.mFlags & bit) || (id & 0x800000) || (OS_Terminate(), 0));
     if (id == -1 || key == 0xffff) {
@@ -1118,7 +1121,7 @@ void DrawSpriteEx(int id, int x, int y, int w, int angle, int sx, int sy, int mo
     if (id & 0x800000) {
         u32 alpha = (u32) id >> 27;
 
-        (void) (mode == 1 || (OS_Terminate(), 0));
+        (void) (layer == 1 || (OS_Terminate(), 0));
         if (alpha == 0) {
             alpha = 0x1f;
         }
@@ -1158,21 +1161,21 @@ void DrawSpriteEx(int id, int x, int y, int w, int angle, int sx, int sy, int mo
         }
         func_0202cce0(key, *p, (u8 *) rect);
         dbl = ((flags & 0x80000) && (angle != 0 || sx > 0x100 || sy > 0x100)) ? 1 : 0;
-        aff = FindOrAddMat(angle, sxv, syv, mode);
+        aff = FindOrAddMat(angle, sxv, syv, layer);
         // Offset from the first record's centre to the object's point, scaled and turned by the matrix.
         cx = (-(rect[2] + (rect[4] / 2 - rect[0])) * ((s16) sx * (s16) sx)) >> 8;
         cy = (-(rect[3] + (rect[5] / 2 - rect[1])) * ((s16) sy * (s16) sy)) >> 8;
         cx = sxv < 0 ? -cx : cx;
         cy = syv < 0 ? -cy : cy;
-        dx = (cx * -((Mat4 *) half->mMats)[aff].mUnk_0 + cy * ((Mat4 *) half->mMats)[aff].mUnk_2) >> 16;
-        dy = (cx * ((Mat4 *) half->mMats)[aff].mUnk_4 - cy * ((Mat4 *) half->mMats)[aff].mUnk_6) >> 16;
+        dx = (cx * -((Mat4 *) textureLayer->mMats)[aff].mUnk_0 + cy * ((Mat4 *) textureLayer->mMats)[aff].mUnk_2) >> 16;
+        dy = (cx * ((Mat4 *) textureLayer->mMats)[aff].mUnk_4 - cy * ((Mat4 *) textureLayer->mMats)[aff].mUnk_6) >> 16;
         dx = sxv < 0 ? -dx : dx;
         dy = syv < 0 ? -dy : dy;
         dx = dx - (rect[4] >> (1 - dbl)) + rect[0] * sxv / 256 - rect[2];
         dy = dy - (rect[5] >> (1 - dbl)) + rect[1] * syv / 256 - rect[3];
     }
     (void) (w < 0x400 || (OS_Terminate(), 0));
-    n = half->mOamCount;
+    n = textureLayer->mOamCount;
     prio = w >> 8;
     while (count-- != 0 && n < 0x80) {
         int px = ((TexRec *) p)->mUnk_00_0;
@@ -1205,7 +1208,7 @@ void DrawSpriteEx(int id, int x, int y, int w, int angle, int sx, int sy, int mo
         if (aff == -1 && (px + wd < 0 || px >= 0x100 || py + ht < 0 || py >= 0xc0)) {
             continue;
         }
-        pal = func_0202ca80(&ids[pi], shape, cnt, mode);
+        pal = func_0202ca80(&ids[pi], shape, cnt, layer);
         if (flags & 0x100000) {
             u32 base;
             u32 dst;
@@ -1215,12 +1218,12 @@ void DrawSpriteEx(int id, int x, int y, int w, int angle, int sx, int sy, int mo
             u32 fl;
             u32 bits;
 
-            (void) (func_0201db58(mode) == 0x8000 || (OS_Terminate(), 0));
-            (void) (shape == 1 || half->mUnk_57b == 0 || (OS_Terminate(), 0));
+            (void) (func_0201db58(layer) == 0x8000 || (OS_Terminate(), 0));
+            (void) (shape == 1 || textureLayer->mUnk_57b == 0 || (OS_Terminate(), 0));
             (void) ((flags & 0x30000) == 0 || (OS_Terminate(), 0));
             (void) (aff == -1 || (OS_Terminate(), 0));
-            base = mode == 1 ? 0x6000000 : 0x6200000;
-            dst = base + (py * GetLayerWidth(mode) + px) * 2;
+            base = layer == 1 ? 0x6000000 : 0x6200000;
+            dst = base + (py * GetLayerWidth(layer) + px) * 2;
             if (gTextureBlocks.mBlockFileKind == 2) {
                 src = c + (off << 7);
             } else {
@@ -1237,12 +1240,12 @@ void DrawSpriteEx(int id, int x, int y, int w, int angle, int sx, int sy, int mo
             if (shape == 1) {
                 fl = 0;
             } else {
-                fl = ((half->mUnk_516 - cnt) << 1) | (mode == 2);
+                fl = ((textureLayer->mUnk_516 - cnt) << 1) | (layer == 2);
             }
             QueueTransferEx(gTextureBlocks.mBlockFile, src, dst, sz, 0, shift + (pal << 4), fl);
             continue;
         }
-        tile = FindOrLoadLayerBlock(size, off, c, shape, cnt, mode);
+        tile = FindOrLoadLayerBlock(size, off, c, shape, cnt, layer);
         if (flags & 0x200000) {
             gTextureBlocks.mUnk_b28 = tile;
             gTextureBlocks.mUnk_b2c = pal;
@@ -1256,13 +1259,13 @@ void DrawSpriteEx(int id, int x, int y, int w, int angle, int sx, int sy, int mo
                  ((flags & 0x40000) >> 8);
             a1 = ((px + dx) & 0x1ff) | ((size & 3) << 14) | (aff << 9);
         }
-        ((Oam *) half->mOam)[n].mUnk_0 = a0;
-        ((Oam *) half->mOam)[n].mUnk_2 = a1;
-        ((Oam *) half->mOam)[n].mUnk_4 = tile | (pal << 12) | (prio << 10) | ((flags & 0x400000) >> 11);
-        ((u8 *) half->mSortKeys)[n] = w;
+        ((Oam *) textureLayer->mOam)[n].mUnk_0 = a0;
+        ((Oam *) textureLayer->mOam)[n].mUnk_2 = a1;
+        ((Oam *) textureLayer->mOam)[n].mUnk_4 = tile | (pal << 12) | (prio << 10) | ((flags & 0x400000) >> 11);
+        ((u8 *) textureLayer->mSortKeys)[n] = w;
         n++;
     }
-    half->mOamCount = n;
+    textureLayer->mOamCount = n;
 }
 
 // Looks up the point of type index in the object's record and flips it for the flip flags in bits 16 and 17 of
@@ -1331,7 +1334,7 @@ void WriteOam(int layer) {
     int sub = (layer == 2);
     u32 bit = (layer == 1) ? 1 : 2;
     u32 other = (layer == 1) ? 0x40000 : 0x80000;
-    TextureLayer *half = &gTextureBlocks.mLayers[sub];
+    TextureLayer *textureLayer = &gTextureBlocks.mLayers[sub];
     Oam *oam;
     u16 *affine;
     int n;
@@ -1343,21 +1346,21 @@ void WriteOam(int layer) {
     }
     n = 0;
     oam = (layer == 1) ? (Oam *) 0x7000000 : (Oam *) 0x7000400;
-    if (half->mOamCount != 0) {
-        u16 *src = (u16 *) half->mOam;
+    if (textureLayer->mOamCount != 0) {
+        u16 *src = (u16 *) textureLayer->mOam;
 
         MI_CpuClearFast(hist, 0x100);
-        n = half->mOamCount;
+        n = textureLayer->mOamCount;
         for (i = 0; i < n; i++) {
-            hist[((u8 *) half->mSortKeys)[i]]++;
+            hist[((u8 *) textureLayer->mSortKeys)[i]]++;
         }
         n = hist[0];
         for (i = 1; i < 256; i++) {
             n += hist[i];
             hist[i] = n;
         }
-        for (i = 0; i < half->mOamCount; i++) {
-            u8 key = ((u8 *) half->mSortKeys)[i];
+        for (i = 0; i < textureLayer->mOamCount; i++) {
+            u8 key = ((u8 *) textureLayer->mSortKeys)[i];
             u8 v = --hist[key];
 
             ((u16 *) oam)[v * 4] = src[0];
@@ -1371,17 +1374,17 @@ void WriteOam(int layer) {
         oam[n].mUnk_0 = 0x200;
     }
     affine = (layer == 1) ? (u16 *) 0x7000006 : (u16 *) 0x7000406;
-    for (i = 0; i < half->mMatCount; i++) {
-        affine[0] = ((Mat4 *) half->mMats)[i].mUnk_0;
-        affine[4] = ((Mat4 *) half->mMats)[i].mUnk_2;
-        affine[8] = ((Mat4 *) half->mMats)[i].mUnk_4;
-        affine[12] = ((Mat4 *) half->mMats)[i].mUnk_6;
+    for (i = 0; i < textureLayer->mMatCount; i++) {
+        affine[0] = ((Mat4 *) textureLayer->mMats)[i].mUnk_0;
+        affine[4] = ((Mat4 *) textureLayer->mMats)[i].mUnk_2;
+        affine[8] = ((Mat4 *) textureLayer->mMats)[i].mUnk_4;
+        affine[12] = ((Mat4 *) textureLayer->mMats)[i].mUnk_6;
         affine += 16;
     }
-    half->mOamCount = 0;
-    half->mMatCount = 0;
-    half->mUnk_114 = 1;
-    half->mUnk_516 = 1;
+    textureLayer->mOamCount = 0;
+    textureLayer->mMatCount = 0;
+    textureLayer->mUnk_114 = 1;
+    textureLayer->mUnk_516 = 1;
 }
 
 #pragma thumb on

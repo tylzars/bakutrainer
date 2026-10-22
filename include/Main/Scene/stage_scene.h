@@ -70,7 +70,7 @@ typedef struct Scene {
     s32 mUnk_624;
     s32 mUnk_628;
     s32 mUnk_62c;
-    u32 mUnk_630;
+    u32 mScoreThreshold;
     s32 mPopupTimer;
     s32 mPopupIntervalMs;
     s32 mUnk_63c;
@@ -115,7 +115,7 @@ void LoadSceneValues(void);
 void ClearNumber(void);
 void ShowNumber(int value, const PopupPos *pos);
 void DrawNumber(void);
-int func_0200d6b0(u8 stage);
+int GetSceneScoreThreshold(u8 tableRow);
 
 #ifdef __cplusplus
 }

@@ -12,12 +12,13 @@ extern "C" {
 #endif
 
 // Main loop state: frame counter, current/previous/requested state numbers, the queue of requested states (PushState
-// terminates at 25 entries) and a table of values the states pass on through SetFlowValue and GetFlowValue (a prompt
-// number, a selection, a state to push); none of them is called.
+// terminates at 25 entries) and a table of values the states pass on (a prompt number, a selection, a state to
+// push): SetFlowValue sets an entry and GetFlowValue reads it back.
 #define QUEUE_SIZE 0x1c
-#define HANDLER_COUNT 24
+#define FLOW_VALUE_COUNT 24
 typedef struct GameFlow {
-    u32 mFrame;
+    // Counted up once per pass of the main loop (main); never read.
+    u32 mLoopFrames;
     u32 mState;
     u32 mPrevState;
     u32 mNextState;
@@ -26,7 +27,7 @@ typedef struct GameFlow {
     s32 mReenterRequested;
     u32 mQueueCount;
     u8 mQueue[QUEUE_SIZE];
-    u32 mHandlers[HANDLER_COUNT];
+    u32 mValues[FLOW_VALUE_COUNT];
     s32 mStateFlag;
 } GameFlow;
 

@@ -54,7 +54,7 @@ typedef struct Particle {
 typedef struct ParticleGame {
     u8 mUnk_0000;
     u8 mUnk_0001[3];
-    u32 mTimer;
+    u32 mEndTimer;
     u32 mScore;
     u8 mUnk_000c[0x184 - 0xc];
     StageInfo mInfo;
@@ -73,9 +73,10 @@ typedef struct ParticleGame {
     s32 mSpawnTimer;
     u32 mKindScores[5];
     u32 mKindSeconds[5];
-    // Bound of SpawnParticles only: the particles a hit splits off are not held to it.
+    // Bound of SpawnParticles only: it adds a particle while mCount is below it, so mCount reaches it; the particles
+    // a hit splits off are not held to it.
     s32 mParticleLimit;
-    s32 mTimerStart;
+    s32 mEndFrameCount;
     s32 mScoreThreshold;
     // Bounds of the spawn delay draw (RandomRange); mSpawnDelayLimit itself can be drawn.
     s32 mSpawnDelayMin;
@@ -91,8 +92,8 @@ void func_0200a3f4(void);
 void func_0200a3fc(void);
 void func_0200a5cc(int value);
 void func_0200a5f0(void);
-int LookupParticleKindValue(int a, int b);
-int LookupParticleGameValue(int a, int b);
+int GetParticleKindValue(int a, int b);
+int GetParticleGameValue(int a, int b);
 void func_0200a99c(DrawParams *p, u32 a, u32 b, u32 c, s32 d, u16 e, u8 f, u8 g, s32 h);
 void func_0200aa2c(Model *obj, u32 a, u32 b, s32 c, u16 d, s32 e);
 void func_0200aa68(u16 id, u32 a, u32 b, u32 c, s32 d, u16 e, u8 f, s32 g);
@@ -109,7 +110,7 @@ void SetupParticleGame(void);
 void DrawParticleGame(void);
 void UpdateParticleGame(void);
 void LeaveParticleGame(void);
-int GetParticleGameScoreThreshold(u8 stage);
+int GetParticleGameScoreThreshold(u8 tableRow);
 
 #ifdef __cplusplus
 }

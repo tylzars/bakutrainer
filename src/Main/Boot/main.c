@@ -78,7 +78,7 @@ void main(void) {
         UpdateProgress();
         UpdateObjSlots();
         UpdateAnimSlots();
-        flow->mFrame++;
+        flow->mLoopFrames++;
         UpdateKeepAliveWaves();
         UpdateSoundCtl();
         UpdateSystemAndWait();

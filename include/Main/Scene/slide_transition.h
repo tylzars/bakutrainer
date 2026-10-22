@@ -36,12 +36,12 @@ typedef struct TitleScreen {
     s8 mReturnState;
     u8 mUnk_39[3];
     Model mModel;
-    // Copied from mLanguage when state 4 is requested and set by its language buttons; state 4 has a single button
-    // (0) in this build, so only 0 can be chosen.
+    // Copied from mLanguage when state 4 is requested and set by its language buttons. State 4 is never reached in this
+    // build: only state 5's button 0x702 requests it, and no button 0x702 is ever added.
     u32 mSelectedLanguage;
     u8 mSlideState;
     u8 mUnk_1b9[3];
-    // In 1/256 pixel, mostly x; the header sprite 0xe22 moves in y by [3] (by [0] in state 4).
+    // In 1/256 pixel, mostly x; the header sprite 0xe22 moves in y by [3] (by [0] in state 4, which is never reached).
     s32 mSlideOffsets[8];
     // -1 or 1 (RequestTitleState's b): the direction of the slide-out, and negated, the side the next state's offsets
     // start from. State 1's slide-out ignores it.

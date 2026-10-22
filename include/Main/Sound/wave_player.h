@@ -48,7 +48,7 @@ typedef struct WaveChannel {
     // Keep-alive mark: 0 none; PlayWaveKeepAlive sets 2, UpdateKeepAliveWaves turns 2 into 1 each frame and stops
     // the channel at 1.
     /* 0c */ u8 mKeepAlive;
-    /* 0d */ u8 mActive : 1;
+    /* 0d */ u8 mUsed : 1;
     u8 mUnk_0d_1 : 1;
     u8 mRepeat : 1;
     u8 mUnk_0d_3 : 1;
@@ -67,7 +67,7 @@ typedef struct WaveStream {
     /* 50 */ u8 *mBuffer;
     /* 54 */ s32 mCurrent;
     /* 58 */ u32 mPause;
-    /* 5c */ u32 mFrame;
+    /* 5c */ u32 mPlayFrames;
     /* 60 */ char mName[0x40];
 } WaveStream;
 

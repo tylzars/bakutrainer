@@ -22,10 +22,10 @@ typedef struct IndexNode16 {
 } IndexNode16;
 
 void SetupImageLayer(int a, int b, u32 c, u32 d);
-u8 *UploadPalette(u8 *palette, u32 count, int a, int target);
+u8 *UploadPalette(u8 *palette, u32 count, int a, int layers);
 void UpdateFade(void);
 void func_0201f6d0(int a, int b, int c, u16 d, u16 e);
-int IsFadeState(int screens, int state);
+int IsFadeState(int layers, int state);
 int TestBits(int a, int b);
 void StartFade(int a);
 void StartFadeClear(int a);

@@ -656,8 +656,8 @@ void *AllocWithFlags(u32 size, u32 flags) {
     return p;
 }
 
-int Free(void *handle) {
-    void **pp = handle;
+int Free(void *p) {
+    void **pp = p;
     u32 *block;
     if (pp != 0 && (block = *pp) != 0) {
         if ((u8 *) block > gSystemState.mHeapBoundary) {
@@ -1080,8 +1080,9 @@ void ProcessTransfers(int flags) {
                 bg = 1;
             }
             if (e->mUnk_13 != 0 && e->mUnk_13 != 0xff) {
-                TextureLayer *half = &gTextureBlocks.mLayers[e->mUnk_13 & 1];
-                RemapPaletteRows((u16 *) dst, &half->mUnk_115[half->mUnk_014[e->mUnk_13 >> 1]], e->mSize >> 1);
+                TextureLayer *textureLayer = &gTextureBlocks.mLayers[e->mUnk_13 & 1];
+                RemapPaletteRows((u16 *) dst, &textureLayer->mUnk_115[textureLayer->mUnk_014[e->mUnk_13 >> 1]],
+                                 e->mSize >> 1);
             }
             e = list[i];
             if ((e->mDst >> 28) == 10 || bg == 1) {
@@ -1424,33 +1425,36 @@ void CopyImageToLayer(u8 *src, u32 dst, u32 width, u32 rows) {
     }
 }
 
-void LoadImage(int id, int target) {
-    LoadImageEx(id, target, 0, 0);
+void LoadImage(int id, int layers) {
+    LoadImageEx(id, layers, 0, 0);
 }
 
-void LoadImageEx(int id, int target, int x, u16 flags) {
+// Every caller passes paletteFile 0, so LoadImageData's palette-file branch never runs in this build.
+void LoadImageEx(int id, int layers, int paletteFile, u16 flags) {
     int found;
     void *buf;
 
     found = FindCachedFile(id);
     if (found > 0) {
-        LoadImageData((u8 *) found, target, x, flags);
+        LoadImageData((u8 *) found, layers, paletteFile, flags);
     } else {
         buf = (void *) LoadFile(id);
-        LoadImageData(buf, target, x, flags);
+        LoadImageData(buf, layers, paletteFile, flags);
         Free(&buf);
     }
-    if (target == 3) {
+    if (layers == 3) {
         gSystemState.mImageIds[1] = id;
         gSystemState.mImageIds[0] = gSystemState.mImageIds[1];
-    } else if (target == 1) {
+    } else if (layers == 1) {
         gSystemState.mImageIds[0] = id;
-    } else if (target == 2) {
+    } else if (layers == 2) {
         gSystemState.mImageIds[1] = id;
     }
 }
 
-void LoadImageData(u8 *data, int target, int x, u16 flags) {
+// paletteFile is 0 at every call (LoadImageEx's callers all pass 0), so the branch that maps the image's colours
+// through CreateNearestColorTable never runs in this build.
+void LoadImageData(u8 *data, int layers, int paletteFile, u16 flags) {
     void *tmp = NULL;
     void *rgb = NULL;
     u32 w;
@@ -1481,23 +1485,23 @@ void LoadImageData(u8 *data, int target, int x, u16 flags) {
         gSystemState.mImageHeight = h;
         gSystemState.mUnk_2d0 = 0x8000;
         height = h;
-        if ((target & 3) == 3 && h >= 0x180) {
+        if ((layers & 3) == 3 && h >= 0x180) {
             height >>= 1;
         }
-        if (x == 0) {
+        if (paletteFile == 0) {
             if (!(flags & 2)) {
-                SetupImageLayer(target, 1, w, height);
+                SetupImageLayer(layers, 1, w, height);
             }
         } else {
             if (!(flags & 2)) {
-                SetupImageLayer(target, 0, w, height);
+                SetupImageLayer(layers, 0, w, height);
             }
-            tmp = CreateNearestColorTable(x, target);
+            tmp = CreateNearestColorTable(paletteFile, layers);
         }
-        if (target & 1) {
-            func_0201e56c(data, target, tmp);
+        if (layers & 1) {
+            func_0201e56c(data, layers, tmp);
         }
-        if (target & 2) {
+        if (layers & 2) {
             func_0201e56c(data, 2, tmp);
         }
         Free(&tmp);
@@ -1519,7 +1523,7 @@ void LoadImageData(u8 *data, int target, int x, u16 flags) {
         }
         gSystemState.mImageWidth = w;
         gSystemState.mImageHeight = h;
-        mode = target & 3;
+        mode = layers & 3;
         if (mode == 3 && h >= 0x180) {
             h2 = h >> 1;
         }
@@ -1527,9 +1531,9 @@ void LoadImageData(u8 *data, int target, int x, u16 flags) {
             if (!(flags & 1)) {
                 gSystemState.mUnk_2d0 = 0x100;
                 if (!(flags & 2)) {
-                    SetupImageLayer(target, 0, w, h2);
+                    SetupImageLayer(layers, 0, w, h2);
                 }
-                pix = UploadPalette(data + 0x20, count, 0, target);
+                pix = UploadPalette(data + 0x20, count, 0, layers);
                 DC_StoreRange(pix, w * h + 0x320);
                 size = w * h2;
             } else {
@@ -1537,7 +1541,7 @@ void LoadImageData(u8 *data, int target, int x, u16 flags) {
                 src = pal + count * 3;
                 gSystemState.mUnk_2d0 = 0x8000;
                 if (!(flags & 2)) {
-                    SetupImageLayer(target, 1, w, h2);
+                    SetupImageLayer(layers, 1, w, h2);
                 }
                 DC_StoreRange(data, w * h + 0x320);
                 size = w * h2 * 2;
@@ -1558,7 +1562,7 @@ void LoadImageData(u8 *data, int target, int x, u16 flags) {
             pal = data + 0x20;
             gSystemState.mUnk_2d0 = 0x8000;
             if (!(flags & 2)) {
-                SetupImageLayer(target, 1, w, h2);
+                SetupImageLayer(layers, 1, w, h2);
             }
             DC_StoreRange(data, w * h * 3 + 0x20);
             pix = pal;
@@ -1810,7 +1814,7 @@ void func_0201e518(u8 *data, u32 *width, u32 *height) {
     *width = (data[5] << 8) + data[6];
 }
 
-void func_0201e56c(u8 *data, int target, void *lut) {
+void func_0201e56c(u8 *data, int layers, void *lut) {
     s16 quant[2][64];
     u8 bits[4][32];
     u8 huffval[4][256];
@@ -1917,7 +1921,7 @@ void func_0201e56c(u8 *data, int target, void *lut) {
                 break;
             case 0xc0:
                 height = (data_020c1820[3] << 8) + data_020c1820[4];
-                if (height > 192 && !(target & 1)) {
+                if (height > 192 && !(layers & 1)) {
                     goto end;
                 }
                 width = (data_020c1820[5] << 8) + data_020c1820[6];
@@ -1959,7 +1963,7 @@ void func_0201e56c(u8 *data, int target, void *lut) {
             func_02028b8c(mcu, out + x, buf + 0x100);
         }
         func_0203e4a4();
-        CopyStripToLayers(out, target, y, width, height, lut);
+        CopyStripToLayers(out, layers, y, width, height, lut);
     }
 end:
     Free(&out);
@@ -2141,7 +2145,7 @@ u16 ColorDistanceSquared(u8 (*pal)[3], int c0, int c1, int c2, int index) {
     return d2 * d2 + d1 * d1 + d0 * d0;
 }
 
-void *CreateNearestColorTable(int id, int target) {
+void *CreateNearestColorTable(int id, int layers) {
     u8 *cube;
     u32 r;
     u32 g;
@@ -2171,7 +2175,7 @@ void *CreateNearestColorTable(int id, int target) {
     queue = Alloc(0x8000);
     tail = 0;
     head = 0;
-    UploadPalette(src, 0x100, 0, target);
+    UploadPalette(src, 0x100, 0, layers);
     MIi_CpuClear16(0xffff, dist, 0x10000);
     for (i = 0; i < 0x100; i++) {
         p = pal[i];
@@ -2364,7 +2368,7 @@ void SetupImageLayer(int a, int b, u32 c, u32 d) {
     }
 }
 
-u8 *UploadPalette(u8 *palette, u32 count, int a, int target) {
+u8 *UploadPalette(u8 *palette, u32 count, int a, int layers) {
     u8 *start = palette;
     u32 i;
     u16 *dst;
@@ -2372,7 +2376,7 @@ u8 *UploadPalette(u8 *palette, u32 count, int a, int target) {
     u8 g;
     u8 b;
 
-    if (target & 1) {
+    if (layers & 1) {
         dst = (u16 *) 0x05000000 + a;
         for (i = 0; i < count; i++) {
             r = palette[0] >> 3;
@@ -2383,7 +2387,7 @@ u8 *UploadPalette(u8 *palette, u32 count, int a, int target) {
             palette += 3;
         }
     }
-    if (target & 2) {
+    if (layers & 2) {
         palette = start;
         dst = (u16 *) 0x05000400 + a;
         for (i = 0; i < count; i++) {
@@ -2458,11 +2462,11 @@ void func_0201f6d0(int a, int b, int c, u16 d, u16 e) {
     gSystemState.mFlags &= ~0x40000;
 }
 
-int IsFadeState(int screens, int state) {
-    if ((screens & 1) && gSystemState.mFadeState[0] != state) {
+int IsFadeState(int layers, int state) {
+    if ((layers & 1) && gSystemState.mFadeState[0] != state) {
         return 0;
     }
-    if ((screens & 2) && gSystemState.mFadeState[1] != state) {
+    if ((layers & 2) && gSystemState.mFadeState[1] != state) {
         return 0;
     }
     return 1;
@@ -3314,9 +3318,9 @@ void AddTouchButton(int id, int x, int y, int a, int b, int c) {
         button->mMaxY = c;
     }
     if (gTouchInput.mTrail.mTouchState.mCornerSpriteId != 0) {
-        int mode = IsLcdSwapped() == 1 ? 2 : 1;
-        DrawSprite(gTouchInput.mTrail.mTouchState.mCornerSpriteId, button->mMinX, button->mMinY, 0, mode);
-        DrawSprite(gTouchInput.mTrail.mTouchState.mCornerSpriteId, button->mMaxX, button->mMaxY, 0, mode);
+        int layer = IsLcdSwapped() == 1 ? 2 : 1;
+        DrawSprite(gTouchInput.mTrail.mTouchState.mCornerSpriteId, button->mMinX, button->mMinY, 0, layer);
+        DrawSprite(gTouchInput.mTrail.mTouchState.mCornerSpriteId, button->mMaxX, button->mMaxY, 0, layer);
     }
     button->mId = id;
     if (shifting == 0) {
@@ -3570,7 +3574,7 @@ int ReadBackup(void *buf, u32 address, u32 size) {
     return result;
 }
 
-void InitMic(int size, int b) {
+void SetupMic(int size, int b) {
     if (gSystemState.mFlags & MIC_FLAG_ACTIVE) {
         ReleaseMic();
     }
@@ -3733,7 +3737,7 @@ u32 GetMicBandAverage(u32 index) {
 void UpdateMicBands(void) {
     u8 spectrum[0x400];
     if ((gSystemState.mFlags & MIC_FLAG_ACTIVE) == 0) {
-        InitMic(0x400, 1);
+        SetupMic(0x400, 1);
         StartMicSampling(0x82e, 0);
     }
     ComputeMicSpectrum(spectrum, 8);

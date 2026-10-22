@@ -28,7 +28,7 @@ typedef struct ModeSelectState {
 
 extern s32 gKeepSelectedMode;
 extern ModeSelectState gModeSelectState;
-extern u32 gPrevTimeLeft;
+extern u32 gPrevTimeRemaining;
 
 void SelectMode(int mode);
 void SetupModeSelect(void);
@@ -39,9 +39,9 @@ void StartResultScreen(int a, u32 b);
 void func_020059cc(u32 value);
 void AddCappedAt999Shifted(u32 *value, u32 add, int shift);
 void AddCappedAt5999(u32 *value, u32 add);
-int UpdateTimeLeft(u32 value);
+int UpdateTimeRemaining(u32 value);
 void StartModeSlide(int a, int b);
-int UpdateModeSlide(int mode);
+int UpdateModeSlide(int layer);
 u8 GetModeSlideState(void);
 s32 GetScoreThresholdMet(void);
 

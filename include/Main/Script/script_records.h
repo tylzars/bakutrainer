@@ -87,7 +87,7 @@ typedef struct ScriptSprite {
     u16 mUnk_1a;
     // Animation frames (cells, not game frames): their number, and those remaining.
     u8 mAnimFrameCount;
-    u8 mAnimFramesLeft;
+    u8 mAnimFramesRemaining;
     u8 mFramesPerAnimFrame;
     u8 mAnimFrameFrames;
     u8 mSlideProgress;
@@ -107,14 +107,16 @@ typedef struct ScriptSprite {
 } ScriptSprite;
 
 // The part of gScriptWork from 0x280 on, which the code reaches through one base address: the event queue's write
-// and read indexes, the values the conditional commands compare, the callback and the selected indexes.
+// and read indices, the values the conditional commands compare, the callback and the selected indices.
 typedef struct Unk_020c642c {
     u8 mUnk_00[0x10];
     u8 mEventWriteIndex;
     u8 mEventReadIndex;
     u8 mUnk_12[2];
-    u8 mPendingImageTargets[2];
-    u16 mPendingImageIndexes[2];
+    // Image changes queued by ScriptCmdScreen for UpdateScript (0 = none): [0] holds the script's raw odd value and
+    // [1] is 2; UpdateScript reads the value as the 1|2 layer mask (SetFaded, LoadImage) and compares it with 1, 2, 3.
+    u8 mPendingImageLayers[2];
+    u16 mPendingImageIndices[2];
     u8 mUnk_1a[2];
     s32 mUnk_1c;
     u16 mUnk_20;
@@ -219,7 +221,7 @@ int IsLetterOrUnderscore(u8 c);
 int IsDigitOrSign(u8 c);
 int IsSign(u8 c);
 int IsNotSignOrSpace(u8 c);
-int StringsEqual(const char *a, const char *b);
+int StringsEqual(const char *x, const char *y);
 void CopyUpperName(u8 **src, u8 **dst);
 void WriteS16(s16 value, u8 **out);
 s16 ReadNumber(u8 **text);

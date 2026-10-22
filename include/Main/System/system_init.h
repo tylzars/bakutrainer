@@ -426,7 +426,7 @@ void QueueTransfer(u16 file, u32 src, u32 dst, u32 size);
 void ClearTransferQueue(void);
 u32 LimitTransferSize(u32 size);
 void func_0201c78c(void);
-void ProcessTransfers(int a);
+void ProcessTransfers(int flags);
 
 // Bank configuration records (12 bytes each): the bank, its size in KB, the use it is mapped for (0 = the bank's
 // LCDC record, which leads each bank's run), its address, then the MST and OFS values of the control register. For

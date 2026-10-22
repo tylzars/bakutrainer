@@ -381,8 +381,8 @@ int PickWeightedTableEntry(StageInfo *info) {
     return GetFileValue(0x1d9, i * 20 + 2);
 }
 
-static void InitStage(int index, int stage);
-static void InitStageInfo(int index, int stage);
+static void InitStage(int index, int id);
+static void InitStageInfo(int index, int id);
 
 // Clears both stage lists, adds stage ids 3, 4 and 5 to the StageInfo list and, only when a is 0, stage id 0x19 to
 // the StageRec list.

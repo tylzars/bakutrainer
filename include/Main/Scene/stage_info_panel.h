@@ -7,15 +7,15 @@
 extern "C" {
 #endif
 
-void LoadStageOrTextImage(int stage, int mode);
+void LoadStageOrTextImage(int stage, int layer);
 void FormatFrameTime(int frames, char *buf);
 void FormatSignedSeconds(int frames, char *buf);
 void func_0201168c(int stage, u32 score, int b, int frames, int d);
 int PercentToX(int percent);
-void DrawPercentGauge(int stage, int mode);
-void DrawStageInfo(int level, int mode);
-void func_02011a94(int stage, int mode);
-void func_02011b70(int stage, int mode);
+void DrawPercentGauge(int stage, int layer);
+void DrawStageInfo(int level, int layer);
+void func_02011a94(int stage, int layer);
+void func_02011b70(int stage, int layer);
 void SetTextAndImage(int a, int b, int c);
 void DrawTextPanel(void);
 void UpdateTextAndStageInfo(void);
@@ -35,7 +35,7 @@ void func_02013b48(StageInfo *info, int slot, int *a, int *b);
 void func_02013c24(StageInfo *info, int slot, int *a, int *b, int *c, int *d, int *e, int *f);
 void func_02013d48(StageInfo *info, s16 slot, u8 flag, int a, int b, int c, int d, int e);
 void func_02013dc8(StageInfo *info, s16 slot, int a, int b);
-void func_02013f74(int stage, int *cursor, int x, int y, int mode, int flags);
+void func_02013f74(int stage, int *cursor, int x, int y, int layer, int flags);
 void func_020140d4(void);
 void func_02014124(void);
 void func_02014184(void);

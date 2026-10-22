@@ -19,13 +19,13 @@ int ClaimWaveChannel(int steal, u32 mask) {
         for (i = 0; i < gWavePlayer.mChannelCount; i++) {
             bit = 1 << i;
 
-            if ((mask & bit) && (gWavePlayer.mChannels[i].mActive == 0 || second == 1)) {
+            if ((mask & bit) && (gWavePlayer.mChannels[i].mUsed == 0 || second == 1)) {
                 WaveChannel *s = &gWavePlayer.mChannels[i];
 
-                if (s->mActive == 1) {
+                if (s->mUsed == 1) {
                     StopWaveChannels(bit);
                 }
-                s->mActive = 1;
+                s->mUsed = 1;
                 func_02040198(bit, 0);
                 return i;
             }
@@ -161,7 +161,7 @@ int StopWave(u32 id) {
     u32 mask = 0;
     u32 i;
     for (i = 0; i < gWavePlayer.mChannelCount; i++) {
-        if (gWavePlayer.mChannels[i].mActive == 1 && id == gWavePlayer.mChannels[i].mId) {
+        if (gWavePlayer.mChannels[i].mUsed == 1 && id == gWavePlayer.mChannels[i].mId) {
             mask |= 1 << i;
         }
     }
@@ -179,7 +179,7 @@ int IsWavePlaying(u32 id) {
 int FindWaveChannel(u32 id, int *index) {
     u32 i;
     for (i = 0; i < gWavePlayer.mChannelCount; i++) {
-        if (gWavePlayer.mChannels[i].mActive == 1 && id == gWavePlayer.mChannels[i].mId) {
+        if (gWavePlayer.mChannels[i].mUsed == 1 && id == gWavePlayer.mChannels[i].mId) {
             if (index != 0) {
                 *index = i;
             }
@@ -195,7 +195,7 @@ void SetWaveVolume(u32 id, u32 volume) {
     u32 i;
     u32 mask = 0;
     for (i = 0; i < gWavePlayer.mChannelCount; i++) {
-        if (gWavePlayer.mChannels[i].mActive == 1 && id == gWavePlayer.mChannels[i].mId) {
+        if (gWavePlayer.mChannels[i].mUsed == 1 && id == gWavePlayer.mChannels[i].mId) {
             mask |= 1 << i;
         }
     }
@@ -216,7 +216,7 @@ void StopAllWaves(void) {
     u32 mask = 0;
     u32 i;
     for (i = 0; i < gWavePlayer.mChannelCount; i++) {
-        if (gWavePlayer.mChannels[i].mActive == 1) {
+        if (gWavePlayer.mChannels[i].mUsed == 1) {
             mask |= 1 << i;
         }
     }
@@ -236,7 +236,7 @@ void UpdateWaves(void) {
             ch->mVolume = v - 1;
             SetWaveVolume(ch->mId, v);
         }
-        if (ch->mActive == 1) {
+        if (ch->mUsed == 1) {
             if ((ch->mRepeat == 0 || gSystemState.mUnk_494 == 0) && (busy & (1 << i)) == 0 &&
                 SND_IsFinishedCommandTag(ch->mCommandTag) == 1) {
                 mask |= 1 << i;
@@ -260,10 +260,10 @@ void DrainCommandReplies(void) {
     }
 }
 
-// Frees a channel: clears mActive, mKeepAlive and mWave; the other fields keep their values.
+// Frees a channel: clears mUsed, mKeepAlive and mWave; the other fields keep their values.
 void ClearWaveChannel(u32 index) {
     WaveChannel *ch = &gWavePlayer.mChannels[index];
-    ch->mActive = 0;
+    ch->mUsed = 0;
     gWavePlayer.mChannels[index].mKeepAlive = 0;
     gWavePlayer.mChannels[index].mWave = 0;
 }
@@ -401,7 +401,7 @@ void ScaleWaveTimer(int id, int scale) {
     u32 timer = 0;
     for (i = 0; i < (u32) gWavePlayer.mChannelCount; i++) {
         WaveChannel *ch = &gWavePlayer.mChannels[i];
-        if (ch->mActive == 1 && id == ch->mId) {
+        if (ch->mUsed == 1 && id == ch->mId) {
             mask |= 1 << i;
             timer = ch->mTimer;
         }
@@ -424,7 +424,7 @@ void OpenWaveStream(WaveStream *stream, const char *name, u32 rate) {
     stream->mBuffer = Alloc(stream->mChunk * 4);
     stream->mCurrent = -1;
     stream->mPause = 0;
-    stream->mFrame = 0;
+    stream->mPlayFrames = 0;
 }
 
 void CloseWaveStream(WaveStream *stream) {
@@ -451,7 +451,7 @@ void UpdateWaveStream(WaveStream *stream) {
                                stream->mChunk * 4, 1);
             } else {
                 s32 next = (stream->mCurrent + 1) % 4;
-                u32 cur = (((stream->mRate << 8) / 60 * stream->mFrame >> 8) / stream->mChunk) & 3;
+                u32 cur = (((stream->mRate << 8) / 60 * stream->mPlayFrames >> 8) / stream->mChunk) & 3;
                 if (next != cur) {
                     u32 got;
                     stream->mCurrent = next;
@@ -464,7 +464,7 @@ void UpdateWaveStream(WaveStream *stream) {
                     }
                 }
             }
-            stream->mFrame++;
+            stream->mPlayFrames++;
         } else {
             ResumeWaveStream(stream);
         }

@@ -51,8 +51,8 @@ void func_0200bbd0(int a, int b, int c, int d, int e, int f, int g, const char *
                    int m, int n, int o, int p, const u8 *q);
 void func_0200bc50(int a, int b, int c, int d, int e, int f, int g, const char *h, const void *i, int j, int k, int l,
                    int m, int n, int o, int p);
-int TestButton(u32 a, u32 b);
-int TestButtonRange(u32 a, u32 b, u32 c);
+int TestButton(u32 mask, u32 id);
+int TestButtonRange(u32 mask, u32 lo, u32 hi);
 void func_0200bdcc(int a, int b);
 u16 func_0200be10(u32 r, u32 g, u32 b);
 void SetLightFromAngles(u32 num, int a, int b, u16 color);
@@ -62,7 +62,7 @@ void func_0200bf38(u32 value);
 u32 func_0200bf54(int n);
 int TakeRandomClearBit(u32 *p);
 int MapRangeClamped(int a, int b, int c, int d, int e);
-void DrawDecimal(int x, int y, int value, const void *font, int align, int mode);
+void DrawDecimal(int x, int y, int value, const void *font, int align, int layer);
 
 #ifdef __cplusplus
 }

@@ -1077,14 +1077,14 @@ void func_020328b0(MapRecord *rec) {
 
 // Handles the object definition list at objs: for each definition, finds the object already placed for it or places
 // a new one from its map entry, and runs the definition's actions.
-void func_020329d0(u8 *p) {
-    int n = *p++;
+void func_020329d0(u8 *objs) {
+    int n = *objs++;
     MapRecord *rec;
     MapRecord *fresh = NULL;
     int i;
 
     while (n-- != 0) {
-        MapObjDef *def = (MapObjDef *) p;
+        MapObjDef *def = (MapObjDef *) objs;
 
         for (i = 0; i < MAP_RECORDS; i++) {
             rec = &gMapState.mRecords[i];
@@ -1147,7 +1147,7 @@ void func_020329d0(u8 *p) {
                 UpdateAndDrawModel(rec->mUnk_04, &dp, flags);
             }
         }
-        p += def->mUnk_03 * 2 + 4;
+        objs += def->mUnk_03 * 2 + 4;
     }
 }
 

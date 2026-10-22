@@ -109,7 +109,7 @@ void SetupPrompt(void) {
 }
 
 // Draw callback of the prompt's script text: while a sprite is chosen, eases its slide level, sets the text's y offset
-// (gScriptWork.mUnk_2a) to the sprite's slide offset, draws the sprite and returns 0x7e; otherwise returns 0.
+// (gScriptWork.mTextOffsetY) to the sprite's slide offset, draws the sprite and returns 0x7e; otherwise returns 0.
 int DrawPromptSprite(void) {
     PromptSprite *state = &gPromptSprite;
     if (gPromptSprite.mSpriteIndex != -1) {

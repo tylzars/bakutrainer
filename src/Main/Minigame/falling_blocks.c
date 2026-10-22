@@ -20,7 +20,7 @@
 
 Board gBoard;
 
-int LookupFallingBlocksValue(int a, int b) {
+int GetFallingBlocksValue(int a, int b) {
     return GetFileValue(0xd66, b + a * 12);
 }
 
@@ -91,12 +91,12 @@ void SetPieceType(Piece *p, u8 type) {
     }
 }
 
-void DrawPiece(Piece *p, int x, int y, int mode, int flag) {
+void DrawPiece(Piece *p, int x, int y, int layer, int flag) {
     int prio;
     int frame;
 
     if (p->mType != 0) {
-        if (mode == 1) {
+        if (layer == 1) {
             prio = 0x1ff;
         } else {
             prio = 0xff;
@@ -105,13 +105,13 @@ void DrawPiece(Piece *p, int x, int y, int mode, int flag) {
             prio -= 5;
         }
         frame = UpdateSprite(&p->mSprite);
-        if (mode == 2) {
+        if (layer == 2) {
             frame++;
             if (flag == 0) {
                 prio--;
             }
         }
-        func_0202de80(frame, x, y, prio, -1, mode);
+        func_0202de80(frame, x, y, prio, -1, layer);
     }
 }
 
@@ -782,23 +782,23 @@ void SetupFallingBlocks(void) {
     gBoard.mCount = 0;
     gBoard.mUnk_8974 = 3738;
     StartSprite(&gBoard.mPairMarker, data_0201abec[26]);
-    gBoard.mTypeCount = LookupFallingBlocksValue(gBoard.mTableRow, 2);
-    stagger = LookupFallingBlocksValue(gBoard.mTableRow, 3);
-    gBoard.mTimer = gBoard.mUnk_04 = LookupFallingBlocksValue(gBoard.mTableRow, 5) * 60000 / 1000;
+    gBoard.mTypeCount = GetFallingBlocksValue(gBoard.mTableRow, 2);
+    stagger = GetFallingBlocksValue(gBoard.mTableRow, 3);
+    gBoard.mEndTimer = gBoard.mEndFrameCount = GetFallingBlocksValue(gBoard.mTableRow, 5) * 60000 / 1000;
     gBoard.mUnk_0c = -12800;
     gBoard.mScore = 0;
-    gBoard.mScoreThreshold = LookupFallingBlocksValue(gBoard.mTableRow, 6);
+    gBoard.mScoreThreshold = GetFallingBlocksValue(gBoard.mTableRow, 6);
     gBoard.mUnk_18 = 0;
-    gBoard.mUnk_896a = LookupFallingBlocksValue(gBoard.mTableRow, 8);
-    gBoard.mUnk_896c = LookupFallingBlocksValue(gBoard.mTableRow, 9);
+    gBoard.mUnk_896a = GetFallingBlocksValue(gBoard.mTableRow, 8);
+    gBoard.mUnk_896c = GetFallingBlocksValue(gBoard.mTableRow, 9);
     gBoard.mUnk_8968 = func_020031f0();
-    gBoard.mUnk_8970 = LookupFallingBlocksValue(gBoard.mTableRow, 10);
-    gBoard.mUnk_8972 = LookupFallingBlocksValue(gBoard.mTableRow, 11);
+    gBoard.mUnk_8970 = GetFallingBlocksValue(gBoard.mTableRow, 10);
+    gBoard.mUnk_8972 = GetFallingBlocksValue(gBoard.mTableRow, 11);
     gBoard.mUnk_896e = func_02003240();
-    gBoard.mFallSpeed = LookupFallingBlocksValue(gBoard.mTableRow, 4) << 8;
-    gBoard.mPieceScore = LookupFallingBlocksValue(gBoard.mTableRow, 7);
+    gBoard.mFallSpeed = GetFallingBlocksValue(gBoard.mTableRow, 4) << 8;
+    gBoard.mPieceScore = GetFallingBlocksValue(gBoard.mTableRow, 7);
     gBoard.mRemovedCount = 0;
-    total = RandomRange(LookupFallingBlocksValue(gBoard.mTableRow, 12), LookupFallingBlocksValue(gBoard.mTableRow, 13));
+    total = RandomRange(GetFallingBlocksValue(gBoard.mTableRow, 12), GetFallingBlocksValue(gBoard.mTableRow, 13));
     for (i = 0; i < 6; i++) {
         if (i < gBoard.mTypeCount - 1) {
             gBoard.mUnk_8978[i] = RandomRange(total / 8, total / 2);
@@ -819,7 +819,8 @@ void SetupFallingBlocks(void) {
 }
 
 void DrawFallingBlocks(void) {
-    func_0201168c(data_020b6ee0.mSelectedStageIndex, gBoard.mScore, gModeSelectState.mScoreThreshold, gBoard.mTimer, 2);
+    func_0201168c(data_020b6ee0.mSelectedStageIndex, gBoard.mScore, gModeSelectState.mScoreThreshold, gBoard.mEndTimer,
+                  2);
     DrawPair(&gBoard.mNextPair, 2, 0);
     DrawBoard();
     DrawPair(&gBoard.mPair, 1, 1);
@@ -829,19 +830,19 @@ void UpdateFallingBlocks(void) {
     static s32 data_02064824;
     static s32 data_02064820;
     char buf[32];
-    int r;
-    int idle;
+    int slideState;
+    int busy;
     Pair *cursor = &gBoard.mPair;
     func_020059cc(gBoard.mScore);
-    r = GetModeSlideState();
-    if (r != MODE_SLIDE_STATE_NONE) {
+    slideState = GetModeSlideState();
+    if (slideState != MODE_SLIDE_STATE_NONE) {
         DrawFallingBlocks();
-        idle = UpdateModeSlide(1);
-        if (r == MODE_SLIDE_STATE_END && idle == 0) {
+        busy = UpdateModeSlide(1);
+        if (slideState == MODE_SLIDE_STATE_END && busy == 0) {
             StartResultScreen(GetScoreThresholdMet(), gBoard.mScore);
             return;
         }
-        if (r == 1) {
+        if (slideState == MODE_SLIDE_STATE_START) {
             data_02064820 = 0;
             return;
         }
@@ -855,7 +856,7 @@ void UpdateFallingBlocks(void) {
         data_02064820 = 1;
         TakeNextPair();
     }
-    if (--gBoard.mTimer == 0) {
+    if (--gBoard.mEndTimer == 0) {
         EndFallingBlocks(1);
     }
     DropPair(cursor);
@@ -867,7 +868,7 @@ void UpdateFallingBlocks(void) {
     } else if (gBoard.mPairState == 2) {
         if (IsBoardSettled()) {
             if (gBoard.mRemovedCount >= 6) {
-                AddCappedAt5999(&gBoard.mTimer, 300);
+                AddCappedAt5999(&gBoard.mEndTimer, 300);
                 sprintf(buf, "+%d'", 5);
                 AddTextObjSlot(buf, 2, data_0201a61c, 30, gBoard.mPair.mPos.x >> 8, gBoard.mPair.mPos.y >> 8, 0, -128,
                                100, 1, 0);
@@ -902,6 +903,6 @@ void LeaveFallingBlocks(void) {
     ReleaseGxPool();
 }
 
-int GetFallingBlocksScoreThreshold(u8 stage) {
-    return LookupFallingBlocksValue(stage, 6);
+int GetFallingBlocksScoreThreshold(u8 tableRow) {
+    return GetFallingBlocksValue(tableRow, 6);
 }

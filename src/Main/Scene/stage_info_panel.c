@@ -54,14 +54,14 @@ Unk_020b13b0 data_020b13b0;
 // The three stage indices of mSlotStages as they were when the screen was entered; button 0x102 writes them back.
 s32 gSavedSlotStages[3];
 
-// Loads the image for screen mode unless that screen already shows it: in state 10 with stage -1 or a text set, image
-// 0x1e4 + mTextImageIndex; otherwise the stage's image (0xdb3 + its stage id). A stage of -1 outside state 10 reads
-// gStages[-1]; UpdateSlotScreen passes -1 when no stage is selected.
-void LoadStageOrTextImage(int stage, int mode) {
+// Loads the image for screen `layer` unless that screen already shows it: in state 10 with stage -1 or a text set,
+// image 0x1e4 + mTextImageIndex; otherwise the stage's image (0xdb3 + its stage id). A stage of -1 outside state 10
+// reads gStages[-1]; UpdateSlotScreen passes -1 when no stage is selected.
+void LoadStageOrTextImage(int stage, int layer) {
     u16 current;
     int id;
 
-    if (mode == 1) {
+    if (layer == 1) {
         current = gSystemState.mImageIds[0];
     } else {
         current = gSystemState.mImageIds[1];
@@ -77,8 +77,8 @@ void LoadStageOrTextImage(int stage, int mode) {
         id = gStages[stage].mInfo.mStageId + 0xdb3;
     }
     if ((u16) id != current) {
-        SetFaded(mode);
-        LoadImage(id, mode);
+        SetFaded(layer);
+        LoadImage(id, layer);
     }
 }
 
@@ -108,8 +108,8 @@ void FormatSignedSeconds(int frames, char *buf) {
 }
 
 // Draws the panel shown while a mode runs: score and b (every caller passes gModeSelectState.mScoreThreshold), each as
-// at least three digits, and, unless UpdateTimeLeft(frames) is not 0, the time left from frames. stage is only
-// range-checked (-1 counts as 0).
+// at least three digits, and, unless UpdateTimeRemaining(frames) is not 0, the time remaining from frames. stage is
+// only range-checked (-1 counts as 0).
 void func_0201168c(int stage, u32 score, int b, int frames, int d) {
     char time[12];
     char text[32];
@@ -131,7 +131,7 @@ void func_0201168c(int stage, u32 score, int b, int frames, int d) {
     DrawText(0x7b, 0xb0, data_0201a68a, text, 2, 0x82, 0x10, d);
     DrawSprite(0xf49, 0xb2, 0x8e, 0xc8, d);
     DrawText(0xc1, 0x95, data_0201a612, GetText(0x31), 0, 0xc8, 0x10, d);
-    if (UpdateTimeLeft(frames) == 0) {
+    if (UpdateTimeRemaining(frames) == 0) {
         FormatFrameTime(frames, time);
         DrawText(0xd2, 0xb0, data_0201a694, time, 2, 0xc8, 0x10, d);
     }
@@ -148,23 +148,23 @@ int PercentToX(int percent) {
     return MapRange(percent, 0, 100, 0, 100) + 14;
 }
 
-void DrawPercentGauge(int stage, int mode) {
+void DrawPercentGauge(int stage, int layer) {
     StageRec *rec;
 
     if (stage >= 0) {
         if (!(stage < STAGE_MAX)) {
             OS_Terminate();
         }
-        DrawSprite(0xf59, 8, 0x54, 0xa0, mode);
+        DrawSprite(0xf59, 8, 0x54, 0xa0, layer);
         rec = &gStages[stage];
-        DrawSprite(MapRange(rec->mInfo.mPercent, 0, 100, 50, 0) + 0xf5a, 7, 0x58, 0x9f, mode);
-        DrawText(0x1c, 0x54, data_0201a612, GetText(10), 0, 0xf0, 0x10, mode);
+        DrawSprite(MapRange(rec->mInfo.mPercent, 0, 100, 50, 0) + 0xf5a, 7, 0x58, 0x9f, layer);
+        DrawText(0x1c, 0x54, data_0201a612, GetText(10), 0, 0xf0, 0x10, layer);
     }
 }
 
 // Draws the info of the stage at index level (nothing when it is negative) and eases mPanelLevel. Always sets
 // mTextOffsetY to 0x100, the offset DrawTextPanel eases to 0, also for a negative index.
-void DrawStageInfo(int level, int mode) {
+void DrawStageInfo(int level, int layer) {
     StageRec *rec;
     int total;
     char label[8];
@@ -178,28 +178,28 @@ void DrawStageInfo(int level, int mode) {
         }
         EaseLevel(&data_020b6ee0.mPanelLevel, 4);
         MapRange(data_020b6ee0.mPanelLevel, 0, 0x4000, 0x100, 0);
-        DrawPercentGauge(level, mode);
-        DrawSprite(0xf8d, 0, 0x79, 0xfa, mode);
-        DrawText(0x25, 0x83, data_0201a61c, GetText(0xd), 2, 0xfa, 0, mode);
-        DrawSprite(0xf4a, 0x27, 0xa3, 0xfa, mode);
-        DrawSprite(0xf4a + rec->mInfo.mGrade, 0x27, 0xa3, 0xfa, mode);
-        DrawSprite(0xf38, 0x47, 0x8b, 0x94, mode);
-        DrawText(0x85, 0x83, data_0201a61c, GetText(0x18), 2, 0xfa, 0, mode);
-        DrawSprite(0xf42 + rec->mInfo.mKind, 0x74, 0xaa, 0xfa, mode);
+        DrawPercentGauge(level, layer);
+        DrawSprite(0xf8d, 0, 0x79, 0xfa, layer);
+        DrawText(0x25, 0x83, data_0201a61c, GetText(0xd), 2, 0xfa, 0, layer);
+        DrawSprite(0xf4a, 0x27, 0xa3, 0xfa, layer);
+        DrawSprite(0xf4a + rec->mInfo.mGrade, 0x27, 0xa3, 0xfa, layer);
+        DrawSprite(0xf38, 0x47, 0x8b, 0x94, layer);
+        DrawText(0x85, 0x83, data_0201a61c, GetText(0x18), 2, 0xfa, 0, layer);
+        DrawSprite(0xf42 + rec->mInfo.mKind, 0x74, 0xaa, 0xfa, layer);
         *FormatDecimal(rec->mInfo.mValue, label) = 0;
-        DrawText(0x74, 0xaa, data_0201a694, label, 0, 0xfa, 10, mode);
+        DrawText(0x74, 0xaa, data_0201a694, label, 0, 0xfa, 10, layer);
         if (func_020150c0(&rec->mInfo)) {
-            DrawSprite(0xf57 + (gSystemState.mElapsedFrames % 60 <= 3 ? 1 : 0), 0x82, 0xbb, 0x8c, mode);
+            DrawSprite(0xf57 + (gSystemState.mElapsedFrames % 60 <= 3 ? 1 : 0), 0x82, 0xbb, 0x8c, layer);
         }
         sprintf(number, "+%d", rec->mInfo.mValue * total / 100);
-        DrawText(0xbe, 0xa4, data_0201a68a, number, 0, 0xfa, 10, mode);
-        DrawText(0xe8, 0xb3, data_0201a61c, GetText(0xf), 1, 0xfa, 0, mode);
-        DrawSprite(GetFileValue(0x10d5, rec->mInfo.mKind * 2 + 3) + 0xf32, 0xf2, 0xaf, 0xf8, mode);
+        DrawText(0xbe, 0xa4, data_0201a68a, number, 0, 0xfa, 10, layer);
+        DrawText(0xe8, 0xb3, data_0201a61c, GetText(0xf), 1, 0xfa, 0, layer);
+        DrawSprite(GetFileValue(0x10d5, rec->mInfo.mKind * 2 + 3) + 0xf32, 0xf2, 0xaf, 0xf8, layer);
     }
     data_020b6ee0.mTextOffsetY = 0x100;
 }
 
-void func_02011a94(int stage, int mode) {
+void func_02011a94(int stage, int layer) {
     if (stage >= 0) {
         if (!(stage >= 0 && stage < STAGE_MAX)) {
             OS_Terminate();
@@ -209,23 +209,23 @@ void func_02011a94(int stage, int mode) {
         if (data_020b6ee0.mUnk_a110 < 11) {
             data_020b6ee0.mUnk_a110 += gSystemState.mElapsedFrames & 1;
         }
-        DrawPercentGauge(stage, mode);
-        DrawSprite(data_020b6ee0.mUnk_a110 + 0x19, 0x1f, 0x83, 0xf8, mode);
+        DrawPercentGauge(stage, layer);
+        DrawSprite(data_020b6ee0.mUnk_a110 + 0x19, 0x1f, 0x83, 0xf8, layer);
         if (data_020b6ee0.mUnk_a110 == 11) {
-            DrawText(0x1f, 0x83, data_0201a61c, GetText(0x10), 0, 0xdc, 0xd, mode);
-            DrawText(0x15, 0x97, data_0201a612, GetText(data_020b6ee0.mUnk_100c + 0x229), 0, 0xdc, 0xd, mode);
+            DrawText(0x1f, 0x83, data_0201a61c, GetText(0x10), 0, 0xdc, 0xd, layer);
+            DrawText(0x15, 0x97, data_0201a612, GetText(data_020b6ee0.mUnk_100c + 0x229), 0, 0xdc, 0xd, layer);
         }
     }
     data_020b6ee0.mTextOffsetY = 0x100;
 }
 
-void func_02011b70(int stage, int mode) {
+void func_02011b70(int stage, int layer) {
     if (stage >= 0) {
         if (!(stage >= 0 && stage < STAGE_MAX)) {
             OS_Terminate();
         }
-        DrawPercentGauge(stage, mode);
-        DrawText(0x12, 0x96, data_0201a612, GetText(data_020b6ee0.mUnk_a13d + 0x5f), 0, 0xdc, 0x10, mode);
+        DrawPercentGauge(stage, layer);
+        DrawText(0x12, 0x96, data_0201a612, GetText(data_020b6ee0.mUnk_a13d + 0x5f), 0, 0xdc, 0x10, layer);
     }
     data_020b6ee0.mTextOffsetY = 0x100;
 }
@@ -545,7 +545,7 @@ void StartGauge(u8 type) {
     if (data_020b6ee0.mUnk_a13d == 0) {
         gSystemState.mUnk_498 = 0x3f;
         func_0204028c(0x3f);
-        InitMic(0x400, data_020b1084.mUnk_04);
+        SetupMic(0x400, data_020b1084.mUnk_04);
         StartMicSampling(0x82e, 0);
     }
 }
@@ -1396,9 +1396,9 @@ void func_02013dc8(StageInfo *info, s16 slot, int a, int b) {
     }
 }
 
-void func_02013f74(int stage, int *cursor, int x, int y, int mode, int flags) {
+void func_02013f74(int stage, int *cursor, int x, int y, int layer, int flags) {
     StageRec *rec;
-    int mode2;
+    int otherLayer;
     int i;
     u8 sel;
     int xx;
@@ -1409,31 +1409,31 @@ void func_02013f74(int stage, int *cursor, int x, int y, int mode, int flags) {
     } else {
         rec = NULL;
     }
-    if (mode == 1) {
-        mode2 = 2;
+    if (layer == 1) {
+        otherLayer = 2;
     } else {
-        mode2 = 1;
+        otherLayer = 1;
     }
     if (!(stage >= -1 && stage < STAGE_MAX)) {
         OS_Terminate();
     }
     if (stage != -1) {
-        DrawSprite(0xfeb, x + 2, y + 0xb, 0x96, mode);
+        DrawSprite(0xfeb, x + 2, y + 0xb, 0x96, layer);
         for (i = 0; i < 5; i++) {
             info = &rec->mInfo;
             sel = (*cursor == i);
             xx = x - 0x34;
             if (info->mTableEntryIds[i] >= 0) {
-                func_02013d48(info, info->mTableEntryIds[i], sel, 0x500 + i, xx, y, mode, flags);
+                func_02013d48(info, info->mTableEntryIds[i], sel, 0x500 + i, xx, y, layer, flags);
                 if (sel) {
-                    func_02013dc8(info, info->mTableEntryIds[i], mode2, flags);
+                    func_02013dc8(info, info->mTableEntryIds[i], otherLayer, flags);
                 }
             } else if (flags & 2) {
                 if (!(flags & 4)) {
                     AddTouchButtonWithSounds(0x500 + i, xx, y, 0, 0, 0x10b4, 0, 0x167);
                 }
                 if (sel) {
-                    DrawSprite(UpdateSprite(&data_020b6ee0.mSelectionSprite), xx, y, 0x93, mode);
+                    DrawSprite(UpdateSprite(&data_020b6ee0.mSelectionSprite), xx, y, 0x93, layer);
                 }
             }
             if (TestButton(0x80000000, 0x500 + i)) {

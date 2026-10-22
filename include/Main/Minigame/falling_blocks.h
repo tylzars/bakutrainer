@@ -70,8 +70,9 @@ typedef struct Board {
     u8 mTableRow;
     u8 mTypeCount;
     u8 mUnk_02[2];
-    s32 mUnk_04;
-    u32 mTimer;
+    // The start value of mEndTimer, set with it in SetupFallingBlocks; never read.
+    s32 mEndFrameCount;
+    u32 mEndTimer;
     s32 mUnk_0c;
     u32 mScore;
     u32 mScoreThreshold;
@@ -110,7 +111,7 @@ typedef struct Board {
     s32 mRemovedCount;
 } Board;
 
-int LookupFallingBlocksValue(int a, int b);
+int GetFallingBlocksValue(int a, int b);
 void CellToBoardPos(s8 col, s8 row, Vec2i *out);
 void BoardPosToCell(const Vec2i *pos, s8 *col, s8 *row);
 u16 func_020031f0(void);
@@ -119,7 +120,7 @@ u16 func_02003240(void);
 void func_02003258(u8 *p);
 u8 PickPieceType(u8 lo, u8 hi);
 void SetPieceType(Piece *p, u8 type);
-void DrawPiece(Piece *p, int x, int y, int mode, int flag);
+void DrawPiece(Piece *p, int x, int y, int layer, int flag);
 void PlacePiece(const Piece *src, u8 col, u8 row, int unused, Vec2i *out);
 void StartPieceRemoval(Piece *p);
 BOOL DropPiece(Piece *p);
@@ -159,7 +160,7 @@ void SetupFallingBlocks(void);
 void DrawFallingBlocks(void);
 void UpdateFallingBlocks(void);
 void LeaveFallingBlocks(void);
-int GetFallingBlocksScoreThreshold(u8 stage);
+int GetFallingBlocksScoreThreshold(u8 tableRow);
 
 #ifdef __cplusplus
 }

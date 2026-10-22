@@ -392,7 +392,7 @@ void OpenMicEdit(void) {
     CloseWaveStream(&gTitleStream);
     sMicEdit.mUnk_00 = data_020b1084.mUnk_04;
     sMicEdit.mUnk_04 = data_020b1084.mUnk_08;
-    InitMic(0x400, data_020b1084.mUnk_04);
+    SetupMic(0x400, data_020b1084.mUnk_04);
     StartMicSampling(0x82e, 0);
 }
 
@@ -663,6 +663,7 @@ void UpdateTitleScreen(void) {
             func_0200bc50((gTitleScreen.mSlideOffsets[2] >> 8) + 0x80, 0x70, 0, 0, 0x8c, 0x708, 0xdda, GetText(0xc9),
                           data_0201a61c, 2, 0, 0x167, flag, 0, 0, 0);
             func_0200bb14(0, (gTitleScreen.mSlideOffsets[4] >> 8) + 0xa1, 0x102, 0xe, 0, 0, 0x5a, flag);
+            // Never true in this build: no button 0x702 is added, so title state 4 is not reached.
             if (TestButton(0x20000000, 0x702)) {
                 gTitleScreen.mSelectedLanguage = data_020b1084.mLanguage;
                 RequestTitleState(4, -1);

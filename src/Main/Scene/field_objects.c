@@ -84,17 +84,17 @@ void DrawFieldObjects(void) {
     }
 }
 
-void EmptyGridGroup(u8 g) {
+void EmptyGridGroup(u8 group) {
     int i, j;
     for (i = 0; i < 8; i++) {
         for (j = 0; j < 8; j++) {
-            gFieldObjects.mGrid[g][i][j].mKind = 0;
-            gFieldObjects.mGrid[g][i][j].mListIndex = -1;
+            gFieldObjects.mGrid[group][i][j].mKind = 0;
+            gFieldObjects.mGrid[group][i][j].mListIndex = -1;
         }
     }
 }
 
-void FillGridGroup(u8 g, u8 k) {
+void FillGridGroup(u8 group, u8 pattern) {
     int a, b;
     s32 width = gFieldObjects.mInfo.mFirstGroupEndX - gFieldObjects.mInfo.mGridStartX;
     s32 height = gFieldObjects.mInfo.mGridEndZ - gFieldObjects.mInfo.mGridStartZ;
@@ -103,15 +103,15 @@ void FillGridGroup(u8 g, u8 k) {
     int idx;
     FieldObject *obj;
     for (a = 0; a < 8; a++) {
-        obj = gFieldObjects.mGrid[g][a];
+        obj = gFieldObjects.mGrid[group][a];
         for (b = 0; b < 8; b++) {
             obj->mType = 1;
-            obj->mPosX = gFieldObjects.mInfo.mGridStartX + g * width + a * cellW + cellW / 2;
+            obj->mPosX = gFieldObjects.mInfo.mGridStartX + group * width + a * cellW + cellW / 2;
             obj->mPosY = gFieldObjects.mInfo.mGridY;
             obj->mPosZ = gFieldObjects.mInfo.mGridStartZ + b * cellH + cellH / 2;
             obj->mMoveDirZ = -1;
             obj->mListIndex = -1;
-            obj->mKind = gFieldObjects.mPatterns[k][a][b];
+            obj->mKind = gFieldObjects.mPatterns[pattern][a][b];
             switch (obj->mKind) {
                 case 2:
                     InitModel(obj->mModel, 0, 0, 0, data_0201abbc[9]);
@@ -242,60 +242,60 @@ int IsYInputEnabled(void) {
 
 // Unlike StartDrivePlusX it does not wait for a running drive: it restarts over one of either direction and zeroes
 // the x speed.
-void StartDriveMinusX(s32 a, u32 b) {
+void StartDriveMinusX(s32 distance, u32 ms) {
     if (gFieldObjects.mBelowMinX == 0 && gFieldObjects.mEndTimer != 0) {
         gFieldObjects.mDrivePlusX = 0;
         gFieldObjects.mDriveStartOffset = gFieldObjects.mStageOffset;
-        gFieldObjects.mDriveDistance = a;
-        gFieldObjects.mDriveTimer = b * 60 / 1000;
+        gFieldObjects.mDriveDistance = distance;
+        gFieldObjects.mDriveTimer = ms * 60 / 1000;
         gFieldObjects.mOffsetSpeedX = 0;
     }
 }
 
-void StartDrivePlusX(s32 a, u32 b) {
+void StartDrivePlusX(s32 distance, u32 ms) {
     if (gFieldObjects.mDriveTimer == 0 && gFieldObjects.mAboveMaxX == 0 && gFieldObjects.mEndTimer != 0) {
         gFieldObjects.mDrivePlusX = 1;
         gFieldObjects.mDriveStartOffset = gFieldObjects.mStageOffset;
-        gFieldObjects.mDriveDistance = a;
-        gFieldObjects.mDriveTimer = b * 60 / 1000;
+        gFieldObjects.mDriveDistance = distance;
+        gFieldObjects.mDriveTimer = ms * 60 / 1000;
     }
 }
 
-void ApplyFieldObject(FieldObject *p) {
+void ApplyFieldObject(FieldObject *obj) {
     char text[32];
     s32 pos[2];
-    switch (p->mKind) {
+    switch (obj->mKind) {
         case 1:
         case 2:
-            if (p->mType == 0) {
+            if (obj->mType == 0) {
                 break;
             }
-            p->mType = 0;
+            obj->mType = 0;
             StartDriveMinusX(250 << 10, 250 << 1);
             PlayWaveKeepAlive(48, 100, 0, 64, 0xffff, 0);
-            if (p->mKind == 2) {
-                p = &gFieldObjects.mList[p->mListIndex];
+            if (obj->mKind == 2) {
+                obj = &gFieldObjects.mList[obj->mListIndex];
             }
-            InitModel(p->mModel, 0, 0, 0, data_0201abbc[11]);
-            p->mUnk_38 = -1;
-            p->mUnk_34 = -1;
-            p->mUnk_30 = -1;
+            InitModel(obj->mModel, 0, 0, 0, data_0201abbc[11]);
+            obj->mUnk_38 = -1;
+            obj->mUnk_34 = -1;
+            obj->mUnk_30 = -1;
             gFieldObjects.mNoScoreTimer = gFieldObjects.mNoScoreFrameCount;
             return;
         case 3:
             StartDrivePlusX(25 << 12, 0x15e);
-            if (p->mType == 0) {
+            if (obj->mType == 0) {
                 break;
             }
-            p->mType = 0;
+            obj->mType = 0;
             PlayWaveKeepAlive(1, 100, 0, 64, 0xffff, 0);
             return;
         case 4:
-            if (p->mType == 0) {
+            if (obj->mType == 0) {
                 break;
             }
-            ProjectToScreen(&p->mPosX, pos);
-            p->mType = 0;
+            ProjectToScreen(&obj->mPosX, pos);
+            obj->mType = 0;
             AddCappedAt5999(&gFieldObjects.mEndTimer, 60000 * gFieldObjects.mAddSeconds / 1000);
             sprintf(text, "+%d'", gFieldObjects.mAddSeconds);
             AddTextObjSlot(text, 2, data_0201a61c, 30, pos[0], pos[1], 0, -128, 100, 1, 0);
@@ -489,15 +489,15 @@ void DrawField(void) {
 
 void UpdateField(void) {
     s32 pos[2];
-    u8 mode;
+    u8 slideState;
     func_020059cc(gFieldObjects.mScore >> 8);
-    mode = GetModeSlideState();
-    if (mode != MODE_SLIDE_STATE_NONE) {
-        int r;
+    slideState = GetModeSlideState();
+    if (slideState != MODE_SLIDE_STATE_NONE) {
+        int busy;
         UpdateCamera();
         DrawField();
-        r = UpdateModeSlide(1);
-        if (mode == MODE_SLIDE_STATE_END && r == 0) {
+        busy = UpdateModeSlide(1);
+        if (slideState == MODE_SLIDE_STATE_END && busy == 0) {
             StartResultScreen(GetScoreThresholdMet(), gFieldObjects.mScore >> 8);
         }
         return;

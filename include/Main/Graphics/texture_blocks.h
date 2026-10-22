@@ -69,19 +69,19 @@ void ReleaseTextureLayers(void);
 void ReleaseTextureLayersEx(int a);
 void func_0202c2f0(void *dst, const void *src, u32 w, u32 h, BOOL mode);
 void func_0202c3e0(Transfer *entry, const void *src, u32 w);
-void MoveChainEntryToListEnd(u32 i, TextureLayer *half);
-u32 FindChainEntry(u32 key, u32 val, TextureLayer *half);
-u32 func_0202c5fc(u32 index, u32 key, u32 val, TextureLayer *half);
-s32 func_0202c778(u16 *keys, int a, u32 n, int engine);
-s32 func_0202ca80(u16 *ids, int flag, u32 count, int mode);
+void MoveChainEntryToListEnd(u32 i, TextureLayer *textureLayer);
+u32 FindChainEntry(u32 key, u32 val, TextureLayer *textureLayer);
+u32 func_0202c5fc(u32 index, u32 key, u32 val, TextureLayer *textureLayer);
+s32 func_0202c778(u16 *keys, int a, u32 n, int layer);
+s32 func_0202ca80(u16 *ids, int flag, u32 count, int layer);
 void func_0202cce0(u32 obj, u32 rec, u8 *out);
 u8 GetMatCount(int layer);
 u32 FindOrAddMat(int angle, int sx, int sy, u32 flags);
-void DrawSprite(int id, int x, int y, int w, int mode);
-void DrawSpriteEx(int id, int x, int y, int w, int angle, int sx, int sy, int mode);
+void DrawSprite(int id, int x, int y, int w, int layer);
+void DrawSpriteEx(int id, int x, int y, int w, int angle, int sx, int sy, int layer);
 int GetSpritePoint(u16 flags, int index, s32 *out);
 int GetSpriteRect(int obj, int a, s32 *rect);
-void WriteOam(int a);
+void WriteOam(int layer);
 
 #ifdef __cplusplus
 }

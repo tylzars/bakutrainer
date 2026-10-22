@@ -130,13 +130,13 @@ void SetupMapObjects(void);
 void UpdateFollowers(int stage);
 void UpdateFollower(FollowerGroup *followers, int index, u16 angle);
 void MoveFollowers(FollowerGroup *followers);
-int SelectStageOnTap(int index, int *sel);
+int SelectStageOnTap(int stage, int *out);
 void UpdateStageMotion(int index, int *sel, int flags);
 int func_020182b8(int row, int column);
 void func_020182cc(void);
 void func_02018558(void);
 void func_020186cc(void);
-int func_020186f0(u8 stage);
+int func_020186f0(u8 tableRow);
 void func_020186fc(int stage);
 void AddStageAmountObjSlots(StageRec *rec, int kind, int amount);
 void func_02018840(StageRec *rec, int kind, int index);
@@ -155,15 +155,15 @@ void func_02019788(void);
 extern VecFx32 data_020c1800;
 extern VecFx32 data_020c180c;
 int func_02019874(VecFx32 *pos);
-void StartStageMoveObject(StageRec *rec, int x, int y, int c, int d, int e);
+void StartStageMoveObj(StageRec *rec, int x, int y, int c, int d, int mode);
 void func_02019b38(void);
 void UpdateMapCursorAndCamera(VecFx32 *a, VecFx32 *b);
 void SetupMapMenu(void);
 void func_02019800(StageRec *rec);
 void func_020198f0(void);
-void DrawStageSprite(StageRec *rec, int a, int b, int c, int d, int e);
+void DrawStageSprite(StageRec *rec, int index, int sprite, int mulX, int mulY, int prio);
 void func_02019ad8(void);
-void UpdateStageMoveObject(void);
+void UpdateStageMoveObj(void);
 #ifdef __cplusplus
 }
 #endif

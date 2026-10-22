@@ -390,19 +390,19 @@ u32 GetNextState(void) {
 void SetFlowValue(u32 index, u32 value) {
     GameFlow *flow = &gGameFlow;
 
-    if (index >= HANDLER_COUNT) {
+    if (index >= FLOW_VALUE_COUNT) {
         OS_Terminate();
     }
-    flow->mHandlers[index] = value;
+    flow->mValues[index] = value;
 }
 
 u32 GetFlowValue(u32 index) {
     GameFlow *flow = &gGameFlow;
 
-    if (index >= HANDLER_COUNT) {
+    if (index >= FLOW_VALUE_COUNT) {
         OS_Terminate();
     }
-    return flow->mHandlers[index];
+    return flow->mValues[index];
 }
 
 void SetStateFlag(s32 value) {
@@ -547,7 +547,7 @@ void ClosePromptScreen(void) {
 void DrawPromptScreen(void) {
     int i;
     int flag;
-    int mode;
+    int layer;
 
     if (gPromptScreen.mState == PROMPT_SCREEN_STATE_IN_PLACE) {
         flag = 1;
@@ -564,11 +564,11 @@ void DrawPromptScreen(void) {
             DrawSprite(0x11ea + i, (i & 3) << 6, (u32) i / 4 << 6, 250, 2);
         }
     }
-    mode = IsLcdSwapped() != 0 ? 1 : 2;
-    DrawText(128, 96, data_0201a64e, GetText(36), 2, 200, 16, mode);
+    layer = IsLcdSwapped() != 0 ? 1 : 2;
+    DrawText(128, 96, data_0201a64e, GetText(36), 2, 200, 16, layer);
     DrawSprite(0xe22, 47, (gPromptScreen.mTextY >> 8) + 17, 140, IsLcdSwapped() != 0 ? 2 : 1);
-    mode = IsLcdSwapped() != 0 ? 2 : 1;
-    DrawText(47, (gPromptScreen.mTextY >> 8) + 17, data_0201a61c, GetText(36), 0, 200, 16, mode);
+    layer = IsLcdSwapped() != 0 ? 2 : 1;
+    DrawText(47, (gPromptScreen.mTextY >> 8) + 17, data_0201a61c, GetText(36), 0, 200, 16, layer);
     func_0200bc50((gPromptScreen.mFirstButtonX >> 8) + 128, 82, 0, 0, 140, PROMPT_SCREEN_BUTTON_FIRST, 0xdda,
                   GetText(37), data_0201a61c, 2, 0, 0, flag, 0, 0, 0);
     func_0200bc50((gPromptScreen.mSecondButtonX >> 8) + 128, 122, 0, 0, 140, PROMPT_SCREEN_BUTTON_SECOND, 0xdda,
@@ -674,7 +674,7 @@ void RunPromptScreen(void) {
 
 void func_020101d0(void) {
     int i;
-    int mode;
+    int layer;
     int id = gSystemState.mSaveLastField + 4 + data_020b1084.mLanguage * 10;
 
     if (gSystemState.mImageIds[0] == 0xffff) {
@@ -687,8 +687,8 @@ void func_020101d0(void) {
             DrawSprite(0x11ea + i, (i & 3) << 6, (u32) i / 4 << 6, 250, 2);
         }
     }
-    mode = IsLcdSwapped() != 0 ? 2 : 1;
-    DrawText(128, 90, data_0201a64e, (const char *) GetFileString(SAVE_BLOCK_ID, id + 6), 2, 200, 16, mode);
+    layer = IsLcdSwapped() != 0 ? 2 : 1;
+    DrawText(128, 90, data_0201a64e, (const char *) GetFileString(SAVE_BLOCK_ID, id + 6), 2, 200, 16, layer);
 }
 
 void func_02010294(int a, int b, int c) {

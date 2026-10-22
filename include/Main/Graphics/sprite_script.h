@@ -14,7 +14,7 @@ int UpdateSprite(void *obj);
 void StartSprite(void *obj, void *p);
 
 // Queues the frame `a` of a sprite at (x, y) with priority `prio`; `e` is not used.
-int func_0202de80(int a, int x, int y, int prio, int e, int mode);
+int func_0202de80(int a, int x, int y, int prio, int e, int layer);
 
 #ifdef __cplusplus
 }

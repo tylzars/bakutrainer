@@ -26,12 +26,12 @@ LinkBuffers gLinkBuffers __attribute__((aligned(32))) = {0};
 #define DISPCNT_BGS 0xf00
 #define DISPCNT_OBJ 0x1000
 
-// Steps whose end the link waits for in WaitForLinkStep (bits of LinkBuffers.mFlags). LINK_STEP_PARENT and
-// LINK_STEP_CHILD are set by the callbacks of ShutDownLink's first and second step, which both run whatever the link's
-// role; nothing sets LINK_STEP_STATUS.
+// Steps whose end the link waits for in WaitForLinkStep (bits of LinkBuffers.mFlags). LINK_STEP_FIRST_SHUT_DOWN and
+// LINK_STEP_SECOND_SHUT_DOWN are set by the callbacks of ShutDownLink's first and second step, which both run
+// whatever the link's role; nothing sets LINK_STEP_STATUS.
 #define LINK_STEP_STATUS 0x10
-#define LINK_STEP_PARENT 0x20
-#define LINK_STEP_CHILD 0x40
+#define LINK_STEP_FIRST_SHUT_DOWN 0x20
+#define LINK_STEP_SECOND_SHUT_DOWN 0x40
 #define LINK_PACKET_OUT 0x200
 
 // One entry of object attribute memory (attributes 0-2, then one of the four affine parameters of the entry's group).
@@ -42,25 +42,25 @@ typedef struct {
     vu16 mUnk_6;
 } Unk_OamEntry;
 
-// Sets up one object of a screen: calls DrawSprite for the picture `id`, then writes object attribute entry `index`
-// (attr0, attribute 1 from `attr2`, and attribute 2 from a tile offset and the palette) and, when `rotate` is set, the
-// rotation entry of the screen's group from the sine/cosine table at the frame counter's phase.
-void WriteIndicatorOam(int id, u32 shift, u32 index, u32 attr2, u32 attr0, int rotate, int screen) {
-    Unk_OamEntry *oam = screen == 1 ? (Unk_OamEntry *) 0x07000000 : (Unk_OamEntry *) 0x07000400;
+// Sets up one object of layer `layer`: calls DrawSprite for the picture `id`, then writes object attribute entry
+// `index` (attr0, attribute 1 from `attr1`, and attribute 2 from a tile offset and the palette) and, when `rotate` is
+// set, the rotation entry of the layer's group from the sine/cosine table at the frame counter's phase.
+void WriteIndicatorOam(int id, u32 shift, u32 index, u32 attr1, u32 attr0, int rotate, int layer) {
+    Unk_OamEntry *oam = layer == 1 ? (Unk_OamEntry *) 0x07000000 : (Unk_OamEntry *) 0x07000400;
     s16 tile;
 
-    DrawSprite(id + 0x200000, 0x80, 0x60, 0, screen);
+    DrawSprite(id + 0x200000, 0x80, 0x60, 0, layer);
     tile = func_0202ad9c();
     if (tile < 0) {
         return;
     }
-    tile += (shift * 4 >> GetUnitShift(screen));
+    tile += (shift * 4 >> GetUnitShift(layer));
     if (rotate == 0) {
         oam[index].mUnk_0 = attr0;
-        oam[index].mUnk_2 = attr2 + 0x4000;
+        oam[index].mUnk_2 = attr1 + 0x4000;
     } else {
         int angle = (gSystemState.mElapsedFrames & 0xff) << 8;
-        u32 group = GetMatCount(screen);
+        u32 group = GetMatCount(layer);
         int k = (angle >> 4) * 2;
 
         *(vu16 *) ((u8 *) oam + 6 + group * 32) = FX_SinCosTable_[k + 1] >> 4;
@@ -68,7 +68,7 @@ void WriteIndicatorOam(int id, u32 shift, u32 index, u32 attr2, u32 attr0, int r
         *(vu16 *) ((u8 *) oam + 14 + group * 32) = FX_SinCosTable_[k] >> 4;
         ((vu16 *) ((u8 *) oam + group * 32))[11] = -*(vu16 *) ((u8 *) oam + 14 + group * 32);
         oam[index].mUnk_0 = 0x300 | attr0;
-        oam[index].mUnk_2 = attr2 + 0x8000 + group * 512;
+        oam[index].mUnk_2 = attr1 + 0x8000 + group * 512;
     }
     oam[index].mUnk_4 = tile + (func_0202adac() << 12);
 }
@@ -76,7 +76,7 @@ void WriteIndicatorOam(int id, u32 shift, u32 index, u32 attr2, u32 attr0, int r
 // Holds a countdown at 20 while IsCommReading reports 1 and counts it down otherwise. When the screens are flagged,
 // saves the plane bits of each engine's display control (hiding all but the objects on the engine that is not the
 // indicator's), or puts them back, then draws the two objects.
-void UpdateCommIndicator(u32 attr2, u32 attr0, int screen) {
+void UpdateCommIndicator(u32 attr1, u32 attr0, int screen) {
     int layer;
     int other;
     int i;
@@ -128,7 +128,7 @@ void UpdateCommIndicator(u32 attr2, u32 attr0, int screen) {
         if ((gSystemState.mFlags & 0xc0000) && gSystemState.mUnk_250.mUnk_28[0] != 0) {
             WriteIndicatorOam(gSystemState.mUnk_290 + 9, 0, 0x7e, 0x61, 0x41, 1, layer);
         }
-        WriteIndicatorOam(gSystemState.mUnk_290 + 10, 3 - func_0204672c(), 0x7f, attr2, attr0, 0, layer);
+        WriteIndicatorOam(gSystemState.mUnk_290 + 10, 3 - func_0204672c(), 0x7f, attr1, attr0, 0, layer);
     }
 }
 
@@ -145,7 +145,7 @@ u32 GetIndicatorLayer(void) {
 void UpdateIndicator(void) {
     u32 x;
     u32 y;
-    u32 screen;
+    u32 layer;
     u32 level;
     u16 *src;
     u16 *dst;
@@ -159,18 +159,18 @@ void UpdateIndicator(void) {
         return;
     }
     {
-        u8 colors[8] = {0, 0, 0xf0, 0, 0xf0, 0xb0, 0, 0xb0};
+        u8 positions[8] = {0, 0, 0xf0, 0, 0xf0, 0xb0, 0, 0xb0};
 
-        x = colors[(gSystemState.mUnk_2a4[0] & 3) * 2];
-        y = colors[(gSystemState.mUnk_2a4[0] & 3) * 2 + 1];
+        x = positions[(gSystemState.mUnk_2a4[0] & 3) * 2];
+        y = positions[(gSystemState.mUnk_2a4[0] & 3) * 2 + 1];
     }
-    screen = GetIndicatorLayer();
+    layer = GetIndicatorLayer();
     level = 3 - func_0204672c();
     if (gSystemState.mFlags & 3) {
         if (gSystemState.mFlags & 0x200) {
-            UpdateCommIndicator(x, y, screen);
+            UpdateCommIndicator(x, y, layer);
         } else {
-            DrawSprite(gSystemState.mUnk_290 + level, x, y, 0, screen);
+            DrawSprite(gSystemState.mUnk_290 + level, x, y, 0, layer);
         }
         if (gSystemState.mUnk_240 != 0) {
             gSystemState.mUnk_240();
@@ -215,10 +215,10 @@ void ShutDownLink(void) {
     (void) ((gSystemState.mUnk_2a4[1] >= 1) ? 0 : 0);
     if ((gSystemState.mFlags & 0x600) || gSystemState.mUnk_2a4[1] >= 1) {
         if (func_0204684c(FirstShutDownStepCallback) == 2) {
-            WaitForLinkStep(LINK_STEP_PARENT, 0x2d0);
+            WaitForLinkStep(LINK_STEP_FIRST_SHUT_DOWN, 0x2d0);
         }
         if (func_02046884(SecondShutDownStepCallback) == 2) {
-            WaitForLinkStep(LINK_STEP_CHILD, 0x3c);
+            WaitForLinkStep(LINK_STEP_SECOND_SHUT_DOWN, 0x3c);
         }
     }
     gSystemState.mUnk_2a4[1] = -1;
@@ -309,7 +309,7 @@ void FirstShutDownStepCallback(WirelessMsg *msg) {
     if (msg->mError != 0) {
         func_0203982c(msg->mUnk_00);
     } else {
-        gLinkBuffers.mFlags |= LINK_STEP_PARENT;
+        gLinkBuffers.mFlags |= LINK_STEP_FIRST_SHUT_DOWN;
     }
 }
 
@@ -317,6 +317,6 @@ void SecondShutDownStepCallback(WirelessMsg *msg) {
     if (msg->mError != 0) {
         func_0203982c(msg->mUnk_00);
     } else {
-        gLinkBuffers.mFlags |= LINK_STEP_CHILD;
+        gLinkBuffers.mFlags |= LINK_STEP_SECOND_SHUT_DOWN;
     }
 }

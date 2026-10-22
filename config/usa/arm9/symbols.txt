@@ -32,7 +32,7 @@ func_020010b4 kind:function(arm,size=0x6c) addr:0x020010b4
 ShutDownComm kind:function(arm,size=0x50) addr:0x02001120
 UpdateCommParent kind:function(arm,size=0x6c) addr:0x02001170
 main kind:function(thumb,size=0x194) addr:0x02003000
-LookupFallingBlocksValue kind:function(thumb,size=0x18) addr:0x02003194
+GetFallingBlocksValue kind:function(thumb,size=0x18) addr:0x02003194
 CellToBoardPos kind:function(thumb,size=0x1c) addr:0x020031ac
 BoardPosToCell kind:function(thumb,size=0x26) addr:0x020031c8
 func_020031f0 kind:function(thumb,size=0x28) addr:0x020031f0
@@ -92,7 +92,7 @@ StartResultScreen kind:function(thumb,size=0x18) addr:0x020059b4
 func_020059cc kind:function(thumb,size=0x2) addr:0x020059cc
 AddCappedAt999Shifted kind:function(thumb,size=0x18) addr:0x020059d0
 AddCappedAt5999 kind:function(thumb,size=0x18) addr:0x020059e8
-UpdateTimeLeft kind:function(thumb,size=0x8c) addr:0x02005a00
+UpdateTimeRemaining kind:function(thumb,size=0x8c) addr:0x02005a00
 StartModeSlide kind:function(thumb,size=0x90) addr:0x02005a8c
 UpdateModeSlide kind:function(thumb,size=0xdc) addr:0x02005b1c
 GetModeSlideState kind:function(thumb,size=0xc) addr:0x02005bf8
@@ -167,8 +167,8 @@ func_0200a3f4 kind:function(thumb,size=0x8) addr:0x0200a3f4
 func_0200a3fc kind:function(thumb,size=0x1d0) addr:0x0200a3fc
 func_0200a5cc kind:function(thumb,size=0x24) addr:0x0200a5cc
 func_0200a5f0 kind:function(thumb,size=0x380) addr:0x0200a5f0
-LookupParticleKindValue kind:function(thumb,size=0x18) addr:0x0200a970
-LookupParticleGameValue kind:function(thumb,size=0x14) addr:0x0200a988
+GetParticleKindValue kind:function(thumb,size=0x18) addr:0x0200a970
+GetParticleGameValue kind:function(thumb,size=0x14) addr:0x0200a988
 func_0200a99c kind:function(thumb,size=0x90) addr:0x0200a99c
 func_0200aa2c kind:function(thumb,size=0x3c) addr:0x0200aa2c
 func_0200aa68 kind:function(thumb,size=0x32) addr:0x0200aa68
@@ -240,7 +240,7 @@ LoadSceneValues kind:function(thumb,size=0x1bc) addr:0x0200d434
 ClearNumber kind:function(thumb,size=0x1c) addr:0x0200d5f0
 ShowNumber kind:function(thumb,size=0x2c) addr:0x0200d60c
 DrawNumber kind:function(thumb,size=0x78) addr:0x0200d638
-func_0200d6b0 kind:function(thumb,size=0x18) addr:0x0200d6b0
+GetSceneScoreThreshold kind:function(thumb,size=0x18) addr:0x0200d6b0
 ClearObjSlots kind:function(thumb,size=0x24) addr:0x0200d6c8
 AddObjSlot kind:function(thumb,size=0x80) addr:0x0200d6ec
 AddAnimObjSlot kind:function(thumb,size=0x20) addr:0x0200d76c
@@ -449,9 +449,9 @@ func_02019800 kind:function(thumb,size=0x74) addr:0x02019800
 func_02019874 kind:function(thumb,size=0x7c) addr:0x02019874
 func_020198f0 kind:function(thumb,size=0x84) addr:0x020198f0
 DrawStageSprite kind:function(thumb,size=0xc4) addr:0x02019974
-StartStageMoveObject kind:function(thumb,size=0xa0) addr:0x02019a38
+StartStageMoveObj kind:function(thumb,size=0xa0) addr:0x02019a38
 func_02019ad8 kind:function(thumb,size=0x14) addr:0x02019ad8
-UpdateStageMoveObject kind:function(thumb,size=0x4c) addr:0x02019aec
+UpdateStageMoveObj kind:function(thumb,size=0x4c) addr:0x02019aec
 func_02019b38 kind:function(thumb,size=0x2) addr:0x02019b38
 UpdateMapCursorAndCamera kind:function(thumb,size=0x2bc) addr:0x02019b3c
 SetupMapMenu kind:function(thumb,size=0x1a8) addr:0x02019df8
@@ -741,7 +741,7 @@ ReadTouchAndAppendTrail kind:function(thumb,size=0xa4) addr:0x02020e3c
 InitBackup kind:function(thumb,size=0x58) addr:0x02020ee0
 WriteBackup kind:function(thumb,size=0x64) addr:0x02020f38
 ReadBackup kind:function(thumb,size=0x58) addr:0x02020f9c
-InitMic kind:function(thumb,size=0x60) addr:0x02020ff4
+SetupMic kind:function(thumb,size=0x60) addr:0x02020ff4
 func_02021054 kind:function(thumb,size=0x20) addr:0x02021054
 StartMicSampling kind:function(thumb,size=0x50) addr:0x02021074
 StopMicSampling kind:function(thumb,size=0x8) addr:0x020210c4
@@ -1944,7 +1944,7 @@ ARM9_CTOR_END kind:data(any) addr:0x02063900
 @1701 kind:data(any) addr:0x02063908 local
 @1702 kind:data(any) addr:0x0206390c local
 @1703 kind:data(any) addr:0x02063914 local
-gPrevTimeLeft kind:data(any) addr:0x0206391c
+gPrevTimeRemaining kind:data(any) addr:0x0206391c
 @1506 kind:data(any) addr:0x02063920 local
 @2534 kind:data(any) addr:0x02063924 local
 @3357 kind:data(any) addr:0x0206392c local

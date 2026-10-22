@@ -1095,7 +1095,7 @@ void func_02018558(void) {
     Unk_020bfd40 *obj = &data_020b6ee0.mUnk_8e60;
     StageRec *rec = &gStages[stage];
     VecFx32 pos;
-    u8 mode;
+    u8 slideState;
     int busy;
 
     if (stage >= STAGE_MAX) {
@@ -1125,10 +1125,10 @@ void func_02018558(void) {
     func_02015f34();
     func_02016008(stage);
     func_020164e0(stage);
-    mode = GetModeSlideState();
-    if (mode != MODE_SLIDE_STATE_NONE) {
+    slideState = GetModeSlideState();
+    if (slideState != MODE_SLIDE_STATE_NONE) {
         busy = UpdateModeSlide(1);
-        if (mode == MODE_SLIDE_STATE_END && busy == 0) {
+        if (slideState == MODE_SLIDE_STATE_END && busy == 0) {
             StartResultScreen(GetScoreThresholdMet(), obj->mScore);
         }
         return;
@@ -1143,8 +1143,8 @@ void func_020186cc(void) {
     ResetVramBanks();
 }
 
-int func_020186f0(u8 stage) {
-    return func_020182b8(stage, 3);
+int func_020186f0(u8 tableRow) {
+    return func_020182b8(tableRow, 3);
 }
 
 void func_020186fc(int stage) {
@@ -1456,7 +1456,7 @@ void func_02018cd4(void) {
         }
         UpdateStageMotion(idx, &data_020b6ee0.mSelectedStageIndex, flags);
     }
-    UpdateStageMoveObject();
+    UpdateStageMoveObj();
     func_02031fc4(0, &view.mPos);
     SetDrawParams(&view, view.mPos.x, view.mPos.y, view.mPos.z, 0x1000, 0, 0, 0, 0x100);
     UpdateAndDrawModel(&data_020b6ee0.mUnk_9c64, &view, 0);
@@ -1722,7 +1722,7 @@ void func_02019788(void) {
 }
 
 // Finds the mUnk_9024 entry within range of the record's position (func_02019874). If it is kind 1, removes it, starts
-// the move object from the record's screen point (UpdateStageMoveObject adds 10 percent to the record when it ends),
+// the move object from the record's screen point (UpdateStageMoveObj adds 10 percent to the record when it ends),
 // plays sound 0xe0 (PlayWaveKeepAlive) and sets mUnk_a570. Called for the selected stage in panel states 0..2 and 5.
 void func_02019800(StageRec *rec) {
     int i = func_02019874(&rec->mPos);
@@ -1732,7 +1732,7 @@ void func_02019800(StageRec *rec) {
 
         if (e->mKind == 1) {
             func_02019750(i);
-            StartStageMoveObject(rec, rec->mScreenX, rec->mScreenY, 0x3e, 0x5e, 1);
+            StartStageMoveObj(rec, rec->mScreenX, rec->mScreenY, 0x3e, 0x5e, 1);
             PlayWaveKeepAlive(0xe0, 0x64, 0, 0x40, 0xffff, 0);
             data_020b6ee0.mUnk_a570 = 1;
         }
@@ -1781,7 +1781,7 @@ void func_020198f0(void) {
 // Eases the record's sprite offset index (0..2) toward mulX and mulY times a scale set by mPanelState (0x200 in state
 // 0, 0x280 in state 1, else 0x500) and draws sprite there; nothing while mVisible is 0. Sprite 0 is not drawn, and
 // index 1 only while mUnk_22e is set, on alternate 32-frame halves.
-void DrawStageSprite(StageRec *rec, int index, int sprite, int mulX, int mulY, int width) {
+void DrawStageSprite(StageRec *rec, int index, int sprite, int mulX, int mulY, int prio) {
     int scale;
     StageOffset *e;
 
@@ -1812,14 +1812,14 @@ void DrawStageSprite(StageRec *rec, int index, int sprite, int mulX, int mulY, i
         EaseToward(&e->x, mulX, 8);
         EaseToward(&e->y, mulY, 8);
         if (sprite != 0) {
-            DrawSprite(sprite, rec->mScreenX + e->x / 512, rec->mScreenY - e->y / 512, width, 1);
+            DrawSprite(sprite, rec->mScreenX + e->x / 512, rec->mScreenY - e->y / 512, prio, 1);
         }
     }
 }
 
 // Starts the move object carrying the record: with mode 1 from (x, y) to the record's percent position (PercentToX of
 // mInfo.mPercent, 0x5e - 252), otherwise the reverse. c and d are unused.
-void StartStageMoveObject(StageRec *rec, int x, int y, int c, int d, int mode) {
+void StartStageMoveObj(StageRec *rec, int x, int y, int c, int d, int mode) {
     MoveObj *o = &data_020b6ee0.mMoveObj;
     Vec2i pos;
     int r;
@@ -1843,12 +1843,12 @@ void func_02019ad8(void) {
 }
 
 // Runs the move object; when it has ended, adds 10 percent to the record it carries (AddPercent(rec, 10, 1, 1)).
-void UpdateStageMoveObject(void) {
+void UpdateStageMoveObj(void) {
     MoveObj *o = &data_020b6ee0.mMoveObj;
 
-    if (o->mActive == 1) {
+    if (o->mPresent == 1) {
         UpdateMoveObj(o, 0);
-        if (o->mActive == 1) {
+        if (o->mPresent == 1) {
             DrawMoveObj(o);
             return;
         }
