@@ -20,7 +20,7 @@
 #define SPRITE_CMD_JUMP_IF_EQUAL 0xfff3
 #define SPRITE_CMD_JUMP_IF_NOT_EQUAL 0xfff2
 
-int func_0202db1c(void *obj) {
+int UpdateSprite(void *obj) {
     Sprite *o = obj;
     u32 dur;
     u32 pend;
@@ -175,8 +175,7 @@ int func_0202db1c(void *obj) {
     }
 }
 
-// Clears the sprite object and starts it on the script `p`.
-void func_0202de60(void *obj, void *p) {
+void StartSprite(void *obj, void *p) {
     Sprite *o = obj;
 
     MI_CpuFill8(o, 0, sizeof(Sprite));
@@ -187,6 +186,6 @@ void func_0202de60(void *obj, void *p) {
 
 // Queues the frame `a` of a sprite at (x, y) with priority `prio`; `e` is not used.
 int func_0202de80(int a, int x, int y, int prio, int e, int mode) {
-    func_0202cf08(a, x, y, prio, mode);
+    DrawSprite(a, x, y, prio, mode);
     return 1;
 }

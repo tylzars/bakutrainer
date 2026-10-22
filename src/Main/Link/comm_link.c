@@ -99,8 +99,8 @@ void func_02034a60(int a) {
 
     if (a == 0) {
         SetFaded(3);
-        func_0202c1c4();
-        func_02022370();
+        ReleaseTextureLayers();
+        ReleaseGxPool();
         SetLcdSwap(0);
         FreeVramBanks(2);
         FreeVramBanks(6);

@@ -59,7 +59,7 @@ void func_0200a3fc(void) {
     switch (sel->mUnk_04) {
         case 0:
             id = sel->mUnk_10 + 0xfa8;
-            func_0202cf08(id, 127, 88, 255, 2);
+            DrawSprite(id, 127, 88, 255, 2);
             func_0200a5f0();
             if (id == 0xfb3) {
                 func_0200a5cc(1);
@@ -67,7 +67,7 @@ void func_0200a3fc(void) {
             }
             break;
         case 1:
-            func_0202cf08(0xfb3, 127, 88, 255, 2);
+            DrawSprite(0xfb3, 127, 88, 255, 2);
             func_0200a5f0();
             if (func_0200bd80(0x20000000, 0x101)) {
                 if (data_020b6ee0.mNodeStageCount) {
@@ -79,7 +79,7 @@ void func_0200a3fc(void) {
             }
             break;
         case 2:
-            func_0202cf08(0xfb3, 127, 88, 255, 2);
+            DrawSprite(0xfb3, 127, 88, 255, 2);
             func_0200a5f0();
             if (func_0200bd80(0x20000000, 0x101)) {
                 sel->mUnk_14++;
@@ -152,7 +152,7 @@ void func_0200a5f0(void) {
             sel->mUnk_08 = 0;
             return;
         case 1: {
-            func_020215fc(127, 37, data_0201a64e, GetText(51), 2, 256, 16, 2);
+            DrawText(127, 37, data_0201a64e, GetText(51), 2, 256, 16, 2);
             for (i = 0; i <= sel->mUnk_14 && i < 3; i++) {
                 u32 t[3];
                 u32 k;
@@ -188,8 +188,8 @@ void func_0200a5f0(void) {
                     x += 76;
                 }
                 y = MapRangeFromZero(t[0], 0x4000, -32, 106);
-                func_0202cf08(rec->mInfo.mUnk_13 + 0x1089, x, y, gSystemState.mUnk_308 - 4, 2);
-                func_0202cf08(0x1088, x, 106, gSystemState.mUnk_308 - 2, 2);
+                DrawSprite(rec->mInfo.mUnk_13 + 0x1089, x, y, gSystemState.mUnk_308 - 4, 2);
+                DrawSprite(0x1088, x, 106, gSystemState.mUnk_308 - 2, 2);
                 if (i == 0) {
                     xx = MapRangeFromZero(t[1], 0x4000, -128, x);
                     yy = 121;
@@ -209,7 +209,7 @@ void func_0200a5f0(void) {
                 } else {
                     id = 0xfd6;
                 }
-                func_0202cf08(id, xx, yy, gSystemState.mUnk_308 - 4, 2);
+                DrawSprite(id, xx, yy, gSystemState.mUnk_308 - 4, 2);
                 if (data_020b6ee0.mUnk_a8f3[i] & 1) {
                     data_020b6ee0.mUnk_c6c[i] = -1;
                     if (i == 0) {
@@ -221,9 +221,9 @@ void func_0200a5f0(void) {
                         x = MapRangeFromZero(t[2], 0x4000, 384, x);
                         y = 48;
                     }
-                    func_0202cf08(0xfca, x, y, gSystemState.mUnk_308 - 8, 2);
-                    func_0202cf08(gSystemState.mElapsedFrames / 4 % 9 + 0x11ad, x + 14, y + 24,
-                                  gSystemState.mUnk_308 - 6, 2);
+                    DrawSprite(0xfca, x, y, gSystemState.mUnk_308 - 8, 2);
+                    DrawSprite(gSystemState.mElapsedFrames / 4 % 9 + 0x11ad, x + 14, y + 24, gSystemState.mUnk_308 - 6,
+                               2);
                 }
             }
             if (sel->mUnk_14 == 3) {
@@ -238,12 +238,12 @@ void func_0200a5f0(void) {
                 OS_Terminate();
             }
             rec = &data_020b1990[id];
-            func_020215fc(127, 37, data_0201a64e, GetText(50), 2, 256, 16, 2);
-            func_0202cf08(rec->mInfo.mUnk_13 + 0x1089, 127, MapRangeFromZero(sel->mUnk_18[0], 0x4000, -32, 106),
-                          gSystemState.mUnk_308 - 4, 2);
-            func_0202cf08(0x1088, 127, 106, gSystemState.mUnk_308 - 2, 2);
-            func_020215fc(127, MapRangeFromZero(sel->mUnk_18[0], 0x4000, 208, 135), data_0201a61c,
-                          GetText(rec->mInfo.mUnk_13 + 98), 2, 256, 16, 2);
+            DrawText(127, 37, data_0201a64e, GetText(50), 2, 256, 16, 2);
+            DrawSprite(rec->mInfo.mUnk_13 + 0x1089, 127, MapRangeFromZero(sel->mUnk_18[0], 0x4000, -32, 106),
+                       gSystemState.mUnk_308 - 4, 2);
+            DrawSprite(0x1088, 127, 106, gSystemState.mUnk_308 - 2, 2);
+            DrawText(127, MapRangeFromZero(sel->mUnk_18[0], 0x4000, 208, 135), data_0201a61c,
+                     GetText(rec->mInfo.mUnk_13 + 98), 2, 256, 16, 2);
             if (sel->mUnk_18[0] == 0x4000) {
                 sel->mUnk_08 = 1;
             }
@@ -256,11 +256,11 @@ void func_0200a5f0(void) {
 }
 
 int func_0200a970(int a, int b) {
-    return func_02021e44(0xd5f, b + a * 10);
+    return GetFileValue(0xd5f, b + a * 10);
 }
 
 int func_0200a988(int a, int b) {
-    return func_02021e44(0xd60, b + a * 20);
+    return GetFileValue(0xd60, b + a * 20);
 }
 
 void func_0200a99c(DrawParams *p, u32 a, u32 b, u32 c, s32 d, u16 e, u8 f, u8 g, s32 h) {
@@ -290,14 +290,14 @@ void func_0200a99c(DrawParams *p, u32 a, u32 b, u32 c, s32 d, u16 e, u8 f, u8 g,
 void func_0200aa2c(Model *obj, u32 a, u32 b, s32 c, u16 d, s32 e) {
     DrawParams params;
     func_0200a99c(&params, a, b, 0, c, d, 4, 255, e);
-    func_020262a0(obj);
-    func_02024b5c(obj->mUnk_170, &params, obj, e);
+    UpdateModelScript(obj);
+    DrawModelFileEx(obj->mUnk_170, &params, obj, e);
 }
 
 void func_0200aa68(u16 id, u32 a, u32 b, u32 c, s32 d, u16 e, u8 f, s32 g) {
     DrawParams params;
     func_0200a99c(&params, a, b, c, d, e, 4, f, g);
-    func_02024b5c(id, &params, 0, g);
+    DrawModelFileEx(id, &params, 0, g);
 }
 
 int func_0200aa9c(void) {
@@ -404,7 +404,7 @@ int func_0200aadc(Particle *src, int kind) {
                      dy / (dist + 1))
                     << 8;
             }
-            func_0202de60(&p->mSprite, data_0201abec[p->mUnk_00 + 6]);
+            StartSprite(&p->mSprite, data_0201abec[p->mUnk_00 + 6]);
             data_020997a4.mCount++;
             return 1;
         }
@@ -426,9 +426,9 @@ void func_0200ad64(Particle *p, int flag) {
     p->mUnk_14 = 0;
     if (flag) {
         if (p->mUnk_00 == 2) {
-            func_0200d78c(12, 1 << 23, p->mPos.x >> 8, p->mPos.y >> 8, 0, 0, 30, 1);
+            AddAnimObjSlotEx(12, 1 << 23, p->mPos.x >> 8, p->mPos.y >> 8, 0, 0, 30, 1);
         } else {
-            func_0200d78c(11, 1 << 23, p->mPos.x >> 8, p->mPos.y >> 8, 0, 0, 30, 1);
+            AddAnimObjSlotEx(11, 1 << 23, p->mPos.x >> 8, p->mPos.y >> 8, 0, 0, 30, 1);
         }
     }
     data_020997a4.mCount--;
@@ -447,7 +447,7 @@ void func_0200adc0(Particle *p) {
                 data_020997a4.mUnk_0004 -= loss;
             }
             sprintf(buf, "-%d'", data_020997a4.mUnk_11fd8[p->mUnk_00]);
-            func_0200d838(buf, 2, data_0201a61c, 30, p->mPos.x >> 8, p->mPos.y >> 8, 0, -128, 100, 1, 0);
+            AddTextObjSlot(buf, 2, data_0201a61c, 30, p->mPos.x >> 8, p->mPos.y >> 8, 0, -128, 100, 1, 0);
             func_0202f110(47, 100, 0, 64, 0xffff, 0);
             func_0200ad64(p, 1);
             break;
@@ -460,7 +460,7 @@ void func_0200adc0(Particle *p) {
         case 4:
             func_020059e8(&data_020997a4.mUnk_0004, 60000 * data_020997a4.mUnk_11fd8[p->mUnk_00] / 1000);
             sprintf(buf, "+%d'", data_020997a4.mUnk_11fd8[p->mUnk_00]);
-            func_0200d838(buf, 2, data_0201a61c, 30, p->mPos.x >> 8, p->mPos.y >> 8, 0, -128, 100, 1, 0);
+            AddTextObjSlot(buf, 2, data_0201a61c, 30, p->mPos.x >> 8, p->mPos.y >> 8, 0, -128, 100, 1, 0);
             func_0200ad64(p, 0);
             func_0202f110(224, 100, 0, 64, 0xffff, 0);
             break;
@@ -481,19 +481,19 @@ void func_0200af28(Particle *p, int angle) {
             q.mUnk_00 = 0;
             q.mUnk_16 = 16;
             func_0200acfc(&q, base);
-            func_0202de60(&q.mSprite, data_0201abec[q.mUnk_00 + 6]);
+            StartSprite(&q.mSprite, data_0201abec[q.mUnk_00 + 6]);
             func_0200aadc(&q, -1);
             q = *p;
             q.mUnk_00 = 0;
             q.mUnk_16 = 16;
             func_0200acfc(&q, (u16) (base - 0x2000));
-            func_0202de60(&q.mSprite, data_0201abec[q.mUnk_00 + 6]);
+            StartSprite(&q.mSprite, data_0201abec[q.mUnk_00 + 6]);
             func_0200aadc(&q, -1);
             q = *p;
             q.mUnk_00 = 0;
             q.mUnk_16 = 16;
             func_0200acfc(&q, (u16) (base + 0x2000));
-            func_0202de60(&q.mSprite, data_0201abec[q.mUnk_00 + 6]);
+            StartSprite(&q.mSprite, data_0201abec[q.mUnk_00 + 6]);
             func_0200aadc(&q, -1);
             func_020059d0(&data_020997a4.mUnk_0008, data_020997a4.mUnk_11fc4[p->mUnk_00], 0);
             func_0200ad64(p, 1);
@@ -513,8 +513,8 @@ void func_0200b0a0(void) {
     for (i = 0; i < PARTICLE_COUNT; i++) {
         Particle *p = &data_020997a4.mParts[i];
         if (p->mUnk_14) {
-            func_0202db1c(&p->mSprite);
-            func_0202cf08(p->mSprite.mUnk_04 + (1 << 23), p->mPos.x >> 8, p->mPos.y >> 8, 100, 1);
+            UpdateSprite(&p->mSprite);
+            DrawSprite(p->mSprite.mUnk_04 + (1 << 23), p->mPos.x >> 8, p->mPos.y >> 8, 100, 1);
         }
     }
 }
@@ -620,7 +620,7 @@ void func_0200b278(void) {
     data_020997a4.mUnk_01b0 = 0x6000;
     data_020997a4.mUnk_023c = 0;
     data_020997a4.mUnk_0240 = 0;
-    func_020271ec(&data_020997a4.mModel, 0, 0, 0, data_0201abbc[8]);
+    InitModel(&data_020997a4.mModel, 0, 0, 0, data_0201abbc[8]);
     for (i = 0; i < PARTICLE_COUNT; i++) {
         data_020997a4.mParts[i].mUnk_14 = 0;
     }

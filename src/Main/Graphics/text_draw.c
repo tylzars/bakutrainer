@@ -6,7 +6,7 @@
 #include <nitro/os.h>
 #include <nitro/fx.h>
 
-u16 func_02021498(const u8 **text) {
+u16 ReadTextChar(const u8 **text) {
     u32 first;
     u32 lead;
     s32 mask;
@@ -68,7 +68,7 @@ u16 func_02021498(const u8 **text) {
     return acc;
 }
 
-void func_0202158c(u8 **out, u32 code) {
+void WriteTextChar(u8 **out, u32 code) {
     if (code >= 0x1000) {
         *(*out)++ = 0xe0 + (code >> 12);
         *(*out)++ = 0x80 + ((code >> 6) & 0x3f);
@@ -81,24 +81,24 @@ void func_0202158c(u8 **out, u32 code) {
     }
 }
 
-u32 func_020215f0(u32 code) {
+u32 NormalizeSpace(u32 code) {
     if (code == 0x20 || code == 0xa0) {
         code = 0x20;
     }
     return code;
 }
 
-void func_020215fc(int x, int y, const void *font, const char *text, int align, int width, int height, int mode) {
+void DrawText(int x, int y, const void *font, const char *text, int align, int width, int height, int mode) {
     const void *f = font;
-    func_02021624(x, y, (const FontRange *const *) &f, 0, (const u8 *) text, 0, align, width, height, mode);
+    DrawTextEx(x, y, (const FontRange *const *) &f, 0, (const u8 *) text, 0, align, width, height, mode);
 }
 
 // The `const u16 *` read into c keeps the glyph's own *q load (without the cast the compiler merges it with the load
 // into c), maxW doubles as the line loop's character count (zero first, so lineW and breakW copy it), spaces and lineW
 // are reused for the skipped count and the drawn width, and spaceW is reloaded inside the width loop: these keep the
 // stack slots in the original's order.
-int func_02021624(int x, int y, const FontRange *const *fonts, u8 fontIndex, const u8 *text, u16 angle, u32 flags,
-                  u32 width, int height, int mode) {
+int DrawTextEx(int x, int y, const FontRange *const *fonts, u8 fontIndex, const u8 *text, u16 angle, u32 flags,
+               u32 width, int height, int mode) {
     u8 widths[0x400];
     u16 chars[0x400];
     u16 glyphs[0x400];
@@ -187,12 +187,12 @@ int func_02021624(int x, int y, const FontRange *const *fonts, u8 fontIndex, con
 
     k = 0;
     do {
-        chars[k++] = func_02021498(&text);
+        chars[k++] = ReadTextChar(&text);
     } while (chars[k - 1] != 0);
     gSystemState.mUnk_317_0 = 0;
 
     font = fonts[fontIndex];
-    func_0202d828(font->mGlyph, 0, rect);
+    GetSpriteRect(font->mGlyph, 0, rect);
     lineH = dirMode ? rect[3] : rect[2];
 
     n = 0;
@@ -210,7 +210,7 @@ int func_02021624(int x, int y, const FontRange *const *fonts, u8 fontIndex, con
                 OS_Terminate();
             }
             font = fonts[q[1] - '0'];
-            func_0202d828(font->mGlyph, 0, rect);
+            GetSpriteRect(font->mGlyph, 0, rect);
             if (dirMode) {
                 if (lineH < rect[3]) {
                     lineH = rect[3];
@@ -232,7 +232,7 @@ int func_02021624(int x, int y, const FontRange *const *fonts, u8 fontIndex, con
             continue;
         }
         fr = font;
-        if (func_020215f0(*q) != 0x20) {
+        if (NormalizeSpace(*q) != 0x20) {
             c = *(const u16 *) q;
             for (;;) {
                 if (c >= fr->mFirst && c <= fr->mLast) {
@@ -262,8 +262,8 @@ int func_02021624(int x, int y, const FontRange *const *fonts, u8 fontIndex, con
     }
     while (chars[k] != 0 && maxW > result) {
         spaceW = lineH;
-        if (func_020215f0(chars[k]) > 0x20) {
-            func_0202d828(glyphs[k], 0, rect);
+        if (NormalizeSpace(chars[k]) > 0x20) {
+            GetSpriteRect(glyphs[k], 0, rect);
             if (dirMode) {
                 widths[k] = rect[3];
             } else {
@@ -344,7 +344,7 @@ int func_02021624(int x, int y, const FontRange *const *fonts, u8 fontIndex, con
                 if (chars[i] == 0) {
                     break;
                 }
-                if (func_020215f0(chars[i]) != 0x20 && gSystemState.mUnk_310 != chars[i] && !nodraw) {
+                if (NormalizeSpace(chars[i]) != 0x20 && gSystemState.mUnk_310 != chars[i] && !nodraw) {
                     if (!(window && (lineNo < gSystemState.mUnk_313 ||
                                      lineNo >= gSystemState.mUnk_313 + gSystemState.mUnk_314))) {
                         if (dirMode != 0) {
@@ -379,13 +379,12 @@ int func_02021624(int x, int y, const FontRange *const *fonts, u8 fontIndex, con
                                 if (dirMode != 0) {
                                     OS_Terminate();
                                 }
-                                func_0202cf08((glyphHigh + 0x100000) | glyphs[i], px, py, 0, mode);
+                                DrawSprite((glyphHigh + 0x100000) | glyphs[i], px, py, 0, mode);
                             } else {
-                                func_0202cf08(glyphHigh + (glyphs[i] + (hilite ? 0x40000 : 0)), px, py, pal + odd,
-                                              mode);
+                                DrawSprite(glyphHigh + (glyphs[i] + (hilite ? 0x40000 : 0)), px, py, pal + odd, mode);
                             }
                             if (flags & TEXT_BOUNDS) {
-                                func_0202d828(glyphHigh + glyphs[i], 0, rect);
+                                GetSpriteRect(glyphHigh + glyphs[i], 0, rect);
                                 if (px + rect[0] < gSystemState.mUnk_2fc) {
                                     gSystemState.mUnk_2fc = px + rect[0];
                                 }
@@ -410,7 +409,7 @@ int func_02021624(int x, int y, const FontRange *const *fonts, u8 fontIndex, con
                 lineW += widths[i];
                 i++;
             }
-            while (func_020215f0(chars[i]) == 0x20 || chars[i] == 1 || chars[i] == gSystemState.mUnk_310) {
+            while (NormalizeSpace(chars[i]) == 0x20 || chars[i] == 1 || chars[i] == gSystemState.mUnk_310) {
                 i++;
                 spaces++;
             }
@@ -448,7 +447,9 @@ const u8 *func_02021df4(u32 base, const u8 *entry) {
     return (const u8 *) FindOrLoadCachedFile(base + entry[1]) + *(const u16 *) (entry + 2);
 }
 
-int func_02021e08(u16 id, int index) {
+// The type of value `index` of indexed file `id`: 1 and 4 strings (GetFileString; CountFileStringChars counts type 1
+// in encoded characters, type 4 in bytes), 2 a 16-bit and 3 a 32-bit number (GetFileValue); 0 for any type above 4.
+int GetFileValueType(u16 id, int index) {
     const u8 *entry = func_02021dd8(id, index);
     if (entry[0] > 4) {
         return 0;
@@ -456,7 +457,7 @@ int func_02021e08(u16 id, int index) {
     return entry[0];
 }
 
-const u8 *func_02021e18(u16 block, int id) {
+const u8 *GetFileString(u16 block, int id) {
     const u8 *entry = func_02021dd8(block, id);
     BOOL ok = 1;
     if (entry[0] != 4 && entry[0] != 1) {
@@ -468,7 +469,7 @@ const u8 *func_02021e18(u16 block, int id) {
     return func_02021df4(block, entry);
 }
 
-int func_02021e44(u16 id, int index) {
+int GetFileValue(u16 id, int index) {
     const u8 *entry = func_02021dd8(id, index);
     const u8 *p;
     BOOL ok = 1;
@@ -485,13 +486,13 @@ int func_02021e44(u16 id, int index) {
     return p[0] + ((p[1] << 8) + ((p[3] << 24) + (p[2] << 16)));
 }
 
-void func_02021e94(int block, int id, u8 *dst, int flags, ...) {
-    const u8 *src = func_02021e18(block, id);
+void CopyFileString(int block, int id, u8 *dst, int flags, ...) {
+    const u8 *src = GetFileString(block, id);
     if (flags & 1) {
         u8 saved = gSystemState.mUnk_318;
         gSystemState.mUnk_318 = 1;
         while (*src != 0) {
-            func_0202158c(&dst, func_02021498(&src));
+            WriteTextChar(&dst, ReadTextChar(&src));
         }
         gSystemState.mUnk_318 = saved;
     } else {
@@ -502,36 +503,36 @@ void func_02021e94(int block, int id, u8 *dst, int flags, ...) {
     *dst = 0;
 }
 
-int func_02021f0c(u16 block, int id, int flags) {
+int CountFileStringChars(u16 block, int id, int flags) {
     u8 buf[0x80];
     const u8 *p;
     int count = 0;
-    int mode = func_02021e08(block, id);
+    int mode = GetFileValueType(block, id);
     if (mode == 4 || mode == 1) {
         if (flags & 2) {
             p = buf;
-            func_02021e94(block, id, buf, 1);
+            CopyFileString(block, id, buf, 1);
         } else {
-            p = func_02021e18(block, id);
+            p = GetFileString(block, id);
         }
         if (mode == 4) {
             u32 ch = *p++;
             if (ch != 0) {
                 do {
-                    if ((flags & 1) == 0 || func_020215f0(ch) != 0x20) {
+                    if ((flags & 1) == 0 || NormalizeSpace(ch) != 0x20) {
                         count++;
                     }
                     ch = *p++;
                 } while (ch != 0);
             }
         } else {
-            u16 ch = func_02021498(&p);
+            u16 ch = ReadTextChar(&p);
             if (ch != 0) {
                 do {
-                    if ((flags & 1) == 0 || func_020215f0(ch) != 0x20) {
+                    if ((flags & 1) == 0 || NormalizeSpace(ch) != 0x20) {
                         count++;
                     }
-                    ch = func_02021498(&p);
+                    ch = ReadTextChar(&p);
                 } while (ch != 0);
             }
         }

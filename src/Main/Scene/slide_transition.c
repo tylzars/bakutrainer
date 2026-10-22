@@ -408,7 +408,7 @@ void func_0200e474(void) {
 void func_0200e484(void) {
     func_0200c5d8(0, 0, 0x25e, 0x100, 0x10, 1, 2);
     func_02024208();
-    func_02027230(&data_020ae504.mUnk_3c, 0x25d, 0x25c, 2, 0);
+    StartModel(&data_020ae504.mUnk_3c, 0x25d, 0x25c, 2, 0);
 }
 
 void func_0200e4c4(void) {
@@ -479,11 +479,11 @@ void func_0200e5b0(void) {
 
     if (s->mUnk_34 == 0) {
         SetFaded(3);
-        func_02022370();
-        func_0202c1c4();
+        ReleaseGxPool();
+        ReleaseTextureLayers();
         LoadImage(0xdaa, 1);
         func_0202f410(&data_020ae464);
-        func_0200dd5c("BAK_Intro.mods", 2);
+        RunVideo("BAK_Intro.mods", 2);
         s->mUnk_34 = 0x4b0;
         SetupImageLayer(1, 0, 0x100, 0x100);
         func_0200e484();
@@ -502,8 +502,8 @@ void func_0200e5b0(void) {
     }
     func_020242a8(&params, 0xff, 0, 0, 0x1000, 0x8000, -1, 0x100);
     params.mUnk_43_3 = 1;
-    func_020262a0(&s->mUnk_3c);
-    func_02024b5c(s->mUnk_3c.mUnk_170, &params, &s->mUnk_3c, 0);
+    UpdateModelScript(&s->mUnk_3c);
+    DrawModelFileEx(s->mUnk_3c.mUnk_170, &params, &s->mUnk_3c, 0);
     if (s->mUnk_1e4 == 0) {
         if (s->mUnk_1e0 >= 0) {
             s32 x = s->mUnk_1e0 - 0x1900;
@@ -511,8 +511,8 @@ void func_0200e5b0(void) {
                 x = 0;
             }
             s->mUnk_1e0 = x;
-            func_0202cf08(0xdfa, 0x59 - (s->mUnk_1e0 >> 8), 0x35, 0x96, 2);
-            func_0202cf08(0xdfb, (s->mUnk_1e0 >> 8) + 0x59, 0x35, 0x8c, 2);
+            DrawSprite(0xdfa, 0x59 - (s->mUnk_1e0 >> 8), 0x35, 0x96, 2);
+            DrawSprite(0xdfb, (s->mUnk_1e0 >> 8) + 0x59, 0x35, 0x8c, 2);
             if (s->mUnk_1e0 == 0) {
                 func_0202f110(0xe7, 100, 0, 0x40, 0xffff, 0);
                 s->mUnk_1e0 = -1;
@@ -530,8 +530,8 @@ void func_0200e5b0(void) {
             d = RandomRange(0, 2);
             d *= sign;
             data_020ae44c = d;
-            func_0202cf08(0xdfa, data_020ae450 + 0x59, d + 0x35, 0x96, 2);
-            func_0202cf08(0xdfb, data_020ae450 + 0x59, data_020ae44c + 0x35, 0x8c, 2);
+            DrawSprite(0xdfa, data_020ae450 + 0x59, d + 0x35, 0x96, 2);
+            DrawSprite(0xdfb, data_020ae450 + 0x59, data_020ae44c + 0x35, 0x8c, 2);
             if (--data_020ae454 == 0) {
                 s->mUnk_1e4 = 1;
                 return;
@@ -539,8 +539,8 @@ void func_0200e5b0(void) {
         }
         return;
     }
-    func_0202cf08(0xdfa, 0x59, 0x35, 0x96, 2);
-    func_0202cf08(0xdfb, 0x59, 0x35, 0x8c, 2);
+    DrawSprite(0xdfa, 0x59, 0x35, 0x96, 2);
+    DrawSprite(0xdfb, 0x59, 0x35, 0x8c, 2);
     if (func_0200de68() != 0 && s->mUnk_28 >= 0) {
         s->mUnk_24 = s->mUnk_28;
         s->mUnk_28 = -1;
@@ -574,13 +574,11 @@ void func_0200e5b0(void) {
             }
             break;
         case 2:
-            func_0202cf08(0xe22, 0x2f, (data_020ae504.mUnk_1bc[3] >> 8) + 0x11, 0x8c, 1);
+            DrawSprite(0xe22, 0x2f, (data_020ae504.mUnk_1bc[3] >> 8) + 0x11, 0x8c, 1);
             if (s->mUnk_2c == 0) {
-                func_020215fc(0x2f, (data_020ae504.mUnk_1bc[3] >> 8) + 0x11, data_0201a61c, GetText(0xc4), 0, 200, 16,
-                              1);
+                DrawText(0x2f, (data_020ae504.mUnk_1bc[3] >> 8) + 0x11, data_0201a61c, GetText(0xc4), 0, 200, 16, 1);
             } else {
-                func_020215fc(0x2f, (data_020ae504.mUnk_1bc[3] >> 8) + 0x11, data_0201a61c, GetText(0xc5), 0, 200, 16,
-                              1);
+                DrawText(0x2f, (data_020ae504.mUnk_1bc[3] >> 8) + 0x11, data_0201a61c, GetText(0xc5), 0, 200, 16, 1);
             }
             for (i = 0; i < 3; i++) {
                 if (s->mUnk_00[i].mUnk_00 == 1) {
@@ -588,20 +586,20 @@ void func_0200e5b0(void) {
                     func_0200bc50((data_020ae504.mUnk_1bc[i] >> 8) + 0x39, i * 0x2c + 0x36, 0, 0, 0x8c, 0x704 + i,
                                   0xdf6, 0, 0, 2, 0, 0x167, flag, 0, 0, 0);
                     sprintf(text, "%s %d", GetText(0xcd), i + 1);
-                    func_020215fc((data_020ae504.mUnk_1bc[i] >> 8) + 0x39, i * 0x2c + 0x36, data_0201a61c, text, 0,
-                                  0xf0, 0x10, 1);
+                    DrawText((data_020ae504.mUnk_1bc[i] >> 8) + 0x39, i * 0x2c + 0x36, data_0201a61c, text, 0, 0xf0,
+                             0x10, 1);
                     if (pct != 0) {
                         u8 n = MapRange(pct, 0, 100, 0, 0x18);
-                        func_0202cf08(0xddd + n, (data_020ae504.mUnk_1bc[i] >> 8) + 0xa0, i * 0x2c + 0x36, 0x82, 1);
+                        DrawSprite(0xddd + n, (data_020ae504.mUnk_1bc[i] >> 8) + 0xa0, i * 0x2c + 0x36, 0x82, 1);
                     }
                     sprintf(text, "%d%", pct);
-                    func_020215fc((data_020ae504.mUnk_1bc[i] >> 8) + 0xa0, i * 0x2c + 0x36, data_0201a662, text, 2,
-                                  0xf0, 0x10, 1);
+                    DrawText((data_020ae504.mUnk_1bc[i] >> 8) + 0xa0, i * 0x2c + 0x36, data_0201a662, text, 2, 0xf0,
+                             0x10, 1);
                 } else if (s->mUnk_2c == 0) {
                     func_0200bc50((data_020ae504.mUnk_1bc[i] >> 8) + 0x39, i * 0x2c + 0x36, 0, 0, 0x8c, 0x704 + i,
                                   0xdf8, 0, 0, 2, 0, 0, flag, 0, 0, 0);
-                    func_020215fc((data_020ae504.mUnk_1bc[i] >> 8) + 0x39, i * 0x2c + 0x36, data_0201a61c,
-                                  GetText(0xcc), 0, 0xf0, 0x10, 1);
+                    DrawText((data_020ae504.mUnk_1bc[i] >> 8) + 0x39, i * 0x2c + 0x36, data_0201a61c, GetText(0xcc), 0,
+                             0xf0, 0x10, 1);
                 }
             }
             func_0200bb14(0, (data_020ae504.mUnk_1bc[4] >> 8) + 0xa1, 0x102, 0xe, 0, 0, 0x5a, flag);
@@ -627,8 +625,8 @@ void func_0200e5b0(void) {
             }
             break;
         case 3:
-            func_0202cf08(0xe21, (data_020ae504.mUnk_1bc[0] >> 8) + 0x7f, 0x50, 0x8c, 1);
-            func_020215fc((data_020ae504.mUnk_1bc[0] >> 8) + 0x7f, 0x50, data_0201a61c, GetText(0xcf), 2, 0xc0, 0xc, 1);
+            DrawSprite(0xe21, (data_020ae504.mUnk_1bc[0] >> 8) + 0x7f, 0x50, 0x8c, 1);
+            DrawText((data_020ae504.mUnk_1bc[0] >> 8) + 0x7f, 0x50, data_0201a61c, GetText(0xcf), 2, 0xc0, 0xc, 1);
             func_0200bb14(0xff, (data_020ae504.mUnk_1bc[4] >> 8) + 0xa1, 0x101, 0x15, 0, 0, 0x17d, flag);
             func_0200bb14(0, (data_020ae504.mUnk_1bc[4] >> 8) + 0xa1, 0x102, 0xe, 0, 0, 0x5a, flag);
             if (func_0200bd80(0x20000000, 0x101)) {
@@ -644,8 +642,8 @@ void func_0200e5b0(void) {
             }
             break;
         case 5:
-            func_0202cf08(0xe22, 0x2f, (data_020ae504.mUnk_1bc[3] >> 8) + 0x11, 0x8c, 1);
-            func_020215fc(0x2f, (data_020ae504.mUnk_1bc[3] >> 8) + 0x11, data_0201a61c, GetText(0xc6), 0, 200, 16, 1);
+            DrawSprite(0xe22, 0x2f, (data_020ae504.mUnk_1bc[3] >> 8) + 0x11, 0x8c, 1);
+            DrawText(0x2f, (data_020ae504.mUnk_1bc[3] >> 8) + 0x11, data_0201a61c, GetText(0xc6), 0, 200, 16, 1);
             func_0200bc50((data_020ae504.mUnk_1bc[1] >> 8) + 0x80, 0x48, 0, 0, 0x8c, 0x703, 0xdda, GetText(0xc8),
                           data_0201a61c, 2, 0, 0x167, flag, 0, 0, 0);
             func_0200bc50((data_020ae504.mUnk_1bc[2] >> 8) + 0x80, 0x70, 0, 0, 0x8c, 0x708, 0xdda, GetText(0xc9),
@@ -670,8 +668,8 @@ void func_0200e5b0(void) {
             }
             break;
         case 4:
-            func_0202cf08(0xe22, 0x2f, (data_020ae504.mUnk_1bc[0] >> 8) + 0x11, 0x8c, 1);
-            func_020215fc(0x2f, (data_020ae504.mUnk_1bc[0] >> 8) + 0x11, data_0201a61c, GetText(0xc7), 0, 200, 16, 1);
+            DrawSprite(0xe22, 0x2f, (data_020ae504.mUnk_1bc[0] >> 8) + 0x11, 0x8c, 1);
+            DrawText(0x2f, (data_020ae504.mUnk_1bc[0] >> 8) + 0x11, data_0201a61c, GetText(0xc7), 0, 200, 16, 1);
             pos = data_0204e1f0;
             id = data_0204e1ec;
             for (i = 0; i < 1; i++) {
@@ -679,9 +677,9 @@ void func_0200e5b0(void) {
                 func_0200bb14((data_020ae504.mUnk_1bc[idx] >> 8) + data_0204e1f0[0], data_0204e1f0[1], 0x705 + i,
                               data_0204e1e8[i], 0, 0, 0x167, 1);
                 if (data_020ae504.mUnk_1b4 == i) {
-                    func_0202cf08(0xdd0, pos[0] + (data_020ae504.mUnk_1bc[idx] >> 8), pos[1], 0xfa, 1);
+                    DrawSprite(0xdd0, pos[0] + (data_020ae504.mUnk_1bc[idx] >> 8), pos[1], 0xfa, 1);
                 }
-                func_0202cf08(*id, (data_020ae504.mUnk_1bc[idx] >> 8) + (pos[0] + pos[2]), pos[1], 0xff, 1);
+                DrawSprite(*id, (data_020ae504.mUnk_1bc[idx] >> 8) + (pos[0] + pos[2]), pos[1], 0xff, 1);
             }
             func_0200bb14(0xff, (data_020ae504.mUnk_1bc[1] >> 8) + 0xa1, 0x101, 0x15, 0, 0, 0x17d, flag);
             func_0200bb14(0, (data_020ae504.mUnk_1bc[1] >> 8) + 0xa1, 0x102, 0xe, 0, 0, 0x5a, flag);
@@ -706,15 +704,15 @@ void func_0200e5b0(void) {
             }
             break;
         case 6:
-            func_0202cf08(0xe22, 0x2f, (data_020ae504.mUnk_1bc[3] >> 8) + 0x11, 0x8c, 1);
-            func_020215fc(0x2f, (data_020ae504.mUnk_1bc[3] >> 8) + 0x11, data_0201a61c, GetText(0xc9), 0, 200, 16, 1);
-            func_0202cf08(0xe21, (data_020ae504.mUnk_1bc[0] >> 8) + 0x7f, 0x28, 0x8c, 1);
-            func_0202cf08(0xe00, (data_020ae504.mUnk_1bc[1] >> 8) + 0x7f, 0x8f, 0x8c, 1);
-            func_020215fc((data_020ae504.mUnk_1bc[1] >> 8) + 0x7f, 0x9e, data_0201a61c, GetText(0xd2), 2, 0xc0, 0xc, 1);
+            DrawSprite(0xe22, 0x2f, (data_020ae504.mUnk_1bc[3] >> 8) + 0x11, 0x8c, 1);
+            DrawText(0x2f, (data_020ae504.mUnk_1bc[3] >> 8) + 0x11, data_0201a61c, GetText(0xc9), 0, 200, 16, 1);
+            DrawSprite(0xe21, (data_020ae504.mUnk_1bc[0] >> 8) + 0x7f, 0x28, 0x8c, 1);
+            DrawSprite(0xe00, (data_020ae504.mUnk_1bc[1] >> 8) + 0x7f, 0x8f, 0x8c, 1);
+            DrawText((data_020ae504.mUnk_1bc[1] >> 8) + 0x7f, 0x9e, data_0201a61c, GetText(0xd2), 2, 0xc0, 0xc, 1);
             level = &data_020ae458.mUnk_04;
             range = &data_0204e1f8[1];
             sprintf(num, "%d", *level + 1);
-            func_020215fc((data_020ae504.mUnk_1bc[1] >> 8) + 0x82, 0xb4, data_0201a676, num, 0, 0xf0, 1, 1);
+            DrawText((data_020ae504.mUnk_1bc[1] >> 8) + 0x82, 0xb4, data_0201a676, num, 0, 0xf0, 1, 1);
             if (*level > range->mUnk_00) {
                 func_0200bb14((data_020ae504.mUnk_1bc[1] >> 8) + 0x50, 0x85, 0x70b, 0xdfc, 0, 0, 0x17d,
                               gSystemState.mUnk_492 == 0 ? 1 : 0);
@@ -724,8 +722,7 @@ void func_0200e5b0(void) {
                               gSystemState.mUnk_492 == 0 ? 1 : 0);
             }
             if (gSystemState.mUnk_492 == 0) {
-                func_020215fc((data_020ae504.mUnk_1bc[0] >> 8) + 0x7f, 0x28, data_0201a61c, GetText(0xd1), 2, 0xc0, 0xc,
-                              1);
+                DrawText((data_020ae504.mUnk_1bc[0] >> 8) + 0x7f, 0x28, data_0201a61c, GetText(0xd1), 2, 0xc0, 0xc, 1);
                 if (s->mUnk_28 < 0) {
                     if (!(gSystemState.mFlags & 0x800)) {
                         OS_Terminate();
@@ -736,8 +733,7 @@ void func_0200e5b0(void) {
                     v = 0;
                 }
             } else {
-                func_020215fc((data_020ae504.mUnk_1bc[0] >> 8) + 0x7f, 0x28, data_0201a61c, GetText(0xd3), 2, 0xc0, 0xc,
-                              1);
+                DrawText((data_020ae504.mUnk_1bc[0] >> 8) + 0x7f, 0x28, data_0201a61c, GetText(0xd3), 2, 0xc0, 0xc, 1);
                 data_020ae458.mUnk_08 = 0;
                 v = 0;
             }
@@ -745,7 +741,7 @@ void func_0200e5b0(void) {
                 data_020ae458.mUnk_08 = v;
             }
             if (data_020ae458.mUnk_08 != 0) {
-                func_0202cf08(data_020ae458.mUnk_08 + 0xe01, (data_020ae504.mUnk_1bc[1] >> 8) + 0x7f, 0x8f, 0x8c, 1);
+                DrawSprite(data_020ae458.mUnk_08 + 0xe01, (data_020ae504.mUnk_1bc[1] >> 8) + 0x7f, 0x8f, 0x8c, 1);
                 data_020ae458.mUnk_08--;
             }
             func_0200bb14(0xff, (data_020ae504.mUnk_1bc[4] >> 8) + 0xa1, 0x101, 0x15, 0, 0, 0x17d, flag);

@@ -1,13 +1,13 @@
 ; Data of the code area between the stage map menu and the start-up code: the fonts used by the text routines
-; (func_020215fc and func_02021624), the model and sprite scripts, and the pointer tables that name them.
+; (DrawText and DrawTextEx), the model and sprite scripts, and the pointer tables that name them.
 ;
 ; This is an assembler file because the compiler cannot lay the block out: it puts only non-const objects in the
 ; .text section, and it emits every data object as its own section in order of size, while the block holds objects
 ; of all sizes in an order that is not by size.
 ;
-; Model script (read by func_02026718): a 16-bit word holds the command (bits 10-15), a mode (bits 8-9) and a signed
+; Model script (read by ExecModelScript): a 16-bit word holds the command (bits 10-15), a mode (bits 8-9) and a signed
 ; 8-bit argument; most commands are followed by a 16-bit operand word.
-; Sprite script (read by func_0202db1c): a 16-bit word above 0xfff0 is a command, any other word is a frame.
+; Sprite script (read by UpdateSprite): a 16-bit word above 0xfff0 is a command, any other word is a frame.
 
 	.macro MODEL_OP cmd, mode, arg
 	.hword ((\cmd) << 10) | ((\mode) << 8) | ((\arg) & 0xff)
@@ -18,6 +18,7 @@
 	.equ MC_JUMP_IF_NOT_EQUAL, 2
 	.equ MC_JUMP_IF_NOT_LESS, 3
 	.equ MC_JUMP_IF_LESS, 4
+; Jumps when the less flag is clear or the equal flag is set, so it also jumps on equal.
 	.equ MC_JUMP_IF_NOT_LESS_OR_EQUAL, 5
 	.equ MC_JUMP_IF_EITHER, 6
 	.equ MC_SET, 7

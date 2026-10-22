@@ -94,7 +94,7 @@ typedef struct MapArea {
 static int func_02031cc8(int x, int z);
 static void func_02031fec(u16 group, u16 key, VecFx32 *out);
 static MapEntry *func_02032074(u8 group, u8 key, u8 *count);
-static MapEntry *func_0203219c(void);
+static MapEntry *GetMapEntries(void);
 
 #pragma thumb off
 
@@ -118,10 +118,10 @@ static void func_020312b8(VecFx32 *pos, MapRingPoint *out, u8 *counts, u16 *keys
     int x0;
     u8 *p;
 
-    base = func_02031eb8(0x5540);
+    base = GetMapChunk(MAP_CHUNK_RINGS);
     x0 = 0;
-    w = data_020c3e44.mUnk_2024.mUnk_54 * data_020c3e44.mUnk_2024.mUnk_40;
-    h = data_020c3e44.mUnk_2024.mUnk_56 * data_020c3e44.mUnk_2024.mUnk_40;
+    w = gMapState.mCamera.mCellCountX * gMapState.mCamera.mCellSize;
+    h = gMapState.mCamera.mCellCountZ * gMapState.mCamera.mCellSize;
     node = base;
     z0 = 0;
     total = 0;
@@ -359,13 +359,13 @@ u32 func_02031824(VecFx32 *pos, int radius, int top, int bottom, u16 any, u16 no
                         hits++;
                         if (dist < best) {
                             best = dist;
-                            data_020c3e44.mUnk_2024.mUnk_10 = rings[i];
+                            gMapState.mCamera.mUnk_10 = rings[i];
                             result = (i << 8) + k + MAP_RING_HIT;
-                            data_020c3e44.mUnk_2024.mUnk_38 = dist;
-                            data_020c3e44.mUnk_2024.mUnk_3a = keys[i];
-                            data_020c3e44.mUnk_2024.mUnk_14 = *cur;
-                            data_020c3e44.mUnk_2024.mUnk_20 = *next;
-                            data_020c3e44.mUnk_2024.mUnk_2c = nearest;
+                            gMapState.mCamera.mUnk_38 = dist;
+                            gMapState.mCamera.mUnk_3a = keys[i];
+                            gMapState.mCamera.mUnk_14 = *cur;
+                            gMapState.mCamera.mUnk_20 = *next;
+                            gMapState.mCamera.mUnk_2c = nearest;
                         } else if (dist == best) {
                             tie = 1;
                         }
@@ -393,7 +393,7 @@ u32 func_02031824(VecFx32 *pos, int radius, int top, int bottom, u16 any, u16 no
 // 4 is the offset of the next node).
 void *func_02031c70(void *p) {
     u16 *cur = p;
-    u16 *base = func_02031eb8(0x5540);
+    u16 *base = GetMapChunk(MAP_CHUNK_RINGS);
     u16 *start = cur;
     u16 *min = cur;
 
@@ -409,7 +409,7 @@ void *func_02031c70(void *p) {
 // Walks the same ring from entry, replacing each node's first halfword with (value & mask) | bits; returns the
 // number of nodes.
 int func_02031c98(u16 *entry, u16 mask, u16 bits) {
-    u16 *base = func_02031eb8(0x5540);
+    u16 *base = GetMapChunk(MAP_CHUNK_RINGS);
     u16 *start = entry;
     int count = 0;
 
@@ -423,9 +423,9 @@ int func_02031c98(u16 *entry, u16 mask, u16 bits) {
 
 // 1 when (x, z) is within the view radius of the camera position.
 static int func_02031cc8(int x, int z) {
-    int dx = (data_020c3e44.mUnk_2024.mUnk_5c.x - x) / 0x1000;
-    int dz = (data_020c3e44.mUnk_2024.mUnk_5c.z - z) / 0x1000;
-    u32 r = (u32) data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_44 >> 12;
+    int dx = (gMapState.mCamera.mPos.x - x) / 0x1000;
+    int dz = (gMapState.mCamera.mPos.z - z) / 0x1000;
+    u32 r = (u32) gMapState.mCamera.mUnk_2dc.mUnk_44 >> 12;
 
     if ((u32) (dx * dx + dz * dz) <= r * r) {
         return 1;
@@ -441,11 +441,11 @@ int func_02031d0c(VecFx32 *pos, int a, int b, int c) {
     if (func_02031cc8(pos->x, pos->z) == 0) {
         return 0;
     }
-    if (data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_4a != 0) {
+    if (gMapState.mCamera.mUnk_2dc.mUnk_4a != 0) {
         func_020334f8(0);
     }
     reg_G3X_MTX_MODE = 2;
-    G3_LoadMtx43(&data_020c3e44.mUnk_3c);
+    G3_LoadMtx43(&gMapState.mUnk_3c);
     box[0] = -256;
     box[1] = 0;
     box[2] = -256;
@@ -470,7 +470,7 @@ int func_02031d0c(VecFx32 *pos, int a, int b, int c) {
 // 1 when the map cell under (x, z) is marked in the first bit set, or lies in a rectangle of chunk 0x5530 whose
 // bit in the second set is marked.
 int func_02031dc4(s32 x, s32 z) {
-    u32 grid = data_020c3e44.mUnk_2024.mUnk_40;
+    u32 grid = gMapState.mCamera.mCellSize;
     s32 cx = (u32) x / grid;
     s32 cz = (u32) z / grid;
     u16 *cells;
@@ -483,14 +483,14 @@ int func_02031dc4(s32 x, s32 z) {
     if (func_02031cc8(x, z) == 0) {
         return 0;
     }
-    cells = func_02032898();
-    v = cells[cx + cz * data_020c3e44.mUnk_2024.mUnk_54] & 0x7fff;
+    cells = GetMapCellChunk();
+    v = cells[cx + cz * gMapState.mCamera.mCellCountX] & 0x7fff;
     if (v != 0) {
-        if (data_020c3e44.mUnk_24[v >> 5] & (1 << (v & 0x1f))) {
+        if (gMapState.mUnk_24[v >> 5] & (1 << (v & 0x1f))) {
             return 1;
         }
     }
-    chunk = (u8 *) func_02031eb8(0x5530);
+    chunk = (u8 *) GetMapChunk(MAP_CHUNK_AREAS);
     if (chunk == 0) {
         return 0;
     }
@@ -512,7 +512,7 @@ int func_02031dc4(s32 x, s32 z) {
                 cx -= x0;
                 sh = 32 - LeadingZeroCount(w);
                 idx = cx + (cz << sh);
-                if (data_020c3e44.mUnk_28[idx >> 5] & (1 << (idx & 0x1f))) {
+                if (gMapState.mUnk_28[idx >> 5] & (1 << (idx & 0x1f))) {
                     return 1;
                 }
                 return 0;
@@ -523,19 +523,21 @@ int func_02031dc4(s32 x, s32 z) {
     return 0;
 }
 
-// Returns the data of the chunk with key id, or 0 when the file has none. Loads the file when it is not loaded.
+// Returns the data of the chunk with key id, or 0 when the file has none. Loads the file when mMapData is 0 or does
+// not start with MAP_FILE_MAGIC (then also refreshing the cell record offsets in mUnk_2dc.mUnk_50), and clears the
+// 20 records when the data pointer differs from the one seen last (mUnk_4c).
 #pragma thumb off
-u16 *func_02031eb8(u32 id) {
-    u16 *p = data_020c3e44.mUnk_2024.mUnk_48;
+u16 *GetMapChunk(u32 id) {
+    u16 *p = gMapState.mCamera.mMapData;
     int key;
 
     if (p == 0 || p[0] != MAP_FILE_MAGIC) {
-        p = FindOrLoadCachedFile(data_020c3e44.mUnk_2024.mUnk_50);
-        data_020c3e44.mUnk_2024.mUnk_48 = p;
-        data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_50 = func_02031eb8(0x5511);
+        p = FindOrLoadCachedFile(gMapState.mCamera.mMapFile);
+        gMapState.mCamera.mMapData = p;
+        gMapState.mCamera.mUnk_2dc.mUnk_50 = GetMapChunk(MAP_CHUNK_CELL_REC_OFFSETS);
     }
-    if (data_020c3e44.mUnk_2024.mUnk_4c != data_020c3e44.mUnk_2024.mUnk_48) {
-        data_020c3e44.mUnk_2024.mUnk_4c = data_020c3e44.mUnk_2024.mUnk_48;
+    if (gMapState.mCamera.mUnk_4c != gMapState.mCamera.mMapData) {
+        gMapState.mCamera.mUnk_4c = gMapState.mCamera.mMapData;
         func_02032b88(0);
     }
     if (p[0] != MAP_FILE_MAGIC) {
@@ -557,19 +559,19 @@ u16 *func_02031eb8(u32 id) {
 }
 #pragma thumb on
 
-s32 func_02031f98(MapEntry *entry) {
+s32 GetMapEntryX(MapEntry *entry) {
     return entry->mUnk_04[0] + (entry->mUnk_04[1] << 16);
 }
 
-s32 func_02031fa4(MapEntry *entry) {
+s32 GetMapEntryY(MapEntry *entry) {
     return entry->mUnk_08[0] + (entry->mUnk_08[1] << 16);
 }
 
-s32 func_02031fb0(MapEntry *entry) {
+s32 GetMapEntryZ(MapEntry *entry) {
     return entry->mUnk_0c[0] + (entry->mUnk_0c[1] << 16);
 }
 
-u16 func_02031fbc(MapEntry *entry) {
+u16 GetMapEntryAngle(MapEntry *entry) {
     return entry->mUnk_02 << 8;
 }
 
@@ -584,18 +586,18 @@ void func_02031fc4(u32 id, VecFx32 *out) {
 static void func_02031fec(u16 group, u16 key, VecFx32 *out) {
     MapEntry *entry = func_02032074(group, key, 0);
 
-    out->x = func_02031f98(entry);
-    out->y = func_02031fa4(entry);
-    out->z = func_02031fb0(entry);
+    out->x = GetMapEntryX(entry);
+    out->y = GetMapEntryY(entry);
+    out->z = GetMapEntryZ(entry);
 }
 
 // Position (and flags, when asked for) of the index'th entry of chunk 0x5513.
 void func_02032018(u32 index, VecFx32 *pos, u8 *flags) {
-    MapEntry *entry = func_0203219c() + index;
+    MapEntry *entry = GetMapEntries() + index;
 
-    pos->x = func_02031f98(entry);
-    pos->y = func_02031fa4(entry);
-    pos->z = func_02031fb0(entry);
+    pos->x = GetMapEntryX(entry);
+    pos->y = GetMapEntryY(entry);
+    pos->z = GetMapEntryZ(entry);
     if (flags != 0) {
         *flags = entry->mUnk_02;
     }
@@ -603,7 +605,7 @@ void func_02032018(u32 index, VecFx32 *pos, u8 *flags) {
 
 // The entry of chunk 0x5513 with id (group in the high byte, key in the low byte); *count receives the number of
 // entries when given.
-MapEntry *func_0203204c(u32 a, u8 *count) {
+MapEntry *GetMapEntry(u32 a, u8 *count) {
     if (a & 0xffff0000) {
         OS_Terminate();
     }
@@ -611,7 +613,7 @@ MapEntry *func_0203204c(u32 a, u8 *count) {
 }
 
 static MapEntry *func_02032074(u8 group, u8 key, u8 *count) {
-    MapEntryChunk *chunk = (MapEntryChunk *) func_02031eb8(0x5513);
+    MapEntryChunk *chunk = (MapEntryChunk *) GetMapChunk(MAP_CHUNK_ENTRIES);
     MapEntry *entry;
     int i;
     int n;
@@ -650,7 +652,7 @@ int func_020320c0(int a, int b, VecFx32 *pos) {
     int px;
     int pz;
 
-    entries = func_0203219c();
+    entries = GetMapEntries();
     count = func_02032244(a, b, keys, 0x30);
     px = pos->x >> 12;
     pz = pos->z >> 12;
@@ -659,13 +661,13 @@ int func_020320c0(int a, int b, VecFx32 *pos) {
         if (nverts < 3) {
             continue;
         }
-        p1.x = func_02031f98(entries + verts[0]) >> 12;
-        p1.z = func_02031fb0(entries + verts[0]) >> 12;
+        p1.x = GetMapEntryX(entries + verts[0]) >> 12;
+        p1.z = GetMapEntryZ(entries + verts[0]) >> 12;
         verts++;
         for (j = 1; j < nverts; verts++, j++) {
             p0 = p1;
-            p1.x = func_02031f98(entries + verts[0]) >> 12;
-            p1.z = func_02031fb0(entries + verts[0]) >> 12;
+            p1.x = GetMapEntryX(entries + verts[0]) >> 12;
+            p1.z = GetMapEntryZ(entries + verts[0]) >> 12;
             if (Cross2d(p0.x, p0.z, p1.x, p1.z, px, pz) > 0) {
                 break;
             }
@@ -677,8 +679,8 @@ int func_020320c0(int a, int b, VecFx32 *pos) {
     return 0;
 }
 
-static MapEntry *func_0203219c(void) {
-    MapEntryChunk *chunk = (MapEntryChunk *) func_02031eb8(0x5513);
+static MapEntry *GetMapEntries(void) {
+    MapEntryChunk *chunk = (MapEntryChunk *) GetMapChunk(MAP_CHUNK_ENTRIES);
 
     return chunk->mUnk_0a;
 }
@@ -686,7 +688,7 @@ static MapEntry *func_0203219c(void) {
 // The vertex index list of the polygon of chunk 0x5516 with group a and key b (-1 matches any); *count receives its
 // vertex count and the matched group and key are kept in the camera.
 u16 *func_020321ac(int a, int b, u32 *count) {
-    MapPoly *p = (MapPoly *) func_02031eb8(0x5516);
+    MapPoly *p = (MapPoly *) GetMapChunk(MAP_CHUNK_POLYS);
     u16 n;
 
     if (p != NULL) {
@@ -698,12 +700,12 @@ u16 *func_020321ac(int a, int b, u32 *count) {
                 return NULL;
             }
             if ((a == -1 || p->mUnk_02 == a) && (b == -1 || p->mUnk_03 == b)) {
-                data_020c3e44.mUnk_2024.mUnk_3c = p->mUnk_02;
-                data_020c3e44.mUnk_2024.mUnk_3d = p->mUnk_03;
+                gMapState.mCamera.mUnk_3c = p->mUnk_02;
+                gMapState.mCamera.mUnk_3d = p->mUnk_03;
                 if (count != NULL) {
                     *count = p[1].mUnk_00 - p->mUnk_00;
                 }
-                return func_02031eb8(0x5517) + p->mUnk_00;
+                return GetMapChunk(MAP_CHUNK_POLY_VERTS) + p->mUnk_00;
             }
         }
     }
@@ -712,7 +714,7 @@ u16 *func_020321ac(int a, int b, u32 *count) {
 
 // Stores the group and key of up to max polygons matching (a, b) (-1 matches any) in out; returns how many.
 u32 func_02032244(int a, int b, u16 *out, u32 max) {
-    MapPoly *p = (MapPoly *) func_02031eb8(0x5516);
+    MapPoly *p = (MapPoly *) GetMapChunk(MAP_CHUNK_POLYS);
     u32 n;
     u32 found = 0;
 
@@ -731,29 +733,30 @@ u32 func_02032244(int a, int b, u16 *out, u32 max) {
     return found;
 }
 
-// Replaces the pair table with an empty one of count entries and marks it unsorted.
-void func_020322b8(u16 count) {
+// Replaces the pair table with an empty one of count entries (when count is not 0) and marks it sorted, so
+// func_0203249c skips the sort. Nothing in this build adds pairs to it.
+void AllocMapPairs(u16 count) {
     if (count != 0) {
-        if (data_020c3e44.mUnk_1c != NULL) {
-            Free(&data_020c3e44.mUnk_1c);
+        if (gMapState.mPairs != NULL) {
+            Free(&gMapState.mPairs);
         }
-        data_020c3e44.mUnk_1c = Alloc(count * 4);
-        data_020c3e44.mUnk_14 = 0;
-        data_020c3e44.mUnk_18 = count;
-        data_020c3e44.mUnk_20 = 1;
-        data_020c3e44.mUnk_21 = 0;
+        gMapState.mPairs = Alloc(count * 4);
+        gMapState.mPairCount = 0;
+        gMapState.mUnk_18 = count;
+        gMapState.mUnk_20 = 1;
+        gMapState.mUnk_21 = 0;
     }
 }
 
 // The distance in cells from the camera's map position to the rectangle (x, z) of w by h cells, 0 when it lies inside.
 u32 func_020322f4(int x, int z, int w, int h) {
-    u32 k = data_020c3e44.mUnk_2024.mUnk_40;
+    u32 k = gMapState.mCamera.mCellSize;
     int cw = k * w;
     int ch = k * h;
-    int cx = data_020c3e44.mUnk_2024.mUnk_5c.x;
+    int cx = gMapState.mCamera.mPos.x;
 
     if (cx < x) {
-        int cz = data_020c3e44.mUnk_2024.mUnk_5c.z;
+        int cz = gMapState.mCamera.mPos.z;
         if (cz >= z) {
             z += ch;
             if (cz < z) {
@@ -761,7 +764,7 @@ u32 func_020322f4(int x, int z, int w, int h) {
             }
         }
     } else if (cx < x + cw) {
-        int cz = data_020c3e44.mUnk_2024.mUnk_5c.z;
+        int cz = gMapState.mCamera.mPos.z;
         if (cz < z) {
             x = cx;
         } else {
@@ -772,7 +775,7 @@ u32 func_020322f4(int x, int z, int w, int h) {
             x = cx;
         }
     } else {
-        int cz = data_020c3e44.mUnk_2024.mUnk_5c.z;
+        int cz = gMapState.mCamera.mPos.z;
         x += cw;
         if (cz >= z) {
             z += ch;
@@ -781,7 +784,7 @@ u32 func_020322f4(int x, int z, int w, int h) {
             }
         }
     }
-    return LengthSquared2d((x - cx) / 512, (z - data_020c3e44.mUnk_2024.mUnk_5c.z) / 512);
+    return LengthSquared2d((x - cx) / 512, (z - gMapState.mCamera.mPos.z) / 512);
 }
 
 // Classifies the rectangle's distance from the camera against the squared limits (rebuilt when the camera's value at
@@ -794,10 +797,10 @@ u32 func_02032368(u32 flags, int x, int z, int w, int h) {
         int base;
         int t;
         int k;
-        MapState *st = &data_020c3e44;
+        MapState *st = &gMapState;
 
-        if (data_020c3e44.mUnk_00 != data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_44) {
-            base = (data_020c3e44.mUnk_10 * 5 * 256) / 256 - 256;
+        if (gMapState.mUnk_00 != gMapState.mCamera.mUnk_2dc.mUnk_44) {
+            base = (gMapState.mUnk_10 * 5 * 256) / 256 - 256;
             k = 0;
             t = 0;
             for (i = 0; i < 3; i++) {
@@ -805,11 +808,11 @@ u32 func_02032368(u32 flags, int x, int z, int w, int h) {
                 int r;
                 t += 256;
                 v = InterpolateQuadratic(0, 0x400, base, t);
-                r = ((u32) data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_44 >> 6) * 41 >> 15;
+                r = ((u32) gMapState.mCamera.mUnk_2dc.mUnk_44 >> 6) * 41 >> 15;
                 v = v * r / 1024;
                 st->mUnk_04[k++] = v * v;
             }
-            data_020c3e44.mUnk_00 = data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_44;
+            gMapState.mUnk_00 = gMapState.mCamera.mUnk_2dc.mUnk_44;
         }
         d = func_020322f4(x, z, w, h);
         if (d == 0) {
@@ -818,23 +821,23 @@ u32 func_02032368(u32 flags, int x, int z, int w, int h) {
         code = 0;
         switch (flags >> MAP_LOD_SHIFT) {
             case 1:
-                if (d > MAP_LOD_UNIT * data_020c3e44.mUnk_04[0]) {
+                if (d > MAP_LOD_UNIT * gMapState.mUnk_04[0]) {
                     code = MAP_LOD_1;
                 }
                 break;
             case 2:
-                if (d > MAP_LOD_UNIT * data_020c3e44.mUnk_04[1]) {
+                if (d > MAP_LOD_UNIT * gMapState.mUnk_04[1]) {
                     code = MAP_LOD_2;
-                } else if (d > MAP_LOD_UNIT * data_020c3e44.mUnk_04[0]) {
+                } else if (d > MAP_LOD_UNIT * gMapState.mUnk_04[0]) {
                     code = MAP_LOD_1;
                 }
                 break;
             case 3:
-                if (d > MAP_LOD_UNIT * data_020c3e44.mUnk_04[2]) {
+                if (d > MAP_LOD_UNIT * gMapState.mUnk_04[2]) {
                     code = MAP_LOD_3;
-                } else if (d > MAP_LOD_UNIT * data_020c3e44.mUnk_04[1]) {
+                } else if (d > MAP_LOD_UNIT * gMapState.mUnk_04[1]) {
                     code = MAP_LOD_2;
-                } else if (d > MAP_LOD_UNIT * data_020c3e44.mUnk_04[0]) {
+                } else if (d > MAP_LOD_UNIT * gMapState.mUnk_04[0]) {
                     code = MAP_LOD_1;
                 }
                 break;
@@ -844,18 +847,19 @@ u32 func_02032368(u32 flags, int x, int z, int w, int h) {
     return flags;
 }
 
-// Maps key through the sorted pair table (sorting it on first use); key itself when it has no entry.
+// Maps key through the sorted pair table (sorting it on first use); key itself when it has no entry. In this build
+// mPairCount is never raised, so the search does not run and key is returned.
 u32 func_0203249c(u32 key) {
-    if (data_020c3e44.mUnk_21 == 0 && data_020c3e44.mUnk_14 != 0) {
-        if (data_020c3e44.mUnk_20 == 0) {
+    if (gMapState.mUnk_21 == 0 && gMapState.mPairCount != 0) {
+        if (gMapState.mUnk_20 == 0) {
             MapPair *e;
             int gap;
 
-            e = data_020c3e44.mUnk_1c;
-            gap = 1 << (31 - LeadingZeroCount(data_020c3e44.mUnk_14));
+            e = gMapState.mPairs;
+            gap = 1 << (31 - LeadingZeroCount(gMapState.mPairCount));
             do {
                 int i;
-                for (i = 0; i < data_020c3e44.mUnk_14 - gap; i++) {
+                for (i = 0; i < gMapState.mPairCount - gap; i++) {
                     int j;
                     for (j = i; j >= 0 && e[j].mUnk_0 > e[j + gap].mUnk_0; j -= gap) {
                         MapPair tmp = e[j];
@@ -865,11 +869,11 @@ u32 func_0203249c(u32 key) {
                 }
                 gap >>= 1;
             } while (gap > 0);
-            while (data_020c3e44.mUnk_14 != 0 && e[data_020c3e44.mUnk_14 - 1].mUnk_0 == 0xffff) {
-                data_020c3e44.mUnk_14--;
+            while (gMapState.mPairCount != 0 && e[gMapState.mPairCount - 1].mUnk_0 == 0xffff) {
+                gMapState.mPairCount--;
             }
-            data_020c3e44.mUnk_16 = 1 << (31 - LeadingZeroCount(data_020c3e44.mUnk_14));
-            data_020c3e44.mUnk_20 = 1;
+            gMapState.mUnk_16 = 1 << (31 - LeadingZeroCount(gMapState.mPairCount));
+            gMapState.mUnk_20 = 1;
         }
         {
             int n;
@@ -877,9 +881,9 @@ u32 func_0203249c(u32 key) {
             int step;
             int pos;
 
-            step = data_020c3e44.mUnk_16;
-            n = data_020c3e44.mUnk_14;
-            e = data_020c3e44.mUnk_1c;
+            step = gMapState.mUnk_16;
+            n = gMapState.mPairCount;
+            e = gMapState.mPairs;
             pos = 0;
             do {
                 while (pos + step < n && e[pos + step].mUnk_0 <= key) {
@@ -897,25 +901,25 @@ u32 func_0203249c(u32 key) {
 
 // Starts the map: initialises with a, b, c and the pair table size d and stores the camera's two halfwords
 // mUnk_00/mUnk_02.
-void func_020325b0(u16 a, u16 b, u16 c, u16 d, u16 e, u16 f) {
+void SetupMap(u16 a, u16 b, u16 c, u16 d, u16 e, u16 f) {
     func_020325d0(a, b, c, d);
-    data_020c3e44.mUnk_2024.mUnk_00 = e;
-    data_020c3e44.mUnk_2024.mUnk_02 = f;
+    gMapState.mCamera.mUnk_00 = e;
+    gMapState.mCamera.mUnk_02 = f;
 }
 
 // Resets the map object and the camera for a new stage, sets up the 3D display and loads the buffers and the two
 // camera positions from the stage data.
 void func_020325d0(u16 a, u16 b, u16 c, u16 count) {
     u16 *hdr;
-    u16 *verts;
+    u16 *offsets;
     MapEntry *entry;
 
-    func_02032850();
-    data_020c3e44.mUnk_2024.mUnk_48 = NULL;
-    data_020c3e44.mUnk_2024.mUnk_4c = NULL;
-    data_020c3e44.mUnk_2024.mUnk_50 = a;
-    data_020c3e44.mUnk_2024.mUnk_52 = b;
-    data_020c3e44.mUnk_2024.mUnk_58 = c;
+    ReleaseMap();
+    gMapState.mCamera.mMapData = NULL;
+    gMapState.mCamera.mUnk_4c = NULL;
+    gMapState.mCamera.mMapFile = a;
+    gMapState.mCamera.mUnk_52 = b;
+    gMapState.mCamera.mUnk_58 = c;
     *(vu32 *) 0x04000060 &= ~0x20;
     reg_GX_DISP3DCNT &= ~0x3002;
     *(vu16 *) 0x04000050 = 0;
@@ -926,93 +930,93 @@ void func_020325d0(u16 a, u16 b, u16 c, u16 count) {
     GX_SetGraphicsMode(1, 4, 1);
     reg_GX_DISPCNT = (reg_GX_DISPCNT & ~0x1f00) | 0x1100;
     reg_G2_BG0CNT = (reg_G2_BG0CNT & ~3) | 1;
-    hdr = func_02031eb8(0x5513);
+    hdr = GetMapChunk(MAP_CHUNK_ENTRIES);
     if (hdr == NULL) {
         OS_Terminate();
     }
-    data_020c3e44.mUnk_2024.mUnk_54 = hdr[0];
-    data_020c3e44.mUnk_2024.mUnk_56 = hdr[1];
-    data_020c3e44.mUnk_2024.mUnk_40 = (hdr[3] << 16) + hdr[2];
-    verts = func_02031eb8(0x5511);
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_50 = verts;
-    data_020c3e44.mUnk_34 = (((verts[-1] * 8) / 8 + 16) & ~3);
-    data_020c3e44.mUnk_24 = Alloc(data_020c3e44.mUnk_34);
-    data_020c3e44.mUnk_28 = Alloc(0x400);
-    data_020c3e44.mUnk_2c = Alloc(0x1200);
-    data_020c3e44.mUnk_30 = Alloc(0x9c40);
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_56 = 0;
-    entry = func_0203204c(0, NULL);
+    gMapState.mCamera.mCellCountX = hdr[0];
+    gMapState.mCamera.mCellCountZ = hdr[1];
+    gMapState.mCamera.mCellSize = (hdr[3] << 16) + hdr[2];
+    offsets = GetMapChunk(MAP_CHUNK_CELL_REC_OFFSETS);
+    gMapState.mCamera.mUnk_2dc.mUnk_50 = offsets;
+    gMapState.mUnk_34 = (((offsets[-1] * 8) / 8 + 16) & ~3);
+    gMapState.mUnk_24 = Alloc(gMapState.mUnk_34);
+    gMapState.mUnk_28 = Alloc(0x400);
+    gMapState.mMarkers = Alloc(0x1200);
+    gMapState.mCells = Alloc(0x9c40);
+    gMapState.mCamera.mUnk_2dc.mUnk_56 = 0;
+    entry = GetMapEntry(0, NULL);
     if (entry != NULL) {
-        data_020c3e44.mUnk_2024.mUnk_9c.mUnk_204.x = func_02031f98(entry);
-        data_020c3e44.mUnk_2024.mUnk_9c.mUnk_204.y = func_02031fa4(entry);
-        data_020c3e44.mUnk_2024.mUnk_9c.mUnk_204.z = func_02031fb0(entry);
+        gMapState.mCamera.mUnk_9c.mUnk_204.x = GetMapEntryX(entry);
+        gMapState.mCamera.mUnk_9c.mUnk_204.y = GetMapEntryY(entry);
+        gMapState.mCamera.mUnk_9c.mUnk_204.z = GetMapEntryZ(entry);
     } else {
-        data_020c3e44.mUnk_2024.mUnk_9c.mUnk_204.x = 0x32000;
-        data_020c3e44.mUnk_2024.mUnk_9c.mUnk_204.y = 0x32000 >> 2;
-        data_020c3e44.mUnk_2024.mUnk_9c.mUnk_204.z = 0x32000;
+        gMapState.mCamera.mUnk_9c.mUnk_204.x = 0x32000;
+        gMapState.mCamera.mUnk_9c.mUnk_204.y = 0x32000 >> 2;
+        gMapState.mCamera.mUnk_9c.mUnk_204.z = 0x32000;
     }
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_32 = 1;
-    data_020c3e44.mUnk_2024.mUnk_9c.mUnk_21c = data_020c3e44.mUnk_2024.mUnk_9c.mUnk_204;
-    entry = func_0203204c(1, NULL);
+    gMapState.mCamera.mUnk_2dc.mUnk_32 = 1;
+    gMapState.mCamera.mUnk_9c.mUnk_21c = gMapState.mCamera.mUnk_9c.mUnk_204;
+    entry = GetMapEntry(1, NULL);
     if (entry != NULL) {
-        data_020c3e44.mUnk_2024.mUnk_9c.mUnk_228.x = func_02031f98(entry);
-        data_020c3e44.mUnk_2024.mUnk_9c.mUnk_228.y = func_02031fa4(entry);
-        data_020c3e44.mUnk_2024.mUnk_9c.mUnk_228.z = func_02031fb0(entry);
+        gMapState.mCamera.mUnk_9c.mUnk_228.x = GetMapEntryX(entry);
+        gMapState.mCamera.mUnk_9c.mUnk_228.y = GetMapEntryY(entry);
+        gMapState.mCamera.mUnk_9c.mUnk_228.z = GetMapEntryZ(entry);
     } else {
-        data_020c3e44.mUnk_2024.mUnk_9c.mUnk_228.x = 0x4b000;
-        data_020c3e44.mUnk_2024.mUnk_9c.mUnk_228.y = 0x19000;
-        data_020c3e44.mUnk_2024.mUnk_9c.mUnk_228.z = 0x4b000;
+        gMapState.mCamera.mUnk_9c.mUnk_228.x = 0x4b000;
+        gMapState.mCamera.mUnk_9c.mUnk_228.y = 0x19000;
+        gMapState.mCamera.mUnk_9c.mUnk_228.z = 0x4b000;
     }
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_33 = 8;
-    *(VecFx32 *) &data_020c3e44.mUnk_2024.mUnk_2dc = data_020c3e44.mUnk_2024.mUnk_9c.mUnk_228;
-    data_020c3e44.mUnk_38 = 0;
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_54 = 0x190;
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_30 = 0x3c00;
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_0f = 1;
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_11[0] = 4;
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_0e = 0;
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_10 = 0;
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_11[1] = 0;
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_14 = 0xe38;
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_16 = data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_14;
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_18 = data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_14;
-    data_020c3e44.mUnk_2024.mUnk_68 = 1;
-    data_020c3e44.mUnk_2024.mUnk_6c = 0x1000;
-    data_020c3e44.mUnk_2024.mUnk_70 = 0;
-    data_020c3e44.mUnk_2024.mUnk_5c.x = data_020c3e44.mUnk_2024.mUnk_9c.mUnk_204.x;
-    data_020c3e44.mUnk_2024.mUnk_5c.y = data_020c3e44.mUnk_2024.mUnk_9c.mUnk_204.y;
-    data_020c3e44.mUnk_2024.mUnk_5c.z = data_020c3e44.mUnk_2024.mUnk_9c.mUnk_204.z;
-    data_020c3e44.mUnk_2024.mUnk_74.x = data_020c3e44.mUnk_2024.mUnk_9c.mUnk_228.x;
-    data_020c3e44.mUnk_2024.mUnk_74.y = data_020c3e44.mUnk_2024.mUnk_9c.mUnk_228.y;
-    data_020c3e44.mUnk_2024.mUnk_74.z = data_020c3e44.mUnk_2024.mUnk_9c.mUnk_228.z;
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_40 = 0;
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_42[0] = 0;
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_44 = 0x1f4000;
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_64 = 0;
-    data_020c3e44.mUnk_00 = -1;
-    data_020c3e44.mUnk_10 = 0x80;
-    data_020c3e44.mUnk_2024.mUnk_04 = NULL;
-    func_020322b8(count);
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_5a = 0;
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_5c = 0;
-    data_020c3e44.mUnk_2024.mUnk_5b_1 = 0;
+    gMapState.mCamera.mUnk_2dc.mUnk_33 = 8;
+    *(VecFx32 *) &gMapState.mCamera.mUnk_2dc = gMapState.mCamera.mUnk_9c.mUnk_228;
+    gMapState.mUnk_38 = 0;
+    gMapState.mCamera.mUnk_2dc.mUnk_54 = 0x190;
+    gMapState.mCamera.mUnk_2dc.mUnk_30 = 0x3c00;
+    gMapState.mCamera.mUnk_2dc.mUnk_0f = 1;
+    gMapState.mCamera.mUnk_2dc.mUnk_11[0] = 4;
+    gMapState.mCamera.mUnk_2dc.mUnk_0e = 0;
+    gMapState.mCamera.mUnk_2dc.mUnk_10 = 0;
+    gMapState.mCamera.mUnk_2dc.mUnk_11[1] = 0;
+    gMapState.mCamera.mUnk_2dc.mUnk_14 = 0xe38;
+    gMapState.mCamera.mUnk_2dc.mUnk_16 = gMapState.mCamera.mUnk_2dc.mUnk_14;
+    gMapState.mCamera.mUnk_2dc.mUnk_18 = gMapState.mCamera.mUnk_2dc.mUnk_14;
+    gMapState.mCamera.mUnk_68 = 1;
+    gMapState.mCamera.mUnk_6c = 0x1000;
+    gMapState.mCamera.mUnk_70 = 0;
+    gMapState.mCamera.mPos.x = gMapState.mCamera.mUnk_9c.mUnk_204.x;
+    gMapState.mCamera.mPos.y = gMapState.mCamera.mUnk_9c.mUnk_204.y;
+    gMapState.mCamera.mPos.z = gMapState.mCamera.mUnk_9c.mUnk_204.z;
+    gMapState.mCamera.mLookAt.x = gMapState.mCamera.mUnk_9c.mUnk_228.x;
+    gMapState.mCamera.mLookAt.y = gMapState.mCamera.mUnk_9c.mUnk_228.y;
+    gMapState.mCamera.mLookAt.z = gMapState.mCamera.mUnk_9c.mUnk_228.z;
+    gMapState.mCamera.mUnk_2dc.mUnk_40 = 0;
+    gMapState.mCamera.mUnk_2dc.mUnk_42[0] = 0;
+    gMapState.mCamera.mUnk_2dc.mUnk_44 = 0x1f4000;
+    gMapState.mCamera.mUnk_2dc.mUnk_64 = 0;
+    gMapState.mUnk_00 = -1;
+    gMapState.mUnk_10 = 0x80;
+    gMapState.mCamera.mUnk_04 = NULL;
+    AllocMapPairs(count);
+    gMapState.mCamera.mUnk_2dc.mUnk_5a = 0;
+    gMapState.mCamera.mUnk_2dc.mUnk_5c = 0;
+    gMapState.mCamera.mUnk_5b_1 = 0;
     gSystemState.mFlags &= ~0x10000;
 }
 
 // Frees the map buffers and clears the records.
-void func_02032850(void) {
-    data_020c3e44.mUnk_14 = 0;
+void ReleaseMap(void) {
+    gMapState.mPairCount = 0;
     func_02032b88(1);
-    Free(&data_020c3e44.mUnk_1c);
-    Free(&data_020c3e44.mUnk_24);
-    Free(&data_020c3e44.mUnk_28);
-    Free(&data_020c3e44.mUnk_2c);
-    Free(&data_020c3e44.mUnk_30);
+    Free(&gMapState.mPairs);
+    Free(&gMapState.mUnk_24);
+    Free(&gMapState.mUnk_28);
+    Free(&gMapState.mMarkers);
+    Free(&gMapState.mCells);
 }
 
 // The cell table of chunk 0x5510; terminates when the chunk is missing.
-u16 *func_02032898(void) {
-    u16 *cells = func_02031eb8(0x5510);
+u16 *GetMapCellChunk(void) {
+    u16 *cells = GetMapChunk(MAP_CHUNK_CELLS);
 
     if (cells == NULL) {
         OS_Terminate();
@@ -1033,24 +1037,24 @@ void func_020328b0(MapRecord *rec) {
         u16 b = (v >> 6) & 0x3f;
 
         if (v >> 15) {
-            if (data_020c3e44.mUnk_2024.mUnk_04 == NULL) {
+            if (gMapState.mCamera.mUnk_04 == NULL) {
                 OS_Terminate();
             }
-            data_020c3e44.mUnk_2024.mUnk_04(a, rec, (u16) (b + data_020c3e44.mUnk_2024.mUnk_02));
+            gMapState.mCamera.mUnk_04(a, rec, (u16) (b + gMapState.mCamera.mUnk_02));
         }
-        if (a == 0x3f || (data_020c3e44.mUnk_2024.mUnk_44 & (1 << a))) {
+        if (a == 0x3f || (gMapState.mCamera.mUnk_44 & (1 << a))) {
             anim = b;
             kind = (rec->mUnk_00->mUnk_04[i] >> 12) & 7;
         }
     }
     if (anim != 0x3f) {
-        anim += data_020c3e44.mUnk_2024.mUnk_02;
+        anim += gMapState.mCamera.mUnk_02;
     } else {
         anim = 0;
     }
     if (rec->mUnk_150 != anim) {
         if (rec->mUnk_176_10 == 1 || rec->mUnk_150 == 0) {
-            func_02027230(rec->mUnk_04, rec->mUnk_174, anim, 2, 0);
+            StartModel(rec->mUnk_04, rec->mUnk_174, anim, 2, 0);
         }
     }
     if (rec->mUnk_176_10 == 1) {
@@ -1081,17 +1085,17 @@ void func_020329d0(u8 *p) {
         MapObjDef *def = (MapObjDef *) p;
 
         for (i = 0; i < MAP_RECORDS; i++) {
-            rec = &data_020c3e44.mUnk_e4[i];
+            rec = &gMapState.mRecords[i];
             if (rec->mUnk_00 == def) {
                 break;
             }
         }
         if (i == MAP_RECORDS) {
-            u8 *entries = (u8 *) func_02031eb8(0x5513) + 0xa;
+            u8 *entries = (u8 *) GetMapChunk(MAP_CHUNK_ENTRIES) + 0xa;
             MapRecord *r;
             int off;
 
-            r = data_020c3e44.mUnk_e4;
+            r = gMapState.mRecords;
             for (i = 0; i < MAP_RECORDS; i++, r++) {
                 if (r->mUnk_00 == NULL) {
                     fresh = r;
@@ -1102,17 +1106,17 @@ void func_020329d0(u8 *p) {
                 return;
             }
             fresh->mUnk_00 = def;
-            fresh->mUnk_174 = def->mUnk_02 + data_020c3e44.mUnk_2024.mUnk_00;
+            fresh->mUnk_174 = def->mUnk_02 + gMapState.mCamera.mUnk_00;
             fresh->mUnk_176_10 = 0;
             fresh->mUnk_176_4 = 0;
             fresh->mUnk_176_9 = 0;
             fresh->mUnk_176_12 = 0;
             rec = fresh;
             off = fresh->mUnk_00->mUnk_00 * 16;
-            fresh->mUnk_17c.x = func_02031f98((MapEntry *) (entries + off));
-            fresh->mUnk_17c.y = func_02031fa4((MapEntry *) (entries + off));
-            fresh->mUnk_17c.z = func_02031fb0((MapEntry *) (entries + off));
-            fresh->mUnk_188 = func_02031fbc((MapEntry *) (entries + off));
+            fresh->mUnk_17c.x = GetMapEntryX((MapEntry *) (entries + off));
+            fresh->mUnk_17c.y = GetMapEntryY((MapEntry *) (entries + off));
+            fresh->mUnk_17c.z = GetMapEntryZ((MapEntry *) (entries + off));
+            fresh->mUnk_188 = GetMapEntryAngle((MapEntry *) (entries + off));
             fresh->mUnk_18a = 0;
             fresh->mUnk_18c = 0;
             fresh->mUnk_18b = 0;
@@ -1137,8 +1141,8 @@ void func_020329d0(u8 *p) {
             }
             func_020328b0(rec);
             if (rec->mUnk_18a == 0) {
-                data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_60++;
-                func_0202733c(rec->mUnk_04, &dp, flags);
+                gMapState.mCamera.mUnk_2dc.mUnk_60++;
+                UpdateAndDrawModel(rec->mUnk_04, &dp, flags);
             }
         }
         p += def->mUnk_03 * 2 + 4;
@@ -1150,11 +1154,11 @@ void func_02032b88(int a) {
     int i;
 
     for (i = 0; i < MAP_RECORDS; i++) {
-        data_020c3e44.mUnk_e4[i].mUnk_00 = NULL;
+        gMapState.mRecords[i].mUnk_00 = NULL;
     }
     if (a == 1) {
-        data_020c3e44.mUnk_2024.mUnk_00 = 0;
-        data_020c3e44.mUnk_2024.mUnk_02 = 0;
+        gMapState.mCamera.mUnk_00 = 0;
+        gMapState.mCamera.mUnk_02 = 0;
     }
 }
 
@@ -1197,7 +1201,7 @@ int func_02032bb8(int x0, int z0, int w, int x1, int z1) {
     k = 1;
     px = x0 + (dx != 0 ? dx >> 31 | 1 : 0);
     pz = z0 + (dz != 0 ? dz >> 31 | 1 : 0);
-    c = data_020c3e44.mUnk_30 + (px + pz * w);
+    c = gMapState.mCells + (px + pz * w);
     kind = c->mUnk_3;
     if (kind == 0) {
         k = 2;
@@ -1205,13 +1209,13 @@ int func_02032bb8(int x0, int z0, int w, int x1, int z1) {
         fz = pz;
         nx = x0 + (stepx != 0 ? stepx >> 31 | 1 : 0);
         nz = z0 + (stepz != 0 ? stepz >> 31 | 1 : 0);
-        c = data_020c3e44.mUnk_30 + (nx + nz * w);
+        c = gMapState.mCells + (nx + nz * w);
         kind = c->mUnk_3;
         if (kind == 0) {
             return 0;
         }
     }
-    cur = data_020c3e44.mUnk_30 + (x0 + z0 * w);
+    cur = gMapState.mCells + (x0 + z0 * w);
     if (kind > 1) {
         int sign = c->mUnk_0 * (z0 - z1) - c->mUnk_1 * (x0 - x1) != 0
                        ? (c->mUnk_0 * (z0 - z1) - c->mUnk_1 * (x0 - x1)) >> 31 | 1
@@ -1245,7 +1249,7 @@ void func_02032d50(u32 px, u32 pz) {
     int x0;
     int z0;
     int w;
-    u32 saved = data_020c3e44.mUnk_36;
+    u32 saved = gMapState.mMarkerCount;
     u32 j;
     int tail;
     int head;
@@ -1271,15 +1275,15 @@ void func_02032d50(u32 px, u32 pz) {
     u32 z;
     int n;
 
-    if (!data_020c3e44.mUnk_2024.mUnk_5b_3) {
+    if (!gMapState.mCamera.mUnk_5b_3) {
         return;
     }
-    area = (u8 *) func_02031eb8(0x5530);
+    area = (u8 *) GetMapChunk(MAP_CHUNK_AREAS);
     if (area == NULL) {
         OS_Terminate();
     }
-    cx = px / data_020c3e44.mUnk_2024.mUnk_40;
-    cz = pz / data_020c3e44.mUnk_2024.mUnk_40;
+    cx = px / gMapState.mCamera.mCellSize;
+    cz = pz / gMapState.mCamera.mCellSize;
     n = *area;
     area += 2;
     left = n - 1;
@@ -1308,7 +1312,7 @@ void func_02032d50(u32 px, u32 pz) {
     }
     reg_G3X_POLYGON_ATTR = 0x10c0;
     reg_G3X_MTX_MODE = 2;
-    G3_LoadMtx43(&data_020c3e44.mUnk_3c);
+    G3_LoadMtx43(&gMapState.mUnk_3c);
     reg_G3X_MTX_STORE = 0x1e;
     box[0] = 0;
     box[1] = -0x1000;
@@ -1316,11 +1320,11 @@ void func_02032d50(u32 px, u32 pz) {
     box[3] = 0x1000;
     box[4] = 0x2000;
     box[5] = 0x1000;
-    MIi_CpuClearFast(0, data_020c3e44.mUnk_28, 0x400);
-    MIi_CpuClearFast(0, data_020c3e44.mUnk_30, 0x9c40);
-    data_020c3e44.mUnk_30[cx + cz * w].mUnk_3 = 1;
+    MIi_CpuClearFast(0, gMapState.mUnk_28, 0x400);
+    MIi_CpuClearFast(0, gMapState.mCells, 0x9c40);
+    gMapState.mCells[cx + cz * w].mUnk_3 = 1;
     idx0 = cx + (cz << shift);
-    data_020c3e44.mUnk_28[idx0 >> 5] |= 1 << (idx0 & 0x1f);
+    gMapState.mUnk_28[idx0 >> 5] |= 1 << (idx0 & 0x1f);
     queue[tail++] = idx0;
     if (tail != head) {
         low = (1 << shift) - 1;
@@ -1332,19 +1336,19 @@ void func_02032d50(u32 px, u32 pz) {
             row = q >> shift;
             col = q & low;
             v = ((MapArea *) area)->mUnk_06[col + row * w];
-            x = data_020c3e44.mUnk_2024.mUnk_40 * (col + x0);
-            z = data_020c3e44.mUnk_2024.mUnk_40 * (row + z0);
+            x = gMapState.mCamera.mCellSize * (col + x0);
+            z = gMapState.mCamera.mCellSize * (row + z0);
             if ((v & 0x3ff) == 0) {
-                data_020c3e44.mUnk_2024.mUnk_5b_2 = 1;
-                data_020c3e44.mUnk_dc = x;
-                data_020c3e44.mUnk_e0 = z;
+                gMapState.mCamera.mUnk_5b_2 = 1;
+                gMapState.mUnk_dc = x;
+                gMapState.mUnk_e0 = z;
             } else {
-                data_020c3e44.mUnk_2c[data_020c3e44.mUnk_36].mUnk_04 = x;
-                data_020c3e44.mUnk_2c[data_020c3e44.mUnk_36].mUnk_08 = z;
-                data_020c3e44.mUnk_2c[data_020c3e44.mUnk_36].mUnk_00 =
-                    data_020c3e44.mUnk_2024.mUnk_58 - 1 + func_0203249c(v & 0x3ff);
-                data_020c3e44.mUnk_36++;
-                if (data_020c3e44.mUnk_36 >= 0x180) {
+                gMapState.mMarkers[gMapState.mMarkerCount].mUnk_04 = x;
+                gMapState.mMarkers[gMapState.mMarkerCount].mUnk_08 = z;
+                gMapState.mMarkers[gMapState.mMarkerCount].mUnk_00 =
+                    gMapState.mCamera.mUnk_58 - 1 + func_0203249c(v & 0x3ff);
+                gMapState.mMarkerCount++;
+                if (gMapState.mMarkerCount >= 0x180) {
                     OS_Terminate();
                 }
             }
@@ -1360,15 +1364,14 @@ void func_02032d50(u32 px, u32 pz) {
                     nr = row + sMapDirs[j];
                     idx = nc + (nr << shift);
                     bit = 1 << (idx & 0x1f);
-                    word = data_020c3e44.mUnk_28[idx >> 5];
+                    word = gMapState.mUnk_28[idx >> 5];
 
                     if (!(bit & word)) {
-                        data_020c3e44.mUnk_28[idx >> 5] = word | bit;
+                        gMapState.mUnk_28[idx >> 5] = word | bit;
                         *(vu32 *) 0x04000450 = 0x1e;
-                        PutTrans(data_020c3e44.mUnk_2024.mUnk_40 * (nc + x0), 0,
-                                 data_020c3e44.mUnk_2024.mUnk_40 * (nr + z0));
-                        PutScale(data_020c3e44.mUnk_2024.mUnk_40, data_020c3e44.mUnk_2024.mUnk_40 << 4,
-                                 data_020c3e44.mUnk_2024.mUnk_40);
+                        PutTrans(gMapState.mCamera.mCellSize * (nc + x0), 0, gMapState.mCamera.mCellSize * (nr + z0));
+                        PutScale(gMapState.mCamera.mCellSize, gMapState.mCamera.mCellSize << 4,
+                                 gMapState.mCamera.mCellSize);
                         reg_G3X_BEGIN_VTXS = 0;
                         reg_G3X_END_VTXS = 0;
                         reg_G3X_BOX_TEST = *(u32 *) &box[0];
@@ -1377,7 +1380,7 @@ void func_02032d50(u32 px, u32 pz) {
                         while (G3X_GetBoxTestResult(&result) != 0) {
                         }
                         if (result != 0 && func_02032bb8(nc, nr, w, cx, cz) != 0) {
-                            data_020c3e44.mUnk_30[nc + nr * w].mUnk_3 = 1;
+                            gMapState.mCells[nc + nr * w].mUnk_3 = 1;
                             queue[tail] = idx;
                             tail = (u8) (tail + 1);
                         }
@@ -1388,18 +1391,18 @@ void func_02032d50(u32 px, u32 pz) {
             }
         } while (tail != head);
     }
-    if (!data_020c3e44.mUnk_2024.mUnk_5b_2) {
-        if (data_020c3e44.mUnk_2024.mUnk_5a == 1) {
-            data_020c3e44.mUnk_2024.mUnk_5b_3 = 0;
-            data_020c3e44.mUnk_36 = saved;
+    if (!gMapState.mCamera.mUnk_5b_2) {
+        if (gMapState.mCamera.mUnk_5a == 1) {
+            gMapState.mCamera.mUnk_5b_3 = 0;
+            gMapState.mMarkerCount = saved;
         } else {
-            data_020c3e44.mUnk_2024.mUnk_5b_4 = 0;
-            data_020c3e44.mUnk_2024.mUnk_0c = 0;
-            MIi_CpuClearFast(0, data_020c3e44.mUnk_24, data_020c3e44.mUnk_34);
-            for (j = saved; j < data_020c3e44.mUnk_36; j++) {
-                data_020c3e44.mUnk_2c[j - saved] = data_020c3e44.mUnk_2c[j];
+            gMapState.mCamera.mUnk_5b_4 = 0;
+            gMapState.mCamera.mUnk_0c = 0;
+            MIi_CpuClearFast(0, gMapState.mUnk_24, gMapState.mUnk_34);
+            for (j = saved; j < gMapState.mMarkerCount; j++) {
+                gMapState.mMarkers[j - saved] = gMapState.mMarkers[j];
             }
-            data_020c3e44.mUnk_36 -= saved;
+            gMapState.mMarkerCount -= saved;
         }
     }
 }
@@ -1422,7 +1425,7 @@ typedef struct MapCellRec {
 } MapCellRec;
 
 // Collects the cell blocks of chunk 0x5512 that the camera sees, starting from the cell under (x, z): each block
-// within the view distance is box-tested, kept in the table at MapState.mUnk_2c (with its class) when visible and its
+// within the view distance is box-tested, kept in the table at MapState.mMarkers (with its class) when visible and its
 // listed cells that are not marked yet are marked in the first bit set and queued for the same treatment.
 void func_0203315c(int x, int z) {
     u32 mask = 0x7fff;
@@ -1443,7 +1446,7 @@ void func_0203315c(int x, int z) {
     n = 0;
     m = 0;
     reg_G3X_MTX_MODE = 2;
-    G3_LoadMtx43(&data_020c3e44.mUnk_3c);
+    G3_LoadMtx43(&gMapState.mUnk_3c);
     reg_G3X_MTX_STORE = 0x1e;
     box[0] = 0;
     box[1] = 0;
@@ -1451,28 +1454,28 @@ void func_0203315c(int x, int z) {
     box[3] = 0x1000;
     box[4] = 0x1000;
     box[5] = 0x1000;
-    cx = (u32) x / data_020c3e44.mUnk_2024.mUnk_40;
-    cz = (u32) z / data_020c3e44.mUnk_2024.mUnk_40;
-    cols = data_020c3e44.mUnk_2024.mUnk_54;
-    rows = data_020c3e44.mUnk_2024.mUnk_56;
+    cx = (u32) x / gMapState.mCamera.mCellSize;
+    cz = (u32) z / gMapState.mCamera.mCellSize;
+    cols = gMapState.mCamera.mCellCountX;
+    rows = gMapState.mCamera.mCellCountZ;
     if (!(cz < rows && cx < cols)) {
         return;
     }
-    cells = func_02032898();
-    chunk = func_02031eb8(0x5512);
+    cells = GetMapCellChunk();
+    chunk = GetMapChunk(MAP_CHUNK_CELL_RECS);
     if (chunk == 0) {
         OS_Terminate();
     }
-    v = cells[cx + cz * data_020c3e44.mUnk_2024.mUnk_54];
+    v = cells[cx + cz * gMapState.mCamera.mCellCountX];
     if (v & 0x8000) {
         v &= 0x7fff;
-        data_020c3e44.mUnk_2024.mUnk_5b_3 = 1;
+        gMapState.mCamera.mUnk_5b_3 = 1;
     }
     if (v != 0) {
-        data_020c3e44.mUnk_24[v >> 5] |= 1 << (v & 0x1f);
+        gMapState.mUnk_24[v >> 5] |= 1 << (v & 0x1f);
         list[0] = v;
         n++;
-        data_020c3e44.mUnk_2024.mUnk_5b_4 = 1;
+        gMapState.mCamera.mUnk_5b_4 = 1;
     }
     if (n != 0) {
         cx = *(u32 *) &box[2];
@@ -1488,7 +1491,7 @@ void func_0203315c(int x, int z) {
             u32 r;
 
             m = (u8) (m + 1);
-            offs = data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_50;
+            offs = gMapState.mCamera.mUnk_2dc.mUnk_50;
             rec = (MapCellRec *) (chunk + offs[idx]);
             listlen =
                 (u32) ((offs[idx + 1] - offs[idx]) * 2 - ((u8 *) (rec + 1) - (u8 *) rec) - (rec->mUnk_12 - 1) * 2) >> 1;
@@ -1507,14 +1510,14 @@ void func_0203315c(int x, int z) {
             px = rec->mUnk_06[0] + (rec->mUnk_06[1] << 16);
             pz = rec->mUnk_0a[0] + (rec->mUnk_0a[1] << 16);
             py = rec->mUnk_0e[0] + (rec->mUnk_0e[1] << 16);
-            r = (u32) data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_44 >> 9;
+            r = (u32) gMapState.mCamera.mUnk_2dc.mUnk_44 >> 9;
             if (func_020322f4(px, pz, rec->mUnk_02, rec->mUnk_03) > r * r) {
                 continue;
             }
             *(vu32 *) 0x04000450 = 0x1e;
             PutTrans(px, py, pz);
-            PutScale(data_020c3e44.mUnk_2024.mUnk_40 * rec->mUnk_02, data_020c3e44.mUnk_2024.mUnk_40 * rec->mUnk_04,
-                     data_020c3e44.mUnk_2024.mUnk_40 * rec->mUnk_03);
+            PutScale(gMapState.mCamera.mCellSize * rec->mUnk_02, gMapState.mCamera.mCellSize * rec->mUnk_04,
+                     gMapState.mCamera.mCellSize * rec->mUnk_03);
             reg_G3X_BEGIN_VTXS = 0;
             reg_G3X_END_VTXS = 0;
             reg_G3X_BOX_TEST = *(u32 *) &box[0];
@@ -1523,20 +1526,19 @@ void func_0203315c(int x, int z) {
             while (G3X_GetBoxTestResult(&result) != 0) {
             }
             if (result != 0 && rec->mUnk_12 > 1) {
-                data_020c3e44.mUnk_2024.mUnk_08[data_020c3e44.mUnk_2024.mUnk_0c++] = &rec->mUnk_13;
+                gMapState.mCamera.mUnk_08[gMapState.mCamera.mUnk_0c++] = &rec->mUnk_13;
             }
-            if (result == 0 && data_020c3e44.mUnk_36 != 0) {
+            if (result == 0 && gMapState.mMarkerCount != 0) {
                 continue;
             }
             if (result != 0) {
                 u32 k = func_02032368(rec->mUnk_00, px, pz, rec->mUnk_02, rec->mUnk_03);
 
-                data_020c3e44.mUnk_2c[data_020c3e44.mUnk_36].mUnk_04 = px;
-                data_020c3e44.mUnk_2c[data_020c3e44.mUnk_36].mUnk_08 = pz;
-                data_020c3e44.mUnk_2c[data_020c3e44.mUnk_36].mUnk_00 =
-                    data_020c3e44.mUnk_2024.mUnk_58 - 1 + func_0203249c(k);
-                data_020c3e44.mUnk_36++;
-                if (data_020c3e44.mUnk_36 >= 0x180) {
+                gMapState.mMarkers[gMapState.mMarkerCount].mUnk_04 = px;
+                gMapState.mMarkers[gMapState.mMarkerCount].mUnk_08 = pz;
+                gMapState.mMarkers[gMapState.mMarkerCount].mUnk_00 = gMapState.mCamera.mUnk_58 - 1 + func_0203249c(k);
+                gMapState.mMarkerCount++;
+                if (gMapState.mMarkerCount >= 0x180) {
                     OS_Terminate();
                 }
             }
@@ -1555,10 +1557,10 @@ void func_0203315c(int x, int z) {
                     OS_Terminate();
                 }
                 bit = 1 << (c & 0x1f);
-                if (data_020c3e44.mUnk_24[c >> 5] & bit) {
+                if (gMapState.mUnk_24[c >> 5] & bit) {
                     continue;
                 }
-                data_020c3e44.mUnk_24[c >> 5] |= bit;
+                gMapState.mUnk_24[c >> 5] |= bit;
                 list[n] = c;
                 n = (u8) (n + 1);
                 if (n == m) {
@@ -1570,29 +1572,29 @@ void func_0203315c(int x, int z) {
     }
 }
 
-// Moves the camera's target and position a step (1 / 2^mUnk_98 of the way) towards their goals and redraws the
-// projection.
-void func_02033488(void) {
-    u8 s = data_020c3e44.mUnk_2024.mUnk_98;
+// Moves the camera's look-at point and position a step (1 / 2^mEaseShift of the way) towards mLookAtGoal and
+// mPosGoal, takes one step of the view angle blend and sets up the projection.
+void EaseCameraToGoals(void) {
+    u8 s = gMapState.mCamera.mEaseShift;
 
-    data_020c3e44.mUnk_2024.mUnk_74.x += (data_020c3e44.mUnk_2024.mUnk_8c.x - data_020c3e44.mUnk_2024.mUnk_74.x) >> s;
-    data_020c3e44.mUnk_2024.mUnk_74.y += (data_020c3e44.mUnk_2024.mUnk_8c.y - data_020c3e44.mUnk_2024.mUnk_74.y) >> s;
-    data_020c3e44.mUnk_2024.mUnk_74.z += (data_020c3e44.mUnk_2024.mUnk_8c.z - data_020c3e44.mUnk_2024.mUnk_74.z) >> s;
-    data_020c3e44.mUnk_2024.mUnk_5c.x += (data_020c3e44.mUnk_2024.mUnk_80.x - data_020c3e44.mUnk_2024.mUnk_5c.x) >> s;
-    data_020c3e44.mUnk_2024.mUnk_5c.y += (data_020c3e44.mUnk_2024.mUnk_80.y - data_020c3e44.mUnk_2024.mUnk_5c.y) >> s;
-    data_020c3e44.mUnk_2024.mUnk_5c.z += (data_020c3e44.mUnk_2024.mUnk_80.z - data_020c3e44.mUnk_2024.mUnk_5c.z) >> s;
+    gMapState.mCamera.mLookAt.x += (gMapState.mCamera.mLookAtGoal.x - gMapState.mCamera.mLookAt.x) >> s;
+    gMapState.mCamera.mLookAt.y += (gMapState.mCamera.mLookAtGoal.y - gMapState.mCamera.mLookAt.y) >> s;
+    gMapState.mCamera.mLookAt.z += (gMapState.mCamera.mLookAtGoal.z - gMapState.mCamera.mLookAt.z) >> s;
+    gMapState.mCamera.mPos.x += (gMapState.mCamera.mPosGoal.x - gMapState.mCamera.mPos.x) >> s;
+    gMapState.mCamera.mPos.y += (gMapState.mCamera.mPosGoal.y - gMapState.mCamera.mPos.y) >> s;
+    gMapState.mCamera.mPos.z += (gMapState.mCamera.mPosGoal.z - gMapState.mCamera.mPos.z) >> s;
     func_02033b8c();
     func_02033520();
 }
 
 // The camera's field of view angle.
 u16 func_020334ec(void) {
-    return data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_14;
+    return gMapState.mCamera.mUnk_2dc.mUnk_14;
 }
 
 // Sets the projection with the far distance scaled by 8 when a is 1, then restores it.
 void func_020334f8(int a) {
-    s32 saved = data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_44;
+    s32 saved = gMapState.mCamera.mUnk_2dc.mUnk_44;
     int sh;
 
     if (a == 1) {
@@ -1600,9 +1602,9 @@ void func_020334f8(int a) {
     } else {
         sh = 0;
     }
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_44 <<= sh;
+    gMapState.mCamera.mUnk_2dc.mUnk_44 <<= sh;
     func_02033520();
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_44 = saved;
+    gMapState.mCamera.mUnk_2dc.mUnk_44 = saved;
 }
 
 // Sets up the projection (from the field of view angle and the far distance) and the view matrix from the camera
@@ -1611,29 +1613,29 @@ void func_020334f8(int a) {
 void func_02033520(void) {
     int a = func_020334ec();
 
-    if (data_020c3e44.mUnk_2024.mUnk_50 != 0) {
+    if (gMapState.mCamera.mMapFile != 0) {
         int i;
 
         func_0203cbe0();
-        if (data_020c3e44.mUnk_2024.mUnk_5c.x == data_020c3e44.mUnk_2024.mUnk_74.x &&
-            data_020c3e44.mUnk_2024.mUnk_5c.y == data_020c3e44.mUnk_2024.mUnk_74.y &&
-            data_020c3e44.mUnk_2024.mUnk_5c.z == data_020c3e44.mUnk_2024.mUnk_74.z) {
-            data_020c3e44.mUnk_2024.mUnk_5c.y += 0xc800;
+        if (gMapState.mCamera.mPos.x == gMapState.mCamera.mLookAt.x &&
+            gMapState.mCamera.mPos.y == gMapState.mCamera.mLookAt.y &&
+            gMapState.mCamera.mPos.z == gMapState.mCamera.mLookAt.z) {
+            gMapState.mCamera.mPos.y += 0xc800;
         }
         i = (a >> 4) * 2;
-        func_0203d030(FX_SinCosTable_[i], FX_SinCosTable_[i + 1], 0x1555, 0x400,
-                      data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_44, 0x1000, 1, &data_020c3e44.mUnk_9c);
+        func_0203d030(FX_SinCosTable_[i], FX_SinCosTable_[i + 1], 0x1555, 0x400, gMapState.mCamera.mUnk_2dc.mUnk_44,
+                      0x1000, 1, &gMapState.mUnk_9c);
         *(vu32 *) 0x040004c8 = 0x20000000;
-        func_0203d0f0(&data_020c3e44.mUnk_2024.mUnk_5c, (VecFx32 *) &data_020c3e44.mUnk_2024.mUnk_68,
-                      &data_020c3e44.mUnk_2024.mUnk_74, 1, &data_020c3e44.mUnk_3c);
-        func_0203b8bc((MtxFx33 *) &data_020c3e44.mUnk_3c, (MtxFx33 *) &data_020c3e44.mUnk_6c);
-        func_0203b9b0((VecFx32 *) &data_020c3e44.mUnk_3c._[9], (MtxFx33 *) &data_020c3e44.mUnk_6c,
-                      (VecFx32 *) &data_020c3e44.mUnk_6c._[9]);
-        data_020c3e44.mUnk_6c._[9] = -data_020c3e44.mUnk_6c._[9];
-        data_020c3e44.mUnk_6c._[10] = -data_020c3e44.mUnk_6c._[10];
-        data_020c3e44.mUnk_6c._[11] = -data_020c3e44.mUnk_6c._[11];
+        func_0203d0f0(&gMapState.mCamera.mPos, (VecFx32 *) &gMapState.mCamera.mUnk_68, &gMapState.mCamera.mLookAt, 1,
+                      &gMapState.mUnk_3c);
+        func_0203b8bc((MtxFx33 *) &gMapState.mUnk_3c, (MtxFx33 *) &gMapState.mUnk_6c);
+        func_0203b9b0((VecFx32 *) &gMapState.mUnk_3c._[9], (MtxFx33 *) &gMapState.mUnk_6c,
+                      (VecFx32 *) &gMapState.mUnk_6c._[9]);
+        gMapState.mUnk_6c._[9] = -gMapState.mUnk_6c._[9];
+        gMapState.mUnk_6c._[10] = -gMapState.mUnk_6c._[10];
+        gMapState.mUnk_6c._[11] = -gMapState.mUnk_6c._[11];
         reg_G3X_MTX_MODE = 2;
-        data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_4a = 0;
+        gMapState.mCamera.mUnk_2dc.mUnk_4a = 0;
     }
 }
 
@@ -1647,36 +1649,36 @@ void func_02033614(s32 x, s32 z) {
     DrawParams marker;
     DrawParams camera;
 
-    data_020c3e44.mUnk_2024.mUnk_08 = Alloc(0x80);
-    data_020c3e44.mUnk_2024.mUnk_0c = 0;
-    if (data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_42[0] != 0) {
-        a = data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_38;
-        b = data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_3c;
+    gMapState.mCamera.mUnk_08 = Alloc(0x80);
+    gMapState.mCamera.mUnk_0c = 0;
+    if (gMapState.mCamera.mUnk_2dc.mUnk_42[0] != 0) {
+        a = gMapState.mCamera.mUnk_2dc.mUnk_38;
+        b = gMapState.mCamera.mUnk_2dc.mUnk_3c;
     } else {
-        a = data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_38 * 0xc800;
-        b = data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_3c * 0xc800;
+        a = gMapState.mCamera.mUnk_2dc.mUnk_38 * 0xc800;
+        b = gMapState.mCamera.mUnk_2dc.mUnk_3c * 0xc800;
     }
-    func_02034768(a, b, data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_40);
-    func_02034904();
-    data_020c3e44.mUnk_2024.mUnk_44 = 0;
-    data_020c3e44.mUnk_2024.mUnk_5b_4 = 0;
-    data_020c3e44.mUnk_2024.mUnk_5b_3 = 0;
-    data_020c3e44.mUnk_2024.mUnk_5b_2 = 0;
-    data_020c3e44.mUnk_36 = 0;
-    MIi_CpuClearFast(0, data_020c3e44.mUnk_24, data_020c3e44.mUnk_34);
+    SetFog(a, b, gMapState.mCamera.mUnk_2dc.mUnk_40);
+    ClearLightMask();
+    gMapState.mCamera.mUnk_44 = 0;
+    gMapState.mCamera.mUnk_5b_4 = 0;
+    gMapState.mCamera.mUnk_5b_3 = 0;
+    gMapState.mCamera.mUnk_5b_2 = 0;
+    gMapState.mMarkerCount = 0;
+    MIi_CpuClearFast(0, gMapState.mUnk_24, gMapState.mUnk_34);
     func_0203315c(x, z);
     func_02032d50(x, z);
-    if (data_020c3e44.mUnk_2024.mUnk_5b_2 == 1 && data_020c3e44.mUnk_2024.mUnk_5b_4 == 0) {
-        func_0203315c(data_020c3e44.mUnk_dc, data_020c3e44.mUnk_e0);
+    if (gMapState.mCamera.mUnk_5b_2 == 1 && gMapState.mCamera.mUnk_5b_4 == 0) {
+        func_0203315c(gMapState.mUnk_dc, gMapState.mUnk_e0);
     }
-    data_020c3e44.mUnk_2024.mUnk_5a = (data_020c3e44.mUnk_2024.mUnk_5b_3 << 1) + data_020c3e44.mUnk_2024.mUnk_5b_4;
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_60 = 0;
-    if (data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_5c == 0) {
-        for (i = 0; i < data_020c3e44.mUnk_2024.mUnk_0c; i++) {
-            func_020329d0(data_020c3e44.mUnk_2024.mUnk_08[i]);
+    gMapState.mCamera.mUnk_5a = (gMapState.mCamera.mUnk_5b_3 << 1) + gMapState.mCamera.mUnk_5b_4;
+    gMapState.mCamera.mUnk_2dc.mUnk_60 = 0;
+    if (gMapState.mCamera.mUnk_2dc.mUnk_5c == 0) {
+        for (i = 0; i < gMapState.mCamera.mUnk_0c; i++) {
+            func_020329d0(gMapState.mCamera.mUnk_08[i]);
         }
     }
-    Free(&data_020c3e44.mUnk_2024.mUnk_08);
+    Free(&gMapState.mCamera.mUnk_08);
     marker.mUnk_43_4 = 0;
     marker.mUnk_43_3 = marker.mUnk_43_4;
     marker.mUnk_43 = 0;
@@ -1686,31 +1688,31 @@ void func_02033614(s32 x, s32 z) {
     marker.mUnk_3c = 0;
     marker.mUnk_3e = 0xff;
     {
-        s32 v = -(data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_5a == 0);
+        s32 v = -(gMapState.mCamera.mUnk_2dc.mUnk_5a == 0);
         marker.mUnk_2c = v;
         marker.mUnk_30 = v;
         marker.mUnk_34 = v;
     }
-    for (i = 0; i < data_020c3e44.mUnk_36; i++) {
-        if ((data_020c3e44.mUnk_38 & 0x8000) == 0 ||
-            (data_020c3e44.mUnk_38 & ~0x8000) + data_020c3e44.mUnk_2024.mUnk_58 == data_020c3e44.mUnk_2c[i].mUnk_00) {
-            MapMarker *m = &data_020c3e44.mUnk_2c[i];
+    for (i = 0; i < gMapState.mMarkerCount; i++) {
+        if ((gMapState.mUnk_38 & 0x8000) == 0 ||
+            (gMapState.mUnk_38 & ~0x8000) + gMapState.mCamera.mUnk_58 == gMapState.mMarkers[i].mUnk_00) {
+            MapMarker *m = &gMapState.mMarkers[i];
             marker.mPos.x = m->mUnk_04;
             marker.mPos.z = m->mUnk_08;
-            func_020248e8(m->mUnk_00 & 0x7fff, &marker, data_020c3e44.mUnk_2024.mUnk_5b_0 == 1 ? 0x10 : 0);
-            if (*(vu16 *) 0x04000604 > data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_54) {
+            DrawModelFile(m->mUnk_00 & 0x7fff, &marker, gMapState.mCamera.mUnk_5b_0 == 1 ? 0x10 : 0);
+            if (*(vu16 *) 0x04000604 > gMapState.mCamera.mUnk_2dc.mUnk_54) {
                 break;
             }
         }
     }
-    if (data_020c3e44.mUnk_2024.mUnk_52 == 0) {
+    if (gMapState.mCamera.mUnk_52 == 0) {
         return;
     }
     func_020334ec();
     func_020334f8(1);
-    camera.mPos.x = data_020c3e44.mUnk_2024.mUnk_5c.x;
-    camera.mPos.y = data_020c3e44.mUnk_2024.mUnk_5c.y;
-    camera.mPos.z = data_020c3e44.mUnk_2024.mUnk_5c.z;
+    camera.mPos.x = gMapState.mCamera.mPos.x;
+    camera.mPos.y = gMapState.mCamera.mPos.y;
+    camera.mPos.z = gMapState.mCamera.mPos.z;
     camera.mUnk_43_3 = 0;
     camera.mUnk_43_4 = 0;
     camera.mUnk_38 = 0;
@@ -1718,12 +1720,13 @@ void func_02033614(s32 x, s32 z) {
     camera.mUnk_3a = 0;
     camera.mUnk_28 = 0x1000;
     camera.mUnk_43 = 0;
-    func_020248e8(data_020c3e44.mUnk_2024.mUnk_52, &camera, data_020c3e44.mUnk_2024.mUnk_5b_1 == 0);
+    DrawModelFile(gMapState.mCamera.mUnk_52, &camera, gMapState.mCamera.mUnk_5b_1 == 0);
     func_020334f8(0);
 }
 
-// Moves the look-at point towards pos: by a fraction of the distance to its goal when a divisor is set, otherwise
-// in mUnk_0d steps from the point where pos last moved far (squared distance beyond mUnk_30 squared) away.
+// Moves the look-at point: with the divisor mUnk_4e set, 1 / mUnk_4e of the way to the blend point mUnk_9c.mUnk_228;
+// otherwise towards pos in mUnk_0d steps from the point where pos last moved far (squared distance beyond mUnk_30
+// squared) away.
 void func_0203393c(VecFx32 *pos) {
     VecFx32 *from;
     VecFx32 *cur;
@@ -1732,52 +1735,49 @@ void func_0203393c(VecFx32 *pos) {
     int dy;
     int dz;
 
-    if (data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_4e == 0) {
-        if (data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_0d < 2) {
-            data_020c3e44.mUnk_2024.mUnk_74.x = pos->x;
-            data_020c3e44.mUnk_2024.mUnk_74.y = pos->y;
-            data_020c3e44.mUnk_2024.mUnk_74.z = pos->z;
-            data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_0c = 0;
+    if (gMapState.mCamera.mUnk_2dc.mUnk_4e == 0) {
+        if (gMapState.mCamera.mUnk_2dc.mUnk_0d < 2) {
+            gMapState.mCamera.mLookAt.x = pos->x;
+            gMapState.mCamera.mLookAt.y = pos->y;
+            gMapState.mCamera.mLookAt.z = pos->z;
+            gMapState.mCamera.mUnk_2dc.mUnk_0c = 0;
             return;
         }
-        cur = &data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_00;
+        cur = &gMapState.mCamera.mUnk_2dc.mUnk_00;
         dy = (cur->y - pos->y) >> 9;
         dx = (cur->x - pos->x) >> 9;
         dz = (cur->z - pos->z) >> 9;
         d = dx * dx + dy * dy + dz * dz;
-        from = &data_020c3e44.mUnk_2024.mUnk_9c.mUnk_234;
-        if (d > (data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_30 * data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_30 >> 18)) {
+        from = &gMapState.mCamera.mUnk_9c.mUnk_234;
+        if (d > (gMapState.mCamera.mUnk_2dc.mUnk_30 * gMapState.mCamera.mUnk_2dc.mUnk_30 >> 18)) {
             cur->x = pos->x;
             cur->y = pos->y;
             cur->z = pos->z;
-            from->x = data_020c3e44.mUnk_2024.mUnk_74.x;
-            from->y = data_020c3e44.mUnk_2024.mUnk_74.y;
-            from->z = data_020c3e44.mUnk_2024.mUnk_74.z;
-            data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_0c = 1;
+            from->x = gMapState.mCamera.mLookAt.x;
+            from->y = gMapState.mCamera.mLookAt.y;
+            from->z = gMapState.mCamera.mLookAt.z;
+            gMapState.mCamera.mUnk_2dc.mUnk_0c = 1;
         }
-        if (data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_0c == 0) {
+        if (gMapState.mCamera.mUnk_2dc.mUnk_0c == 0) {
             return;
         }
-        data_020c3e44.mUnk_2024.mUnk_74.x = MapRangeFromZero(data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_0c,
-                                                             data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_0d, from->x, cur->x);
-        data_020c3e44.mUnk_2024.mUnk_74.y = MapRangeFromZero(data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_0c,
-                                                             data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_0d, from->y, cur->y);
-        data_020c3e44.mUnk_2024.mUnk_74.z = MapRangeFromZero(data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_0c,
-                                                             data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_0d, from->z, cur->z);
-        data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_0c++;
-        if (data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_0c >= data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_0d) {
-            data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_0c = 0;
+        gMapState.mCamera.mLookAt.x =
+            MapRangeFromZero(gMapState.mCamera.mUnk_2dc.mUnk_0c, gMapState.mCamera.mUnk_2dc.mUnk_0d, from->x, cur->x);
+        gMapState.mCamera.mLookAt.y =
+            MapRangeFromZero(gMapState.mCamera.mUnk_2dc.mUnk_0c, gMapState.mCamera.mUnk_2dc.mUnk_0d, from->y, cur->y);
+        gMapState.mCamera.mLookAt.z =
+            MapRangeFromZero(gMapState.mCamera.mUnk_2dc.mUnk_0c, gMapState.mCamera.mUnk_2dc.mUnk_0d, from->z, cur->z);
+        gMapState.mCamera.mUnk_2dc.mUnk_0c++;
+        if (gMapState.mCamera.mUnk_2dc.mUnk_0c >= gMapState.mCamera.mUnk_2dc.mUnk_0d) {
+            gMapState.mCamera.mUnk_2dc.mUnk_0c = 0;
         }
     } else {
-        data_020c3e44.mUnk_2024.mUnk_74.x +=
-            (data_020c3e44.mUnk_2024.mUnk_9c.mUnk_228.x - data_020c3e44.mUnk_2024.mUnk_74.x) /
-            data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_4e;
-        data_020c3e44.mUnk_2024.mUnk_74.y +=
-            (data_020c3e44.mUnk_2024.mUnk_9c.mUnk_228.y - data_020c3e44.mUnk_2024.mUnk_74.y) /
-            data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_4e;
-        data_020c3e44.mUnk_2024.mUnk_74.z +=
-            (data_020c3e44.mUnk_2024.mUnk_9c.mUnk_228.z - data_020c3e44.mUnk_2024.mUnk_74.z) /
-            data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_4e;
+        gMapState.mCamera.mLookAt.x +=
+            (gMapState.mCamera.mUnk_9c.mUnk_228.x - gMapState.mCamera.mLookAt.x) / gMapState.mCamera.mUnk_2dc.mUnk_4e;
+        gMapState.mCamera.mLookAt.y +=
+            (gMapState.mCamera.mUnk_9c.mUnk_228.y - gMapState.mCamera.mLookAt.y) / gMapState.mCamera.mUnk_2dc.mUnk_4e;
+        gMapState.mCamera.mLookAt.z +=
+            (gMapState.mCamera.mUnk_9c.mUnk_228.z - gMapState.mCamera.mLookAt.z) / gMapState.mCamera.mUnk_2dc.mUnk_4e;
     }
 }
 
@@ -1789,104 +1789,99 @@ void func_02033b04(void) {
     s32 diff;
     VecFx32 *target;
 
-    if (data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_34[0] == 0) {
-        target = &data_020c3e44.mUnk_2024.mUnk_74;
-        dx = data_020c3e44.mUnk_2024.mUnk_5c.x - target->x;
-        dz = data_020c3e44.mUnk_2024.mUnk_5c.z - target->z;
-        diff = AngleDelta(data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_56, AngleOfVector(-dx >> 6, -dz >> 6));
-        data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_56 += (u16) (diff / 4);
+    if (gMapState.mCamera.mUnk_2dc.mUnk_34[0] == 0) {
+        target = &gMapState.mCamera.mLookAt;
+        dx = gMapState.mCamera.mPos.x - target->x;
+        dz = gMapState.mCamera.mPos.z - target->z;
+        diff = AngleDelta(gMapState.mCamera.mUnk_2dc.mUnk_56, AngleOfVector(-dx >> 6, -dz >> 6));
+        gMapState.mCamera.mUnk_2dc.mUnk_56 += (u16) (diff / 4);
     } else {
-        data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_34[0] = 0;
+        gMapState.mCamera.mUnk_2dc.mUnk_34[0] = 0;
     }
 }
 
 // One step of the view angle blend from mUnk_16 to mUnk_18 over mUnk_11[0] steps (mUnk_10 counts them); c points at
 // the blend counters from mUnk_0c on.
 void func_02033b8c(void) {
-    u8 *c = &data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_0c;
+    u8 *c = &gMapState.mCamera.mUnk_2dc.mUnk_0c;
     if (c[4] == 0) {
         return;
     }
     if (c[5] - 1 > 1) {
-        data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_14 = MapRangeFromZero(
-            c[4], c[5] - 1, data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_16, data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_18);
+        gMapState.mCamera.mUnk_2dc.mUnk_14 =
+            MapRangeFromZero(c[4], c[5] - 1, gMapState.mCamera.mUnk_2dc.mUnk_16, gMapState.mCamera.mUnk_2dc.mUnk_18);
         c[4]++;
         if (c[4] == c[5]) {
             c[4] = 0;
         }
     } else {
-        data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_14 = data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_18;
+        gMapState.mCamera.mUnk_2dc.mUnk_14 = gMapState.mCamera.mUnk_2dc.mUnk_18;
         c[4] = 0;
     }
 }
 
-// The same for the camera position, with a goal and a start point of its own.
+// The same for the camera position, with a blend point (mUnk_9c.mUnk_204) and a start point of its own.
 void func_02033c0c(VecFx32 *pos) {
     u8 *c;
     int t;
 
-    if (data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_4d == 0) {
-        c = &data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_0c;
+    if (gMapState.mCamera.mUnk_2dc.mUnk_4d == 0) {
+        c = &gMapState.mCamera.mUnk_2dc.mUnk_0c;
         func_02033b8c();
         if (c[3] < 2) {
-            data_020c3e44.mUnk_2024.mUnk_5c.x = pos->x;
-            data_020c3e44.mUnk_2024.mUnk_5c.y = pos->y;
-            data_020c3e44.mUnk_2024.mUnk_5c.z = pos->z;
-            data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_0f = 0;
+            gMapState.mCamera.mPos.x = pos->x;
+            gMapState.mCamera.mPos.y = pos->y;
+            gMapState.mCamera.mPos.z = pos->z;
+            gMapState.mCamera.mUnk_2dc.mUnk_0f = 0;
             return;
         }
         if (c[2] != 0) {
             t = c[3] - 1;
             if (t > 1) {
-                data_020c3e44.mUnk_2024.mUnk_5c.x =
-                    MapRangeFromZero(c[2], t, data_020c3e44.mUnk_2024.mUnk_9c.mUnk_21c.x, pos->x);
-                data_020c3e44.mUnk_2024.mUnk_5c.y =
-                    MapRangeFromZero(c[2], t, data_020c3e44.mUnk_2024.mUnk_9c.mUnk_21c.y, pos->y);
-                data_020c3e44.mUnk_2024.mUnk_5c.z =
-                    MapRangeFromZero(c[2], t, data_020c3e44.mUnk_2024.mUnk_9c.mUnk_21c.z, pos->z);
+                gMapState.mCamera.mPos.x = MapRangeFromZero(c[2], t, gMapState.mCamera.mUnk_9c.mUnk_21c.x, pos->x);
+                gMapState.mCamera.mPos.y = MapRangeFromZero(c[2], t, gMapState.mCamera.mUnk_9c.mUnk_21c.y, pos->y);
+                gMapState.mCamera.mPos.z = MapRangeFromZero(c[2], t, gMapState.mCamera.mUnk_9c.mUnk_21c.z, pos->z);
                 c[2]++;
                 if (c[2] == c[3]) {
                     c[2] = 0;
                 }
             } else {
-                data_020c3e44.mUnk_2024.mUnk_5c.x = pos->x;
-                data_020c3e44.mUnk_2024.mUnk_5c.y = pos->y;
-                data_020c3e44.mUnk_2024.mUnk_5c.z = pos->z;
+                gMapState.mCamera.mPos.x = pos->x;
+                gMapState.mCamera.mPos.y = pos->y;
+                gMapState.mCamera.mPos.z = pos->z;
                 c[2] = 0;
             }
-        } else if (data_020c3e44.mUnk_2024.mUnk_5c.x != pos->x || data_020c3e44.mUnk_2024.mUnk_5c.y != pos->y ||
-                   data_020c3e44.mUnk_2024.mUnk_5c.z != pos->z) {
-            data_020c3e44.mUnk_2024.mUnk_9c.mUnk_21c.x = data_020c3e44.mUnk_2024.mUnk_5c.x;
-            data_020c3e44.mUnk_2024.mUnk_9c.mUnk_21c.y = data_020c3e44.mUnk_2024.mUnk_5c.y;
-            data_020c3e44.mUnk_2024.mUnk_9c.mUnk_21c.z = data_020c3e44.mUnk_2024.mUnk_5c.z;
-            data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_0e = 1;
+        } else if (gMapState.mCamera.mPos.x != pos->x || gMapState.mCamera.mPos.y != pos->y ||
+                   gMapState.mCamera.mPos.z != pos->z) {
+            gMapState.mCamera.mUnk_9c.mUnk_21c.x = gMapState.mCamera.mPos.x;
+            gMapState.mCamera.mUnk_9c.mUnk_21c.y = gMapState.mCamera.mPos.y;
+            gMapState.mCamera.mUnk_9c.mUnk_21c.z = gMapState.mCamera.mPos.z;
+            gMapState.mCamera.mUnk_2dc.mUnk_0e = 1;
         } else {
-            data_020c3e44.mUnk_2024.mUnk_9c.mUnk_204.x = pos->x;
-            data_020c3e44.mUnk_2024.mUnk_9c.mUnk_204.y = pos->y;
-            data_020c3e44.mUnk_2024.mUnk_9c.mUnk_204.z = pos->z;
+            gMapState.mCamera.mUnk_9c.mUnk_204.x = pos->x;
+            gMapState.mCamera.mUnk_9c.mUnk_204.y = pos->y;
+            gMapState.mCamera.mUnk_9c.mUnk_204.z = pos->z;
         }
     } else {
-        data_020c3e44.mUnk_2024.mUnk_5c.x +=
-            (data_020c3e44.mUnk_2024.mUnk_9c.mUnk_204.x - data_020c3e44.mUnk_2024.mUnk_5c.x) /
-            data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_4d;
-        data_020c3e44.mUnk_2024.mUnk_5c.y +=
-            (data_020c3e44.mUnk_2024.mUnk_9c.mUnk_204.y - data_020c3e44.mUnk_2024.mUnk_5c.y) /
-            data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_4d;
-        data_020c3e44.mUnk_2024.mUnk_5c.z +=
-            (data_020c3e44.mUnk_2024.mUnk_9c.mUnk_204.z - data_020c3e44.mUnk_2024.mUnk_5c.z) /
-            data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_4d;
+        gMapState.mCamera.mPos.x +=
+            (gMapState.mCamera.mUnk_9c.mUnk_204.x - gMapState.mCamera.mPos.x) / gMapState.mCamera.mUnk_2dc.mUnk_4d;
+        gMapState.mCamera.mPos.y +=
+            (gMapState.mCamera.mUnk_9c.mUnk_204.y - gMapState.mCamera.mPos.y) / gMapState.mCamera.mUnk_2dc.mUnk_4d;
+        gMapState.mCamera.mPos.z +=
+            (gMapState.mCamera.mUnk_9c.mUnk_204.z - gMapState.mCamera.mPos.z) / gMapState.mCamera.mUnk_2dc.mUnk_4d;
     }
 }
 
 // Starts the view angle blend towards a, given in degrees (stored as a 16-bit angle).
 void func_02033df4(int a) {
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_16 = data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_14;
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_18 = ((u32) a << 16) / 360;
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_10 = 1;
+    gMapState.mCamera.mUnk_2dc.mUnk_16 = gMapState.mCamera.mUnk_2dc.mUnk_14;
+    gMapState.mCamera.mUnk_2dc.mUnk_18 = ((u32) a << 16) / 360;
+    gMapState.mCamera.mUnk_2dc.mUnk_10 = 1;
 }
 
-// Sets the goal of the position blend (a 1 or 2) or the look-at blend (a 7 or 8) to entry b of chunk 0x5513 (-1:
-// the current point) and clears its state; c is stored as the step count.
+// Sets the blend point of the position blend (a 1 or 2, mUnk_9c.mUnk_204) or the look-at blend (a 7 or 8,
+// mUnk_9c.mUnk_228) to entry b of chunk 0x5513 (-1: the current point) and clears its state; c is stored as the step
+// count.
 void func_02033e38(int a, int b, int c) {
     VecFx32 *dst = NULL;
     VecFx32 *src;
@@ -1895,34 +1890,34 @@ void func_02033e38(int a, int b, int c) {
     switch (a) {
         case 1:
         case 2:
-            dst = &data_020c3e44.mUnk_2024.mUnk_9c.mUnk_204;
-            src = &data_020c3e44.mUnk_2024.mUnk_5c;
-            data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_4d = 0;
-            data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_32 = a;
-            data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_0f = c;
-            data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_0e = 0;
+            dst = &gMapState.mCamera.mUnk_9c.mUnk_204;
+            src = &gMapState.mCamera.mPos;
+            gMapState.mCamera.mUnk_2dc.mUnk_4d = 0;
+            gMapState.mCamera.mUnk_2dc.mUnk_32 = a;
+            gMapState.mCamera.mUnk_2dc.mUnk_0f = c;
+            gMapState.mCamera.mUnk_2dc.mUnk_0e = 0;
             break;
         case 7:
         case 8:
-            dst = &data_020c3e44.mUnk_2024.mUnk_9c.mUnk_228;
-            src = &data_020c3e44.mUnk_2024.mUnk_74;
-            data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_4e = 0;
-            data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_33 = a;
-            data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_0d = c;
-            data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_0c = 0;
+            dst = &gMapState.mCamera.mUnk_9c.mUnk_228;
+            src = &gMapState.mCamera.mLookAt;
+            gMapState.mCamera.mUnk_2dc.mUnk_4e = 0;
+            gMapState.mCamera.mUnk_2dc.mUnk_33 = a;
+            gMapState.mCamera.mUnk_2dc.mUnk_0d = c;
+            gMapState.mCamera.mUnk_2dc.mUnk_0c = 0;
             break;
         default:
             OS_Terminate();
             break;
     }
     if (b != -1) {
-        e = func_0203204c(b, 0);
+        e = GetMapEntry(b, 0);
         if (e == NULL) {
             OS_Terminate();
         }
-        dst->x = func_02031f98(e);
-        dst->y = func_02031fa4(e);
-        dst->z = func_02031fb0(e);
+        dst->x = GetMapEntryX(e);
+        dst->y = GetMapEntryY(e);
+        dst->z = GetMapEntryZ(e);
     } else {
         dst->x = src->x;
         dst->y = src->y;
@@ -1931,7 +1926,7 @@ void func_02033e38(int a, int b, int c) {
 }
 
 // Advances an animation track by the frames passed since its last update (1 when it has no timer).
-void func_02033f38(CameraTrack *t, s32 *whole, s32 *next, s32 *rest) {
+void AdvanceCameraTrack(CameraTrack *t, s32 *whole, s32 *next, s32 *rest) {
     int step;
 
     if (t->mUnk_16_5 == 0) {
@@ -1945,7 +1940,7 @@ void func_02033f38(CameraTrack *t, s32 *whole, s32 *next, s32 *rest) {
         step = 0;
         t->mUnk_0c = gSystemState.mElapsedFrames;
     }
-    func_0202601c(t->mUnk_10, &t->mUnk_12, t->mUnk_14, step, whole, next, rest, t->mUnk_16_2);
+    SplitAnimFrameAndAdvance(t->mUnk_10, &t->mUnk_12, t->mUnk_14, step, whole, next, rest, t->mUnk_16_2);
 }
 #pragma thumb on
 
@@ -1957,7 +1952,7 @@ void func_02033f38(CameraTrack *t, s32 *whole, s32 *next, s32 *rest) {
 // when flag 3 or 4 of track mUnk_1ec is set, else moving an eighth of the way). While the top bit of
 // gSystemState.mFlags is set only the tracks' timestamps follow the frame counter.
 #pragma thumb off
-void func_02033fc8(void) {
+void UpdateCamera(void) {
     VecFx32 eye;
     VecFx32 at;
     VecFx32 pos;
@@ -1974,145 +1969,134 @@ void func_02033fc8(void) {
     s32 z;
 
     if (gSystemState.mFlags & 0x80000000) {
-        data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1ec.mUnk_0c = gSystemState.mElapsedFrames;
-        data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1d4.mUnk_0c = gSystemState.mElapsedFrames;
-        data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1bc.mUnk_0c = gSystemState.mElapsedFrames;
+        gMapState.mCamera.mUnk_9c.mUnk_1ec.mUnk_0c = gSystemState.mElapsedFrames;
+        gMapState.mCamera.mUnk_9c.mUnk_1d4.mUnk_0c = gSystemState.mElapsedFrames;
+        gMapState.mCamera.mUnk_9c.mUnk_1bc.mUnk_0c = gSystemState.mElapsedFrames;
         func_02033520();
         return;
     }
-    target = data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_1c;
-    switch (data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_32) {
+    target = gMapState.mCamera.mUnk_2dc.mUnk_1c;
+    switch (gMapState.mCamera.mUnk_2dc.mUnk_32) {
         case 0:
             idx = (u16) (target->mDraw.mUnk_38 + 0x8000) >> 4 << 1;
-            dx = data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_28 * FX_SinCosTable_[idx];
-            dz = data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_28 * FX_SinCosTable_[idx + 1];
-            y = target->mDraw.mPos.y + data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_2c;
+            dx = gMapState.mCamera.mUnk_2dc.mUnk_28 * FX_SinCosTable_[idx];
+            dz = gMapState.mCamera.mUnk_2dc.mUnk_28 * FX_SinCosTable_[idx + 1];
+            y = target->mDraw.mPos.y + gMapState.mCamera.mUnk_2dc.mUnk_2c;
             x = target->mDraw.mPos.x + dx / 4096;
             z = target->mDraw.mPos.z - dz / 4096;
-            data_020c3e44.mUnk_2024.mUnk_5c.y = y;
-            data_020c3e44.mUnk_2024.mUnk_5c.x = x;
-            data_020c3e44.mUnk_2024.mUnk_5c.z = z;
+            gMapState.mCamera.mPos.y = y;
+            gMapState.mCamera.mPos.x = x;
+            gMapState.mCamera.mPos.z = z;
             break;
         case 3:
-            func_02033f38(&data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1bc, &whole, &next, &rest);
-            func_02023478(data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1bc.mUnk_10, NULL, &eye, NULL, whole, next, rest, 0);
-            data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1bc.mUnk_16_0 = data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1bc.mUnk_12 == 0;
-            if (data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1bc.mUnk_16_2 == 1) {
-                data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1bc.mUnk_16_0 =
-                    data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1bc.mUnk_12 == 0;
+            AdvanceCameraTrack(&gMapState.mCamera.mUnk_9c.mUnk_1bc, &whole, &next, &rest);
+            ReadAnimFileNode(gMapState.mCamera.mUnk_9c.mUnk_1bc.mUnk_10, NULL, &eye, NULL, whole, next, rest, 0);
+            gMapState.mCamera.mUnk_9c.mUnk_1bc.mUnk_16_0 = gMapState.mCamera.mUnk_9c.mUnk_1bc.mUnk_12 == 0;
+            if (gMapState.mCamera.mUnk_9c.mUnk_1bc.mUnk_16_2 == 1) {
+                gMapState.mCamera.mUnk_9c.mUnk_1bc.mUnk_16_0 = gMapState.mCamera.mUnk_9c.mUnk_1bc.mUnk_12 == 0;
             } else {
-                data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1bc.mUnk_16_0 =
-                    data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1bc.mUnk_12 /
-                        data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1bc.mUnk_14 ==
-                    func_02025fc0(data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1bc.mUnk_10) - 2;
+                gMapState.mCamera.mUnk_9c.mUnk_1bc.mUnk_16_0 =
+                    gMapState.mCamera.mUnk_9c.mUnk_1bc.mUnk_12 / gMapState.mCamera.mUnk_9c.mUnk_1bc.mUnk_14 ==
+                    GetAnimFrameCount(gMapState.mCamera.mUnk_9c.mUnk_1bc.mUnk_10) - 2;
             }
-            data_020c3e44.mUnk_2024.mUnk_5c.x = data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1bc.mUnk_00.x + eye.x;
-            data_020c3e44.mUnk_2024.mUnk_5c.y = data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1bc.mUnk_00.y + eye.y;
-            data_020c3e44.mUnk_2024.mUnk_5c.z = data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1bc.mUnk_00.z + eye.z;
+            gMapState.mCamera.mPos.x = gMapState.mCamera.mUnk_9c.mUnk_1bc.mUnk_00.x + eye.x;
+            gMapState.mCamera.mPos.y = gMapState.mCamera.mUnk_9c.mUnk_1bc.mUnk_00.y + eye.y;
+            gMapState.mCamera.mPos.z = gMapState.mCamera.mUnk_9c.mUnk_1bc.mUnk_00.z + eye.z;
             func_02033b8c();
             break;
         case 1:
         case 2:
-            func_02033c0c(&data_020c3e44.mUnk_2024.mUnk_9c.mUnk_204);
+            func_02033c0c(&gMapState.mCamera.mUnk_9c.mUnk_204);
             break;
         case 4:
-            data_020c3e44.mUnk_2024.mUnk_9c.mUnk_204 = target->mDraw.mPos;
-            func_02033c0c(&data_020c3e44.mUnk_2024.mUnk_9c.mUnk_204);
+            gMapState.mCamera.mUnk_9c.mUnk_204 = target->mDraw.mPos;
+            func_02033c0c(&gMapState.mCamera.mUnk_9c.mUnk_204);
             break;
         case 11:
-            if (data_020c3e44.mUnk_2024.mUnk_9c.mModel.mUnk_170 != 0) {
+            if (gMapState.mCamera.mUnk_9c.mModel.mUnk_170 != 0) {
                 OS_Terminate();
             }
-            func_0202733c(&data_020c3e44.mUnk_2024.mUnk_9c.mModel, &data_020c3e44.mUnk_2024.mUnk_9c.mDraw, 0);
-            count = data_020c3e44.mUnk_2024.mUnk_9c.mModel.mUnk_14c.mUnk_4;
-            whole = DivideWithRemainder(data_020c3e44.mUnk_2024.mUnk_9c.mModel.mUnk_14c.mUnk_2, count, (u32 *) &rest);
-            next = (u32) (whole + 1) % func_02025fc0(data_020c3e44.mUnk_2024.mUnk_9c.mModel.mUnk_14c.mUnk_0);
+            UpdateAndDrawModel(&gMapState.mCamera.mUnk_9c.mModel, &gMapState.mCamera.mUnk_9c.mDraw, 0);
+            count = gMapState.mCamera.mUnk_9c.mModel.mUnk_14c.mUnk_4;
+            whole = DivideWithRemainder(gMapState.mCamera.mUnk_9c.mModel.mUnk_14c.mUnk_2, count, (u32 *) &rest);
+            next = (u32) (whole + 1) % GetAnimFrameCount(gMapState.mCamera.mUnk_9c.mModel.mUnk_14c.mUnk_0);
             rest = (rest << 8) / count;
-            func_02023478(data_020c3e44.mUnk_2024.mUnk_9c.mModel.mUnk_14c.mUnk_0, NULL, &eye, NULL, whole, next, rest,
-                          1);
-            func_02023478(data_020c3e44.mUnk_2024.mUnk_9c.mModel.mUnk_14c.mUnk_0, NULL, &at, NULL, whole, next, rest,
-                          2);
+            ReadAnimFileNode(gMapState.mCamera.mUnk_9c.mModel.mUnk_14c.mUnk_0, NULL, &eye, NULL, whole, next, rest, 1);
+            ReadAnimFileNode(gMapState.mCamera.mUnk_9c.mModel.mUnk_14c.mUnk_0, NULL, &at, NULL, whole, next, rest, 2);
             break;
         case 10:
-            func_02033f38(&data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1ec, &whole, &next, &rest);
-            if (data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1ec.mUnk_16_2 == 1) {
-                data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1ec.mUnk_16_0 =
-                    data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1ec.mUnk_12 == 0;
+            AdvanceCameraTrack(&gMapState.mCamera.mUnk_9c.mUnk_1ec, &whole, &next, &rest);
+            if (gMapState.mCamera.mUnk_9c.mUnk_1ec.mUnk_16_2 == 1) {
+                gMapState.mCamera.mUnk_9c.mUnk_1ec.mUnk_16_0 = gMapState.mCamera.mUnk_9c.mUnk_1ec.mUnk_12 == 0;
             } else {
-                data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1ec.mUnk_16_0 =
-                    (u32) (data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1ec.mUnk_12 /
-                           data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1ec.mUnk_14) >=
-                    func_02025fc0(data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1ec.mUnk_10) - 2;
+                gMapState.mCamera.mUnk_9c.mUnk_1ec.mUnk_16_0 =
+                    (u32) (gMapState.mCamera.mUnk_9c.mUnk_1ec.mUnk_12 / gMapState.mCamera.mUnk_9c.mUnk_1ec.mUnk_14) >=
+                    GetAnimFrameCount(gMapState.mCamera.mUnk_9c.mUnk_1ec.mUnk_10) - 2;
             }
-            func_02023478(data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1ec.mUnk_10, NULL, &eye, NULL, whole, next, rest, 1);
-            func_02023478(data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1ec.mUnk_10, NULL, &at, NULL, whole, next, rest, 2);
+            ReadAnimFileNode(gMapState.mCamera.mUnk_9c.mUnk_1ec.mUnk_10, NULL, &eye, NULL, whole, next, rest, 1);
+            ReadAnimFileNode(gMapState.mCamera.mUnk_9c.mUnk_1ec.mUnk_10, NULL, &at, NULL, whole, next, rest, 2);
             break;
         default:
             OS_Terminate();
             break;
     }
-    target = data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_20;
-    switch (data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_33) {
+    target = gMapState.mCamera.mUnk_2dc.mUnk_20;
+    switch (gMapState.mCamera.mUnk_2dc.mUnk_33) {
         case 6:
             pos = target->mModel.mUnk_158;
-            pos.y += data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_24;
+            pos.y += gMapState.mCamera.mUnk_2dc.mUnk_24;
             func_0203393c(&pos);
             func_02033b04();
             break;
         case 5:
             pos = target->mDraw.mPos;
-            pos.y += data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_24;
+            pos.y += gMapState.mCamera.mUnk_2dc.mUnk_24;
             func_0203393c(&pos);
             func_02033b04();
             break;
         case 7:
         case 8:
-            func_0203393c(&data_020c3e44.mUnk_2024.mUnk_9c.mUnk_228);
+            func_0203393c(&gMapState.mCamera.mUnk_9c.mUnk_228);
             func_02033b04();
             break;
         case 9:
-            func_02033f38(&data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1d4, &whole, &next, &rest);
-            func_02023478(data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1d4.mUnk_10, NULL, &eye, NULL, whole, next, rest, 0);
-            if (data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1d4.mUnk_16_2 == 1) {
-                data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1d4.mUnk_16_0 =
-                    data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1d4.mUnk_12 == 0;
+            AdvanceCameraTrack(&gMapState.mCamera.mUnk_9c.mUnk_1d4, &whole, &next, &rest);
+            ReadAnimFileNode(gMapState.mCamera.mUnk_9c.mUnk_1d4.mUnk_10, NULL, &eye, NULL, whole, next, rest, 0);
+            if (gMapState.mCamera.mUnk_9c.mUnk_1d4.mUnk_16_2 == 1) {
+                gMapState.mCamera.mUnk_9c.mUnk_1d4.mUnk_16_0 = gMapState.mCamera.mUnk_9c.mUnk_1d4.mUnk_12 == 0;
             } else {
-                data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1d4.mUnk_16_0 =
-                    data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1d4.mUnk_12 /
-                        data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1d4.mUnk_14 ==
-                    func_02025fc0(data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1d4.mUnk_10) - 2;
+                gMapState.mCamera.mUnk_9c.mUnk_1d4.mUnk_16_0 =
+                    gMapState.mCamera.mUnk_9c.mUnk_1d4.mUnk_12 / gMapState.mCamera.mUnk_9c.mUnk_1d4.mUnk_14 ==
+                    GetAnimFrameCount(gMapState.mCamera.mUnk_9c.mUnk_1d4.mUnk_10) - 2;
             }
-            data_020c3e44.mUnk_2024.mUnk_74.x = data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1d4.mUnk_00.x + eye.x;
-            data_020c3e44.mUnk_2024.mUnk_74.y = data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1d4.mUnk_00.y + eye.y;
-            data_020c3e44.mUnk_2024.mUnk_74.z = data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1d4.mUnk_00.z + eye.z;
+            gMapState.mCamera.mLookAt.x = gMapState.mCamera.mUnk_9c.mUnk_1d4.mUnk_00.x + eye.x;
+            gMapState.mCamera.mLookAt.y = gMapState.mCamera.mUnk_9c.mUnk_1d4.mUnk_00.y + eye.y;
+            gMapState.mCamera.mLookAt.z = gMapState.mCamera.mUnk_9c.mUnk_1d4.mUnk_00.z + eye.z;
             break;
         case 10:
         case 11:
-            if (data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1ec.mUnk_16_3 == 1 ||
-                data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1ec.mUnk_16_4 == 1) {
-                data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1ec.mUnk_16_3 = 0;
-                data_020c3e44.mUnk_2024.mUnk_5c.x = data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1ec.mUnk_00.x + eye.x;
-                data_020c3e44.mUnk_2024.mUnk_5c.y = data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1ec.mUnk_00.y + eye.y;
-                data_020c3e44.mUnk_2024.mUnk_5c.z = data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1ec.mUnk_00.z + eye.z;
-                data_020c3e44.mUnk_2024.mUnk_74.x = data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1ec.mUnk_00.x + at.x;
-                data_020c3e44.mUnk_2024.mUnk_74.y = data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1ec.mUnk_00.y + at.y;
-                data_020c3e44.mUnk_2024.mUnk_74.z = data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1ec.mUnk_00.z + at.z;
+            if (gMapState.mCamera.mUnk_9c.mUnk_1ec.mUnk_16_3 == 1 ||
+                gMapState.mCamera.mUnk_9c.mUnk_1ec.mUnk_16_4 == 1) {
+                gMapState.mCamera.mUnk_9c.mUnk_1ec.mUnk_16_3 = 0;
+                gMapState.mCamera.mPos.x = gMapState.mCamera.mUnk_9c.mUnk_1ec.mUnk_00.x + eye.x;
+                gMapState.mCamera.mPos.y = gMapState.mCamera.mUnk_9c.mUnk_1ec.mUnk_00.y + eye.y;
+                gMapState.mCamera.mPos.z = gMapState.mCamera.mUnk_9c.mUnk_1ec.mUnk_00.z + eye.z;
+                gMapState.mCamera.mLookAt.x = gMapState.mCamera.mUnk_9c.mUnk_1ec.mUnk_00.x + at.x;
+                gMapState.mCamera.mLookAt.y = gMapState.mCamera.mUnk_9c.mUnk_1ec.mUnk_00.y + at.y;
+                gMapState.mCamera.mLookAt.z = gMapState.mCamera.mUnk_9c.mUnk_1ec.mUnk_00.z + at.z;
             } else {
-                data_020c3e44.mUnk_2024.mUnk_5c.x +=
-                    (data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1ec.mUnk_00.x + eye.x - data_020c3e44.mUnk_2024.mUnk_5c.x) /
-                    8;
-                data_020c3e44.mUnk_2024.mUnk_5c.y +=
-                    (data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1ec.mUnk_00.y + eye.y - data_020c3e44.mUnk_2024.mUnk_5c.y) /
-                    8;
-                data_020c3e44.mUnk_2024.mUnk_5c.z +=
-                    (data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1ec.mUnk_00.z + eye.z - data_020c3e44.mUnk_2024.mUnk_5c.z) /
-                    8;
-                data_020c3e44.mUnk_2024.mUnk_74.x +=
-                    (data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1ec.mUnk_00.x + at.x - data_020c3e44.mUnk_2024.mUnk_74.x) / 8;
-                data_020c3e44.mUnk_2024.mUnk_74.y +=
-                    (data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1ec.mUnk_00.y + at.y - data_020c3e44.mUnk_2024.mUnk_74.y) / 8;
-                data_020c3e44.mUnk_2024.mUnk_74.z +=
-                    (data_020c3e44.mUnk_2024.mUnk_9c.mUnk_1ec.mUnk_00.z + at.z - data_020c3e44.mUnk_2024.mUnk_74.z) / 8;
+                gMapState.mCamera.mPos.x +=
+                    (gMapState.mCamera.mUnk_9c.mUnk_1ec.mUnk_00.x + eye.x - gMapState.mCamera.mPos.x) / 8;
+                gMapState.mCamera.mPos.y +=
+                    (gMapState.mCamera.mUnk_9c.mUnk_1ec.mUnk_00.y + eye.y - gMapState.mCamera.mPos.y) / 8;
+                gMapState.mCamera.mPos.z +=
+                    (gMapState.mCamera.mUnk_9c.mUnk_1ec.mUnk_00.z + eye.z - gMapState.mCamera.mPos.z) / 8;
+                gMapState.mCamera.mLookAt.x +=
+                    (gMapState.mCamera.mUnk_9c.mUnk_1ec.mUnk_00.x + at.x - gMapState.mCamera.mLookAt.x) / 8;
+                gMapState.mCamera.mLookAt.y +=
+                    (gMapState.mCamera.mUnk_9c.mUnk_1ec.mUnk_00.y + at.y - gMapState.mCamera.mLookAt.y) / 8;
+                gMapState.mCamera.mLookAt.z +=
+                    (gMapState.mCamera.mUnk_9c.mUnk_1ec.mUnk_00.z + at.z - gMapState.mCamera.mLookAt.z) / 8;
             }
             func_02033b8c();
             break;
@@ -2124,14 +2108,14 @@ void func_02033fc8(void) {
 }
 
 // Sets the fog with the default density table.
-void func_02034768(int a, int b, int c) {
-    func_02034778(a, b, c, NULL);
+void SetFog(int a, int b, int c) {
+    SetFogEx(a, b, c, NULL);
 }
 
 // Turns the fog off when a and b are both 0. Otherwise it switches it on with the shift and offset worked out from
 // a and b, sets the fog colour to c (opaque) and the clear colour to c, and loads the density table: the given one,
 // else the camera's pending one (which it then forgets), else a ramp.
-void func_02034778(int a, int b, int c, const u16 *table) {
+void SetFogEx(int a, int b, int c, const u16 *table) {
     u32 lim;
     u32 t;
     u32 i;
@@ -2153,14 +2137,14 @@ void func_02034778(int a, int b, int c, const u16 *table) {
     *(vu32 *) 0x04000358 = (u16) c | 0x1f0000;
     G3X_SetClearColor((u16) c, 8, 0x7fff, 0, 0);
     if (table == NULL) {
-        if (data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_64 == 0) {
+        if (gMapState.mCamera.mUnk_2dc.mUnk_64 == 0) {
             for (i = 0; i < 8; i++) {
                 tab[i] = 15 * i | (15 * i + 4) << 8 | (15 * i + 8) << 16 | (15 * i + 12) << 24;
             }
             func_0203cdf4((u16 *) tab);
         } else {
-            func_0203cdf4(data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_64);
-            data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_64 = 0;
+            func_0203cdf4(gMapState.mCamera.mUnk_2dc.mUnk_64);
+            gMapState.mCamera.mUnk_2dc.mUnk_64 = 0;
         }
     } else {
         func_0203cdf4(table);
@@ -2169,7 +2153,7 @@ void func_02034778(int a, int b, int c, const u16 *table) {
 
 // Light 0: colour (r, g, b, 5 bits each) and a direction that has only the component -z (in 1/8 units, 10 bits),
 // under the identity matrix; marks light 0 as on in the camera object.
-void func_020348ac(int r, int g, int b, int z) {
+void SetLight0(int r, int g, int b, int z) {
     u32 color = (u16) (r | g << 5 | b << 10);
     s16 neg = -z;
 
@@ -2177,11 +2161,11 @@ void func_020348ac(int r, int g, int b, int z) {
     *(vu32 *) 0x04000440 = 2;
     *(vu32 *) 0x040004cc = color;
     *(vu32 *) 0x040004c8 = (u32) ((neg >> 3) << 22) >> 2;
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_5b = 1;
+    gMapState.mCamera.mUnk_2dc.mLightMask = 1;
 }
 
 // Marks all lights as off.
-void func_02034904(void) {
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_5b = 0;
+void ClearLightMask(void) {
+    gMapState.mCamera.mUnk_2dc.mLightMask = 0;
 }
 #pragma thumb on

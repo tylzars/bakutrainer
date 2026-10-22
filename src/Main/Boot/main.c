@@ -40,11 +40,11 @@ void main(void) {
     func_0202f00c();
     InitSoundCtl(0, 0x80);
     InitGameFlow();
-    func_0200d6c8();
-    func_0200dacc();
+    ClearObjSlots();
+    ClearAnimSlots();
     ResetAllProgress();
     func_0200e474();
-    func_0202de60(&data_020b6ee0.mSelectionSprite, data_0201abec[2]);
+    StartSprite(&data_020b6ee0.mSelectionSprite, data_0201abec[2]);
     data_020b6ee0.mUnk_a91b = 0;
     func_0200dbac();
     data_020b6ee0.mUnk_a91a = 1;
@@ -76,8 +76,8 @@ void main(void) {
         }
         UpdateNodeState();
         UpdateProgress();
-        func_0200d8bc();
-        func_0200daf8();
+        UpdateObjSlots();
+        UpdateAnimSlots();
         flow->mFrame++;
         func_0202f200();
         UpdateSoundCtl();

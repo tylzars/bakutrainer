@@ -6,7 +6,7 @@
 extern "C" {
 #endif
 
-// Flags of func_02021624 and func_020215fc.
+// Flags of DrawTextEx and DrawText.
 #define TEXT_ALIGN_MASK 0x3
 #define TEXT_HILITE 0x8
 #define TEXT_NO_DRAW 0x10
@@ -30,19 +30,19 @@ typedef struct FontRange {
     u16 mGlyph;
 } FontRange;
 
-u16 func_02021498(const u8 **text);
-void func_0202158c(u8 **out, u32 code);
-u32 func_020215f0(u32 code);
-void func_020215fc(int x, int y, const void *font, const char *text, int align, int width, int height, int mode);
-int func_02021624(int x, int y, const FontRange *const *fonts, u8 fontIndex, const u8 *text, u16 angle, u32 flags,
-                  u32 width, int height, int mode);
+u16 ReadTextChar(const u8 **text);
+void WriteTextChar(u8 **out, u32 code);
+u32 NormalizeSpace(u32 code);
+void DrawText(int x, int y, const void *font, const char *text, int align, int width, int height, int mode);
+int DrawTextEx(int x, int y, const FontRange *const *fonts, u8 fontIndex, const u8 *text, u16 angle, u32 flags,
+               u32 width, int height, int mode);
 const u8 *func_02021dd8(u16 block, int id);
 const u8 *func_02021df4(u32 base, const u8 *entry);
-int func_02021e08(u16 id, int index);
-const u8 *func_02021e18(u16 block, int id);
-int func_02021e44(u16 id, int index);
-void func_02021e94(int block, int id, u8 *dst, int flags, ...);
-int func_02021f0c(u16 block, int id, int flags);
+int GetFileValueType(u16 id, int index);
+const u8 *GetFileString(u16 block, int id);
+int GetFileValue(u16 id, int index);
+void CopyFileString(int block, int id, u8 *dst, int flags, ...);
+int CountFileStringChars(u16 block, int id, int flags);
 void func_02021fa8(const char *fmt, ...);
 
 #ifdef __cplusplus

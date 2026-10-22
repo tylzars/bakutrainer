@@ -29,8 +29,11 @@ typedef struct Unk_MovieAudio {
     /* a8 */ u32 mUnk_a8;
     /* ac */ u32 mUnk_ac;
     /* b0 */ u32 mUnk_b0;
-    /* b4 */ u8 mUnk_b4;
-    /* b5 */ u8 mUnk_b5;
+    /* b4 */ u8 mAudioStarted;
+    // 1 once func_0202fbc8 has turned the screens off for a closed lid, 0 again once func_0202fc5c has turned them on
+    // (StartVideo also clears it). While it and mAudioStarted are set, UpdateVideo reads no new frame and holds the
+    // player.
+    /* b5 */ u8 mScreensOff;
     /* b6 */ u8 mUnk_b6;
     u8 mUnk_b7;
 } Unk_MovieAudio; /* b8 */
@@ -39,16 +42,16 @@ extern Unk_MovieAudio data_020c661c;
 void *func_0202f500(u32 size);
 void func_0202f50c(void *p);
 void func_0202f520(void *arg);
-void func_0202f538(u32 a, u32 b);
+void StartVideoAudio(u32 a, u32 b);
 void func_0202f614(void *arg);
 void *func_0202f628(u32 screen);
-void func_0202f638(const char *path, int b);
-int func_0202f8d0(void);
-void func_0202fb08(void);
-void func_0202fb4c(void);
+void StartVideo(const char *path, int b);
+int UpdateVideo(void);
+void StopVideoAudio(void);
+void StopVideo(void);
 void func_0202fbc8(void);
 void func_0202fc5c(void);
-u8 func_0202fcb4(void);
+u8 AreScreensOff(void);
 
 #ifdef __cplusplus
 }

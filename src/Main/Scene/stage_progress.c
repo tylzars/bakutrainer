@@ -311,21 +311,21 @@ void func_02014bf0(void) {
 void LoadStageInfo(StageInfo *info) {
     int base = info->mUnk_13 * 27;
 
-    info->mUnk_10 = func_02021e44(0xfd6, base + 2);
-    info->mUnk_12 = func_02021e44(0xfd6, base + 3);
-    info->mUnk_11 = func_02021e44(0xfd6, base + 4);
-    info->mUnk_04 = func_02021e44(0xfd6, base + 5);
+    info->mUnk_10 = GetFileValue(0xfd6, base + 2);
+    info->mUnk_12 = GetFileValue(0xfd6, base + 3);
+    info->mUnk_11 = GetFileValue(0xfd6, base + 4);
+    info->mUnk_04 = GetFileValue(0xfd6, base + 5);
     if (info->mUnk_10 >= 6) {
         OS_Terminate();
     }
     info->mUnk_14 = 0;
     info->mUnk_00 = 10;
     info->mUnk_02 = 11;
-    info->mUnk_1c[0] = func_02021e44(0xfd6, base + 0x17);
-    info->mUnk_1c[1] = func_02021e44(0xfd6, base + 0x18);
-    info->mUnk_1c[2] = func_02021e44(0xfd6, base + 0x19);
-    info->mUnk_1c[3] = func_02021e44(0xfd6, base + 0x1a);
-    info->mUnk_1c[4] = func_02021e44(0xfd6, base + 0x1b);
+    info->mUnk_1c[0] = GetFileValue(0xfd6, base + 0x17);
+    info->mUnk_1c[1] = GetFileValue(0xfd6, base + 0x18);
+    info->mUnk_1c[2] = GetFileValue(0xfd6, base + 0x19);
+    info->mUnk_1c[3] = GetFileValue(0xfd6, base + 0x1a);
+    info->mUnk_1c[4] = GetFileValue(0xfd6, base + 0x1b);
     func_02014ccc(info);
 }
 
@@ -369,7 +369,7 @@ int PickWeightedTableEntry(StageInfo *info) {
     i = 0;
     off = 0;
     do {
-        if (func_02021e44(0x1d9, row + off) >= roll) {
+        if (GetFileValue(0x1d9, row + off) >= roll) {
             break;
         }
         i++;
@@ -378,7 +378,7 @@ int PickWeightedTableEntry(StageInfo *info) {
     if (i == 100) {
         OS_Terminate();
     }
-    return func_02021e44(0x1d9, i * 20 + 2);
+    return GetFileValue(0x1d9, i * 20 + 2);
 }
 
 static void InitStage(int index, int stage);
@@ -517,8 +517,8 @@ int func_02014f98(StageRec *rec, int delta) {
     int low;
     int high;
 
-    low = func_02021e44(0xfd6, info->mUnk_11 + (info->mUnk_13 * 27 + 4));
-    high = func_02021e44(0xfd6, info->mUnk_11 + (info->mUnk_13 * 27 + 5));
+    low = GetFileValue(0xfd6, info->mUnk_11 + (info->mUnk_13 * 27 + 4));
+    high = GetFileValue(0xfd6, info->mUnk_11 + (info->mUnk_13 * 27 + 5));
     info->mUnk_04 += delta;
     if (delta > 0 && info->mUnk_04 > high) {
         info->mUnk_04 = high;
@@ -533,7 +533,7 @@ int func_02014f98(StageRec *rec, int delta) {
 
 // Adds amount to the stage's percent (mInfo.mUnk_12), clamped to 0..100; returns 1 when it was clamped. When amount
 // is positive, a set plays sound 0xe8 (func_0202f110) and b set, while a stage is selected, adds an ObjSlot
-// (func_0200d78c) at the gauge position of the old value (PercentToX). Reaching 100 clears mUnk_22e.
+// (AddAnimObjSlotEx) at the gauge position of the old value (PercentToX). Reaching 100 clears mUnk_22e.
 int AddPercent(StageRec *rec, int amount, int a, int b) {
     StageInfo *info = &rec->mInfo;
     int value = info->mUnk_12;
@@ -542,7 +542,7 @@ int AddPercent(StageRec *rec, int amount, int a, int b) {
         func_0202f110(0xe8, 100, 0, 0x40, 0xffff, 0);
     }
     if (b != 0 && amount > 0 && data_020b6ee0.mSelectedStageIndex != -1) {
-        func_0200d78c(0x1e, 0, PercentToX(value), 0x5e, 0, 0, 0x3c, 2);
+        AddAnimObjSlotEx(0x1e, 0, PercentToX(value), 0x5e, 0, 0, 0x3c, 2);
     }
     value += amount;
     rec->mUnk_22e = value >= 100 ? 0 : rec->mUnk_22e;
@@ -570,7 +570,7 @@ int func_020150a0(StageRec *rec, int delta) {
 }
 
 int func_020150c0(StageInfo *info) {
-    if (info->mUnk_04 >= func_02021e44(0xfd6, info->mUnk_11 + (info->mUnk_13 * 27 + 5))) {
+    if (info->mUnk_04 >= GetFileValue(0xfd6, info->mUnk_11 + (info->mUnk_13 * 27 + 5))) {
         return 1;
     }
     return 0;

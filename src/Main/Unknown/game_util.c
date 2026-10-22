@@ -23,7 +23,7 @@ void func_0200b898(int x, int y, const char *format, ...) {
     va_list args;
     va_start(args, format);
     vsprintf(buf, format, args);
-    func_020215fc(x, y, data_0201a6d0, buf, 0, 240, 16, 2);
+    DrawText(x, y, data_0201a6d0, buf, 0, 240, 16, 2);
 }
 
 void func_0200b8dc(int x, int y, const char *format, ...) {
@@ -31,7 +31,7 @@ void func_0200b8dc(int x, int y, const char *format, ...) {
     va_list args;
     va_start(args, format);
     vsprintf(buf, format, args);
-    func_020215fc(x, y, data_0201a6d0, buf, 0, 240, 16, 1);
+    DrawText(x, y, data_0201a6d0, buf, 0, 240, 16, 1);
 }
 
 // Debug print that does nothing in this build.
@@ -106,7 +106,7 @@ void func_0200ba08(u32 a, const VecFx32 *pos, u32 b, u32 c, int d, int e) {
         p.mUnk_2c = -1;
         p.mUnk_3e = b - 1;
     }
-    func_020248e8(a, &p, e);
+    DrawModelFile(a, &p, e);
 }
 
 void func_0200ba68(u32 a, int index, int b, int c, int d, int e) {
@@ -173,7 +173,7 @@ void func_0200bc50(int a, int b, int c, int d, int e, int f, int g, const char *
         if (font == 0) {
             font = data_0201a6c6;
         }
-        func_020215fc(a, b, font, h, j, 200, 16, mode);
+        DrawText(a, b, font, h, j, 200, 16, mode);
     }
     if (m == 1) {
         if (c != 0) {
@@ -238,12 +238,12 @@ static inline void G3_LightColor(u32 num, u16 color) {
 }
 
 void func_0200be50(u32 num, s8 x, s8 y, s8 z, u32 color) {
-    G3_LoadMtx43(&data_020c3e44.mUnk_3c);
+    G3_LoadMtx43(&gMapState.mUnk_3c);
     reg_G3X_MTX_MODE = 2;
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_5b = 0;
+    gMapState.mCamera.mUnk_2dc.mLightMask = 0;
     G3_LightVector(num, x << 5, y << 5, z << 5);
     G3_LightColor(num, color);
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_5b |= 1 << num;
+    gMapState.mCamera.mUnk_2dc.mLightMask |= 1 << num;
 }
 
 void func_0200bec0(VecFx32 *out, int a, int b, int scale) {
@@ -258,9 +258,9 @@ void func_0200bec0(VecFx32 *out, int a, int b, int scale) {
 }
 
 void func_0200bf38(u32 value) {
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_14 = (value << 16) / 360;
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_16 = data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_14;
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_18 = data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_16;
+    gMapState.mCamera.mUnk_2dc.mUnk_14 = (value << 16) / 360;
+    gMapState.mCamera.mUnk_2dc.mUnk_16 = gMapState.mCamera.mUnk_2dc.mUnk_14;
+    gMapState.mCamera.mUnk_2dc.mUnk_18 = gMapState.mCamera.mUnk_2dc.mUnk_16;
 }
 
 u32 func_0200bf54(int n) {
@@ -304,5 +304,5 @@ int func_0200bfc4(int a, int b, int c, int d, int e) {
 void func_0200bffc(int x, int y, int value, const void *font, int align, int mode) {
     char buf[16];
     *FormatDecimal(value, buf) = 0;
-    func_020215fc(x, y, font, buf, align, 100, 10, mode);
+    DrawText(x, y, font, buf, align, 100, 10, mode);
 }

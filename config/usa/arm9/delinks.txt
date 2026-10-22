@@ -642,7 +642,7 @@ src/Main/Graphics/text_draw.c:
     complete
     .text       start:0x02021498 end:0x02021fb0
 
-// provisional: probably continues with func_020225dc (same pool objects)
+// provisional: probably continues with FreeTexBlock (same pool objects)
 src/Main/Graphics/gx_pool.c:
     complete
     .text       start:0x02021fb0 end:0x020223e8
@@ -653,12 +653,12 @@ src/Main/Unknown/angle_blend.c:
     .text       start:0x020223e8 end:0x020225dc
 
 // provisional: the pool allocator and hash lookups of the graphics pools (data_020c31dc, like gx_pool.c);
-// func_020232f0/func_02023478 work on the animation tracks and may belong with the model code after it
+// ApplyAnimTrack/ReadAnimFileNode work on the animation tracks and may belong with the model code after it
 src/Main/Graphics/vram_cache.c:
     complete
     .text       start:0x020225dc end:0x0202350c
 
-// provisional: the .rodata 0x02050898-0x020508d8 of the ARM pose code, the ARM render code and func_02025f58 ascends
+// provisional: the .rodata 0x02050898-0x020508d8 of the ARM pose code, the ARM render code and GetTexByteSize ascends
 // by size as one file's, and the Thumb code after it follows with no gap and calls both ways. Its .bss starts at
 // 0x020c31ac, where the size order restarts (0x30 after the 0xb30-byte gTextureBlocks), and ascends to 0x020c61ac
 src/Main/Graphics/model.c:
@@ -727,7 +727,7 @@ src/Main/Map/map_floor.c:
     .text       start:0x02030830 end:0x020312b8
 
 // provisional: the stage data file's chunks and entries, the placed objects, the visible cells and the camera
-// projection, blends and modes (data_020c3e44, which holds the camera object); it starts with the ring quadtree of
+// projection, blends and modes (gMapState, which holds the camera object); it starts with the ring quadtree of
 // chunk 0x5540, whose rings func_02031c70 walks (func_0203129c before it also reads what func_02031824 writes)
 src/Main/Map/map_entries.c:
     complete

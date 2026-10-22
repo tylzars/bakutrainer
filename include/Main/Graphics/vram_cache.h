@@ -8,16 +8,16 @@
 extern "C" {
 #endif
 
-u32 func_020225dc(u32 i);
-u32 func_020227b4(u32 i);
-u32 func_0202283c(Unk_PoolRange *n, u32 size, u32 slot);
-u32 func_020229b4(u32 kind, u32 key, u32 size, u32 srcSize);
-u32 func_02022cdc(u32 i);
-u32 func_02022eb4(u32 i);
-u32 func_02022f40(Unk_PoolRange *n, u32 size, u32 slot);
-u32 func_020230b0(u32 kind, u32 key, u32 size);
-void func_020232f0(u32 map, u16 *out, s32 *pos, s32 *vec, u32 d, int *done, const Unk_PoseNode *node);
-void func_02023478(u16 a, u16 *rot, VecFx32 *pos, VecFx32 *vec, int e, int f, int g, int h);
+u32 FreeTexBlock(u32 i);
+u32 RemoveLeastRecentTexCacheEntry(u32 i);
+u32 AllocTexBlock(Unk_PoolRange *n, u32 size, u32 node);
+u32 FindOrLoadTex(u32 kind, u32 key, u32 size, u32 srcSize);
+u32 FreePlttBlock(u32 i);
+u32 RemoveLeastRecentPlttCacheEntry(u32 i);
+u32 AllocPlttBlock(Unk_PoolRange *n, u32 size, u32 node);
+u32 FindOrLoadPltt(u32 kind, u32 key, u32 size);
+void ApplyAnimTrack(u32 track, u16 *out, s32 *pos, s32 *vec, u32 nodeIndex, int *done, const PoseNode *node);
+void ReadAnimFileNode(u16 file, u16 *rot, VecFx32 *pos, VecFx32 *vec, int frame, int nextFrame, int weight, int node);
 
 #ifdef __cplusplus
 }

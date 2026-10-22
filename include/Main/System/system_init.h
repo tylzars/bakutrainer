@@ -26,16 +26,18 @@ typedef struct Unk_020c1b0c {
 } Unk_020c1b0c;
 
 // One queued transfer (0x14 bytes): the source (a file offset, packed with a block index for some files, or an
-// address when the file is 0), the destination, the stored and the unpacked size, the file and two format bytes.
-typedef struct Unk_LoadEntry {
-    u32 mUnk_00;
-    u32 mUnk_04;
-    u32 mUnk_08;
-    u32 mUnk_0c;
-    u16 mUnk_10;
+// address when the file is 0), the destination (a VRAM group offset is turned into an address before the copy), the
+// stored and the unpacked size, the file and two format bytes. mSize becomes mUnpackedSize once the data is unpacked
+// and is cut down when ProcessTransfers splits a transfer.
+typedef struct Transfer {
+    u32 mSrc;
+    u32 mDst;
+    u32 mSize;
+    u32 mUnpackedSize;
+    u16 mFile;
     u8 mUnk_12;
     u8 mUnk_13;
-} Unk_LoadEntry;
+} Transfer;
 
 // VRAM banks mapped for one use: each bank's control register, its size in KB, its LCDC address and the control
 // value to restore, then the number of banks.
@@ -83,7 +85,7 @@ typedef struct SystemState {
     u8 *mHeapBoundary;
     s32 mLowHeap;
     s32 mHighHeap;
-    Unk_LoadEntry *mTransfers;
+    Transfer *mTransfers;
     VramGroup mPlttVramGroup;
     VramGroup mTexVramGroup;
     VramBank mUnk_0a0;
@@ -302,64 +304,88 @@ u32 func_0201c564(void);
 
 // Objects of the per-frame system code.
 
+// Set in mUnk_0 (the run length) of a block heap entry while the run is allocated.
+#define POOL_BLOCK_USED 0x8000
+
+// An entry of a block heap (8 bytes): one per 512-byte (or 32-byte) VRAM block of a VRAM cache, or per unit of a
+// texture layer, plus two sentinels. At the first entry of a run mUnk_0 is the run's length (with POOL_BLOCK_USED while
+// it is allocated), mPrev/mNext link the free runs in order of size and mUnk_6 is the start of the run before it in
+// memory. A texture layer's cache list (TextureLayer.mNodes) uses the same type: mPrev/mNext are the list links,
+// mUnk_0 the entry's hash slot and mUnk_6 the first unit of its run.
 typedef struct Unk_PoolRange {
     u16 mUnk_0;
-    u16 mUnk_2;
-    u16 mUnk_4;
+    u16 mPrev;
+    u16 mNext;
     u16 mUnk_6;
 } Unk_PoolRange;
 
-// A slot of the second table of a half: a link to its entry and a value.
+// An entry of a layer's palette slot list (mUnk_534): a palette key (0xffff = unused) and the palette index it is
+// loaded into.
 typedef struct Unk_SlotPair {
-    u16 mUnk_0;
-    u16 mUnk_2;
+    u16 mKey;
+    u16 mPaletteIndex;
 } Unk_SlotPair;
 
-// Entry of a half's hash table (16 bytes): the key at +8 (-1 = never used, -2 = removed) and the number of
-// search paths that pass through the entry.
-typedef struct Unk_HashEntry {
+// A slot of a layer's hash table (16 bytes): the block's sixteen 4-bit palette positions (mode 0), the key (-1 =
+// never used, -2 = removed), the cache list entry that holds the block and the number of search paths that pass
+// through the slot.
+typedef struct TextureSlot {
     u32 mUnk_0[2];
-    s32 mUnk_8;
-    u16 mUnk_c;
-    u16 mUnk_e;
-} Unk_HashEntry;
+    s32 mKey;
+    u16 mNodeIndex;
+    u16 mPathCount;
+} TextureSlot;
 
-// Entry of the chain table of a half (8 bytes): a word and five link bytes.
-typedef struct Unk_ChainEntry {
-    u16 mUnk_0;
-    u8 mUnk_2;
-    u8 mUnk_3;
-    u8 mUnk_4;
-    u8 mUnk_5;
+// An entry of a layer's chain table (8 bytes): the key, held by the first entry of a key's chain (0xffff in the later
+// entries, 0xfffe = free); the chain links (mChainPrev is written but never read in this build); the links of the
+// list that func_0202c5fc searches from the front for an entry of a slot, which it moves to the end (entry 255 is the
+// anchor); and the palette position mUnk_6 (high nibble the slot, low nibble the index within it).
+typedef struct PaletteChainEntry {
+    u16 mKey;
+    u8 mChainPrev;
+    u8 mChainNext;
+    u8 mPrev;
+    u8 mNext;
     u8 mUnk_6;
     u8 mUnk_7;
-} Unk_ChainEntry;
+} PaletteChainEntry;
 
-// The two halves of the texture blocks (0x580 bytes each): tables for one display engine's cached blocks.
-typedef struct Unk_020c2694 {
-    void *mUnk_000;
-    Unk_PoolRange *mUnk_004;
-    Unk_HashEntry *mUnk_008;
-    Unk_PoolRange *mUnk_00c;
-    void *mUnk_010;
+// The tables of one texture layer (0x580 bytes; gTextureBlocks.mLayers[layer - 1], one per display engine): the
+// queued OAM entries, the cache list and hash table of the blocks loaded into VRAM, the block heap, the matrices, the
+// list of palette positions (mUnk_115, next index mUnk_516) with, per queued mode-0 transfer, the start of its run in
+// that list (mUnk_014, next index mUnk_114), the chain table (mUnk_518) with its free entry count per slot (mUnk_51c)
+// and each key's first entry (mUnk_52c), the sort keys of the queued entries, the palette slot list (mUnk_534), the
+// chain-table flag (mUnk_57b) and the long-search flag (mUnk_57c, set when a hash search takes more than 20 steps;
+// UpdateSystem then resets the layer).
+typedef struct TextureLayer {
+    // Queued entries, written to OAM by WriteOam.
+    void *mOam;
+    Unk_PoolRange *mNodes;
+    TextureSlot *mSlots;
+    // The block heap: one entry per VRAM unit of 32 << mUnitShift bytes, plus two sentinels.
+    Unk_PoolRange *mBlocks;
+    void *mMats;
     u16 mUnk_014[0x80];
     u8 mUnk_114;
     u8 mUnk_115[0x516 - 0x115];
     u16 mUnk_516;
-    Unk_ChainEntry *mUnk_518;
+    PaletteChainEntry *mUnk_518;
     u8 mUnk_51c[0x10];
     u8 *mUnk_52c;
-    void *mUnk_530;
+    void *mSortKeys;
     Unk_SlotPair mUnk_534[0x10];
-    u16 mUnk_574;
-    u8 mUnk_576;
-    u8 mUnk_577;
-    u16 mUnk_578;
-    u8 mUnk_57a;
+    // Used entries of mNodes.
+    u16 mEntryCount;
+    u8 mMatCount;
+    // Also the value of the display control register's field at bit 20.
+    u8 mUnitShift;
+    // Units in the block heap (mBlocks has mUnitCount + 2 entries).
+    u16 mUnitCount;
+    u8 mOamCount;
     u8 mUnk_57b;
     u8 mUnk_57c;
     u8 mUnk_57d[3];
-} Unk_020c2694;
+} TextureLayer;
 
 // Texture blocks: a preloaded block (valid flag, its address and its offset), the palette count (the palette file's
 // size in 32-byte palettes), the tables of each layer (mLayers[layer - 1]), the file offsets of a PACK block file, the
@@ -376,7 +402,7 @@ typedef struct TextureBlocks {
     u16 mPaletteCount;
     u8 mUnk_016;
     u8 mUnk_017;
-    Unk_020c2694 mLayers[2];
+    TextureLayer mLayers[2];
     u8 mUnk_b18[4];
     u32 *mPackOffsets;
     u32 *mBlockTable;
@@ -424,84 +450,102 @@ typedef struct Unk_020c1834 {
     u8 mUnk_10[0x30];
 } Unk_020c1834;
 
-typedef struct Unk_PoolNode {
-    u32 mUnk_00;
-    u32 mUnk_04;
-    u16 mUnk_08;
-    u16 mUnk_0a;
-    u16 mUnk_0c;
+// Node of a VRAM cache (16 bytes): the byte offset of the entry's blocks from the start of the VRAM group, the size in
+// bytes (written for the palette cache only, never read in this build), the entry's hash slot and the links of the
+// cache list. Node 0 is the list's end and node 1 its front, so node 1's mNext is the least recently used entry;
+// node 1's mPrev also heads the chain of free nodes.
+typedef struct VramCacheNode {
+    u32 mOffset;
+    u32 mSize;
+    u16 mSlotIndex;
+    u16 mPrev;
+    u16 mNext;
     u8 mUnk_0e[2];
-} Unk_PoolNode;
+} VramCacheNode;
 
-typedef struct Unk_PoolSlot {
-    s32 mUnk_00;
-    u16 mUnk_04;
+// Slot of a VRAM cache's hash table (8 bytes): the key (-1 = never used, -2 = removed; with no path count a removed
+// slot never becomes -1 again) and the node that holds the entry.
+typedef struct VramCacheSlot {
+    s32 mKey;
+    u16 mNodeIndex;
     u16 mUnk_06;
-} Unk_PoolSlot;
+} VramCacheSlot;
 
-// An animation track: its data, the current and next frame, the blend between them and the mode.
-typedef struct Unk_AnimTrack {
-    void *mUnk_00;
-    u32 mUnk_04;
-    u32 mUnk_08;
-    u8 mUnk_0c;
-    u8 mUnk_0d;
+// An animation track: the loaded data, the current and next frame index, the next frame's weight (out of 0x100) and
+// a copy of the animation's flags, whose only reader (bits 0-1, in ApplyAnimTrack's combining path) does not run in
+// this build.
+typedef struct AnimTrack {
+    void *mData;
+    u32 mFrameIndex;
+    u32 mNextFrameIndex;
+    u8 mNextWeight;
+    u8 mFlags;
     u8 mUnk_0e[2];
-} Unk_AnimTrack;
+} AnimTrack;
 
-// A node of a model's pose tree: mUnk_0 is its first child and mUnk_1 its next sibling (0xff = none); scale (s8),
-// angles (s8, << 8), position (s16, << 5), its matrix stack slot (-1 = none) and flags.
-typedef struct Unk_PoseNode {
-    u8 mUnk_0;
-    u8 mUnk_1;
-    s8 mUnk_2;
-    s8 mUnk_3;
-    s8 mUnk_4;
+// A node of a model's pose tree: child and sibling links (0xff = none), scale (s8), angles (s8, << 8), position
+// (s16, << 5), its matrix stack slot (-1 = none) and flags.
+typedef struct PoseNode {
+    u8 mFirstChild;
+    u8 mNextSibling;
+    s8 mScaleX;
+    s8 mScaleY;
+    s8 mScaleZ;
     s8 mUnk_5;
     s8 mUnk_6;
     s8 mUnk_7;
-    s16 mUnk_8;
-    s16 mUnk_a;
-    s16 mUnk_c;
-    s8 mUnk_e;
+    s16 mPosX;
+    s16 mPosY;
+    s16 mPosZ;
+    s8 mMtxStoreIndex;
     u8 mUnk_f;
-} Unk_PoseNode;
+} PoseNode;
 
-// The graphics pools (texture blocks at 0x00, palette blocks at 0x0c: slots, hash entries and block ranges) and the
-// model animation state.
+// The two VRAM caches (texture at 0x00, palette at 0x0c: nodes, hash-table slots and the heap of 512-byte (or 32-byte)
+// VRAM blocks, not the block file) and the state of the pose walk.
 typedef struct Unk_020c31dc {
-    Unk_PoolNode *mUnk_00;
-    Unk_PoolSlot *mUnk_04;
-    Unk_PoolRange *mUnk_08;
-    Unk_PoolNode *mUnk_0c;
-    Unk_PoolSlot *mUnk_10;
-    Unk_PoolRange *mUnk_14;
-    Unk_AnimTrack mUnk_18[2];
-    Unk_PoseNode *mUnk_38;
+    VramCacheNode *mTexNodes;
+    VramCacheSlot *mTexSlots;
+    Unk_PoolRange *mTexBlocks;
+    VramCacheNode *mPlttNodes;
+    VramCacheSlot *mPlttSlots;
+    Unk_PoolRange *mPlttBlocks;
+    AnimTrack mAnimTracks[2];
+    PoseNode *mPoseNodes;
     u16 mUnk_3c;
     u16 mUnk_3e;
     s16 mUnk_40;
     u8 mUnk_42;
     u8 mUnk_43;
-    u8 mUnk_44;
+    // The shift byte of the last model drawn in a mode other than 1, 3 and 5: positions read from the tracks are
+    // shifted right by it, and func_02024b2c scales relative to it.
+    u8 mModelShift;
     u8 mUnk_45;
-    u8 mUnk_46;
+    // ComputePoseMatrices stops at this node once it has stored its matrix (its children and later siblings are
+    // skipped) and resets it to 0xff; while mUnk_45 is set, track 1's positions are blended in only for nodes
+    // numbered above it.
+    u8 mStopNodeIndex;
     u8 mUnk_47;
     u8 mUnk_48;
-    u8 mUnk_49;
+    // Raised each time a track is filled with data (the same track can be filled twice, and clearing a track does not
+    // lower it); while it is 0 the pose walk uses the nodes' own values.
+    u8 mTrackFillCount;
     u8 mUnk_4a;
     u8 mUnk_4b;
-    u32 mUnk_4c;
-    u32 mUnk_50;
-    u16 mUnk_54;
-    u16 mUnk_56;
-    u16 mUnk_58;
-    u16 mUnk_5a;
+    // Counted by FindOrLoadTex; never read in this build.
+    u32 mTexLookupCount;
+    u32 mTexProbeCount;
+    u16 mTexFile;
+    u16 mPlttFile;
+    // The file's stored size less the offset in its header word 1, divided by 4; the keys of the other sources are
+    // counted from here.
+    u16 mTexFileKeyCount;
+    u16 mPlttFileKeyCount;
     u8 mUnk_5c[2];
-    u16 mUnk_5e;
-    u16 mUnk_60;
-    u16 mUnk_62;
-    u16 mUnk_64;
+    u16 mPlttEntryCount;
+    u16 mTexEntryCount;
+    u16 mTexBlockCount;
+    u16 mPlttBlockCount;
     u8 mUnk_66[2];
 } Unk_020c31dc;
 

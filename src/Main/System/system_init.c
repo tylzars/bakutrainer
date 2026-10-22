@@ -125,7 +125,7 @@ void InitSystemEx(u32 a, int b, int c) {
     REG_IME = 1;
     gSystemState.mUnk_2c8 = 0;
     gSystemState.mUnk_470 = 0;
-    data_020c3e44.mUnk_2024.mUnk_50 = 0;
+    gMapState.mCamera.mMapFile = 0;
     gSystemState.mTransferLimit = a;
     gSystemState.mUnk_30e = 0x20;
     gSystemState.mUnk_310 = 10;
@@ -172,8 +172,8 @@ void InitSystemEx(u32 a, int b, int c) {
     MIi_CpuClearFast(0, (void *) 0x05000000, 0x400);
     MIi_CpuClearFast(0xc0, (void *) 0x07000400, 0x400);
     MIi_CpuClearFast(0, (void *) 0x05000400, 0x400);
-    gTextureBlocks.mLayers[0].mUnk_577 = 0;
-    gTextureBlocks.mLayers[1].mUnk_577 = 0;
+    gTextureBlocks.mLayers[0].mUnitShift = 0;
+    gTextureBlocks.mLayers[1].mUnitShift = 0;
     gSystemState.mElapsedFrames = 0;
     gSystemState.mFadeState[0] = gSystemState.mFadeState[1] = FADE_STATE_CLEAR;
     *(vu16 *) 0x0400106c = *(vu16 *) 0x0400006c = 0;
@@ -272,7 +272,7 @@ void UpdateSystem(int flags) {
         }
         *(vu32 *) HW_DISPCNT &= ~DISPCNT_FORCED_BLANK;
     }
-    data_020c3e44.mUnk_2024.mUnk_48 = 0;
+    gMapState.mCamera.mMapData = 0;
     MixRandomSeed();
     single = flags & 1;
     if (single == 0 && (gSystemState.mFlags & 0x20000)) {
@@ -282,8 +282,8 @@ void UpdateSystem(int flags) {
     }
     if ((gSystemState.mFlags & 0x10000080) == 0x10000080) {
         if (func_02035058() == 0) {
-            func_020248fc();
-            if (data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_4a == 0 && !(gSystemState.mFlags & 0x10000)) {
+            ClearTrackCount();
+            if (gMapState.mCamera.mUnk_2dc.mUnk_4a == 0 && !(gSystemState.mFlags & 0x10000)) {
                 *(vu32 *) HW_SWAP_BUFFERS = 3;
             } else {
                 *(vu32 *) HW_SWAP_BUFFERS = 1;
@@ -298,7 +298,7 @@ void UpdateSystem(int flags) {
     ProcessTransfers(2);
     ClearTransferQueue();
     if (((*(vu16 *) HW_SHARED_BUTTONS & LID_CLOSED) >> 15) == 1) {
-        if (func_0202fcb4() == 1) {
+        if (AreScreensOff() == 1) {
             ClearTouchButtons();
             flags |= 2;
         }
@@ -311,7 +311,7 @@ void UpdateSystem(int flags) {
     for (engine = 0; engine < 2; engine++) {
         if (gTextureBlocks.mLayers[engine].mUnk_57c != 0) {
             gTextureBlocks.mLayers[engine].mUnk_57c = 0;
-            func_0202bb30(engine == 0 ? 1 : 2);
+            ResetTextureLayer(engine == 0 ? 1 : 2);
         }
     }
     if (gSystemState.mUnk_4a0 == 1) {
@@ -479,8 +479,8 @@ void UpdateSystem(int flags) {
     }
     if (single == 0) {
         UpdateFade();
-        func_0202d908(1);
-        func_0202d908(2);
+        WriteOam(1);
+        WriteOam(2);
         if (func_02035058() == 0 && (flags & 2) == 0) {
             UpdateKeys();
         }
@@ -674,15 +674,15 @@ int Free(void *handle) {
 }
 
 u16 func_0201c538(void) {
-    return data_020c31dc.mUnk_58;
+    return data_020c31dc.mTexFileKeyCount;
 }
 
 u16 func_0201c544(void) {
-    return data_020c31dc.mUnk_5a;
+    return data_020c31dc.mPlttFileKeyCount;
 }
 
 u32 func_0201c550(void) {
-    return func_0201c538() + (func_0202ade0() << 7);
+    return func_0201c538() + (GetBlockCount() << 7);
 }
 
 u32 func_0201c564(void) {
@@ -693,7 +693,7 @@ u32 func_0201c564(void) {
 // Queues a transfer for ProcessTransfers: grows the queue's byte count, waits for the queue to drain when it is full
 // (terminating when it stays full), and appends the entry.
 void QueueTransferEx(u32 file, u32 src, u32 dst, u32 size, u32 unpackedSize, u8 mode, u8 flag) {
-    Unk_LoadEntry entry;
+    Transfer entry;
     int limit;
     if (unpackedSize == 0) {
         unpackedSize = size;
@@ -713,13 +713,13 @@ void QueueTransferEx(u32 file, u32 src, u32 dst, u32 size, u32 unpackedSize, u8 
     }
     entry.mUnk_12 = mode;
     entry.mUnk_13 = flag;
-    entry.mUnk_10 = file;
-    entry.mUnk_00 = src;
-    entry.mUnk_08 = size;
-    entry.mUnk_0c = unpackedSize;
-    entry.mUnk_04 = dst;
+    entry.mFile = file;
+    entry.mSrc = src;
+    entry.mSize = size;
+    entry.mUnpackedSize = unpackedSize;
+    entry.mDst = dst;
     if (gSystemState.mTransferCount != 0) {
-        memcmp(&entry, &gSystemState.mTransfers[gSystemState.mTransferCount - 1], sizeof(Unk_LoadEntry));
+        memcmp(&entry, &gSystemState.mTransfers[gSystemState.mTransferCount - 1], sizeof(Transfer));
     }
     gSystemState.mTransfers[gSystemState.mTransferCount++] = entry;
     gSystemState.mTransferSize += unpackedSize;
@@ -777,8 +777,8 @@ void func_0201c78c(void) {
 // a cast of the entry pointer.
 void ProcessTransfers(int flags) {
     int i;
-    Unk_LoadEntry **list;
-    Unk_LoadEntry *e;
+    Transfer **list;
+    Transfer *e;
     int j;
     BOOL busy;
     u32 cachedFile;
@@ -874,10 +874,10 @@ void ProcessTransfers(int flags) {
     count = 0;
     for (i = 0; i < gSystemState.mTransferCount; i++) {
         u32 addr;
-        if (gSystemState.mTransfers[i].mUnk_08 == 0) {
+        if (gSystemState.mTransfers[i].mSize == 0) {
             continue;
         }
-        addr = gSystemState.mTransfers[i].mUnk_04;
+        addr = gSystemState.mTransfers[i].mDst;
         if ((addr >> 28) == 11 || (addr >> 28) == 10 || (addr >= 0x06000000 && addr < 0x06400000)) {
             if ((flags & 2) && !busy) {
                 list[count] = &gSystemState.mTransfers[i];
@@ -900,9 +900,9 @@ void ProcessTransfers(int flags) {
         while (gap > 0) {
             for (i = 0; i < (int) (count - gap); i++) {
                 j = i;
-                while (list[j]->mUnk_10 < list[j + gap]->mUnk_10 ||
-                       (list[j]->mUnk_10 == list[j + gap]->mUnk_10 && list[j]->mUnk_00 > list[j + gap]->mUnk_00)) {
-                    Unk_LoadEntry *t = list[j];
+                while (list[j]->mFile < list[j + gap]->mFile ||
+                       (list[j]->mFile == list[j + gap]->mFile && list[j]->mSrc > list[j + gap]->mSrc)) {
+                    Transfer *t = list[j];
                     list[j] = list[j + gap];
                     list[j + gap] = t;
                     j -= gap;
@@ -917,7 +917,7 @@ void ProcessTransfers(int flags) {
 
     total = 0;
     for (i = 0; i < count; i++) {
-        total += list[i]->mUnk_0c;
+        total += list[i]->mUnpackedSize;
     }
     buf = AllocWithFlags(total + 0x80, 1);
     dst = buf;
@@ -925,21 +925,21 @@ void ProcessTransfers(int flags) {
     cachedSize = 0;
     for (i = 0; i < count; i++) {
         e = list[i];
-        if (gTextureBlocks.mBlockFile == e->mUnk_10 && gTextureBlocks.mBlockFileKind == 1) {
-            if (gTextureBlocks.mUnk_000 != 0 && e->mUnk_00 == gTextureBlocks.mUnk_00c << 3) {
-                MIi_CpuCopy32(gTextureBlocks.mUnk_004, dst, e->mUnk_0c);
+        if (gTextureBlocks.mBlockFile == e->mFile && gTextureBlocks.mBlockFileKind == 1) {
+            if (gTextureBlocks.mUnk_000 != 0 && e->mSrc == gTextureBlocks.mUnk_00c << 3) {
+                MIi_CpuCopy32(gTextureBlocks.mUnk_004, dst, e->mUnpackedSize);
                 gTextureBlocks.mUnk_017 = 0;
             } else {
                 int size;
                 unsigned long first;
                 u32 last;
-                Unk_LoadEntry **p;
+                Transfer **p;
                 u32 next;
                 int k;
-                first = e->mUnk_00 >> 11;
-                last = (e->mUnk_00 + e->mUnk_08) >> 11;
-                for (k = i + 1, p = *(Unk_LoadEntry ***) &list;
-                     k < count && (next = (p[k]->mUnk_00 + p[k]->mUnk_08) >> 11) <= last + 1 &&
+                first = e->mSrc >> 11;
+                last = (e->mSrc + e->mSize) >> 11;
+                for (k = i + 1, p = *(Transfer ***) &list;
+                     k < count && (next = (p[k]->mSrc + p[k]->mSize) >> 11) <= last + 1 &&
                      gTextureBlocks.mPackOffsets[next + 1] - gTextureBlocks.mPackOffsets[first] <= 0x8000;
                      k++) {
                     if (next > last) {
@@ -951,25 +951,25 @@ void ProcessTransfers(int flags) {
                     tmp = AllocWithFlags(0x8000, 1);
                 }
                 if ((int) gTextureBlocks.mPackOffsets[first] + size > cachedOff + cachedSize || k == 0 ||
-                    list[i]->mUnk_10 != cachedFile) {
-                    ReadFileBytes(list[i]->mUnk_10, tmp, size, gTextureBlocks.mPackOffsets[first]);
+                    list[i]->mFile != cachedFile) {
+                    ReadFileBytes(list[i]->mFile, tmp, size, gTextureBlocks.mPackOffsets[first]);
                     cachedSize = size;
                     cachedOff = gTextureBlocks.mPackOffsets[first];
                 }
-                UnpackRlePart(tmp + (gTextureBlocks.mPackOffsets[first] - cachedOff), dst, list[i]->mUnk_00 & 0x7ff,
-                              list[i]->mUnk_08);
+                UnpackRlePart(tmp + (gTextureBlocks.mPackOffsets[first] - cachedOff), dst, list[i]->mSrc & 0x7ff,
+                              list[i]->mSize);
             }
-        } else if (gTextureBlocks.mBlockFile == e->mUnk_10 && gTextureBlocks.mBlockFileKind == 2) {
-            u32 sub = (e->mUnk_00 << 25) >> 20;
+        } else if (gTextureBlocks.mBlockFile == e->mFile && gTextureBlocks.mBlockFileKind == 2) {
+            u32 sub = (e->mSrc << 25) >> 20;
             u32 off;
-            e->mUnk_00 = (e->mUnk_00 >> 7) << 2;
+            e->mSrc = (e->mSrc >> 7) << 2;
             e = list[i];
-            off = e->mUnk_00;
+            off = e->mSrc;
             if (gTextureBlocks.mUnk_000 != 0 && gTextureBlocks.mUnk_00c == off + (sub << 20)) {
-                MIi_CpuCopy32(gTextureBlocks.mUnk_004, dst, e->mUnk_0c);
+                MIi_CpuCopy32(gTextureBlocks.mUnk_004, dst, e->mUnpackedSize);
                 gTextureBlocks.mUnk_017 = 0;
-            } else if (cachedOff != off || cachedFile != e->mUnk_10) {
-                ReadFileBytes(e->mUnk_10, hdr, 0x10, off);
+            } else if (cachedOff != off || cachedFile != e->mFile) {
+                ReadFileBytes(e->mFile, hdr, 0x10, off);
                 if (hdr[0] == EZ10_MAGIC) {
                     u8 *packed;
                     if (tmp == 0) {
@@ -983,33 +983,33 @@ void ProcessTransfers(int flags) {
                     }
                     packed = (u8 *) (((u32) tmp + 0x8000 - hdr[3]) & ~3);
                     memcpy(packed, hdr, 0x10);
-                    ReadFileBytes(list[i]->mUnk_10, packed + 0x10, hdr[3] - 0x10, off + 0x10);
+                    ReadFileBytes(list[i]->mFile, packed + 0x10, hdr[3] - 0x10, off + 0x10);
                     UnpackEz10(packed, tmp);
-                    MIi_CpuCopy32(tmp + sub, dst, list[i]->mUnk_0c);
+                    MIi_CpuCopy32(tmp + sub, dst, list[i]->mUnpackedSize);
                     cachedOff = off;
-                    cachedFile = list[i]->mUnk_10;
+                    cachedFile = list[i]->mFile;
                 } else {
-                    ReadFileBytes(list[i]->mUnk_10, dst, list[i]->mUnk_0c, off + sub);
+                    ReadFileBytes(list[i]->mFile, dst, list[i]->mUnpackedSize, off + sub);
                 }
             } else {
-                MIi_CpuCopy32(tmp + sub, dst, e->mUnk_0c);
+                MIi_CpuCopy32(tmp + sub, dst, e->mUnpackedSize);
             }
-        } else if (gSystemState.mUnk_42c == e->mUnk_10) {
-            u32 sub = (e->mUnk_00 << 26) >> 20;
-            u32 off = (e->mUnk_00 >> 6) << 2;
-            if (gSystemState.mUnk_350 != off || gSystemState.mUnk_354 != e->mUnk_10) {
+        } else if (gSystemState.mUnk_42c == e->mFile) {
+            u32 sub = (e->mSrc << 26) >> 20;
+            u32 off = (e->mSrc >> 6) << 2;
+            if (gSystemState.mUnk_350 != off || gSystemState.mUnk_354 != e->mFile) {
                 u32 *packed;
                 if (gSystemState.mUnk_34c == 0) {
                     gSystemState.mUnk_34c = Alloc(0x1200);
                 }
-                packed = (u32 *) (((u32) gSystemState.mUnk_34c + 0x1000 - list[i]->mUnk_08) & ~3);
-                ReadFileBytes(list[i]->mUnk_10, packed, list[i]->mUnk_08, off);
+                packed = (u32 *) (((u32) gSystemState.mUnk_34c + 0x1000 - list[i]->mSize) & ~3);
+                ReadFileBytes(list[i]->mFile, packed, list[i]->mSize, off);
                 if (packed[0] != EZ10_MAGIC) {
                     gSystemState.mUnk_350 = off;
-                    gSystemState.mUnk_354 = list[i]->mUnk_10;
-                    MIi_CpuCopyFast(packed, gSystemState.mUnk_34c, list[i]->mUnk_08);
-                    MIi_CpuCopyFast(gSystemState.mUnk_34c + sub, dst, list[i]->mUnk_0c);
-                    list[i]->mUnk_08 = list[i]->mUnk_0c;
+                    gSystemState.mUnk_354 = list[i]->mFile;
+                    MIi_CpuCopyFast(packed, gSystemState.mUnk_34c, list[i]->mSize);
+                    MIi_CpuCopyFast(gSystemState.mUnk_34c + sub, dst, list[i]->mUnpackedSize);
+                    list[i]->mSize = list[i]->mUnpackedSize;
                 } else {
                     if (packed[0] != EZ10_MAGIC) {
                         OS_Terminate();
@@ -1017,87 +1017,86 @@ void ProcessTransfers(int flags) {
                     if (packed[1] > 0x8000) {
                         OS_Terminate();
                     }
-                    if (packed[3] != list[i]->mUnk_08) {
+                    if (packed[3] != list[i]->mSize) {
                         OS_Terminate();
                     }
                     UnpackEz10(packed, gSystemState.mUnk_34c);
-                    MIi_CpuCopyFast(gSystemState.mUnk_34c + sub, dst, list[i]->mUnk_0c);
+                    MIi_CpuCopyFast(gSystemState.mUnk_34c + sub, dst, list[i]->mUnpackedSize);
                     gSystemState.mUnk_350 = off;
-                    gSystemState.mUnk_354 = list[i]->mUnk_10;
-                    list[i]->mUnk_08 = list[i]->mUnk_0c;
+                    gSystemState.mUnk_354 = list[i]->mFile;
+                    list[i]->mSize = list[i]->mUnpackedSize;
                 }
             } else {
-                MIi_CpuCopyFast(gSystemState.mUnk_34c + sub, dst, e->mUnk_0c);
-                list[i]->mUnk_08 = list[i]->mUnk_0c;
+                MIi_CpuCopyFast(gSystemState.mUnk_34c + sub, dst, e->mUnpackedSize);
+                list[i]->mSize = list[i]->mUnpackedSize;
             }
-        } else if (data_020c31dc.mUnk_54 == e->mUnk_10 && e->mUnk_08 < e->mUnk_0c) {
-            u32 size = e->mUnk_08;
-            u32 *packed = (u32 *) (((u32) dst + e->mUnk_0c + 0x80 - size) & ~3);
-            ReadFileBytes(e->mUnk_10, packed, size, e->mUnk_00);
+        } else if (data_020c31dc.mTexFile == e->mFile && e->mSize < e->mUnpackedSize) {
+            u32 size = e->mSize;
+            u32 *packed = (u32 *) (((u32) dst + e->mUnpackedSize + 0x80 - size) & ~3);
+            ReadFileBytes(e->mFile, packed, size, e->mSrc);
             data_020c1834.mUnk_08 += size;
             data_020c1834.mUnk_0c++;
             if (packed[0] != EZ10_MAGIC) {
                 OS_Terminate();
             }
-            if (packed[1] != list[i]->mUnk_0c) {
+            if (packed[1] != list[i]->mUnpackedSize) {
                 OS_Terminate();
             }
-            if (-packed[2] >= list[i]->mUnk_0c + 0x80 - size) {
+            if (-packed[2] >= list[i]->mUnpackedSize + 0x80 - size) {
                 OS_Terminate();
             }
             UnpackEz10(packed, dst);
-            list[i]->mUnk_08 = list[i]->mUnk_0c;
-        } else if (e->mUnk_10 != 0) {
-            u32 size = e->mUnk_08;
+            list[i]->mSize = list[i]->mUnpackedSize;
+        } else if (e->mFile != 0) {
+            u32 size = e->mSize;
             j = i + 1;
-            if (cachedFile != e->mUnk_10 || e->mUnk_00 + size > cachedOff + cachedSize ||
-                (i > 0 && list[i - 1]->mUnk_00 == list[i]->mUnk_00) ||
-                (lastDst & ~0x3ffff) != (e->mUnk_04 & ~0x3ffff)) {
-                cachedFile = ((Unk_LoadEntry *) e)->mUnk_10;
-                cachedOff = e->mUnk_00;
-                lastDst = (*(Unk_LoadEntry ***) &list)[j - 1]->mUnk_04;
+            if (cachedFile != e->mFile || e->mSrc + size > cachedOff + cachedSize ||
+                (i > 0 && list[i - 1]->mSrc == list[i]->mSrc) || (lastDst & ~0x3ffff) != (e->mDst & ~0x3ffff)) {
+                cachedFile = ((Transfer *) e)->mFile;
+                cachedOff = e->mSrc;
+                lastDst = (*(Transfer ***) &list)[j - 1]->mDst;
                 cachedSize = size;
                 ReadFileBytes(cachedFile, dst, size, cachedOff);
-                if (gSystemState.mUnk_464 != 0 && (list[i]->mUnk_04 >> 28) == 11) {
+                if (gSystemState.mUnk_464 != 0 && (list[i]->mDst >> 28) == 11) {
                     DC_FlushRange(dst, size);
                     gSystemState.mUnk_464(dst, size);
                 }
             }
         } else {
-            if (e->mUnk_08 & 1) {
+            if (e->mSize & 1) {
                 OS_Terminate();
             }
-            MIi_CpuCopy16((void *) list[i]->mUnk_00, dst, list[i]->mUnk_08);
+            MIi_CpuCopy16((void *) list[i]->mSrc, dst, list[i]->mSize);
         }
 
         e = list[i];
-        if (gTextureBlocks.mBlockFile == e->mUnk_10) {
+        if (gTextureBlocks.mBlockFile == e->mFile) {
             BOOL bg = 0;
-            u32 area = e->mUnk_04 >> 20;
+            u32 area = e->mDst >> 20;
             if (area < 0x64 && area >= 0x60) {
                 bg = 1;
             }
             if (e->mUnk_13 != 0 && e->mUnk_13 != 0xff) {
-                Unk_020c2694 *half = &gTextureBlocks.mLayers[e->mUnk_13 & 1];
-                RemapPaletteRows((u16 *) dst, &half->mUnk_115[half->mUnk_014[e->mUnk_13 >> 1]], e->mUnk_08 >> 1);
+                TextureLayer *half = &gTextureBlocks.mLayers[e->mUnk_13 & 1];
+                RemapPaletteRows((u16 *) dst, &half->mUnk_115[half->mUnk_014[e->mUnk_13 >> 1]], e->mSize >> 1);
             }
             e = list[i];
-            if ((e->mUnk_04 >> 28) == 10 || bg == 1) {
+            if ((e->mDst >> 28) == 10 || bg == 1) {
                 u32 w = (u32) ((1 << (e->mUnk_12 & 0xf)) / 8);
-                u32 h = e->mUnk_08 / (e->mUnk_13 == 0 ? 0x20 : 0x40) / w;
+                u32 h = e->mSize / (e->mUnk_13 == 0 ? 0x20 : 0x40) / w;
                 if (tex == 0) {
                     tex = AllocWithFlags(0x4000, 1);
                 }
                 func_0202c2f0(tex, dst, w, h, list[i]->mUnk_13 == 0);
                 e = list[i];
-                if ((e->mUnk_04 >> 28) == 10) {
-                    MIi_CpuCopy16(tex, dst, e->mUnk_08);
+                if ((e->mDst >> 28) == 10) {
+                    MIi_CpuCopy16(tex, dst, e->mSize);
                 } else {
                     func_0202c3e0(e, tex, w);
                 }
             }
         }
-        dst += list[i]->mUnk_08;
+        dst += list[i]->mSize;
     }
 
     func_0203e4a4();
@@ -1109,41 +1108,40 @@ void ProcessTransfers(int flags) {
         part = 0;
         e = list[i];
         if (e->mUnk_12 == 0xff) {
-            src += e->mUnk_08;
+            src += e->mSize;
             i++;
             continue;
         }
-        base = e->mUnk_00;
-        run = e->mUnk_08;
-        for (j = i + 1; j < count && base + run == list[j]->mUnk_00 && run == 0 && list[i]->mUnk_10 == list[j]->mUnk_10;
-             j++) {
-            run += list[j]->mUnk_08;
+        base = e->mSrc;
+        run = e->mSize;
+        for (j = i + 1; j < count && base + run == list[j]->mSrc && run == 0 && list[i]->mFile == list[j]->mFile; j++) {
+            run += list[j]->mSize;
         }
         while (i < j) {
             u32 addr;
             u32 type;
             e = list[i];
-            addr = e->mUnk_04;
+            addr = e->mDst;
             type = addr >> 28;
             if (type == 5) {
                 bits |= 0x20;
-                e->mUnk_04 = gSystemState.mUnk_0a0.mAddr + (addr & 0x1fff);
+                e->mDst = gSystemState.mUnk_0a0.mAddr + (addr & 0x1fff);
                 func_0201c78c();
                 *gSystemState.mUnk_0a0.mCtrl = 0x80;
             } else if (type == 9) {
                 bits |= 0x200;
-                e->mUnk_04 = gSystemState.mUnk_0ac.mAddr + (addr & 0x1fff);
+                e->mDst = gSystemState.mUnk_0ac.mAddr + (addr & 0x1fff);
                 func_0201c78c();
                 *gSystemState.mUnk_0ac.mCtrl = 0x80;
             } else if (type == 11) {
                 if (gSystemState.mPlttVramGroup.mBankCount != 0) {
                     saved = addr;
-                    e->mUnk_04 = gSystemState.mPlttVramGroup.mAddr[0] + (addr & 0x7fffff);
+                    e->mDst = gSystemState.mPlttVramGroup.mAddr[0] + (addr & 0x7fffff);
                     bits |= 0x800;
-                    part = LimitTransferSize(list[i]->mUnk_08);
+                    part = LimitTransferSize(list[i]->mSize);
                     e = list[i];
-                    rest = e->mUnk_08 - part;
-                    e->mUnk_08 = part;
+                    rest = e->mSize - part;
+                    e->mSize = part;
                     *gSystemState.mPlttVramGroup.mCtrl[0] = 0x80;
                 } else {
                     rest = 0;
@@ -1153,16 +1151,16 @@ void ProcessTransfers(int flags) {
                 VramGroup *group = &gSystemState.mTexVramGroup;
                 if (gSystemState.mTexVramGroup.mBankCount != 0) {
                     saved = addr;
-                    e->mUnk_04 = group->mAddr[0] + (addr & 0x7fffff);
+                    e->mDst = group->mAddr[0] + (addr & 0x7fffff);
                     bits |= 0x400;
-                    part = LimitTransferSize(list[i]->mUnk_08);
+                    part = LimitTransferSize(list[i]->mSize);
                     e = list[i];
-                    rest = e->mUnk_08 - part;
-                    e->mUnk_08 = part;
+                    rest = e->mSize - part;
+                    e->mSize = part;
                     for (n = 0; n < group->mBankCount; n++) {
-                        Unk_LoadEntry *f = list[i];
-                        if (group->mAddr[n] <= f->mUnk_04 + f->mUnk_08 &&
-                            group->mAddr[n] + (group->mSizeKb[n] << 10) >= f->mUnk_04) {
+                        Transfer *f = list[i];
+                        if (group->mAddr[n] <= f->mDst + f->mSize &&
+                            group->mAddr[n] + (group->mSizeKb[n] << 10) >= f->mDst) {
                             *gSystemState.mTexVramGroup.mCtrl[n] = 0x80;
                         }
                     }
@@ -1172,10 +1170,10 @@ void ProcessTransfers(int flags) {
                 }
             }
             e = list[i];
-            if (e->mUnk_08 < 0x100) {
-                MIi_CpuCopyFast(src, (void *) e->mUnk_04, e->mUnk_08);
+            if (e->mSize < 0x100) {
+                MIi_CpuCopyFast(src, (void *) e->mDst, e->mSize);
             } else {
-                MI_DmaCopy32(3, src, (void *) e->mUnk_04, e->mUnk_08);
+                MI_DmaCopy32(3, src, (void *) e->mDst, e->mSize);
             }
             if (bits & 0x400) {
                 u32 k;
@@ -1196,10 +1194,10 @@ void ProcessTransfers(int flags) {
             }
         next:
             e = list[i];
-            src += e->mUnk_08;
+            src += e->mSize;
             if (rest > 0) {
-                e->mUnk_04 = saved + part;
-                list[i]->mUnk_08 = rest;
+                e->mDst = saved + part;
+                list[i]->mSize = rest;
                 rest = 0;
             } else {
                 i++;
@@ -1218,9 +1216,9 @@ void ProcessTransfers(int flags) {
                 return;
             }
             e = &gSystemState.mTransfers[i];
-            if (e->mUnk_08 == 0 || e->mUnk_12 == 0xff || gTextureBlocks.mBlockFile == e->mUnk_10) {
+            if (e->mSize == 0 || e->mUnk_12 == 0xff || gTextureBlocks.mBlockFile == e->mFile) {
                 if (i != gSystemState.mTransferCount - 1) {
-                    memcpy(e, &gSystemState.mTransfers[gSystemState.mTransferCount - 1], sizeof(Unk_LoadEntry));
+                    memcpy(e, &gSystemState.mTransfers[gSystemState.mTransferCount - 1], sizeof(Transfer));
                 }
                 gSystemState.mTransferCount--;
             } else {
@@ -2309,7 +2307,7 @@ void SetupImageLayer(int a, int b, u32 c, u32 d) {
     rows = (size * d) >> 10;
     if (a & 1) {
         *(vu32 *) 0x04000000 =
-            (gTextureBlocks.mLayers[0].mUnk_57b << 31) + (gTextureBlocks.mLayers[0].mUnk_577 << 20) + 0x11833;
+            (gTextureBlocks.mLayers[0].mUnk_57b << 31) + (gTextureBlocks.mLayers[0].mUnitShift << 20) + 0x11833;
         gSystemState.mUnk_474[0] &= ~4;
         gSystemState.mBg3X = 0;
         gSystemState.mBg3Y = 0;
@@ -2338,7 +2336,7 @@ void SetupImageLayer(int a, int b, u32 c, u32 d) {
     }
     if (a & 2) {
         *(vu32 *) 0x04001000 =
-            (gTextureBlocks.mLayers[1].mUnk_57b << 31) + (gTextureBlocks.mLayers[1].mUnk_577 << 20) + 0x11813;
+            (gTextureBlocks.mLayers[1].mUnk_57b << 31) + (gTextureBlocks.mLayers[1].mUnitShift << 20) + 0x11813;
         gSystemState.mUnk_474[0] &= ~8;
         gSystemState.mSubBg3X = 0;
         gSystemState.mSubBg3Y = 0;
@@ -2431,8 +2429,8 @@ void func_0201f6d0(int a, int b, int c, u16 d, u16 e) {
 
     SetFaded(3);
     LoadImage(d, 3);
-    func_0202c1c4();
-    func_0202bdd8(b, c, a, 0, 1);
+    ReleaseTextureLayers();
+    SetupTextureLayer(b, c, a, 0, 1);
     SetLcdSwap(1);
     while (func_0201f910(&frames, &touched, 0x3c, 0x78, 3) == 0) {
         if (phase == 0) {
@@ -2449,7 +2447,7 @@ void func_0201f6d0(int a, int b, int c, u16 d, u16 e) {
             }
         }
         UpdateSystemAndWait();
-        func_0202cf08(e + step, 0x2c, 0x5d, 0, 1);
+        DrawSprite(e + step, 0x2c, 0x5d, 0, 1);
     }
     gSystemState.mFlags |= 0x40000;
     FadeAndWait(3);
@@ -2513,12 +2511,12 @@ void SetFaded(int a) {
     if (TestBits(a, 1) == 1) {
         gSystemState.mFadeState[0] = FADE_STATE_FADED;
         *(vu16 *) 0x0400006c = 0x8011;
-        func_0202ae34(1);
+        ResetOam(1);
     }
     if (TestBits(a, 2) == 1) {
         gSystemState.mFadeState[1] = FADE_STATE_FADED;
         *(vu16 *) 0x0400106c = 0x8011;
-        func_0202ae34(2);
+        ResetOam(2);
     }
 }
 
@@ -2906,7 +2904,7 @@ void func_0201fed4(int a) {
 }
 
 int GetSaveBlockSize(u32 id) {
-    return gSystemState.mSaveStoreSize / func_02021e44(id, gSystemState.mSaveLastField + 1);
+    return gSystemState.mSaveStoreSize / GetFileValue(id, gSystemState.mSaveLastField + 1);
 }
 
 int GetSaveFieldCount(void) {
@@ -2928,8 +2926,8 @@ void FreeSaveRecord(void *p) {
 // Returns the 16-bit tag of a block: the table bytes at 2 * index and 2 * index + 1, each taken modulo the table's
 // length.
 u16 GetSaveBlockTag(int id, u32 index) {
-    const u8 *table = func_02021e18(id, gSystemState.mSaveLastField + 2);
-    u32 count = func_02021f0c(id, gSystemState.mSaveLastField + 2, 0);
+    const u8 *table = GetFileString(id, gSystemState.mSaveLastField + 2);
+    u32 count = CountFileStringChars(id, gSystemState.mSaveLastField + 2, 0);
     if (count < 2) {
         OS_Terminate();
     }
@@ -2940,7 +2938,7 @@ u16 GetSaveBlockTag(int id, u32 index) {
 // leaves it; otherwise the callback is also called with 4). Reads every block, writes a zero record
 // (WriteZeroSaveBlock) over each one that does not read back intact, then waits for the store.
 void InitSaveStore(u32 a, int b, u16 c, int d, void (*fn)(u32), int e) {
-    u32 count = func_02021e44(a, d + 1);
+    u32 count = GetFileValue(a, d + 1);
     u32 r;
     u32 i;
     if (b != SAVE_STORE_SMALL && b != SAVE_STORE_LARGE) {
@@ -2996,7 +2994,7 @@ u32 ReadSaveBlock(u32 index, void *buf, int c) {
     u8 *data = Alloc(size);
     u32 result = 0;
     int check = GetSaveBlockTag(c, index);
-    if (index >= func_02021e44(c, gSystemState.mSaveLastField + 1)) {
+    if (index >= GetFileValue(c, gSystemState.mSaveLastField + 1)) {
         OS_Terminate();
     }
     if (ReadBackup(data, index * size, size) == 0) {
@@ -3044,7 +3042,7 @@ void WriteSaveBlock(u32 index, void *buf, int c) {
     int payload;
     u32 offset;
     int headWritten;
-    if (index >= func_02021e44(c, gSystemState.mSaveLastField + 1)) {
+    if (index >= GetFileValue(c, gSystemState.mSaveLastField + 1)) {
         OS_Terminate();
     }
     memset(data, 0, size);
@@ -3122,7 +3120,7 @@ int PackSaveFields(const u32 *values, u32 *out, u32 id) {
     radix = Alloc(fields * 4);
     order = Alloc((fields + 1) * 4);
     for (i = 0; i < fields; i++) {
-        radix[i] = func_02021e44(id, gSystemState.mSaveFirstField + i) + 1;
+        radix[i] = GetFileValue(id, gSystemState.mSaveFirstField + i) + 1;
     }
     SortIndicesByKey(order, radix, fields);
     outCount = 0;
@@ -3173,7 +3171,7 @@ void UnpackSaveFields(u32 *out, u32 *packed, u32 id) {
     int n;
     u64 prod;
     for (i = 0; i < fields; i++) {
-        radix[i] = func_02021e44(id, gSystemState.mSaveFirstField + i) + 1;
+        radix[i] = GetFileValue(id, gSystemState.mSaveFirstField + i) + 1;
     }
     SortIndicesByKey(order, radix, fields);
     for (w = 0;; w++) {
@@ -3299,7 +3297,7 @@ void AddTouchButton(int id, int x, int y, int a, int b, int c) {
         button->mUnk_0 = x;
         button->mUnk_4 = a;
     } else if (!(id & TOUCH_SHAPE)) {
-        if (func_0202d828(c, 0, rect) == 0) {
+        if (GetSpriteRect(c, 0, rect) == 0) {
             return;
         }
         button->mUnk_2 = y + rect[1];
@@ -3313,8 +3311,8 @@ void AddTouchButton(int id, int x, int y, int a, int b, int c) {
     }
     if (data_020c1d60.mUnk_800.mUnk_100.mUnk_16 != 0) {
         int mode = IsLcdSwapped() == 1 ? 2 : 1;
-        func_0202cf08(data_020c1d60.mUnk_800.mUnk_100.mUnk_16, button->mUnk_0, button->mUnk_2, 0, mode);
-        func_0202cf08(data_020c1d60.mUnk_800.mUnk_100.mUnk_16, button->mUnk_4, button->mUnk_6, 0, mode);
+        DrawSprite(data_020c1d60.mUnk_800.mUnk_100.mUnk_16, button->mUnk_0, button->mUnk_2, 0, mode);
+        DrawSprite(data_020c1d60.mUnk_800.mUnk_100.mUnk_16, button->mUnk_4, button->mUnk_6, 0, mode);
     }
     button->mUnk_8 = id;
     if (shifting == 0) {
@@ -3348,7 +3346,7 @@ int IsPointInShape(int x, int y, int shape, int px, int py) {
         count = 0;
         inside = 0;
         for (;;) {
-            found = func_0202d7a0(shape, next++ + 2, corner);
+            found = GetSpritePoint(shape, next++ + 2, corner);
             if (found != 1) {
                 break;
             }

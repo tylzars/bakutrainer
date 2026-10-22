@@ -26,15 +26,15 @@ static const u32 data_0204e144[5] = {0, 0xd97, 0xd9b, 0xd9d, 0xd9e};
 FieldObjects data_0206d460;
 
 s32 func_02005c10(int a, int b) {
-    return func_02021e44(0xda0, b + a * 7);
+    return GetFileValue(0xda0, b + a * 7);
 }
 
 s32 func_02005c24(int a, int b) {
-    return func_02021e44(0xda1, b + a * 252);
+    return GetFileValue(0xda1, b + a * 252);
 }
 
 s32 func_02005c3c(int a, int b) {
-    return func_02021e44(0xd9f, b + a * 10);
+    return GetFileValue(0xd9f, b + a * 10);
 }
 
 void func_02005c54(s32 x, s32 y, s32 *outCol, s32 *outSub, s32 *outRow) {
@@ -59,17 +59,17 @@ void func_02005cb4(void) {
                         break;
                     case 1:
                         if (p->mType != 0) {
-                            func_020248e8(data_0204e144[p->mKind], &p->mUnk_04, 0);
+                            DrawModelFile(data_0204e144[p->mKind], &p->mUnk_04, 0);
                         } else {
-                            func_0202733c(p->mUnk_48, &p->mUnk_04, 0);
+                            UpdateAndDrawModel(p->mUnk_48, &p->mUnk_04, 0);
                         }
                         break;
                     case 3:
-                        func_0202733c(p->mUnk_48, &p->mUnk_04, 0);
+                        UpdateAndDrawModel(p->mUnk_48, &p->mUnk_04, 0);
                         break;
                     case 4:
                         if (p->mType != 0) {
-                            func_020248e8(data_0204e144[p->mKind], &p->mUnk_04, 0);
+                            DrawModelFile(data_0204e144[p->mKind], &p->mUnk_04, 0);
                         }
                         break;
                 }
@@ -79,7 +79,7 @@ void func_02005cb4(void) {
     for (i = 0; i < 128; i++) {
         p = &data_0206d460.mList[i];
         if (p->mKind != 0) {
-            func_0202733c(p->mUnk_48, &p->mUnk_04, 0);
+            UpdateAndDrawModel(p->mUnk_48, &p->mUnk_04, 0);
         }
     }
 }
@@ -114,13 +114,13 @@ void func_02005de0(u8 g, u8 k) {
             obj->mKind = data_0206d460.mUnk_2a8b4[k][a][b];
             switch (obj->mKind) {
                 case 2:
-                    func_020271ec(obj->mUnk_48, 0, 0, 0, data_0201abbc[9]);
+                    InitModel(obj->mUnk_48, 0, 0, 0, data_0201abbc[9]);
                     obj->mUnk_38 = -1;
                     obj->mUnk_34 = -1;
                     obj->mUnk_30 = -1;
                     break;
                 case 3:
-                    func_020271ec(obj->mUnk_48, 0, 0, 0, data_0201abbc[10]);
+                    InitModel(obj->mUnk_48, 0, 0, 0, data_0201abbc[10]);
                     obj->mUnk_38 = -1;
                     obj->mUnk_34 = -1;
                     obj->mUnk_30 = -1;
@@ -161,11 +161,11 @@ void func_02005f70(void) {
                 data_0206d460.mGrid[col][sub][row].mUnk_1c2 = -1;
             }
             o->mUnk_0c += o->mUnk_1c0 * (50 << 10) / 2;
-            if (o->mUnk_0c < data_020c3e44.mUnk_2024.mUnk_9c.mUnk_228.z - 0x177000) {
-                o->mUnk_0c = data_020c3e44.mUnk_2024.mUnk_9c.mUnk_228.z - 0x177000;
+            if (o->mUnk_0c < gMapState.mCamera.mUnk_9c.mUnk_228.z - 0x177000) {
+                o->mUnk_0c = gMapState.mCamera.mUnk_9c.mUnk_228.z - 0x177000;
                 o->mUnk_1c0 = -o->mUnk_1c0;
-            } else if (o->mUnk_0c > data_020c3e44.mUnk_2024.mUnk_9c.mUnk_228.z + (150 << 12)) {
-                o->mUnk_0c = data_020c3e44.mUnk_2024.mUnk_9c.mUnk_228.z + (150 << 12);
+            } else if (o->mUnk_0c > gMapState.mCamera.mUnk_9c.mUnk_228.z + (150 << 12)) {
+                o->mUnk_0c = gMapState.mCamera.mUnk_9c.mUnk_228.z + (150 << 12);
                 o->mUnk_1c0 = -o->mUnk_1c0;
             }
             func_02005c54(o->mUnk_04, o->mUnk_0c - half, &col, &sub, &row);
@@ -272,7 +272,7 @@ void func_02006398(FieldObject *p) {
             if (p->mKind == 2) {
                 p = &data_0206d460.mList[p->mUnk_1c2];
             }
-            func_020271ec(p->mUnk_48, 0, 0, 0, data_0201abbc[11]);
+            InitModel(p->mUnk_48, 0, 0, 0, data_0201abbc[11]);
             p->mUnk_38 = -1;
             p->mUnk_34 = -1;
             p->mUnk_30 = -1;
@@ -290,11 +290,11 @@ void func_02006398(FieldObject *p) {
             if (p->mType == 0) {
                 break;
             }
-            func_02025db4(&p->mUnk_04, pos);
+            ProjectToScreen(&p->mUnk_04, pos);
             p->mType = 0;
             func_020059e8(&data_0206d460.mUnk_004, 60000 * data_0206d460.mUnk_2b90c / 1000);
             sprintf(text, "+%d'", data_0206d460.mUnk_2b90c);
-            func_0200d838(text, 2, data_0201a61c, 30, pos[0], pos[1], 0, -128, 100, 1, 0);
+            AddTextObjSlot(text, 2, data_0201a61c, 30, pos[0], pos[1], 0, -128, 100, 1, 0);
             func_0202f110(117, 100, 0, 64, 0xffff, 0);
             break;
     }
@@ -315,48 +315,45 @@ void func_020064e8(void) {
 
 void func_0200659c(void) {
     void *entry;
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_44 = 0x186a000;
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_54 = 0x578;
+    gMapState.mCamera.mUnk_2dc.mUnk_44 = 0x186a000;
+    gMapState.mCamera.mUnk_2dc.mUnk_54 = 0x578;
     func_02033e38(1, 1, 1);
     func_02033e38(8, 0, 1);
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_30 = 1;
-    data_020c3e44.mUnk_2024.mUnk_9c.mUnk_204.x = data_020c3e44.mUnk_2024.mUnk_9c.mUnk_228.x;
-    data_0206d460.mUnk_274 = data_020c3e44.mUnk_2024.mUnk_9c.mUnk_228;
-    entry = func_0203204c(2, 0);
+    gMapState.mCamera.mUnk_2dc.mUnk_30 = 1;
+    gMapState.mCamera.mUnk_9c.mUnk_204.x = gMapState.mCamera.mUnk_9c.mUnk_228.x;
+    data_0206d460.mUnk_274 = gMapState.mCamera.mUnk_9c.mUnk_228;
+    entry = GetMapEntry(2, 0);
     if (entry == NULL) {
         OS_Terminate();
     }
-    data_0206d460.mInfo.mUnk_00.x = func_02031f98(entry);
-    data_0206d460.mInfo.mUnk_00.y = func_02031fa4(entry);
-    data_0206d460.mInfo.mUnk_00.z = func_02031fb0(entry);
-    data_0206d460.mInfo.mUnk_0c.x =
-        data_020c3e44.mUnk_2024.mUnk_9c.mUnk_204.x - data_020c3e44.mUnk_2024.mUnk_9c.mUnk_228.x;
-    data_0206d460.mInfo.mUnk_0c.y =
-        data_020c3e44.mUnk_2024.mUnk_9c.mUnk_204.y - data_020c3e44.mUnk_2024.mUnk_9c.mUnk_228.y;
-    data_0206d460.mInfo.mUnk_0c.z =
-        data_020c3e44.mUnk_2024.mUnk_9c.mUnk_204.z - data_020c3e44.mUnk_2024.mUnk_9c.mUnk_228.z;
+    data_0206d460.mInfo.mUnk_00.x = GetMapEntryX(entry);
+    data_0206d460.mInfo.mUnk_00.y = GetMapEntryY(entry);
+    data_0206d460.mInfo.mUnk_00.z = GetMapEntryZ(entry);
+    data_0206d460.mInfo.mUnk_0c.x = gMapState.mCamera.mUnk_9c.mUnk_204.x - gMapState.mCamera.mUnk_9c.mUnk_228.x;
+    data_0206d460.mInfo.mUnk_0c.y = gMapState.mCamera.mUnk_9c.mUnk_204.y - gMapState.mCamera.mUnk_9c.mUnk_228.y;
+    data_0206d460.mInfo.mUnk_0c.z = gMapState.mCamera.mUnk_9c.mUnk_204.z - gMapState.mCamera.mUnk_9c.mUnk_228.z;
     data_0206d460.mInfo.mUnk_18 = 0;
-    entry = func_0203204c(3, 0);
+    entry = GetMapEntry(3, 0);
     if (entry == NULL) {
         OS_Terminate();
     }
-    data_0206d460.mInfo.mUnk_1c = func_02031f98(entry);
-    data_0206d460.mInfo.mUnk_20 = func_02031fa4(entry);
-    data_0206d460.mInfo.mUnk_24 = func_02031fb0(entry);
-    entry = func_0203204c(4, 0);
+    data_0206d460.mInfo.mUnk_1c = GetMapEntryX(entry);
+    data_0206d460.mInfo.mUnk_20 = GetMapEntryY(entry);
+    data_0206d460.mInfo.mUnk_24 = GetMapEntryZ(entry);
+    entry = GetMapEntry(4, 0);
     if (entry == NULL) {
         OS_Terminate();
     }
-    data_0206d460.mInfo.mUnk_28 = func_02031f98(entry);
-    data_0206d460.mInfo.mUnk_2c = func_02031fa4(entry);
-    data_0206d460.mInfo.mUnk_30 = func_02031fb0(entry);
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_38 = 0;
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_40 = 0;
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_3c = 0;
-    data_020c3e44.mUnk_2024.mUnk_5b_1 = 0;
+    data_0206d460.mInfo.mUnk_28 = GetMapEntryX(entry);
+    data_0206d460.mInfo.mUnk_2c = GetMapEntryY(entry);
+    data_0206d460.mInfo.mUnk_30 = GetMapEntryZ(entry);
+    gMapState.mCamera.mUnk_2dc.mUnk_38 = 0;
+    gMapState.mCamera.mUnk_2dc.mUnk_40 = 0;
+    gMapState.mCamera.mUnk_2dc.mUnk_3c = 0;
+    gMapState.mCamera.mUnk_5b_1 = 0;
     func_02033df4(0x12);
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_14 = data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_18;
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_10 = 0;
+    gMapState.mCamera.mUnk_2dc.mUnk_14 = gMapState.mCamera.mUnk_2dc.mUnk_18;
+    gMapState.mCamera.mUnk_2dc.mUnk_10 = 0;
 }
 
 void func_020066c8(void) {
@@ -365,19 +362,16 @@ void func_020066c8(void) {
     data_0206d460.mInfo.mUnk_18 += step;
     remain = data_0206d460.mInfo.mUnk_18;
     while (remain > 0) {
-        data_020c3e44.mUnk_2024.mUnk_9c.mUnk_228.x = data_0206d460.mUnk_274.x + remain;
+        gMapState.mCamera.mUnk_9c.mUnk_228.x = data_0206d460.mUnk_274.x + remain;
         remain = data_0206d460.mInfo.mUnk_18 - (data_0206d460.mUnk_26c << 9);
         if (remain >= 0) {
             data_0206d460.mInfo.mUnk_18 = remain;
             func_020061ac();
         }
     }
-    data_020c3e44.mUnk_2024.mUnk_9c.mUnk_204.x =
-        data_020c3e44.mUnk_2024.mUnk_9c.mUnk_228.x + data_0206d460.mInfo.mUnk_0c.x;
-    data_020c3e44.mUnk_2024.mUnk_9c.mUnk_204.y =
-        data_020c3e44.mUnk_2024.mUnk_9c.mUnk_228.y + data_0206d460.mInfo.mUnk_0c.y;
-    data_020c3e44.mUnk_2024.mUnk_9c.mUnk_204.z =
-        data_020c3e44.mUnk_2024.mUnk_9c.mUnk_228.z + data_0206d460.mInfo.mUnk_0c.z;
+    gMapState.mCamera.mUnk_9c.mUnk_204.x = gMapState.mCamera.mUnk_9c.mUnk_228.x + data_0206d460.mInfo.mUnk_0c.x;
+    gMapState.mCamera.mUnk_9c.mUnk_204.y = gMapState.mCamera.mUnk_9c.mUnk_228.y + data_0206d460.mInfo.mUnk_0c.y;
+    gMapState.mCamera.mUnk_9c.mUnk_204.z = gMapState.mCamera.mUnk_9c.mUnk_228.z + data_0206d460.mInfo.mUnk_0c.z;
     if (data_0206d460.mUnk_00c != 0) {
         data_0206d460.mUnk_00c--;
     }
@@ -389,7 +383,7 @@ void func_020066c8(void) {
                           step / cellW,
                       8);
     }
-    func_02033fc8();
+    UpdateCamera();
 }
 
 void func_020067ac(void) {
@@ -414,7 +408,7 @@ void func_020067ac(void) {
     func_02024208();
     RequestTrack(2, 0x4c);
     func_0200dc08(data_0204e138[data_0206d460.mStage.mUnk_10], &v[4], &v[3], &v[2], &v[1], &v[0], NULL);
-    func_020325b0(v[4], v[2], v[3], 0, v[1], v[0]);
+    SetupMap(v[4], v[2], v[3], 0, v[1], v[0]);
     UpdateSystemAndWait();
     func_0200659c();
     G3X_SetClearColor(0x7fff, 8, 0x7fff, 0, 0);
@@ -423,9 +417,9 @@ void func_020067ac(void) {
         s64 dz = (data_0206d460.mInfo.mUnk_00.z - data_0206d460.mUnk_274.z) / 512;
         data_0206d460.mUnk_26c = SqrtU64(dx * dx + dz * dz);
     }
-    func_020271ec(&data_0206d460.mUnk_010, 0, 0, 0, data_0201ab04[data_0206d460.mStage.mUnk_13]);
+    InitModel(&data_0206d460.mUnk_010, 0, 0, 0, data_0201ab04[data_0206d460.mStage.mUnk_13]);
     data_0206d460.mUnk_1e8 = 3 << 14;
-    data_0206d460.mUnk_1b0 = data_020c3e44.mUnk_2024.mUnk_9c.mUnk_228;
+    data_0206d460.mUnk_1b0 = gMapState.mCamera.mUnk_9c.mUnk_228;
     data_0206d460.mUnk_1f3 = (data_0206d460.mUnk_1f3 & ~7) | 2;
     data_0206d460.mUnk_1d8 = 2 << 18;
     data_0206d460.mUnk_144 |= 1;
@@ -484,8 +478,8 @@ void func_020067ac(void) {
 void func_02006b1c(void) {
     func_0201168c(data_020b6ee0.mSelectedStageIndex, data_0206d460.mUnk_008 >> 8, data_0206d448.mUnk_00,
                   data_0206d460.mUnk_004, 2);
-    func_02033614(data_020c3e44.mUnk_2024.mUnk_9c.mUnk_228.x, data_020c3e44.mUnk_2024.mUnk_9c.mUnk_228.z);
-    func_0202733c(&data_0206d460.mUnk_010, &data_0206d460.mUnk_1b0, 0);
+    func_02033614(gMapState.mCamera.mUnk_9c.mUnk_228.x, gMapState.mCamera.mUnk_9c.mUnk_228.z);
+    UpdateAndDrawModel(&data_0206d460.mUnk_010, &data_0206d460.mUnk_1b0, 0);
     func_02005cb4();
 }
 
@@ -496,7 +490,7 @@ void func_02006b68(void) {
     mode = func_02005bf8();
     if (mode != 0) {
         int r;
-        func_02033fc8();
+        UpdateCamera();
         func_02006b1c();
         r = func_02005b1c(1);
         if (mode == 2 && r == 0) {
@@ -545,7 +539,7 @@ void func_02006b68(void) {
         (data_0206d460.mUnk_240.mY < (150 << 12) ? data_0206d460.mUnk_240.mY : 150 << 12) < -0x177000
             ? -0x177000
             : (data_0206d460.mUnk_240.mY < (150 << 12) ? data_0206d460.mUnk_240.mY : 150 << 12);
-    func_02025db4(&data_0206d460.mUnk_1b0, pos);
+    ProjectToScreen(&data_0206d460.mUnk_1b0, pos);
     if (data_0206d460.mUnk_004 != 0) {
         if (func_020062ec()) {
             if (gSystemState.mTouchDown) {
@@ -618,7 +612,7 @@ void func_02006b68(void) {
             }
         }
     }
-    data_0206d460.mUnk_1b0 = data_020c3e44.mUnk_2024.mUnk_9c.mUnk_228;
+    data_0206d460.mUnk_1b0 = gMapState.mCamera.mUnk_9c.mUnk_228;
     data_0206d460.mUnk_1b0.x += data_0206d460.mUnk_240.mX;
     data_0206d460.mUnk_1b0.z += data_0206d460.mUnk_240.mY;
     func_0200b928(&data_0206d460.mUnk_270,

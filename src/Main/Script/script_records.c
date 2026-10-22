@@ -25,8 +25,8 @@ void func_02028e5c(const char *name) {
     int i = 2;
     func_0202938c(first, name);
     for (;; i++) {
-        if (func_02021e08(data_020c61ac.mUnk_0e, i) == 4) {
-            const u8 *s = func_02021e18(data_020c61ac.mUnk_0e, i);
+        if (GetFileValueType(data_020c61ac.mUnk_0e, i) == 4) {
+            const u8 *s = GetFileString(data_020c61ac.mUnk_0e, i);
             if (s[0] != 0) {
                 func_0202938c(second, s);
                 if (func_020290ac(first, second) == 1) {
@@ -459,7 +459,7 @@ void func_020294c4(u8 *text, int mode) {
         } else {
             cmd->mUnk_22 = 2;
         }
-        func_0202ae84(cmd->mUnk_04, &info, 0);
+        GetTexInfo(cmd->mUnk_04, &info, 0);
         // Both arms clear bit 4 of mUnk_21: one through the bit-field, one as a byte operation (the code keeps two
         // separate stores).
         if (info.mUnk_12 > 1) {
@@ -520,7 +520,7 @@ void func_020294c4(u8 *text, int mode) {
         return;
     }
     if (mode == 0) {
-        func_0202d828(cmd->mUnk_04, 0, rect);
+        GetSpriteRect(cmd->mUnk_04, 0, rect);
         if (buf[4] & 1) {
             cmd->mUnk_14 = cmd->mUnk_0a;
             if (buf[4] & 2) {
@@ -600,7 +600,7 @@ void func_020297c8(u8 *text) {
         entry->mUnk_11 = 1;
     }
     entry->mUnk_0c =
-        func_02021f0c(data_020c61ac.mUnk_0a, entry->mUnk_00, (data_020c61ac.mUnk_280.mUnk_28 != 0 ? 2 : 0) + 1);
+        CountFileStringChars(data_020c61ac.mUnk_0a, entry->mUnk_00, (data_020c61ac.mUnk_280.mUnk_28 != 0 ? 2 : 0) + 1);
     entry->mUnk_10 = data_020c61ac.mUnk_20;
 }
 
@@ -674,8 +674,8 @@ void func_02029a1c(const char *name) {
     int i;
     func_0202938c(first, name);
     for (i = 2;; i++) {
-        if (func_02021e08(data_020c61ac.mUnk_0c, i) == 4) {
-            const u8 *s = func_02021e18(data_020c61ac.mUnk_0c, i);
+        if (GetFileValueType(data_020c61ac.mUnk_0c, i) == 4) {
+            const u8 *s = GetFileString(data_020c61ac.mUnk_0c, i);
             if (s[0] != 0) {
                 func_0202938c(second, s);
                 if (func_020290ac(first, second) == 1) {
@@ -1111,9 +1111,9 @@ Unk_EventRec *func_0202a1a4(void) {
 // Resets one camera byte and steps another through 0..0x1f.
 void func_0202a1cc(void) {
     func_020240ec();
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_4b = 0;
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_4c++;
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_4c &= 0x1f;
+    gMapState.mCamera.mUnk_2dc.mUnk_4b = 0;
+    gMapState.mCamera.mUnk_2dc.mUnk_4c++;
+    gMapState.mCamera.mUnk_2dc.mUnk_4c &= 0x1f;
 }
 
 // Runs one frame of the script engine: applies queued screen changes, moves and draws the command sprites, builds
@@ -1176,12 +1176,12 @@ void func_0202a1ec(int (*callback)(void)) {
                               data_020c61ac.mUnk_280.mUnk_22, 0x4000, 0x1000, 0x8000, 0xff, 0);
             } else {
                 u32 tex = data_020c61ac.mUnk_280.mUnk_1c & 0x3fffffff;
-                func_0202ae84(tex, &info, 0);
+                GetTexInfo(tex, &info, 0);
                 if (info.mUnk_12 <= 1) {
                     OS_Terminate();
                 }
                 func_0202a1cc();
-                func_0202cf08(tex + 0x800000, data_020c61ac.mUnk_280.mUnk_20, data_020c61ac.mUnk_280.mUnk_22, 0xff, 1);
+                DrawSprite(tex + 0x800000, data_020c61ac.mUnk_280.mUnk_20, data_020c61ac.mUnk_280.mUnk_22, 0xff, 1);
             }
         }
 
@@ -1292,12 +1292,12 @@ void func_0202a1ec(int (*callback)(void)) {
                     if (data_020c61ac.mUnk_00 != 0) {
                         data_020c61ac.mUnk_00(cmd->mUnk_04 ^ flip, x, y, cmd->mUnk_1a, cmd->mUnk_22);
                     } else {
-                        func_0202ae84(cmd->mUnk_04, &info, 0);
+                        GetTexInfo(cmd->mUnk_04, &info, 0);
                         if (info.mUnk_12 > 1) {
                             func_0202a1cc();
-                            func_0202cf08(cmd->mUnk_04 ^ (flip + 0x800000), x, y, cmd->mUnk_1a, cmd->mUnk_22);
+                            DrawSprite(cmd->mUnk_04 ^ (flip + 0x800000), x, y, cmd->mUnk_1a, cmd->mUnk_22);
                         } else {
-                            func_0202cf08(flip ^ cmd->mUnk_04, x, y, cmd->mUnk_1a, cmd->mUnk_22);
+                            DrawSprite(flip ^ cmd->mUnk_04, x, y, cmd->mUnk_1a, cmd->mUnk_22);
                         }
                     }
                 } else {
@@ -1308,12 +1308,12 @@ void func_0202a1ec(int (*callback)(void)) {
             func_02029ed8(cmd->mUnk_00, &id, &dx, &dy);
             if (id != -1) {
                 id = data_0204e2c8[id];
-                func_0202ae84(id, &info, 0);
+                GetTexInfo(id, &info, 0);
                 if (info.mUnk_12 > 1) {
                     func_0202a1cc();
-                    func_0202cf08(id + flip + 0x800000, x + dx, y + dy, cmd->mUnk_1a - 2, cmd->mUnk_22);
+                    DrawSprite(id + flip + 0x800000, x + dx, y + dy, cmd->mUnk_1a - 2, cmd->mUnk_22);
                 } else {
-                    func_0202cf08(id + flip, x + dx, y + dy, cmd->mUnk_1a - 2, cmd->mUnk_22);
+                    DrawSprite(id + flip, x + dx, y + dy, cmd->mUnk_1a - 2, cmd->mUnk_22);
                 }
             }
 
@@ -1330,13 +1330,13 @@ void func_0202a1ec(int (*callback)(void)) {
                     id = data_0204e2c8[rec->mUnk_02];
                 }
                 if (id != -1) {
-                    func_0202ae84(id, &info, 0);
+                    GetTexInfo(id, &info, 0);
                     if (info.mUnk_12 > 1) {
                         func_0202a1cc();
-                        func_0202cf08(id + flip + 0x800000, x + rec->mUnk_0a, y + rec->mUnk_0c, cmd->mUnk_1a - 2,
-                                      cmd->mUnk_22);
+                        DrawSprite(id + flip + 0x800000, x + rec->mUnk_0a, y + rec->mUnk_0c, cmd->mUnk_1a - 2,
+                                   cmd->mUnk_22);
                     } else {
-                        func_0202cf08(id + flip, x + rec->mUnk_0a, y + rec->mUnk_0c, cmd->mUnk_1a - 2, cmd->mUnk_22);
+                        DrawSprite(id + flip, x + rec->mUnk_0a, y + rec->mUnk_0c, cmd->mUnk_1a - 2, cmd->mUnk_22);
                     }
                 }
             }
@@ -1353,9 +1353,9 @@ void func_0202a1ec(int (*callback)(void)) {
                 u16 pos;
                 if (data_020c61ac.mUnk_280.mUnk_28 != 0) {
                     s = name;
-                    func_02021e94(data_020c61ac.mUnk_0a, entry->mUnk_00, name, 1);
+                    CopyFileString(data_020c61ac.mUnk_0a, entry->mUnk_00, name, 1);
                 } else {
-                    s = func_02021e18(data_020c61ac.mUnk_0a, entry->mUnk_00);
+                    s = GetFileString(data_020c61ac.mUnk_0a, entry->mUnk_00);
                 }
                 pos = gSystemState.mUnk_30c;
                 if (pos >= start && pos <= start + entry->mUnk_0c) {
@@ -1386,18 +1386,18 @@ void func_0202a1ec(int (*callback)(void)) {
                 if (callback != 0) {
                     value = callback();
                 }
-                func_0202ae84(data_02063988[entry->mUnk_0e]->mGlyph, &info, 0);
+                GetTexInfo(data_02063988[entry->mUnk_0e]->mGlyph, &info, 0);
                 if (info.mUnk_12 > 1) {
                     extra = TEXT_ROTATE;
                     saved = gSystemState.mUnk_30a[0];
                     gSystemState.mUnk_30a[0] = value;
                     func_0202a1cc();
                 }
-                func_02021624(entry->mUnk_02, entry->mUnk_04 + data_020c61ac.mUnk_2a, data_02063988,
-                              (u8) entry->mUnk_0e, (const u8 *) text, 0,
-                              extra + (entry->mUnk_0a + (TEXT_LINE_WINDOW | TEXT_LIMIT | TEXT_HILITE) +
-                                       (data_020c61ac.mUnk_280.mUnk_28 != 0 ? TEXT_ESCAPES : 0)),
-                              entry->mUnk_06, entry->mUnk_08, entry->mUnk_11);
+                DrawTextEx(entry->mUnk_02, entry->mUnk_04 + data_020c61ac.mUnk_2a, data_02063988, (u8) entry->mUnk_0e,
+                           (const u8 *) text, 0,
+                           extra + (entry->mUnk_0a + (TEXT_LINE_WINDOW | TEXT_LIMIT | TEXT_HILITE) +
+                                    (data_020c61ac.mUnk_280.mUnk_28 != 0 ? TEXT_ESCAPES : 0)),
+                           entry->mUnk_06, entry->mUnk_08, entry->mUnk_11);
                 if (extra & TEXT_ROTATE) {
                     gSystemState.mUnk_30a[0] = saved;
                 }
@@ -1438,9 +1438,9 @@ void func_0202a1ec(int (*callback)(void)) {
             }
         } else if (data_020c61ac.mUnk_1b == 2) {
             if (data_020c61ac.mUnk_1c_2 == 1 || data_020c61ac.mUnk_1c_0 == 0) {
-                if (((data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_0c != 0 && data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_33 == 8 &&
+                if (((gMapState.mCamera.mUnk_2dc.mUnk_0c != 0 && gMapState.mCamera.mUnk_2dc.mUnk_33 == 8 &&
                       (gSystemState.mFlags & 0x80)) ||
-                     (data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_0e != 0 && (gSystemState.mFlags & 0x80))) &&
+                     (gMapState.mCamera.mUnk_2dc.mUnk_0e != 0 && (gSystemState.mFlags & 0x80))) &&
                     !(gSystemState.mFlags & 0x08000000)) {
                     continue;
                 }
@@ -1458,10 +1458,10 @@ void func_0202a1ec(int (*callback)(void)) {
         } else {
             data_020c61ac.mUnk_1c_1 = 0;
             do {
-                int kind = func_02021e08(data_020c61ac.mUnk_08, data_020c61ac.mUnk_10);
+                int kind = GetFileValueType(data_020c61ac.mUnk_08, data_020c61ac.mUnk_10);
                 // kind is compared with 0 before the test for 4 (both compares are in the code).
                 if (kind != 0 && kind == 4) {
-                    line = (u8 *) func_02021e18(data_020c61ac.mUnk_08, data_020c61ac.mUnk_10);
+                    line = (u8 *) GetFileString(data_020c61ac.mUnk_08, data_020c61ac.mUnk_10);
                     switch (func_02029298(&line)) {
                         case 0:
                             func_020292f4((const char *) line);

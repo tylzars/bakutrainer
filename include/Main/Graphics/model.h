@@ -39,13 +39,13 @@ typedef union MatKey {
 
 // One frame of a texture animation: texture and palette sources.
 typedef struct ModelFrame {
-    u16 mUnk_00;
-    u16 mUnk_02;
-    u16 mUnk_04;
-    u16 mUnk_06;
-    u16 mUnk_08;
-    u16 mUnk_0a;
-    u16 mUnk_0c;
+    u16 mTexKey;
+    u16 mTexStoredSize;
+    u16 mTexSrcLow;
+    u16 mTexSrcHigh;
+    u16 mPlttKey;
+    u16 mPlttSrcLow;
+    u16 mPlttSrcHigh;
 } ModelFrame;
 
 // A texture animation: its frame count and frames.
@@ -78,30 +78,36 @@ typedef struct ModelTracks {
     u16 mOffsets[1];
 } ModelTracks;
 
-// One part of a model: material and texture; a display list of mUnk_34 bytes follows it.
+// One part of a model: material and texture; a display list of mCommandSize bytes follows it.
 typedef struct ModelPart {
     u32 mUnk_00;
-    u32 mUnk_04;
+    u32 mTexAnimMask;
     u32 mUnk_08;
-    u32 mUnk_0c;
-    u32 mUnk_10;
-    u32 mUnk_14;
-    u32 mUnk_18;
-    u16 mUnk_1c;
-    u16 mUnk_1e;
-    u16 mUnk_20;
-    u16 mUnk_22;
-    u16 mUnk_24;
-    u16 mUnk_26;
-    u16 mUnk_28;
+    u32 mMatAnimMask;
+    // FindOrLoadTex's `kind`: the data's offset in mTexFile (1 and 2 would select the block file and the file
+    // gSystemState.mUnk_42c).
+    u32 mTexSrc;
+    // 0 = no palette; otherwise FindOrLoadPltt's `kind`.
+    u32 mPlttSrc;
+    u32 mTexStoredSize;
+    u16 mTexKey;
+    u16 mPlttKey;
+    u16 mPlttSize;
+    // The low and high halves of the DIF_AMB and SPE_EMI words (draw flag 0x10 forces the DIF_AMB high half to
+    // 0x7fff).
+    u16 mDifAmbLow;
+    u16 mDifAmbHigh;
+    u16 mSpeEmiLow;
+    u16 mSpeEmiHigh;
     u8 mUnk_2a;
-    u8 mUnk_2b;
+    // 0 = untextured; otherwise the low 3 bits are the texture format.
+    u8 mTexFormat;
     u8 mUnk_2c;
     u8 mUnk_2d;
     u8 mUnk_2e[2];
     s16 mUnk_30;
     s16 mUnk_32;
-    u16 mUnk_34;
+    u16 mCommandSize;
     u8 mUnk_36[2];
 } ModelPart;
 
@@ -109,13 +115,13 @@ typedef struct ModelPart {
 // each pose node.
 extern MtxFx43 data_020c31ac;
 extern Unk_020c31dc data_020c31dc;
-extern MapState data_020c3e44;
-extern MtxFx43 data_020c3244[64];
+extern MapState gMapState;
+extern MtxFx43 gPoseNodeMatrices[64];
 
-void func_0202350c(u16 *rot, s32 *pos, s32 *vec, u32 frame, u32 map);
-void func_0202397c(int from, int node);
-void func_02023f0c(VecFx32 *out, int node);
-void func_02023f58(DrawParams *p, int x, int y, int z, int a, u16 b, u8 c, u8 d, int flags);
+void ReadAnimTrackNode(u16 *rot, s32 *pos, s32 *vec, u32 node, u32 track);
+void ComputePoseMatrices(int from, int node);
+void GetPoseNodePos(VecFx32 *out, int node);
+void SetDrawParams(DrawParams *p, int x, int y, int z, int a, u16 b, u8 c, u8 d, int flags);
 void func_02023ff0(void);
 void func_020240ec(void);
 void func_02024208(void);
@@ -124,39 +130,39 @@ void func_020242e8(u16 id, int x, int y, int a, int b, u16 c, u8 d, int e);
 void func_02024338(void *a, void *b, int c);
 void func_02024368(Model *obj, int x, int y, int scale, u16 angle, int flags);
 void func_020243c0(int id, fx32 x, fx32 y, fx32 z, u16 angle, fx32 sx, fx32 sy, u32 alpha);
-void func_020248e8(u32 id, void *p, int flags);
-void func_020248fc(void);
-ModelPart *func_02024910(int id, int a);
-u16 func_02024968(const AnimKey *key, const u8 *table, int t);
-int func_02024a64(const AnimKey16 *key, const u8 *table, int t);
-u32 func_02024b14(const DrawParams *p);
+void DrawModelFile(u32 id, void *p, int flags);
+void ClearTrackCount(void);
+ModelPart *GetFirstModelPart(int id, int a);
+u16 GetAnimKeyAngle(const AnimKey *key, const u8 *table, int t);
+int GetAnimKeyValue(const AnimKey16 *key, const u8 *table, int t);
+u32 GetDrawFrame(const DrawParams *p);
 s32 func_02024b2c(const u32 *data, const DrawParams *p);
-void func_02024b5c(u32 id, void *params, void *obj, int flags);
-void func_02025db4(void *pos, s32 *out);
-void func_02025dc4(const VecFx32 *pos, s32 *out, int steps);
-int func_02025f58(int log2w, int log2h, int format);
-int func_02025fc0(u16 id);
-int func_02025fe0(Model *m, int track);
-void func_02025ff4(Model *m, int n);
-int func_02026004(Model *m);
-void func_0202601c(u16 id, u16 *frame, u32 count, int step, s32 *whole, s32 *next, s32 *rest, int loop);
+void DrawModelFileEx(u32 id, void *params, void *obj, int flags);
+void ProjectToScreen(void *pos, s32 *out);
+void ProjectToScreenEx(const VecFx32 *pos, s32 *out, int steps);
+int GetTexByteSize(int log2w, int log2h, int format);
+int GetAnimFrameCount(u16 id);
+int GetTrackFrameCount(Model *m, int track);
+void SetModelFrameIndex(Model *m, int n);
+int GetModelFrameIndex(Model *m);
+void SplitAnimFrameAndAdvance(u16 id, u16 *frame, u32 count, int step, s32 *whole, s32 *next, s32 *rest, int loop);
 int func_02026080(Model *m);
 int func_020260f4(Model *m, u32 track);
 int func_02026268(Model *m, u32 track);
-void func_020262a0(Model *m);
+void UpdateModelScript(Model *m);
 void func_0202635c(Model *m, s32 *slot);
-void func_02026384(Model *m, s32 *slot, int id, int count, int flags, int mode);
-int func_020264d4(Model *m, u16 id);
-void func_02026598(Model *m, u16 id, u32 value);
+void StartModelAnim(Model *m, s32 *slot, int id, int count, int flags, int mode);
+int GetModelScriptReg(Model *m, u16 id);
+void SetModelScriptReg(Model *m, u16 id, u32 value);
 void func_020266a8(Model *m, s32 *slot);
-int func_02026718(Model *m);
-void func_020271c8(void);
+int ExecModelScript(Model *m);
+void ClearAnimTracks(void);
 void func_020271e0(Model *m);
-void func_020271ec(void *obj, int id, int anim, int count, u32 script);
-void func_02027200(Model *m, int id, int anim, int count, int mode, u32 script);
-void func_02027230(void *obj, int id, int anim, int count, u32 script);
-void func_02027244(Model *m, int id, int anim, int count, int mode, u32 script);
-void func_0202733c(void *obj, void *params, int flags);
+void InitModel(void *obj, int id, int anim, int count, u32 script);
+void InitModelEx(Model *m, int id, int anim, int count, int mode, u32 script);
+void StartModel(void *obj, int id, int anim, int count, u32 script);
+void StartModelEx(Model *m, int id, int anim, int count, int mode, u32 script);
+void UpdateAndDrawModel(void *obj, void *params, int flags);
 
 #ifdef __cplusplus
 }

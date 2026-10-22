@@ -49,14 +49,14 @@ void func_02004964(void) {
     data_0206d1d4.mUnk_08 = 0;
     data_0206d1d4.mUnk_0c = 1;
     data_0206d1d4.mUnk_10 = level;
-    v = func_02021e44(488, 5) << 8;
+    v = GetFileValue(488, 5) << 8;
     data_0206d1d4.mUnk_14 = v;
     data_0206d1d4.mUnk_18 = (v << 8) >> 8;
-    v = func_02021e44(488, 7) << 8;
+    v = GetFileValue(488, 7) << 8;
     data_0206d1d4.mUnk_1c = v;
     data_0206d1d4.mUnk_20 = (v << 8) >> 8;
     data_0206d1d4.mUnk_24 = 0;
-    data_0206d1d4.mUnk_28 = func_02021e44(488, 9) << 8;
+    data_0206d1d4.mUnk_28 = GetFileValue(488, 9) << 8;
     data_0206d1d4.mUnk_2c = 0;
     data_0206d1d4.mUnk_30 =
         data_020b10fc.mUnk_0c == 1 ? PickWeightedTableEntry(&data_020b1990[data_0206d1d4.mUnk_10].mInfo) : -1;
@@ -68,8 +68,8 @@ void func_02004964(void) {
         data_0206d1d4.mUnk_48[i] = 0;
     }
     func_0200f848(data_0204e0cc[data_020b10fc.mUnk_0c], 0);
-    func_0202de60(&data_0206d1d4.mUnk_68, data_0201abec[3]);
-    func_0202de60(&data_0206d1d4.mUnk_16c, data_0201abec[4]);
+    StartSprite(&data_0206d1d4.mUnk_68, data_0201abec[3]);
+    StartSprite(&data_0206d1d4.mUnk_16c, data_0201abec[4]);
     RequestTrack(data_020b10fc.mUnk_0c == 1 ? 7 : 8, 102);
 }
 
@@ -99,42 +99,42 @@ void func_02004aa8(void) {
         return;
     }
     if (data_0206d1d4.mUnk_00 == 1) {
-        func_020215fc(51, 21, data_0201a61c, GetText(data_020b10fc.mMode + 31), 0, 200, 16, 1);
-        func_0202cf08(data_0204e0d4[data_020b10fc.mMode], 25, 22, 130, 1);
+        DrawText(51, 21, data_0201a61c, GetText(data_020b10fc.mMode + 31), 0, 200, 16, 1);
+        DrawSprite(data_0204e0d4[data_020b10fc.mMode], 25, 22, 130, 1);
         switch (data_020b10fc.mUnk_0c) {
             case 1:
-                func_020215fc(89, 66, data_0201a64e, GetText(44), 2, 200, 16, 1);
+                DrawText(89, 66, data_0201a64e, GetText(44), 2, 200, 16, 1);
                 if (data_0206d1d4.mUnk_08 >= 18) {
                     sprintf(text0, "%d", data_020b10fc.mScore);
-                    func_020215fc(35, 128, data_0201a64e, GetText(43), 0, 200, 16, 1);
-                    func_020215fc(180, 128, data_0201a64e, text0, 1, 200, 16, 1);
+                    DrawText(35, 128, data_0201a64e, GetText(43), 0, 200, 16, 1);
+                    DrawText(180, 128, data_0201a64e, text0, 1, 200, 16, 1);
                 }
                 if (data_0206d1d4.mUnk_08 >= 36 && data_0206d1d4.mUnk_14 > 0) {
                     sprintf(text1, "+G %d", data_0206d1d4.mUnk_14 >> 8);
-                    func_020215fc(140, 143, data_0201a61c, text1, 0, 200, 16, 1);
+                    DrawText(140, 143, data_0201a61c, text1, 0, 200, 16, 1);
                 }
                 if (data_0206d1d4.mUnk_08 >= 72) {
                     sprintf(text2, "%d", data_020b10fc.mBestScores[data_020b10fc.mMode]);
-                    func_020215fc(35, 148, data_0201a64e, GetText(46), 0, 200, 16, 1);
-                    func_020215fc(180, 148, data_0201a64e, text2, 1, 200, 16, 1);
+                    DrawText(35, 148, data_0201a64e, GetText(46), 0, 200, 16, 1);
+                    DrawText(180, 148, data_0201a64e, text2, 1, 200, 16, 1);
                 }
                 if (data_0206d1d4.mUnk_24 != 0 && data_0206d1d4.mUnk_1c > 0) {
                     sprintf(text3, "+G %d", data_0206d1d4.mUnk_1c >> 8);
-                    func_020215fc(140, 163, data_0201a61c, text3, 0, 200, 16, 1);
+                    DrawText(140, 163, data_0201a61c, text3, 0, 200, 16, 1);
                 }
                 break;
             case 0:
-                func_020215fc(89, 66, data_0201a64e, GetText(45), 2, 200, 16, 1);
+                DrawText(89, 66, data_0201a64e, GetText(45), 2, 200, 16, 1);
                 sprintf(text4, "%d", data_020b10fc.mScore);
-                func_020215fc(35, 128, data_0201a64e, GetText(43), 0, 200, 16, 1);
-                func_020215fc(180, 128, data_0201a64e, text4, 1, 200, 16, 1);
+                DrawText(35, 128, data_0201a64e, GetText(43), 0, 200, 16, 1);
+                DrawText(180, 128, data_0201a64e, text4, 1, 200, 16, 1);
                 sprintf(text5, "%d", data_020b10fc.mBestScores[data_020b10fc.mMode]);
-                func_020215fc(35, 148, data_0201a64e, GetText(46), 0, 200, 16, 1);
-                func_020215fc(180, 148, data_0201a64e, text5, 1, 200, 16, 1);
+                DrawText(35, 148, data_0201a64e, GetText(46), 0, 200, 16, 1);
+                DrawText(180, 148, data_0201a64e, text5, 1, 200, 16, 1);
                 if (data_0206d1d4.mUnk_08 >= 18) {
                     if (data_0206d1d4.mUnk_28 < 0) {
                         sprintf(text6, "%s %d", GetText(10), data_0206d1d4.mUnk_28 >> 8);
-                        func_020215fc(70, 163, data_0201a61c, text6, 0, 200, 16, 1);
+                        DrawText(70, 163, data_0201a61c, text6, 0, 200, 16, 1);
                     }
                 }
                 break;
@@ -188,10 +188,10 @@ void func_02004aa8(void) {
         func_0200bb14(0, 161, 161 + 97, 14, 0, 0, 90, 1);
     }
     if (slot != -1 && data_0206d1d4.mUnk_34 == 0) {
-        func_020215fc(70 + (data_0206d1d4.mUnk_48[0] >> 8), 37, data_0201a64e, GetText(52), 0, 256, 16, 2);
+        DrawText(70 + (data_0206d1d4.mUnk_48[0] >> 8), 37, data_0201a64e, GetText(52), 0, 256, 16, 2);
         if (data_0206d1d4.mUnk_48[0] == 0 && data_0206d1d4.mUnk_48[1] == 0) {
-            func_0202db1c(&data_0206d1d4.mUnk_68);
-            func_0202cf08(data_0206d1d4.mUnk_68.mUnk_04, 57, 103, 150, 2);
+            UpdateSprite(&data_0206d1d4.mUnk_68);
+            DrawSprite(data_0206d1d4.mUnk_68.mUnk_04, 57, 103, 150, 2);
         }
         func_02013d48(&rec->mInfo, slot, data_0206d1d4.mUnk_3c == 5, 0x505, 57, (data_0206d1d4.mUnk_48[2] >> 8) + 103,
                       2, 0);
@@ -202,10 +202,10 @@ void func_02004aa8(void) {
             data_0206d1d4.mUnk_3c = 5;
         }
         if (data_0206d1d4.mUnk_68.mUnk_de != 0) {
-            func_0202db1c(&data_0206d1d4.mUnk_16c);
-            func_0202cf08(data_0206d1d4.mUnk_16c.mUnk_04, 0, 137, 130, 2);
+            UpdateSprite(&data_0206d1d4.mUnk_16c);
+            DrawSprite(data_0206d1d4.mUnk_16c.mUnk_04, 0, 137, 130, 2);
             if (data_0206d1d4.mUnk_16c.mUnk_de != 0) {
-                func_0202cf08(0xfb4, data_0206d1d4.mUnk_40 * 26 + 116, 103, 141, 2);
+                DrawSprite(0xfb4, data_0206d1d4.mUnk_40 * 26 + 116, 103, 141, 2);
             }
         }
         func_0200bc50((data_0206d1d4.mUnk_48[4] >> 8) + 181, 174, 0, 0, 140, 512, 0xfb5, GetText(41), data_0201a61c, 2,
@@ -232,8 +232,8 @@ void func_02004aa8(void) {
             rec->mInfo.mUnk_1c[data_0206d1d4.mUnk_40] = data_0206d1d4.mUnk_44;
         }
     }
-    func_0202cf08(rec->mInfo.mUnk_13 + 0x1089, (data_0206d1d4.mUnk_48[1] >> 8) + 40, 45, gSystemState.mUnk_308 - 4, 2);
-    func_0202cf08(0x1088, (data_0206d1d4.mUnk_48[1] >> 8) + 40, 45, gSystemState.mUnk_308 - 2, 2);
+    DrawSprite(rec->mInfo.mUnk_13 + 0x1089, (data_0206d1d4.mUnk_48[1] >> 8) + 40, 45, gSystemState.mUnk_308 - 4, 2);
+    DrawSprite(0x1088, (data_0206d1d4.mUnk_48[1] >> 8) + 40, 45, gSystemState.mUnk_308 - 2, 2);
     func_02013f74(data_0206d1d4.mUnk_10, &data_0206d1d4.mUnk_3c, 168, 103, 2, (ready == 1 ? 0 : 4) + 2);
     data_0206d1d4.mUnk_38 = data_0206d1d4.mUnk_34;
 }

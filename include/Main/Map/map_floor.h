@@ -56,9 +56,9 @@ typedef struct MapFloorRegion {
 // The floor height under (x, z) for a position at height y: the highest floor of the map cell that y lies above (or
 // within a of below); 0 when (x, z) is outside the map. Outlines whose attribute bit is set in mask are skipped.
 // *out receives the floor's attribute (0xff when none was found) and *vec its normal; either may be NULL.
-int func_02030830(fx32 x, fx32 z, fx32 y, int a, u32 mask, u8 *out, VecFx32 *vec);
-// func_02030830 without the normal.
-int func_02031270(fx32 x, fx32 z, fx32 y, int a, u32 mask, u8 *out);
+int GetFloorHeightEx(fx32 x, fx32 z, fx32 y, int a, u32 mask, u8 *out, VecFx32 *vec);
+// GetFloorHeightEx without the normal.
+int GetFloorHeight(fx32 x, fx32 z, fx32 y, int a, u32 mask, u8 *out);
 // AngleOfVector of the camera's point mUnk_14 relative to its point mUnk_20.
 u32 func_0203129c(void);
 

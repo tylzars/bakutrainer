@@ -42,7 +42,7 @@ void UpdateMapMenu(void) {
     Unk_020c1454 *q = &data_020b6ee0.mUnk_a574;
 
     UpdateMapCursorAndCamera(&data_020c180c, &data_020c1800);
-    func_02033614(data_020c3e44.mUnk_2024.mUnk_74.x, data_020c3e44.mUnk_2024.mUnk_74.z);
+    func_02033614(gMapState.mCamera.mLookAt.x, gMapState.mCamera.mLookAt.z);
     prevSel = data_020b6ee0.mSelectedNodeIndex;
     data_020b6ee0.mSelectedNodeIndex = -1;
     for (i = 0; i < MAP_NODE_COUNT; i++) {
@@ -50,8 +50,8 @@ void UpdateMapMenu(void) {
             func_0200ba68(0xde6, i + MAP_NODE_POS_ID, 0, 0, 0x1000, 0);
         } else if (i == data_020b6ee0.mReachedNodeIndex) {
             func_02031fc4(i + MAP_NODE_POS_ID, &dp.mPos);
-            func_02023f58(&dp, dp.mPos.x, dp.mPos.y, dp.mPos.z, 0x1000, 0, 0, gSystemState.mElapsedFrames % 400, 0x100);
-            func_0202733c(&p->mReachedNodeModel, &dp, 0);
+            SetDrawParams(&dp, dp.mPos.x, dp.mPos.y, dp.mPos.z, 0x1000, 0, 0, gSystemState.mElapsedFrames % 400, 0x100);
+            UpdateAndDrawModel(&p->mReachedNodeModel, &dp, 0);
         } else {
             func_0200ba68(0xde3, i + MAP_NODE_POS_ID, 0, 0, 0x1000, 0);
         }
@@ -71,52 +71,52 @@ void UpdateMapMenu(void) {
             p->mCursor.mPos.x = pos.x;
             p->mCursor.mPos.z = pos.z;
             p->mCursor.mPos.y =
-                func_02031270(p->mCursor.mPos.x, p->mCursor.mPos.z, p->mCursor.mPos.y + 0x32000, 0, 0, 0) + 0x1900;
+                GetFloorHeight(p->mCursor.mPos.x, p->mCursor.mPos.z, p->mCursor.mPos.y + 0x32000, 0, 0, 0) + 0x1900;
             p->mCursorSnapped = 1;
             p->mNodeInfoHidden = 0;
             p->mTargetBlend = 0x100;
             p->mCursorXPerFrame = 0;
             p->mCursorZPerFrame = 0;
             q->mMapButtonOffsetX = 0x28;
-            func_0202de60(&p->mUnk_1c8, data_0201abec[0]);
-            func_0202de60(&p->mUnk_2cc, data_0201abec[1]);
+            StartSprite(&p->mUnk_1c8, data_0201abec[0]);
+            StartSprite(&p->mUnk_2cc, data_0201abec[1]);
         }
         if (p->mNodeInfoHidden == 0) {
             int a = GetNodeValue(data_020b6ee0.mSelectedNodeIndex, 0xe);
             int b = GetNodeValue(data_020b6ee0.mSelectedNodeIndex, 7);
 
             if (p->mUnk_1c8.mUnk_de == 0) {
-                func_0202cf08(func_0202db1c(&p->mUnk_1c8), 0, 7, 0xfa, 2);
+                DrawSprite(UpdateSprite(&p->mUnk_1c8), 0, 7, 0xfa, 2);
             } else {
-                func_0202cf08(a + 0xed6, 0, 7, 0xfa, 2);
-                func_0202cf08(b + 0xedc, 0, 7, 0xfa, 2);
-                func_020215fc(0x72, 0x1c, data_0201a630, GetText(0x46), 2, 0xf0, 0x10, 2);
+                DrawSprite(a + 0xed6, 0, 7, 0xfa, 2);
+                DrawSprite(b + 0xedc, 0, 7, 0xfa, 2);
+                DrawText(0x72, 0x1c, data_0201a630, GetText(0x46), 2, 0xf0, 0x10, 2);
                 sprintf(buf, "%d", data_020b6ee0.mSelectedNodeIndex + 1);
-                func_020215fc(0x72, 0x3b, data_0201a6b2, buf, 2, 0xf0, 0x10, 2);
+                DrawText(0x72, 0x3b, data_0201a6b2, buf, 2, 0xf0, 0x10, 2);
             }
             for (j = 0; j < 3; j++) {
                 int k = GetSelectedNodeStageId(j);
 
                 if (k >= 0) {
-                    int v1 = func_02021e44(0xfd6, k * 0x1b + 2);
-                    int v2 = func_02021e44(0xfd6, k * 0x1b + 5);
+                    int v1 = GetFileValue(0xfd6, k * 0x1b + 2);
+                    int v2 = GetFileValue(0xfd6, k * 0x1b + 5);
 
-                    func_0202cf08(k + 0x1089, j * 0x37 + 0x22, 0x85, 0xfa, 2);
-                    func_0202cf08(0x41088, j * 0x37 + 0x22, 0x85, 0xfc, 2);
-                    func_0202cf08(v1 + 0x11a1, j * 0x37 + 0x13, 0x56, 0xfa, 2);
+                    DrawSprite(k + 0x1089, j * 0x37 + 0x22, 0x85, 0xfa, 2);
+                    DrawSprite(0x41088, j * 0x37 + 0x22, 0x85, 0xfc, 2);
+                    DrawSprite(v1 + 0x11a1, j * 0x37 + 0x13, 0x56, 0xfa, 2);
                     sprintf(buf, "%d", v2);
-                    func_020215fc(j * 0x37 + 0x13, 0x56, data_0201a6bc, buf, 0, 0x60, 0, 2);
+                    DrawText(j * 0x37 + 0x13, 0x56, data_0201a6bc, buf, 0, 0x60, 0, 2);
                 }
             }
             func_0200b928(&q->mMapButtonOffsetX, 0, 4);
             func_0200bb14(q->mMapButtonOffsetX + 0xff, 0xa1, 0x101, 0x15, 0, 0, 0x17d, 1);
             func_0200bb14(-q->mMapButtonOffsetX, 0xa1, 0x102, 0xe, 0, 0, 0x5a, 1);
         } else {
-            func_020215fc(0x5a, 0x5a, data_0201a64e, GetText(0x47), 2, 0xc8, 0x10, 2);
+            DrawText(0x5a, 0x5a, data_0201a64e, GetText(0x47), 2, 0xc8, 0x10, 2);
         }
     } else {
         p->mCursorSnapped = 0;
-        func_020215fc(0x5a, 0x5a, data_0201a64e, GetText(0x47), 2, 0xc8, 0x10, 2);
+        DrawText(0x5a, 0x5a, data_0201a64e, GetText(0x47), 2, 0xc8, 0x10, 2);
     }
     if (p->mNodeInfoHidden == 1) {
         func_0200b928(&q->mMapButtonOffsetX, 0, 4);
@@ -166,10 +166,10 @@ void SetupRecap(void) {
     UpdateSystemAndWait();
     ResetKeys();
     ResetVramBanks();
-    func_0202c1c4();
+    ReleaseTextureLayers();
     SetLcdSwap(0);
-    func_0202bdd8(0x10cb, 0x10ca, 0x10cc, 0x82, 1);
-    func_0202bdd8(0x10cb, 0x10ca, 0x10cc, 0x82, 2);
+    SetupTextureLayer(0x10cb, 0x10ca, 0x10cc, 0x82, 1);
+    SetupTextureLayer(0x10cb, 0x10ca, 0x10cc, 0x82, 2);
     LoadImage(0x237, 3);
     gRecapFrameIndex = -8;
 }
@@ -177,20 +177,20 @@ void SetupRecap(void) {
 void UpdateRecap(void) {
     int sel;
 
-    func_020215fc(0x7f, 0x3a, data_0201a61c, "Recap", 2, 0xf0, 0x10, 1);
+    DrawText(0x7f, 0x3a, data_0201a61c, "Recap", 2, 0xf0, 0x10, 1);
     sel = GetNodeValue(data_020b6ee0.mReachedNodeIndex, 0xf);
     if (sel != -1) {
         gRecapFrameIndex += gSystemState.mElapsedFrames % 3 / 2;
         if (gRecapFrameIndex >= 0) {
             if (gRecapFrameIndex <= 8) {
-                func_0202cf08(0xfa7 - gRecapFrameIndex, 0x7f, 0x62, 0x64, 1);
+                DrawSprite(0xfa7 - gRecapFrameIndex, 0x7f, 0x62, 0x64, 1);
             } else {
-                func_0202cf08(sel + 0x1089, 0x7f, 0x62, 0x64, 1);
+                DrawSprite(sel + 0x1089, 0x7f, 0x62, 0x64, 1);
             }
         }
-        func_0202cf08(0x1088, 0x7f, 0x62, 0x66, 1);
+        DrawSprite(0x1088, 0x7f, 0x62, 0x66, 1);
     } else {
-        func_0202cf08(0x1088, 0x7f, 0x62, 0x66, 1);
+        DrawSprite(0x1088, 0x7f, 0x62, 0x66, 1);
     }
     func_0200bb14(0xff, 0xa1, 0x101, 0x15, 0, 0, 0x17d, 1);
     if (func_0200bd80(0x20000000, 0x101)) {

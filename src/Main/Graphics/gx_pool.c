@@ -17,7 +17,7 @@ typedef struct Unk_TexHeader {
     u32 mUnk_4;
 } Unk_TexHeader;
 
-void func_02021fb0(int a, int b, int c, int d) {
+void InitGxPool(int texFile, int plttFile, int c, int d) {
     int v;
     Unk_TexHeader hdr;
     if (gSystemState.mFlags & POOL_FLAG) {
@@ -28,12 +28,12 @@ void func_02021fb0(int a, int b, int c, int d) {
     G3X_InitMtxStack();
     ReallocVramBanks(10, c, -1);
     ReallocVramBanks(11, d, -1);
-    data_020c31dc.mUnk_62 = (gSystemState.mTexVramGroup.mSize16Kb << 14) / 512;
-    data_020c31dc.mUnk_64 = (gSystemState.mPlttVramGroup.mSize16Kb << 14) / 32;
+    data_020c31dc.mTexBlockCount = (gSystemState.mTexVramGroup.mSize16Kb << 14) / 512;
+    data_020c31dc.mPlttBlockCount = (gSystemState.mPlttVramGroup.mSize16Kb << 14) / 32;
     *(vu32 *) 0x04000060 |= 9;
-    data_020c31dc.mUnk_54 = a;
-    data_020c31dc.mUnk_56 = b;
-    v = FindCachedFile(a);
+    data_020c31dc.mTexFile = texFile;
+    data_020c31dc.mPlttFile = plttFile;
+    v = FindCachedFile(texFile);
     if (v < 0) {
         SeekBank(-v);
         ReadBank(&hdr, 8);
@@ -44,18 +44,18 @@ void func_02021fb0(int a, int b, int c, int d) {
     if (hdr.mUnk_0 != TEX_MAGIC) {
         OS_Terminate();
     }
-    data_020c31dc.mUnk_58 = (GetStoredFileSize(a) - hdr.mUnk_4) >> 2;
-    v = FindCachedFile(b);
+    data_020c31dc.mTexFileKeyCount = (GetStoredFileSize(texFile) - hdr.mUnk_4) >> 2;
+    v = FindCachedFile(plttFile);
     if (v < 0) {
         SeekBank(4 - v);
         ReadBank(&v, 4);
     } else {
         v = ((Unk_TexHeader *) v)->mUnk_4;
     }
-    data_020c31dc.mUnk_5a = (GetStoredFileSize(b) - v) >> 2;
-    data_020c31dc.mUnk_46 = 0xff;
-    func_02022120();
-    func_0202224c();
+    data_020c31dc.mPlttFileKeyCount = (GetStoredFileSize(plttFile) - v) >> 2;
+    data_020c31dc.mStopNodeIndex = 0xff;
+    ResetTexCache();
+    ResetPlttCache();
     gSystemState.mFlags |= POOL_FLAG;
 }
 
@@ -79,90 +79,99 @@ void func_020220c8(int a) {
     MIi_CpuCopy16(p + 2, (void *) 0x04000380, 0x40);
 }
 
-void func_02022120(void) {
+// Frees (once the pool is set up) and reallocates the texture cache's slots, nodes and block heap and empties them:
+// all slots unused, every node but the two list ends on the free chain, one free run over the whole heap of
+// 512-byte VRAM blocks, and the lookup counters zeroed. Also zeroes gSystemState.mUnk_2bc and mUnk_2b8, which
+// FindOrLoadTex raises by the bytes it queues.
+void ResetTexCache(void) {
     int i;
     if (gSystemState.mFlags & POOL_FLAG) {
-        Free(&data_020c31dc.mUnk_04);
-        Free(&data_020c31dc.mUnk_00);
-        Free(&data_020c31dc.mUnk_08);
+        Free(&data_020c31dc.mTexSlots);
+        Free(&data_020c31dc.mTexNodes);
+        Free(&data_020c31dc.mTexBlocks);
     }
-    data_020c31dc.mUnk_04 = Alloc(0x2000);
-    data_020c31dc.mUnk_00 = Alloc(0x2be0);
-    data_020c31dc.mUnk_00[0].mUnk_0a = 1;
-    data_020c31dc.mUnk_00[1].mUnk_0c = 0;
-    data_020c31dc.mUnk_00[1].mUnk_0a = 2;
-    data_020c31dc.mUnk_60 = 0;
+    data_020c31dc.mTexSlots = Alloc(0x2000);
+    data_020c31dc.mTexNodes = Alloc(0x2be0);
+    data_020c31dc.mTexNodes[0].mPrev = 1;
+    data_020c31dc.mTexNodes[1].mNext = 0;
+    data_020c31dc.mTexNodes[1].mPrev = 2;
+    data_020c31dc.mTexEntryCount = 0;
     gSystemState.mUnk_2bc = 0;
     gSystemState.mUnk_2b8 = 0;
-    for (i = data_020c31dc.mUnk_00[1].mUnk_0a; i < 0x2bd; i++) {
-        data_020c31dc.mUnk_00[i].mUnk_0a = i + 1;
+    for (i = data_020c31dc.mTexNodes[1].mPrev; i < 0x2bd; i++) {
+        data_020c31dc.mTexNodes[i].mPrev = i + 1;
     }
-    data_020c31dc.mUnk_00[i].mUnk_0a = data_020c31dc.mUnk_00[1].mUnk_0a;
+    data_020c31dc.mTexNodes[i].mPrev = data_020c31dc.mTexNodes[1].mPrev;
     for (i = 0; i < 0x400; i++) {
-        data_020c31dc.mUnk_04[i].mUnk_00 = -1;
+        data_020c31dc.mTexSlots[i].mKey = -1;
     }
-    data_020c31dc.mUnk_08 = Alloc((data_020c31dc.mUnk_62 + 2) * 8);
-    data_020c31dc.mUnk_08[0].mUnk_0 = (gSystemState.mTexVramGroup.mSize16Kb << 14) / 512;
-    data_020c31dc.mUnk_08[0].mUnk_6 = 0xffff;
-    data_020c31dc.mUnk_08[0].mUnk_2 = data_020c31dc.mUnk_08[0].mUnk_0;
-    data_020c31dc.mUnk_08[0].mUnk_4 = data_020c31dc.mUnk_08[0].mUnk_0 + 1;
-    data_020c31dc.mUnk_08[data_020c31dc.mUnk_08[0].mUnk_0].mUnk_0 = 0xffff;
-    data_020c31dc.mUnk_08[data_020c31dc.mUnk_08[0].mUnk_0].mUnk_4 = 0;
-    data_020c31dc.mUnk_08[data_020c31dc.mUnk_08[0].mUnk_0].mUnk_2 = 0xffff;
-    data_020c31dc.mUnk_08[data_020c31dc.mUnk_08[0].mUnk_0 + 1].mUnk_0 = 0;
-    data_020c31dc.mUnk_08[data_020c31dc.mUnk_08[0].mUnk_0 + 1].mUnk_4 = 0xffff;
-    data_020c31dc.mUnk_08[data_020c31dc.mUnk_08[0].mUnk_0 + 1].mUnk_2 = 0;
-    data_020c31dc.mUnk_4c = 0;
-    data_020c31dc.mUnk_50 = 0;
+    data_020c31dc.mTexBlocks = Alloc((data_020c31dc.mTexBlockCount + 2) * 8);
+    data_020c31dc.mTexBlocks[0].mUnk_0 = (gSystemState.mTexVramGroup.mSize16Kb << 14) / 512;
+    data_020c31dc.mTexBlocks[0].mUnk_6 = 0xffff;
+    data_020c31dc.mTexBlocks[0].mPrev = data_020c31dc.mTexBlocks[0].mUnk_0;
+    data_020c31dc.mTexBlocks[0].mNext = data_020c31dc.mTexBlocks[0].mUnk_0 + 1;
+    data_020c31dc.mTexBlocks[data_020c31dc.mTexBlocks[0].mUnk_0].mUnk_0 = 0xffff;
+    data_020c31dc.mTexBlocks[data_020c31dc.mTexBlocks[0].mUnk_0].mNext = 0;
+    data_020c31dc.mTexBlocks[data_020c31dc.mTexBlocks[0].mUnk_0].mPrev = 0xffff;
+    data_020c31dc.mTexBlocks[data_020c31dc.mTexBlocks[0].mUnk_0 + 1].mUnk_0 = 0;
+    data_020c31dc.mTexBlocks[data_020c31dc.mTexBlocks[0].mUnk_0 + 1].mNext = 0xffff;
+    data_020c31dc.mTexBlocks[data_020c31dc.mTexBlocks[0].mUnk_0 + 1].mPrev = 0;
+    data_020c31dc.mTexLookupCount = 0;
+    data_020c31dc.mTexProbeCount = 0;
 }
 
-void func_0202224c(void) {
+// The same for the palette cache (32-byte VRAM blocks, no lookup counters); zeroes gSystemState.mUnk_2c4 and
+// mUnk_2c0.
+void ResetPlttCache(void) {
     int i;
     if (gSystemState.mFlags & POOL_FLAG) {
-        Free(&data_020c31dc.mUnk_10);
-        Free(&data_020c31dc.mUnk_0c);
-        Free(&data_020c31dc.mUnk_14);
+        Free(&data_020c31dc.mPlttSlots);
+        Free(&data_020c31dc.mPlttNodes);
+        Free(&data_020c31dc.mPlttBlocks);
     }
-    data_020c31dc.mUnk_10 = Alloc(0x800);
-    data_020c31dc.mUnk_0c = Alloc(0xca0);
-    data_020c31dc.mUnk_0c[0].mUnk_0a = 1;
-    data_020c31dc.mUnk_0c[1].mUnk_0c = 0;
-    data_020c31dc.mUnk_0c[1].mUnk_0a = 2;
-    data_020c31dc.mUnk_5e = 0;
+    data_020c31dc.mPlttSlots = Alloc(0x800);
+    data_020c31dc.mPlttNodes = Alloc(0xca0);
+    data_020c31dc.mPlttNodes[0].mPrev = 1;
+    data_020c31dc.mPlttNodes[1].mNext = 0;
+    data_020c31dc.mPlttNodes[1].mPrev = 2;
+    data_020c31dc.mPlttEntryCount = 0;
     gSystemState.mUnk_2c4 = 0;
     gSystemState.mUnk_2c0 = 0;
-    for (i = data_020c31dc.mUnk_0c[1].mUnk_0a; i < 0xc9; i++) {
-        data_020c31dc.mUnk_0c[i].mUnk_0a = i + 1;
+    for (i = data_020c31dc.mPlttNodes[1].mPrev; i < 0xc9; i++) {
+        data_020c31dc.mPlttNodes[i].mPrev = i + 1;
     }
-    data_020c31dc.mUnk_0c[i].mUnk_0a = data_020c31dc.mUnk_0c[1].mUnk_0a;
+    data_020c31dc.mPlttNodes[i].mPrev = data_020c31dc.mPlttNodes[1].mPrev;
     for (i = 0; i < 0x100; i++) {
-        data_020c31dc.mUnk_10[i].mUnk_00 = -1;
+        data_020c31dc.mPlttSlots[i].mKey = -1;
     }
-    data_020c31dc.mUnk_14 = Alloc((data_020c31dc.mUnk_64 + 2) * 8);
-    data_020c31dc.mUnk_14[0].mUnk_0 = (gSystemState.mPlttVramGroup.mSize16Kb << 14) / 32;
-    data_020c31dc.mUnk_14[0].mUnk_6 = 0xffff;
-    data_020c31dc.mUnk_14[0].mUnk_2 = data_020c31dc.mUnk_14[0].mUnk_0;
-    data_020c31dc.mUnk_14[0].mUnk_4 = data_020c31dc.mUnk_14[0].mUnk_0 + 1;
-    data_020c31dc.mUnk_14[data_020c31dc.mUnk_14[0].mUnk_0].mUnk_0 = 0xffff;
-    data_020c31dc.mUnk_14[data_020c31dc.mUnk_14[0].mUnk_0].mUnk_4 = 0;
-    data_020c31dc.mUnk_14[data_020c31dc.mUnk_14[0].mUnk_0].mUnk_2 = 0xffff;
-    data_020c31dc.mUnk_14[data_020c31dc.mUnk_14[0].mUnk_0 + 1].mUnk_0 = 0;
-    data_020c31dc.mUnk_14[data_020c31dc.mUnk_14[0].mUnk_0 + 1].mUnk_4 = 0xffff;
-    data_020c31dc.mUnk_14[data_020c31dc.mUnk_14[0].mUnk_0 + 1].mUnk_2 = 0;
+    data_020c31dc.mPlttBlocks = Alloc((data_020c31dc.mPlttBlockCount + 2) * 8);
+    data_020c31dc.mPlttBlocks[0].mUnk_0 = (gSystemState.mPlttVramGroup.mSize16Kb << 14) / 32;
+    data_020c31dc.mPlttBlocks[0].mUnk_6 = 0xffff;
+    data_020c31dc.mPlttBlocks[0].mPrev = data_020c31dc.mPlttBlocks[0].mUnk_0;
+    data_020c31dc.mPlttBlocks[0].mNext = data_020c31dc.mPlttBlocks[0].mUnk_0 + 1;
+    data_020c31dc.mPlttBlocks[data_020c31dc.mPlttBlocks[0].mUnk_0].mUnk_0 = 0xffff;
+    data_020c31dc.mPlttBlocks[data_020c31dc.mPlttBlocks[0].mUnk_0].mNext = 0;
+    data_020c31dc.mPlttBlocks[data_020c31dc.mPlttBlocks[0].mUnk_0].mPrev = 0xffff;
+    data_020c31dc.mPlttBlocks[data_020c31dc.mPlttBlocks[0].mUnk_0 + 1].mUnk_0 = 0;
+    data_020c31dc.mPlttBlocks[data_020c31dc.mPlttBlocks[0].mUnk_0 + 1].mNext = 0xffff;
+    data_020c31dc.mPlttBlocks[data_020c31dc.mPlttBlocks[0].mUnk_0 + 1].mPrev = 0;
 }
 
-void func_02022370(void) {
+// Undoes InitGxPool when it ran: clears POOL_FLAG, frees both caches' tables and the VRAM banks of uses 10 and 11,
+// sets the camera's mUnk_2dc.mUnk_4a to 0xff and clears the bits InitGxPool set at 0x04000304 (not those at
+// 0x04000060).
+void ReleaseGxPool(void) {
     if (gSystemState.mFlags & POOL_FLAG) {
         gSystemState.mFlags &= ~POOL_FLAG;
-        Free(&data_020c31dc.mUnk_04);
-        Free(&data_020c31dc.mUnk_00);
-        Free(&data_020c31dc.mUnk_08);
-        Free(&data_020c31dc.mUnk_14);
-        Free(&data_020c31dc.mUnk_10);
-        Free(&data_020c31dc.mUnk_0c);
+        Free(&data_020c31dc.mTexSlots);
+        Free(&data_020c31dc.mTexNodes);
+        Free(&data_020c31dc.mTexBlocks);
+        Free(&data_020c31dc.mPlttBlocks);
+        Free(&data_020c31dc.mPlttSlots);
+        Free(&data_020c31dc.mPlttNodes);
         FreeVramBanks(10);
         FreeVramBanks(11);
-        data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_4a = 0xff;
+        gMapState.mCamera.mUnk_2dc.mUnk_4a = 0xff;
         *(vu16 *) 0x04000304 &= ~0xc;
     }
 }

@@ -16,11 +16,11 @@ void func_02006fc0(void) {
     SetFaded(3);
     ResetKeys();
     ResetVramBanks();
-    func_0202c1c4();
+    ReleaseTextureLayers();
     SetLcdSwap(1);
     LoadImage(0xdaa, 3);
-    func_0202bdd8(0x10cb, 0x10ca, 0x10cc, 2, 1);
-    func_0202bdd8(0x10cb, 0x10ca, 0x10cc, 2, 2);
+    SetupTextureLayer(0x10cb, 0x10ca, 0x10cc, 2, 1);
+    SetupTextureLayer(0x10cb, 0x10ca, 0x10cc, 2, 2);
     RequestTrack(1, 0x80);
     data_02098d74.mUnk_04 = 0;
     func_02007168(1);

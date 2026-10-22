@@ -271,7 +271,7 @@ void func_020159ac(void) {
         }
     }
     if (s->mUnk_03 == GRID_COLS * GRID_ROWS) {
-        func_020215fc(10, 20, data_0201a6d0, "touche screen to continue", 0, 240, 16, 2);
+        DrawText(10, 20, data_0201a6d0, "touche screen to continue", 0, 240, 16, 2);
         if (gSystemState.mTouchPressed != 1) {
             return;
         }
@@ -280,10 +280,10 @@ void func_020159ac(void) {
     if (s->mUnk_01 & 0x40) {
         if (s->mUnk_02 == 0) {
             if (s->mUnk_48 & 1) {
-                func_020215fc(10, 20, data_0201a6d0, "Ordi", 0, 240, 16, 2);
+                DrawText(10, 20, data_0201a6d0, "Ordi", 0, 240, 16, 2);
                 func_02015850(s->mUnk_0e, s->mUnk_40, CELL_COMPUTER, 0);
             } else {
-                func_020215fc(10, 20, data_0201a6d0, "Humain", 0, 240, 16, 2);
+                DrawText(10, 20, data_0201a6d0, "Humain", 0, 240, 16, 2);
                 if (gSystemState.mTouchPressed == 1) {
                     x = gSystemState.mTouchX - 0x54;
                     y = gSystemState.mTouchY - 0x20;
@@ -299,32 +299,32 @@ void func_020159ac(void) {
     }
     for (i = 0; i < s->mUnk_44; i++) {
         if (s->mUnk_0e[i].mUnk_04 != PIECE_GONE) {
-            func_0202cf08(0xf90 + s->mUnk_0e[i].mUnk_04, s->mUnk_0e[i].mUnk_00, s->mUnk_0e[i].mUnk_02, 5, 2);
+            DrawSprite(0xf90 + s->mUnk_0e[i].mUnk_04, s->mUnk_0e[i].mUnk_00, s->mUnk_0e[i].mUnk_02, 5, 2);
         }
     }
     for (y = 0; y < 4; y++) {
         for (x = 0, i = 0x54; x < 3; x++, i += 32) {
             switch (s->mUnk_40[y * 4 + x] & 0xf) {
                 case 2:
-                    func_0202cf08(0xf9d, i, y * 32 + 0x20, 4, 2);
+                    DrawSprite(0xf9d, i, y * 32 + 0x20, 4, 2);
                     break;
                 case 3:
-                    func_0202cf08(0xf9c, i, y * 32 + 0x20, 4, 2);
+                    DrawSprite(0xf9c, i, y * 32 + 0x20, 4, 2);
                     break;
             }
         }
     }
     for (i = 0; i < s->mUnk_0c; i++) {
         if (s->mUnk_04[i] == CELL_HUMAN) {
-            func_020215fc(20, 30 + i * 12, data_0201a6d0, "H", 0, 240, 16, 2);
+            DrawText(20, 30 + i * 12, data_0201a6d0, "H", 0, 240, 16, 2);
         } else {
-            func_020215fc(20, 30 + i * 12, data_0201a6d0, "O", 0, 240, 16, 2);
+            DrawText(20, 30 + i * 12, data_0201a6d0, "O", 0, 240, 16, 2);
         }
     }
     if (s->mUnk_01 < 0xf) {
         cell = s->mUnk_01 & 0xf;
         player = (s->mUnk_48 & 1) ? CELL_COMPUTER : CELL_HUMAN;
-        func_0202de60(&s->mUnk_4c, (void *) (data_0201aa60 + 37)[player]);
+        StartSprite(&s->mUnk_4c, (void *) (data_0201aa60 + 37)[player]);
         s->mUnk_01 |= 0x80;
         s->mUnk_40[cell] = (s->mUnk_40[cell] & 0xf0) | player;
     }
@@ -332,7 +332,7 @@ void func_020159ac(void) {
         return;
     }
     cell = s->mUnk_01 & 0xf;
-    func_0202cf08(func_0202db1c(&s->mUnk_4c), (cell & 3) * 32 + 0x54, (cell >> 2) * 32 + 0x20, 0, 2);
+    DrawSprite(UpdateSprite(&s->mUnk_4c), (cell & 3) * 32 + 0x54, (cell >> 2) * 32 + 0x20, 0, 2);
     if (s->mUnk_4c.mUnk_de == 1) {
         player = (s->mUnk_48 & 1) ? CELL_COMPUTER : CELL_HUMAN;
         s->mUnk_0e[s->mUnk_40[cell] >> 4].mUnk_06--;
@@ -350,8 +350,8 @@ void func_020159ac(void) {
 }
 
 void func_02015cd4(void) {
-    func_0202c1c4();
-    func_0202bdd8(0x10cb, 0x10ca, 0x10cc, 0, 2);
+    ReleaseTextureLayers();
+    SetupTextureLayer(0x10cb, 0x10ca, 0x10cc, 0, 2);
     SetLcdSwap(1);
     LoadImage(0xde8, 1);
     LoadImage(0xde7, 2);

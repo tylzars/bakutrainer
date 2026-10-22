@@ -7,7 +7,7 @@
 
 #pragma thumb off
 
-int func_02030830(fx32 x, fx32 z, fx32 y, int a, u32 mask, u8 *out, VecFx32 *vec) {
+int GetFloorHeightEx(fx32 x, fx32 z, fx32 y, int a, u32 mask, u8 *out, VecFx32 *vec) {
     int cz;
     int gz;
     int len;
@@ -74,9 +74,9 @@ int func_02030830(fx32 x, fx32 z, fx32 y, int a, u32 mask, u8 *out, VecFx32 *vec
     s32 heights[12];
     u8 attrs[12];
 
-    grid = func_02031eb8(MAP_FLOOR_CELLS);
-    lists = func_02031eb8(MAP_FLOOR_LISTS);
-    regions = (u8 *) func_02031eb8(MAP_FLOOR_REGIONS);
+    grid = GetMapChunk(MAP_FLOOR_CELLS);
+    lists = GetMapChunk(MAP_FLOOR_LISTS);
+    regions = (u8 *) GetMapChunk(MAP_FLOOR_REGIONS);
     count = 0;
     cx = x / 512;
     cz = z / 512;
@@ -90,9 +90,9 @@ int func_02030830(fx32 x, fx32 z, fx32 y, int a, u32 mask, u8 *out, VecFx32 *vec
         OS_Terminate();
     }
 
-    gx = x / (s32) data_020c3e44.mUnk_2024.mUnk_40;
-    gz = z / (s32) data_020c3e44.mUnk_2024.mUnk_40;
-    if (gx >= data_020c3e44.mUnk_2024.mUnk_54 || gz >= data_020c3e44.mUnk_2024.mUnk_56) {
+    gx = x / (s32) gMapState.mCamera.mCellSize;
+    gz = z / (s32) gMapState.mCamera.mCellSize;
+    if (gx >= gMapState.mCamera.mCellCountX || gz >= gMapState.mCamera.mCellCountZ) {
         if (out != NULL) {
             *out = 0;
         }
@@ -104,7 +104,7 @@ int func_02030830(fx32 x, fx32 z, fx32 y, int a, u32 mask, u8 *out, VecFx32 *vec
         return 0;
     }
 
-    entry = lists + grid[data_020c3e44.mUnk_2024.mUnk_54 * gz + gx];
+    entry = lists + grid[gMapState.mCamera.mCellCountX * gz + gx];
     normp = normals;
     attrp = attrs;
     do {
@@ -339,13 +339,13 @@ int func_02030830(fx32 x, fx32 z, fx32 y, int a, u32 mask, u8 *out, VecFx32 *vec
     return y;
 }
 
-int func_02031270(fx32 x, fx32 z, fx32 y, int a, u32 mask, u8 *out) {
-    return func_02030830(x, z, y, a, mask, out, NULL);
+int GetFloorHeight(fx32 x, fx32 z, fx32 y, int a, u32 mask, u8 *out) {
+    return GetFloorHeightEx(x, z, y, a, mask, out, NULL);
 }
 
 #pragma thumb on
 
 u32 func_0203129c(void) {
-    return AngleOfVector(data_020c3e44.mUnk_2024.mUnk_14.x - data_020c3e44.mUnk_2024.mUnk_20.x,
-                         data_020c3e44.mUnk_2024.mUnk_14.z - data_020c3e44.mUnk_2024.mUnk_20.z);
+    return AngleOfVector(gMapState.mCamera.mUnk_14.x - gMapState.mCamera.mUnk_20.x,
+                         gMapState.mCamera.mUnk_14.z - gMapState.mCamera.mUnk_20.z);
 }

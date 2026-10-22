@@ -10,75 +10,78 @@
 
 #pragma thumb off
 
-// Frees block i of the first pool, merges it with free neighbours and links it into the free list ordered by size.
-u32 func_020225dc(u32 i) {
-    Unk_PoolRange *n = data_020c31dc.mUnk_08;
+// Frees the run of 512-byte VRAM blocks that starts at block i of the texture cache's heap, merges it with free
+// neighbours, links it into the free list ordered by size and returns the merged run's length in blocks.
+u32 FreeTexBlock(u32 i) {
+    Unk_PoolRange *n = data_020c31dc.mTexBlocks;
     u32 q;
     u32 j;
     u32 k;
     u32 size;
 
-    n[i].mUnk_0 &= ~0x8000;
+    n[i].mUnk_0 &= ~POOL_BLOCK_USED;
     j = i + n[i].mUnk_0;
-    if (j < data_020c31dc.mUnk_62 && !(n[j].mUnk_0 & 0x8000)) {
+    if (j < data_020c31dc.mTexBlockCount && !(n[j].mUnk_0 & POOL_BLOCK_USED)) {
         n[i].mUnk_0 += n[j].mUnk_0;
         n[i + n[i].mUnk_0].mUnk_6 = i;
-        n[n[j].mUnk_4].mUnk_2 = n[j].mUnk_2;
-        n[n[j].mUnk_2].mUnk_4 = n[j].mUnk_4;
+        n[n[j].mNext].mPrev = n[j].mPrev;
+        n[n[j].mPrev].mNext = n[j].mNext;
     }
     k = n[i].mUnk_6;
-    if (k < data_020c31dc.mUnk_62 && !(n[k].mUnk_0 & 0x8000)) {
+    if (k < data_020c31dc.mTexBlockCount && !(n[k].mUnk_0 & POOL_BLOCK_USED)) {
         n[k].mUnk_0 += n[i].mUnk_0;
         n[k + n[k].mUnk_0].mUnk_6 = k;
-        n[n[k].mUnk_4].mUnk_2 = n[k].mUnk_2;
-        n[n[k].mUnk_2].mUnk_4 = n[k].mUnk_4;
+        n[n[k].mNext].mPrev = n[k].mPrev;
+        n[n[k].mPrev].mNext = n[k].mNext;
         i = k;
     }
     size = n[i].mUnk_0;
     if (size < 4) {
-        j = data_020c31dc.mUnk_62 + 1;
-        q = n[j].mUnk_2;
+        j = data_020c31dc.mTexBlockCount + 1;
+        q = n[j].mPrev;
         while (size > n[q].mUnk_0) {
             j = q;
-            q = n[q].mUnk_2;
+            q = n[q].mPrev;
         }
-        n[i].mUnk_2 = q;
-        n[i].mUnk_4 = j;
-        n[j].mUnk_2 = i;
-        n[q].mUnk_4 = i;
+        n[i].mPrev = q;
+        n[i].mNext = j;
+        n[j].mPrev = i;
+        n[q].mNext = i;
     } else {
-        j = data_020c31dc.mUnk_62;
-        q = n[j].mUnk_4;
+        j = data_020c31dc.mTexBlockCount;
+        q = n[j].mNext;
         while (size < n[q].mUnk_0) {
             j = q;
-            q = n[q].mUnk_4;
+            q = n[q].mNext;
         }
-        n[i].mUnk_4 = q;
-        n[i].mUnk_2 = j;
-        n[j].mUnk_4 = i;
-        n[q].mUnk_2 = i;
+        n[i].mNext = q;
+        n[i].mPrev = j;
+        n[j].mNext = i;
+        n[q].mPrev = i;
     }
     return n[i].mUnk_0;
 }
 
-// Evicts cache slot i of the first pool: clears its hash entry, frees its block and returns the slot to the free
-// slot list.
-u32 func_020227b4(u32 i) {
+// Removes the least recently used entry of the texture cache, node i, which must be node 1's mNext (as at both
+// callers; any nodes between them would be unlinked too): marks its hash slot removed (-2), frees its blocks and puts
+// the node on the free chain headed by node 1's mPrev. Returns the length of the merged free run in 512-byte blocks.
+u32 RemoveLeastRecentTexCacheEntry(u32 i) {
     u32 result;
 
-    data_020c31dc.mUnk_60--;
-    data_020c31dc.mUnk_04[data_020c31dc.mUnk_00[i].mUnk_08].mUnk_00 = -2;
-    result = func_020225dc(data_020c31dc.mUnk_00[i].mUnk_00 >> 9);
-    data_020c31dc.mUnk_00[1].mUnk_0c = data_020c31dc.mUnk_00[i].mUnk_0c;
-    data_020c31dc.mUnk_00[data_020c31dc.mUnk_00[i].mUnk_0c].mUnk_0a = 1;
-    data_020c31dc.mUnk_00[i].mUnk_0a = data_020c31dc.mUnk_00[1].mUnk_0a;
-    data_020c31dc.mUnk_00[1].mUnk_0a = i;
+    data_020c31dc.mTexEntryCount--;
+    data_020c31dc.mTexSlots[data_020c31dc.mTexNodes[i].mSlotIndex].mKey = -2;
+    result = FreeTexBlock(data_020c31dc.mTexNodes[i].mOffset >> 9);
+    data_020c31dc.mTexNodes[1].mNext = data_020c31dc.mTexNodes[i].mNext;
+    data_020c31dc.mTexNodes[data_020c31dc.mTexNodes[i].mNext].mPrev = 1;
+    data_020c31dc.mTexNodes[i].mPrev = data_020c31dc.mTexNodes[1].mPrev;
+    data_020c31dc.mTexNodes[1].mPrev = i;
     return result;
 }
 
-// Finds a free block of at least `size` bytes (counted in 512-byte units) in the first pool, evicting slots until
-// one fits, and splits it.
-u32 func_0202283c(Unk_PoolRange *n, u32 size, u32 slot) {
+// Allocates a run of 512-byte VRAM blocks for `size` bytes from the texture cache's heap: takes the smallest free run
+// that fits (removing least recently used entries until one does), marks it used, stores its byte offset in node
+// `node`, gives the rest of the run back to the free list and returns the offset.
+u32 AllocTexBlock(Unk_PoolRange *n, u32 size, u32 node) {
     unsigned long q;
     int found;
     u32 p;
@@ -89,27 +92,27 @@ u32 func_0202283c(Unk_PoolRange *n, u32 size, u32 slot) {
 
     size = (size >> 9) + ((size & 0x1ff) != 0);
     for (;;) {
-        q = n[(gSystemState.mTexVramGroup.mSize16Kb << 14) / 512].mUnk_4;
+        q = n[(gSystemState.mTexVramGroup.mSize16Kb << 14) / 512].mNext;
         found = -1;
         while (size <= n[q].mUnk_0) {
             found = q;
-            q = n[q].mUnk_4;
+            q = n[q].mNext;
         }
         if (found != -1) {
             break;
         }
         victim = 1;
         do {
-            victim = data_020c31dc.mUnk_00[victim].mUnk_0c;
-        } while (func_020227b4(victim) < size);
+            victim = data_020c31dc.mTexNodes[victim].mNext;
+        } while (RemoveLeastRecentTexCacheEntry(victim) < size);
     }
     spare = n[found].mUnk_0;
-    n[found].mUnk_0 = size + 0x8000;
+    n[found].mUnk_0 = size + POOL_BLOCK_USED;
     addr = found << 9;
-    data_020c31dc.mUnk_00[slot].mUnk_00 = addr;
-    p = n[found].mUnk_2;
-    n[n[found].mUnk_4].mUnk_2 = p;
-    n[n[found].mUnk_2].mUnk_4 = n[found].mUnk_4;
+    data_020c31dc.mTexNodes[node].mOffset = addr;
+    p = n[found].mPrev;
+    n[n[found].mNext].mPrev = p;
+    n[n[found].mPrev].mNext = n[found].mNext;
     if (spare - size == 0) {
         return addr;
     }
@@ -119,161 +122,163 @@ u32 func_0202283c(Unk_PoolRange *n, u32 size, u32 slot) {
     n[next + (spare - size)].mUnk_6 = next;
     while (spare - size < n[q].mUnk_0) {
         p = q;
-        q = n[q].mUnk_4;
+        q = n[q].mNext;
     }
-    n[next].mUnk_4 = q;
-    n[next].mUnk_2 = p;
-    n[p].mUnk_4 = next;
-    n[q].mUnk_2 = next;
+    n[next].mNext = q;
+    n[next].mPrev = p;
+    n[p].mNext = next;
+    n[q].mPrev = next;
     return addr;
 }
 
-// Looks up `key` in the first pool's hash table; on a miss it claims a slot and a block and starts the transfer
-// into it.
-u32 func_020229b4(u32 kind, u32 key, u32 size, u32 srcSize) {
+// Returns the VRAM byte offset of texture `key`, looked up in the texture cache's hash table; a hit makes the entry the
+// most recently used. On a miss it takes a free node (removing the least recently used entry once there are more
+// than 0x2bc), allocates blocks for `size` bytes and queues the transfer, so the offset is returned before the data
+// arrives. `kind` picks the source: 1 a texture of the block file, 2 the file gSystemState.mUnk_42c, any other value
+// the data's offset in mTexFile (`srcSize` is the stored size for kinds other than 1; 0 means `size`). Counts calls
+// and probes in mTexLookupCount and mTexProbeCount.
+u32 FindOrLoadTex(u32 kind, u32 key, u32 size, u32 srcSize) {
     u32 idx;
     int first = -1;
-    u32 slot;
+    u32 node;
     u32 step;
     u32 off;
     TexInfo info;
 
     step = gHashSteps[(key >> 10) & 0x7f];
     idx = key & 0x3ff;
-    data_020c31dc.mUnk_4c++;
+    data_020c31dc.mTexLookupCount++;
     for (;;) {
-        data_020c31dc.mUnk_50++;
-        if (key == data_020c31dc.mUnk_04[idx].mUnk_00) {
-            slot = data_020c31dc.mUnk_04[idx].mUnk_04;
-            MoveIndexNode16ToEnd((IndexNode16 *) data_020c31dc.mUnk_00, slot);
-            return data_020c31dc.mUnk_00[slot].mUnk_00;
+        data_020c31dc.mTexProbeCount++;
+        if (key == data_020c31dc.mTexSlots[idx].mKey) {
+            node = data_020c31dc.mTexSlots[idx].mNodeIndex;
+            MoveIndexNode16ToEnd((IndexNode16 *) data_020c31dc.mTexNodes, node);
+            return data_020c31dc.mTexNodes[node].mOffset;
         }
-        if (data_020c31dc.mUnk_04[idx].mUnk_00 == -2 && first == -1) {
+        if (data_020c31dc.mTexSlots[idx].mKey == -2 && first == -1) {
             first = idx;
-        } else if (data_020c31dc.mUnk_04[idx].mUnk_00 == -1 ||
-                   (data_020c31dc.mUnk_04[idx].mUnk_00 == -2 && idx == first)) {
-            u16 count = data_020c31dc.mUnk_60 + 1;
+        } else if (data_020c31dc.mTexSlots[idx].mKey == -1 ||
+                   (data_020c31dc.mTexSlots[idx].mKey == -2 && idx == first)) {
+            u16 count = data_020c31dc.mTexEntryCount + 1;
 
-            data_020c31dc.mUnk_60 = count;
+            data_020c31dc.mTexEntryCount = count;
             if (count > 0x2bc) {
-                func_020227b4(data_020c31dc.mUnk_00[1].mUnk_0c);
+                RemoveLeastRecentTexCacheEntry(data_020c31dc.mTexNodes[1].mNext);
             }
             if (srcSize == 0) {
                 srcSize = size;
             }
-            slot = data_020c31dc.mUnk_00[1].mUnk_0a;
-            data_020c31dc.mUnk_00[1].mUnk_0a = data_020c31dc.mUnk_00[slot].mUnk_0a;
-            data_020c31dc.mUnk_00[slot].mUnk_0a = data_020c31dc.mUnk_00[0].mUnk_0a;
-            data_020c31dc.mUnk_00[slot].mUnk_0c = 0;
-            data_020c31dc.mUnk_00[0].mUnk_0a = slot;
-            data_020c31dc.mUnk_00[data_020c31dc.mUnk_00[slot].mUnk_0a].mUnk_0c = slot;
+            node = data_020c31dc.mTexNodes[1].mPrev;
+            data_020c31dc.mTexNodes[1].mPrev = data_020c31dc.mTexNodes[node].mPrev;
+            data_020c31dc.mTexNodes[node].mPrev = data_020c31dc.mTexNodes[0].mPrev;
+            data_020c31dc.mTexNodes[node].mNext = 0;
+            data_020c31dc.mTexNodes[0].mPrev = node;
+            data_020c31dc.mTexNodes[data_020c31dc.mTexNodes[node].mPrev].mNext = node;
             if (first != -1) {
                 idx = first;
             }
-            data_020c31dc.mUnk_04[idx].mUnk_00 = key;
-            data_020c31dc.mUnk_04[idx].mUnk_04 = slot;
-            data_020c31dc.mUnk_00[slot].mUnk_08 = idx;
-            data_020c31dc.mUnk_00[slot].mUnk_00 = func_0202283c(data_020c31dc.mUnk_08, size, slot);
+            data_020c31dc.mTexSlots[idx].mKey = key;
+            data_020c31dc.mTexSlots[idx].mNodeIndex = node;
+            data_020c31dc.mTexNodes[node].mSlotIndex = idx;
+            data_020c31dc.mTexNodes[node].mOffset = AllocTexBlock(data_020c31dc.mTexBlocks, size, node);
             if (kind == 1) {
                 u32 shift;
                 u8 flag;
                 s16 bits;
 
                 off = key - func_0201c538();
-                func_0202ae84(off >> 6, &info, off & 0x3f);
+                GetTexInfo(off >> 6, &info, off & 0x3f);
                 flag = (info.mUnk_12 != 1 && info.mUnk_12 != 4) ? 0xff : 0;
                 if (gTextureBlocks.mBlockFileKind == 2) {
                     kind = (info.mUnk_00 << 7) + info.mUnk_13;
                 } else {
                     kind = info.mUnk_00 << 5;
                 }
-                bits = info.mUnk_0c;
+                bits = info.mWidth;
                 shift = 32 - CountLeadingZeros(~bits & (bits - 1));
-                QueueTransferEx(func_0202ad68(), kind, data_020c31dc.mUnk_00[slot].mUnk_00 | 0xa0000000, size, 0, shift,
-                                flag);
+                QueueTransferEx(GetBlockFile(), kind, data_020c31dc.mTexNodes[node].mOffset | 0xa0000000, size, 0,
+                                shift, flag);
             } else if (kind == 2) {
                 off = key - func_0201c550();
-                QueueTransferEx(gSystemState.mUnk_42c, off, data_020c31dc.mUnk_00[slot].mUnk_00 | 0xa0000000, srcSize,
+                QueueTransferEx(gSystemState.mUnk_42c, off, data_020c31dc.mTexNodes[node].mOffset | 0xa0000000, srcSize,
                                 size, 0, 0);
             } else {
-                QueueTransferEx(data_020c31dc.mUnk_54, kind, data_020c31dc.mUnk_00[slot].mUnk_00 | 0xa0000000, srcSize,
-                                size, 0, 0);
+                QueueTransferEx(data_020c31dc.mTexFile, kind, data_020c31dc.mTexNodes[node].mOffset | 0xa0000000,
+                                srcSize, size, 0, 0);
             }
             gSystemState.mUnk_2bc += size;
             gSystemState.mUnk_2b8 += size;
-            return data_020c31dc.mUnk_00[slot].mUnk_00;
+            return data_020c31dc.mTexNodes[node].mOffset;
         }
         idx = (idx + step) & 0x3ff;
     }
 }
 
-// Same as func_020225dc for the second pool.
-u32 func_02022cdc(u32 i) {
-    Unk_PoolRange *n = data_020c31dc.mUnk_14;
+u32 FreePlttBlock(u32 i) {
+    Unk_PoolRange *n = data_020c31dc.mPlttBlocks;
     u32 q;
     u32 j;
     u32 k;
     u32 size;
 
-    n[i].mUnk_0 &= ~0x8000;
+    n[i].mUnk_0 &= ~POOL_BLOCK_USED;
     j = i + n[i].mUnk_0;
-    if (j < data_020c31dc.mUnk_64 && !(n[j].mUnk_0 & 0x8000)) {
+    if (j < data_020c31dc.mPlttBlockCount && !(n[j].mUnk_0 & POOL_BLOCK_USED)) {
         n[i].mUnk_0 += n[j].mUnk_0;
         n[i + n[i].mUnk_0].mUnk_6 = i;
-        n[n[j].mUnk_4].mUnk_2 = n[j].mUnk_2;
-        n[n[j].mUnk_2].mUnk_4 = n[j].mUnk_4;
+        n[n[j].mNext].mPrev = n[j].mPrev;
+        n[n[j].mPrev].mNext = n[j].mNext;
     }
     k = n[i].mUnk_6;
-    if (k < data_020c31dc.mUnk_64 && !(n[k].mUnk_0 & 0x8000)) {
+    if (k < data_020c31dc.mPlttBlockCount && !(n[k].mUnk_0 & POOL_BLOCK_USED)) {
         n[k].mUnk_0 += n[i].mUnk_0;
         n[k + n[k].mUnk_0].mUnk_6 = k;
-        n[n[k].mUnk_4].mUnk_2 = n[k].mUnk_2;
-        n[n[k].mUnk_2].mUnk_4 = n[k].mUnk_4;
+        n[n[k].mNext].mPrev = n[k].mPrev;
+        n[n[k].mPrev].mNext = n[k].mNext;
         i = k;
     }
     size = n[i].mUnk_0;
     if (size < 4) {
-        j = data_020c31dc.mUnk_64 + 1;
-        q = n[j].mUnk_2;
+        j = data_020c31dc.mPlttBlockCount + 1;
+        q = n[j].mPrev;
         while (size > n[q].mUnk_0) {
             j = q;
-            q = n[q].mUnk_2;
+            q = n[q].mPrev;
         }
-        n[i].mUnk_2 = q;
-        n[i].mUnk_4 = j;
-        n[j].mUnk_2 = i;
-        n[q].mUnk_4 = i;
+        n[i].mPrev = q;
+        n[i].mNext = j;
+        n[j].mPrev = i;
+        n[q].mNext = i;
     } else {
-        j = data_020c31dc.mUnk_64;
-        q = n[j].mUnk_4;
+        j = data_020c31dc.mPlttBlockCount;
+        q = n[j].mNext;
         while (size < n[q].mUnk_0) {
             j = q;
-            q = n[q].mUnk_4;
+            q = n[q].mNext;
         }
-        n[i].mUnk_4 = q;
-        n[i].mUnk_2 = j;
-        n[j].mUnk_4 = i;
-        n[q].mUnk_2 = i;
+        n[i].mNext = q;
+        n[i].mPrev = j;
+        n[j].mNext = i;
+        n[q].mPrev = i;
     }
     return n[i].mUnk_0;
 }
 
-// Same as func_020227b4 for the second pool.
-u32 func_02022eb4(u32 i) {
+u32 RemoveLeastRecentPlttCacheEntry(u32 i) {
     u32 result;
 
-    data_020c31dc.mUnk_5e--;
-    data_020c31dc.mUnk_10[data_020c31dc.mUnk_0c[i].mUnk_08].mUnk_00 = -2;
-    result = func_02022cdc(data_020c31dc.mUnk_0c[i].mUnk_00 >> 5);
-    data_020c31dc.mUnk_0c[1].mUnk_0c = data_020c31dc.mUnk_0c[i].mUnk_0c;
-    data_020c31dc.mUnk_0c[data_020c31dc.mUnk_0c[i].mUnk_0c].mUnk_0a = 1;
-    data_020c31dc.mUnk_0c[i].mUnk_0a = data_020c31dc.mUnk_0c[1].mUnk_0a;
-    data_020c31dc.mUnk_0c[1].mUnk_0a = i;
+    data_020c31dc.mPlttEntryCount--;
+    data_020c31dc.mPlttSlots[data_020c31dc.mPlttNodes[i].mSlotIndex].mKey = -2;
+    result = FreePlttBlock(data_020c31dc.mPlttNodes[i].mOffset >> 5);
+    data_020c31dc.mPlttNodes[1].mNext = data_020c31dc.mPlttNodes[i].mNext;
+    data_020c31dc.mPlttNodes[data_020c31dc.mPlttNodes[i].mNext].mPrev = 1;
+    data_020c31dc.mPlttNodes[i].mPrev = data_020c31dc.mPlttNodes[1].mPrev;
+    data_020c31dc.mPlttNodes[1].mPrev = i;
     return result;
 }
 
-// Same as func_0202283c for the second pool (counted in 32-byte units).
-u32 func_02022f40(Unk_PoolRange *n, u32 size, u32 slot) {
+// Counted in 32-byte VRAM blocks.
+u32 AllocPlttBlock(Unk_PoolRange *n, u32 size, u32 node) {
     unsigned long q;
     int found;
     u32 p;
@@ -284,27 +289,27 @@ u32 func_02022f40(Unk_PoolRange *n, u32 size, u32 slot) {
 
     size = (size >> 5) + ((size & 0x1f) != 0);
     for (;;) {
-        q = n[(gSystemState.mPlttVramGroup.mSize16Kb << 14) / 32].mUnk_4;
+        q = n[(gSystemState.mPlttVramGroup.mSize16Kb << 14) / 32].mNext;
         found = -1;
         while (size <= n[q].mUnk_0) {
             found = q;
-            q = n[q].mUnk_4;
+            q = n[q].mNext;
         }
         if (found != -1) {
             break;
         }
         victim = 1;
         do {
-            victim = data_020c31dc.mUnk_0c[victim].mUnk_0c;
-        } while (func_02022eb4(victim) < size);
+            victim = data_020c31dc.mPlttNodes[victim].mNext;
+        } while (RemoveLeastRecentPlttCacheEntry(victim) < size);
     }
     spare = n[found].mUnk_0;
-    n[found].mUnk_0 = size + 0x8000;
+    n[found].mUnk_0 = size + POOL_BLOCK_USED;
     addr = found << 5;
-    data_020c31dc.mUnk_0c[slot].mUnk_00 = addr;
-    p = n[found].mUnk_2;
-    n[n[found].mUnk_4].mUnk_2 = p;
-    n[n[found].mUnk_2].mUnk_4 = n[found].mUnk_4;
+    data_020c31dc.mPlttNodes[node].mOffset = addr;
+    p = n[found].mPrev;
+    n[n[found].mNext].mPrev = p;
+    n[n[found].mPrev].mNext = n[found].mNext;
     if (spare - size == 0) {
         return addr;
     }
@@ -314,82 +319,90 @@ u32 func_02022f40(Unk_PoolRange *n, u32 size, u32 slot) {
     n[next + (spare - size)].mUnk_6 = next;
     while (spare - size < n[q].mUnk_0) {
         p = q;
-        q = n[q].mUnk_4;
+        q = n[q].mNext;
     }
-    n[next].mUnk_4 = q;
-    n[next].mUnk_2 = p;
-    n[p].mUnk_4 = next;
-    n[q].mUnk_2 = next;
+    n[next].mNext = q;
+    n[next].mPrev = p;
+    n[p].mNext = next;
+    n[q].mPrev = next;
     return addr;
 }
 
-// Same as func_020229b4 for the second pool.
-u32 func_020230b0(u32 kind, u32 key, u32 size) {
+// Returns the VRAM byte offset of palette `key`, cached like FindOrLoadTex's textures, with these differences: the
+// hash starts at the key's low 8 bits and wraps its probe with 0x3ff although the table has 0x100 slots; a miss
+// stops only at a never-used slot; more than 200 entries remove the least recently used one; nothing is counted; the
+// node records `size`; and the key range picks the source: below func_0201c544() offset `kind` of mPlttFile, below
+// func_0201c564() palette `kind` of the palette file, else entry key - func_0201c564() of gSystemState.mUnk_390.
+u32 FindOrLoadPltt(u32 kind, u32 key, u32 size) {
     u32 idx = key & 0xff;
     int first = -1;
     u32 step = gHashSteps[(key >> 8) & 0x7f];
-    u32 slot;
+    u32 node;
 
     for (;;) {
-        if (key == data_020c31dc.mUnk_10[idx].mUnk_00) {
-            slot = data_020c31dc.mUnk_10[idx].mUnk_04;
-            MoveIndexNode16ToEnd((IndexNode16 *) data_020c31dc.mUnk_0c, slot);
-            return data_020c31dc.mUnk_0c[slot].mUnk_00;
+        if (key == data_020c31dc.mPlttSlots[idx].mKey) {
+            node = data_020c31dc.mPlttSlots[idx].mNodeIndex;
+            MoveIndexNode16ToEnd((IndexNode16 *) data_020c31dc.mPlttNodes, node);
+            return data_020c31dc.mPlttNodes[node].mOffset;
         }
-        if (data_020c31dc.mUnk_10[idx].mUnk_00 == -2 && first == -1) {
+        if (data_020c31dc.mPlttSlots[idx].mKey == -2 && first == -1) {
             first = idx;
-        } else if (data_020c31dc.mUnk_10[idx].mUnk_00 == -1) {
-            data_020c31dc.mUnk_5e++;
-            if (data_020c31dc.mUnk_5e > 200) {
-                func_02022eb4(data_020c31dc.mUnk_0c[1].mUnk_0c);
+        } else if (data_020c31dc.mPlttSlots[idx].mKey == -1) {
+            data_020c31dc.mPlttEntryCount++;
+            if (data_020c31dc.mPlttEntryCount > 200) {
+                RemoveLeastRecentPlttCacheEntry(data_020c31dc.mPlttNodes[1].mNext);
             }
-            slot = data_020c31dc.mUnk_0c[1].mUnk_0a;
-            data_020c31dc.mUnk_0c[1].mUnk_0a = data_020c31dc.mUnk_0c[slot].mUnk_0a;
-            data_020c31dc.mUnk_0c[slot].mUnk_0a = data_020c31dc.mUnk_0c[0].mUnk_0a;
-            data_020c31dc.mUnk_0c[slot].mUnk_0c = 0;
-            data_020c31dc.mUnk_0c[0].mUnk_0a = slot;
-            data_020c31dc.mUnk_0c[data_020c31dc.mUnk_0c[slot].mUnk_0a].mUnk_0c = slot;
+            node = data_020c31dc.mPlttNodes[1].mPrev;
+            data_020c31dc.mPlttNodes[1].mPrev = data_020c31dc.mPlttNodes[node].mPrev;
+            data_020c31dc.mPlttNodes[node].mPrev = data_020c31dc.mPlttNodes[0].mPrev;
+            data_020c31dc.mPlttNodes[node].mNext = 0;
+            data_020c31dc.mPlttNodes[0].mPrev = node;
+            data_020c31dc.mPlttNodes[data_020c31dc.mPlttNodes[node].mPrev].mNext = node;
             if (first != -1) {
                 idx = first;
             }
-            data_020c31dc.mUnk_10[idx].mUnk_00 = key;
-            data_020c31dc.mUnk_10[idx].mUnk_04 = slot;
-            data_020c31dc.mUnk_0c[slot].mUnk_08 = idx;
-            data_020c31dc.mUnk_0c[slot].mUnk_00 = func_02022f40(data_020c31dc.mUnk_14, size, slot);
-            data_020c31dc.mUnk_0c[slot].mUnk_04 = size;
+            data_020c31dc.mPlttSlots[idx].mKey = key;
+            data_020c31dc.mPlttSlots[idx].mNodeIndex = node;
+            data_020c31dc.mPlttNodes[node].mSlotIndex = idx;
+            data_020c31dc.mPlttNodes[node].mOffset = AllocPlttBlock(data_020c31dc.mPlttBlocks, size, node);
+            data_020c31dc.mPlttNodes[node].mSize = size;
             if (key < func_0201c544()) {
-                QueueTransfer(data_020c31dc.mUnk_56, kind, data_020c31dc.mUnk_0c[slot].mUnk_00 | 0xb0000000, size);
+                QueueTransfer(data_020c31dc.mPlttFile, kind, data_020c31dc.mPlttNodes[node].mOffset | 0xb0000000, size);
             } else if (key < func_0201c564()) {
-                QueueTransfer(func_0202ad58(), kind << 5, data_020c31dc.mUnk_0c[slot].mUnk_00 | 0xb0000000, size);
+                QueueTransfer(GetPaletteFile(), kind << 5, data_020c31dc.mPlttNodes[node].mOffset | 0xb0000000, size);
             } else {
                 QueueTransfer(0, gSystemState.mUnk_390[key - func_0201c564()] + 4,
-                              data_020c31dc.mUnk_0c[slot].mUnk_00 | 0xb0000000, size);
+                              data_020c31dc.mPlttNodes[node].mOffset | 0xb0000000, size);
             }
             gSystemState.mUnk_2c4 += size;
             gSystemState.mUnk_2c0 += size;
-            return data_020c31dc.mUnk_0c[slot].mUnk_00;
+            return data_020c31dc.mPlttNodes[node].mOffset;
         }
         idx = (idx + step) & 0x3ff;
     }
 }
 
-// Evaluates map `map` into out/pos/vec. With *done set it combines the new result with the values already in out.
-void func_020232f0(u32 map, u16 *out, s32 *pos, s32 *vec, u32 d, int *done, const Unk_PoseNode *node) {
+// Reads node `nodeIndex` of track `track` into out/pos/vec and sets *done; nothing is written when the track has no
+// data. With *done already set it would instead combine the angles with out by the track's flags (1 adds the
+// difference from the node's own angles, 2 takes the read angles when one is more than 0x100 from the node's, else
+// terminates) and drop the read position and vector; both callers clear *done first, so that path does not run in
+// this build.
+void ApplyAnimTrack(u32 track, u16 *out, s32 *pos, s32 *vec, u32 nodeIndex, int *done, const PoseNode *node) {
     u16 r[3];
     s32 p[3];
     s32 v[3];
     u32 kind;
 
-    if (data_020c31dc.mUnk_18[map].mUnk_00 == NULL) {
+    if (data_020c31dc.mAnimTracks[track].mData == NULL) {
         return;
     }
     if (*done == 0) {
-        func_0202350c(out, pos, vec, d, map);
+        ReadAnimTrackNode(out, pos, vec, nodeIndex, track);
         *done = 1;
         return;
     }
-    func_0202350c(r, p, v, d, map);
-    kind = data_020c31dc.mUnk_18[map].mUnk_0d & 3;
+    ReadAnimTrackNode(r, p, v, nodeIndex, track);
+    kind = data_020c31dc.mAnimTracks[track].mFlags & 3;
     if (kind == 1) {
         out[0] += AngleDelta((u16) (node->mUnk_5 << 8), r[0]);
         out[1] += AngleDelta((u16) (node->mUnk_6 << 8), r[1]);
@@ -407,12 +420,14 @@ void func_020232f0(u32 map, u16 *out, s32 *pos, s32 *vec, u32 d, int *done, cons
     }
 }
 
-void func_02023478(u16 a, u16 *rot, VecFx32 *pos, VecFx32 *vec, int e, int f, int g, int h) {
-    data_020c31dc.mUnk_18[0].mUnk_0c = g;
-    data_020c31dc.mUnk_18[0].mUnk_08 = f;
-    data_020c31dc.mUnk_18[0].mUnk_04 = e;
-    data_020c31dc.mUnk_18[0].mUnk_00 = FindOrLoadCachedFile(a);
-    func_0202350c(rot, (s32 *) pos, (s32 *) vec, h, 0);
+// Loads file `file` into track 0 (it stays there), sets the track's frames and weight, reads node `node` into
+// rot/pos/vec and shifts pos right by 3.
+void ReadAnimFileNode(u16 file, u16 *rot, VecFx32 *pos, VecFx32 *vec, int frame, int nextFrame, int weight, int node) {
+    data_020c31dc.mAnimTracks[0].mNextWeight = weight;
+    data_020c31dc.mAnimTracks[0].mNextFrameIndex = nextFrame;
+    data_020c31dc.mAnimTracks[0].mFrameIndex = frame;
+    data_020c31dc.mAnimTracks[0].mData = FindOrLoadCachedFile(file);
+    ReadAnimTrackNode(rot, (s32 *) pos, (s32 *) vec, node, 0);
     if (pos != NULL) {
         pos->x >>= 3;
         pos->y >>= 3;

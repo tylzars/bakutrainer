@@ -114,7 +114,7 @@ int func_0200f468(void) {
         EaseLevel(&state->mUnk_04, 8);
         data_020c61ac.mUnk_2a = MapRangeFromZero(state->mUnk_04, 0x4000, e->mUnk_08, 0);
         func_0202a1cc();
-        func_0202cf08(e->mUnk_0c + 0x800000, data_0204e218[i].mUnk_00, e->mUnk_04 + data_020c61ac.mUnk_2a, 0x80, 1);
+        DrawSprite(e->mUnk_0c + 0x800000, data_0204e218[i].mUnk_00, e->mUnk_04 + data_020c61ac.mUnk_2a, 0x80, 1);
         return 0x7e;
     }
     return 0;
@@ -144,7 +144,7 @@ void func_0200f4d4(void) {
     }
     if (func_0202a188() != 3) {
         AddTouchButtonWithSounds(0x400, 0x80, 0x60, 0, 0, id, 0, 0x168);
-        func_0202cf08(id, 0x80, 0x60, 0, 2);
+        DrawSprite(id, 0x80, 0x60, 0, 2);
     }
 }
 
@@ -202,8 +202,8 @@ void func_0200f660(void) {
     i = 2;
     data_020ae870.mCount = 0;
     for (;; i++) {
-        if (func_02021e08(0x246, i) == 4) {
-            const u8 *s = func_02021e18(0x246, i);
+        if (GetFileValueType(0x246, i) == 4) {
+            const u8 *s = GetFileString(0x246, i);
             if (s[0] != 0) {
                 func_0202938c(buf, s);
                 if (func_020290ac("LAST", buf) == 1) {
@@ -246,7 +246,7 @@ void func_0200f758(void) {
     if ((gSystemState.mKeysPressed & 0x200) && data_020b1084.mLanguage != 0) {
         data_020b1084.mLanguage--;
     }
-    func_020215fc(0x80, 0x60, data_0201a6c6, menu->mEntries[menu->mSelected].mText, 2, 0xe0, 0x10, 1);
+    DrawText(0x80, 0x60, data_0201a6c6, menu->mEntries[menu->mSelected].mText, 2, 0xe0, 0x10, 1);
     if (gSystemState.mKeysPressed & 1) {
         SetFlowValue(0x14, menu->mEntries[menu->mSelected].mIndex);
         SetFlowValue(0x15, menu->mSelected);
@@ -258,7 +258,7 @@ void func_0200f848(u32 a, int b) {
     if (a >= func_0200f988()) {
         OS_Terminate();
     }
-    func_02027230(&data_020ae6f4.mUnk_04, a * 2 + 0x1f5, a * 2 + 0x1f4, 2, 0);
+    StartModel(&data_020ae6f4.mUnk_04, a * 2 + 0x1f5, a * 2 + 0x1f4, 2, 0);
     data_020ae6f4.mUnk_00 = b;
     if (b == 0) {
         data_020ae6f4.mUnk_04.mUnk_172_13 = 1;
@@ -271,17 +271,17 @@ void func_0200f898(void) {
     int a, x, y, z;
     func_020242a8(params, 0xff, 0, 0, 0x1000, 0x8000, -1, 0x100);
     params[0x43] |= 8;
-    func_020262a0(&data_020ae6f4.mUnk_04);
-    func_02024b5c(data_020ae6f4.mUnk_04.mUnk_170, params, &data_020ae6f4.mUnk_04, 0);
-    a = func_02021e44(0x235, idx * 4 + 2);
+    UpdateModelScript(&data_020ae6f4.mUnk_04);
+    DrawModelFileEx(data_020ae6f4.mUnk_04.mUnk_170, params, &data_020ae6f4.mUnk_04, 0);
+    a = GetFileValue(0x235, idx * 4 + 2);
     if (data_020ae6f4.mUnk_04.mUnk_14c.mUnk_2 >= a) {
-        x = func_02021e44(0x235, idx * 4 + 4);
-        y = func_02021e44(0x235, idx * 4 + 5);
-        z = func_02021e44(0x235, idx * 4 + 3);
+        x = GetFileValue(0x235, idx * 4 + 4);
+        y = GetFileValue(0x235, idx * 4 + 5);
+        z = GetFileValue(0x235, idx * 4 + 3);
         if (data_020ae6f4.mUnk_04.mUnk_14c.mUnk_2 < a + 4) {
             x = MapRange(data_020ae6f4.mUnk_04.mUnk_14c.mUnk_2, a, a + 4, x - 0x78, x);
         }
-        func_0202cf08(z * 6 + 0xee, x, y, 0x64, 1);
+        DrawSprite(z * 6 + 0xee, x, y, 0x64, 1);
     }
 }
 
@@ -298,7 +298,7 @@ u16 func_0200f97c(void) {
 
 int func_0200f988(void) {
     int n = 0;
-    while (func_02021e44(0x235, 2 + n * 4) != -1) {
+    while (GetFileValue(0x235, 2 + n * 4) != -1) {
         n++;
     }
     return n;

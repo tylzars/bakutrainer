@@ -36,25 +36,25 @@ typedef struct {
     vu16 mUnk_6;
 } Unk_OamEntry;
 
-// Sets up one object of a screen: calls func_0202cf08 for the picture `id`, then writes object attribute entry `index`
+// Sets up one object of a screen: calls DrawSprite for the picture `id`, then writes object attribute entry `index`
 // (attr0, attribute 1 from `attr2`, and attribute 2 from a tile offset and the palette) and, when `rotate` is set, the
 // rotation entry of the screen's group from the sine/cosine table at the frame counter's phase.
 void func_02039830(int id, u32 shift, u32 index, u32 attr2, u32 attr0, int rotate, int screen) {
     Unk_OamEntry *oam = screen == 1 ? (Unk_OamEntry *) 0x07000000 : (Unk_OamEntry *) 0x07000400;
     s16 tile;
 
-    func_0202cf08(id + 0x200000, 0x80, 0x60, 0, screen);
+    DrawSprite(id + 0x200000, 0x80, 0x60, 0, screen);
     tile = func_0202ad9c();
     if (tile < 0) {
         return;
     }
-    tile += (shift * 4 >> func_0202ad78(screen));
+    tile += (shift * 4 >> GetUnitShift(screen));
     if (rotate == 0) {
         oam[index].mUnk_0 = attr0;
         oam[index].mUnk_2 = attr2 + 0x4000;
     } else {
         int angle = (gSystemState.mElapsedFrames & 0xff) << 8;
-        u32 group = func_0202cdac(screen);
+        u32 group = GetMatCount(screen);
         int k = (angle >> 4) * 2;
 
         *(vu16 *) ((u8 *) oam + 6 + group * 32) = FX_SinCosTable_[k + 1] >> 4;
@@ -164,7 +164,7 @@ void func_02039a94(void) {
         if (gSystemState.mFlags & 0x200) {
             func_02039908(x, y, screen);
         } else {
-            func_0202cf08(gSystemState.mUnk_290 + level, x, y, 0, screen);
+            DrawSprite(gSystemState.mUnk_290 + level, x, y, 0, screen);
         }
         if (gSystemState.mUnk_240 != 0) {
             gSystemState.mUnk_240();

@@ -17,19 +17,19 @@ SlotCounters data_020abfc0;
 AnimSlot data_020abfcc[ANIM_SLOT_COUNT];
 ObjSlot data_020ace4c[OBJ_SLOT_COUNT];
 
-void func_0200d6c8(void) {
+void ClearObjSlots(void) {
     u32 i;
     data_020abfc0.mLastId = 0;
     for (i = 0; i < OBJ_SLOT_COUNT; i++) {
-        data_020ace4c[i].mKind = 0;
+        data_020ace4c[i].mKind = OBJ_KIND_FREE;
     }
 }
 
-ObjSlot *func_0200d6ec(int kind, int a, int x, int y, int vx, int vy, int life, int h) {
+ObjSlot *AddObjSlot(int kind, int a, int x, int y, int vx, int vy, int life, int h) {
     u32 i;
     ObjSlot *s = data_020ace4c;
     for (i = 0; i < OBJ_SLOT_COUNT; i++, s++) {
-        if (s->mKind == 0) {
+        if (s->mKind == OBJ_KIND_FREE) {
             if (life < 0) {
                 OS_Terminate();
             }
@@ -50,21 +50,21 @@ ObjSlot *func_0200d6ec(int kind, int a, int x, int y, int vx, int vy, int life, 
     return 0;
 }
 
-int func_0200d76c(int kind, int a, int b, int c, int d) {
-    return func_0200d78c(kind, 0, a, b, 0, 0, c, d);
+int AddAnimObjSlot(int script, int a, int b, int c, int d) {
+    return AddAnimObjSlotEx(script, 0, a, b, 0, 0, c, d);
 }
 
-int func_0200d78c(int kind, int a, int b, int c, int d, int e, int f, int g) {
-    ObjSlot *s = func_0200d6ec(3, a, b, c, d, e, f, g);
+int AddAnimObjSlotEx(int script, int a, int b, int c, int d, int e, int f, int g) {
+    ObjSlot *s = AddObjSlot(OBJ_KIND_ANIM, a, b, c, d, e, f, g);
     if (s != 0) {
-        s->mUnk_08 = kind;
-        func_0202de60(&s->mUnk_30, data_0201abec[kind]);
+        s->mUnk_08 = script;
+        StartSprite(&s->mUnk_30, data_0201abec[script]);
         return s->mId;
     }
     return 0;
 }
 
-int func_0200d7cc(int a, int b, int duration, int c, int d, int e, int f, int g, int h, int i) {
+int AddSpriteObjSlot(int a, int b, int duration, int c, int d, int e, int f, int g, int h, int i) {
     ObjSlot *s;
     if (duration == 0) {
         OS_Terminate();
@@ -72,7 +72,7 @@ int func_0200d7cc(int a, int b, int duration, int c, int d, int e, int f, int g,
     if (duration <= 0 && f > 0) {
         OS_Terminate();
     }
-    s = func_0200d6ec(2, b, c, d, e, f, g, h);
+    s = AddObjSlot(OBJ_KIND_SPRITE, b, c, d, e, f, g, h);
     if (s != 0) {
         s->mUnk_44 = a;
         s->mUnk_08 = a;
@@ -87,12 +87,12 @@ int func_0200d7cc(int a, int b, int duration, int c, int d, int e, int f, int g,
     return 0;
 }
 
-int func_0200d838(const char *text, int a, const void *font, int b, int x, int y, int c, int d, int e, int f, int g) {
+int AddTextObjSlot(const char *text, int a, const void *font, int b, int x, int y, int c, int d, int e, int f, int g) {
     ObjSlot *s;
     if (b < 0) {
         OS_Terminate();
     }
-    s = func_0200d6ec(4, 0, x, y, c, d, e, f);
+    s = AddObjSlot(OBJ_KIND_TEXT, 0, x, y, c, d, e, f);
     if (s != 0) {
         strcpy(s->mText, text);
         s->mUnk_44 = a;
@@ -103,18 +103,18 @@ int func_0200d838(const char *text, int a, const void *font, int b, int x, int y
     return 0;
 }
 
-ObjSlot *func_0200d88c(int id) {
+ObjSlot *FindObjSlot(int id) {
     u32 i;
     ObjSlot *s = data_020ace4c;
     for (i = 0; i < OBJ_SLOT_COUNT; i++, s++) {
-        if (s->mKind != 0 && s->mId == id) {
+        if (s->mKind != OBJ_KIND_FREE && s->mId == id) {
             return s;
         }
     }
     return 0;
 }
 
-void func_0200d8bc(void) {
+void UpdateObjSlots(void) {
     u32 i;
     s32 sx, sy;
     ObjSlot *s;
@@ -124,7 +124,7 @@ void func_0200d8bc(void) {
         s32 rect[4];
         s32 pt[2];
         char buf[0x20];
-        if (s->mKind == 0) {
+        if (s->mKind == OBJ_KIND_FREE) {
             continue;
         }
         s->mX += s->mVx;
@@ -134,13 +134,13 @@ void func_0200d8bc(void) {
         if (s->mKind != OBJ_KIND_TEXT_PLUS && s->mKind != OBJ_KIND_TEXT) {
             done = 0;
             if (s->mKind == OBJ_KIND_ANIM) {
-                obj = func_0202db1c(&s->mUnk_30);
+                obj = UpdateSprite(&s->mUnk_30);
                 if (s->mUnk_10e == 1) {
                     done = 1;
                 }
             } else if (s->mUnk_10a == 0) {
                 obj = s->mUnk_44;
-                func_0202d828(obj, 0, rect);
+                GetSpriteRect(obj, 0, rect);
                 if (sx + rect[0] > 0x100 || sx + rect[2] < 0 || sy + rect[1] > 0xc0 || sy + rect[3] < 0) {
                     done = 1;
                 } else {
@@ -156,19 +156,21 @@ void func_0200d8bc(void) {
             }
             if (done == 0) {
                 if (s->mUnk_140 != 0) {
-                    func_02025db4(&s->mUnk_134, pt);
-                    func_0202cf08(obj + s->mUnk_0c, pt[0] + sx, pt[1] + sy, s->mUnk_158, s->mUnk_15c);
+                    ProjectToScreen(&s->mUnk_134, pt);
+                    DrawSprite(obj + s->mUnk_0c, pt[0] + sx, pt[1] + sy, s->mUnk_158, s->mUnk_15c);
                 } else {
-                    func_0202cf08(obj + s->mUnk_0c, sx, sy, s->mUnk_158, s->mUnk_15c);
+                    DrawSprite(obj + s->mUnk_0c, sx, sy, s->mUnk_158, s->mUnk_15c);
                 }
             } else {
-                s->mKind = 0;
+                s->mKind = OBJ_KIND_FREE;
             }
         } else {
             s->mUnk_10a--;
             if (s->mUnk_10a != 0) {
                 u16 saved;
                 s32 textObj = s->mUnk_44;
+                // No slot is created with OBJ_KIND_TEXT_PLUS in this build (AddObjSlot's callers pass OBJ_KIND_ANIM,
+                // OBJ_KIND_SPRITE or OBJ_KIND_TEXT), so this branch does not run.
                 if (s->mKind == OBJ_KIND_TEXT_PLUS) {
                     char *end;
                     buf[0] = '+';
@@ -180,20 +182,20 @@ void func_0200d8bc(void) {
                 saved = gSystemState.mUnk_308;
                 gSystemState.mUnk_308 = s->mUnk_158;
                 if (s->mUnk_140 != 0) {
-                    func_02025db4(&s->mUnk_134, pt);
-                    func_020215fc(pt[0] + sx, pt[1] + sy, s->mUnk_30, buf, textObj, 0x100, 0x18, s->mUnk_15c);
+                    ProjectToScreen(&s->mUnk_134, pt);
+                    DrawText(pt[0] + sx, pt[1] + sy, s->mUnk_30, buf, textObj, 0x100, 0x18, s->mUnk_15c);
                 } else {
-                    func_020215fc(sx, sy, s->mUnk_30, buf, textObj, 0x100, 0x18, s->mUnk_15c);
+                    DrawText(sx, sy, s->mUnk_30, buf, textObj, 0x100, 0x18, s->mUnk_15c);
                 }
                 gSystemState.mUnk_308 = saved;
             } else {
-                s->mKind = 0;
+                s->mKind = OBJ_KIND_FREE;
             }
         }
     }
 }
 
-void func_0200dacc(void) {
+void ClearAnimSlots(void) {
     u32 i;
     for (i = 0; i < ANIM_SLOT_COUNT; i++) {
         data_020abfcc[i].mKind = 0;
@@ -205,14 +207,17 @@ void func_0200daec(void) {
     data_020abfc0.mUnk_04 = 0;
 }
 
-void func_0200daf8(void) {
+// Draws the animation slots of kind 1 (UpdateAndDrawModel) and 2 (func_02024338) and counts their lifetimes down.
+// Nothing in this build sets a slot's mKind to 1 or 2 (ClearAnimSlots and this function only write 0), so the loop
+// body does not run.
+void UpdateAnimSlots(void) {
     u32 i;
     AnimSlot *s = data_020abfcc;
     for (i = 0; i < ANIM_SLOT_COUNT; i++, s++) {
         if ((u32) (s->mKind - 1) <= 1) {
             s->mUnk_17e = (s->mUnk_17e & ~0x1000) | (((u16) data_020abfc0.mUnk_04 & 1) << 12);
             if (s->mKind == 1) {
-                func_0202733c(&s->mUnk_0c, s->mUnk_18c, 1);
+                UpdateAndDrawModel(&s->mUnk_0c, s->mUnk_18c, 1);
             } else {
                 func_02024338(&s->mUnk_0c, s->mUnk_18c, 1);
             }
@@ -316,12 +321,12 @@ void func_0200dc08(int id, u16 *outId, u16 *outVal, u16 *outOpt1, u16 *outZ1, u1
     }
 }
 
-void func_0200dd5c(const char *path, int b) {
-    func_0202f638(path, b);
-    while (func_0202f8d0() == 1 && gSystemState.mKeysPressed == 0 && !gSystemState.mTouchPressed) {
+void RunVideo(const char *path, int b) {
+    StartVideo(path, b);
+    while (UpdateVideo() == 1 && gSystemState.mKeysPressed == 0 && !gSystemState.mTouchPressed) {
         UpdateSystemAndWait();
     }
-    func_0202fb4c();
+    StopVideo();
 }
 
 void func_0200dd90(void) {

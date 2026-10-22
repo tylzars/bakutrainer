@@ -27,7 +27,7 @@ extern const u8 data_0201a6bc[];
 extern const u8 data_0201a6c6[];
 extern const u8 data_0201a6d0[];
 
-// Model scripts (run by func_02026718) and sprite scripts (run by func_0202db1c), by table.
+// Model scripts (run by ExecModelScript) and sprite scripts (run by UpdateSprite), by table.
 extern const u32 data_0201aa60[];
 extern const u32 data_0201ab04[];
 extern u32 data_0201aba0[7];

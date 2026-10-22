@@ -21,7 +21,7 @@
 Board data_02064828;
 
 int func_02003194(int a, int b) {
-    return func_02021e44(0xd66, b + a * 12);
+    return GetFileValue(0xd66, b + a * 12);
 }
 
 void func_020031ac(s8 col, s8 row, Vec2i *out) {
@@ -85,7 +85,7 @@ void func_020032b4(Piece *p, u8 type) {
         } else {
             idx = type + 11;
         }
-        func_0202de60(&p->mSprite, data_0201abec[(u16) idx]);
+        StartSprite(&p->mSprite, data_0201abec[(u16) idx]);
     }
 }
 
@@ -102,7 +102,7 @@ void func_020032e4(Piece *p, int x, int y, int mode, int flag) {
         if (p->mUnk_110 >= 0) {
             prio -= 5;
         }
-        frame = func_0202db1c(&p->mSprite);
+        frame = UpdateSprite(&p->mSprite);
         if (mode == 2) {
             frame++;
             if (flag == 0) {
@@ -385,7 +385,7 @@ void func_02003aa8(Pair *pr, int a, int b) {
             func_020034f8(pr, &pos);
             func_020032e4(&pr->mPiece[1], pos.x >> 8, pos.y >> 8, 1, 1);
             if (b != 0) {
-                func_0202db1c(&data_02064828.mUnk_884c);
+                UpdateSprite(&data_02064828.mUnk_884c);
                 func_0202de80(data_02064828.mUnk_884c.mUnk_04, pr->mPos.x >> 8, pr->mPos.y >> 8, 0xfa, -1, 1);
             }
         }
@@ -776,7 +776,7 @@ void func_0200445c(void) {
     }
     data_02064828.mCount = 0;
     data_02064828.mUnk_8974 = 3738;
-    func_0202de60(&data_02064828.mUnk_884c, data_0201abec[26]);
+    StartSprite(&data_02064828.mUnk_884c, data_0201abec[26]);
     data_02064828.mUnk_01 = func_02003194(data_02064828.mUnk_00, 2);
     stagger = func_02003194(data_02064828.mUnk_00, 3);
     data_02064828.mUnk_08 = data_02064828.mUnk_04 = func_02003194(data_02064828.mUnk_00, 5) * 60000 / 1000;
@@ -866,8 +866,8 @@ void func_02004768(void) {
             if (data_02064828.mUnk_8994 >= 6) {
                 func_020059e8(&data_02064828.mUnk_08, 300);
                 sprintf(buf, "+%d'", 5);
-                func_0200d838(buf, 2, data_0201a61c, 30, data_02064828.mUnk_83c4.mPos.x >> 8,
-                              data_02064828.mUnk_83c4.mPos.y >> 8, 0, -128, 100, 1, 0);
+                AddTextObjSlot(buf, 2, data_0201a61c, 30, data_02064828.mUnk_83c4.mPos.x >> 8,
+                               data_02064828.mUnk_83c4.mPos.y >> 8, 0, -128, 100, 1, 0);
             }
             data_02064828.mUnk_8994 = 0;
             func_02003a5c();
@@ -896,7 +896,7 @@ void func_02004768(void) {
 
 void func_02004930(void) {
     SetFaded(3);
-    func_02022370();
+    ReleaseGxPool();
 }
 
 int func_02004940(u8 stage) {

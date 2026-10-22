@@ -35,14 +35,14 @@ void func_0200c034(MoveObj *o, int sprite, int model, const Vec2i *pos, int e, i
     }
     if (sprite >= 0) {
         o->mFlags |= 1;
-        func_0202de60(o, data_0201abec[sprite]);
+        StartSprite(o, data_0201abec[sprite]);
     }
     if (model >= 0) {
         o->mFlags |= 2;
         o->mScale = 0x1000;
     }
     func_0200c174(o, 0);
-    func_020271c8();
+    ClearAnimTracks();
 }
 
 void func_0200c0dc(MoveObj *o, int speed, const Vec2i *target, int limit) {
@@ -82,13 +82,13 @@ int func_0200c174(MoveObj *o, const Vec2i *pos) {
     if (o->mActive != 0) {
         int keep = 1;
         if (o->mFlags & 1) {
-            func_0202db1c(o);
+            UpdateSprite(o);
             if (o->mSprite.mUnk_de == 0) {
                 keep = 0;
             }
         }
         if (o->mFlags & 2) {
-            func_020262a0(&o->mModel);
+            UpdateModelScript(&o->mModel);
             if (o->mModel.mUnk_172_9 == 0) {
                 keep = 0;
             }
@@ -211,11 +211,11 @@ void func_0200c470(MoveObj *o) {
             func_020242a8(&params, o->mX >> 8, o->mY >> 8, -0x3000, o->mScale, 0x8000, -1, 0);
             params.mUnk_2c = -1;
             params.mUnk_34 = -1;
-            func_02024b5c(o->mModel.mUnk_170, &params, &o->mModel, 0);
+            DrawModelFileEx(o->mModel.mUnk_170, &params, &o->mModel, 0);
             func_020334f8(0);
         }
     } else {
-        func_020271c8();
+        ClearAnimTracks();
     }
 }
 
@@ -223,14 +223,14 @@ void func_0200c5d8(int a, int b, int c, int d, int e, int f, int g) {
     UpdateSystemAndWait();
     SetFaded(3);
     ResetKeys();
-    func_0202c1c4();
-    func_02022370();
+    ReleaseTextureLayers();
+    ReleaseGxPool();
     ResetVramBanks();
     ResetTouchButtons(0, 0);
     SetLcdSwap(a);
-    func_0202bdd8(0x10cb, 0x10ca, 0x10cc, f, 1);
-    func_0202bdd8(0x10cb, 0x10ca, 0x10cc, g, 2);
-    func_02021fb0(0x1c7, 0x1c6, d, e);
+    SetupTextureLayer(0x10cb, 0x10ca, 0x10cc, f, 1);
+    SetupTextureLayer(0x10cb, 0x10ca, 0x10cc, g, 2);
+    InitGxPool(0x1c7, 0x1c6, d, e);
     if (b != 0) {
         LoadImage(b, 1);
     }

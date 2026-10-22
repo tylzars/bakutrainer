@@ -74,7 +74,7 @@ void func_020055a8(void) {
     char text[32];
     StageRec *rec = &data_020b1990[data_020b6ee0.mSelectedStageIndex];
     DrawStageInfo(data_020b6ee0.mSelectedStageIndex, 2);
-    func_020215fc(48, 17, data_0201a61c, GetText(26), 0, 200, 16, 1);
+    DrawText(48, 17, data_0201a61c, GetText(26), 0, 200, 16, 1);
     func_0200bb14(255, 161, 161 + 96, 21, 0, 0, 0x17d, 1);
     func_0200bb14(0, 161, 161 + 97, 14, 0, 0, 90, 1);
     func_0200bb58(67, 61, 0, 0, 140, 0x303, data_0204e124[data_020b10fc.mMode], 0x11dc, 0, 0, 140 + 219, 1, 0, 0, 0);
@@ -94,15 +94,15 @@ void func_020055a8(void) {
         func_0200bb58(67, 152, 0, 0, 140, 0x304, data_0204e124[data_020b10fc.mMode], 0x11d6, 0, 0, 140 + 219, 1, 0, 0,
                       0);
     }
-    func_020215fc(99, 108, data_0201a64e, GetText(data_020b10fc.mMode + 31), 0, 200, 16, 1);
-    func_020215fc(106, 129, data_0201a61c, GetText(28), 0, 200, 16, 1);
+    DrawText(99, 108, data_0201a64e, GetText(data_020b10fc.mMode + 31), 0, 200, 16, 1);
+    DrawText(106, 129, data_0201a61c, GetText(28), 0, 200, 16, 1);
     sprintf(text, "%d", data_0206d448.mUnk_00);
-    func_020215fc(215, 129, data_0201a61c, text, 0, 200, 16, 1);
-    func_020215fc(106, 144, data_0201a61c, GetText(29), 0, 200, 16, 1);
+    DrawText(215, 129, data_0201a61c, text, 0, 200, 16, 1);
+    DrawText(106, 144, data_0201a61c, GetText(29), 0, 200, 16, 1);
     sprintf(text, "%d", data_0206d448.mUnk_04);
-    func_020215fc(215, 144, data_0201a61c, text, 0, 200, 16, 1);
+    DrawText(215, 144, data_0201a61c, text, 0, 200, 16, 1);
     func_0200bb14(153, 181, 50 << 4, 0x11de, 0, 0, 0x167, 1);
-    func_020215fc(153, 181, data_0201a61c, GetText(30), 2, 200, 16, 1);
+    DrawText(153, 181, data_0201a61c, GetText(30), 2, 200, 16, 1);
 }
 
 // Handles the touch regions of the mode selection screen.
@@ -217,7 +217,7 @@ int func_02005b1c(int mode) {
                     return 0;
                 }
             }
-            func_0202cf08(data_020b1084.mLanguage + 0xe77, (data_0206d448.mUnk_0c >> 8) + 128, 96, 10, mode);
+            DrawSprite(data_020b1084.mLanguage + 0xe77, (data_0206d448.mUnk_0c >> 8) + 128, 96, 10, mode);
             return 1;
         case 2: {
             int id = data_0206d448.mUnk_14 == 1 ? 0xec5 : 0xe7d;
@@ -233,7 +233,7 @@ int func_02005b1c(int mode) {
             } else {
                 return 0;
             }
-            func_0202cf08(id + data_020b1084.mLanguage, (data_0206d448.mUnk_0c >> 8) + 128, 96, 10, mode);
+            DrawSprite(id + data_020b1084.mLanguage, (data_0206d448.mUnk_0c >> 8) + 128, 96, 10, mode);
             return 1;
         }
         default:

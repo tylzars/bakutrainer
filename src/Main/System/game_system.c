@@ -245,13 +245,13 @@ u16 LookupLanguageFileId(int index) {
 
 const char *GetText(int id) {
     if (id != 0) {
-        return (const char *) func_02021e18(LookupLanguageFileId(data_020b1084.mLanguage), id);
+        return (const char *) GetFileString(LookupLanguageFileId(data_020b1084.mLanguage), id);
     }
     return 0;
 }
 
 const char *GetLanguageText(int id, int index) {
-    return (const char *) func_02021e18(LookupLanguageFileId(index), id);
+    return (const char *) GetFileString(LookupLanguageFileId(index), id);
 }
 
 void InitGameFlow(void) {
@@ -412,7 +412,7 @@ int OpenPromptScreen(int *a, int *b) {
                 LoadImageEx(r == 0x100 ? 0x10d3 : 0x10d4, 2, 0, 2);
             }
         }
-        func_02034768(0, 0, 0);
+        SetFog(0, 0, 0);
         if (IsLcdSwapped() == 0) {
             if (a != 0) {
                 *a = 2;
@@ -493,19 +493,19 @@ void DrawPromptScreen(void) {
     }
     if (gSystemState.mImageIds[0] == 0xffff) {
         for (i = 0; (u32) i < 12; i++) {
-            func_0202cf08(0x8011ea + i, (i & 3) << 6, (u32) i / 4 << 6, 250, 1);
+            DrawSprite(0x8011ea + i, (i & 3) << 6, (u32) i / 4 << 6, 250, 1);
         }
     }
     if (gPromptScreen.mSavedImageIds[1] == 0xffff) {
         for (i = 0; (u32) i < 12; i++) {
-            func_0202cf08(0x11ea + i, (i & 3) << 6, (u32) i / 4 << 6, 250, 2);
+            DrawSprite(0x11ea + i, (i & 3) << 6, (u32) i / 4 << 6, 250, 2);
         }
     }
     mode = IsLcdSwapped() != 0 ? 1 : 2;
-    func_020215fc(128, 96, data_0201a64e, GetText(36), 2, 200, 16, mode);
-    func_0202cf08(0xe22, 47, (gPromptScreen.mTextY >> 8) + 17, 140, IsLcdSwapped() != 0 ? 2 : 1);
+    DrawText(128, 96, data_0201a64e, GetText(36), 2, 200, 16, mode);
+    DrawSprite(0xe22, 47, (gPromptScreen.mTextY >> 8) + 17, 140, IsLcdSwapped() != 0 ? 2 : 1);
     mode = IsLcdSwapped() != 0 ? 2 : 1;
-    func_020215fc(47, (gPromptScreen.mTextY >> 8) + 17, data_0201a61c, GetText(36), 0, 200, 16, mode);
+    DrawText(47, (gPromptScreen.mTextY >> 8) + 17, data_0201a61c, GetText(36), 0, 200, 16, mode);
     func_0200bc50((gPromptScreen.mFirstButtonX >> 8) + 128, 82, 0, 0, 140, PROMPT_SCREEN_BUTTON_FIRST, 0xdda,
                   GetText(37), data_0201a61c, 2, 0, 0, flag, 0, 0, 0);
     func_0200bc50((gPromptScreen.mSecondButtonX >> 8) + 128, 122, 0, 0, 140, PROMPT_SCREEN_BUTTON_SECOND, 0xdda,
@@ -616,16 +616,16 @@ void func_020101d0(void) {
 
     if (gSystemState.mImageIds[0] == 0xffff) {
         for (i = 0; (u32) i < 12; i++) {
-            func_0202cf08(0x8011ea + i, (i & 3) << 6, (u32) i / 4 << 6, 250, 1);
+            DrawSprite(0x8011ea + i, (i & 3) << 6, (u32) i / 4 << 6, 250, 1);
         }
     }
     if (gPromptScreen.mSavedImageIds[1] == 0xffff) {
         for (i = 0; (u32) i < 12; i++) {
-            func_0202cf08(0x11ea + i, (i & 3) << 6, (u32) i / 4 << 6, 250, 2);
+            DrawSprite(0x11ea + i, (i & 3) << 6, (u32) i / 4 << 6, 250, 2);
         }
     }
     mode = IsLcdSwapped() != 0 ? 2 : 1;
-    func_020215fc(128, 90, data_0201a64e, (const char *) func_02021e18(SAVE_BLOCK_ID, id + 6), 2, 200, 16, mode);
+    DrawText(128, 90, data_0201a64e, (const char *) GetFileString(SAVE_BLOCK_ID, id + 6), 2, 200, 16, mode);
 }
 
 void func_02010294(int a, int b, int c) {
@@ -633,12 +633,12 @@ void func_02010294(int a, int b, int c) {
     UpdateSystemAndWait();
     ResetKeys();
     ResetVramBanks();
-    func_0202c1c4();
+    ReleaseTextureLayers();
     SetLcdSwap(c);
-    func_0202bdd8(0x10cb, 0x10ca, 0x10cc, b, 1);
-    func_0202bdd8(0x10cb, 0x10ca, 0x10cc, 2, 2);
+    SetupTextureLayer(0x10cb, 0x10ca, 0x10cc, b, 1);
+    SetupTextureLayer(0x10cb, 0x10ca, 0x10cc, 2, 2);
     if (a != 0) {
-        func_02021fb0(0x1c7, 0x1c6, a, 16);
+        InitGxPool(0x1c7, 0x1c6, a, 16);
         func_02024208();
     }
 }
@@ -648,10 +648,10 @@ void func_020102f8(void) {
     UpdateSystemAndWait();
     *(vu16 *) 0x04001050 = 0;
     *(vu16 *) 0x04000050 = 0;
-    func_0200d6c8();
-    func_0200dacc();
+    ClearObjSlots();
+    ClearAnimSlots();
     if (gSystemState.mFlags & 0x80) {
-        func_02022370();
+        ReleaseGxPool();
     }
     data_020b6ee0.mButtonsEnabled = 1;
 }
@@ -847,7 +847,7 @@ void func_02010648(u32 a) {
     u32 id;
 
     if (a > gSystemState.mUnk_32e) {
-        func_02021e44(SAVE_BLOCK_ID, 0x1c9);
+        GetFileValue(SAVE_BLOCK_ID, 0x1c9);
         state = a;
         lang10 = data_020b1084.mLanguage * 10;
         id = gSystemState.mSaveLastField + 4 + lang10;
@@ -857,12 +857,12 @@ void func_02010648(u32 a) {
             gSystemState.mUnk_324 = gSystemState.mElapsedFrames;
             SetFaded(3);
             SetLcdSwap(1);
-            func_0202c1c4();
-            func_02022370();
+            ReleaseTextureLayers();
+            ReleaseGxPool();
             FreeVramBanks(6);
             FreeVramBanks(2);
             LoadImage(0xdaa, 3);
-            func_0202bdd8(0x10cb, 0x10ca, 0x10cc, 2, 2);
+            SetupTextureLayer(0x10cb, 0x10ca, 0x10cc, 2, 2);
         }
         switch (a) {
             case 1:
@@ -887,10 +887,10 @@ void func_02010648(u32 a) {
             case 10:
                 break;
         }
-        func_020215fc(0x80, 0x60, data_0201a6c6, (const char *) func_02021e18(SAVE_BLOCK_ID, id), 2, 0xfa, 0x10, 2);
+        DrawText(0x80, 0x60, data_0201a6c6, (const char *) GetFileString(SAVE_BLOCK_ID, id), 2, 0xfa, 0x10, 2);
         if (a == 2) {
-            func_020215fc(0x80, 0x88, data_0201a6c6, (const char *) func_02021e18(SAVE_BLOCK_ID, base + lang10), 2,
-                          0xfa, 0x10, 2);
+            DrawText(0x80, 0x88, data_0201a6c6, (const char *) GetFileString(SAVE_BLOCK_ID, base + lang10), 2, 0xfa,
+                     0x10, 2);
         }
         UpdateSystemAndWait();
         gSystemState.mFlags |= 0x80000;
@@ -1124,8 +1124,8 @@ void func_02010d4c(SaveRecord *rec) {
 void SetupStateMenu(void) {
     ResetKeys();
     ResetVramBanks();
-    func_0202c1c4();
-    func_0202bdd8(0x10cb, 0x10ca, 0x10cc, 0, 2);
+    ReleaseTextureLayers();
+    SetupTextureLayer(0x10cb, 0x10ca, 0x10cc, 0, 2);
     LoadImage(0xdaa, 1);
     LoadImage(0xde7, 2);
     SetLcdSwap(1);
@@ -1192,9 +1192,9 @@ void UpdateStateMenu(void) {
         }
         rows = 0;
         for (i = 0; i < gStateMenu.mDepth; i++) {
-            func_020215fc(0x14 + i * 0x10, 0x1e + rows * 10, data_0201a6c6 + 2 * FONT_STRIDE,
-                          (const char *) func_02021e18(ENTRY_BLOCK, i * ENTRY_STRIDE + 2 + gStateMenuSelection[i]), 0,
-                          0xf0, 0xa, 2);
+            DrawText(0x14 + i * 0x10, 0x1e + rows * 10, data_0201a6c6 + 2 * FONT_STRIDE,
+                     (const char *) GetFileString(ENTRY_BLOCK, i * ENTRY_STRIDE + 2 + gStateMenuSelection[i]), 0, 0xf0,
+                     0xa, 2);
             rows++;
         }
         if (gStateMenu.mDepth > 0) {
@@ -1205,7 +1205,7 @@ void UpdateStateMenu(void) {
         for (j = start; j < ENTRY_STRIDE; j++) {
             if (j != start) {
                 for (k = 0; k < gStateMenu.mDepth; k++) {
-                    if (func_02021e08(ENTRY_BLOCK, j + (k * ENTRY_STRIDE + 2)) != 0) {
+                    if (GetFileValueType(ENTRY_BLOCK, j + (k * ENTRY_STRIDE + 2)) != 0) {
                         break;
                     }
                 }
@@ -1214,11 +1214,11 @@ void UpdateStateMenu(void) {
                 }
             }
             n = gStateMenu.mDepth * ENTRY_STRIDE + 2;
-            if (func_02021e08(ENTRY_BLOCK, j + n) != 0) {
-                func_020215fc(0x14 + gStateMenu.mDepth * 0x10, 0x1e + rows * 10,
-                              j != gStateMenuSelection[gStateMenu.mDepth] ? data_0201a6c6 + FONT_STRIDE
-                                                                          : data_0201a6c6 + 2 * FONT_STRIDE,
-                              (const char *) func_02021e18(ENTRY_BLOCK, j + n), 0, 0xf0, 0xa, 2);
+            if (GetFileValueType(ENTRY_BLOCK, j + n) != 0) {
+                DrawText(0x14 + gStateMenu.mDepth * 0x10, 0x1e + rows * 10,
+                         j != gStateMenuSelection[gStateMenu.mDepth] ? data_0201a6c6 + FONT_STRIDE
+                                                                     : data_0201a6c6 + 2 * FONT_STRIDE,
+                         (const char *) GetFileString(ENTRY_BLOCK, j + n), 0, 0xf0, 0xa, 2);
                 last = j;
                 rows++;
             }
@@ -1230,7 +1230,7 @@ void UpdateStateMenu(void) {
                     s32 idx = *(s32 *) &gStateMenu.mDepth;
                     (*p)--;
                     n = idx * ENTRY_STRIDE + 2;
-                    if (func_02021e08(ENTRY_BLOCK, n + *p) != 0) {
+                    if (GetFileValueType(ENTRY_BLOCK, n + *p) != 0) {
                         break;
                     }
                 } while (gStateMenuSelection[gStateMenu.mDepth] > start);
@@ -1242,7 +1242,7 @@ void UpdateStateMenu(void) {
                     s32 idx = *(s32 *) &gStateMenu.mDepth;
                     (*p)++;
                     n = idx * ENTRY_STRIDE + 2;
-                    if (func_02021e08(ENTRY_BLOCK, n + *p) != 0) {
+                    if (GetFileValueType(ENTRY_BLOCK, n + *p) != 0) {
                         break;
                     }
                 } while (gStateMenuSelection[gStateMenu.mDepth] < last);
@@ -1252,8 +1252,8 @@ void UpdateStateMenu(void) {
             gStateMenu.mDepth++;
             gStateMenuSelection[gStateMenu.mDepth] = *(gStateMenuSelection + gStateMenu.mDepth - 1);
             n = gStateMenu.mDepth * ENTRY_STRIDE + 2 + gStateMenuSelection[gStateMenu.mDepth];
-            if ((u32) (func_02021e08(ENTRY_BLOCK, n) - 2) <= 1) {
-                int v = func_02021e44(ENTRY_BLOCK, n);
+            if ((u32) (GetFileValueType(ENTRY_BLOCK, n) - 2) <= 1) {
+                int v = GetFileValue(ENTRY_BLOCK, n);
                 if (v < 100) {
                     data_020b6ee0.mMapIndex = v - 1;
                     data_020b6ee0.mSelectedStageIndex = -1;
@@ -1328,7 +1328,7 @@ void SetupSphereModel(void) {
     gSphereModel.mSphereIndex = 0;
     gSphereModel.mAngle = 0x8000;
     gSphereModel.mUnk_180 = 0;
-    func_020271ec(&gSphereModel.mModel, 0, 0, 0, data_0201ab04[gSphereModel.mSphereIndex]);
+    InitModel(&gSphereModel.mModel, 0, 0, 0, data_0201ab04[gSphereModel.mSphereIndex]);
 }
 
 void UpdateSphereModel(void) {
@@ -1359,7 +1359,7 @@ void UpdateSphereModel(void) {
         gSphereModel.mSphereIndex = idx;
         gSphereModel.mAngle = 0x8000;
         gSphereModel.mUnk_180 = 0;
-        func_020271ec(&gSphereModel.mModel, 0, 0, 0, data_0201ab04[idx]);
+        InitModel(&gSphereModel.mModel, 0, 0, 0, data_0201ab04[idx]);
     } else if (gSystemState.mKeysPressed & 0x100) {
         idx = gSphereModel.mSphereIndex + 1;
         if (idx >= 0x26) {
@@ -1368,7 +1368,7 @@ void UpdateSphereModel(void) {
         gSphereModel.mSphereIndex = idx;
         gSphereModel.mAngle = 0x8000;
         gSphereModel.mUnk_180 = 0;
-        func_020271ec(&gSphereModel.mModel, 0, 0, 0, data_0201ab04[idx]);
+        InitModel(&gSphereModel.mModel, 0, 0, 0, data_0201ab04[idx]);
     }
 }
 

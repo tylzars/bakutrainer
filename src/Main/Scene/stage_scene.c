@@ -49,13 +49,13 @@ Scene data_020ab7e0;
 Scene *gScene = &data_020ab7e0;
 
 void GetMapEntryPos(int index, VecFx32 *out) {
-    void *entry = func_0203204c(index, 0);
+    void *entry = GetMapEntry(index, 0);
     if (entry == 0) {
         OS_Terminate();
     }
-    out->x = func_02031f98(entry);
-    out->y = func_02031fa4(entry);
-    out->z = func_02031fb0(entry);
+    out->x = GetMapEntryX(entry);
+    out->y = GetMapEntryY(entry);
+    out->z = GetMapEntryZ(entry);
 }
 
 void StartShake(int ms) {
@@ -63,11 +63,11 @@ void StartShake(int ms) {
 }
 
 void SetupSceneCamera(void) {
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_44 = 0x030d4000;
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_54 = 0x640;
+    gMapState.mCamera.mUnk_2dc.mUnk_44 = 0x030d4000;
+    gMapState.mCamera.mUnk_2dc.mUnk_54 = 0x640;
     func_02033e38(1, 1, 1);
     func_02033e38(8, 0, 1);
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_30 = 1;
+    gMapState.mCamera.mUnk_2dc.mUnk_30 = 1;
     GetMapEntryPos(1, &gScene->mUnk_5b4);
     GetMapEntryPos(0, &gScene->mUnk_5c0);
     GetMapEntryPos(2, &gScene->mUnk_5cc);
@@ -77,17 +77,17 @@ void SetupSceneCamera(void) {
     memset(&gScene->mShakePerFrame, 0, 12);
     gScene->mShakeFrameIndex = 0;
     gScene->mShakeTimer = 0;
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_38 = 0;
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_40 = 0;
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_3c = 0;
-    data_020c3e44.mUnk_2024.mUnk_5b_1 = 0;
+    gMapState.mCamera.mUnk_2dc.mUnk_38 = 0;
+    gMapState.mCamera.mUnk_2dc.mUnk_40 = 0;
+    gMapState.mCamera.mUnk_2dc.mUnk_3c = 0;
+    gMapState.mCamera.mUnk_5b_1 = 0;
     func_02033df4(25);
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_14 = data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_18;
-    data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_10 = 0;
+    gMapState.mCamera.mUnk_2dc.mUnk_14 = gMapState.mCamera.mUnk_2dc.mUnk_18;
+    gMapState.mCamera.mUnk_2dc.mUnk_10 = 0;
 }
 
 void UpdateSceneCamera(void) {
-    Unk_020c5f04 *cam = &data_020c3e44.mUnk_2024.mUnk_9c;
+    Unk_020c5f04 *cam = &gMapState.mCamera.mUnk_9c;
     VecFx32 a;
     VecFx32 b;
     a.x = MapRange(gScene->mEndTimer, 0, gScene->mEndTimerMax, gScene->mUnk_5cc.x >> 8,
@@ -128,7 +128,7 @@ void UpdateSceneCamera(void) {
         cam->mUnk_228.y += gScene->mShakeOffset.y;
         cam->mUnk_228.z += gScene->mShakeOffset.z;
     }
-    func_02033fc8();
+    UpdateCamera();
 }
 
 void SetupScene(void) {
@@ -152,16 +152,16 @@ void SetupScene(void) {
     func_02024208();
     RequestTrack(4, 0x4c);
     func_0200dc08(data_0204e1c0[gScene->mStage.mUnk_10], &area[4], &area[3], &area[2], &area[1], &area[0], 0);
-    func_020325b0(area[4], area[2], area[3], 0, area[1], area[0]);
+    SetupMap(area[4], area[2], area[3], 0, area[1], area[0]);
     UpdateSystemAndWait();
     SetupSceneCamera();
     G3X_SetClearColor(0, 8, 0x7fff, 0, 0);
     memset(&gScene->mUnk_3a8, 0, sizeof(DrawParams));
     func_02031fc4(3, &gScene->mUnk_3a8.mPos);
     gScene->mUnk_3a8.mUnk_43 = 0;
-    func_020271ec(&gScene->mUnk_230, 0, 0, 0, data_0201abbc[gScene->mStage.mUnk_10 + 1]);
+    InitModel(&gScene->mUnk_230, 0, 0, 0, data_0201abbc[gScene->mStage.mUnk_10 + 1]);
     gScene->mBasePos = gScene->mUnk_3a8.mPos;
-    func_020271ec(&gScene->mUnk_3ec, 0, 0, 0, data_0201abbc[0]);
+    InitModel(&gScene->mUnk_3ec, 0, 0, 0, data_0201abbc[0]);
     data_020b10fc.mSceneState = SCENE_STATE_START;
     gScene->mPopupRow = data_020b10fc.mTableRow - 1;
     gScene->mScore = 0;
@@ -223,14 +223,14 @@ void UpdateScene(void) {
 
 void LeaveScene(void) {
     SetFaded(3);
-    func_02022370();
+    ReleaseGxPool();
 }
 
 void DrawScene(void) {
     func_0201168c(data_020b6ee0.mSelectedStageIndex, gScene->mScore, data_0206d448.mUnk_00, gScene->mEndTimer, 2);
     func_0200cdc4();
-    func_02033614(data_020c3e44.mUnk_2024.mUnk_9c.mUnk_228.x, data_020c3e44.mUnk_2024.mUnk_9c.mUnk_228.z);
-    func_0202733c(&gScene->mUnk_230, &gScene->mUnk_3a8, 0xb0000002);
+    func_02033614(gMapState.mCamera.mUnk_9c.mUnk_228.x, gMapState.mCamera.mUnk_9c.mUnk_228.z);
+    UpdateAndDrawModel(&gScene->mUnk_230, &gScene->mUnk_3a8, 0xb0000002);
     PlayObjectSe(&gScene->mUnk_230);
     func_02024368(&gScene->mUnk_3ec, 255, 0, 0x1000, 0, 0);
     if (data_020b10fc.mSceneState < SCENE_STATE_END) {
@@ -288,17 +288,17 @@ void AddPopups(void) {
     if (mask != -1) {
         do {
             int t = gScene->mPopupRow * 5;
-            int cellType = func_02021e08(0xd64, t + 6);
+            int cellType = GetFileValueType(0xd64, t + 6);
             if (cellType != 2 && cellType != 3) {
                 OS_Terminate();
             }
-            gScene->mRowPopupCount = func_02021e44(0xd64, t + 6);
+            gScene->mRowPopupCount = GetFileValue(0xd64, t + 6);
             if (gScene->mRowPopupCount == 0) {
                 gScene->mPopupRow--;
             }
         } while (gScene->mRowPopupCount == 0);
         for (i = 0; i < 4; i++) {
-            total += func_02021e44(0xd64, gScene->mPopupRow * 5 + 2 + i);
+            total += GetFileValue(0xd64, gScene->mPopupRow * 5 + 2 + i);
             cum[i] = total;
         }
         n = 0;
@@ -422,7 +422,7 @@ void HandlePopupTouch(PopupSlot *slot) {
 
     pos.x = slot->mCellIndex % 3 * 64 + 63;
     pos.y = slot->mCellIndex / 3 * 48 + 64;
-    func_0200d76c(5, pos.x, pos.y, 30, 1);
+    AddAnimObjSlot(5, pos.x, pos.y, 30, 1);
     slot->mState = POPUP_STATE_TOUCHED;
     slot->mDisappearTimer = 30;
     gScene->mUnk_62c++;
@@ -457,34 +457,34 @@ void HandlePopupTouch(PopupSlot *slot) {
 void LoadSceneValues(void) {
     int base;
     base = data_020b10fc.mTableRow * 3;
-    gScene->mEndTimer = func_02021e44(0xd63, base + 2) * 60;
+    gScene->mEndTimer = GetFileValue(0xd63, base + 2) * 60;
     gScene->mEndTimerMax = gScene->mEndTimer;
     base = (data_020b10fc.mTableRow + 1) * 3;
-    gScene->mUnk_630 = func_02021e44(0xd63, base);
+    gScene->mUnk_630 = GetFileValue(0xd63, base);
     base = data_020b10fc.mTableRow * 3;
-    gScene->mUnk_624 = func_02021e44(0xd63, base + 4);
+    gScene->mUnk_624 = GetFileValue(0xd63, base + 4);
     base = data_020b10fc.mTableRow * 11;
-    gScene->mPopupIntervalMs = func_02021e44(0xd62, base + 2);
+    gScene->mPopupIntervalMs = GetFileValue(0xd62, base + 2);
     base = data_020b10fc.mTableRow * 11;
-    gScene->mUnk_63c = func_02021e44(0xd62, base + 3);
+    gScene->mUnk_63c = GetFileValue(0xd62, base + 3);
     base = data_020b10fc.mTableRow * 11;
-    gScene->mPopupIntervalMinMs = func_02021e44(0xd62, base + 4);
+    gScene->mPopupIntervalMinMs = GetFileValue(0xd62, base + 4);
     base = data_020b10fc.mTableRow * 11;
-    gScene->mRowSeconds = func_02021e44(0xd62, base + 5);
+    gScene->mRowSeconds = GetFileValue(0xd62, base + 5);
     base = data_020b10fc.mTableRow * 11;
-    gScene->mPopupShowMs = func_02021e44(0xd62, base + 6);
+    gScene->mPopupShowMs = GetFileValue(0xd62, base + 6);
     base = data_020b10fc.mTableRow * 11;
-    gScene->mUnk_648 = func_02021e44(0xd62, base + 7);
+    gScene->mUnk_648 = GetFileValue(0xd62, base + 7);
     base = data_020b10fc.mTableRow * 11;
-    gScene->mPopupShowMinMs = func_02021e44(0xd62, base + 8);
+    gScene->mPopupShowMinMs = GetFileValue(0xd62, base + 8);
     base = (data_020b10fc.mTableRow + 1) * 11;
-    gScene->mUnk_660 = func_02021e44(0xd62, base);
+    gScene->mUnk_660 = GetFileValue(0xd62, base);
     base = data_020b10fc.mTableRow * 11;
-    gScene->mUnk_65c = func_02021e44(0xd62, base + 10) * 60;
+    gScene->mUnk_65c = GetFileValue(0xd62, base + 10) * 60;
     base = data_020b10fc.mTableRow * 11;
-    gScene->mUnk_658 = func_02021e44(0xd62, base + 9);
+    gScene->mUnk_658 = GetFileValue(0xd62, base + 9);
     base = data_020b10fc.mTableRow * 11;
-    gScene->mUnk_628 = func_02021e44(0xd62, base + 12);
+    gScene->mUnk_628 = GetFileValue(0xd62, base + 12);
 }
 
 void ClearNumber(void) {
@@ -516,5 +516,5 @@ void DrawNumber(void) {
 }
 
 int func_0200d6b0(u8 stage) {
-    return func_02021e44(0xd63, (stage + 1) * 3);
+    return GetFileValue(0xd63, (stage + 1) * 3);
 }

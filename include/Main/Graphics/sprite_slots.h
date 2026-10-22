@@ -21,6 +21,7 @@ extern "C" {
 typedef struct ObjSlot {
     s32 mKind;
     s32 mId;
+    // The script index (OBJ_KIND_ANIM) or the sprite id (OBJ_KIND_SPRITE); nothing reads it in this build.
     s32 mUnk_08;
     s32 mUnk_0c;
     char mText[0x20];
@@ -71,20 +72,20 @@ extern SlotCounters data_020abfc0;
 extern AnimSlot data_020abfcc[ANIM_SLOT_COUNT];
 extern ObjSlot data_020ace4c[OBJ_SLOT_COUNT];
 
-void func_0200d6c8(void);
-ObjSlot *func_0200d6ec(int kind, int a, int x, int y, int vx, int vy, int life, int h);
-int func_0200d76c(int kind, int a, int b, int c, int d);
-int func_0200d78c(int kind, int a, int b, int c, int d, int e, int f, int g);
-int func_0200d7cc(int a, int b, int duration, int c, int d, int e, int f, int g, int h, int i);
-int func_0200d838(const char *text, int a, const void *font, int b, int x, int y, int c, int d, int e, int f, int g);
-ObjSlot *func_0200d88c(int id);
-void func_0200d8bc(void);
-void func_0200dacc(void);
+void ClearObjSlots(void);
+ObjSlot *AddObjSlot(int kind, int a, int x, int y, int vx, int vy, int life, int h);
+int AddAnimObjSlot(int script, int a, int b, int c, int d);
+int AddAnimObjSlotEx(int script, int a, int b, int c, int d, int e, int f, int g);
+int AddSpriteObjSlot(int a, int b, int duration, int c, int d, int e, int f, int g, int h, int i);
+int AddTextObjSlot(const char *text, int a, const void *font, int b, int x, int y, int c, int d, int e, int f, int g);
+ObjSlot *FindObjSlot(int id);
+void UpdateObjSlots(void);
+void ClearAnimSlots(void);
 void func_0200daec(void);
-void func_0200daf8(void);
+void UpdateAnimSlots(void);
 void func_0200dbac(void);
 void func_0200dc08(int id, u16 *outId, u16 *outVal, u16 *outOpt1, u16 *outZ1, u16 *outZ2, u16 *outOpt2);
-void func_0200dd5c(const char *path, int b);
+void RunVideo(const char *path, int b);
 void func_0200dd90(void);
 
 #ifdef __cplusplus
