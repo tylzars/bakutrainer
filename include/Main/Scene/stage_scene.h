@@ -12,16 +12,22 @@ extern "C" {
 
 // One timed slot of the popup table; the table has 9 of them.
 typedef struct PopupSlot {
-    s32 mUnk_00;
-    s32 mUnk_04;
-    s32 mUnk_08;
-    s32 mUnk_0c;
-    s32 mUnk_10;
-    s32 mUnk_14;
-    s32 mUnk_18;
+    s32 mKind;
+    // Only ever set to 0 (StartPopup), so POPUP_STATE_WAIT lasts one update in this build.
+    s32 mWaitTimer;
+    s32 mAppearFrameCount;
+    // Counts down from 0x10 in POPUP_STATE_APPEAR; the popup sprite and its touch button are added from 2 on.
+    s32 mAppearTimer;
+    s32 mShowTimer;
+    s32 mDisappearFrameCount;
+    // Counts down in POPUP_STATE_DISAPPEAR; HandlePopupTouch also sets it to 30 for POPUP_STATE_TOUCHED, which counts
+    // it down the same way.
+    s32 mDisappearTimer;
     s32 mUnk_1c;
-    s32 mUnk_20;
-    s32 mUnk_24;
+    s32 mState;
+    // Grid cell (3 across) the popup is drawn in; both StartPopup calls pass the slot's own index, so it always equals
+    // the slot's position in mSlots.
+    s32 mCellIndex;
 } PopupSlot;
 
 #define POPUP_SLOT_COUNT 9
@@ -31,7 +37,7 @@ typedef struct PopupPos {
     s32 y;
 } PopupPos;
 
-// The stage scene object (data_02063940 points to it): the stage settings, two models, the draw parameters, the
+// The stage scene object (gScene points to it): the stage settings, two models, the draw parameters, the
 // scene's vectors and counters, and the timed popup slots.
 typedef struct Scene {
     u8 mUnk_000[0x178];
@@ -41,67 +47,74 @@ typedef struct Scene {
     DrawParams mUnk_3a8;
     Model mUnk_3ec;
     u8 mUnk_564[0x5a8 - 0x564];
-    VecFx32 mUnk_5a8;
+    VecFx32 mBasePos;
     VecFx32 mUnk_5b4;
     VecFx32 mUnk_5c0;
     VecFx32 mUnk_5cc;
     VecFx32 mUnk_5d8;
-    VecFx32 mUnk_5e4;
-    VecFx32 mUnk_5f0;
-    VecFx32 mUnk_5fc;
-    u32 mUnk_608;
-    s32 mUnk_60c;
-    u32 mUnk_610;
-    s32 mUnk_614;
-    s32 mUnk_618;
-    s32 mUnk_61c;
-    s32 mUnk_620;
+    VecFx32 mShakeTarget;
+    VecFx32 mShakeOffset;
+    VecFx32 mShakePerFrame;
+    u32 mShakeFrameIndex;
+    s32 mShakeTimer;
+    u32 mScore;
+    s32 mEndTimerMax;
+    // Counts down in SCENE_STATE_RUN; at 0 the scene state becomes SCENE_STATE_END. Also the time func_0201168c draws,
+    // raised by mUnk_65c (up to mEndTimerMax) when a kind-1 popup is touched, and its ratio to mEndTimerMax places the
+    // camera points (UpdateSceneCamera).
+    s32 mEndTimer;
+    // Row of table 0xd64: advanced by func_0200ce24 every mRowSeconds seconds, stepped back by AddPopups while the
+    // row's popup count is 0.
+    s32 mPopupRow;
+    s32 mRowPopupCount;
     s32 mUnk_624;
     s32 mUnk_628;
     s32 mUnk_62c;
     u32 mUnk_630;
-    s32 mUnk_634;
-    s32 mUnk_638;
+    s32 mPopupTimer;
+    s32 mPopupIntervalMs;
     s32 mUnk_63c;
-    s32 mUnk_640;
-    s32 mUnk_644;
+    s32 mPopupIntervalMinMs;
+    s32 mPopupShowMs;
     s32 mUnk_648;
-    s32 mUnk_64c;
-    s32 mUnk_650;
-    s32 mUnk_654;
+    s32 mPopupShowMinMs;
+    s32 mRowSeconds;
+    s32 mRowTimer;
     s32 mUnk_658;
     s32 mUnk_65c;
     s32 mUnk_660;
     s32 mUnk_664;
     PopupSlot mSlots[POPUP_SLOT_COUNT];
-    s32 mUnk_7d0;
-    u16 mUnk_7d4;
+    // The amount ShowNumber was last given (mUnk_658 or mUnk_660, when a popup of a kind other than 1 and 3 is
+    // touched); DrawNumber draws nothing while it is 0.
+    s32 mNumber;
+    u16 mNumberLevel;
     u16 mUnk_7d6;
     PopupPos mPos;
 } Scene;
 
-extern Scene *data_02063940;
+extern Scene *gScene;
 extern const u16 data_0204e1c0[];
 extern const s32 data_0204e1cc[][2];
 
-void func_0200c65c(int index, VecFx32 *out);
-void func_0200c688(int n);
-void func_0200c6ac(void);
-void func_0200c7a4(void);
-void func_0200ca14(void);
-void func_0200cbe8(void);
-void func_0200cd1c(void);
-void func_0200cd2c(void);
+void GetMapEntryPos(int index, VecFx32 *out);
+void StartShake(int ms);
+void SetupSceneCamera(void);
+void UpdateSceneCamera(void);
+void SetupScene(void);
+void UpdateScene(void);
+void LeaveScene(void);
+void DrawScene(void);
 void func_0200cdc4(void);
 void func_0200ce24(void);
-void func_0200ceac(void);
-void func_0200d014(int slot, int type, int index);
-void func_0200d098(void);
-void func_0200d2a4(PopupSlot *slot);
-void func_0200d434(void);
-void func_0200d5f0(void);
-void func_0200d60c(int value, const PopupPos *pos);
-void func_0200d638(void);
+void AddPopups(void);
+void StartPopup(int slot, int type, int index);
+void UpdatePopups(void);
+void HandlePopupTouch(PopupSlot *slot);
+void LoadSceneValues(void);
+void ClearNumber(void);
+void ShowNumber(int value, const PopupPos *pos);
+void DrawNumber(void);
 int func_0200d6b0(u8 stage);
 
 #ifdef __cplusplus

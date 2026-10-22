@@ -15,6 +15,7 @@
 #include <Main/Unknown/game_util.h>
 #include <Main/Scene/stage_data.h>
 #include <Main/Scene/stage_camera.h>
+#include <Main/Scene/stage_map_menu.h>
 #include <Main/Unknown/move_object.h>
 #include <Main/Minigame/three_in_row.h>
 #include <Main/Graphics/sprite_slots.h>
@@ -32,14 +33,14 @@
 #include <Main/System/system_init.h>
 #include <Main/Graphics/gx_pool.h>
 
-void func_02015d4c(void) {
-    data_020b6ee0.mUnk_a146 = 0;
+void ClearPanelState(void) {
+    data_020b6ee0.mPanelState = 0;
 }
 
-void func_02015d58(int stage) {
+void SetStageCameraFar(int stage) {
     StageRec *rec = &data_020b1990[stage];
-    int angle = rec->mUnk_220 >> 4;
-    int dist;
+    int distancePerFrame = rec->mDistancePerFrame >> 4;
+    int height;
 
     if (stage < 0 || stage >= STAGE_MAX) {
         OS_Terminate();
@@ -49,15 +50,15 @@ void func_02015d58(int stage) {
     data_020c3e44.mUnk_2024.mUnk_8c.y = rec->mUnk_158.y;
     data_020c3e44.mUnk_2024.mUnk_80.x = rec->mUnk_1a0.x - 400 * FX_SinCosTable_[(rec->mUnk_224 >> 4) * 2];
     data_020c3e44.mUnk_2024.mUnk_80.z = rec->mUnk_1a0.z + 400 * FX_SinCosTable_[(rec->mUnk_224 >> 4) * 2 + 1];
-    dist = rec->mUnk_1a0.y + MapRangeFromZero(angle, 0xc00, 0x320000, 0x4b0000);
-    data_020c3e44.mUnk_2024.mUnk_80.y = dist;
-    if (dist > 0x5dc000) {
+    height = rec->mUnk_1a0.y + MapRangeFromZero(distancePerFrame, 0xc00, 0x320000, 0x4b0000);
+    data_020c3e44.mUnk_2024.mUnk_80.y = height;
+    if (height > 0x5dc000) {
         data_020c3e44.mUnk_2024.mUnk_80.y = 0x5dc000;
     }
     func_02033488();
 }
 
-void func_02015e08(int stage) {
+void SetStageCameraNear(int stage) {
     StageRec *rec = &data_020b1990[stage];
 
     if (stage < 0 || stage >= STAGE_MAX) {
@@ -72,23 +73,25 @@ void func_02015e08(int stage) {
     func_02033488();
 }
 
-void func_02015e94(int stage) {
+void UpdateStageCamera(int stage) {
     if (stage < -1 || stage >= STAGE_MAX) {
         OS_Terminate();
     }
     if (stage != -1) {
-        if (data_020b6ee0.mUnk_a146 <= 1) {
-            func_02015d58(stage);
+        if (data_020b6ee0.mPanelState <= 1) {
+            SetStageCameraFar(stage);
         } else {
-            func_02015e08(stage);
+            SetStageCameraNear(stage);
         }
         return;
     }
     data_020b6ee0.mUnk_a574.mUnk_00.x = data_020b6ee0.mUnk_a574.mUnk_0c.x - 600 * FX_SinCosTable_[0];
     data_020b6ee0.mUnk_a574.mUnk_00.z = data_020b6ee0.mUnk_a574.mUnk_0c.z + 600 * FX_SinCosTable_[1];
     data_020b6ee0.mUnk_a574.mUnk_00.y = data_020b6ee0.mUnk_a574.mUnk_0c.y + 0x3e8000;
-    func_0200b960(&data_020c3e44.mUnk_2024.mUnk_8c, data_020b6ee0.mUnk_a574.mUnk_0c, data_020b6ee0.mUnk_a574.mUnk_34);
-    func_0200b960(&data_020c3e44.mUnk_2024.mUnk_80, data_020b6ee0.mUnk_a574.mUnk_00, data_020b6ee0.mUnk_a574.mUnk_34);
+    func_0200b960(&data_020c3e44.mUnk_2024.mUnk_8c, data_020b6ee0.mUnk_a574.mUnk_0c,
+                  data_020b6ee0.mUnk_a574.mCameraEaseDivisor);
+    func_0200b960(&data_020c3e44.mUnk_2024.mUnk_80, data_020b6ee0.mUnk_a574.mUnk_00,
+                  data_020b6ee0.mUnk_a574.mCameraEaseDivisor);
     func_02033488();
 }
 
@@ -102,11 +105,11 @@ void func_02015f34(void) {
     for (i = 0; i < data_020b6ee0.mUnk_0c48; i++) {
         obj = &data_020b6ee0.mUnk_0008[i];
         if (obj->mModel.mUnk_170 != 0) {
-            func_02023f58(&params, obj->mUnk_178 << 9, 0, obj->mUnk_17c << 9, 0x1000, obj->mUnk_185 << 8, 0, 0xff,
+            func_02023f58(&params, obj->mPosX << 9, 0, obj->mPosZ << 9, 0x1000, obj->mUnk_185 << 8, 0, 0xff,
                           0x100);
             if (func_02031d0c(&params.mPos, 0x12c000, 0x190000, 0x190000) == 1) {
                 func_0202733c(&obj->mModel, &params, 0);
-                if (obj->mUnk_184 == 10) {
+                if (obj->mKind == 10) {
                     sprintf(text, "%d", obj->mUnk_186);
                     func_02025db4(&params, pos);
                     func_020215fc(pos[0], pos[1], data_0201a61c, text, 2, 0x82, 0x10, 1);
@@ -135,27 +138,27 @@ void func_02016008(int stage) {
     }
     f = data_020b6ee0.mUnk_1014;
     for (i = 0; i < data_020b6ee0.mUnk_5a54; i++, f++) {
-        dx = f->mUnk_178 - px;
-        dz = f->mUnk_17c - pz;
-        if (f->mUnk_182 == 0x19) {
+        dx = f->mPosX - px;
+        dz = f->mPosZ - pz;
+        if (f->mKind == 0x19) {
             d = Length2d(dx, dz);
             if (d < 400) {
                 break;
             }
-        } else if (f->mUnk_182 == 0x14) {
+        } else if (f->mKind == 0x14) {
             if (abs(dx) < 400 && abs(dz) < 800) {
-                f->mUnk_188++;
+                f->mNearFrames++;
                 f->mModel.mUnk_134 |= 1;
-                if (f->mUnk_188 > (f->mUnk_187 + 1) * 6) {
+                if (f->mNearFrames > (f->mUnk_187 + 1) * 6) {
                     rec->mUnk_1d8 += 0x8000;
-                    rec->mUnk_220 += 0x2000;
-                    f->mUnk_188 = 0;
+                    rec->mDistancePerFrame += 0x2000;
+                    f->mNearFrames = 0;
                     func_02018840(rec, 0x14, i);
                     f->mModel.mUnk_134 |= 2;
                     func_0202f110(0x2b, 0x64, 0, 0x40, 0xffff, 0);
                 }
             } else {
-                f->mUnk_188 = 0;
+                f->mNearFrames = 0;
             }
         } else {
             d = abs(dx) + abs(dz);
@@ -165,29 +168,29 @@ void func_02016008(int stage) {
         }
     }
     if (i != data_020b6ee0.mUnk_5a54) {
-        switch (f->mUnk_182) {
+        switch (f->mKind) {
             case 0xf:
                 rec->mUnk_1a0 = rec->mUnk_210;
                 rec->mUnk_1d8 += 0x8000;
-                rec->mUnk_220 = 0x2000;
+                rec->mDistancePerFrame = 0x2000;
                 func_02018840(rec, 0xf, i);
                 break;
             case 0x19: {
                 int q = 0x32000 / d;
-                int ax = px - f->mUnk_178;
-                int az = pz - f->mUnk_17c;
+                int ax = px - f->mPosX;
+                int az = pz - f->mPosZ;
                 ax *= q;
                 az *= q;
-                rec->mUnk_1a0.x = ax + (f->mUnk_178 << 9);
-                rec->mUnk_1a0.z = az + (f->mUnk_17c << 9);
-                rec->mUnk_1d8 = AngleOfVector(rec->mUnk_1a0.x / 512 - f->mUnk_178, rec->mUnk_1a0.z / 512 - f->mUnk_17c);
-                rec->mUnk_220 += 0x4000;
+                rec->mUnk_1a0.x = ax + (f->mPosX << 9);
+                rec->mUnk_1a0.z = az + (f->mPosZ << 9);
+                rec->mUnk_1d8 = AngleOfVector(rec->mUnk_1a0.x / 512 - f->mPosX, rec->mUnk_1a0.z / 512 - f->mPosZ);
+                rec->mDistancePerFrame += 0x4000;
                 func_0202f110(0x28, 0x64, 0, 0x40, 0xffff, 0);
                 break;
             }
             case 0x23:
                 rec->mUnk_1d8 = ((f->mUnk_184 + 1) & 3) << 14;
-                rec->mUnk_220 = 0x14000;
+                rec->mDistancePerFrame = 0x14000;
                 func_0202f110(1, 0x64, 0, 0x40, 0xffff, 0);
                 break;
             case 0x28:
@@ -199,11 +202,11 @@ void func_02016008(int stage) {
 
                     SetFaded(moved);
                     func_0202f110(0x59, 0x64, 0, 0x40, 0xffff, 0);
-                    rec->mUnk_220 = 0;
+                    rec->mDistancePerFrame = 0;
                     for (j = 0; j < data_020b6ee0.mUnk_5a54; j++, p++) {
-                        if (p->mUnk_182 == 0x28 && p->mUnk_186 == key) {
-                            rec->mUnk_1a0.x = p->mUnk_178 << 9;
-                            rec->mUnk_1a0.z = p->mUnk_17c << 9;
+                        if (p->mKind == 0x28 && p->mUnk_186 == key) {
+                            rec->mUnk_1a0.x = p->mPosX << 9;
+                            rec->mUnk_1a0.z = p->mPosZ << 9;
                             break;
                         }
                     }
@@ -217,11 +220,11 @@ void func_02016008(int stage) {
     b = data_020b6ee0.mUnk_1014;
     i = 0;
     while (i < data_020b6ee0.mUnk_5a54) {
-        pos.x = b->mUnk_178 << 9;
-        pos.z = b->mUnk_17c << 9;
+        pos.x = b->mPosX << 9;
+        pos.z = b->mPosZ << 9;
         pos.y = 0;
         if (func_02031d0c(&pos, 0x190000, 0x190000, 0x190000) == 1) {
-            switch (b->mUnk_182) {
+            switch (b->mKind) {
                 case 0x19:
                     if (b == f) {
                         b->mModel.mUnk_134 |= 1;
@@ -279,18 +282,18 @@ void func_020164e0(int stage) {
     pos.y = 0;
     found = -1;
     while (i < data_020b6ee0.mUnk_8ad8) {
-        if (obj->mUnk_183 == 1) {
-            pos.x = obj->mUnk_00 << 9;
-            pos.z = obj->mUnk_04 << 9;
+        if (obj->mPresent == 1) {
+            pos.x = obj->mPosX << 9;
+            pos.z = obj->mPosZ << 9;
             if (func_02031d0c(&pos, 0x190000, 0x190000, 0x190000) == 1) {
                 params.mPos.x = pos.x;
                 params.mPos.z = pos.z;
-                if (obj->mUnk_180 == 0x1e) {
+                if (obj->mKind == 0x1e) {
                     func_0202733c(&obj->mModel, &params, 0);
                 }
                 if (found == -1) {
-                    dx = obj->mUnk_00;
-                    dz = obj->mUnk_04;
+                    dx = obj->mPosX;
+                    dz = obj->mPosZ;
                     dx -= px;
                     dz -= pz;
                     if (abs(dx) + abs(dz) < 400) {
@@ -304,15 +307,18 @@ void func_020164e0(int stage) {
     }
     if (found != -1) {
         obj = &data_020b6ee0.mUnk_5a58[found];
-        if (obj->mUnk_180 == 0x1e) {
+        if (obj->mKind == 0x1e) {
             func_02018840(rec, 0x1e, found);
-            obj->mUnk_183 = 0;
+            obj->mPresent = 0;
             func_0202f110(0xe0, 0x64, 0, 0x40, 0xffff, 0);
         }
     }
 }
 
-void func_02016624(void) {
+// Fills mUnk_0008, mUnk_1014, mUnk_5a58 and mFollowerEntries and their counts, by entry type, from the map entry list
+// in chunk 0x5514. Also clears gFollowerGroup and sets its defaults (mSlowRange 600, mNearDistance 0x640,
+// mUseRingTest 1). Called by state 4's set-up.
+void SetupMapObjects(void) {
     int n5 = 0;
     int n34 = 0;
     int n7 = 0;
@@ -322,9 +328,9 @@ void func_02016624(void) {
     VecFx32 pos;
     u8 flags;
 
-    memset(data_020b6ee0.mUnk_8adc, 0, 0x384);
+    memset(data_020b6ee0.mFollowerEntries, 0, 0x384);
     memset(&data_020b6ee0.mUnk_0c4c, 0, 0x10);
-    memset(&data_020b1598, 0, 0x3f8);
+    memset(&gFollowerGroup, 0, 0x3f8);
     data_020b6ee0.mUnk_8ad9 = 0;
     q = func_02031eb8(0x5514);
     cnt = *q;
@@ -335,31 +341,31 @@ void func_02016624(void) {
 
         func_02032018(q[1], &pos, &flags);
         if (type == 0xf) {
-            data_020b6ee0.mUnk_1014[n7].mUnk_182 = type;
-            data_020b6ee0.mUnk_1014[n7].mUnk_178 = pos.x / 512;
-            data_020b6ee0.mUnk_1014[n7].mUnk_17c = pos.z / 512;
+            data_020b6ee0.mUnk_1014[n7].mKind = type;
+            data_020b6ee0.mUnk_1014[n7].mPosX = pos.x / 512;
+            data_020b6ee0.mUnk_1014[n7].mPosZ = pos.z / 512;
             data_020b6ee0.mUnk_1014[n7].mUnk_183 = ReadBits(q + 2, 0, 3);
             n7++;
         } else if (type == 0x14) {
-            data_020b6ee0.mUnk_1014[n7].mUnk_182 = type;
-            data_020b6ee0.mUnk_1014[n7].mUnk_178 = pos.x / 512;
-            data_020b6ee0.mUnk_1014[n7].mUnk_17c = pos.z / 512;
+            data_020b6ee0.mUnk_1014[n7].mKind = type;
+            data_020b6ee0.mUnk_1014[n7].mPosX = pos.x / 512;
+            data_020b6ee0.mUnk_1014[n7].mPosZ = pos.z / 512;
             data_020b6ee0.mUnk_1014[n7].mUnk_187 = ReadBits(q + 2, 0, 1);
-            data_020b6ee0.mUnk_1014[n7].mUnk_188 = 0;
+            data_020b6ee0.mUnk_1014[n7].mNearFrames = 0;
             data_020b6ee0.mUnk_1014[n7].mUnk_184 = (u32) flags >> 6;
             func_020271ec(&data_020b6ee0.mUnk_1014[n7].mModel, 0, 0, 0, data_0201aba0[6]);
             n7++;
         } else if (type == 0x19) {
-            data_020b6ee0.mUnk_1014[n7].mUnk_182 = type;
-            data_020b6ee0.mUnk_1014[n7].mUnk_178 = pos.x / 512;
-            data_020b6ee0.mUnk_1014[n7].mUnk_17c = pos.z / 512;
+            data_020b6ee0.mUnk_1014[n7].mKind = type;
+            data_020b6ee0.mUnk_1014[n7].mPosX = pos.x / 512;
+            data_020b6ee0.mUnk_1014[n7].mPosZ = pos.z / 512;
             func_020271ec(&data_020b6ee0.mUnk_1014[n7].mModel, 0, 0, 0, data_0201aba0[0]);
             n7++;
         } else if (type == 0x1e) {
-            data_020b6ee0.mUnk_5a58[n30].mUnk_180 = type;
-            data_020b6ee0.mUnk_5a58[n30].mUnk_00 = pos.x / 512;
-            data_020b6ee0.mUnk_5a58[n30].mUnk_04 = pos.z / 512;
-            data_020b6ee0.mUnk_5a58[n30].mUnk_183 = 1;
+            data_020b6ee0.mUnk_5a58[n30].mKind = type;
+            data_020b6ee0.mUnk_5a58[n30].mPosX = pos.x / 512;
+            data_020b6ee0.mUnk_5a58[n30].mPosZ = pos.z / 512;
+            data_020b6ee0.mUnk_5a58[n30].mPresent = 1;
             data_020b6ee0.mUnk_5a58[n30].mUnk_181[1] = ReadBits(q + 2, 0, 0);
             data_020b6ee0.mUnk_5a58[n30].mUnk_181[0] = ReadBits(q + 2, 1, 7);
             if (data_020b6ee0.mUnk_5a58[n30].mUnk_181[1] == 0) {
@@ -370,29 +376,29 @@ void func_02016624(void) {
             }
             n30++;
         } else if (type == 0x23) {
-            data_020b6ee0.mUnk_1014[n7].mUnk_182 = type;
-            data_020b6ee0.mUnk_1014[n7].mUnk_178 = pos.x / 512;
-            data_020b6ee0.mUnk_1014[n7].mUnk_17c = pos.z / 512;
+            data_020b6ee0.mUnk_1014[n7].mKind = type;
+            data_020b6ee0.mUnk_1014[n7].mPosX = pos.x / 512;
+            data_020b6ee0.mUnk_1014[n7].mPosZ = pos.z / 512;
             data_020b6ee0.mUnk_1014[n7].mUnk_184 = (u32) flags >> 6;
             n7++;
         } else if (type == 0x28) {
-            data_020b6ee0.mUnk_1014[n7].mUnk_182 = type;
-            data_020b6ee0.mUnk_1014[n7].mUnk_178 = pos.x / 512;
-            data_020b6ee0.mUnk_1014[n7].mUnk_17c = pos.z / 512;
+            data_020b6ee0.mUnk_1014[n7].mKind = type;
+            data_020b6ee0.mUnk_1014[n7].mPosX = pos.x / 512;
+            data_020b6ee0.mUnk_1014[n7].mPosZ = pos.z / 512;
             data_020b6ee0.mUnk_1014[n7].mUnk_185 = ReadBits(q + 2, 0, 3);
             data_020b6ee0.mUnk_1014[n7].mUnk_186 = ReadBits(q + 2, 4, 7);
             func_020271ec(&data_020b6ee0.mUnk_1014[n7].mModel, 0xc8e, 0xc8d, 2, 0);
             n7++;
         } else if (type == 5) {
-            data_020b6ee0.mUnk_8adc[n5].mUnk_00 = pos;
-            data_020b6ee0.mUnk_8adc[n5].mUnk_18 = ReadBits(q + 2, 0, 0);
-            data_020b6ee0.mUnk_8adc[n5].mUnk_1a = 1;
+            data_020b6ee0.mFollowerEntries[n5].mPos = pos;
+            data_020b6ee0.mFollowerEntries[n5].mUnk_18 = ReadBits(q + 2, 0, 0);
+            data_020b6ee0.mFollowerEntries[n5].mPresent = 1;
             n5++;
         } else if (type == 0xa || type == 0x2d) {
-            data_020b6ee0.mUnk_0008[n34].mUnk_178 = pos.x / 512;
-            data_020b6ee0.mUnk_0008[n34].mUnk_17c = pos.z / 512;
+            data_020b6ee0.mUnk_0008[n34].mPosX = pos.x / 512;
+            data_020b6ee0.mUnk_0008[n34].mPosZ = pos.z / 512;
             data_020b6ee0.mUnk_0008[n34].mUnk_185 = flags;
-            data_020b6ee0.mUnk_0008[n34].mUnk_184 = type;
+            data_020b6ee0.mUnk_0008[n34].mKind = type;
             if (type == 0xa) {
                 data_020b6ee0.mUnk_0008[n34].mUnk_186 = ReadBits(q + 2, 0, 2);
                 func_020271ec(&data_020b6ee0.mUnk_0008[n34].mModel, 0, 0, 0, data_0201aba0[1]);
@@ -412,7 +418,7 @@ void func_02016624(void) {
     if (n5 >= 0x20) {
         OS_Terminate();
     }
-    data_020b6ee0.mUnk_8e5c = n5;
+    data_020b6ee0.mFollowerEntryCount = n5;
     if (n7 >= 0x30) {
         OS_Terminate();
     }
@@ -421,13 +427,13 @@ void func_02016624(void) {
         OS_Terminate();
     }
     data_020b6ee0.mUnk_8ad8 = n30;
-    data_020b1598.mUnk_3f0 = 1;
-    data_020b1598.mUnk_3f2 = 600;
-    data_020b1598.mUnk_3f4 = 0x640;
-    data_020b1598.mUnk_3f6 = 1;
+    gFollowerGroup.mFollowerCount = 1;
+    gFollowerGroup.mSlowRange = 600;
+    gFollowerGroup.mNearDistance = 0x640;
+    gFollowerGroup.mUseRingTest = 1;
 }
 
-void func_02016ae8(int stage) {
+void UpdateFollowers(int stage) {
     StageRec *rec = &data_020b1990[stage];
     int n;
     int i;
@@ -436,153 +442,158 @@ void func_02016ae8(int stage) {
         OS_Terminate();
     }
     n = 0;
-    for (i = 0; i < data_020b6ee0.mUnk_8e5c; i++) {
+    for (i = 0; i < data_020b6ee0.mFollowerEntryCount; i++) {
         if (i >= 0x20) {
             OS_Terminate();
         }
         if (n >= 0x11) {
             OS_Terminate();
         }
-        if (data_020b6ee0.mUnk_8adc[i].mUnk_1a != 0) {
-            int dx = abs(data_020b6ee0.mUnk_8adc[i].mUnk_00.x - rec->mUnk_1a0.x);
-            int dz = abs(data_020b6ee0.mUnk_8adc[i].mUnk_00.z - rec->mUnk_1a0.z);
+        if (data_020b6ee0.mFollowerEntries[i].mPresent != 0) {
+            int dx = abs(data_020b6ee0.mFollowerEntries[i].mPos.x - rec->mUnk_1a0.x);
+            int dz = abs(data_020b6ee0.mFollowerEntries[i].mPos.z - rec->mUnk_1a0.z);
             if (dx + dz < 0x4b0000) {
-                data_020b1598.mUnk_000[n].mUnk_00.x = data_020b6ee0.mUnk_8adc[i].mUnk_00.x / 512;
-                data_020b1598.mUnk_000[n].mUnk_00.y = data_020b6ee0.mUnk_8adc[i].mUnk_00.y / 512;
-                data_020b1598.mUnk_000[n].mUnk_00.z = data_020b6ee0.mUnk_8adc[i].mUnk_00.z / 512;
-                data_020b1598.mUnk_000[n].mUnk_20 = 300;
-                data_020b1598.mUnk_000[n].mUnk_1c = 32.0f;
-                data_020b1598.mUnk_000[n].mUnk_36 = i;
-                data_020b6ee0.mUnk_8adc[i].mUnk_19 = 1;
+                gFollowerGroup.mFollowers[n].mPos.x = data_020b6ee0.mFollowerEntries[i].mPos.x / 512;
+                gFollowerGroup.mFollowers[n].mPos.y = data_020b6ee0.mFollowerEntries[i].mPos.y / 512;
+                gFollowerGroup.mFollowers[n].mPos.z = data_020b6ee0.mFollowerEntries[i].mPos.z / 512;
+                gFollowerGroup.mFollowers[n].mDiameter = 300;
+                gFollowerGroup.mFollowers[n].mMaxDistancePerFrame = 32.0f;
+                gFollowerGroup.mFollowers[n].mFollowerEntryIndex = i;
+                data_020b6ee0.mFollowerEntries[i].mInRange = 1;
                 n++;
             } else {
-                data_020b6ee0.mUnk_8adc[i].mUnk_19 = 0;
+                data_020b6ee0.mFollowerEntries[i].mInRange = 0;
             }
         }
     }
-    if (data_020b6ee0.mUnk_0c5a != 0) {
-        data_020b6ee0.mUnk_0c5a--;
-        data_020b1598.mUnk_000[n].mUnk_00.x = data_020b6ee0.mUnk_0c50;
-        data_020b1598.mUnk_000[n].mUnk_00.z = data_020b6ee0.mUnk_0c54;
-        data_020b1598.mUnk_000[n].mUnk_20 = 0;
-        data_020b1598.mUnk_3f7 = 1;
+    if (data_020b6ee0.mFixedTargetTimer != 0) {
+        data_020b6ee0.mFixedTargetTimer--;
+        gFollowerGroup.mFollowers[n].mPos.x = data_020b6ee0.mFixedTargetX;
+        gFollowerGroup.mFollowers[n].mPos.z = data_020b6ee0.mFixedTargetZ;
+        gFollowerGroup.mFollowers[n].mDiameter = 0;
+        gFollowerGroup.mTargetFixed = 1;
     } else {
-        data_020b1598.mUnk_000[n].mUnk_00.x = rec->mUnk_1a0.x / 512;
-        data_020b1598.mUnk_000[n].mUnk_00.y = rec->mUnk_1a0.y / 512;
-        data_020b1598.mUnk_000[n].mUnk_00.z = rec->mUnk_1a0.z / 512;
-        data_020b1598.mUnk_000[n].mUnk_20 = 900;
-        data_020b1598.mUnk_000[n].mUnk_1c = 0;
-        data_020b1598.mUnk_3f7 = 0;
+        gFollowerGroup.mFollowers[n].mPos.x = rec->mUnk_1a0.x / 512;
+        gFollowerGroup.mFollowers[n].mPos.y = rec->mUnk_1a0.y / 512;
+        gFollowerGroup.mFollowers[n].mPos.z = rec->mUnk_1a0.z / 512;
+        gFollowerGroup.mFollowers[n].mDiameter = 900;
+        gFollowerGroup.mFollowers[n].mMaxDistancePerFrame = 0;
+        gFollowerGroup.mTargetFixed = 0;
     }
-    data_020b1598.mUnk_3f0 = n;
-    func_02017298(&data_020b1598);
+    gFollowerGroup.mFollowerCount = n;
+    MoveFollowers(&gFollowerGroup);
     for (i = 0; i < n; i++) {
-        int idx = data_020b1598.mUnk_000[i].mUnk_36;
-        if (data_020b6ee0.mUnk_8adc[idx].mUnk_19 == 1) {
-            data_020b6ee0.mUnk_8adc[idx].mUnk_00.x = 512.0f * data_020b1598.mUnk_000[i].mUnk_00.x;
-            data_020b6ee0.mUnk_8adc[idx].mUnk_00.y = 512.0f * data_020b1598.mUnk_000[i].mUnk_00.y;
-            data_020b6ee0.mUnk_8adc[idx].mUnk_00.z = 512.0f * data_020b1598.mUnk_000[i].mUnk_00.z;
+        int idx = gFollowerGroup.mFollowers[i].mFollowerEntryIndex;
+        if (data_020b6ee0.mFollowerEntries[idx].mInRange == 1) {
+            data_020b6ee0.mFollowerEntries[idx].mPos.x = 512.0f * gFollowerGroup.mFollowers[i].mPos.x;
+            data_020b6ee0.mFollowerEntries[idx].mPos.y = 512.0f * gFollowerGroup.mFollowers[i].mPos.y;
+            data_020b6ee0.mFollowerEntries[idx].mPos.z = 512.0f * gFollowerGroup.mFollowers[i].mPos.z;
         }
     }
-    for (i = 0; i < data_020b6ee0.mUnk_8e5c; i++) {
-        if (data_020b6ee0.mUnk_8adc[i].mUnk_19 == 1) {
-            if (func_02031dc4(data_020b6ee0.mUnk_8adc[i].mUnk_00.x, data_020b6ee0.mUnk_8adc[i].mUnk_00.z) == 1) {
-                func_02025db4(&data_020b6ee0.mUnk_8adc[i], data_020b6ee0.mUnk_8adc[i].mUnk_0c);
+    for (i = 0; i < data_020b6ee0.mFollowerEntryCount; i++) {
+        if (data_020b6ee0.mFollowerEntries[i].mInRange == 1) {
+            if (func_02031dc4(data_020b6ee0.mFollowerEntries[i].mPos.x,
+                              data_020b6ee0.mFollowerEntries[i].mPos.z) == 1) {
+                func_02025db4(&data_020b6ee0.mFollowerEntries[i], data_020b6ee0.mFollowerEntries[i].mScreenPos);
             }
         }
     }
-    for (i = 0; i < data_020b6ee0.mUnk_8e5c; i++) {
-        if (data_020b6ee0.mUnk_8adc[i].mUnk_19 == 1) {
-            func_0200ba94(&data_020b6ee0.mUnk_8adc[i].mUnk_00, 0x38400, 0x400);
-            func_0202cf08(data_020b6ee0.mUnk_8adc[i].mUnk_18 == 0 ? 0xe24 : 0xe23,
-                          data_020b6ee0.mUnk_8adc[i].mUnk_0c[0], data_020b6ee0.mUnk_8adc[i].mUnk_0c[1], 0, 1);
+    for (i = 0; i < data_020b6ee0.mFollowerEntryCount; i++) {
+        if (data_020b6ee0.mFollowerEntries[i].mInRange == 1) {
+            func_0200ba94(&data_020b6ee0.mFollowerEntries[i].mPos, 0x38400, 0x400);
+            func_0202cf08(data_020b6ee0.mFollowerEntries[i].mUnk_18 == 0 ? 0xe24 : 0xe23,
+                          data_020b6ee0.mFollowerEntries[i].mScreenPos[0],
+                          data_020b6ee0.mFollowerEntries[i].mScreenPos[1], 0, 1);
         }
     }
 }
 
-void func_02016db4(Unk_020b1598 *followers, int index, u16 angle) {
+// One follower's step, run by MoveFollowers (called from UpdateFollowers) for each follower whose
+// mMaxDistancePerFrame is not 0: the ring test (a hit puts it back at mPrevPos), the sector distances to the other
+// followers and the speed from the follower found ahead. angle is unused.
+void UpdateFollower(FollowerGroup *followers, int index, u16 angle) {
     int bestIdx = 0;
-    Unk_Follower *f = &followers->mUnk_000[index];
-    StageRec *rec = &data_020b1990[data_020b6ee0.mUnk_a8e4];
+    Follower *f = &followers->mFollowers[index];
+    StageRec *rec = &data_020b1990[data_020b6ee0.mSelectedStageIndex];
     int bestDist;
     int j;
-    Unk_Follower *o;
+    Follower *o;
 
-    if (data_020b6ee0.mUnk_a8e4 < 0 || data_020b6ee0.mUnk_a8e4 >= STAGE_MAX) {
+    if (data_020b6ee0.mSelectedStageIndex < 0 || data_020b6ee0.mSelectedStageIndex >= STAGE_MAX) {
         OS_Terminate();
     }
-    if (f->mUnk_36 >= 0x20) {
+    if (f->mFollowerEntryIndex >= 0x20) {
         OS_Terminate();
     }
-    bestDist = followers->mUnk_3f4;
+    bestDist = followers->mNearDistance;
     for (j = 0; j < 8; j++) {
-        f->mUnk_26[j] = 30000;
+        f->mSectorDistances[j] = 30000;
     }
-    if (followers->mUnk_3f6 == 1) {
+    if (followers->mUseRingTest == 1) {
         VecFx32 pos;
-        pos.x = 512.0f * f->mUnk_00.x;
-        pos.y = 512.0f * f->mUnk_00.y;
-        pos.z = 512.0f * f->mUnk_00.z;
-        if (func_02031824(&pos, f->mUnk_20, 0x6e, 0, 0x13, 0)) {
-            if ((data_020c3e44.mUnk_2024.mUnk_3a & 0x10) && data_020b6ee0.mUnk_0c5a != 0 &&
-                data_020b6ee0.mUnk_8adc[f->mUnk_36].mUnk_18 == 0 &&
+        pos.x = 512.0f * f->mPos.x;
+        pos.y = 512.0f * f->mPos.y;
+        pos.z = 512.0f * f->mPos.z;
+        if (func_02031824(&pos, f->mDiameter, 0x6e, 0, 0x13, 0)) {
+            if ((data_020c3e44.mUnk_2024.mUnk_3a & 0x10) && data_020b6ee0.mFixedTargetTimer != 0 &&
+                data_020b6ee0.mFollowerEntries[f->mFollowerEntryIndex].mUnk_18 == 0 &&
                 data_020b6ee0.mUnk_0c4c == data_020c3e44.mUnk_2024.mUnk_10 &&
-                data_020b6ee0.mUnk_0008[data_020b6ee0.mUnk_0c58].mUnk_186 > 0) {
-                data_020b6ee0.mUnk_0008[data_020b6ee0.mUnk_0c58].mModel.mUnk_134 |= 1;
-                data_020b6ee0.mUnk_0008[data_020b6ee0.mUnk_0c58].mUnk_186--;
-                if (data_020b6ee0.mUnk_0008[data_020b6ee0.mUnk_0c58].mUnk_186 == 0) {
+                data_020b6ee0.mUnk_0008[data_020b6ee0.mFixedTargetObjectIndex].mUnk_186 > 0) {
+                data_020b6ee0.mUnk_0008[data_020b6ee0.mFixedTargetObjectIndex].mModel.mUnk_134 |= 1;
+                data_020b6ee0.mUnk_0008[data_020b6ee0.mFixedTargetObjectIndex].mUnk_186--;
+                if (data_020b6ee0.mUnk_0008[data_020b6ee0.mFixedTargetObjectIndex].mUnk_186 == 0) {
                     func_02031c98(data_020b6ee0.mUnk_0c4c, 0, 0);
-                    data_020b6ee0.mUnk_0008[data_020b6ee0.mUnk_0c58].mModel.mUnk_134 |= 2;
+                    data_020b6ee0.mUnk_0008[data_020b6ee0.mFixedTargetObjectIndex].mModel.mUnk_134 |= 2;
                     func_0202f110(0xdb, 0x64, 0, 0x40, 0xffff, 0);
                 } else {
                     func_0202f110(0xdd, 0x64, 0, 0x40, 0xffff, 0);
                 }
-                data_020b6ee0.mUnk_8adc[f->mUnk_36].mUnk_1a = 0;
-                data_020b6ee0.mUnk_8adc[f->mUnk_36].mUnk_19 = 0;
+                data_020b6ee0.mFollowerEntries[f->mFollowerEntryIndex].mPresent = 0;
+                data_020b6ee0.mFollowerEntries[f->mFollowerEntryIndex].mInRange = 0;
             }
             {
                 u32 cam = func_0203129c();
                 int cross = Cross2d(data_020c3e44.mUnk_2024.mUnk_14.x, data_020c3e44.mUnk_2024.mUnk_14.z,
-                                    data_020c3e44.mUnk_2024.mUnk_20.x, data_020c3e44.mUnk_2024.mUnk_20.z, f->mUnk_00.x,
-                                    f->mUnk_00.z);
-                f->mUnk_00 = f->mUnk_0c;
-                f->mUnk_24 = cam + (((cross != 0) ? ((cross >> 31) | 1) : 0) << 14);
-                f->mUnk_22 = f->mUnk_24;
+                                    data_020c3e44.mUnk_2024.mUnk_20.x, data_020c3e44.mUnk_2024.mUnk_20.z, f->mPos.x,
+                                    f->mPos.z);
+                f->mPos = f->mPrevPos;
+                f->mAngle = cam + (((cross != 0) ? ((cross >> 31) | 1) : 0) << 14);
+                f->mTargetAngle = f->mAngle;
             }
         }
     }
     j = 0;
-    if (j < followers->mUnk_3f0 + 1) {
-        o = followers->mUnk_000;
+    if (j < followers->mFollowerCount + 1) {
+        o = followers->mFollowers;
         do {
             int dx;
             int dz;
             int dist;
 
             if (j != index) {
-                dx = o->mUnk_00.x - f->mUnk_00.x;
-                dz = o->mUnk_00.z - f->mUnk_00.z;
+                dx = o->mPos.x - f->mPos.x;
+                dz = o->mPos.z - f->mPos.z;
                 dist = Length2d(dx, dz);
-                if (dist < followers->mUnk_3f4) {
+                if (dist < followers->mNearDistance) {
                     u32 ang = AngleOfVector(dx, dz);
                     const s16 *s1 = &FX_SinCosTable_[((u16) (ang - 0x4000) >> 4) * 2];
-                    int ax = f->mUnk_00.x + (float) (f->mUnk_20 * s1[0] / 2 / 0x1000);
-                    int az = f->mUnk_00.z - (float) (f->mUnk_20 * s1[1] / 2 / 0x1000);
+                    int ax = f->mPos.x + (float) (f->mDiameter * s1[0] / 2 / 0x1000);
+                    int az = f->mPos.z - (float) (f->mDiameter * s1[1] / 2 / 0x1000);
                     const s16 *s2 = &FX_SinCosTable_[((u16) (ang + 0x4000) >> 4) * 2];
-                    int bx = o->mUnk_00.x + (float) (o->mUnk_20 * s2[0] / 2 / 0x1000);
-                    int bz = o->mUnk_00.z - (float) (o->mUnk_20 * s2[1] / 2 / 0x1000);
+                    int bx = o->mPos.x + (float) (o->mDiameter * s2[0] / 2 / 0x1000);
+                    int bz = o->mPos.z - (float) (o->mDiameter * s2[1] / 2 / 0x1000);
                     u32 span = AngleDistance(ang, AngleOfVector(bx - ax, bz - az));
                     u16 cur = ang - (u16) span;
                     u32 end = ang + span;
 
                     while (IsAngleIncreasing(end, cur) == 1) {
                         u16 sector = ((cur + 0x1000) / 0x2000) & 7;
-                        if (f->mUnk_26[sector] > dist) {
-                            f->mUnk_26[sector] = dist;
+                        if (f->mSectorDistances[sector] > dist) {
+                            f->mSectorDistances[sector] = dist;
                         }
                         cur += 0x200;
                     }
-                    if (f->mUnk_26[(u32) f->mUnk_24 >> 13] < bestDist) {
+                    if (f->mSectorDistances[(u32) f->mAngle >> 13] < bestDist) {
                         bestDist = dist;
                         bestIdx = j;
                     }
@@ -590,40 +601,40 @@ void func_02016db4(Unk_020b1598 *followers, int index, u16 angle) {
             }
             o++;
             j++;
-        } while (j < followers->mUnk_3f0 + 1);
+        } while (j < followers->mFollowerCount + 1);
     }
-    if (bestDist < followers->mUnk_3f4) {
-        int avg = (f->mUnk_20 + followers->mUnk_000[bestIdx].mUnk_20) / 2;
-        int limit = followers->mUnk_3f2 + avg;
+    if (bestDist < followers->mNearDistance) {
+        int avg = (f->mDiameter + followers->mFollowers[bestIdx].mDiameter) / 2;
+        int limit = followers->mSlowRange + avg;
 
         bestDist = (bestDist >= limit) ? limit : bestDist;
-        f->mUnk_18 = f->mUnk_1c * (float) MapRange(bestDist, avg, limit, 0, 0x400) / 1024.0f;
-        f->mUnk_37 = 1;
-        if (f->mUnk_18 < 0.1) {
-            if (data_020b6ee0.mUnk_8adc[f->mUnk_36].mUnk_18 == 1 && bestIdx == followers->mUnk_3f0 &&
-                data_020b1598.mUnk_3f7 == 0) {
-                data_020b6ee0.mUnk_8adc[f->mUnk_36].mUnk_1a = 0;
-                data_020b6ee0.mUnk_8adc[f->mUnk_36].mUnk_19 = 0;
+        f->mDistancePerFrame = f->mMaxDistancePerFrame * (float) MapRange(bestDist, avg, limit, 0, 0x400) / 1024.0f;
+        f->mNeighbourAhead = 1;
+        if (f->mDistancePerFrame < 0.1) {
+            if (data_020b6ee0.mFollowerEntries[f->mFollowerEntryIndex].mUnk_18 == 1 &&
+                bestIdx == followers->mFollowerCount && gFollowerGroup.mTargetFixed == 0) {
+                data_020b6ee0.mFollowerEntries[f->mFollowerEntryIndex].mPresent = 0;
+                data_020b6ee0.mFollowerEntries[f->mFollowerEntryIndex].mInRange = 0;
                 func_02018840(rec, 5, -1);
             }
         }
     } else {
-        f->mUnk_37 = 0;
-        if (f->mUnk_18 != f->mUnk_1c) {
-            f->mUnk_18 = f->mUnk_18 + (f->mUnk_1c - f->mUnk_18) / 16.0f;
+        f->mNeighbourAhead = 0;
+        if (f->mDistancePerFrame != f->mMaxDistancePerFrame) {
+            f->mDistancePerFrame = f->mDistancePerFrame + (f->mMaxDistancePerFrame - f->mDistancePerFrame) / 16.0f;
         }
     }
 }
 
-void func_02017298(Unk_020b1598 *followers) {
-    Unk_Follower *target = &followers->mUnk_000[followers->mUnk_3f0];
+void MoveFollowers(FollowerGroup *followers) {
+    Follower *target = &followers->mFollowers[followers->mFollowerCount];
     int i;
 
-    if (followers->mUnk_3f0 >= 0x11) {
+    if (followers->mFollowerCount >= 0x11) {
         OS_Terminate();
     }
-    for (i = 0; i < followers->mUnk_3f0; i++) {
-        Unk_Follower *f = &followers->mUnk_000[i];
+    for (i = 0; i < followers->mFollowerCount; i++) {
+        Follower *f = &followers->mFollowers[i];
         const s16 *s1;
         const s16 *s2;
         float fa;
@@ -639,60 +650,60 @@ void func_02017298(Unk_020b1598 *followers) {
         int best;
         int j;
 
-        s1 = &FX_SinCosTable_[(f->mUnk_24 >> 4) * 2];
-        fa = (f->mUnk_20 * s1[0] * 2) / 0x1000;
-        fb = (f->mUnk_20 * -s1[1] * 2) / 0x1000;
-        s2 = &FX_SinCosTable_[(f->mUnk_22 >> 4) * 2];
-        fc = (f->mUnk_20 * s2[0] * 3) / 0x1000;
-        fd = (f->mUnk_20 * -s2[1] * 3) / 0x1000;
-        px = fa + f->mUnk_00.x;
-        pz = fb + f->mUnk_00.z;
+        s1 = &FX_SinCosTable_[(f->mAngle >> 4) * 2];
+        fa = (f->mDiameter * s1[0] * 2) / 0x1000;
+        fb = (f->mDiameter * -s1[1] * 2) / 0x1000;
+        s2 = &FX_SinCosTable_[(f->mTargetAngle >> 4) * 2];
+        fc = (f->mDiameter * s2[0] * 3) / 0x1000;
+        fd = (f->mDiameter * -s2[1] * 3) / 0x1000;
+        px = fa + f->mPos.x;
+        pz = fb + f->mPos.z;
         px = fc + px;
         pz = fd + pz;
-        diff = AngleDelta(f->mUnk_24, (u16) AngleOfVector(px - f->mUnk_00.x, pz - f->mUnk_00.z));
+        diff = AngleDelta(f->mAngle, (u16) AngleOfVector(px - f->mPos.x, pz - f->mPos.z));
         if (abs(diff) > 0x100) {
-            f->mUnk_24 += diff / 8;
+            f->mAngle += diff / 8;
         }
-        if (0 != f->mUnk_1c) {
-            func_02016db4(followers, i, f->mUnk_24);
+        if (0 != f->mMaxDistancePerFrame) {
+            UpdateFollower(followers, i, f->mAngle);
         }
-        f->mUnk_0c = f->mUnk_00;
-        f->mUnk_00.x = f->mUnk_00.x + f->mUnk_18 * (float) FX_SinCosTable_[(f->mUnk_24 >> 4) * 2] / 4096.0f;
-        f->mUnk_00.z = f->mUnk_00.z - f->mUnk_18 * (float) FX_SinCosTable_[(f->mUnk_24 >> 4) * 2 + 1] / 4096.0f;
-        ang = AngleOfVector(target->mUnk_00.x - f->mUnk_00.x, target->mUnk_00.z - f->mUnk_00.z);
-        if (f->mUnk_37 == 1 && 2.0f * f->mUnk_18 < f->mUnk_1c) {
+        f->mPrevPos = f->mPos;
+        f->mPos.x = f->mPos.x + f->mDistancePerFrame * (float) FX_SinCosTable_[(f->mAngle >> 4) * 2] / 4096.0f;
+        f->mPos.z = f->mPos.z - f->mDistancePerFrame * (float) FX_SinCosTable_[(f->mAngle >> 4) * 2 + 1] / 4096.0f;
+        ang = AngleOfVector(target->mPos.x - f->mPos.x, target->mPos.z - f->mPos.z);
+        if (f->mNeighbourAhead == 1 && 2.0f * f->mDistancePerFrame < f->mMaxDistancePerFrame) {
             best = 0;
             sec = ang >> 13;
 
             for (j = 0; j < 4; j++) {
                 int off = (j & 1) ? -(j / 2 + 1) : (j / 2 + 1);
                 int s = (sec + off) & 7;
-                if (f->mUnk_26[s] > best) {
-                    best = f->mUnk_26[s];
+                if (f->mSectorDistances[s] > best) {
+                    best = f->mSectorDistances[s];
                     bi = s;
                 }
             }
-            if (best > f->mUnk_20) {
+            if (best > f->mDiameter) {
                 ang = (u16) ((bi << 13) + 0x1000);
             }
         }
-        diff = AngleDelta(f->mUnk_22, ang);
+        diff = AngleDelta(f->mTargetAngle, ang);
         if (abs(diff) > 0x100) {
-            f->mUnk_22 = f->mUnk_22 + diff / 8;
+            f->mTargetAngle = f->mTargetAngle + diff / 8;
         } else {
-            f->mUnk_22 = ang;
+            f->mTargetAngle = ang;
         }
     }
 }
 
 #pragma thumb off
-int func_0201750c(int stage, int *out) {
+int SelectStageOnTap(int stage, int *out) {
     StageRec *rec = &data_020b1990[stage];
 
-    if (gSystemState.mTouchReleased && rec->mUnk_22f == 1) {
-        if ((int) Length2d(gSystemState.mTouchX - rec->mUnk_1f0, gSystemState.mTouchY - rec->mUnk_1f4) < 0x10) {
-            if ((int) Length2d(gSystemState.mTouchX - data_020b6ee0.mUnk_a574.mUnk_24,
-                               gSystemState.mTouchY - data_020b6ee0.mUnk_a574.mUnk_28) < 6) {
+    if (gSystemState.mTouchReleased && rec->mVisible == 1) {
+        if ((int) Length2d(gSystemState.mTouchX - rec->mScreenX, gSystemState.mTouchY - rec->mScreenY) < 0x10) {
+            if ((int) Length2d(gSystemState.mTouchX - data_020b6ee0.mUnk_a574.mTouchPressX,
+                               gSystemState.mTouchY - data_020b6ee0.mUnk_a574.mTouchPressY) < 6) {
                 *out = stage;
                 func_0202f110(0x167, 0x64, 0, 0x40, 0xffff, 0);
                 return 1;
@@ -713,7 +724,13 @@ static inline s32 cosIdx(int a) {
 
 #pragma thumb off
 
-void func_020175e8(int index, int *sel, int flags) {
+// Per-frame step of stage index: clamps mDistancePerFrame to -0x20000..0x20000 and, on a touch press, records the
+// touch point in mUnk_a574. While the stage's mUnk_142 is not 1 or mPanelState is 3, 4, 6, 7 or 8 it then only turns
+// the selected stage by the decaying spin mUnk_a8e8 or lets a tap select another stage (panel states 0..2). The touch
+// drag that would set the spin here needs panel state 3 or 4 with flags bit 0 clear, which no call reaches in this
+// build (state 10 sets bit 0 in panel states 3 to 5, and state 4 keeps panel state 0). Otherwise it moves the stage
+// along mUnk_1d8, keeps it on the ground and handles its hits with other stages and the map (func_02031824).
+void UpdateStageMotion(int index, int *sel, int flags) {
     StageRec *rec = &data_020b1990[index];
     int hit = 0;
     int i;
@@ -734,34 +751,34 @@ void func_020175e8(int index, int *sel, int flags) {
     if (index < 0 || index >= STAGE_MAX) {
         OS_Terminate();
     }
-    rec->mUnk_220 = (rec->mUnk_220 < 0x20000 ? rec->mUnk_220 : 0x20000) < -0x20000
+    rec->mDistancePerFrame = (rec->mDistancePerFrame < 0x20000 ? rec->mDistancePerFrame : 0x20000) < -0x20000
                         ? -0x20000
-                        : (rec->mUnk_220 < 0x20000 ? rec->mUnk_220 : 0x20000);
+                        : (rec->mDistancePerFrame < 0x20000 ? rec->mDistancePerFrame : 0x20000);
     if (gSystemState.mTouchPressed) {
-        data_020b6ee0.mUnk_a574.mUnk_24 = gSystemState.mTouchX;
-        data_020b6ee0.mUnk_a574.mUnk_28 = gSystemState.mTouchY;
+        data_020b6ee0.mUnk_a574.mTouchPressX = gSystemState.mTouchX;
+        data_020b6ee0.mUnk_a574.mTouchPressY = gSystemState.mTouchY;
     }
-    if (rec->mUnk_142 != 1 || data_020b6ee0.mUnk_a146 == 3 || data_020b6ee0.mUnk_a146 == 4 ||
-        data_020b6ee0.mUnk_a146 == 6 || data_020b6ee0.mUnk_a146 == 7 || data_020b6ee0.mUnk_a146 == 8) {
+    if (rec->mUnk_142 != 1 || data_020b6ee0.mPanelState == 3 || data_020b6ee0.mPanelState == 4 ||
+        data_020b6ee0.mPanelState == 6 || data_020b6ee0.mPanelState == 7 || data_020b6ee0.mPanelState == 8) {
         if (index == *sel) {
-            if (!(flags & 1) && (data_020b6ee0.mUnk_a146 == 3 || data_020b6ee0.mUnk_a146 == 4)) {
+            if (!(flags & 1) && (data_020b6ee0.mPanelState == 3 || data_020b6ee0.mPanelState == 4)) {
                 if (gSystemState.mTouchPressed) {
-                    data_020b6ee0.mUnk_0c5c = gSystemState.mTouchX;
+                    data_020b6ee0.mPrevTouchX = gSystemState.mTouchX;
                     data_020b6ee0.mUnk_0c5d = gSystemState.mTouchY;
                     data_020b6ee0.mUnk_a8e8 = 0;
                 } else if (gSystemState.mTouchDown) {
-                    data_020b6ee0.mUnk_a8e8 += (gSystemState.mTouchX - data_020b6ee0.mUnk_0c5c) << 7;
-                    data_020b6ee0.mUnk_0c5c = gSystemState.mTouchX;
+                    data_020b6ee0.mUnk_a8e8 += (gSystemState.mTouchX - data_020b6ee0.mPrevTouchX) << 7;
+                    data_020b6ee0.mPrevTouchX = gSystemState.mTouchX;
                 }
             }
             rec->mUnk_1d8 -= data_020b6ee0.mUnk_a8e8;
             data_020b6ee0.mUnk_a8e8 = data_020b6ee0.mUnk_a8e8 * 31 / 32;
             return;
         }
-        if (data_020b6ee0.mUnk_a146 > 2) {
+        if (data_020b6ee0.mPanelState > 2) {
             return;
         }
-        if (func_0201750c(index, sel) != 1) {
+        if (SelectStageOnTap(index, sel) != 1) {
             return;
         }
         rec->mUnk_134 |= 2;
@@ -782,11 +799,11 @@ void func_020175e8(int index, int *sel, int flags) {
                         dy = (dy << 3) / len;
                         Length2d(dx, dy);
                     }
-                    dx = (dx << 12) + rec->mUnk_220 * sinIdx(rec->mUnk_1d8) / 4096;
-                    dy = (dy << 12) + rec->mUnk_220 * -cosIdx(rec->mUnk_1d8) / 4096;
+                    dx = (dx << 12) + rec->mDistancePerFrame * sinIdx(rec->mUnk_1d8) / 4096;
+                    dy = (dy << 12) + rec->mDistancePerFrame * -cosIdx(rec->mUnk_1d8) / 4096;
                     rec->mUnk_1d8 = AngleOfVector(dx, dy);
                     len = Length2d(dx, dy);
-                    rec->mUnk_220 = len < 0x14000 ? len : 0x14000;
+                    rec->mDistancePerFrame = len < 0x14000 ? len : 0x14000;
                 }
             } else if (gSystemState.mTouchDown) {
                 int n = data_020c1d60.mUnk_800.mUnk_100.mUnk_10 - 1;
@@ -795,18 +812,18 @@ void func_020175e8(int index, int *sel, int flags) {
                                            (data_020c1d60.mUnk_800.mUnk_000 + n - 4)->mUnk_0,
                                        data_020c1d60.mUnk_800.mUnk_000[n].mUnk_1 -
                                            (data_020c1d60.mUnk_800.mUnk_000 + n - 4)->mUnk_1) < 4) {
-                        rec->mUnk_220 -= 3276.8;
+                        rec->mDistancePerFrame -= 3276.8;
                     }
                 }
             }
         } else {
-            func_0201750c(index, sel);
+            SelectStageOnTap(index, sel);
         }
     }
-    spd = rec->mUnk_220 - 204.8;
-    rec->mUnk_220 = spd;
+    spd = rec->mDistancePerFrame - 204.8;
+    rec->mDistancePerFrame = spd;
     if (spd <= 0) {
-        rec->mUnk_220 = 0;
+        rec->mDistancePerFrame = 0;
         return;
     }
     {
@@ -814,14 +831,14 @@ void func_020175e8(int index, int *sel, int flags) {
         k = k + (spd = spd * 0xc0 >> 12);
         old = rec->mUnk_1a0;
         rec->mUnk_1dc = k;
-        x = rec->mUnk_220 * sinIdx(rec->mUnk_1d8) >> 12;
-        z = rec->mUnk_220 * -cosIdx(rec->mUnk_1d8) >> 12;
+        x = rec->mDistancePerFrame * sinIdx(rec->mUnk_1d8) >> 12;
+        z = rec->mDistancePerFrame * -cosIdx(rec->mUnk_1d8) >> 12;
         rec->mUnk_1a0.x += x;
         rec->mUnk_1a0.z += z;
         ground = func_02030830(rec->mUnk_1a0.x, rec->mUnk_1a0.z, rec->mUnk_1a0.y + 0xc800, 0, 0, NULL, &push) + 0x32000;
     }
-    if (rec->mUnk_220 != 0) {
-        func_0202f110(0x1c4, MapRangeFromZero(abs(rec->mUnk_220 >> 12), 0x20, 0, 0x4b), 1, 0x40, 0xffff, 0);
+    if (rec->mDistancePerFrame != 0) {
+        func_0202f110(0x1c4, MapRangeFromZero(abs(rec->mDistancePerFrame >> 12), 0x20, 0, 0x4b), 1, 0x40, 0xffff, 0);
     }
     if (push.y != 0x1000) {
         rec->mUnk_1a0.x += push.x;
@@ -837,8 +854,8 @@ void func_020175e8(int index, int *sel, int flags) {
             rec->mUnk_21c += 5120.0f;
         }
     }
-    if (!(flags & 2) && rec->mUnk_220 != 0) {
-        for (i = 0; i < data_020b6ee0.mUnk_a8ee; i++) {
+    if (!(flags & 2) && rec->mDistancePerFrame != 0) {
+        for (i = 0; i < data_020b6ee0.mStageCount; i++) {
             StageRec *other;
             u32 dir;
             int diff;
@@ -860,30 +877,30 @@ void func_020175e8(int index, int *sel, int flags) {
             if (abs(diff) >= 0x3000) {
                 continue;
             }
-            along = rec->mUnk_220 * cosIdx(abs(diff)) / 4096;
+            along = rec->mDistancePerFrame * cosIdx(abs(diff)) / 4096;
             x = along * sinIdx((u16) (dir + 0x8000)) / 4096;
             z = along * -cosIdx((u16) (dir + 0x8000)) / 4096;
-            across = rec->mUnk_220 * sinIdx(abs(diff)) / 4096;
+            across = rec->mDistancePerFrame * sinIdx(abs(diff)) / 4096;
             x += across * sinIdx((u16) (rec->mUnk_1d8 - diff)) / 4096;
             z += across * -cosIdx((u16) (rec->mUnk_1d8 - diff)) / 4096;
-            if (c[2] < 3 && data_020b6ee0.mUnk_a146 != 2) {
+            if (c[2] < 3 && data_020b6ee0.mPanelState != 2) {
                 other->mUnk_1d8 = AngleOfVector(-x, -z);
-                other->mUnk_220 = Length2d(x, z) >> 1;
+                other->mDistancePerFrame = Length2d(x, z) >> 1;
                 if (other->mUnk_142 != 1) {
-                    other->mUnk_220 = 0;
+                    other->mDistancePerFrame = 0;
                 }
             }
             func_0202f110(0x30, 100, 0, 0x40, 0xffff, 0);
-            if ((u32) data_020b6ee0.mUnk_a564 >= 99) {
-                func_02014ffc(rec, -4, 0, 0);
-                func_02014ffc(other, -4, 0, 0);
+            if ((u32) data_020b6ee0.mProgressState >= 99) {
+                AddPercent(rec, -4, 0, 0);
+                AddPercent(other, -4, 0, 0);
             }
             hit = 1;
         }
     }
     if (hit == 1) {
         rec->mUnk_1d8 = AngleOfVector(x, z);
-        rec->mUnk_220 = Length2d(x, z);
+        rec->mDistancePerFrame = Length2d(x, z);
     }
     {
         int mask = 1;
@@ -922,18 +939,18 @@ void func_020175e8(int index, int *sel, int flags) {
         u32 best;
         int near;
 
-        data_020b6ee0.mUnk_0c5a = 600;
+        data_020b6ee0.mFixedTargetTimer = 600;
         best = -1;
         for (j = 0; j < data_020b6ee0.mUnk_0c48; j++) {
-            u32 dist = abs(data_020b6ee0.mUnk_0008[j].mUnk_178 - cx) + abs(data_020b6ee0.mUnk_0008[j].mUnk_17c - cz);
+            u32 dist = abs(data_020b6ee0.mUnk_0008[j].mPosX - cx) + abs(data_020b6ee0.mUnk_0008[j].mPosZ - cz);
             if (dist < best) {
                 best = dist;
                 near = j;
             }
         }
-        data_020b6ee0.mUnk_0c50 = data_020b6ee0.mUnk_0008[near].mUnk_178;
-        data_020b6ee0.mUnk_0c54 = data_020b6ee0.mUnk_0008[near].mUnk_17c;
-        data_020b6ee0.mUnk_0c58 = near;
+        data_020b6ee0.mFixedTargetX = data_020b6ee0.mUnk_0008[near].mPosX;
+        data_020b6ee0.mFixedTargetZ = data_020b6ee0.mUnk_0008[near].mPosZ;
+        data_020b6ee0.mFixedTargetObjectIndex = near;
         data_020b6ee0.mUnk_0c4c = data_020c3e44.mUnk_2024.mUnk_10;
     }
     if (data_020c3e44.mUnk_2024.mUnk_3a & 2) {
@@ -943,7 +960,7 @@ void func_020175e8(int index, int *sel, int flags) {
 
         for (i = 0; i < count; i++) {
             Unk_020b6ee8 *g = &data_020b6ee0.mUnk_0008[i];
-            if (g->mUnk_184 == 0x2d && g->mUnk_180 == key) {
+            if (g->mKind == 0x2d && g->mUnk_180 == key) {
                 break;
             }
         }
@@ -953,8 +970,8 @@ void func_020175e8(int index, int *sel, int flags) {
             int near;
             for (j = 0; j < data_020b6ee0.mUnk_0c48; j++) {
                 Unk_020b6ee8 *g = &data_020b6ee0.mUnk_0008[j];
-                s32 dx = g->mUnk_178 - rec->mUnk_1a0.x / 512;
-                s32 dz = g->mUnk_17c - rec->mUnk_1a0.z / 512;
+                s32 dx = g->mPosX - rec->mUnk_1a0.x / 512;
+                s32 dz = g->mPosZ - rec->mUnk_1a0.z / 512;
                 u32 dist = abs(dx) + abs(dz);
                 if (dist < best) {
                     best = dist;
@@ -964,7 +981,7 @@ void func_020175e8(int index, int *sel, int flags) {
             data_020b6ee0.mUnk_0008[near].mUnk_180 = key;
             i = near;
         }
-        dmg = abs(rec->mUnk_220 * cosIdx((u16) AngleDistance(angle, rec->mUnk_1d8)) / 4096 >> 12);
+        dmg = abs(rec->mDistancePerFrame * cosIdx((u16) AngleDistance(angle, rec->mUnk_1d8)) / 4096 >> 12);
         data_020b6ee0.mUnk_0008[i].mUnk_186 -= dmg;
         if (data_020b6ee0.mUnk_0008[i].mUnk_186 < 0) {
             func_02031c98(data_020c3e44.mUnk_2024.mUnk_10, 0, 0);
@@ -974,7 +991,7 @@ void func_020175e8(int index, int *sel, int flags) {
             data_020b6ee0.mUnk_0008[i].mModel.mUnk_134 |= 1;
         }
     }
-    rec->mUnk_220 -= rec->mUnk_220 / 2 < 1 ? 1 : rec->mUnk_220 / 2;
+    rec->mDistancePerFrame -= rec->mDistancePerFrame / 2 < 1 ? 1 : rec->mDistancePerFrame / 2;
     rec->mUnk_1a0 = old;
     rec->mUnk_1d8 = angle;
     data_020b6ee0.mUnk_8e60.mModel.mUnk_134 |= 1;
@@ -986,14 +1003,14 @@ static const u16 data_02050194[24] = {
     1188, 1288, 1397, 1481, 1596, 1732, 1866, 1966, 2075, 2161, 2269, 2395,
 };
 
-static const u16 data_02050164[4][6] = {
+static const u16 sMapIndices[4][6] = {
     {0, 1, 2, 3, 4, 5},
     {6, 7, 8, 9, 10, 11},
     {12, 13, 14, 15, 16, 17},
     {18, 19, 20, 21, 22, 23},
 };
 
-static const u16 data_020501c4[24] = {
+static const u16 sMapFileIds[24] = {
     2527, 2627, 2738, 2826, 2934, 3060, 607,  3215, 707,  791,  908,  1047,
     1187, 1287, 1396, 1480, 1595, 1731, 1865, 1965, 2074, 2160, 2268, 2394,
 };
@@ -1009,20 +1026,20 @@ void func_020182cc(void) {
     u8 resumed;
     int row;
 
-    stage = data_020b6ee0.mUnk_a8e4;
+    stage = data_020b6ee0.mSelectedStageIndex;
     obj = &data_020b6ee0.mUnk_8e60;
     resumed = stage != -1;
-    data_020b6ee0.mUnk_a8e4 = stage == -1 ? 0 : stage;
+    data_020b6ee0.mSelectedStageIndex = stage == -1 ? 0 : stage;
     {
         BOOL ok = 0;
-        if (data_020b6ee0.mUnk_a8e4 >= 0 && data_020b6ee0.mUnk_a8e4 < STAGE_MAX) {
+        if (data_020b6ee0.mSelectedStageIndex >= 0 && data_020b6ee0.mSelectedStageIndex < STAGE_MAX) {
             ok = 1;
         }
         if (ok == 0) {
             OS_Terminate();
         }
     }
-    rec = &data_020b1990[data_020b6ee0.mUnk_a8e4];
+    rec = &data_020b1990[data_020b6ee0.mSelectedStageIndex];
     if (resumed == 1) {
         if (rec->mInfo.mUnk_11 > 12) {
             OS_Terminate();
@@ -1034,8 +1051,8 @@ void func_020182cc(void) {
         if (row > 4) {
             OS_Terminate();
         }
-        data_020b6ee0.mUnk_a8f2 = data_02050164[row][rec->mInfo.mUnk_10];
-        if (data_020b6ee0.mUnk_a8f2 >= 24) {
+        data_020b6ee0.mMapIndex = sMapIndices[row][rec->mInfo.mUnk_10];
+        if (data_020b6ee0.mMapIndex >= 24) {
             OS_Terminate();
         }
     }
@@ -1046,7 +1063,7 @@ void func_020182cc(void) {
     func_0202bdd8(0x10cb, 0x10ca, 0x10cc, 0, 2);
     SetLcdSwap(0);
     func_02021fb0(0x1c7, 0x1c6, 0x180, 0x10);
-    func_020325b0(data_020501c4[data_020b6ee0.mUnk_a8f2], 0, data_02050194[data_020b6ee0.mUnk_a8f2], 0, 0, 0);
+    func_020325b0(sMapFileIds[data_020b6ee0.mMapIndex], 0, data_02050194[data_020b6ee0.mMapIndex], 0, 0, 0);
     data_020c3e44.mUnk_2024.mUnk_04 = func_02015d48;
     data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_54 = 0x640;
     data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_44 = 0x186a000;
@@ -1055,7 +1072,7 @@ void func_020182cc(void) {
     func_02031fc4(0, &rec->mUnk_1a0);
     rec->mDraw.mUnk_43 = 2;
     rec->mDraw.mUnk_28 = 2 << 19;
-    rec->mUnk_220 = 0;
+    rec->mDistancePerFrame = 0;
     rec->mUnk_224 = 0;
     func_020271ec(rec, 0, 0, 0, data_0201ab04[rec->mInfo.mUnk_13]);
     rec->mUnk_158 = rec->mUnk_1a0;
@@ -1070,15 +1087,15 @@ void func_020182cc(void) {
     func_02031fc4(0, &data_020c3e44.mUnk_2024.mUnk_74);
     data_020c3e44.mUnk_2024.mUnk_5c = data_020c3e44.mUnk_2024.mUnk_74;
     data_020c3e44.mUnk_2024.mUnk_5c.y += 0x6d6000;
-    func_02015d4c();
-    func_02016624();
-    obj->mUnk_1bc = func_020182b8(rec->mInfo.mUnk_11 - 1, 2) * 60000 / 1000;
-    obj->mUnk_1c0 = 0;
+    ClearPanelState();
+    SetupMapObjects();
+    obj->mEndTimer = func_020182b8(rec->mInfo.mUnk_11 - 1, 2) * 60000 / 1000;
+    obj->mScore = 0;
     func_02005a8c(1, 0);
 }
 
 void func_02018558(void) {
-    int stage = data_020b6ee0.mUnk_a8e4;
+    int stage = data_020b6ee0.mSelectedStageIndex;
     Unk_020bfd40 *obj = &data_020b6ee0.mUnk_8e60;
     StageRec *rec = &data_020b1990[stage];
     VecFx32 pos;
@@ -1088,13 +1105,13 @@ void func_02018558(void) {
     if (stage >= STAGE_MAX) {
         OS_Terminate();
     }
-    func_0201168c(data_020b6ee0.mUnk_a8e4, obj->mUnk_1c0, data_0206d448.mUnk_00, obj->mUnk_1bc, 2);
-    func_02015d58(stage);
+    func_0201168c(data_020b6ee0.mSelectedStageIndex, obj->mScore, data_0206d448.mUnk_00, obj->mEndTimer, 2);
+    SetStageCameraFar(stage);
     rec->mUnk_158 = rec->mUnk_1a0;
     func_0200ba94(&rec->mUnk_1a0, 0x70800, 0x800);
     func_0202733c(rec, &rec->mUnk_1a0, 0);
     PlayObjectSe(rec);
-    func_02025db4(&rec->mUnk_1a0, &rec->mUnk_1f0);
+    func_02025db4(&rec->mUnk_1a0, &rec->mScreenX);
     func_020262a0(&data_020b6ee0.mUnk_8e60.mModel);
     if (data_020b6ee0.mUnk_8e60.mModel.mUnk_142 != 1) {
         data_020b6ee0.mUnk_8e60.mDraw.mPos = rec->mUnk_1a0;
@@ -1106,9 +1123,9 @@ void func_02018558(void) {
     pos.x = data_020c3e44.mUnk_2024.mUnk_74.x;
     pos.z = data_020c3e44.mUnk_2024.mUnk_74.z;
     pos.y = -0x19000;
-    func_0200ba08(data_020b6ee0.mUnk_a8f2 + 0xfbe, &pos, (gSystemState.mElapsedFrames >> 1) % 100, 0, 0x3000, 0);
+    func_0200ba08(data_020b6ee0.mMapIndex + 0xfbe, &pos, (gSystemState.mElapsedFrames >> 1) % 100, 0, 0x3000, 0);
     func_02033614(data_020c3e44.mUnk_2024.mUnk_74.x, data_020c3e44.mUnk_2024.mUnk_74.z);
-    func_02016ae8(stage);
+    UpdateFollowers(stage);
     func_02015f34();
     func_02016008(stage);
     func_020164e0(stage);
@@ -1116,17 +1133,17 @@ void func_02018558(void) {
     if (mode != 0) {
         busy = func_02005b1c(1);
         if (mode == 2 && busy == 0) {
-            func_020059b4(func_02005c04(), obj->mUnk_1c0);
+            func_020059b4(func_02005c04(), obj->mScore);
         }
         return;
     }
-    func_020175e8(stage, &data_020b6ee0.mUnk_a8e4, 2);
+    UpdateStageMotion(stage, &data_020b6ee0.mSelectedStageIndex, 2);
     func_020186fc(stage);
 }
 
 void func_020186cc(void) {
     func_020102f8();
-    RemoveCachedFile(data_020501c4[data_020b6ee0.mUnk_a8f2]);
+    RemoveCachedFile(sMapFileIds[data_020b6ee0.mMapIndex]);
     ResetVramBanks();
 }
 
@@ -1141,19 +1158,19 @@ void func_020186fc(int stage) {
     if (stage < 0 || stage >= STAGE_MAX) {
         OS_Terminate();
     }
-    obj->mUnk_1bc--;
-    func_020059cc(obj->mUnk_1c0);
-    if (obj->mUnk_1bc <= 0 || data_020b6ee0.mUnk_8ad9 == 0) {
-        func_02005a8c(0, obj->mUnk_1c0 >= func_020182b8(rec->mInfo.mUnk_11 - 1, 3));
+    obj->mEndTimer--;
+    func_020059cc(obj->mScore);
+    if (obj->mEndTimer <= 0 || data_020b6ee0.mUnk_8ad9 == 0) {
+        func_02005a8c(0, obj->mScore >= func_020182b8(rec->mInfo.mUnk_11 - 1, 3));
     }
 }
 
-void func_02018770(StageRec *rec, int kind, int amount) {
+void AddStageAmountObjSlots(StageRec *rec, int kind, int amount) {
     char buf[32];
     ObjSlot *slot;
 
     if (kind == 0xf49) {
-        func_02011624(amount, buf);
+        FormatSignedSeconds(amount, buf);
     } else if (amount > 0) {
         sprintf(buf, "+%d", amount < 0 ? -amount : amount);
     } else {
@@ -1201,17 +1218,17 @@ void func_02018840(StageRec *rec, int kind, int index) {
             break;
     }
     if (time != 0 || score != 0) {
-        func_02025db4(&rec->mUnk_1a0, &rec->mUnk_1f0);
+        func_02025db4(&rec->mUnk_1a0, &rec->mScreenX);
     }
     if (time != 0) {
-        obj->mUnk_1bc += time;
-        func_02018770(rec, 0xf49, time);
+        obj->mEndTimer += time;
+        AddStageAmountObjSlots(rec, 0xf49, time);
     } else if (score != 0) {
         if (score <= 0) {
             OS_Terminate();
         }
-        func_020059d0(&obj->mUnk_1c0, score, 0);
-        func_02018770(rec, 0xf48, score);
+        func_020059d0(&obj->mScore, score, 0);
+        AddStageAmountObjSlots(rec, 0xf48, score);
     }
 }
 
@@ -1245,45 +1262,45 @@ void func_0201896c(void) {
         data_020c3e44.mUnk_2024.mUnk_80 = data_020c3e44.mUnk_2024.mUnk_8c;
         data_020c3e44.mUnk_2024.mUnk_80.y += 0xcb2000;
         data_020c3e44.mUnk_2024.mUnk_80.z += 0x32000;
-        data_020b6ee0.mUnk_a574.mUnk_34 = 0x80;
+        data_020b6ee0.mUnk_a574.mCameraEaseDivisor = 0x80;
     } else {
         data_020b6ee0.mUnk_a147 = 0;
     }
     params.mUnk_43 = 2;
     params.mUnk_28 = 2 << 19;
-    for (i = 0; i < data_020b6ee0.mUnk_a8ee; i++) {
+    for (i = 0; i < data_020b6ee0.mStageCount; i++) {
         rec = &data_020b1990[i];
         func_020271ec(rec, 0, 0, 0, data_0201ab04[rec->mInfo.mUnk_13]);
         rec->mDraw = params;
         rec->mUnk_1d8 = NextRandom();
-        rec->mUnk_220 = 0;
+        rec->mDistancePerFrame = 0;
         rec->mUnk_224 = 0;
         if (rec->mUnk_1e8 == -1) {
             func_02031fc4(0, &rec->mUnk_1a0);
-            rec->mUnk_220 = 0x6000;
+            rec->mDistancePerFrame = 0x6000;
         } else {
-            rec->mUnk_1a0.x = offset.x + rec->mUnk_1e4;
-            rec->mUnk_1a0.z = offset.z + rec->mUnk_1ec;
+            rec->mUnk_1a0.x = offset.x + rec->mStoredOffsetX;
+            rec->mUnk_1a0.z = offset.z + rec->mStoredOffsetZ;
         }
         rec->mUnk_1a0.y = offset.y + 0x32000;
         rec->mUnk_1a0.y =
             func_02030830(rec->mUnk_1a0.x, rec->mUnk_1a0.z, rec->mUnk_1a0.y + 0xc800, 0, 0, 0, 0) + 0x32000;
         rec->mUnk_158 = rec->mUnk_1a0;
     }
-    if (data_020b6ee0.mUnk_a8e4 == -1) {
-        data_020b6ee0.mUnk_a146 = 0;
+    if (data_020b6ee0.mSelectedStageIndex == -1) {
+        data_020b6ee0.mPanelState = 0;
     } else {
-        data_020b6ee0.mUnk_a146 = 1;
+        data_020b6ee0.mPanelState = 1;
         {
             BOOL ok = 0;
-            if (data_020b6ee0.mUnk_a8e4 >= 0 && data_020b6ee0.mUnk_a8e4 < STAGE_MAX) {
+            if (data_020b6ee0.mSelectedStageIndex >= 0 && data_020b6ee0.mSelectedStageIndex < STAGE_MAX) {
                 ok = 1;
             }
             if (ok == 0) {
                 OS_Terminate();
             }
         }
-        rec = &data_020b1990[data_020b6ee0.mUnk_a8e4];
+        rec = &data_020b1990[data_020b6ee0.mSelectedStageIndex];
         dx = rec->mUnk_1a0.x - data_020c3e44.mUnk_2024.mUnk_8c.x;
         dz = rec->mUnk_1a0.z - data_020c3e44.mUnk_2024.mUnk_8c.z;
         data_020c3e44.mUnk_2024.mUnk_8c.x += dx;
@@ -1291,33 +1308,33 @@ void func_0201896c(void) {
         data_020c3e44.mUnk_2024.mUnk_80.x += dx;
         data_020c3e44.mUnk_2024.mUnk_80.z += dz;
     }
-    func_020151f8();
+    FillEmptySlots();
     func_020196b4();
     func_020198f0();
-    panel->mUnk_3c = 0x28;
-    data_020b6ee0.mUnk_a8e0 = -1;
-    data_020b6ee0.mUnk_a5d0 = 1;
+    panel->mPanelButtonOffsetX = 0x28;
+    data_020b6ee0.mPrevSelectedStageIndex = -1;
+    data_020b6ee0.mButtonsEnabled = 1;
     func_020271ec(&data_020b6ee0.mUnk_9c64, 0, 0, 2, data_0201aba0[3]);
     data_020b6ee0.mUnk_a10c = -1;
-    func_02011518(data_020b6ee0.mUnk_a8e4, 2);
+    LoadStageOrTextImage(data_020b6ee0.mSelectedStageIndex, 2);
     data_020b6ee0.mUnk_a14b = 0;
     func_020271ec(&data_020b6ee0.mUnk_8e60, 0, 0, 0, data_0201aba0[5]);
     func_02023f58(&data_020b6ee0.mUnk_8e60.mDraw, 0, 0, 0, 6 << 18, 0, 2, 0, 0x100);
     if (data_020b6ee0.mUnk_a14a == 1) {
         data_020b6ee0.mUnk_a14a = 0;
         data_020b6ee0.mUnk_9c64.mUnk_134 |= 1;
-        if (data_020b6ee0.mUnk_a8e4 != -1) {
+        if (data_020b6ee0.mSelectedStageIndex != -1) {
             data_020b6ee0.mUnk_8e60.mModel.mUnk_134 |= 4;
         }
     }
-    if (data_020b6ee0.mUnk_a14c == 1) {
-        func_02014430(0);
-        data_020b6ee0.mUnk_a14c = 0;
+    if (data_020b6ee0.mSaveRequested == 1) {
+        RunSaveScreen(0);
+        data_020b6ee0.mSaveRequested = 0;
     }
-    func_0200c164(&data_020b6ee0.mUnk_9de8);
+    func_0200c164(&data_020b6ee0.mMoveObj);
 }
 
-int func_02018ccc(const u16 *a, const u16 *b) {
+int CompareKeysDescending(const u16 *a, const u16 *b) {
     return *b - *a;
 }
 
@@ -1340,50 +1357,50 @@ void func_02018cd4(void) {
     int j;
     StageRec *rec;
 
-    func_020192d4();
-    memset(order, 0, data_020b6ee0.mUnk_a8ee * 2);
+    UpdateStageInput();
+    memset(order, 0, data_020b6ee0.mStageCount * 2);
     memset(c, 0, 0xc);
-    for (i = 0; i < data_020b6ee0.mUnk_a8ee; i++) {
+    for (i = 0; i < data_020b6ee0.mStageCount; i++) {
         StageRec *rec = &data_020b1990[i];
-        if (i == data_020b6ee0.mUnk_a8e4) {
+        if (i == data_020b6ee0.mSelectedStageIndex) {
             order[i].mKey = 0xffff;
         } else if (rec->mUnk_142 != 1) {
             order[i].mKey = 0xfffe;
-        } else if (rec->mUnk_220 > 0x1000) {
-            order[i].mKey = (rec->mUnk_220 >> 12) + 1;
+        } else if (rec->mDistancePerFrame > 0x1000) {
+            order[i].mKey = (rec->mDistancePerFrame >> 12) + 1;
         }
         order[i].mStage = i;
         if (rec->mUnk_22e == 1) {
             c[0]++;
         }
-        if (rec->mUnk_220 != 0) {
+        if (rec->mDistancePerFrame != 0) {
             c[2]++;
         }
-        if (rec->mUnk_220 != 0 || rec->mUnk_142 != 1) {
+        if (rec->mDistancePerFrame != 0 || rec->mUnk_142 != 1) {
             c[1]++;
         }
     }
-    qsort(order, data_020b6ee0.mUnk_a8ee, 4, (int (*)(const void *, const void *)) func_02018ccc);
+    qsort(order, data_020b6ee0.mStageCount, 4, (int (*)(const void *, const void *)) CompareKeysDescending);
     func_02031fc4(0, &camPos);
-    func_02015e94(data_020b6ee0.mUnk_a8e4);
-    func_02019504();
-    for (j = 0; j < data_020b6ee0.mUnk_a8ee; j++) {
+    UpdateStageCamera(data_020b6ee0.mSelectedStageIndex);
+    UpdateRandomStage();
+    for (j = 0; j < data_020b6ee0.mStageCount; j++) {
         int idx = order[j].mStage;
         int lim;
         rec = &data_020b1990[idx];
         params = rec->mDraw;
         rec->mUnk_158 = params.mPos;
-        rec->mUnk_22f = func_02031d0c(&rec->mUnk_1a0, 0x64000, 0x64000, 0x64000);
-        if (rec->mUnk_22f == 1 || idx == data_020b6ee0.mUnk_a8e4) {
-            func_02025db4(&rec->mUnk_1a0, &rec->mUnk_1f0);
-            lim = (data_020b6ee0.mUnk_a146 == 0 || data_020b6ee0.mUnk_a146 == 1) ? 2 : 1;
+        rec->mVisible = func_02031d0c(&rec->mUnk_1a0, 0x64000, 0x64000, 0x64000);
+        if (rec->mVisible == 1 || idx == data_020b6ee0.mSelectedStageIndex) {
+            func_02025db4(&rec->mUnk_1a0, &rec->mScreenX);
+            lim = (data_020b6ee0.mPanelState == 0 || data_020b6ee0.mPanelState == 1) ? 2 : 1;
             if (order[j].mKey != 0 && j < lim) {
                 rec->mUnk_170 = rec->mInfo.mUnk_13 * 6 + 0xfd8;
             } else {
                 rec->mUnk_170 = rec->mInfo.mUnk_13 * 6 + 0xfdb;
             }
-            if (rec->mUnk_142 != 1 || rec->mUnk_134 != 0 || idx == data_020b6ee0.mUnk_a8e4) {
-                if (rec->mUnk_142 != 1 && data_020b6ee0.mUnk_ca8 != 0 && idx == data_020b6ee0.mUnk_a8e4) {
+            if (rec->mUnk_142 != 1 || rec->mUnk_134 != 0 || idx == data_020b6ee0.mSelectedStageIndex) {
+                if (rec->mUnk_142 != 1 && data_020b6ee0.mUnk_ca8 != 0 && idx == data_020b6ee0.mSelectedStageIndex) {
                     func_0202601c(data_020b6ee0.mUnk_ca8, &data_020b6ee0.mUnk_ca6, 2, 1, &data_020b6ee0.mUnk_c94,
                                   &data_020b6ee0.mUnk_c98, &data_020b6ee0.mUnk_c9c, 1);
                     func_02023478(data_020b6ee0.mUnk_ca8, data_020b6ee0.mUnk_ca0, &data_020b6ee0.mUnk_c88,
@@ -1397,7 +1414,7 @@ void func_02018cd4(void) {
                     params.mPos.z += data_020b6ee0.mUnk_c88.z * data_020b6ee0.mUnk_c7c.z;
                     rec->mUnk_158 = params.mPos;
                 }
-                if (data_020b6ee0.mUnk_a10c != -1 && idx == data_020b6ee0.mUnk_a8e4) {
+                if (data_020b6ee0.mUnk_a10c != -1 && idx == data_020b6ee0.mSelectedStageIndex) {
                     func_02025ff4((Model *) rec, data_020b6ee0.mUnk_a10c);
                 }
                 func_0202733c(rec, &params, 0x10);
@@ -1405,7 +1422,7 @@ void func_02018cd4(void) {
             } else {
                 func_02024b5c(rec->mUnk_170, &params, rec, 0x10);
             }
-            if (idx == data_020b6ee0.mUnk_a8e4) {
+            if (idx == data_020b6ee0.mSelectedStageIndex) {
                 func_020262a0(&data_020b6ee0.mUnk_8e60.mModel);
                 if (data_020b6ee0.mUnk_8e60.mModel.mUnk_142 != 1) {
                     data_020b6ee0.mUnk_8e60.mDraw.mPos = rec->mUnk_1a0;
@@ -1418,66 +1435,68 @@ void func_02018cd4(void) {
                 marker.y -= 0x19000;
                 func_0200ba94(&params.mPos, 0x70800, 0x800);
             }
-            if (data_020b6ee0.mUnk_a146 <= 1) {
-                if (idx == data_020b6ee0.mUnk_a8e4) {
+            if (data_020b6ee0.mPanelState <= 1) {
+                if (idx == data_020b6ee0.mSelectedStageIndex) {
                     func_0200ba08(0x10c8, &marker, 0, gSystemState.mElapsedFrames << 10, 0x100000, 0);
                     func_02019800(rec);
                 }
-                if (rec->mUnk_22d == 1 && (u32) data_020b6ee0.mUnk_a564 >= 0x11) {
-                    func_02019974(rec, 0, 0x76, 0, 0x15, 0xc8);
+                if (rec->mInSlot == 1 && (u32) data_020b6ee0.mProgressState >= 0x11) {
+                    DrawStageSprite(rec, 0, 0x76, 0, 0x15, 0xc8);
                 }
-                func_02019974(rec, 1, 0x77, 0xc, 0x11, 0xc8);
-            } else if (data_020b6ee0.mUnk_a146 == 2 || data_020b6ee0.mUnk_a146 == 5) {
-                if (idx == data_020b6ee0.mUnk_a8e4 && data_020b6ee0.mUnk_a148 == 0) {
+                DrawStageSprite(rec, 1, 0x77, 0xc, 0x11, 0xc8);
+            } else if (data_020b6ee0.mPanelState == 2 || data_020b6ee0.mPanelState == 5) {
+                if (idx == data_020b6ee0.mSelectedStageIndex && data_020b6ee0.mUnk_a148 == 0) {
                     func_02019800(rec);
-                    if (rec->mUnk_22d == 1 && (u32) data_020b6ee0.mUnk_a564 >= 0x11) {
-                        func_02019974(rec, 0, 0x76, 0, 0x15, 0xc8);
+                    if (rec->mInSlot == 1 && (u32) data_020b6ee0.mProgressState >= 0x11) {
+                        DrawStageSprite(rec, 0, 0x76, 0, 0x15, 0xc8);
                     }
-                    func_02019974(rec, 1, rec->mInfo.mUnk_1a + 0x42, 0xc, 0x11, 0xc8);
+                    DrawStageSprite(rec, 1, rec->mInfo.mUnk_1a + 0x42, 0xc, 0x11, 0xc8);
                 }
             }
         }
         flags = 4;
-        if (data_020b6ee0.mUnk_a5d0 == 1 || (u8) (data_020b6ee0.mUnk_a146 + 253) <= 2) {
+        if (data_020b6ee0.mButtonsEnabled == 1 || (u8) (data_020b6ee0.mPanelState + 253) <= 2) {
             flags |= 1;
         }
-        func_020175e8(idx, &data_020b6ee0.mUnk_a8e4, flags);
+        UpdateStageMotion(idx, &data_020b6ee0.mSelectedStageIndex, flags);
     }
-    func_02019aec();
+    UpdateStageMoveObject();
     func_02031fc4(0, &view.mPos);
     func_02023f58(&view, view.mPos.x, view.mPos.y, view.mPos.z, 0x1000, 0, 0, 0, 0x100);
     func_0202733c(&data_020b6ee0.mUnk_9c64, &view, 0);
     func_02019788();
     func_02033614(data_020c3e44.mUnk_2024.mUnk_74.x, data_020c3e44.mUnk_2024.mUnk_74.z);
-    if (data_020b6ee0.mUnk_a8e0 != data_020b6ee0.mUnk_a8e4) {
-        if (data_020b6ee0.mUnk_a8e4 == -1) {
-            data_020b6ee0.mUnk_a146 = 0;
-        } else if (data_020b6ee0.mUnk_a8e0 == -1) {
-            data_020b6ee0.mUnk_a146 = 1;
+    if (data_020b6ee0.mPrevSelectedStageIndex != data_020b6ee0.mSelectedStageIndex) {
+        if (data_020b6ee0.mSelectedStageIndex == -1) {
+            data_020b6ee0.mPanelState = 0;
+        } else if (data_020b6ee0.mPrevSelectedStageIndex == -1) {
+            data_020b6ee0.mPanelState = 1;
         }
         data_020b6ee0.mUnk_a14b = 1;
-        data_020b6ee0.mUnk_a8ec = 0;
-        data_020b6ee0.mUnk_a8e0 = data_020b6ee0.mUnk_a8e4;
-        fade->mUnk_3c = 0x28;
+        data_020b6ee0.mPanelLevel = 0;
+        data_020b6ee0.mPrevSelectedStageIndex = data_020b6ee0.mSelectedStageIndex;
+        fade->mPanelButtonOffsetX = 0x28;
         func_02019ad8();
     }
-    func_02011d1c();
+    UpdateTextAndStageInfo();
     if (data_020b6ee0.mUnk_a14b == 1) {
-        func_02011518(data_020b6ee0.mUnk_a8e4, 2);
+        LoadStageOrTextImage(data_020b6ee0.mSelectedStageIndex, 2);
         data_020b6ee0.mUnk_a14b = 0;
     }
-    if (data_020b6ee0.mUnk_a146 == 0 && data_020b6ee0.mUnk_a5d0 == 0) {
+    if (data_020b6ee0.mPanelState == 0 && data_020b6ee0.mButtonsEnabled == 0) {
         if (gSystemState.mTouchPressed) {
-            data_020b6ee0.mUnk_a574.mUnk_34 = 4;
-            data_020b6ee0.mUnk_a574.mUnk_24 = gSystemState.mTouchX;
-            data_020b6ee0.mUnk_a574.mUnk_28 = gSystemState.mTouchY;
-            data_020b6ee0.mUnk_a574.mUnk_18 = data_020b6ee0.mUnk_a574.mUnk_0c;
+            data_020b6ee0.mUnk_a574.mCameraEaseDivisor = 4;
+            data_020b6ee0.mUnk_a574.mTouchPressX = gSystemState.mTouchX;
+            data_020b6ee0.mUnk_a574.mTouchPressY = gSystemState.mTouchY;
+            data_020b6ee0.mUnk_a574.mDragStartPos = data_020b6ee0.mUnk_a574.mUnk_0c;
         }
         if (gSystemState.mTouchDown) {
-            data_020b6ee0.mUnk_a574.mUnk_0c.x = data_020b6ee0.mUnk_a574.mUnk_18.x +
-                                                (data_020b6ee0.mUnk_a574.mUnk_24 - gSystemState.mTouchX) * (0xe << 10);
-            data_020b6ee0.mUnk_a574.mUnk_0c.z = data_020b6ee0.mUnk_a574.mUnk_18.z +
-                                                (data_020b6ee0.mUnk_a574.mUnk_28 - gSystemState.mTouchY) * (0xe << 10);
+            data_020b6ee0.mUnk_a574.mUnk_0c.x =
+                data_020b6ee0.mUnk_a574.mDragStartPos.x +
+                (data_020b6ee0.mUnk_a574.mTouchPressX - gSystemState.mTouchX) * (0xe << 10);
+            data_020b6ee0.mUnk_a574.mUnk_0c.z =
+                data_020b6ee0.mUnk_a574.mDragStartPos.z +
+                (data_020b6ee0.mUnk_a574.mTouchPressY - gSystemState.mTouchY) * (0xe << 10);
             dist = Length2d((data_020b6ee0.mUnk_a574.mUnk_0c.x - camPos.x) / 512,
                             (data_020b6ee0.mUnk_a574.mUnk_0c.z - camPos.z) / 512);
             if (dist > 0x3200) {
@@ -1491,37 +1510,37 @@ void func_02018cd4(void) {
             }
         }
     }
-    func_020126a0(data_020b6ee0.mUnk_a8e4);
+    UpdatePanel(data_020b6ee0.mSelectedStageIndex);
     data_020c3e44.mUnk_2024.mUnk_98 = 4;
 }
 
-void func_020192d4(void) {
+void UpdateStageInput(void) {
     u16 keys = gSystemState.mKeysPressed;
 
     if (keys & 0x10) {
-        if (data_020b6ee0.mUnk_a146 <= 1) {
+        if (data_020b6ee0.mPanelState <= 1) {
             int next;
-            if (data_020b6ee0.mUnk_a8e4 < data_020b6ee0.mUnk_a8ee - 1) {
-                next = data_020b6ee0.mUnk_a8e4 + 1;
+            if (data_020b6ee0.mSelectedStageIndex < data_020b6ee0.mStageCount - 1) {
+                next = data_020b6ee0.mSelectedStageIndex + 1;
             } else {
                 next = 0;
             }
-            data_020b6ee0.mUnk_a8e4 = next;
+            data_020b6ee0.mSelectedStageIndex = next;
         }
     }
     if (keys & 0x20) {
-        if (data_020b6ee0.mUnk_a146 <= 1) {
+        if (data_020b6ee0.mPanelState <= 1) {
             int prev;
-            if (data_020b6ee0.mUnk_a8e4 > 0) {
-                prev = data_020b6ee0.mUnk_a8e4 - 1;
+            if (data_020b6ee0.mSelectedStageIndex > 0) {
+                prev = data_020b6ee0.mSelectedStageIndex - 1;
             } else {
-                prev = data_020b6ee0.mUnk_a8ee - 1;
+                prev = data_020b6ee0.mStageCount - 1;
             }
-            data_020b6ee0.mUnk_a8e4 = prev;
+            data_020b6ee0.mSelectedStageIndex = prev;
         }
     }
-    if (data_020b6ee0.mUnk_a146 == 0 || data_020b6ee0.mUnk_a146 == 1 || data_020b6ee0.mUnk_a146 == 2 ||
-        (u8) (data_020b6ee0.mUnk_a146 + 250) <= 2) {
+    if (data_020b6ee0.mPanelState == 0 || data_020b6ee0.mPanelState == 1 || data_020b6ee0.mPanelState == 2 ||
+        (u8) (data_020b6ee0.mPanelState + 250) <= 2) {
         if (gSystemState.mTouchPressed == 1) {
             if (!func_0200bd80(0x80000000, 0x5a) && !func_0200bd80(0x80000000, 0xa) &&
                 !func_0200bd80(0x80000000, 0xb) && !func_0200bd80(0x80000000, 0xc) && !func_0200bd80(0x80000000, 0xd) &&
@@ -1529,41 +1548,43 @@ void func_020192d4(void) {
                 !func_0200bd80(0x80000000, 0x10) && !func_0200bd80(0x80000000, 0x11) &&
                 !func_0200bd80(0x80000000, 0x21) && !func_0200bd80(0x80000000, 0x111) &&
                 !func_0200bd80(0x80000000, 0x112)) {
-                data_020b6ee0.mUnk_a5d0 = 0;
+                data_020b6ee0.mButtonsEnabled = 0;
             }
         }
         if (!gSystemState.mTouchDown && !gSystemState.mTouchReleased) {
-            data_020b6ee0.mUnk_a5d0 = 1;
+            data_020b6ee0.mButtonsEnabled = 1;
         }
     } else {
-        data_020b6ee0.mUnk_a5d0 = 1;
+        data_020b6ee0.mButtonsEnabled = 1;
     }
 }
 
 void func_02019438(void) {
     GetNextState();
-    func_0201944c();
+    StoreStageOffsets();
     func_020102f8();
     ResetVramBanks();
 }
 
-void func_0201944c(void) {
+void StoreStageOffsets(void) {
     if (GetState() == 10) {
         VecFx32 pos;
         StageRec *rec;
         int i;
 
         func_02031fc4(0, &pos);
-        for (i = 0; i < data_020b6ee0.mUnk_a8ee; i++) {
+        for (i = 0; i < data_020b6ee0.mStageCount; i++) {
             rec = &data_020b1990[i];
-            rec->mUnk_1e4 = rec->mUnk_1a0.x - pos.x;
+            rec->mStoredOffsetX = rec->mUnk_1a0.x - pos.x;
             rec->mUnk_1e8 = 0;
-            rec->mUnk_1ec = rec->mUnk_1a0.z - pos.z;
+            rec->mStoredOffsetZ = rec->mUnk_1a0.z - pos.z;
         }
     }
 }
 
-void func_020194ac(int stage) {
+// Stores in mPolygonGroupIndex the first polygon group of 10..15 that holds the stage's position (func_020320c0),
+// minus 10, or 99 when none does.
+void FindStagePolygonGroup(int stage) {
     StageRec *rec = &data_020b1990[stage];
     int i;
 
@@ -1572,36 +1593,42 @@ void func_020194ac(int stage) {
     }
     for (i = 10; i < 16; i++) {
         if (func_020320c0(i, 0, &rec->mUnk_1a0) == 1) {
-            if (rec->mUnk_226 != i - 10) {
-                rec->mUnk_226 = i - 10;
+            if (rec->mPolygonGroupIndex != i - 10) {
+                rec->mPolygonGroupIndex = i - 10;
             }
             break;
         }
     }
     if (i == 16) {
-        rec->mUnk_226 = 99;
+        rec->mPolygonGroupIndex = 99;
     }
 }
 
-void func_02019504(void) {
+// Called every frame of state 10; does nothing while mPanelState > 2. Picks a random stage and, unless it is the
+// selected one, moving, out of view or the panel is in state 2, may start a random turn or move or change its
+// mUnk_22e. About one call in 0x40 / mStageCount + 8 then updates that stage's polygon group and adds 2 percent when it
+// equals mInfo.mUnk_10, or -2 when it is another group and mProgressState is 99 or more. While mUnk_a149 < 4, one call
+// in 512 also runs func_020198f0.
+void UpdateRandomStage(void) {
     s32 *c = data_020b6ee0.mUnk_9ddc;
     int result = 0;
     int idx;
     StageRec *rec;
     int interval;
 
-    if (data_020b6ee0.mUnk_a146 > 2) {
+    if (data_020b6ee0.mPanelState > 2) {
         return;
     }
-    idx = RandomRange(0, data_020b6ee0.mUnk_a8ee - 1);
-    if (!((idx >= 0) & (idx < data_020b6ee0.mUnk_a8ee))) {
+    idx = RandomRange(0, data_020b6ee0.mStageCount - 1);
+    if (!((idx >= 0) & (idx < data_020b6ee0.mStageCount))) {
         OS_Terminate();
     }
     rec = &data_020b1990[idx];
     if (data_020b6ee0.mUnk_a149 < 4 && !(NextRandom() & 0x1ff)) {
         func_020198f0();
     }
-    if (idx != data_020b6ee0.mUnk_a8e4 && rec->mUnk_220 == 0 && rec->mUnk_22f != 0 && data_020b6ee0.mUnk_a146 != 2) {
+    if (idx != data_020b6ee0.mSelectedStageIndex && rec->mDistancePerFrame == 0 && rec->mVisible != 0 &&
+        data_020b6ee0.mPanelState != 2) {
         switch ((u8) NextRandom()) {
             case 0:
                 if (c[1] == 0) {
@@ -1612,7 +1639,7 @@ void func_02019504(void) {
             case 1:
                 if (c[1] == 0) {
                     rec->mUnk_1d8 = NextRandom();
-                    rec->mUnk_220 = 0x4000;
+                    rec->mDistancePerFrame = 0x4000;
                 }
                 break;
             case 2:
@@ -1627,24 +1654,24 @@ void func_02019504(void) {
                 break;
         }
     }
-    interval = 0x40 / data_020b6ee0.mUnk_a8ee + 8;
+    interval = 0x40 / data_020b6ee0.mStageCount + 8;
     if (NextRandom() % interval != 0) {
         return;
     }
-    func_020194ac(idx);
-    if (rec->mUnk_226 == rec->mInfo.mUnk_10) {
+    FindStagePolygonGroup(idx);
+    if (rec->mPolygonGroupIndex == rec->mInfo.mUnk_10) {
         result = 2;
-    } else if (rec->mUnk_226 != 99 && (u32) data_020b6ee0.mUnk_a564 >= 0x63) {
+    } else if (rec->mPolygonGroupIndex != 99 && (u32) data_020b6ee0.mProgressState >= 0x63) {
         result = -2;
     }
-    if (idx == data_020b6ee0.mUnk_a8e4) {
+    if (idx == data_020b6ee0.mSelectedStageIndex) {
         if (result == 2) {
             data_020b6ee0.mUnk_8e60.mModel.mUnk_134 |= 1;
         } else if (result == -2) {
             data_020b6ee0.mUnk_8e60.mModel.mUnk_134 |= 4;
         }
     }
-    func_02014ffc(rec, result, 0, idx == data_020b6ee0.mUnk_a8e4 ? 1 : 0);
+    AddPercent(rec, result, 0, idx == data_020b6ee0.mSelectedStageIndex ? 1 : 0);
 }
 
 void func_020196b4(void) {
@@ -1652,7 +1679,7 @@ void func_020196b4(void) {
 
     data_020b6ee0.mUnk_a149 = 0;
     for (i = 0; i < 8; i++) {
-        data_020b6ee0.mUnk_9024[i].mUnk_184 = 0;
+        data_020b6ee0.mUnk_9024[i].mKind = 0;
     }
 }
 
@@ -1663,10 +1690,10 @@ int func_020196e0(int value) {
         OS_Terminate();
     }
     for (i = 0; i < 8; i++) {
-        if (data_020b6ee0.mUnk_9024[i].mUnk_184 == 0) {
+        if (data_020b6ee0.mUnk_9024[i].mKind == 0) {
             Unk_020bff04 *e = &data_020b6ee0.mUnk_9024[i];
-            e->mUnk_184 = value;
-            if (e->mUnk_184 == 1) {
+            e->mKind = value;
+            if (e->mKind == 1) {
                 func_020271ec(&e->mModel, 0, 0, 2, data_0201aba0[4]);
             }
             data_020b6ee0.mUnk_a149++;
@@ -1680,10 +1707,10 @@ void func_02019750(u32 index) {
     if (index >= 8) {
         OS_Terminate();
     }
-    if (data_020b6ee0.mUnk_9024[index].mUnk_184 == 0) {
+    if (data_020b6ee0.mUnk_9024[index].mKind == 0) {
         OS_Terminate();
     }
-    data_020b6ee0.mUnk_9024[index].mUnk_184 = 0;
+    data_020b6ee0.mUnk_9024[index].mKind = 0;
     data_020b6ee0.mUnk_a149--;
 }
 
@@ -1693,39 +1720,40 @@ void func_02019788(void) {
     int i;
 
     for (i = 0; i < 8; i++) {
-        if (data_020b6ee0.mUnk_9024[i].mUnk_184 != 0 && e[i].mUnk_184 == 1) {
-            func_02023f58(&params, e[i].mUnk_178.x, e[i].mUnk_178.y, e[i].mUnk_178.z, 0x100000, 0, 2, 0, 0x100);
+        if (data_020b6ee0.mUnk_9024[i].mKind != 0 && e[i].mKind == 1) {
+            func_02023f58(&params, e[i].mPos.x, e[i].mPos.y, e[i].mPos.z, 0x100000, 0, 2, 0, 0x100);
             func_0202733c(&e[i], &params, 0);
         }
     }
 }
 
-// Looks for an element of the table at mUnk_9024 near the record position; one in state 1 is released and the move
-// object is started.
+// Finds the mUnk_9024 entry within range of the record's position (func_02019874). If it is kind 1, removes it, starts
+// the move object from the record's screen point (UpdateStageMoveObject adds 10 percent to the record when it ends),
+// plays sound 0xe0 (func_0202f110) and sets mUnk_a570. Called for the selected stage in panel states 0..2 and 5.
 void func_02019800(StageRec *rec) {
     int i = func_02019874(&rec->mUnk_1a0);
 
     if (i != -1) {
         Unk_020bff04 *e = &data_020b6ee0.mUnk_9024[i];
 
-        if (e->mUnk_184 == 1) {
+        if (e->mKind == 1) {
             func_02019750(i);
-            func_02019a38(rec, rec->mUnk_1f0, rec->mUnk_1f4, 0x3e, 0x5e, 1);
+            StartStageMoveObject(rec, rec->mScreenX, rec->mScreenY, 0x3e, 0x5e, 1);
             func_0202f110(0xe0, 0x64, 0, 0x40, 0xffff, 0);
             data_020b6ee0.mUnk_a570 = 1;
         }
     }
 }
 
-// Index of the first used element of the table whose x/z distance to pos is under 8 units of 0xc800, or -1.
+// Index of the first used (kind not 0) mUnk_9024 entry with (|dx| + |dz|) / 0xc800 < 8 from pos, or -1.
 int func_02019874(VecFx32 *pos) {
     Unk_020bff04 *e = data_020b6ee0.mUnk_9024;
     int i;
 
     for (i = 0; i < 8; i++) {
-        if (data_020b6ee0.mUnk_9024[i].mUnk_184 != 0) {
-            s32 dx = e[i].mUnk_178.x - pos->x;
-            s32 dz = e[i].mUnk_178.z - pos->z;
+        if (data_020b6ee0.mUnk_9024[i].mKind != 0) {
+            s32 dx = e[i].mPos.x - pos->x;
+            s32 dz = e[i].mPos.z - pos->z;
             u8 inRange = (abs(dx) + abs(dz)) / 0xc800 < 8;
 
             if (inRange == 1) {
@@ -1736,7 +1764,8 @@ int func_02019874(VecFx32 *pos) {
     return -1;
 }
 
-// Picks a random point around a fixed position and adds a table element there when none lies near it.
+// Adds a kind-1 mUnk_9024 entry at a random point around map entry 0 (x and z moved by -0x3f..0x40 steps of 0xc800,
+// y raised by 0x19000), unless an entry already lies near that point (func_02019874) or all 8 are used.
 void func_020198f0(void) {
     VecFx32 v;
     int j;
@@ -1750,23 +1779,24 @@ void func_020198f0(void) {
         if (j != -1) {
             Unk_020bff04 *e = &data_020b6ee0.mUnk_9024[j];
 
-            e->mUnk_178 = v;
+            e->mPos = v;
         }
     }
 }
 
-// Eases the offset of the record with number index toward mulX and mulY (scaled by the screen mode) and draws the
-// sprite at it.
-void func_02019974(StageRec *rec, int index, int sprite, int mulX, int mulY, int width) {
+// Eases the record's sprite offset index (0..2) toward mulX and mulY times a scale set by mPanelState (0x200 in state
+// 0, 0x280 in state 1, else 0x500) and draws sprite there; nothing while mVisible is 0. Sprite 0 is not drawn, and
+// index 1 only while mUnk_22e is set, on alternate 32-frame halves.
+void DrawStageSprite(StageRec *rec, int index, int sprite, int mulX, int mulY, int width) {
     int scale;
     StageOffset *e;
 
-    if (rec->mUnk_22f != 0) {
+    if (rec->mVisible != 0) {
         if ((u32) index >= 3) {
             OS_Terminate();
         }
-        e = &rec->mUnk_1f8[index];
-        switch (data_020b6ee0.mUnk_a146) {
+        e = &rec->mSpriteOffsets[index];
+        switch (data_020b6ee0.mPanelState) {
             case 0:
                 scale = 0x200;
                 break;
@@ -1788,19 +1818,20 @@ void func_02019974(StageRec *rec, int index, int sprite, int mulX, int mulY, int
         func_0200b928(&e->x, mulX, 8);
         func_0200b928(&e->y, mulY, 8);
         if (sprite != 0) {
-            func_0202cf08(sprite, rec->mUnk_1f0 + e->x / 512, rec->mUnk_1f4 - e->y / 512, width, 1);
+            func_0202cf08(sprite, rec->mScreenX + e->x / 512, rec->mScreenY - e->y / 512, width, 1);
         }
     }
 }
 
-// Starts the move object for the record, with the end point depending on mode.
-void func_02019a38(StageRec *rec, int x, int y, int c, int d, int mode) {
-    MoveObj *o = &data_020b6ee0.mUnk_9de8;
+// Starts the move object carrying the record: with mode 1 from (x, y) to the record's percent position (PercentToX of
+// mInfo.mUnk_12, 0x5e - 252), otherwise the reverse. c and d are unused.
+void StartStageMoveObject(StageRec *rec, int x, int y, int c, int d, int mode) {
+    MoveObj *o = &data_020b6ee0.mMoveObj;
     Vec2i pos;
     int r;
 
     o->mUnk_310 = rec;
-    r = func_020117e0(rec->mInfo.mUnk_12);
+    r = PercentToX(rec->mInfo.mUnk_12);
     pos.x = mode == 1 ? x : r;
     pos.y = mode == 1 ? y : 0x5e;
     pos.y += mode == 1 ? 0 : -252;
@@ -1813,13 +1844,13 @@ void func_02019a38(StageRec *rec, int x, int y, int c, int d, int mode) {
 }
 
 void func_02019ad8(void) {
-    func_0200c164(&data_020b6ee0.mUnk_9de8);
+    func_0200c164(&data_020b6ee0.mMoveObj);
     func_0200d6c8();
 }
 
-// Runs the move object; when it has ended, calls the record update.
-void func_02019aec(void) {
-    MoveObj *o = &data_020b6ee0.mUnk_9de8;
+// Runs the move object; when it has ended, adds 10 percent to the record it carries (AddPercent(rec, 10, 1, 1)).
+void UpdateStageMoveObject(void) {
+    MoveObj *o = &data_020b6ee0.mMoveObj;
 
     if (o->mActive == 1) {
         func_0200c174(o, 0);
@@ -1830,15 +1861,18 @@ void func_02019aec(void) {
         if (o->mUnk_310 == 0) {
             OS_Terminate();
         }
-        func_02014ffc(o->mUnk_310, 10, 1, 1);
+        AddPercent(o->mUnk_310, 10, 1, 1);
     }
 }
 
 void func_02019b38(void) {}
 
-// Per-frame update of the stage camera: eases the zoom, follows the touch drag and moves both targets.
-void func_02019b3c(VecFx32 *a, VecFx32 *b) {
-    Unk_020c1030 *p = &data_020b6ee0.mUnk_a150;
+// Per-frame update of the map menu's cursor and camera: sets the camera's two points from a and b, the second blended
+// toward the first by mBlend (eased toward mTargetBlend), eases the camera toward them, draws the cursor sprites once
+// mDelayTimer is 0, moves the cursor by the touch drag (within 0x320 of map entry 0) and moves a and b toward the
+// cursor.
+void UpdateMapCursorAndCamera(VecFx32 *a, VecFx32 *b) {
+    MapMenu *p = &data_020b6ee0.mMapMenu;
     VecFx32 v;
     s32 out1[2];
     s32 out0[2];
@@ -1850,80 +1884,81 @@ void func_02019b3c(VecFx32 *a, VecFx32 *b) {
     data_020b6ee0.mUnk_a574.mUnk_00.x = b->x;
     data_020b6ee0.mUnk_a574.mUnk_00.y = b->y;
     data_020b6ee0.mUnk_a574.mUnk_00.z = b->z;
-    func_0200b928(&p->mUnk_3d0, p->mUnk_3d4, 0x20);
-    if (p->mUnk_3d0 != 0x200) {
+    func_0200b928(&p->mBlend, p->mTargetBlend, 0x20);
+    if (p->mBlend != 0x200) {
         data_020b6ee0.mUnk_a574.mUnk_00.x =
-            (data_020b6ee0.mUnk_a574.mUnk_0c.x - data_020b6ee0.mUnk_a574.mUnk_00.x) * p->mUnk_3d0 / 512;
+            (data_020b6ee0.mUnk_a574.mUnk_0c.x - data_020b6ee0.mUnk_a574.mUnk_00.x) * p->mBlend / 512;
         data_020b6ee0.mUnk_a574.mUnk_00.y =
-            (data_020b6ee0.mUnk_a574.mUnk_0c.y - data_020b6ee0.mUnk_a574.mUnk_00.y) * p->mUnk_3d0 / 512;
+            (data_020b6ee0.mUnk_a574.mUnk_0c.y - data_020b6ee0.mUnk_a574.mUnk_00.y) * p->mBlend / 512;
         data_020b6ee0.mUnk_a574.mUnk_00.z =
-            (data_020b6ee0.mUnk_a574.mUnk_0c.z - data_020b6ee0.mUnk_a574.mUnk_00.z) * p->mUnk_3d0 / 512;
+            (data_020b6ee0.mUnk_a574.mUnk_0c.z - data_020b6ee0.mUnk_a574.mUnk_00.z) * p->mBlend / 512;
         data_020b6ee0.mUnk_a574.mUnk_00.x = data_020b6ee0.mUnk_a574.mUnk_0c.x - data_020b6ee0.mUnk_a574.mUnk_00.x;
         data_020b6ee0.mUnk_a574.mUnk_00.y = data_020b6ee0.mUnk_a574.mUnk_0c.y - data_020b6ee0.mUnk_a574.mUnk_00.y;
         data_020b6ee0.mUnk_a574.mUnk_00.z = data_020b6ee0.mUnk_a574.mUnk_0c.z - data_020b6ee0.mUnk_a574.mUnk_00.z;
     }
-    func_0200b960(&data_020c3e44.mUnk_2024.mUnk_5c, data_020b6ee0.mUnk_a574.mUnk_00, data_020b6ee0.mUnk_a574.mUnk_34);
-    func_0200b960(&data_020c3e44.mUnk_2024.mUnk_74, data_020b6ee0.mUnk_a574.mUnk_0c, data_020b6ee0.mUnk_a574.mUnk_34);
+    func_0200b960(&data_020c3e44.mUnk_2024.mUnk_5c, data_020b6ee0.mUnk_a574.mUnk_00,
+                  data_020b6ee0.mUnk_a574.mCameraEaseDivisor);
+    func_0200b960(&data_020c3e44.mUnk_2024.mUnk_74, data_020b6ee0.mUnk_a574.mUnk_0c,
+                  data_020b6ee0.mUnk_a574.mCameraEaseDivisor);
     func_02033b8c();
     func_02033520();
     func_02025db4(p, out1);
-    if (p->mUnk_3d8 == 0) {
+    if (p->mDelayTimer == 0) {
         func_0202cf08(0xe25, 0x7f, out1[1], 0xdc, 1);
         func_0202cf08(0xe26, out1[0], 0x5f, 0xd2, 1);
         func_0202cf08(0xe29, out1[0], out1[1], 0xc8, 1);
         func_0202cf08(0xe2e, out1[0], out1[1], 0xbe, 1);
     } else {
-        p->mUnk_3d8--;
+        p->mDelayTimer--;
     }
     if (gSystemState.mTouchDown == 1 && func_0200bd80(0x40000000, 0x101) == 0 &&
-        func_0200bd80(0x40000000, 0x102) == 0 && data_020b6ee0.mUnk_a5d0 == 0 && p->mUnk_3dd == 1) {
+        func_0200bd80(0x40000000, 0x102) == 0 && data_020b6ee0.mButtonsEnabled == 0 && p->mNodeInfoHidden == 1) {
         s32 dx;
         s32 dy;
 
         func_02025db4(p, out0);
         dy = gSystemState.mTouchY - out0[1];
         dx = gSystemState.mTouchX - out0[0];
-        p->mUnk_44 = (dx << 9) / 16;
-        p->mUnk_4c = (dy << 9) / 16;
+        p->mCursorXPerFrame = (dx << 9) / 16;
+        p->mCursorZPerFrame = (dy << 9) / 16;
     }
-    if (p->mUnk_44 != 0 || p->mUnk_4c != 0) {
+    if (p->mCursorXPerFrame != 0 || p->mCursorZPerFrame != 0) {
         s32 d;
 
-        p->mUnk_00.mPos.x += p->mUnk_44;
-        p->mUnk_00.mPos.z += p->mUnk_4c;
-        p->mUnk_00.mPos.y =
-            func_02031270(p->mUnk_00.mPos.x, p->mUnk_00.mPos.z, p->mUnk_00.mPos.y + 0x32000, 0, 0, 0) + 0x1900;
-        d = Length2d((p->mUnk_00.mPos.x - v.x) / 512, (p->mUnk_00.mPos.z - v.z) / 512);
+        p->mCursor.mPos.x += p->mCursorXPerFrame;
+        p->mCursor.mPos.z += p->mCursorZPerFrame;
+        p->mCursor.mPos.y =
+            func_02031270(p->mCursor.mPos.x, p->mCursor.mPos.z, p->mCursor.mPos.y + 0x32000, 0, 0, 0) + 0x1900;
+        d = Length2d((p->mCursor.mPos.x - v.x) / 512, (p->mCursor.mPos.z - v.z) / 512);
         if (d > 0x320) {
             s32 r = 0x64000 / d;
-            s32 dx = (p->mUnk_00.mPos.x - v.x) / 512;
-            s32 dz = (p->mUnk_00.mPos.z - v.z) / 512;
+            s32 dx = (p->mCursor.mPos.x - v.x) / 512;
+            s32 dz = (p->mCursor.mPos.z - v.z) / 512;
 
             dx *= r;
             dz *= r;
-            p->mUnk_00.mPos.x = v.x + dx;
-            p->mUnk_00.mPos.z = v.z + dz;
+            p->mCursor.mPos.x = v.x + dx;
+            p->mCursor.mPos.z = v.z + dz;
         }
     }
-    func_0200b928(&p->mUnk_44, 0, 0x10);
-    func_0200b928(&p->mUnk_4c, 0, 0x10);
+    func_0200b928(&p->mCursorXPerFrame, 0, 0x10);
+    func_0200b928(&p->mCursorZPerFrame, 0, 0x10);
     {
-        s32 d = (p->mUnk_00.mPos.z - a->z) / 16;
+        s32 d = (p->mCursor.mPos.z - a->z) / 16;
 
         b->z += d;
         a->z += d;
     }
     {
-        s32 d = (p->mUnk_00.mPos.x - a->x) / 16;
+        s32 d = (p->mCursor.mPos.x - a->x) / 16;
 
         b->x += d;
         a->x += d;
     }
 }
 
-// Sets up the stage camera view and the follow state.
-void func_02019df8(void) {
-    Unk_020c1030 *p = &data_020b6ee0.mUnk_a150;
+void SetupMapMenu(void) {
+    MapMenu *p = &data_020b6ee0.mMapMenu;
 
     ResetVramBanks();
     func_0202c1c4();
@@ -1943,24 +1978,24 @@ void func_02019df8(void) {
     func_02031fc4(0, &data_020c3e44.mUnk_2024.mUnk_74);
     data_020c3e44.mUnk_2024.mUnk_5c.z += 0x352000;
     data_020c3e44.mUnk_2024.mUnk_74.y += 0x32000;
-    data_020b6ee0.mUnk_a574.mUnk_34 = 0x80;
+    data_020b6ee0.mUnk_a574.mCameraEaseDivisor = 0x80;
     func_0200bf38(8);
     memset(p, 0, 0x44);
-    p->mUnk_00.mUnk_43 = 2;
-    p->mUnk_00.mUnk_28 = 0x8000;
-    func_02031fc4(data_020b6ee0.mUnk_a530 + 0xa00, &p->mUnk_00.mPos);
-    p->mUnk_00.mPos.y += 0x1900;
-    p->mUnk_3dc = 0;
-    p->mUnk_3dd = 1;
-    data_020b6ee0.mUnk_a5d0 = 1;
-    p->mUnk_3d4 = 0x200;
-    p->mUnk_3d0 = p->mUnk_3d4;
-    data_020b6ee0.mUnk_a574.mUnk_38 = 0x28;
-    p->mUnk_44 = 0;
-    p->mUnk_4c = 0;
-    p->mUnk_3d8 = 0xb4;
-    func_02027230(&p->mUnk_50, 0xde5, 0xde4, 2, 0);
-    if ((u32) data_020b6ee0.mUnk_a564 > 0xc) {
+    p->mCursor.mUnk_43 = 2;
+    p->mCursor.mUnk_28 = 0x8000;
+    func_02031fc4(data_020b6ee0.mReachedNodeIndex + MAP_NODE_POS_ID, &p->mCursor.mPos);
+    p->mCursor.mPos.y += 0x1900;
+    p->mCursorSnapped = 0;
+    p->mNodeInfoHidden = 1;
+    data_020b6ee0.mButtonsEnabled = 1;
+    p->mTargetBlend = 0x200;
+    p->mBlend = p->mTargetBlend;
+    data_020b6ee0.mUnk_a574.mMapButtonOffsetX = 0x28;
+    p->mCursorXPerFrame = 0;
+    p->mCursorZPerFrame = 0;
+    p->mDelayTimer = 0xb4;
+    func_02027230(&p->mReachedNodeModel, 0xde5, 0xde4, 2, 0);
+    if ((u32) data_020b6ee0.mProgressState > 0xc) {
         func_0202f110(0x59, 0x64, 0, 0x40, 0xffff, 0);
     }
 }

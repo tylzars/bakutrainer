@@ -23,14 +23,32 @@
 #include <nitro/gx.h>
 #include <nitro/os.h>
 
+// Values of data_020b10fc.mSceneState, the state UpdateScene switches on: start (adds the first popups), run (the
+// timers count), popups only (set when a touched kind-3 popup brings mUnk_624 to 0: the timers stop, touches are
+// ignored and the popups still update; that popup's slot, in POPUP_STATE_END_SCENE, moves the state on to end at the
+// next update), end (waits for the model, then ends the mode).
+#define SCENE_STATE_START 0
+#define SCENE_STATE_RUN 1
+#define SCENE_STATE_POPUPS_ONLY 2
+#define SCENE_STATE_END 3
+
+// Values of PopupSlot.mState, the state UpdatePopups switches on. 6 is a case of that switch but is never stored.
+#define POPUP_STATE_WAIT 0
+#define POPUP_STATE_APPEAR 1
+#define POPUP_STATE_SHOWN 2
+#define POPUP_STATE_DISAPPEAR 3
+#define POPUP_STATE_TOUCHED 4
+#define POPUP_STATE_END_SCENE 5
+#define POPUP_STATE_FREE 7
+
 const u16 data_0204e1c0[6] = {0xd10, 0xd14, 0xd18, 0xd1c, 0xd20, 0xd24};
 const s32 data_0204e1cc[3][2] = {{28, 90}, {48, 90}, {68, 90}};
 
-// The stage scene object; the code reaches it through data_02063940.
+// The stage scene object; the code reaches it through gScene.
 Scene data_020ab7e0;
-Scene *data_02063940 = &data_020ab7e0;
+Scene *gScene = &data_020ab7e0;
 
-void func_0200c65c(int index, VecFx32 *out) {
+void GetMapEntryPos(int index, VecFx32 *out) {
     void *entry = func_0203204c(index, 0);
     if (entry == 0) {
         OS_Terminate();
@@ -40,25 +58,25 @@ void func_0200c65c(int index, VecFx32 *out) {
     out->z = func_02031fb0(entry);
 }
 
-void func_0200c688(int n) {
-    data_02063940->mUnk_60c = (60 * (u32) n) / 1000;
+void StartShake(int ms) {
+    gScene->mShakeTimer = (60 * (u32) ms) / 1000;
 }
 
-void func_0200c6ac(void) {
+void SetupSceneCamera(void) {
     data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_44 = 0x030d4000;
     data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_54 = 0x640;
     func_02033e38(1, 1, 1);
     func_02033e38(8, 0, 1);
     data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_30 = 1;
-    func_0200c65c(1, &data_02063940->mUnk_5b4);
-    func_0200c65c(0, &data_02063940->mUnk_5c0);
-    func_0200c65c(2, &data_02063940->mUnk_5cc);
-    func_0200c65c(4, &data_02063940->mUnk_5d8);
-    memset(&data_02063940->mUnk_5e4, 0, 12);
-    memset(&data_02063940->mUnk_5f0, 0, 12);
-    memset(&data_02063940->mUnk_5fc, 0, 12);
-    data_02063940->mUnk_608 = 0;
-    data_02063940->mUnk_60c = 0;
+    GetMapEntryPos(1, &gScene->mUnk_5b4);
+    GetMapEntryPos(0, &gScene->mUnk_5c0);
+    GetMapEntryPos(2, &gScene->mUnk_5cc);
+    GetMapEntryPos(4, &gScene->mUnk_5d8);
+    memset(&gScene->mShakeTarget, 0, 12);
+    memset(&gScene->mShakeOffset, 0, 12);
+    memset(&gScene->mShakePerFrame, 0, 12);
+    gScene->mShakeFrameIndex = 0;
+    gScene->mShakeTimer = 0;
     data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_38 = 0;
     data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_40 = 0;
     data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_3c = 0;
@@ -68,160 +86,160 @@ void func_0200c6ac(void) {
     data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_10 = 0;
 }
 
-void func_0200c7a4(void) {
+void UpdateSceneCamera(void) {
     Unk_020c5f04 *cam = &data_020c3e44.mUnk_2024.mUnk_9c;
     VecFx32 a;
     VecFx32 b;
-    a.x = MapRange(data_02063940->mUnk_618, 0, data_02063940->mUnk_614, data_02063940->mUnk_5cc.x >> 8,
-                   data_02063940->mUnk_5b4.x >> 8)
+    a.x = MapRange(gScene->mEndTimer, 0, gScene->mEndTimerMax, gScene->mUnk_5cc.x >> 8,
+                   gScene->mUnk_5b4.x >> 8)
           << 8;
-    a.y = MapRange(data_02063940->mUnk_618, 0, data_02063940->mUnk_614, data_02063940->mUnk_5cc.y >> 8,
-                   data_02063940->mUnk_5b4.y >> 8)
+    a.y = MapRange(gScene->mEndTimer, 0, gScene->mEndTimerMax, gScene->mUnk_5cc.y >> 8,
+                   gScene->mUnk_5b4.y >> 8)
           << 8;
-    a.z = MapRange(data_02063940->mUnk_618, 0, data_02063940->mUnk_614, data_02063940->mUnk_5cc.z >> 8,
-                   data_02063940->mUnk_5b4.z >> 8)
+    a.z = MapRange(gScene->mEndTimer, 0, gScene->mEndTimerMax, gScene->mUnk_5cc.z >> 8,
+                   gScene->mUnk_5b4.z >> 8)
           << 8;
-    b.x = MapRange(data_02063940->mUnk_618, 0, data_02063940->mUnk_614, data_02063940->mUnk_5d8.x >> 8,
-                   data_02063940->mUnk_5c0.x >> 8)
+    b.x = MapRange(gScene->mEndTimer, 0, gScene->mEndTimerMax, gScene->mUnk_5d8.x >> 8,
+                   gScene->mUnk_5c0.x >> 8)
           << 8;
-    b.y = MapRange(data_02063940->mUnk_618, 0, data_02063940->mUnk_614, data_02063940->mUnk_5d8.y >> 8,
-                   data_02063940->mUnk_5c0.y >> 8)
+    b.y = MapRange(gScene->mEndTimer, 0, gScene->mEndTimerMax, gScene->mUnk_5d8.y >> 8,
+                   gScene->mUnk_5c0.y >> 8)
           << 8;
-    b.z = MapRange(data_02063940->mUnk_618, 0, data_02063940->mUnk_614, data_02063940->mUnk_5d8.z >> 8,
-                   data_02063940->mUnk_5c0.z >> 8)
+    b.z = MapRange(gScene->mEndTimer, 0, gScene->mEndTimerMax, gScene->mUnk_5d8.z >> 8,
+                   gScene->mUnk_5c0.z >> 8)
           << 8;
     func_0200b960(&cam->mUnk_204, a, 4);
     func_0200b960(&cam->mUnk_228, b, 4);
-    if (data_02063940->mUnk_60c != 0) {
-        data_02063940->mUnk_60c--;
-        data_02063940->mUnk_608 = (data_02063940->mUnk_608 + 1) % 3;
-        if (data_02063940->mUnk_608 == 0) {
-            data_02063940->mUnk_5e4.x = ((NextRandom() & 7) - 5) << 12;
-            data_02063940->mUnk_5e4.y = ((NextRandom() & 7) - 5) << 12;
-            data_02063940->mUnk_5e4.z = ((NextRandom() & 7) - 5) << 12;
-            data_02063940->mUnk_5fc.x = (data_02063940->mUnk_5e4.x - data_02063940->mUnk_5f0.x) / 2;
-            data_02063940->mUnk_5fc.y = (data_02063940->mUnk_5e4.y - data_02063940->mUnk_5f0.y) / 2;
-            data_02063940->mUnk_5fc.z = (data_02063940->mUnk_5e4.z - data_02063940->mUnk_5f0.z) / 2;
+    if (gScene->mShakeTimer != 0) {
+        gScene->mShakeTimer--;
+        gScene->mShakeFrameIndex = (gScene->mShakeFrameIndex + 1) % 3;
+        if (gScene->mShakeFrameIndex == 0) {
+            gScene->mShakeTarget.x = ((NextRandom() & 7) - 5) << 12;
+            gScene->mShakeTarget.y = ((NextRandom() & 7) - 5) << 12;
+            gScene->mShakeTarget.z = ((NextRandom() & 7) - 5) << 12;
+            gScene->mShakePerFrame.x = (gScene->mShakeTarget.x - gScene->mShakeOffset.x) / 2;
+            gScene->mShakePerFrame.y = (gScene->mShakeTarget.y - gScene->mShakeOffset.y) / 2;
+            gScene->mShakePerFrame.z = (gScene->mShakeTarget.z - gScene->mShakeOffset.z) / 2;
         }
-        data_02063940->mUnk_5f0.x += data_02063940->mUnk_5fc.x;
-        data_02063940->mUnk_5f0.y += data_02063940->mUnk_5fc.y;
-        data_02063940->mUnk_5f0.z += data_02063940->mUnk_5fc.z;
-        cam->mUnk_228.x += data_02063940->mUnk_5f0.x;
-        cam->mUnk_228.y += data_02063940->mUnk_5f0.y;
-        cam->mUnk_228.z += data_02063940->mUnk_5f0.z;
+        gScene->mShakeOffset.x += gScene->mShakePerFrame.x;
+        gScene->mShakeOffset.y += gScene->mShakePerFrame.y;
+        gScene->mShakeOffset.z += gScene->mShakePerFrame.z;
+        cam->mUnk_228.x += gScene->mShakeOffset.x;
+        cam->mUnk_228.y += gScene->mShakeOffset.y;
+        cam->mUnk_228.z += gScene->mShakeOffset.z;
     }
     func_02033fc8();
 }
 
-void func_0200ca14(void) {
+void SetupScene(void) {
     u16 area[5];
     int i;
-    int stage = data_020b6ee0.mUnk_a8e4;
+    int stage = data_020b6ee0.mSelectedStageIndex;
     int ok;
     if (stage < 0) {
         stage = 0;
     }
-    data_02063940->mStage = data_020b1990[stage].mInfo;
-    data_020b10fc.mUnk_08 = data_02063940->mStage.mUnk_11 - 1;
+    gScene->mStage = data_020b1990[stage].mInfo;
+    data_020b10fc.mTableRow = gScene->mStage.mUnk_11 - 1;
     ok = 0;
-    if (data_020b10fc.mUnk_08 >= 0 && data_020b10fc.mUnk_08 < 12) {
+    if (data_020b10fc.mTableRow >= 0 && data_020b10fc.mTableRow < 12) {
         ok = 1;
     }
     if (!ok) {
         OS_Terminate();
     }
-    func_0200c5d8(0, 0, data_02063940->mStage.mUnk_13 + 0xdb3, 0x180, 16, 0, 2);
+    func_0200c5d8(0, 0, gScene->mStage.mUnk_13 + 0xdb3, 0x180, 16, 0, 2);
     func_02024208();
     RequestTrack(4, 0x4c);
-    func_0200dc08(data_0204e1c0[data_02063940->mStage.mUnk_10], &area[4], &area[3], &area[2], &area[1], &area[0], 0);
+    func_0200dc08(data_0204e1c0[gScene->mStage.mUnk_10], &area[4], &area[3], &area[2], &area[1], &area[0], 0);
     func_020325b0(area[4], area[2], area[3], 0, area[1], area[0]);
     UpdateSystemAndWait();
-    func_0200c6ac();
+    SetupSceneCamera();
     G3X_SetClearColor(0, 8, 0x7fff, 0, 0);
-    memset(&data_02063940->mUnk_3a8, 0, sizeof(DrawParams));
-    func_02031fc4(3, &data_02063940->mUnk_3a8.mPos);
-    data_02063940->mUnk_3a8.mUnk_43 = 0;
-    func_020271ec(&data_02063940->mUnk_230, 0, 0, 0, data_0201abbc[data_02063940->mStage.mUnk_10 + 1]);
-    data_02063940->mUnk_5a8 = data_02063940->mUnk_3a8.mPos;
-    func_020271ec(&data_02063940->mUnk_3ec, 0, 0, 0, data_0201abbc[0]);
-    data_020b10fc.mUnk_00 = 0;
-    data_02063940->mUnk_61c = data_020b10fc.mUnk_08 - 1;
-    data_02063940->mUnk_610 = 0;
-    data_02063940->mUnk_654 = 0;
-    func_0200d434();
+    memset(&gScene->mUnk_3a8, 0, sizeof(DrawParams));
+    func_02031fc4(3, &gScene->mUnk_3a8.mPos);
+    gScene->mUnk_3a8.mUnk_43 = 0;
+    func_020271ec(&gScene->mUnk_230, 0, 0, 0, data_0201abbc[gScene->mStage.mUnk_10 + 1]);
+    gScene->mBasePos = gScene->mUnk_3a8.mPos;
+    func_020271ec(&gScene->mUnk_3ec, 0, 0, 0, data_0201abbc[0]);
+    data_020b10fc.mSceneState = SCENE_STATE_START;
+    gScene->mPopupRow = data_020b10fc.mTableRow - 1;
+    gScene->mScore = 0;
+    gScene->mRowTimer = 0;
+    LoadSceneValues();
     func_0200ce24();
-    func_0200d5f0();
-    for (i = 0; i < 9; i++) {
-        data_02063940->mSlots[i].mUnk_20 = 7;
+    ClearNumber();
+    for (i = 0; i < POPUP_SLOT_COUNT; i++) {
+        gScene->mSlots[i].mState = POPUP_STATE_FREE;
     }
     func_02005a8c(1, 0);
 }
 
-void func_0200cbe8(void) {
+void UpdateScene(void) {
     u8 mode;
     int busy;
-    func_020059cc(data_02063940->mUnk_610);
+    func_020059cc(gScene->mScore);
     mode = func_02005bf8();
     if (mode != 0) {
-        func_0200c7a4();
-        func_0200cd2c();
+        UpdateSceneCamera();
+        DrawScene();
         busy = func_02005b1c(1);
         if (mode == 2 && busy == 0) {
-            func_020059b4(func_02005c04(), data_02063940->mUnk_610);
+            func_020059b4(func_02005c04(), gScene->mScore);
         }
         return;
     }
-    func_0200c7a4();
-    func_0200cd2c();
-    func_0200b960(&data_02063940->mUnk_3a8.mPos, data_02063940->mUnk_5a8, 12);
-    switch (data_020b10fc.mUnk_00) {
-        case 0:
-            func_0200ceac();
-            data_020b10fc.mUnk_00 = 1;
-        case 1:
-            data_02063940->mUnk_654--;
-            if (data_02063940->mUnk_654 <= 0) {
+    UpdateSceneCamera();
+    DrawScene();
+    func_0200b960(&gScene->mUnk_3a8.mPos, gScene->mBasePos, 12);
+    switch (data_020b10fc.mSceneState) {
+        case SCENE_STATE_START:
+            AddPopups();
+            data_020b10fc.mSceneState = SCENE_STATE_RUN;
+        case SCENE_STATE_RUN:
+            gScene->mRowTimer--;
+            if (gScene->mRowTimer <= 0) {
                 func_0200ce24();
             }
-            data_02063940->mUnk_634--;
-            if (data_02063940->mUnk_634 <= 0) {
-                func_0200ceac();
+            gScene->mPopupTimer--;
+            if (gScene->mPopupTimer <= 0) {
+                AddPopups();
             }
-            data_02063940->mUnk_618--;
-            if (data_02063940->mUnk_618 <= 0) {
-                data_020b10fc.mUnk_00 = 3;
-                data_02063940->mUnk_230.mUnk_134 |= 2;
+            gScene->mEndTimer--;
+            if (gScene->mEndTimer <= 0) {
+                data_020b10fc.mSceneState = SCENE_STATE_END;
+                gScene->mUnk_230.mUnk_134 |= 2;
             }
-        case 2:
-            func_0200d098();
+        case SCENE_STATE_POPUPS_ONLY:
+            UpdatePopups();
             break;
-        case 3:
-            if (data_02063940->mUnk_230.mUnk_172_9) {
-                func_02005a8c(0, data_02063940->mUnk_610 >= data_02063940->mUnk_630);
+        case SCENE_STATE_END:
+            if (gScene->mUnk_230.mUnk_172_9) {
+                func_02005a8c(0, gScene->mScore >= gScene->mUnk_630);
             }
             break;
     }
 }
 
-void func_0200cd1c(void) {
+void LeaveScene(void) {
     SetFaded(3);
     func_02022370();
 }
 
-void func_0200cd2c(void) {
-    func_0201168c(data_020b6ee0.mUnk_a8e4, data_02063940->mUnk_610, data_0206d448.mUnk_00, data_02063940->mUnk_618, 2);
+void DrawScene(void) {
+    func_0201168c(data_020b6ee0.mSelectedStageIndex, gScene->mScore, data_0206d448.mUnk_00, gScene->mEndTimer, 2);
     func_0200cdc4();
     func_02033614(data_020c3e44.mUnk_2024.mUnk_9c.mUnk_228.x, data_020c3e44.mUnk_2024.mUnk_9c.mUnk_228.z);
-    func_0202733c(&data_02063940->mUnk_230, &data_02063940->mUnk_3a8, 0xb0000002);
-    PlayObjectSe(&data_02063940->mUnk_230);
-    func_02024368(&data_02063940->mUnk_3ec, 255, 0, 0x1000, 0, 0);
-    if (data_020b10fc.mUnk_00 < 3) {
-        func_0200d638();
+    func_0202733c(&gScene->mUnk_230, &gScene->mUnk_3a8, 0xb0000002);
+    PlayObjectSe(&gScene->mUnk_230);
+    func_02024368(&gScene->mUnk_3ec, 255, 0, 0x1000, 0, 0);
+    if (data_020b10fc.mSceneState < SCENE_STATE_END) {
+        DrawNumber();
     }
 }
 
 void func_0200cdc4(void) {
-    int n = 3 - data_02063940->mUnk_624;
+    int n = 3 - gScene->mUnk_624;
     int i;
     func_0202de80(0xe3a, 8, 84, 100, -1, 2);
     for (i = 0; i < n; i++) {
@@ -230,21 +248,24 @@ void func_0200cdc4(void) {
 }
 
 void func_0200ce24(void) {
-    data_02063940->mUnk_61c++;
-    data_02063940->mUnk_654 = data_02063940->mUnk_650 * 60;
-    if (data_02063940->mUnk_638 >= data_02063940->mUnk_640 + data_02063940->mUnk_63c) {
-        data_02063940->mUnk_638 -= data_02063940->mUnk_63c;
+    gScene->mPopupRow++;
+    gScene->mRowTimer = gScene->mRowSeconds * 60;
+    if (gScene->mPopupIntervalMs >= gScene->mPopupIntervalMinMs + gScene->mUnk_63c) {
+        gScene->mPopupIntervalMs -= gScene->mUnk_63c;
     } else {
-        data_02063940->mUnk_638 = data_02063940->mUnk_640;
+        gScene->mPopupIntervalMs = gScene->mPopupIntervalMinMs;
     }
-    if (data_02063940->mUnk_644 >= data_02063940->mUnk_64c + data_02063940->mUnk_648) {
-        data_02063940->mUnk_644 -= data_02063940->mUnk_648;
+    if (gScene->mPopupShowMs >= gScene->mPopupShowMinMs + gScene->mUnk_648) {
+        gScene->mPopupShowMs -= gScene->mUnk_648;
     } else {
-        data_02063940->mUnk_644 = data_02063940->mUnk_64c;
+        gScene->mPopupShowMs = gScene->mPopupShowMinMs;
     }
 }
 
-void func_0200ceac(void) {
+// Restarts mPopupTimer. If a cell is free, steps mPopupRow back while that row of table 0xd64 has a popup count of 0,
+// then starts up to that many popups in free cells: the first of kind 1 when mUnk_62c > mUnk_628 (which resets
+// mUnk_62c), the rest of a kind picked by the row's four weights.
+void AddPopups(void) {
     u32 mask;
     s32 cum[4];
     s32 total;
@@ -256,38 +277,38 @@ void func_0200ceac(void) {
     Scene *p;
 
     total = -1;
-    mask = func_0200bf54(9);
-    p = data_02063940;
-    p->mUnk_634 = p->mUnk_638 * 60 / 1000;
+    mask = func_0200bf54(POPUP_SLOT_COUNT);
+    p = gScene;
+    p->mPopupTimer = p->mPopupIntervalMs * 60 / 1000;
     for (i = 0; i < POPUP_SLOT_COUNT; i++) {
-        if (data_02063940->mSlots[i].mUnk_20 != 7) {
-            mask |= 1 << data_02063940->mSlots[i].mUnk_24;
+        if (gScene->mSlots[i].mState != POPUP_STATE_FREE) {
+            mask |= 1 << gScene->mSlots[i].mCellIndex;
         }
     }
     if (mask != -1) {
         do {
-            int t = data_02063940->mUnk_61c * 5;
-            int kind = func_02021e08(0xd64, t + 6);
-            if (kind != 2 && kind != 3) {
+            int t = gScene->mPopupRow * 5;
+            int cellType = func_02021e08(0xd64, t + 6);
+            if (cellType != 2 && cellType != 3) {
                 OS_Terminate();
             }
-            data_02063940->mUnk_620 = func_02021e44(0xd64, t + 6);
-            if (data_02063940->mUnk_620 == 0) {
-                data_02063940->mUnk_61c--;
+            gScene->mRowPopupCount = func_02021e44(0xd64, t + 6);
+            if (gScene->mRowPopupCount == 0) {
+                gScene->mPopupRow--;
             }
-        } while (data_02063940->mUnk_620 == 0);
+        } while (gScene->mRowPopupCount == 0);
         for (i = 0; i < 4; i++) {
-            total += func_02021e44(0xd64, data_02063940->mUnk_61c * 5 + 2 + i);
+            total += func_02021e44(0xd64, gScene->mPopupRow * 5 + 2 + i);
             cum[i] = total;
         }
         n = 0;
-        if (data_02063940->mUnk_62c > data_02063940->mUnk_628) {
-            data_02063940->mUnk_62c = 0;
+        if (gScene->mUnk_62c > gScene->mUnk_628) {
+            gScene->mUnk_62c = 0;
             slot = func_0200bf68(&mask);
-            func_0200d014(slot, 1, slot);
+            StartPopup(slot, 1, slot);
             n++;
         }
-        for (; n < data_02063940->mUnk_620; n++) {
+        for (; n < gScene->mRowPopupCount; n++) {
             if (mask == -1) {
                 break;
             }
@@ -297,33 +318,33 @@ void func_0200ceac(void) {
                 k++;
             }
             slot = func_0200bf68(&mask);
-            func_0200d014(slot, k, slot);
+            StartPopup(slot, k, slot);
         }
     }
 }
 
-void func_0200d014(int slot, int type, int index) {
-    PopupSlot *slots = data_02063940->mSlots;
+void StartPopup(int slot, int type, int index) {
+    PopupSlot *slots = gScene->mSlots;
     PopupSlot *e = &slots[slot];
-    e->mUnk_20 = 0;
-    e->mUnk_24 = index;
-    slots[slot].mUnk_00 = type;
-    e->mUnk_08 = 0x10;
-    e->mUnk_0c = 0x10;
-    e->mUnk_14 = 0x10;
-    e->mUnk_18 = 0x10;
-    e->mUnk_10 = data_02063940->mUnk_644 * 60 / 1000;
-    e->mUnk_04 = 0;
-    if (slots[slot].mUnk_00 == 2) {
-        e->mUnk_1c = data_02063940->mUnk_658;
-    } else if (slots[slot].mUnk_00 == 1) {
-        e->mUnk_1c = data_02063940->mUnk_65c;
-    } else if (slots[slot].mUnk_00 != 3) {
-        e->mUnk_1c = data_02063940->mUnk_660;
+    e->mState = POPUP_STATE_WAIT;
+    e->mCellIndex = index;
+    slots[slot].mKind = type;
+    e->mAppearFrameCount = 0x10;
+    e->mAppearTimer = 0x10;
+    e->mDisappearFrameCount = 0x10;
+    e->mDisappearTimer = 0x10;
+    e->mShowTimer = gScene->mPopupShowMs * 60 / 1000;
+    e->mWaitTimer = 0;
+    if (slots[slot].mKind == 2) {
+        e->mUnk_1c = gScene->mUnk_658;
+    } else if (slots[slot].mKind == 1) {
+        e->mUnk_1c = gScene->mUnk_65c;
+    } else if (slots[slot].mKind != 3) {
+        e->mUnk_1c = gScene->mUnk_660;
     }
 }
 
-void func_0200d098(void) {
+void UpdatePopups(void) {
     int i;
     Scene *p;
     PopupSlot *e;
@@ -332,164 +353,165 @@ void func_0200d098(void) {
     int redraw;
 
     for (i = 0; i < POPUP_SLOT_COUNT; i++) {
-        p = data_02063940;
+        p = gScene;
         e = &p->mSlots[i];
         redraw = 0;
-        x = e->mUnk_24 % 3 * 64 + 63;
-        y = e->mUnk_24 / 3 * 48 + 64;
-        switch (e->mUnk_20) {
-            case 0:
-                e->mUnk_04--;
-                if (e->mUnk_04 <= 0) {
-                    e->mUnk_20 = 1;
+        x = e->mCellIndex % 3 * 64 + 63;
+        y = e->mCellIndex / 3 * 48 + 64;
+        switch (e->mState) {
+            case POPUP_STATE_WAIT:
+                e->mWaitTimer--;
+                if (e->mWaitTimer <= 0) {
+                    e->mState = POPUP_STATE_APPEAR;
                 }
                 break;
-            case 1:
-                e->mUnk_0c--;
-                func_0202de80(func_0200bfc4(e->mUnk_0c, e->mUnk_08, 0, 0, 6) + 0xe85, x, y, 0xbe, -1, 1);
-                if (e->mUnk_0c <= 2) {
+            case POPUP_STATE_APPEAR:
+                e->mAppearTimer--;
+                func_0202de80(func_0200bfc4(e->mAppearTimer, e->mAppearFrameCount, 0, 0, 6) + 0xe85, x, y, 0xbe, -1, 1);
+                if (e->mAppearTimer <= 2) {
                     redraw = 1;
                 }
-                if (e->mUnk_0c <= 0) {
-                    e->mUnk_20 = 2;
+                if (e->mAppearTimer <= 0) {
+                    e->mState = POPUP_STATE_SHOWN;
                 }
                 break;
-            case 2:
-                e->mUnk_10--;
+            case POPUP_STATE_SHOWN:
+                e->mShowTimer--;
                 redraw = 1;
-                if (e->mUnk_10 <= 0) {
-                    e->mUnk_20 = 3;
+                if (e->mShowTimer <= 0) {
+                    e->mState = POPUP_STATE_DISAPPEAR;
                 }
                 break;
-            case 3:
-                e->mUnk_18--;
-                func_0202de80(func_0200bfc4(e->mUnk_18, e->mUnk_14, 0, 6, 0) + 0xe85, x, y, 0xbe, -1, 1);
-                if (e->mUnk_18 <= 0) {
-                    e->mUnk_20 = 7;
+            case POPUP_STATE_DISAPPEAR:
+                e->mDisappearTimer--;
+                func_0202de80(func_0200bfc4(e->mDisappearTimer, e->mDisappearFrameCount, 0, 6, 0) + 0xe85, x, y, 0xbe,
+                              -1, 1);
+                if (e->mDisappearTimer <= 0) {
+                    e->mState = POPUP_STATE_FREE;
                 }
                 break;
-            case 4:
-                e->mUnk_18--;
+            case POPUP_STATE_TOUCHED:
+                e->mDisappearTimer--;
                 func_020242e8(0xd0f, x, y, 0x1000, 0x1000, 0, 0xff, 0);
-                if (e->mUnk_18 <= 0) {
-                    e->mUnk_20 = 7;
+                if (e->mDisappearTimer <= 0) {
+                    e->mState = POPUP_STATE_FREE;
                 }
                 break;
-            case 5:
-                data_020b10fc.mUnk_00 = 3;
+            case POPUP_STATE_END_SCENE:
+                data_020b10fc.mSceneState = SCENE_STATE_END;
                 p->mUnk_230.mUnk_134 |= 2;
                 break;
             case 6:
-            case 7:
+            case POPUP_STATE_FREE:
                 break;
         }
         if (redraw == 1) {
-            func_020242e8(e->mUnk_00 + 0xd0b, x, y, 0x1000, 0x1000, 0, 0xff, 0);
+            func_020242e8(e->mKind + 0xd0b, x, y, 0x1000, 0x1000, 0, 0xff, 0);
             AddTouchButton(i + 0x100, x, y, 0, 0, 0xe83);
         }
     }
-    if (data_020b10fc.mUnk_00 < 2 && gSystemState.mTouchPressed) {
+    if (data_020b10fc.mSceneState < SCENE_STATE_POPUPS_ONLY && gSystemState.mTouchPressed) {
         if (func_0200bdac(0x80000000, 0x100, 0x108)) {
-            func_0200d2a4(&data_02063940->mSlots[(u16) data_020c1d60.mUnk_800.mUnk_100.mUnk_04 - 0x100]);
+            HandlePopupTouch(&gScene->mSlots[(u16) data_020c1d60.mUnk_800.mUnk_100.mUnk_04 - 0x100]);
         }
     }
 }
 
-void func_0200d2a4(PopupSlot *slot) {
+void HandlePopupTouch(PopupSlot *slot) {
     PopupPos pos;
 
-    pos.x = slot->mUnk_24 % 3 * 64 + 63;
-    pos.y = slot->mUnk_24 / 3 * 48 + 64;
+    pos.x = slot->mCellIndex % 3 * 64 + 63;
+    pos.y = slot->mCellIndex / 3 * 48 + 64;
     func_0200d76c(5, pos.x, pos.y, 30, 1);
-    slot->mUnk_20 = 4;
-    slot->mUnk_18 = 30;
-    data_02063940->mUnk_62c++;
-    if (slot->mUnk_00 == 3) {
-        data_02063940->mUnk_624--;
-        data_02063940->mUnk_62c = 0;
-        if (data_02063940->mUnk_624 <= 0) {
-            slot->mUnk_10 = 0;
-            slot->mUnk_20 = 5;
-            data_020b10fc.mUnk_00 = 2;
+    slot->mState = POPUP_STATE_TOUCHED;
+    slot->mDisappearTimer = 30;
+    gScene->mUnk_62c++;
+    if (slot->mKind == 3) {
+        gScene->mUnk_624--;
+        gScene->mUnk_62c = 0;
+        if (gScene->mUnk_624 <= 0) {
+            slot->mShowTimer = 0;
+            slot->mState = POPUP_STATE_END_SCENE;
+            data_020b10fc.mSceneState = SCENE_STATE_POPUPS_ONLY;
         }
-        func_0200c688(200);
+        StartShake(200);
         func_0202f110(0x72, 100, 0, 0x40, 0xffff, 0);
-    } else if (slot->mUnk_00 == 1) {
-        data_02063940->mUnk_618 += data_02063940->mUnk_65c;
-        data_02063940->mUnk_618 =
-            data_02063940->mUnk_618 < data_02063940->mUnk_614 ? data_02063940->mUnk_618 : data_02063940->mUnk_614;
+    } else if (slot->mKind == 1) {
+        gScene->mEndTimer += gScene->mUnk_65c;
+        gScene->mEndTimer =
+            gScene->mEndTimer < gScene->mEndTimerMax ? gScene->mEndTimer : gScene->mEndTimerMax;
         func_0202f110(0x75, 100, 0, 0x40, 0xffff, 0);
-    } else if (slot->mUnk_00 == 2) {
-        func_020059d0(&data_02063940->mUnk_610, data_02063940->mUnk_658, 0);
-        func_0200d60c(data_02063940->mUnk_658, &pos);
-        data_02063940->mUnk_3a8.mPos.z = data_02063940->mUnk_5a8.z - 0xc800;
+    } else if (slot->mKind == 2) {
+        func_020059d0(&gScene->mScore, gScene->mUnk_658, 0);
+        ShowNumber(gScene->mUnk_658, &pos);
+        gScene->mUnk_3a8.mPos.z = gScene->mBasePos.z - 0xc800;
         func_0202f110(0x74, 100, 0, 0x40, 0xffff, 0);
     } else {
-        func_020059d0(&data_02063940->mUnk_610, data_02063940->mUnk_660, 0);
-        func_0200d60c(data_02063940->mUnk_660, &pos);
-        data_02063940->mUnk_3a8.mPos.z = data_02063940->mUnk_5a8.z - 0xc800;
+        func_020059d0(&gScene->mScore, gScene->mUnk_660, 0);
+        ShowNumber(gScene->mUnk_660, &pos);
+        gScene->mUnk_3a8.mPos.z = gScene->mBasePos.z - 0xc800;
         func_0202f110(0x73, 100, 0, 0x40, 0xffff, 0);
     }
 }
 
-void func_0200d434(void) {
+void LoadSceneValues(void) {
     int base;
-    base = data_020b10fc.mUnk_08 * 3;
-    data_02063940->mUnk_618 = func_02021e44(0xd63, base + 2) * 60;
-    data_02063940->mUnk_614 = data_02063940->mUnk_618;
-    base = (data_020b10fc.mUnk_08 + 1) * 3;
-    data_02063940->mUnk_630 = func_02021e44(0xd63, base);
-    base = data_020b10fc.mUnk_08 * 3;
-    data_02063940->mUnk_624 = func_02021e44(0xd63, base + 4);
-    base = data_020b10fc.mUnk_08 * 11;
-    data_02063940->mUnk_638 = func_02021e44(0xd62, base + 2);
-    base = data_020b10fc.mUnk_08 * 11;
-    data_02063940->mUnk_63c = func_02021e44(0xd62, base + 3);
-    base = data_020b10fc.mUnk_08 * 11;
-    data_02063940->mUnk_640 = func_02021e44(0xd62, base + 4);
-    base = data_020b10fc.mUnk_08 * 11;
-    data_02063940->mUnk_650 = func_02021e44(0xd62, base + 5);
-    base = data_020b10fc.mUnk_08 * 11;
-    data_02063940->mUnk_644 = func_02021e44(0xd62, base + 6);
-    base = data_020b10fc.mUnk_08 * 11;
-    data_02063940->mUnk_648 = func_02021e44(0xd62, base + 7);
-    base = data_020b10fc.mUnk_08 * 11;
-    data_02063940->mUnk_64c = func_02021e44(0xd62, base + 8);
-    base = (data_020b10fc.mUnk_08 + 1) * 11;
-    data_02063940->mUnk_660 = func_02021e44(0xd62, base);
-    base = data_020b10fc.mUnk_08 * 11;
-    data_02063940->mUnk_65c = func_02021e44(0xd62, base + 10) * 60;
-    base = data_020b10fc.mUnk_08 * 11;
-    data_02063940->mUnk_658 = func_02021e44(0xd62, base + 9);
-    base = data_020b10fc.mUnk_08 * 11;
-    data_02063940->mUnk_628 = func_02021e44(0xd62, base + 12);
+    base = data_020b10fc.mTableRow * 3;
+    gScene->mEndTimer = func_02021e44(0xd63, base + 2) * 60;
+    gScene->mEndTimerMax = gScene->mEndTimer;
+    base = (data_020b10fc.mTableRow + 1) * 3;
+    gScene->mUnk_630 = func_02021e44(0xd63, base);
+    base = data_020b10fc.mTableRow * 3;
+    gScene->mUnk_624 = func_02021e44(0xd63, base + 4);
+    base = data_020b10fc.mTableRow * 11;
+    gScene->mPopupIntervalMs = func_02021e44(0xd62, base + 2);
+    base = data_020b10fc.mTableRow * 11;
+    gScene->mUnk_63c = func_02021e44(0xd62, base + 3);
+    base = data_020b10fc.mTableRow * 11;
+    gScene->mPopupIntervalMinMs = func_02021e44(0xd62, base + 4);
+    base = data_020b10fc.mTableRow * 11;
+    gScene->mRowSeconds = func_02021e44(0xd62, base + 5);
+    base = data_020b10fc.mTableRow * 11;
+    gScene->mPopupShowMs = func_02021e44(0xd62, base + 6);
+    base = data_020b10fc.mTableRow * 11;
+    gScene->mUnk_648 = func_02021e44(0xd62, base + 7);
+    base = data_020b10fc.mTableRow * 11;
+    gScene->mPopupShowMinMs = func_02021e44(0xd62, base + 8);
+    base = (data_020b10fc.mTableRow + 1) * 11;
+    gScene->mUnk_660 = func_02021e44(0xd62, base);
+    base = data_020b10fc.mTableRow * 11;
+    gScene->mUnk_65c = func_02021e44(0xd62, base + 10) * 60;
+    base = data_020b10fc.mTableRow * 11;
+    gScene->mUnk_658 = func_02021e44(0xd62, base + 9);
+    base = data_020b10fc.mTableRow * 11;
+    gScene->mUnk_628 = func_02021e44(0xd62, base + 12);
 }
 
-void func_0200d5f0(void) {
-    data_02063940->mUnk_7d4 = 0;
-    data_02063940->mUnk_7d0 = 0;
+void ClearNumber(void) {
+    gScene->mNumberLevel = 0;
+    gScene->mNumber = 0;
 }
 
-void func_0200d60c(int value, const PopupPos *pos) {
-    data_02063940->mUnk_7d4 = 0;
-    data_02063940->mPos = *pos;
-    data_02063940->mUnk_7d0 = value;
+void ShowNumber(int value, const PopupPos *pos) {
+    gScene->mNumberLevel = 0;
+    gScene->mPos = *pos;
+    gScene->mNumber = value;
 }
 
-void func_0200d638(void) {
-    Scene *p = data_02063940;
+void DrawNumber(void) {
+    Scene *p = gScene;
     int x;
     int y;
 
-    if (p->mUnk_7d4 < 0x4000 && p->mUnk_7d0 != 0) {
+    if (p->mNumberLevel < 0x4000 && p->mNumber != 0) {
         x = p->mPos.x;
-        EaseLevel(&p->mUnk_7d4, 12);
-        p = data_02063940;
-        y = p->mPos.y - MapRange(p->mUnk_7d4, 0, 0x4000, 0, 30);
+        EaseLevel(&p->mNumberLevel, 12);
+        p = gScene;
+        y = p->mPos.y - MapRange(p->mNumberLevel, 0, 0x4000, 0, 30);
         if (y <= 20) {
             y = 20;
         }
-        func_0200bffc(x, y, p->mUnk_7d0, data_0201a680, 2, 1);
+        func_0200bffc(x, y, p->mNumber, data_0201a680, 2, 1);
     }
 }
 

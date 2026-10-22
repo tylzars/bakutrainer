@@ -30,12 +30,12 @@ u32 data_0206391c = 1800;
 void func_020054a4(int mode) {
     int level;
     u8 stage;
-    level = data_020b6ee0.mUnk_a8e4;
+    level = data_020b6ee0.mSelectedStageIndex;
     if (level < 0) {
         level = 0;
     }
     stage = data_020b1990[level].mInfo.mUnk_11 - 1;
-    data_020b10fc.mUnk_04 = mode;
+    data_020b10fc.mMode = mode;
     switch (mode) {
         case 0:
             data_0206d448.mUnk_00 = func_0200d6b0(stage);
@@ -56,11 +56,11 @@ void func_020054a4(int mode) {
             data_0206d448.mUnk_00 = 0;
             break;
     }
-    data_0206d448.mUnk_04 = data_020b10fc.mUnk_14[data_020b10fc.mUnk_04];
+    data_0206d448.mUnk_04 = data_020b10fc.mBestScores[data_020b10fc.mMode];
 }
 
 void func_02005548(void) {
-    func_0200c5d8(0, 0x10d1, data_020b1990[data_020b6ee0.mUnk_a8e4].mInfo.mUnk_13 + 0xdb3, 32, 16, 130, 2);
+    func_0200c5d8(0, 0x10d1, data_020b1990[data_020b6ee0.mSelectedStageIndex].mInfo.mUnk_13 + 0xdb3, 32, 16, 130, 2);
     func_02024208();
     if (data_0206d444 == 0) {
         func_020054a4(4);
@@ -72,29 +72,29 @@ void func_02005548(void) {
 // Draws the mode selection screen.
 void func_020055a8(void) {
     char text[32];
-    StageRec *rec = &data_020b1990[data_020b6ee0.mUnk_a8e4];
-    func_02011890(data_020b6ee0.mUnk_a8e4, 2);
+    StageRec *rec = &data_020b1990[data_020b6ee0.mSelectedStageIndex];
+    DrawStageInfo(data_020b6ee0.mSelectedStageIndex, 2);
     func_020215fc(48, 17, data_0201a61c, GetText(26), 0, 200, 16, 1);
     func_0200bb14(255, 161, 161 + 96, 21, 0, 0, 0x17d, 1);
     func_0200bb14(0, 161, 161 + 97, 14, 0, 0, 90, 1);
-    func_0200bb58(67, 61, 0, 0, 140, 0x303, data_0204e124[data_020b10fc.mUnk_04], 0x11dc, 0, 0, 140 + 219, 1, 0, 0, 0);
+    func_0200bb58(67, 61, 0, 0, 140, 0x303, data_0204e124[data_020b10fc.mMode], 0x11dc, 0, 0, 140 + 219, 1, 0, 0, 0);
     if (rec->mInfo.mUnk_11 > 1) {
-        func_0200bb58(29, 84, 0, 0, 140, 0x300, data_0204e124[data_020b10fc.mUnk_04], 0x11d8, 0, 0, 140 + 219, 1, 0, 0,
+        func_0200bb58(29, 84, 0, 0, 140, 0x300, data_0204e124[data_020b10fc.mMode], 0x11d8, 0, 0, 140 + 219, 1, 0, 0,
                       0);
     }
     if (rec->mInfo.mUnk_11 > 2) {
-        func_0200bb58(67, 106, 0, 0, 140, 0x301, data_0204e124[data_020b10fc.mUnk_04], 0x11d4, 0, 0, 140 + 219, 1, 0, 0,
+        func_0200bb58(67, 106, 0, 0, 140, 0x301, data_0204e124[data_020b10fc.mMode], 0x11d4, 0, 0, 140 + 219, 1, 0, 0,
                       0);
     }
     if (rec->mInfo.mUnk_11 > 3) {
-        func_0200bb58(29, 129, 0, 0, 140, 0x302, data_0204e124[data_020b10fc.mUnk_04], 0x11da, 0, 0, 140 + 219, 1, 0, 0,
+        func_0200bb58(29, 129, 0, 0, 140, 0x302, data_0204e124[data_020b10fc.mMode], 0x11da, 0, 0, 140 + 219, 1, 0, 0,
                       0);
     }
     if (rec->mInfo.mUnk_11 > 4) {
-        func_0200bb58(67, 152, 0, 0, 140, 0x304, data_0204e124[data_020b10fc.mUnk_04], 0x11d6, 0, 0, 140 + 219, 1, 0, 0,
+        func_0200bb58(67, 152, 0, 0, 140, 0x304, data_0204e124[data_020b10fc.mMode], 0x11d6, 0, 0, 140 + 219, 1, 0, 0,
                       0);
     }
-    func_020215fc(99, 108, data_0201a64e, GetText(data_020b10fc.mUnk_04 + 31), 0, 200, 16, 1);
+    func_020215fc(99, 108, data_0201a64e, GetText(data_020b10fc.mMode + 31), 0, 200, 16, 1);
     func_020215fc(106, 129, data_0201a61c, GetText(28), 0, 200, 16, 1);
     sprintf(text, "%d", data_0206d448.mUnk_00);
     func_020215fc(215, 129, data_0201a61c, text, 0, 200, 16, 1);
@@ -124,8 +124,8 @@ void func_02005898(void) {
         func_020054a4(4);
     }
     if (func_0200bd80(0x20000000, 0x101)) {
-        idx = data_020b10fc.mUnk_04;
-        if (data_020b10fc.mUnk_14[idx] == 0) {
+        idx = data_020b10fc.mMode;
+        if (data_020b10fc.mBestScores[idx] == 0) {
             func_0201033c(data_0204e110[idx], data_0204e0fc[idx]);
         } else {
             PushState(data_0204e0fc[idx]);
@@ -134,7 +134,7 @@ void func_02005898(void) {
     }
     if (func_0200bd80(0x20000000, 0x320)) {
         data_0206d444 = 1;
-        func_0201033c(data_0204e110[data_020b10fc.mUnk_04], 13);
+        func_0201033c(data_0204e110[data_020b10fc.mMode], 13);
     }
     func_020055a8();
 }
@@ -145,7 +145,7 @@ void func_020059ac(void) {
 
 void func_020059b4(int a, u32 b) {
     data_020b10fc.mUnk_0c = a;
-    data_020b10fc.mUnk_10 = b;
+    data_020b10fc.mScore = b;
     PushState(18);
     PopState();
 }

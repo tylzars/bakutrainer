@@ -70,7 +70,7 @@ void func_0200a3fc(void) {
             func_0202cf08(0xfb3, 127, 88, 255, 2);
             func_0200a5f0();
             if (func_0200bd80(0x20000000, 0x101)) {
-                if (data_020b6ee0.mUnk_a53c) {
+                if (data_020b6ee0.mNodeStageCount) {
                     func_0200a5cc(2);
                     sel->mUnk_14 = 0;
                 } else {
@@ -83,7 +83,7 @@ void func_0200a3fc(void) {
             func_0200a5f0();
             if (func_0200bd80(0x20000000, 0x101)) {
                 sel->mUnk_14++;
-                if (sel->mUnk_14 < data_020b6ee0.mUnk_a53c) {
+                if (sel->mUnk_14 < data_020b6ee0.mNodeStageCount) {
                     func_0200a5cc(2);
                 } else {
                     done = 1;
@@ -107,14 +107,14 @@ void func_0200a3fc(void) {
         }
     } else {
         if (func_02007758() == 0) {
-            if (func_020149b0() == 1) {
-                int r = func_02014538(data_020b6ee0.mUnk_a534, 4);
-                if (data_020b6ee0.mUnk_a530 == 24) {
-                    data_020b6ee0.mUnk_a560 = 1;
+            if (IsReachedNodeSelected() == 1) {
+                int r = GetNodeValue(data_020b6ee0.mSelectedNodeIndex, 4);
+                if (data_020b6ee0.mReachedNodeIndex == 24) {
+                    data_020b6ee0.mLastNodeDone = 1;
                     data_020b6ee0.mUnk_a91b = 1;
                     func_0201033c(r, 24);
                 } else {
-                    data_020b6ee0.mUnk_a530++;
+                    data_020b6ee0.mReachedNodeIndex++;
                     func_0201033c(r, 10);
                 }
             } else {
@@ -125,7 +125,7 @@ void func_0200a3fc(void) {
             PushState(10);
             PopState();
         }
-        data_020b6ee0.mUnk_a14c = 1;
+        data_020b6ee0.mSaveRequested = 1;
     }
 }
 
@@ -159,7 +159,7 @@ void func_0200a5f0(void) {
                 int x, y, xx, yy;
                 StageRec *rec;
                 // x holds the stage id until its record is found, then the x position
-                x = data_020b6ee0.mUnk_c60[i];
+                x = data_020b6ee0.mSlotStages[i];
                 if (i < sel->mUnk_14) {
                     for (k = 0; k < 3; k++) {
                         t[k] = 0x4000;
@@ -233,7 +233,7 @@ void func_0200a5f0(void) {
         }
         case 2: {
             StageRec *rec;
-            id = data_020b6ee0.mUnk_a540[sel->mUnk_14];
+            id = data_020b6ee0.mNodeStages[sel->mUnk_14];
             if (id == -1 || id >= 39) {
                 OS_Terminate();
             }
@@ -596,16 +596,16 @@ void func_0200b244(void) {
 }
 
 void func_0200b278(void) {
-    s32 level = data_020b6ee0.mUnk_a8e4;
+    s32 level = data_020b6ee0.mSelectedStageIndex;
     int i;
     if (level < 0) {
         level = 0;
     }
     data_020997a4.mInfo = data_020b1990[level].mInfo;
-    data_020b10fc.mUnk_08 = data_020997a4.mInfo.mUnk_11 - 1;
+    data_020b10fc.mTableRow = data_020997a4.mInfo.mUnk_11 - 1;
     {
         BOOL ok = 0;
-        if (data_020b10fc.mUnk_08 >= 0 && data_020b10fc.mUnk_08 < 12) {
+        if (data_020b10fc.mTableRow >= 0 && data_020b10fc.mTableRow < 12) {
             ok = 1;
         }
         if (ok == 0) {
@@ -635,26 +635,26 @@ void func_0200b278(void) {
     data_020997a4.mUnk_11fd8[3] = func_0200a970(0, 9);
     data_020997a4.mUnk_11fc4[4] = func_0200a970(0, 10);
     data_020997a4.mUnk_11fd8[4] = func_0200a970(0, 11);
-    data_020997a4.mUnk_11fec = func_0200a988(data_020b10fc.mUnk_08, 2);
-    data_020997a4.mUnk_11ff0 = func_0200a988(data_020b10fc.mUnk_08, 3) * 60000 / 1000;
-    data_020997a4.mUnk_11ff4 = func_0200a988(data_020b10fc.mUnk_08, 4);
-    data_020997a4.mUnk_11ff8 = func_0200a988(data_020b10fc.mUnk_08, 5) * 60 / 1000;
-    data_020997a4.mUnk_11ffc = func_0200a988(data_020b10fc.mUnk_08, 6) * 60 / 1000;
-    data_020997a4.mWeights[0][0] = func_0200a988(data_020b10fc.mUnk_08, 7);
-    data_020997a4.mWeights[1][0] = func_0200a988(data_020b10fc.mUnk_08, 8);
-    data_020997a4.mWeights[2][0] = func_0200a988(data_020b10fc.mUnk_08, 9);
-    data_020997a4.mWeights[0][1] = func_0200a988(data_020b10fc.mUnk_08, 10);
-    data_020997a4.mWeights[1][1] = func_0200a988(data_020b10fc.mUnk_08, 11);
-    data_020997a4.mWeights[2][1] = func_0200a988(data_020b10fc.mUnk_08, 12);
-    data_020997a4.mWeights[0][2] = func_0200a988(data_020b10fc.mUnk_08, 13);
-    data_020997a4.mWeights[1][2] = func_0200a988(data_020b10fc.mUnk_08, 14);
-    data_020997a4.mWeights[2][2] = func_0200a988(data_020b10fc.mUnk_08, 15);
-    data_020997a4.mWeights[0][3] = func_0200a988(data_020b10fc.mUnk_08, 16);
-    data_020997a4.mWeights[1][3] = func_0200a988(data_020b10fc.mUnk_08, 17);
-    data_020997a4.mWeights[2][3] = func_0200a988(data_020b10fc.mUnk_08, 18);
-    data_020997a4.mWeights[0][4] = func_0200a988(data_020b10fc.mUnk_08, 19);
-    data_020997a4.mWeights[1][4] = func_0200a988(data_020b10fc.mUnk_08, 20);
-    data_020997a4.mWeights[2][4] = func_0200a988(data_020b10fc.mUnk_08, 21);
+    data_020997a4.mUnk_11fec = func_0200a988(data_020b10fc.mTableRow, 2);
+    data_020997a4.mUnk_11ff0 = func_0200a988(data_020b10fc.mTableRow, 3) * 60000 / 1000;
+    data_020997a4.mUnk_11ff4 = func_0200a988(data_020b10fc.mTableRow, 4);
+    data_020997a4.mUnk_11ff8 = func_0200a988(data_020b10fc.mTableRow, 5) * 60 / 1000;
+    data_020997a4.mUnk_11ffc = func_0200a988(data_020b10fc.mTableRow, 6) * 60 / 1000;
+    data_020997a4.mWeights[0][0] = func_0200a988(data_020b10fc.mTableRow, 7);
+    data_020997a4.mWeights[1][0] = func_0200a988(data_020b10fc.mTableRow, 8);
+    data_020997a4.mWeights[2][0] = func_0200a988(data_020b10fc.mTableRow, 9);
+    data_020997a4.mWeights[0][1] = func_0200a988(data_020b10fc.mTableRow, 10);
+    data_020997a4.mWeights[1][1] = func_0200a988(data_020b10fc.mTableRow, 11);
+    data_020997a4.mWeights[2][1] = func_0200a988(data_020b10fc.mTableRow, 12);
+    data_020997a4.mWeights[0][2] = func_0200a988(data_020b10fc.mTableRow, 13);
+    data_020997a4.mWeights[1][2] = func_0200a988(data_020b10fc.mTableRow, 14);
+    data_020997a4.mWeights[2][2] = func_0200a988(data_020b10fc.mTableRow, 15);
+    data_020997a4.mWeights[0][3] = func_0200a988(data_020b10fc.mTableRow, 16);
+    data_020997a4.mWeights[1][3] = func_0200a988(data_020b10fc.mTableRow, 17);
+    data_020997a4.mWeights[2][3] = func_0200a988(data_020b10fc.mTableRow, 18);
+    data_020997a4.mWeights[0][4] = func_0200a988(data_020b10fc.mTableRow, 19);
+    data_020997a4.mWeights[1][4] = func_0200a988(data_020b10fc.mTableRow, 20);
+    data_020997a4.mWeights[2][4] = func_0200a988(data_020b10fc.mTableRow, 21);
     data_020997a4.mUnk_0000 = 0;
     data_020997a4.mUnk_0004 = data_020997a4.mUnk_11ff0;
     data_020997a4.mUnk_0008 = 0;
@@ -663,7 +663,8 @@ void func_0200b278(void) {
 }
 
 void func_0200b53c(void) {
-    func_0201168c(data_020b6ee0.mUnk_a8e4, data_020997a4.mUnk_0008, data_0206d448.mUnk_00, data_020997a4.mUnk_0004, 2);
+    func_0201168c(data_020b6ee0.mSelectedStageIndex, data_020997a4.mUnk_0008, data_0206d448.mUnk_00,
+                  data_020997a4.mUnk_0004, 2);
     func_0200aa68(data_020997a4.mInfo.mUnk_10 + 0xd28, 256, 0, 0x1000, 0x1000, 0, 255, 256);
     func_0200aa68(data_020997a4.mInfo.mUnk_13 + 0xd31, data_020997a4.mUnk_01ac >> 8, data_020997a4.mUnk_01b0 >> 8, 0,
                   0x6000, data_020997a4.mUnk_0230, 255, 0);

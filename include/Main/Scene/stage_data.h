@@ -57,22 +57,28 @@ typedef struct StageRec {
             u8 mUnk_1de[0x1e4 - 0x1de];
         };
     };
-    s32 mUnk_1e4;
+    s32 mStoredOffsetX;
+    // 0 when mStoredOffsetX/Z hold an offset from map entry 0 (StoreStageOffsets, the save reader), -1 when they hold
+    // none (InitStage); state 10's set-up then starts the stage at entry 0 with mDistancePerFrame 0x6000.
     s32 mUnk_1e8;
-    s32 mUnk_1ec;
-    s32 mUnk_1f0;
-    s32 mUnk_1f4;
-    StageOffset mUnk_1f8[3];
+    s32 mStoredOffsetZ;
+    s32 mScreenX;
+    s32 mScreenY;
+    StageOffset mSpriteOffsets[3];
     VecFx32 mUnk_210;
     float mUnk_21c;
-    s32 mUnk_220;
+    s32 mDistancePerFrame;
     u16 mUnk_224;
-    s8 mUnk_226;
+    // Polygon group (10..15) the stage lies in, minus 10 (FindStagePolygonGroup); 99 = none. Compared with
+    // mInfo.mUnk_10.
+    s8 mPolygonGroupIndex;
     u8 mUnk_227[5];
     u8 mUnk_22c;
-    u8 mUnk_22d;
+    u8 mInSlot;
     u8 mUnk_22e;
-    u8 mUnk_22f;
+    // 1 when any part of the stage is in view (func_02031d0c, set every frame of state 10); the selected stage is
+    // still projected and drawn while it is 0, but DrawStageSprite draws nothing for it.
+    u8 mVisible;
 } StageRec;
 
 #define STAGE_MAX 0x27

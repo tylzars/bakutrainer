@@ -393,7 +393,7 @@ void func_020066c8(void) {
 }
 
 void func_020067ac(void) {
-    s32 level = data_020b6ee0.mUnk_a8e4;
+    s32 level = data_020b6ee0.mSelectedStageIndex;
     u16 v[5];
     s32 i, j, k;
     s8 value;
@@ -402,9 +402,9 @@ void func_020067ac(void) {
         level = 0;
     }
     data_0206d460.mStage = data_020b1990[level].mInfo;
-    data_020b10fc.mUnk_08 = data_0206d460.mStage.mUnk_11 - 1;
+    data_020b10fc.mTableRow = data_0206d460.mStage.mUnk_11 - 1;
     ok = 0;
-    if (data_020b10fc.mUnk_08 >= 0 && data_020b10fc.mUnk_08 < 12) {
+    if (data_020b10fc.mTableRow >= 0 && data_020b10fc.mTableRow < 12) {
         ok = 1;
     }
     if (ok == 0) {
@@ -439,13 +439,13 @@ void func_020067ac(void) {
     data_0206d460.mUnk_25c = 0;
     data_0206d460.mUnk_264 = 0;
     data_0206d460.mUnk_268 = 0;
-    data_0206d460.mUnk_2b8f8 = func_02005c10(data_020b10fc.mUnk_08, 2) << 8;
-    data_0206d460.mUnk_2b8fc = func_02005c10(data_020b10fc.mUnk_08, 3) << 8;
-    data_0206d460.mUnk_2b900 = func_02005c10(data_020b10fc.mUnk_08, 4) - 1;
-    data_0206d460.mUnk_2b904 = func_02005c10(data_020b10fc.mUnk_08, 5) * 60000 / 1000;
-    data_0206d460.mUnk_2b908 = func_02005c10(data_020b10fc.mUnk_08, 6);
-    data_0206d460.mUnk_2b90c = func_02005c10(data_020b10fc.mUnk_08, 7);
-    data_0206d460.mUnk_2b910 = func_02005c10(data_020b10fc.mUnk_08, 8) * 60 / 1000;
+    data_0206d460.mUnk_2b8f8 = func_02005c10(data_020b10fc.mTableRow, 2) << 8;
+    data_0206d460.mUnk_2b8fc = func_02005c10(data_020b10fc.mTableRow, 3) << 8;
+    data_0206d460.mUnk_2b900 = func_02005c10(data_020b10fc.mTableRow, 4) - 1;
+    data_0206d460.mUnk_2b904 = func_02005c10(data_020b10fc.mTableRow, 5) * 60000 / 1000;
+    data_0206d460.mUnk_2b908 = func_02005c10(data_020b10fc.mTableRow, 6);
+    data_0206d460.mUnk_2b90c = func_02005c10(data_020b10fc.mTableRow, 7);
+    data_0206d460.mUnk_2b910 = func_02005c10(data_020b10fc.mTableRow, 8) * 60 / 1000;
     memset(data_0206d460.mUnk_2a8b4, 0, 0x1000);
     for (i = 0; i < 42; i++) {
         for (j = 0; j < 6; j++) {
@@ -482,8 +482,8 @@ void func_020067ac(void) {
 }
 
 void func_02006b1c(void) {
-    func_0201168c(data_020b6ee0.mUnk_a8e4, data_0206d460.mUnk_008 >> 8, data_0206d448.mUnk_00, data_0206d460.mUnk_004,
-                  2);
+    func_0201168c(data_020b6ee0.mSelectedStageIndex, data_0206d460.mUnk_008 >> 8, data_0206d448.mUnk_00,
+                  data_0206d460.mUnk_004, 2);
     func_02033614(data_020c3e44.mUnk_2024.mUnk_9c.mUnk_228.x, data_020c3e44.mUnk_2024.mUnk_9c.mUnk_228.z);
     func_0202733c(&data_0206d460.mUnk_010, &data_0206d460.mUnk_1b0, 0);
     func_02005cb4();

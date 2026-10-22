@@ -27,7 +27,7 @@ ResultState data_0206d1d4;
 
 void func_0200494c(void) {
     func_02014bf0();
-    func_02014430(0);
+    RunSaveScreen(0);
     PushState(10);
     PopState();
 }
@@ -38,7 +38,7 @@ void func_02004964(void) {
     int level;
     s32 v;
     stage = data_020b10fc.mUnk_0c == 1 ? 0x1d1 : 0x1ca;
-    level = data_020b6ee0.mUnk_a8e4;
+    level = data_020b6ee0.mSelectedStageIndex;
     if (level < 0) {
         level = 0;
     }
@@ -59,7 +59,7 @@ void func_02004964(void) {
     data_0206d1d4.mUnk_28 = func_02021e44(488, 9) << 8;
     data_0206d1d4.mUnk_2c = 0;
     data_0206d1d4.mUnk_30 =
-        data_020b10fc.mUnk_0c == 1 ? func_02014d2c(&data_020b1990[data_0206d1d4.mUnk_10].mInfo) : -1;
+        data_020b10fc.mUnk_0c == 1 ? PickWeightedTableEntry(&data_020b1990[data_0206d1d4.mUnk_10].mInfo) : -1;
     data_0206d1d4.mUnk_34 = 0;
     data_0206d1d4.mUnk_38 = 0;
     data_0206d1d4.mUnk_3c = 5;
@@ -86,12 +86,12 @@ void func_02004aa8(void) {
     int slot;
     s32 v;
     if (data_0206d1d4.mUnk_00 != 2) {
-        func_02011890(data_0206d1d4.mUnk_10, 2);
+        DrawStageInfo(data_0206d1d4.mUnk_10, 2);
     } else {
         s32 t = data_0206d1d4.mUnk_3c;
         if (t < 0 || (t == 5 && data_0206d1d4.mUnk_38 != 0) ||
             (t >= 0 && t < 5 && data_020b1990[data_0206d1d4.mUnk_10].mInfo.mUnk_1c[t] < 0)) {
-            func_02011890(data_0206d1d4.mUnk_10, 1);
+            DrawStageInfo(data_0206d1d4.mUnk_10, 1);
         }
     }
     if (data_0206d1d4.mUnk_00 == 0) {
@@ -99,13 +99,13 @@ void func_02004aa8(void) {
         return;
     }
     if (data_0206d1d4.mUnk_00 == 1) {
-        func_020215fc(51, 21, data_0201a61c, GetText(data_020b10fc.mUnk_04 + 31), 0, 200, 16, 1);
-        func_0202cf08(data_0204e0d4[data_020b10fc.mUnk_04], 25, 22, 130, 1);
+        func_020215fc(51, 21, data_0201a61c, GetText(data_020b10fc.mMode + 31), 0, 200, 16, 1);
+        func_0202cf08(data_0204e0d4[data_020b10fc.mMode], 25, 22, 130, 1);
         switch (data_020b10fc.mUnk_0c) {
             case 1:
                 func_020215fc(89, 66, data_0201a64e, GetText(44), 2, 200, 16, 1);
                 if (data_0206d1d4.mUnk_08 >= 18) {
-                    sprintf(text0, "%d", data_020b10fc.mUnk_10);
+                    sprintf(text0, "%d", data_020b10fc.mScore);
                     func_020215fc(35, 128, data_0201a64e, GetText(43), 0, 200, 16, 1);
                     func_020215fc(180, 128, data_0201a64e, text0, 1, 200, 16, 1);
                 }
@@ -114,7 +114,7 @@ void func_02004aa8(void) {
                     func_020215fc(140, 143, data_0201a61c, text1, 0, 200, 16, 1);
                 }
                 if (data_0206d1d4.mUnk_08 >= 72) {
-                    sprintf(text2, "%d", data_020b10fc.mUnk_14[data_020b10fc.mUnk_04]);
+                    sprintf(text2, "%d", data_020b10fc.mBestScores[data_020b10fc.mMode]);
                     func_020215fc(35, 148, data_0201a64e, GetText(46), 0, 200, 16, 1);
                     func_020215fc(180, 148, data_0201a64e, text2, 1, 200, 16, 1);
                 }
@@ -125,10 +125,10 @@ void func_02004aa8(void) {
                 break;
             case 0:
                 func_020215fc(89, 66, data_0201a64e, GetText(45), 2, 200, 16, 1);
-                sprintf(text4, "%d", data_020b10fc.mUnk_10);
+                sprintf(text4, "%d", data_020b10fc.mScore);
                 func_020215fc(35, 128, data_0201a64e, GetText(43), 0, 200, 16, 1);
                 func_020215fc(180, 128, data_0201a64e, text4, 1, 200, 16, 1);
-                sprintf(text5, "%d", data_020b10fc.mUnk_14[data_020b10fc.mUnk_04]);
+                sprintf(text5, "%d", data_020b10fc.mBestScores[data_020b10fc.mMode]);
                 func_020215fc(35, 148, data_0201a64e, GetText(46), 0, 200, 16, 1);
                 func_020215fc(180, 148, data_0201a64e, text5, 1, 200, 16, 1);
                 if (data_0206d1d4.mUnk_08 >= 18) {
@@ -301,10 +301,10 @@ void func_02005194(void) {
                     }
                 }
                 if (data_0206d1d4.mUnk_08 >= 72) {
-                    if (data_020b10fc.mUnk_10 > data_020b10fc.mUnk_14[data_020b10fc.mUnk_04]) {
+                    if (data_020b10fc.mScore > data_020b10fc.mBestScores[data_020b10fc.mMode]) {
                         if (data_0206d1d4.mUnk_08 >= 90) {
                             data_0206d1d4.mUnk_24 = 1;
-                            data_020b10fc.mUnk_14[data_020b10fc.mUnk_04] = data_020b10fc.mUnk_10;
+                            data_020b10fc.mBestScores[data_020b10fc.mMode] = data_020b10fc.mScore;
                         }
                     } else if (data_0206d1d4.mUnk_24 == 0) {
                         data_0206d1d4.mUnk_2c = 1;

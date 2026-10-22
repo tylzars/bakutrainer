@@ -162,7 +162,7 @@ void func_0200bc50(int a, int b, int c, int d, int e, int f, int g, const char *
                    int m, int n, int o, int p) {
     int mode = IsLcdSwapped() ? 2 : 1;
     int g2 = g;
-    if (o == 0 && data_020b6ee0.mUnk_a5d0 != 0 && p == 0) {
+    if (o == 0 && data_020b6ee0.mButtonsEnabled != 0 && p == 0) {
         g2 = g + (data_020c1d60.mUnk_800.mUnk_100.mUnk_04 == f + 0x40000000);
     }
     if (n == 0 && (p != 1 || data_020c1d60.mUnk_800.mUnk_100.mUnk_04 == f + 0x40000000)) {
@@ -188,7 +188,7 @@ void func_0200bc50(int a, int b, int c, int d, int e, int f, int g, const char *
 }
 
 int func_0200bd80(u32 mask, u32 id) {
-    if (data_020b6ee0.mUnk_a5d0 == 0) {
+    if (data_020b6ee0.mButtonsEnabled == 0) {
         return 0;
     }
     if ((mask & data_020c1d60.mUnk_800.mUnk_100.mUnk_04) && (u16) data_020c1d60.mUnk_800.mUnk_100.mUnk_04 == id) {

@@ -588,7 +588,7 @@ src/Main/Scene/language_menu.c:
 
 // one file: func_02014260's local initializer (0x0204fedc) and the panel tables after it share one .rodata section;
 // its strings 0x02063a2c-0x02063a5c follow in creation order and its .bss is the stage selection state. The end is
-// provisional (the lookup helpers func_020144a4..func_0201456c show no file break)
+// provisional (the lookup helpers FindTableEntryIndex..GetSelectedNodeStageId show no file break)
 src/Main/Scene/stage_info_panel.c:
     complete
     .text       start:0x02011518 end:0x020145bc
@@ -596,7 +596,7 @@ src/Main/Scene/stage_info_panel.c:
     .data       start:0x02063a2c end:0x02063a5c
     .bss        start:0x020b13b0 end:0x020b13c8
 
-// provisional: a new unit starts by func_02014ac8 (its table at 0x020500d4 breaks the size order of the
+// provisional: a new unit starts by SetupNodeStageInfos (its table at 0x020500d4 breaks the size order of the
 // .rodata before it); the end is provisional
 src/Main/Scene/stage_progress.c:
     complete
@@ -612,8 +612,8 @@ src/Main/System/game_system.c:
     .data       start:0x020639ec end:0x02063a2c
     .bss        start:0x020b1078 end:0x020b13b0
 
-// provisional: the start (func_02015d4c may belong to the file before); the end is where the next file's "%d"
-// (0x02063aa0, func_02019fa0) starts
+// provisional: the start (ClearPanelState may belong to the file before); the end is where the next file's "%d"
+// (0x02063aa0, UpdateMapMenu) starts
 src/Main/Scene/stage_camera.c:
     complete
     .text       start:0x02015d4c end:0x02019fa0
@@ -621,7 +621,7 @@ src/Main/Scene/stage_camera.c:
     .data       start:0x02063a90 end:0x02063a9c
 
 // .rodata 0x020500d8-0x02050164, strings 0x02063a5c-0x02063a90, .bss 0x020b13c8-0x020b1524 (defined here); the end
-// is provisional (func_02015d48 and func_02015d4c may meet in either file)
+// is provisional (func_02015d48 and ClearPanelState may meet in either file)
 src/Main/Minigame/three_in_row.c:
     complete
     .text       start:0x02015340 end:0x02015d4c

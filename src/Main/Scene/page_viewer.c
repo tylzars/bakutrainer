@@ -24,9 +24,9 @@ void func_02006fc0(void) {
     RequestTrack(1, 0x80);
     data_02098d74.mUnk_04 = 0;
     func_02007168(1);
-    if (data_020b6ee0.mUnk_a14c == 1) {
-        func_02014430(0);
-        data_020b6ee0.mUnk_a14c = 0;
+    if (data_020b6ee0.mSaveRequested == 1) {
+        RunSaveScreen(0);
+        data_020b6ee0.mSaveRequested = 0;
     }
 }
 

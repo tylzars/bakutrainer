@@ -395,7 +395,7 @@ void func_0200e424(int a) {
         if (data_020ae458.mUnk_04 != data_020b1084.mUnk_08 || data_020ae458.mUnk_00 != data_020b1084.mUnk_04) {
             data_020b1084.mUnk_04 = data_020ae458.mUnk_00;
             data_020b1084.mUnk_08 = data_020ae458.mUnk_04;
-            func_02014430(1);
+            RunSaveScreen(1);
         }
     }
     func_0202f290(&data_020ae464, "BAK_strm_Title.raw", 0x5654);
@@ -606,17 +606,17 @@ void func_0200e5b0(void) {
             }
             func_0200bb14(0, (data_020ae504.mUnk_1bc[4] >> 8) + 0xa1, 0x102, 0xe, 0, 0, 0x5a, flag);
             if (func_0200bdac(0x20000000, 0x704, 0x706)) {
-                data_020b1084.mUnk_0c = (u16) data_020c1d60.mUnk_800.mUnk_100.mUnk_04 - 0x704;
+                data_020b1084.mSaveSlot = (u16) data_020c1d60.mUnk_800.mUnk_100.mUnk_04 - 0x704;
                 if (s->mUnk_2c == 0) {
-                    if (s->mUnk_00[data_020b1084.mUnk_0c].mUnk_00 == 1) {
+                    if (s->mUnk_00[data_020b1084.mSaveSlot].mUnk_00 == 1) {
                         func_0200e3d0(3, -1);
                     } else {
-                        func_020143f4();
+                        ResetAllProgress();
                         PushState(10);
                         PopState();
                     }
                 } else {
-                    func_0201440c();
+                    ResetAndReadSaveSlot();
                     PushState(10);
                     PopState();
                 }
@@ -632,8 +632,8 @@ void func_0200e5b0(void) {
             func_0200bb14(0xff, (data_020ae504.mUnk_1bc[4] >> 8) + 0xa1, 0x101, 0x15, 0, 0, 0x17d, flag);
             func_0200bb14(0, (data_020ae504.mUnk_1bc[4] >> 8) + 0xa1, 0x102, 0xe, 0, 0, 0x5a, flag);
             if (func_0200bd80(0x20000000, 0x101)) {
-                func_020143f4();
-                func_02014430(0);
+                ResetAllProgress();
+                RunSaveScreen(0);
                 PushState(10);
                 PopState();
             }
@@ -698,7 +698,7 @@ void func_0200e5b0(void) {
                 if (data_020ae504.mUnk_1b4 != data_020b1084.mLanguage) {
                     data_020b1084.mLanguage = data_020ae504.mUnk_1b4;
                     func_0202f2e8(&data_020ae464);
-                    func_02014430(1);
+                    RunSaveScreen(1);
                     func_0202f290(&data_020ae464, "BAK_strm_Title.raw", 0x5654);
                 }
                 func_0200e3d0(5, 1);

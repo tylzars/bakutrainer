@@ -42,12 +42,14 @@ extern const StateFunc gStateUpdateFuncs[STATE_COUNT];
 extern const StateFunc gStateLeaveFuncs[STATE_COUNT];
 
 typedef struct Unk_020b10fc {
-    s32 mUnk_00;
-    s32 mUnk_04;
-    s32 mUnk_08;
+    s32 mSceneState;
+    s32 mMode;
+    // mInfo.mUnk_11 - 1 of the selected stage (checked 0..11), set when a mode starts; the row of the mode's value
+    // tables.
+    s32 mTableRow;
     s32 mUnk_0c;
-    u32 mUnk_10;
-    s32 mUnk_14[5];
+    u32 mScore;
+    s32 mBestScores[5];
 } Unk_020b10fc;
 extern Unk_020b10fc data_020b10fc;
 
@@ -56,56 +58,73 @@ typedef struct Unk_020b1084 {
     u32 mLanguage;
     u32 mUnk_04;
     u32 mUnk_08;
-    s32 mUnk_0c;
+    s32 mSaveSlot;
 } Unk_020b1084;
 extern Unk_020b1084 data_020b1084;
 
-// Part of data_020b6ee0 the stage info panel works on through a pointer: a position, two values and two fade
-// counters.
+// An entry of data_020b6ee0.mUnk_9024 (mUnk_a149 counts the used ones): a model, a position and a kind. Used only by
+// func_020196b4..func_020198f0 in stage_camera.c; func_02019800 removes the kind-1 entry the selected stage comes
+// within range of.
 typedef struct Unk_020bff04 {
     Model mModel;
-    VecFx32 mUnk_178;
-    s32 mUnk_184;
+    VecFx32 mPos;
+    // 0 = free. Kind 1 gets a model and is drawn; only kind 1 is ever added in this build.
+    s32 mKind;
 } Unk_020bff04;
 
 typedef struct Unk_020c1454 {
     VecFx32 mUnk_00;
     VecFx32 mUnk_0c;
-    VecFx32 mUnk_18;
-    s32 mUnk_24;
-    s32 mUnk_28;
-    s32 mUnk_2c;
-    s32 mUnk_30;
-    s32 mUnk_34;
-    s32 mUnk_38;
-    s32 mUnk_3c;
-    s32 mUnk_40;
+    VecFx32 mDragStartPos;
+    s32 mTouchPressX;
+    s32 mTouchPressY;
+    // Touch position on the previous frame of the gauge drag in panel state 8 (UpdatePanel).
+    s32 mPrevTouchX;
+    s32 mPrevTouchY;
+    s32 mCameraEaseDivisor;
+    // x offset of the map menu's buttons, added for 0x101 and subtracted for 0x102; set to 0x28, then eased to 0.
+    s32 mMapButtonOffsetX;
+    s32 mPanelButtonOffsetX;
+    s32 mTextButtonOffsetY;
 } Unk_020c1454;
 
 // The stage's character: its model, the draw parameters and the countdown (time left, then the count).
 typedef struct Unk_020bfd40 {
     Model mModel;
     DrawParams mDraw;
-    s32 mUnk_1bc;
-    u32 mUnk_1c0;
+    // Frames left: func_020186fc counts it down in state 4 and calls func_02005a8c(0, ...) at 0. Also the time
+    // func_0201168c draws; func_02018840 adds its signed time amounts to it.
+    s32 mEndTimer;
+    u32 mScore;
 } Unk_020bfd40;
 
-// Camera follow state: draw parameters, the drag velocity and the zoom (current, target) with a countdown.
-typedef struct Unk_020c1030 {
-    DrawParams mUnk_00;
-    s32 mUnk_44;
+// Map menu (state 6) state: the cursor's draw parameters and its per-frame x/z move from the touch drag, the model
+// drawn at the reached node, two sprites started when the cursor snaps to a node, the blend of the camera's second
+// point and its target, the delay before the cursor shows, and the cursor-snapped and node-info-hidden flags.
+typedef struct MapMenu {
+    DrawParams mCursor;
+    s32 mCursorXPerFrame;
     u8 mUnk_48[4];
-    s32 mUnk_4c;
-    Model mUnk_50;
+    s32 mCursorZPerFrame;
+    Model mReachedNodeModel;
     Sprite mUnk_1c8;
     Sprite mUnk_2cc;
-    s32 mUnk_3d0;
-    s32 mUnk_3d4;
-    s32 mUnk_3d8;
-    u8 mUnk_3dc;
-    u8 mUnk_3dd;
+    // Weight out of 0x200 of the camera's second point against the first (0x200 keeps the second point, 0x100 is
+    // halfway); UpdateMapCursorAndCamera eases it toward mTargetBlend.
+    s32 mBlend;
+    // 0x100 once the cursor snaps to a node; 0x200 at set-up and when button 0x101 or 0x102 hides the node info.
+    s32 mTargetBlend;
+    // 0xb4 at set-up and counted down while the cursor sprites are hidden; snapping to a node also waits for 0. A
+    // touch press off buttons 0x101 and 0x102 zeroes it.
+    s32 mDelayTimer;
+    // Set when the cursor is moved onto the selected node; 0 while no node is selected or mDelayTimer is not 0.
+    u8 mCursorSnapped;
+    // 0 once the cursor snaps to a node (the node info and buttons 0x101 and 0x102 are drawn); 1 at set-up and after
+    // button 0x101 or 0x102. While 1 the touch drag can move the cursor and only button 0x102 is drawn, which then
+    // leaves the menu.
+    u8 mNodeInfoHidden;
     u8 mUnk_3de[2];
-} Unk_020c1030;
+} MapMenu;
 
 // Large block of game state shared by several screens; only the members the code touches are named.
 typedef struct Unk_020b6ee0 {
@@ -117,18 +136,23 @@ typedef struct Unk_020b6ee0 {
     u8 mUnk_0c48;
     u8 mUnk_0c49[3];
     u16 *mUnk_0c4c;
-    s32 mUnk_0c50;
-    s32 mUnk_0c54;
-    u8 mUnk_0c58;
+    s32 mFixedTargetX;
+    s32 mFixedTargetZ;
+    u8 mFixedTargetObjectIndex;
     u8 mUnk_0c59;
-    u16 mUnk_0c5a;
-    u8 mUnk_0c5c;
+    u16 mFixedTargetTimer;
+    // Touch x on the previous frame of UpdateStageMotion's touch drag, a path no call reaches in this build.
+    u8 mPrevTouchX;
     u8 mUnk_0c5d;
     u8 mUnk_0c5e[2];
-    s32 mUnk_c60[3];
+    // Stage index per slot of the slot screen (state 9); -1 = empty.
+    s32 mSlotStages[3];
     s32 mUnk_c6c[3];
-    u8 mUnk_c78;
-    u8 mUnk_c79;
+    // 1 when there are more than 3 stages (SetupSlotScreen). On the slot screen it gates the unslotted stage, button
+    // 0x200, the slot cursor and buttons 0x109 and 0x110; it also picks image 0x10ce or 0x10cd, the offset of the slot
+    // row and the highlight of the selected slot.
+    u8 mUnslottedVisible;
+    u8 mSelectedSlotIndex;
     u8 mUnk_c7a[2];
     VecFx32 mUnk_c7c;
     VecFx32 mUnk_c88;
@@ -171,14 +195,14 @@ typedef struct Unk_020b6ee0 {
     u8 mUnk_8ad8;
     u8 mUnk_8ad9;
     u8 mUnk_8ada[2];
-    Unk_020bf9bc mUnk_8adc[32];
-    u8 mUnk_8e5c;
+    FollowerEntry mFollowerEntries[32];
+    u8 mFollowerEntryCount;
     u8 mUnk_8e5d[3];
     Unk_020bfd40 mUnk_8e60;
     Unk_020bff04 mUnk_9024[8];
     Model mUnk_9c64;
     s32 mUnk_9ddc[3];
-    MoveObj mUnk_9de8;
+    MoveObj mMoveObj;
     s32 mUnk_a0fc;
     s32 mUnk_a100;
     s32 mUnk_a104;
@@ -188,13 +212,13 @@ typedef struct Unk_020b6ee0 {
     s32 mUnk_a114;
     s32 mUnk_a118;
     s32 mUnk_a11c;
-    s32 mUnk_a120;
-    s32 mUnk_a124;
-    s32 mUnk_a128;
-    s32 mUnk_a12c;
-    s32 mUnk_a130;
-    s32 mUnk_a134;
-    s32 mUnk_a138;
+    s32 mTextImageIndex;
+    s32 mSavedTextImageIndex;
+    s32 mTextId;
+    s32 mSavedTextId;
+    s32 mTextOffsetY;
+    s32 mTextTimer;
+    s32 mSavedTextTimer;
     u8 mUnk_a13c;
     u8 mUnk_a13d;
     u8 mUnk_a13e;
@@ -205,45 +229,54 @@ typedef struct Unk_020b6ee0 {
     u8 mUnk_a143;
     u8 mUnk_a144;
     s8 mUnk_a145;
-    u8 mUnk_a146;
+    u8 mPanelState;
     u8 mUnk_a147;
     u8 mUnk_a148;
     u8 mUnk_a149;
     u8 mUnk_a14a;
     u8 mUnk_a14b;
-    u8 mUnk_a14c;
+    u8 mSaveRequested;
     u8 mUnk_a14d;
     u8 mUnk_a14e[2];
-    Unk_020c1030 mUnk_a150;
-    s32 mUnk_a530;
-    s32 mUnk_a534;
-    s32 mUnk_a538;
-    u32 mUnk_a53c;
-    s32 mUnk_a540[8];
-    s32 mUnk_a560;
-    s32 mUnk_a564;
+    MapMenu mMapMenu;
+    s32 mReachedNodeIndex;
+    s32 mSelectedNodeIndex;
+    s32 mNodeState;
+    u32 mNodeStageCount;
+    s32 mNodeStages[8];
+    // Set to 1 instead of raising mReachedNodeIndex past node 24 (stage_minigame.c); IsReachedNodeSelected returns 0
+    // once it is set. Kept in the save record.
+    s32 mLastNodeDone;
+    s32 mProgressState;
     s32 mUnk_a568;
     u8 mUnk_a56c;
     u8 mUnk_a56d;
     u8 mUnk_a56e;
     u8 mUnk_a56f;
+    // Set to 1 by func_02019800 when it removes a kind-1 mUnk_9024 entry and cleared only by ResetProgress;
+    // mProgressState 3 waits for it in state 10.
     u8 mUnk_a570;
     u8 mUnk_a571[3];
     Unk_020c1454 mUnk_a574;
     u8 mUnk_a5b8[0xa5d0 - 0xa5b8];
-    u8 mUnk_a5d0;
+    // 0 from a touch press that hit none of the screen's buttons until a frame with neither touch down nor release;
+    // func_0200bd80 reports no button while it is 0. The camera drag of panel state 0 (state 10) and the map menu's
+    // cursor drag move only while it is 0.
+    u8 mButtonsEnabled;
     u8 mUnk_a5d1[3];
-    Sprite mUnk_a5d4;
+    Sprite mSelectionSprite;
     Sprite mUnk_a6d8[2];
-    s32 mUnk_a8e0;
-    s32 mUnk_a8e4;
+    s32 mPrevSelectedStageIndex;
+    s32 mSelectedStageIndex;
     s32 mUnk_a8e8;
-    u16 mUnk_a8ec;
-    u8 mUnk_a8ee;
-    u8 mUnk_a8ef;
+    u16 mPanelLevel;
+    // StageRec records in data_020b1990.
+    u8 mStageCount;
+    // StageInfo records in data_020b1524 (at most 3).
+    u8 mStageInfoCount;
     u8 mUnk_a8f0;
-    u8 mUnk_a8f1;
-    u8 mUnk_a8f2;
+    u8 mPanelRow;
+    u8 mMapIndex;
     u8 mUnk_a8f3[39];
     u8 mUnk_a91a;
     u8 mUnk_a91b;

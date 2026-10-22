@@ -748,13 +748,13 @@ void func_0200445c(void) {
     s32 level;
     int total;
     int stagger;
-    level = data_020b6ee0.mUnk_a8e4;
+    level = data_020b6ee0.mSelectedStageIndex;
     if (level < 0) {
         level = 0;
     }
     data_02064828.mStage = data_020b1990[level].mInfo;
     data_02064828.mUnk_00 = data_02064828.mStage.mUnk_11 - 1;
-    if (data_020b10fc.mUnk_08 < 0 || data_02064828.mUnk_00 >= 12) {
+    if (data_020b10fc.mTableRow < 0 || data_02064828.mUnk_00 >= 12) {
         OS_Terminate();
     }
     func_0200c5d8(0, data_02064828.mStage.mUnk_10 + 0x1cb, data_02064828.mStage.mUnk_13 + 0xdb3, 64, 16, 2, 130);
@@ -814,7 +814,8 @@ void func_0200445c(void) {
 }
 
 void func_02004720(void) {
-    func_0201168c(data_020b6ee0.mUnk_a8e4, data_02064828.mUnk_10, data_0206d448.mUnk_00, data_02064828.mUnk_08, 2);
+    func_0201168c(data_020b6ee0.mSelectedStageIndex, data_02064828.mUnk_10, data_0206d448.mUnk_00,
+                  data_02064828.mUnk_08, 2);
     func_02003aa8(&data_02064828.mUnk_8608, 2, 0);
     func_02004254();
     func_02003aa8(&data_02064828.mUnk_83c4, 1, 1);

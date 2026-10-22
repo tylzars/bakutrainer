@@ -10,15 +10,16 @@ extern "C" {
 #define MAP_NODE_COUNT 25
 #define MAP_NODE_POS_ID 0xa00
 
-// Frame counter of the recap screen's animation (it starts negative).
-extern s32 data_020c17fc;
+// Animation frame of the recap screen: -8 at set-up (a delay), raised by 1 on frames whose counter % 3 is 2 while the
+// reached node has a column-0xf value; frames 0..8 are drawn, then sprite 0x1089 plus that value.
+extern s32 gRecapFrameIndex;
 
-void func_02019fa0(void);
-void func_0201a3d4(void);
-void func_0201a3e0(void);
-void func_0201a4b0(void);
-void func_0201a50c(void);
-void func_0201a600(void);
+void UpdateMapMenu(void);
+void LeaveMapMenu(void);
+void UpdateMapMenuInput(void);
+void SetupRecap(void);
+void UpdateRecap(void);
+void LeaveRecap(void);
 
 #ifdef __cplusplus
 }

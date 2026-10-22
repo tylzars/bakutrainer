@@ -92,21 +92,21 @@ SphereModel gSphereModel;
 const u8 gStatePromptScreenEnabled[STATE_COUNT] = {0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 1, 0, 0,
                                                    0, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0};
 const StateFunc gStateLeaveFuncs[STATE_COUNT] = {
-    NULL,          func_0200f360, func_0201133c, func_0200f580, func_020186cc, func_02015d34, func_0201a3d4,
-    func_0201a600, NULL,          func_02013a2c, func_02019438, NULL,          func_0200f750, func_020059ac,
-    func_0200cd1c, func_0200b884, func_02006fac, func_02004930, func_0200548c, func_02007750, func_0200a3f4,
+    NULL,          func_0200f360, func_0201133c, func_0200f580, func_020186cc, func_02015d34, LeaveMapMenu,
+    LeaveRecap, NULL,          LeaveSlotScreen, func_02019438, NULL,          func_0200f750, func_020059ac,
+    LeaveScene, func_0200b884, func_02006fac, func_02004930, func_0200548c, func_02007750, func_0200a3f4,
     func_02014184, func_0201438c, func_02011510, func_0200719c,
 };
 const StateFunc gStateEnterFuncs[STATE_COUNT] = {
-    NULL,          func_0200e4c4, SetupStateMenu,   func_0200f374, func_020182cc, func_02015cd4, func_02019df8,
-    func_0201a4b0, NULL,          func_0201353c,    func_0201896c, NULL,          func_0200f660, func_02005548,
-    func_0200ca14, func_0200b278, func_020067ac,    func_0200445c, func_02004964, func_020074ac, func_0200a384,
+    NULL,          func_0200e4c4, SetupStateMenu,   func_0200f374, func_020182cc, func_02015cd4, SetupMapMenu,
+    SetupRecap, NULL,          SetupSlotScreen,    func_0201896c, NULL,          func_0200f660, func_02005548,
+    SetupScene, func_0200b278, func_020067ac,    func_0200445c, func_02004964, func_020074ac, func_0200a384,
     func_020140d4, func_02014190, SetupSphereModel, func_02006fc0,
 };
 const StateFunc gStateUpdateFuncs[STATE_COUNT] = {
-    NULL,          func_0200e5b0, UpdateStateMenu,   func_0200f4d4, func_02018558, func_02015d2c, func_02019fa0,
-    func_0201a50c, NULL,          func_0201364c,     func_02018cd4, NULL,          func_0200f758, func_02005898,
-    func_0200cbe8, func_0200b610, func_02006b68,     func_02004768, func_02005194, func_02007704, func_0200a3fc,
+    NULL,          func_0200e5b0, UpdateStateMenu,   func_0200f4d4, func_02018558, func_02015d2c, UpdateMapMenu,
+    UpdateRecap, NULL,          UpdateSlotScreen,     func_02018cd4, NULL,          func_0200f758, func_02005898,
+    UpdateScene, func_0200b610, func_02006b68,     func_02004768, func_02005194, func_02007704, func_0200a3fc,
     func_02014124, func_02014260, UpdateSphereModel, func_020070c4,
 };
 
@@ -435,7 +435,7 @@ int OpenPromptScreen(int *a, int *b) {
         st->mTextY = -0x8000;
         *(vu16 *) 0x04001050 = 0;
         *(vu16 *) 0x04001052 = 0;
-        data_020b6ee0.mUnk_a5d0 = 1;
+        data_020b6ee0.mButtonsEnabled = 1;
         return 1;
     }
     return 0;
@@ -513,8 +513,8 @@ void DrawPromptScreen(void) {
 }
 
 // Runs the prompt screen: slides the buttons in, waits for a button, slides them out and restores the display; the
-// track volume fades down meanwhile and back up after. The second button also clears data_020b6ee0.mUnk_a538,
-// releases the microphone, runs func_02014430(0) and requests state 1. Key bit 3 ends it without a button once both
+// track volume fades down meanwhile and back up after. The second button also clears data_020b6ee0.mNodeState,
+// releases the microphone, runs RunSaveScreen(0) and requests state 1. Key bit 3 ends it without a button once both
 // screens' fade states are FADE_STATE_CLEAR (and data_020c6b14.mUnk_1748 is 0).
 void RunPromptScreen(void) {
     int result;
@@ -593,9 +593,9 @@ void RunPromptScreen(void) {
                         break;
                     case PROMPT_SCREEN_BUTTON_SECOND:
                         running = 0;
-                        data_020b6ee0.mUnk_a538 = running;
+                        data_020b6ee0.mNodeState = running;
                         ReleaseMic();
-                        func_02014430(running);
+                        RunSaveScreen(running);
                         PushState(1);
                         PopState();
                         break;
@@ -653,7 +653,7 @@ void func_020102f8(void) {
     if (gSystemState.mFlags & 0x80) {
         func_02022370();
     }
-    data_020b6ee0.mUnk_a5d0 = 1;
+    data_020b6ee0.mButtonsEnabled = 1;
 }
 
 void func_0201033c(int a, int b) {
@@ -911,9 +911,9 @@ int ReadSaveSlot(u32 slot) {
     ReadSaveBlock(slot, rec, SAVE_BLOCK_ID);
     if (rec->mWritten == 1) {
         ok = 1;
-        work->mUnk_a530 = rec->mUnk_14;
-        work->mUnk_a560 = rec->mUnk_18;
-        work->mUnk_a564 = rec->mUnk_28;
+        work->mReachedNodeIndex = rec->mUnk_14;
+        work->mLastNodeDone = rec->mUnk_18;
+        work->mProgressState = rec->mUnk_28;
         work->mUnk_a56c = rec->mUnk_2c;
         work->mUnk_a56d = rec->mUnk_30;
         work->mUnk_a56e = rec->mUnk_34;
@@ -922,33 +922,33 @@ int ReadSaveSlot(u32 slot) {
         if (v == 99) {
             v = -1;
         }
-        work->mUnk_a120 = v;
+        work->mTextImageIndex = v;
         v = rec->mUnk_40;
         if (v == 999) {
             v = -1;
         }
-        work->mUnk_a128 = v;
-        func_02011bcc(work->mUnk_a128, work->mUnk_a120, 480);
-        data_020b10fc.mUnk_14[0] = rec->mUnk_44;
-        data_020b10fc.mUnk_14[1] = rec->mUnk_48;
-        data_020b10fc.mUnk_14[2] = rec->mUnk_4c;
-        data_020b10fc.mUnk_14[3] = rec->mUnk_50;
-        data_020b10fc.mUnk_14[4] = rec->mUnk_54;
-        data_020b6ee0.mUnk_a8ee = 0;
+        work->mTextId = v;
+        SetTextAndImage(work->mTextId, work->mTextImageIndex, 480);
+        data_020b10fc.mBestScores[0] = rec->mUnk_44;
+        data_020b10fc.mBestScores[1] = rec->mUnk_48;
+        data_020b10fc.mBestScores[2] = rec->mUnk_4c;
+        data_020b10fc.mBestScores[3] = rec->mUnk_50;
+        data_020b10fc.mBestScores[4] = rec->mUnk_54;
+        data_020b6ee0.mStageCount = 0;
         for (i = 0; i < STAGE_MAX; i++) {
             if (rec->mStageWritten[i] == 1) {
-                stage = &data_020b1990[func_02014de4(0, i)];
-                stage->mUnk_1e4 = (rec->mUnk_f8[i] - 0x100) * STAGE_UNIT;
+                stage = &data_020b1990[AddStage(0, i)];
+                stage->mStoredOffsetX = (rec->mUnk_f8[i] - 0x100) * STAGE_UNIT;
                 stage->mUnk_1e8 = 0;
-                stage->mUnk_1ec = (rec->mUnk_194[i] - 0x100) * STAGE_UNIT;
+                stage->mStoredOffsetZ = (rec->mUnk_194[i] - 0x100) * STAGE_UNIT;
                 stage->mInfo.mUnk_12 = rec->mUnk_230[i];
                 stage->mInfo.mUnk_04 = rec->mUnk_2cc[i];
                 stage->mInfo.mUnk_11 = rec->mUnk_368[i];
-                stage->mInfo.mUnk_1c[0] = rec->mUnk_404[i] == 0 ? -1 : func_020144e0(rec->mUnk_404[i] - 1, 2);
-                stage->mInfo.mUnk_1c[1] = rec->mUnk_4a0[i] == 0 ? -1 : func_020144e0(rec->mUnk_4a0[i] - 1, 2);
-                stage->mInfo.mUnk_1c[2] = rec->mUnk_53c[i] == 0 ? -1 : func_020144e0(rec->mUnk_53c[i] - 1, 2);
-                stage->mInfo.mUnk_1c[3] = rec->mUnk_5d8[i] == 0 ? -1 : func_020144e0(rec->mUnk_5d8[i] - 1, 2);
-                stage->mInfo.mUnk_1c[4] = rec->mUnk_674[i] == 0 ? -1 : func_020144e0(rec->mUnk_674[i] - 1, 2);
+                stage->mInfo.mUnk_1c[0] = rec->mUnk_404[i] == 0 ? -1 : GetTableEntryValue(rec->mUnk_404[i] - 1, 2);
+                stage->mInfo.mUnk_1c[1] = rec->mUnk_4a0[i] == 0 ? -1 : GetTableEntryValue(rec->mUnk_4a0[i] - 1, 2);
+                stage->mInfo.mUnk_1c[2] = rec->mUnk_53c[i] == 0 ? -1 : GetTableEntryValue(rec->mUnk_53c[i] - 1, 2);
+                stage->mInfo.mUnk_1c[3] = rec->mUnk_5d8[i] == 0 ? -1 : GetTableEntryValue(rec->mUnk_5d8[i] - 1, 2);
+                stage->mInfo.mUnk_1c[4] = rec->mUnk_674[i] == 0 ? -1 : GetTableEntryValue(rec->mUnk_674[i] - 1, 2);
             }
         }
         for (i = 0; i < 3; i++) {
@@ -958,13 +958,13 @@ int ReadSaveSlot(u32 slot) {
                 if (s >= STAGE_MAX) {
                     OS_Terminate();
                 }
-                j = func_02014f14(0, s);
+                j = FindStage(0, s);
                 if (j == -1) {
                     OS_Terminate();
                 }
-                func_02015114(i, j);
+                SetSlotStage(i, j);
             } else {
-                func_02015114(i, -1);
+                SetSlotStage(i, -1);
             }
         }
     }
@@ -981,44 +981,44 @@ void WriteSaveSlot(u32 slot) {
 
     func_02010d4c(rec);
     rec->mWritten = 1;
-    rec->mUnk_14 = data_020b6ee0.mUnk_a530;
-    rec->mUnk_18 = data_020b6ee0.mUnk_a560;
-    rec->mUnk_28 = data_020b6ee0.mUnk_a564;
+    rec->mUnk_14 = data_020b6ee0.mReachedNodeIndex;
+    rec->mUnk_18 = data_020b6ee0.mLastNodeDone;
+    rec->mUnk_28 = data_020b6ee0.mProgressState;
     rec->mUnk_2c = data_020b6ee0.mUnk_a56c;
     rec->mUnk_30 = data_020b6ee0.mUnk_a56d;
     rec->mUnk_34 = data_020b6ee0.mUnk_a56e;
     rec->mUnk_38 = data_020b6ee0.mUnk_a56f;
-    if (data_020b6ee0.mUnk_a128 == -1) {
-        v = work->mUnk_a12c;
+    if (data_020b6ee0.mTextId == -1) {
+        v = work->mSavedTextId;
         if (v == -1) {
             v = 999;
         }
         rec->mUnk_40 = v;
-        v = work->mUnk_a124;
+        v = work->mSavedTextImageIndex;
         if (v == -1) {
             v = 99;
         }
         rec->mUnk_3c = v;
     } else {
-        v = work->mUnk_a128;
+        v = work->mTextId;
         if (v == -1) {
             v = 999;
         }
         rec->mUnk_40 = v;
-        v = work->mUnk_a120;
+        v = work->mTextImageIndex;
         if (v == -1) {
             v = 99;
         }
         rec->mUnk_3c = v;
     }
-    rec->mUnk_44 = data_020b10fc.mUnk_14[0];
-    rec->mUnk_48 = data_020b10fc.mUnk_14[1];
-    rec->mUnk_4c = data_020b10fc.mUnk_14[2];
-    rec->mUnk_50 = data_020b10fc.mUnk_14[3];
-    rec->mUnk_54 = data_020b10fc.mUnk_14[4];
+    rec->mUnk_44 = data_020b10fc.mBestScores[0];
+    rec->mUnk_48 = data_020b10fc.mBestScores[1];
+    rec->mUnk_4c = data_020b10fc.mBestScores[2];
+    rec->mUnk_50 = data_020b10fc.mBestScores[3];
+    rec->mUnk_54 = data_020b10fc.mBestScores[4];
     for (i = 0; i < 3; i++) {
         u8 slotStage = 0;
-        stage = func_02015190(i);
+        stage = GetSlotStage(i);
         if (stage != NULL) {
             slotStage = stage->mInfo.mUnk_13;
             if (slotStage >= STAGE_MAX) {
@@ -1031,8 +1031,8 @@ void WriteSaveSlot(u32 slot) {
     for (i = 0; i < STAGE_MAX; i++) {
         rec->mStageWritten[i] = 0;
     }
-    rec->mStageCount = data_020b6ee0.mUnk_a8ee;
-    for (i = 0; i < data_020b6ee0.mUnk_a8ee; i++) {
+    rec->mStageCount = data_020b6ee0.mStageCount;
+    for (i = 0; i < data_020b6ee0.mStageCount; i++) {
         u8 id;
         stage = &data_020b1990[i];
         id = stage->mInfo.mUnk_13;
@@ -1043,12 +1043,12 @@ void WriteSaveSlot(u32 slot) {
             OS_Terminate();
         }
         rec->mStageWritten[id] = 1;
-        v = stage->mUnk_1e4 / STAGE_UNIT;
+        v = stage->mStoredOffsetX / STAGE_UNIT;
         if (v <= -0x100 || v >= 0x100) {
             OS_Terminate();
         }
         rec->mUnk_f8[id] = v + 0x100;
-        v = stage->mUnk_1ec / STAGE_UNIT;
+        v = stage->mStoredOffsetZ / STAGE_UNIT;
         if (v <= -0x100 || v >= 0x100) {
             OS_Terminate();
         }
@@ -1056,11 +1056,11 @@ void WriteSaveSlot(u32 slot) {
         rec->mUnk_230[id] = stage->mInfo.mUnk_12;
         rec->mUnk_2cc[id] = stage->mInfo.mUnk_04;
         rec->mUnk_368[id] = stage->mInfo.mUnk_11;
-        rec->mUnk_404[id] = func_020144a4(stage->mInfo.mUnk_1c[0]) + 1;
-        rec->mUnk_4a0[id] = func_020144a4(stage->mInfo.mUnk_1c[1]) + 1;
-        rec->mUnk_53c[id] = func_020144a4(stage->mInfo.mUnk_1c[2]) + 1;
-        rec->mUnk_5d8[id] = func_020144a4(stage->mInfo.mUnk_1c[3]) + 1;
-        rec->mUnk_674[id] = func_020144a4(stage->mInfo.mUnk_1c[4]) + 1;
+        rec->mUnk_404[id] = FindTableEntryIndex(stage->mInfo.mUnk_1c[0]) + 1;
+        rec->mUnk_4a0[id] = FindTableEntryIndex(stage->mInfo.mUnk_1c[1]) + 1;
+        rec->mUnk_53c[id] = FindTableEntryIndex(stage->mInfo.mUnk_1c[2]) + 1;
+        rec->mUnk_5d8[id] = FindTableEntryIndex(stage->mInfo.mUnk_1c[3]) + 1;
+        rec->mUnk_674[id] = FindTableEntryIndex(stage->mInfo.mUnk_1c[4]) + 1;
     }
     WriteSaveBlock(slot, rec, SAVE_BLOCK_ID);
     FreeSaveRecord(&rec);
@@ -1155,7 +1155,7 @@ void UpdateStateMenu(void) {
         func_0200bc50(0xe9, 0x30, 0, 0, 0x8c, 0x202, 0xd7, "Card", 0, 2, 0, 0, 1, 0, 0, 0);
         if (func_0200bd80(0x20000000, 0x202)) {
             memset(data_020b10d4.mUnk_1c, -1, 10);
-            func_02014cf8(&data_020b10d4);
+            PickTableEntries(&data_020b10d4);
         }
         pad = gSystemState.mKeysPressed;
         if (pad & 0x10) {
@@ -1174,20 +1174,21 @@ void UpdateStateMenu(void) {
         }
         func_0200b898(0x10, 0x10, "grade: %i", data_020b10d4.mUnk_11);
         for (k = 0; k < 5; k++) {
-            func_0200b898(0x10, 0x1a + k * 10, "%s", GetText(func_02014518(data_020b10d4.mUnk_1c[k], 3) + 0x8a));
+            func_0200b898(0x10, 0x1a + k * 10, "%s",
+                          GetText(GetTableEntryValueById(data_020b10d4.mUnk_1c[k], 3) + 0x8a));
         }
         for (k = 0; k < 5; k++) {
-            func_0200b898(0x88, 0x1a + k * 10, "%i %i", func_02014518(data_020b10d4.mUnk_1c[k], 4),
-                          func_02014518(data_020b10d4.mUnk_1c[k], 5));
+            func_0200b898(0x88, 0x1a + k * 10, "%i %i", GetTableEntryValueById(data_020b10d4.mUnk_1c[k], 4),
+                          GetTableEntryValueById(data_020b10d4.mUnk_1c[k], 5));
         }
     } else {
         func_0200bc50(0xe9, 0x30, 0, 0, 0x8c, 0x200, 0xd7, "Save", 0, 2, 0, 0, 1, 0, 0, 0);
         func_0200bc50(0xe9, 0x4e, 0, 0, 0x8c, 0x201, 0xd7, "Load", 0, 2, 0, 0, 1, 0, 0, 0);
         if (func_0200bd80(0x20000000, 0x200)) {
-            func_02014430(0);
+            RunSaveScreen(0);
         }
         if (func_0200bd80(0x20000000, 0x201)) {
-            func_0201440c();
+            ResetAndReadSaveSlot();
         }
         rows = 0;
         for (i = 0; i < gStateMenu.mDepth; i++) {
@@ -1254,9 +1255,9 @@ void UpdateStateMenu(void) {
             if ((u32) (func_02021e08(ENTRY_BLOCK, n) - 2) <= 1) {
                 int v = func_02021e44(ENTRY_BLOCK, n);
                 if (v < 100) {
-                    data_020b6ee0.mUnk_a8f2 = v - 1;
-                    data_020b6ee0.mUnk_a8e4 = -1;
-                    data_020b10fc.mUnk_04 = 4;
+                    data_020b6ee0.mMapIndex = v - 1;
+                    data_020b6ee0.mSelectedStageIndex = -1;
+                    data_020b10fc.mMode = 4;
                     PushState(4);
                     PopState();
                 } else if (v < 200) {
@@ -1276,25 +1277,25 @@ void UpdateStateMenu(void) {
                     PushState(12);
                     PopState();
                 } else if (v < 800) {
-                    data_020b10fc.mUnk_04 = 0;
+                    data_020b10fc.mMode = 0;
                     PushState(14);
                     PopState();
                 } else if (v < 900) {
-                    data_020b10fc.mUnk_04 = 1;
+                    data_020b10fc.mMode = 1;
                     PushState(15);
                     PopState();
                 } else if (v < 1000) {
                     PushState(19);
                     PopState();
                 } else if (v < 1100) {
-                    data_020b10fc.mUnk_04 = 2;
+                    data_020b10fc.mMode = 2;
                     PushState(16);
                     PopState();
                 } else if (v < 1200) {
                     PushState(1);
                     PopState();
                 } else if (v < 1300) {
-                    data_020b10fc.mUnk_04 = 3;
+                    data_020b10fc.mMode = 3;
                     PushState(17);
                     PopState();
                 } else if (v < 1400) {

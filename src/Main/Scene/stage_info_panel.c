@@ -21,6 +21,7 @@
 #include <Main/Scene/language_menu.h>
 #include <Main/Scene/stage_data.h>
 #include <Main/Scene/stage_info_panel.h>
+#include <Main/Scene/stage_map_menu.h>
 #include <Main/Graphics/text_draw.h>
 #include <Main/Graphics/model.h>
 #include <Main/Map/map_entries.h>
@@ -35,23 +36,28 @@
 #define GAUGE_MAX 0x31
 #define TABLE_ENTRY_COUNT 100
 
-// Stage selection screen state: member 3 is set once the shown stage was changed with a button, member 4 is the stage
-// shown in the large panel (-1 for none) and member 8 the highlighted entry of the row of five (-1 for none).
+// Slot screen (state 9) state.
 typedef struct Unk_020b13b0 {
     u8 mUnk_00;
     u8 mUnk_01;
     u8 mUnk_02;
-    u8 mUnk_03;
-    s32 mUnk_04;
-    s32 mUnk_08;
+    // Set when button 0x200 writes a slot; button 0x101 is drawn only after that.
+    u8 mSlotChanged;
+    // The stage shown outside the slots (-1 for none); used only while mUnslottedVisible is 1.
+    s32 mUnslottedStageIndex;
+    // Highlighted entry of the selected stage's row of five (0..4 into mInfo.mUnk_1c), -1 for none.
+    s32 mEntryCursor;
 } Unk_020b13b0;
 
 Unk_020b13b0 data_020b13b0;
 
-// The three stage numbers of the list as they were when the screen was entered; a cancel puts them back.
-s32 data_020b13bc[3];
+// The three stage indices of mSlotStages as they were when the screen was entered; button 0x102 writes them back.
+s32 gSavedSlotStages[3];
 
-void func_02011518(int stage, int mode) {
+// Loads the image for screen mode unless that screen already shows it: in state 10 with stage -1 or a text set, image
+// 0x1e4 + mTextImageIndex; otherwise the stage's image (0xdb3 + its stage id). A stage of -1 outside state 10 reads
+// data_020b1990[-1]; UpdateSlotScreen passes -1 when no stage is selected.
+void LoadStageOrTextImage(int stage, int mode) {
     u16 current;
     int id;
 
@@ -64,8 +70,8 @@ void func_02011518(int stage, int mode) {
         OS_Terminate();
     }
     data_020b6ee0.mUnk_a13c = 0;
-    if (GetState() == 10 && (stage == -1 || data_020b6ee0.mUnk_a128 != -1)) {
-        id = data_020b6ee0.mUnk_a120 + 0x1e4;
+    if (GetState() == 10 && (stage == -1 || data_020b6ee0.mTextId != -1)) {
+        id = data_020b6ee0.mTextImageIndex + 0x1e4;
         func_0200bdcc(2, 8);
     } else {
         id = data_020b1990[stage].mInfo.mUnk_13 + 0xdb3;
@@ -76,7 +82,7 @@ void func_02011518(int stage, int mode) {
     }
 }
 
-void func_020115ac(int frames, char *buf) {
+void FormatFrameTime(int frames, char *buf) {
     int t;
 
     if (frames < 0) {
@@ -86,7 +92,8 @@ void func_020115ac(int frames, char *buf) {
     sprintf(buf, "%d%d:%d%d", t / 10000 % 10, t / 1000 % 10, t / 100 % 10, t / 10 % 10);
 }
 
-void func_02011624(int frames, char *buf) {
+// Formats frames as whole seconds, rounded up, with a sign: "+n" when frames > 0, else "-n" (0 gives "-0").
+void FormatSignedSeconds(int frames, char *buf) {
     int t;
 
     t = (frames >= 0 ? frames : -frames) * 1000 / 60;
@@ -100,34 +107,37 @@ void func_02011624(int frames, char *buf) {
     }
 }
 
-void func_0201168c(int level, u32 a, int b, int c, int d) {
+// Draws the panel shown while a mode runs: score and b (every caller passes data_0206d448.mUnk_00), each as at least
+// three digits, and, unless func_02005a00(frames) is not 0, the time left from frames. stage is only range-checked
+// (-1 counts as 0).
+void func_0201168c(int stage, u32 score, int b, int frames, int d) {
     char time[12];
     char text[32];
 
-    if (level == -1) {
-        level = 0;
+    if (stage == -1) {
+        stage = 0;
     }
-    if (!(level >= 0 && level < STAGE_MAX)) {
+    if (!(stage >= 0 && stage < STAGE_MAX)) {
         OS_Terminate();
     }
     func_0202cf08(0xf38, 0xa3, 0x8b, 0xc8, d);
     func_0202cf08(0xf39, 0x53, 0x8b, 0xc8, d);
     func_0202cf08(0xf48, 0x15, 0x8e, 0xc8, d);
     func_020215fc(0x23, 0x95, data_0201a612, GetText(0x2f), 0, 0xc8, 0x10, d);
-    sprintf(text, "%003d", a);
+    sprintf(text, "%003d", score);
     func_020215fc(0x30, 0xb1, data_0201a694, text, 2, 0x82, 0x10, d);
     func_020215fc(0x5f, 0x95, data_0201a612, GetText(0x30), 0, 0xc8, 0x10, d);
     sprintf(text, "%003d", b);
     func_020215fc(0x7b, 0xb0, data_0201a68a, text, 2, 0x82, 0x10, d);
     func_0202cf08(0xf49, 0xb2, 0x8e, 0xc8, d);
     func_020215fc(0xc1, 0x95, data_0201a612, GetText(0x31), 0, 0xc8, 0x10, d);
-    if (func_02005a00(c) == 0) {
-        func_020115ac(c, time);
+    if (func_02005a00(frames) == 0) {
+        FormatFrameTime(frames, time);
         func_020215fc(0xd2, 0xb0, data_0201a694, time, 2, 0xc8, 0x10, d);
     }
 }
 
-int func_020117e0(int percent) {
+int PercentToX(int percent) {
     int low = percent < 100 ? percent : 100;
 
     if (low < 0) {
@@ -138,7 +148,7 @@ int func_020117e0(int percent) {
     return MapRange(percent, 0, 100, 0, 100) + 14;
 }
 
-void func_0201180c(int stage, int mode) {
+void DrawPercentGauge(int stage, int mode) {
     StageRec *rec;
 
     if (stage >= 0) {
@@ -152,7 +162,9 @@ void func_0201180c(int stage, int mode) {
     }
 }
 
-void func_02011890(int level, int mode) {
+// Draws the info of the stage at index level (nothing when it is negative) and eases mPanelLevel. Always sets
+// mTextOffsetY to 0x100, the offset DrawTextPanel eases to 0, also for a negative index.
+void DrawStageInfo(int level, int mode) {
     StageRec *rec;
     int total;
     char label[8];
@@ -164,9 +176,9 @@ void func_02011890(int level, int mode) {
         if (!(level >= 0 && level < STAGE_MAX)) {
             OS_Terminate();
         }
-        EaseLevel(&data_020b6ee0.mUnk_a8ec, 4);
-        MapRange(data_020b6ee0.mUnk_a8ec, 0, 0x4000, 0x100, 0);
-        func_0201180c(level, mode);
+        EaseLevel(&data_020b6ee0.mPanelLevel, 4);
+        MapRange(data_020b6ee0.mPanelLevel, 0, 0x4000, 0x100, 0);
+        DrawPercentGauge(level, mode);
         func_0202cf08(0xf8d, 0, 0x79, 0xfa, mode);
         func_020215fc(0x25, 0x83, data_0201a61c, GetText(0xd), 2, 0xfa, 0, mode);
         func_0202cf08(0xf4a, 0x27, 0xa3, 0xfa, mode);
@@ -184,7 +196,7 @@ void func_02011890(int level, int mode) {
         func_020215fc(0xe8, 0xb3, data_0201a61c, GetText(0xf), 1, 0xfa, 0, mode);
         func_0202cf08(func_02021e44(0x10d5, rec->mInfo.mUnk_10 * 2 + 3) + 0xf32, 0xf2, 0xaf, 0xf8, mode);
     }
-    data_020b6ee0.mUnk_a130 = 0x100;
+    data_020b6ee0.mTextOffsetY = 0x100;
 }
 
 void func_02011a94(int stage, int mode) {
@@ -192,19 +204,19 @@ void func_02011a94(int stage, int mode) {
         if (!(stage >= 0 && stage < STAGE_MAX)) {
             OS_Terminate();
         }
-        EaseLevel(&data_020b6ee0.mUnk_a8ec, 4);
-        MapRange(data_020b6ee0.mUnk_a8ec, 0, 0x4000, 0x100, 0);
+        EaseLevel(&data_020b6ee0.mPanelLevel, 4);
+        MapRange(data_020b6ee0.mPanelLevel, 0, 0x4000, 0x100, 0);
         if (data_020b6ee0.mUnk_a110 < 11) {
             data_020b6ee0.mUnk_a110 += gSystemState.mElapsedFrames & 1;
         }
-        func_0201180c(stage, mode);
+        DrawPercentGauge(stage, mode);
         func_0202cf08(data_020b6ee0.mUnk_a110 + 0x19, 0x1f, 0x83, 0xf8, mode);
         if (data_020b6ee0.mUnk_a110 == 11) {
             func_020215fc(0x1f, 0x83, data_0201a61c, GetText(0x10), 0, 0xdc, 0xd, mode);
             func_020215fc(0x15, 0x97, data_0201a612, GetText(data_020b6ee0.mUnk_100c + 0x229), 0, 0xdc, 0xd, mode);
         }
     }
-    data_020b6ee0.mUnk_a130 = 0x100;
+    data_020b6ee0.mTextOffsetY = 0x100;
 }
 
 void func_02011b70(int stage, int mode) {
@@ -212,46 +224,49 @@ void func_02011b70(int stage, int mode) {
         if (!(stage >= 0 && stage < STAGE_MAX)) {
             OS_Terminate();
         }
-        func_0201180c(stage, mode);
+        DrawPercentGauge(stage, mode);
         func_020215fc(0x12, 0x96, data_0201a612, GetText(data_020b6ee0.mUnk_a13d + 0x5f), 0, 0xdc, 0x10, mode);
     }
-    data_020b6ee0.mUnk_a130 = 0x100;
+    data_020b6ee0.mTextOffsetY = 0x100;
 }
 
-void func_02011bcc(int a, int b, int c) {
+// a = -1 clears the shown text id, image index and timer and their saved copies; -2 clears only the shown ones; -3
+// restores the saved copies; any other value shows text a with image index b for c frames and saves them. Always
+// resets mTextOffsetY to 0x100 and mTextButtonOffsetY to 0x28.
+void SetTextAndImage(int a, int b, int c) {
     Unk_020c1454 *p = &data_020b6ee0.mUnk_a574;
 
     if (a == -1) {
-        data_020b6ee0.mUnk_a12c = -1;
-        data_020b6ee0.mUnk_a128 = -1;
-        data_020b6ee0.mUnk_a124 = 0;
-        data_020b6ee0.mUnk_a120 = 0;
-        data_020b6ee0.mUnk_a138 = 0;
-        data_020b6ee0.mUnk_a134 = 0;
+        data_020b6ee0.mSavedTextId = -1;
+        data_020b6ee0.mTextId = -1;
+        data_020b6ee0.mSavedTextImageIndex = 0;
+        data_020b6ee0.mTextImageIndex = 0;
+        data_020b6ee0.mSavedTextTimer = 0;
+        data_020b6ee0.mTextTimer = 0;
     } else if (a == -2) {
-        data_020b6ee0.mUnk_a128 = -1;
-        data_020b6ee0.mUnk_a120 = 0;
-        data_020b6ee0.mUnk_a134 = 0;
+        data_020b6ee0.mTextId = -1;
+        data_020b6ee0.mTextImageIndex = 0;
+        data_020b6ee0.mTextTimer = 0;
     } else if (a == -3) {
-        data_020b6ee0.mUnk_a128 = data_020b6ee0.mUnk_a12c;
-        data_020b6ee0.mUnk_a120 = data_020b6ee0.mUnk_a124;
-        data_020b6ee0.mUnk_a134 = data_020b6ee0.mUnk_a138;
+        data_020b6ee0.mTextId = data_020b6ee0.mSavedTextId;
+        data_020b6ee0.mTextImageIndex = data_020b6ee0.mSavedTextImageIndex;
+        data_020b6ee0.mTextTimer = data_020b6ee0.mSavedTextTimer;
     } else {
-        data_020b6ee0.mUnk_a12c = a;
-        data_020b6ee0.mUnk_a128 = a;
-        data_020b6ee0.mUnk_a124 = b;
-        data_020b6ee0.mUnk_a120 = b;
-        data_020b6ee0.mUnk_a138 = c;
-        data_020b6ee0.mUnk_a134 = c;
+        data_020b6ee0.mSavedTextId = a;
+        data_020b6ee0.mTextId = a;
+        data_020b6ee0.mSavedTextImageIndex = b;
+        data_020b6ee0.mTextImageIndex = b;
+        data_020b6ee0.mSavedTextTimer = c;
+        data_020b6ee0.mTextTimer = c;
     }
-    data_020b6ee0.mUnk_a130 = 0x100;
+    data_020b6ee0.mTextOffsetY = 0x100;
     data_020b6ee0.mUnk_a13c = 1;
     data_020b6ee0.mUnk_a14b = 1;
-    p->mUnk_40 = 0x28;
-    if (data_020b6ee0.mUnk_a120 < 0) {
+    p->mTextButtonOffsetY = 0x28;
+    if (data_020b6ee0.mTextImageIndex < 0) {
         OS_Terminate();
     }
-    if (data_020b6ee0.mUnk_a128 < -1) {
+    if (data_020b6ee0.mTextId < -1) {
         OS_Terminate();
     }
 }
@@ -278,79 +293,86 @@ static const s32 data_02050038[STAGE_MAX] = {
     0x11, 0x11, 0x11, 0x10, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x10, 0x10, 0x10,
 };
 
-void func_02011c64(void) {
+// Eases mTextOffsetY toward 0 and draws the header (text 0x4b), the percent gauge while 2 < mProgressState < 99
+// (stage 0's before 11, then the selected stage's) and, when mTextId is not -1, that text at mTextOffsetY + 0xa0.
+// UpdateTextAndStageInfo draws it in panel state 0 even when no text is set.
+void DrawTextPanel(void) {
     u32 v;
 
-    func_0200b928(&data_020b6ee0.mUnk_a130, 0, 4);
+    func_0200b928(&data_020b6ee0.mTextOffsetY, 0, 4);
     func_020215fc(0x30, 0x11, data_0201a61c, GetText(0x4b), 0, 0xf0, 0xa, 2);
-    v = data_020b6ee0.mUnk_a564;
+    v = data_020b6ee0.mProgressState;
     if (v > 2 && v < 99) {
         if (v >= 11) {
-            func_0201180c(data_020b6ee0.mUnk_a8e4, 2);
+            DrawPercentGauge(data_020b6ee0.mSelectedStageIndex, 2);
         } else {
-            func_0201180c(0, 2);
+            DrawPercentGauge(0, 2);
         }
     }
-    if (data_020b6ee0.mUnk_a128 != -1) {
-        func_020215fc(0x1b, data_020b6ee0.mUnk_a130 + 0xa0, data_0201a66c, GetText(data_020b6ee0.mUnk_a128), 0, 200, 10,
-                      2);
-        func_0202cf08(0x40014, 0xd, data_020b6ee0.mUnk_a130 + 0xa3, 200, 2);
+    if (data_020b6ee0.mTextId != -1) {
+        func_020215fc(0x1b, data_020b6ee0.mTextOffsetY + 0xa0, data_0201a66c, GetText(data_020b6ee0.mTextId), 0, 200,
+                      10, 2);
+        func_0202cf08(0x40014, 0xd, data_020b6ee0.mTextOffsetY + 0xa3, 200, 2);
     }
 }
 
-void func_02011d1c(void) {
+// Counts the text timer down (SetTextAndImage(-2) when it runs out), then draws by mPanelState: in state 0 the text
+// panel; otherwise the text panel while a text is set, else func_02011a94 (states 3 and 4), func_02011b70 (6 to 8)
+// or DrawStageInfo (the rest) for the selected stage. In panel states 0 and 1 it also shows button 0x112, which
+// clears the text, or, when only a saved text is left, button 0x111, which restores it.
+void UpdateTextAndStageInfo(void) {
     Unk_020c1454 *p = &data_020b6ee0.mUnk_a574;
 
-    if (data_020b6ee0.mUnk_a128 == -1) {
-        if (data_020b6ee0.mUnk_a134 > 0) {
-            data_020b6ee0.mUnk_a134--;
+    if (data_020b6ee0.mTextId == -1) {
+        if (data_020b6ee0.mTextTimer > 0) {
+            data_020b6ee0.mTextTimer--;
         }
-    } else if (data_020b6ee0.mUnk_a134 <= 0) {
-        func_02011bcc(-2, 0, 0);
+    } else if (data_020b6ee0.mTextTimer <= 0) {
+        SetTextAndImage(-2, 0, 0);
     } else {
-        data_020b6ee0.mUnk_a134--;
+        data_020b6ee0.mTextTimer--;
     }
-    switch (data_020b6ee0.mUnk_a146) {
+    switch (data_020b6ee0.mPanelState) {
         case 0:
-            func_02011c64();
+            DrawTextPanel();
             break;
         case 3:
         case 4:
-            if (data_020b6ee0.mUnk_a128 != -1) {
-                func_02011c64();
+            if (data_020b6ee0.mTextId != -1) {
+                DrawTextPanel();
             } else {
-                func_02011a94(data_020b6ee0.mUnk_a8e4, 2);
+                func_02011a94(data_020b6ee0.mSelectedStageIndex, 2);
             }
             break;
         case 6:
         case 7:
         case 8:
-            if (data_020b6ee0.mUnk_a128 != -1) {
-                func_02011c64();
+            if (data_020b6ee0.mTextId != -1) {
+                DrawTextPanel();
             } else {
-                func_02011b70(data_020b6ee0.mUnk_a8e4, 2);
+                func_02011b70(data_020b6ee0.mSelectedStageIndex, 2);
             }
             break;
         default:
-            if (data_020b6ee0.mUnk_a128 != -1) {
-                func_02011c64();
+            if (data_020b6ee0.mTextId != -1) {
+                DrawTextPanel();
             } else {
-                func_02011890(data_020b6ee0.mUnk_a8e4, 2);
+                DrawStageInfo(data_020b6ee0.mSelectedStageIndex, 2);
             }
             break;
     }
-    if (data_020b6ee0.mUnk_a146 <= 1) {
-        if (data_020b6ee0.mUnk_a128 != -1) {
-            func_0200b928(&p->mUnk_40, 0, 4);
-            func_0200bc50(0x80, p->mUnk_40 + 0xc0, 0, 0, 0x8c, 0x112, 0xd1, 0, 0, 0, 0, 0x167, 1, 0, 0, 0);
+    if (data_020b6ee0.mPanelState <= 1) {
+        if (data_020b6ee0.mTextId != -1) {
+            func_0200b928(&p->mTextButtonOffsetY, 0, 4);
+            func_0200bc50(0x80, p->mTextButtonOffsetY + 0xc0, 0, 0, 0x8c, 0x112, 0xd1, 0, 0, 0, 0, 0x167, 1, 0, 0, 0);
             if (func_0200bd80(0x20000000, 0x112)) {
-                func_02011bcc(-2, 0, 0);
+                SetTextAndImage(-2, 0, 0);
             }
-        } else if (data_020b6ee0.mUnk_a12c != -1) {
-            func_0200b928(&p->mUnk_40, 0, 4);
-            func_0200bc50(0x80, p->mUnk_40 + 0xc0, 0, 0, 0x8c, 0x111, 0xd3, 0, 0, 0, 0, 0x167, 1, 0, 0, 0);
+        } else if (data_020b6ee0.mSavedTextId != -1) {
+            func_0200b928(&p->mTextButtonOffsetY, 0, 4);
+            func_0200bc50(0x80, p->mTextButtonOffsetY + 0xc0, 0, 0, 0x8c, 0x111, 0xd3, 0, 0, 0, 0, 0x167, 1, 0, 0, 0);
             if (func_0200bd80(0x20000000, 0x111)) {
-                func_02011bcc(-3, 0, 0);
+                SetTextAndImage(-3, 0, 0);
             }
         }
     }
@@ -367,13 +389,13 @@ void func_02011ebc(StageRec *rec, u8 index, u32 flags) {
     data_020b6ee0.mUnk_c9c = 0;
     rec->mUnk_1d8 = 0;
     rec->mUnk_1dc = 0;
-    rec->mUnk_220 = 0;
+    rec->mDistancePerFrame = 0;
     rec->mUnk_21c = 0;
     rec->mUnk_134 |= flags;
     func_0202f110(data_0204fef0[index], 100, 0, 0x40, 0xffff, 0);
 }
 
-int func_02011f44(int value, int low, int high, int steps) {
+int MapRangeToIndex(int value, int low, int high, int steps) {
     if ((value < high ? value : high) < low) {
         value = low;
     } else if (value >= high) {
@@ -382,7 +404,7 @@ int func_02011f44(int value, int low, int high, int steps) {
     return MapRange(value, low, high, 0, steps - 1);
 }
 
-void func_02011f70(int kind, int x, int y, int delta) {
+void AddAmountObjSlots(int kind, int x, int y, int delta) {
     char text[0x20];
 
     if (delta >= 0) {
@@ -394,7 +416,7 @@ void func_02011f70(int kind, int x, int y, int delta) {
     func_0200d838(text, 2, data_0201a61c, 0x78, x, y + 6, 0, 0, 0x96, 1, 0);
 }
 
-void func_02011fec(int a, int b, int c, u8 d, u8 e, int x, int y, int z, u8 *state, s32 *position) {
+void DrawGauge(int a, int b, int c, u8 d, u8 e, int x, int y, int z, u8 *state, s32 *position) {
     int hi3;
     int lo3;
     int lo4;
@@ -487,15 +509,15 @@ void func_02011fec(int a, int b, int c, u8 d, u8 e, int x, int y, int z, u8 *sta
     }
 }
 
-void func_020122c0(u8 type) {
+void StartGauge(u8 type) {
     StageRec *rec;
     u8 grade;
     int ok;
 
-    if (data_020b6ee0.mUnk_a8e4 == -1) {
+    if (data_020b6ee0.mSelectedStageIndex == -1) {
         OS_Terminate();
     }
-    rec = &data_020b1990[data_020b6ee0.mUnk_a8e4];
+    rec = &data_020b1990[data_020b6ee0.mSelectedStageIndex];
     ok = 0;
     grade = rec->mInfo.mUnk_11;
     if (grade >= 1 && grade <= 12) {
@@ -529,22 +551,24 @@ void func_020122c0(u8 type) {
     }
 }
 
-void func_020123a4(int a) {
+// Ends the gauge of the selected stage: moves the panel to state 5, adds the amount ObjSlots for mUnk_a100, stops
+// the stage and, when mUnk_a13d is 0, releases the microphone.
+void StopGauge(int a) {
     StageRec *rec;
     int step;
 
-    if (data_020b6ee0.mUnk_a8e4 == -1) {
+    if (data_020b6ee0.mSelectedStageIndex == -1) {
         OS_Terminate();
     }
-    rec = &data_020b1990[data_020b6ee0.mUnk_a8e4];
+    rec = &data_020b1990[data_020b6ee0.mSelectedStageIndex];
     data_020b6ee0.mUnk_a13e = a;
-    data_020b6ee0.mUnk_a146 = 5;
+    data_020b6ee0.mPanelState = 5;
     data_020b6ee0.mUnk_a148 = 1;
     data_020b6ee0.mUnk_a10c = -1;
-    data_020b6ee0.mUnk_a8ec = 0;
-    step = func_02011f44(data_020b6ee0.mUnk_a100, 0, 20, 3);
-    func_02011ebc(rec, func_02011f44(data_020b6ee0.mUnk_a100, 0, 20, 3), 1);
-    func_02011f70(step + 0x1b, 0x80, 0x60, data_020b6ee0.mUnk_a100);
+    data_020b6ee0.mPanelLevel = 0;
+    step = MapRangeToIndex(data_020b6ee0.mUnk_a100, 0, 20, 3);
+    func_02011ebc(rec, MapRangeToIndex(data_020b6ee0.mUnk_a100, 0, 20, 3), 1);
+    AddAmountObjSlots(step + 0x1b, 0x80, 0x60, data_020b6ee0.mUnk_a100);
     if (data_020b6ee0.mUnk_a13d >= 3) {
         OS_Terminate();
     }
@@ -552,7 +576,7 @@ void func_020123a4(int a) {
         rec->mUnk_22e = 0;
         func_02014cdc(&rec->mInfo);
     }
-    rec->mUnk_220 = 0;
+    rec->mDistancePerFrame = 0;
     rec->mUnk_21c = 0;
     if (data_020b6ee0.mUnk_a13d == 0) {
         gSystemState.mUnk_498 = 0x7f;
@@ -561,16 +585,16 @@ void func_020123a4(int a) {
     }
 }
 
-void func_02012490(u8 a, int b) {
+void UpdateGauge(u8 a, int b) {
     StageRec *rec;
     int level;
     int type;
     int amount;
 
-    if (data_020b6ee0.mUnk_a8e4 == -1) {
+    if (data_020b6ee0.mSelectedStageIndex == -1) {
         OS_Terminate();
     }
-    rec = &data_020b1990[data_020b6ee0.mUnk_a8e4];
+    rec = &data_020b1990[data_020b6ee0.mSelectedStageIndex];
     if (data_020b6ee0.mUnk_a13d > 3) {
         OS_Terminate();
     }
@@ -637,7 +661,7 @@ void func_02012490(u8 a, int b) {
             } else {
                 amount = data_0204ff40[data_020b6ee0.mUnk_a13d];
             }
-            func_02014ffc(rec, amount, 0, 1);
+            AddPercent(rec, amount, 0, 1);
             data_020b6ee0.mUnk_a100 += amount;
             data_020b6ee0.mUnk_a0fc++;
             if (data_020b6ee0.mUnk_a0fc >= data_0204ff08[data_020b6ee0.mUnk_a13d]) {
@@ -652,14 +676,14 @@ void func_02012490(u8 a, int b) {
     data_020b6ee0.mUnk_a110--;
     if (data_020b6ee0.mUnk_a110 <= 0) {
         if (data_020b6ee0.mUnk_a100 != 0) {
-            func_020123a4(1);
+            StopGauge(1);
         } else {
-            func_020123a4(0);
+            StopGauge(0);
         }
     }
 }
 
-void func_020126a0(int stage) {
+void UpdatePanel(int stage) {
     StageRec *rec;
     int top;
     int bottom;
@@ -684,38 +708,38 @@ void func_020126a0(int stage) {
     if (!(stage >= -1 && stage < STAGE_MAX)) {
         OS_Terminate();
     }
-    EaseLevel(&data_020b6ee0.mUnk_a8ec, 4);
-    alpha = MapRange(data_020b6ee0.mUnk_a8ec, 0, 0x4000, 0x100, 0);
-    switch (data_020b6ee0.mUnk_a146) {
+    EaseLevel(&data_020b6ee0.mPanelLevel, 4);
+    alpha = MapRange(data_020b6ee0.mPanelLevel, 0, 0x4000, 0x100, 0);
+    switch (data_020b6ee0.mPanelState) {
         case 0:
             if (gSystemState.mFlags & 0x800) {
                 OS_Terminate();
             }
-            func_0200b928(&fade->mUnk_3c, 0, 4);
-            func_0200bbd0(fade->mUnk_3c + 0xff, 0x5f, 0, 0, 0x8c, 0x5a, 0xc8, 0, 0, 0, 0, 0x167, 1, 0, 0, 0,
+            func_0200b928(&fade->mPanelButtonOffsetX, 0, 4);
+            func_0200bbd0(fade->mPanelButtonOffsetX + 0xff, 0x5f, 0, 0, 0x8c, 0x5a, 0xc8, 0, 0, 0, 0, 0x167, 1, 0, 0, 0,
                           &data_020b6ee0.mUnk_a56f);
-            func_0200bbd0(fade->mUnk_3c + 0xff, 0x7d, 0, 0, 0x8c, 0xd, 0xc4, 0, 0, 0, 0, 0x167, 1, 0, 0, 0,
+            func_0200bbd0(fade->mPanelButtonOffsetX + 0xff, 0x7d, 0, 0, 0x8c, 0xd, 0xc4, 0, 0, 0, 0, 0x167, 1, 0, 0, 0,
                           &data_020b6ee0.mUnk_a56e);
             top = -1;
             bottom = -1;
             break;
         case 1:
-            func_0200b928(&fade->mUnk_3c, 0, 4);
-            func_0200bbd0(fade->mUnk_3c + 0xff, 0x23, 0, 0, 0x8c, 0xa, 0xbc, 0, 0, 0, 0, 0x167, 1, 0, 0, 0,
+            func_0200b928(&fade->mPanelButtonOffsetX, 0, 4);
+            func_0200bbd0(fade->mPanelButtonOffsetX + 0xff, 0x23, 0, 0, 0x8c, 0xa, 0xbc, 0, 0, 0, 0, 0x167, 1, 0, 0, 0,
                           &data_020b6ee0.mUnk_a56c);
-            func_0200bbd0(fade->mUnk_3c + 0xff, 0x5f, 0, 0, 0x8c, 0xb, 0xc8, 0, 0, 0, 0, 0x167, 1, 0, 0, 0,
+            func_0200bbd0(fade->mPanelButtonOffsetX + 0xff, 0x5f, 0, 0, 0x8c, 0xb, 0xc8, 0, 0, 0, 0, 0x167, 1, 0, 0, 0,
                           &data_020b6ee0.mUnk_a56f);
-            func_0200bbd0(fade->mUnk_3c + 0xff, 0x7d, 0, 0, 0x8c, 0xd, 0xc4, 0, 0, 0, 0, 0x167, 1, 0, 0, 0,
+            func_0200bbd0(fade->mPanelButtonOffsetX + 0xff, 0x7d, 0, 0, 0x8c, 0xd, 0xc4, 0, 0, 0, 0, 0x167, 1, 0, 0, 0,
                           &data_020b6ee0.mUnk_a56e);
             if (stage == -1 || rec == NULL) {
                 OS_Terminate();
             }
             if (rec->mInfo.mUnk_12 == 100) {
-                func_0200bbd0(fade->mUnk_3c + 0xff, 0x41, 0, 0, 0x8c, 0xc, 0xcc, 0, 0, 0, 0, 0x167, 1, 0, 0, 0,
-                              &data_020b6ee0.mUnk_a56d);
+                func_0200bbd0(fade->mPanelButtonOffsetX + 0xff, 0x41, 0, 0, 0x8c, 0xc, 0xcc, 0, 0, 0, 0, 0x167, 1, 0, 0,
+                              0, &data_020b6ee0.mUnk_a56d);
             } else {
-                func_0200bbd0(fade->mUnk_3c + 0xff, 0x41, 0, 0, 0x8c, 0xc, 0xcc, 0, 0, 0, 0, 0x167, 0, 0, 0, 0,
-                              &data_020b6ee0.mUnk_a56d);
+                func_0200bbd0(fade->mPanelButtonOffsetX + 0xff, 0x41, 0, 0, 0x8c, 0xc, 0xcc, 0, 0, 0, 0, 0x167, 0, 0, 0,
+                              0, &data_020b6ee0.mUnk_a56d);
             }
             top = -1;
             bottom = 0xe;
@@ -736,18 +760,18 @@ void func_020126a0(int stage) {
             for (i = 0, y = 0x54; i < 3; i++, y += 0x16) {
                 id = data_020b6ee0.mUnk_1000[i];
                 AddTouchButtonWithSounds(i + 0x19, 0x10, y, -1, -1, 0x41, 0, 0x167);
-                if (i == data_020b6ee0.mUnk_a8f1) {
+                if (i == data_020b6ee0.mPanelRow) {
                     font = data_0201a644;
                 } else {
                     font = data_0201a63a;
                 }
                 func_020215fc(0x16, y, font, GetText(data_020b6ee0.mUnk_100e[id] + 0x229), 0, 0xf0, 0x10, 1);
             }
-            func_0202cf08(0x800041, 0x10, data_020b6ee0.mUnk_a8f1 * 0x16 + 0x54, 0x5f, 1);
+            func_0202cf08(0x800041, 0x10, data_020b6ee0.mPanelRow * 0x16 + 0x54, 0x5f, 1);
             if (func_0200bdac(0x80000000, 0x19, 0x1b) == 1) {
                 id = (u16) data_020c1d60.mUnk_800.mUnk_100.mUnk_04 - 0x19;
-                if (data_020b6ee0.mUnk_a8f1 != id) {
-                    data_020b6ee0.mUnk_a8f1 = id;
+                if (data_020b6ee0.mPanelRow != id) {
+                    data_020b6ee0.mPanelRow = id;
                 }
             }
             top = 0x17;
@@ -779,7 +803,7 @@ void func_020126a0(int stage) {
             x = 0x39 - alpha;
             func_0202cf08(0xdb, x, 0x12, 0x8c, 1);
             func_020215fc(x, 0x12, data_0201a61c, GetText(0x15), 0, 0xf0, 0x10, 1);
-            func_02011fec(data_020b6ee0.mUnk_a8e8, 0, 3000, data_020b6ee0.mUnk_a13f, data_020b6ee0.mUnk_a141,
+            DrawGauge(data_020b6ee0.mUnk_a8e8, 0, 3000, data_020b6ee0.mUnk_a13f, data_020b6ee0.mUnk_a141,
                           0x2c - alpha, 0x96, 1, &kind, &value);
             if (gSystemState.mUnk_492) {
                 func_020215fc(0x80, 0x60, data_0201a61c, GetText(0xd3), 2, 0xc0, 0x10, 1);
@@ -820,7 +844,7 @@ void func_020126a0(int stage) {
             if (data_020b6ee0.mUnk_0002 > 4) {
                 data_020b6ee0.mUnk_0002 -= 4;
             }
-            func_02012490(kind, value);
+            UpdateGauge(kind, value);
             top = -1;
             bottom = 0x21;
             break;
@@ -831,7 +855,7 @@ void func_020126a0(int stage) {
             x = 0x39 - alpha;
             func_0202cf08(0xdc, x, 0x12, 0x8c, 1);
             func_020215fc(x, 0x12, data_0201a61c, GetText(0x16), 0, 0xf0, 0x10, 1);
-            func_02011fec(rec->mUnk_1a0.y - 0x32000, 0, 0x12c000, data_020b6ee0.mUnk_a13f, data_020b6ee0.mUnk_a141,
+            DrawGauge(rec->mUnk_1a0.y - 0x32000, 0, 0x12c000, data_020b6ee0.mUnk_a13f, data_020b6ee0.mUnk_a141,
                           0x2c - alpha, 0x96, 1, &kind, &value);
             if (gSystemState.mTouchPressed) {
                 speed = rec->mUnk_1a0.y / 0xc800;
@@ -863,7 +887,7 @@ void func_020126a0(int stage) {
                     func_0202f110(0x27, 100, 0, 0x40, 0xffff, 0);
                 }
             }
-            func_02012490(kind, value);
+            UpdateGauge(kind, value);
             top = -1;
             bottom = 0x21;
             break;
@@ -872,18 +896,18 @@ void func_020126a0(int stage) {
             x = 0x39 - alpha;
             func_0202cf08(0xdd, x, 0x12, 0x8c, 1);
             func_020215fc(x, 0x12, data_0201a61c, GetText(0x19), 0, 0xf0, 0x10, 1);
-            func_02011fec(data_020b6ee0.mUnk_a108, 0, 1000, data_020b6ee0.mUnk_a13f, data_020b6ee0.mUnk_a141,
+            DrawGauge(data_020b6ee0.mUnk_a108, 0, 1000, data_020b6ee0.mUnk_a13f, data_020b6ee0.mUnk_a141,
                           0x2c - alpha, 0x96, 1, &kind, &value);
             if (gSystemState.mTouchPressed) {
-                data_020b6ee0.mUnk_a574.mUnk_2c = gSystemState.mTouchX;
-                data_020b6ee0.mUnk_a574.mUnk_30 = gSystemState.mTouchY;
+                data_020b6ee0.mUnk_a574.mPrevTouchX = gSystemState.mTouchX;
+                data_020b6ee0.mUnk_a574.mPrevTouchY = gSystemState.mTouchY;
             } else if (gSystemState.mTouchDown) {
-                data_020b6ee0.mUnk_a108 += (data_020b6ee0.mUnk_a574.mUnk_2c - gSystemState.mTouchX >= 0
-                                                ? data_020b6ee0.mUnk_a574.mUnk_2c - gSystemState.mTouchX
-                                                : -(data_020b6ee0.mUnk_a574.mUnk_2c - gSystemState.mTouchX)) +
-                                           (data_020b6ee0.mUnk_a574.mUnk_30 - gSystemState.mTouchY >= 0
-                                                ? data_020b6ee0.mUnk_a574.mUnk_30 - gSystemState.mTouchY
-                                                : -(data_020b6ee0.mUnk_a574.mUnk_30 - gSystemState.mTouchY));
+                data_020b6ee0.mUnk_a108 += (data_020b6ee0.mUnk_a574.mPrevTouchX - gSystemState.mTouchX >= 0
+                                                ? data_020b6ee0.mUnk_a574.mPrevTouchX - gSystemState.mTouchX
+                                                : -(data_020b6ee0.mUnk_a574.mPrevTouchX - gSystemState.mTouchX)) +
+                                           (data_020b6ee0.mUnk_a574.mPrevTouchY - gSystemState.mTouchY >= 0
+                                                ? data_020b6ee0.mUnk_a574.mPrevTouchY - gSystemState.mTouchY
+                                                : -(data_020b6ee0.mUnk_a574.mPrevTouchY - gSystemState.mTouchY));
                 gauge = data_020b6ee0.mUnk_a108;
                 if ((gauge < 1000 ? gauge : 1000) < 0) {
                     gauge = 0;
@@ -891,13 +915,13 @@ void func_020126a0(int stage) {
                     gauge = 1000;
                 }
                 data_020b6ee0.mUnk_a108 = gauge;
-                data_020b6ee0.mUnk_a574.mUnk_2c = gSystemState.mTouchX;
-                data_020b6ee0.mUnk_a574.mUnk_30 = gSystemState.mTouchY;
+                data_020b6ee0.mUnk_a574.mPrevTouchX = gSystemState.mTouchX;
+                data_020b6ee0.mUnk_a574.mPrevTouchY = gSystemState.mTouchY;
             }
             if (data_020b6ee0.mUnk_a108 > 0) {
                 data_020b6ee0.mUnk_a108 -= 8;
             }
-            func_02012490(kind, value);
+            UpdateGauge(kind, value);
             top = -1;
             bottom = 0x21;
             break;
@@ -909,15 +933,15 @@ void func_020126a0(int stage) {
         func_0200bc50(0, 0xa1, 0, 0, 0x8c, bottom, 0xe, 0, 0, 0, 0, 0x5a, 1, 0, 0, 0);
     }
     key = (u16) data_020c1d60.mUnk_800.mUnk_100.mUnk_04;
-    if ((data_020c1d60.mUnk_800.mUnk_100.mUnk_04 & 0x20000000) && key != 0xffff && data_020b6ee0.mUnk_a5d0 == 1) {
+    if ((data_020c1d60.mUnk_800.mUnk_100.mUnk_04 & 0x20000000) && key != 0xffff && data_020b6ee0.mButtonsEnabled == 1) {
         switch (key) {
             case 0xa:
-                data_020b6ee0.mUnk_a146 = 2;
+                data_020b6ee0.mPanelState = 2;
                 data_020b6ee0.mUnk_ca8 = 0;
                 data_020b6ee0.mUnk_a148 = 0;
-                data_020b6ee0.mUnk_a8ec = 0;
-                fade->mUnk_3c = 0x28;
-                func_02011bcc(-2, 0, 0);
+                data_020b6ee0.mPanelLevel = 0;
+                fade->mPanelButtonOffsetX = 0x28;
+                SetTextAndImage(-2, 0, 0);
                 break;
             case 0xb:
                 PushState(9);
@@ -928,16 +952,16 @@ void func_020126a0(int stage) {
                 PopState();
                 break;
             case 0xd:
-                data_020b6ee0.mUnk_a8e4 = -1;
+                data_020b6ee0.mSelectedStageIndex = -1;
                 PushState(6);
                 PopState();
                 break;
             case 0xe:
-                data_020b6ee0.mUnk_a8e4 = -1;
+                data_020b6ee0.mSelectedStageIndex = -1;
                 data_020b6ee0.mUnk_a574.mUnk_0c.x = data_020c3e44.mUnk_2024.mUnk_8c.x;
                 data_020b6ee0.mUnk_a574.mUnk_0c.y = data_020c3e44.mUnk_2024.mUnk_8c.y;
                 data_020b6ee0.mUnk_a574.mUnk_0c.z = data_020c3e44.mUnk_2024.mUnk_8c.z;
-                fade->mUnk_3c = 0x28;
+                fade->mPanelButtonOffsetX = 0x28;
                 break;
             case 0xf: {
                 int r;
@@ -947,12 +971,12 @@ void func_020126a0(int stage) {
                 int k;
                 int idx;
 
-                data_020b6ee0.mUnk_a146 = 3;
-                data_020b6ee0.mUnk_a8f1 = 0;
+                data_020b6ee0.mPanelState = 3;
+                data_020b6ee0.mPanelRow = 0;
                 data_020b6ee0.mUnk_a13d = 3;
                 data_020b6ee0.mUnk_a110 = 0;
-                data_020b6ee0.mUnk_a8ec = 0;
-                func_02011bcc(-2, 0, 0);
+                data_020b6ee0.mPanelLevel = 0;
+                SetTextAndImage(-2, 0, 0);
                 r = NextRandom() % 6;
                 if (!(r * 3 + 2 < 18)) {
                     OS_Terminate();
@@ -979,18 +1003,18 @@ void func_020126a0(int stage) {
                 break;
             }
             case 0x10:
-                data_020b6ee0.mUnk_a146 = 5;
+                data_020b6ee0.mPanelState = 5;
                 data_020b6ee0.mUnk_a148 = 0;
-                data_020b6ee0.mUnk_a8ec = 0;
+                data_020b6ee0.mPanelLevel = 0;
                 break;
             case 0x11:
-                data_020b6ee0.mUnk_a146 = 1;
+                data_020b6ee0.mPanelState = 1;
                 break;
             case 0x12:
                 func_0200d6c8();
-                data_020b6ee0.mUnk_a146 = 2;
+                data_020b6ee0.mPanelState = 2;
                 data_020b6ee0.mUnk_a148 = 0;
-                data_020b6ee0.mUnk_a8ec = 0;
+                data_020b6ee0.mPanelLevel = 0;
                 data_020b6ee0.mUnk_ca8 = 0;
                 rec->mUnk_134 |= 2;
                 rec->mUnk_1a0.y =
@@ -1000,8 +1024,8 @@ void func_020126a0(int stage) {
             case 0x17: {
                 int got;
 
-                data_020b6ee0.mUnk_a146 = 4;
-                if (data_020b6ee0.mUnk_1000[data_020b6ee0.mUnk_a8f1] == 0) {
+                data_020b6ee0.mPanelState = 4;
+                if (data_020b6ee0.mUnk_1000[data_020b6ee0.mPanelRow] == 0) {
                     if (data_020b6ee0.mUnk_a13d >= 4) {
                         OS_Terminate();
                     }
@@ -1012,14 +1036,14 @@ void func_020126a0(int stage) {
                     }
                     data_020b6ee0.mUnk_a13e = 1;
                     data_020b6ee0.mUnk_a100 = id;
-                    func_02014ffc(rec, id, 1, 1);
+                    AddPercent(rec, id, 1, 1);
                 } else {
                     data_020b6ee0.mUnk_a13e = 0;
                     data_020b6ee0.mUnk_a100 = 0;
                 }
                 got = data_020b6ee0.mUnk_a100 == 0 ? 0 : 2;
                 func_02011ebc(rec, data_020b6ee0.mUnk_a100 == 0 ? 0 : 2, 1);
-                func_02011f70(got + 0x1b, 0x80, 0x60, data_020b6ee0.mUnk_a100);
+                AddAmountObjSlots(got + 0x1b, 0x80, 0x60, data_020b6ee0.mUnk_a100);
                 if (data_020b6ee0.mUnk_a13d >= 4) {
                     OS_Terminate();
                 }
@@ -1030,46 +1054,46 @@ void func_020126a0(int stage) {
                 break;
             }
             case 0x18:
-                data_020b6ee0.mUnk_a146 = 2;
+                data_020b6ee0.mPanelState = 2;
                 data_020b6ee0.mUnk_a148 = 0;
-                data_020b6ee0.mUnk_a8ec = 0;
+                data_020b6ee0.mPanelLevel = 0;
                 break;
             case 0x1e:
-                data_020b6ee0.mUnk_a146 = 6;
-                func_020122c0(0);
+                data_020b6ee0.mPanelState = 6;
+                StartGauge(0);
                 data_020b6ee0.mUnk_0002 = 0;
                 data_020b6ee0.mUnk_0004 = 8;
                 data_020b6ee0.mUnk_0000 = 0;
-                data_020b6ee0.mUnk_a8ec = 0;
-                func_02011bcc(-2, 0, 0);
+                data_020b6ee0.mPanelLevel = 0;
+                SetTextAndImage(-2, 0, 0);
                 break;
             case 0x1f:
-                data_020b6ee0.mUnk_a146 = 7;
-                func_020122c0(1);
+                data_020b6ee0.mPanelState = 7;
+                StartGauge(1);
                 rec->mUnk_21c = -60000.0f;
                 rec->mUnk_1d8 = 0xe000;
                 rec->mUnk_1da = 0;
                 rec->mUnk_1dc = 0;
-                data_020b6ee0.mUnk_a8ec = 0;
-                func_02011bcc(-2, 0, 0);
+                data_020b6ee0.mPanelLevel = 0;
+                SetTextAndImage(-2, 0, 0);
                 break;
             case 0x20:
-                data_020b6ee0.mUnk_a146 = 8;
-                func_020122c0(2);
+                data_020b6ee0.mPanelState = 8;
+                StartGauge(2);
                 rec->mUnk_1d8 = 0xe000;
                 rec->mUnk_1da = 0;
                 rec->mUnk_1dc = 0;
-                data_020b6ee0.mUnk_a8ec = 0;
-                func_02011bcc(-2, 0, 0);
+                data_020b6ee0.mPanelLevel = 0;
+                SetTextAndImage(-2, 0, 0);
                 break;
             case 0x21:
-                func_020123a4(0);
+                StopGauge(0);
                 break;
             case 0x29:
                 // No action; the original's jump table runs up to this key.
                 break;
             case 0x5a:
-                data_020b6ee0.mUnk_c78 = 0;
+                data_020b6ee0.mUnslottedVisible = 0;
                 PushState(9);
                 PopState();
                 break;
@@ -1077,7 +1101,7 @@ void func_020126a0(int stage) {
     }
 }
 
-void func_0201353c(void) {
+void SetupSlotScreen(void) {
     int stage;
     int id;
 
@@ -1090,36 +1114,36 @@ void func_0201353c(void) {
     func_0202bdd8(0x10cb, 0x10ca, 0x10cc, 0x82, 1);
     func_0202bdd8(0x10cb, 0x10ca, 0x10cc, 0x82, 2);
     func_02024208();
-    data_020b13b0.mUnk_03 = 0;
-    data_020b13b0.mUnk_04 = data_020b6ee0.mUnk_a8e4;
-    memcpy(data_020b13bc, data_020b6ee0.mUnk_c60, 0xc);
-    data_020b13b0.mUnk_08 = -1;
-    data_020b6ee0.mUnk_c79 = 1;
-    if (data_020b6ee0.mUnk_a8ee <= 3) {
-        data_020b6ee0.mUnk_c78 = 0;
+    data_020b13b0.mSlotChanged = 0;
+    data_020b13b0.mUnslottedStageIndex = data_020b6ee0.mSelectedStageIndex;
+    memcpy(gSavedSlotStages, data_020b6ee0.mSlotStages, 0xc);
+    data_020b13b0.mEntryCursor = -1;
+    data_020b6ee0.mSelectedSlotIndex = 1;
+    if (data_020b6ee0.mStageCount <= 3) {
+        data_020b6ee0.mUnslottedVisible = 0;
     } else {
-        data_020b6ee0.mUnk_c78 = 1;
-        if (data_020b6ee0.mUnk_a8e4 != -1) {
-            int slot = func_020151cc(data_020b6ee0.mUnk_a8e4);
+        data_020b6ee0.mUnslottedVisible = 1;
+        if (data_020b6ee0.mSelectedStageIndex != -1) {
+            int slot = FindStageSlot(data_020b6ee0.mSelectedStageIndex);
             if (slot != -1) {
-                data_020b13b0.mUnk_04 = func_02015260();
-                data_020b6ee0.mUnk_c79 = slot;
+                data_020b13b0.mUnslottedStageIndex = FindFirstUnslottedStage();
+                data_020b6ee0.mSelectedSlotIndex = slot;
             }
         } else {
-            data_020b13b0.mUnk_04 = func_02015260();
+            data_020b13b0.mUnslottedStageIndex = FindFirstUnslottedStage();
         }
     }
-    stage = data_020b6ee0.mUnk_a8e4;
+    stage = data_020b6ee0.mSelectedStageIndex;
     if (stage == -1) {
         id = 0x237;
     } else {
         id = data_020b1990[stage].mInfo.mUnk_13 + 0xdb3;
     }
     LoadImage(id, 1);
-    LoadImage(data_020b6ee0.mUnk_c78 == 1 ? 0x10ce : 0x10cd, 2);
+    LoadImage(data_020b6ee0.mUnslottedVisible == 1 ? 0x10ce : 0x10cd, 2);
 }
 
-void func_0201364c(void) {
+void UpdateSlotScreen(void) {
     StageRec *sel;
     int ox;
     int oy;
@@ -1129,23 +1153,23 @@ void func_0201364c(void) {
     int y;
     int sub;
 
-    if (data_020b13b0.mUnk_04 != -1) {
-        sel = &data_020b1990[data_020b13b0.mUnk_04];
+    if (data_020b13b0.mUnslottedStageIndex != -1) {
+        sel = &data_020b1990[data_020b13b0.mUnslottedStageIndex];
     } else {
         sel = NULL;
     }
-    func_02013a34();
-    if (data_020b6ee0.mUnk_a8e0 != data_020b6ee0.mUnk_a8e4) {
-        func_02011518(data_020b6ee0.mUnk_a8e4, 1);
-        data_020b6ee0.mUnk_a8e0 = data_020b6ee0.mUnk_a8e4;
-    } else if (data_020b6ee0.mUnk_a8e4 == -1 && data_020b6ee0.mUnk_a13c == 1) {
-        func_02011518(data_020b6ee0.mUnk_a8e4, 1);
+    UpdateSlotScreenInput();
+    if (data_020b6ee0.mPrevSelectedStageIndex != data_020b6ee0.mSelectedStageIndex) {
+        LoadStageOrTextImage(data_020b6ee0.mSelectedStageIndex, 1);
+        data_020b6ee0.mPrevSelectedStageIndex = data_020b6ee0.mSelectedStageIndex;
+    } else if (data_020b6ee0.mSelectedStageIndex == -1 && data_020b6ee0.mUnk_a13c == 1) {
+        LoadStageOrTextImage(data_020b6ee0.mSelectedStageIndex, 1);
     }
-    func_02013f74(data_020b6ee0.mUnk_a8e4, &data_020b13b0.mUnk_08, 0x80, 0xa1, 2, 0);
-    if (data_020b13b0.mUnk_08 == -1) {
-        func_02011890(data_020b6ee0.mUnk_a8e4, 1);
+    func_02013f74(data_020b6ee0.mSelectedStageIndex, &data_020b13b0.mEntryCursor, 0x80, 0xa1, 2, 0);
+    if (data_020b13b0.mEntryCursor == -1) {
+        DrawStageInfo(data_020b6ee0.mSelectedStageIndex, 1);
     }
-    if (data_020b6ee0.mUnk_c78 == 1) {
+    if (data_020b6ee0.mUnslottedVisible == 1) {
         ox = 0;
         oy = 0;
     } else {
@@ -1158,86 +1182,90 @@ void func_0201364c(void) {
     y = oy + 0x4e;
     x = ox + 0x80;
     for (; i < 3; i++) {
-        s = data_020b6ee0.mUnk_c60[i];
+        s = data_020b6ee0.mSlotStages[i];
         if (s != -1) {
             if (s >= STAGE_MAX) {
                 OS_Terminate();
             }
             func_0202cf08(data_020b1990[s].mInfo.mUnk_13 + 0x1089, x, y, 0x64, 2);
             func_0202cf08(0x1088, x, y, 0x66, 2);
-            if (s == data_020b6ee0.mUnk_a8e4) {
+            if (s == data_020b6ee0.mSelectedStageIndex) {
                 sub = (gSystemState.mElapsedFrames >> 1) & 7;
             } else {
                 sub = 0;
             }
-            if (s == data_020b6ee0.mUnk_a8e4 || (data_020b6ee0.mUnk_c78 == 1 && i == data_020b6ee0.mUnk_c79)) {
+            if (s == data_020b6ee0.mSelectedStageIndex ||
+                (data_020b6ee0.mUnslottedVisible == 1 && i == data_020b6ee0.mSelectedSlotIndex)) {
                 func_0202cf08(0x11c6 + sub, x, y, 0x65, 2);
             }
         } else {
             func_0202cf08(0x1088, x, y, 0x66, 2);
         }
         if (gSystemState.mTouchDown == 1 && Length2d(gSystemState.mTouchX - x, gSystemState.mTouchY - y + 0xc) < 0x10 &&
-            data_020b6ee0.mUnk_a8e4 != s) {
+            data_020b6ee0.mSelectedStageIndex != s) {
             if (s != -1) {
-                data_020b6ee0.mUnk_a8e4 = s;
+                data_020b6ee0.mSelectedStageIndex = s;
             }
-            data_020b6ee0.mUnk_c79 = i;
-            data_020b13b0.mUnk_08 = -1;
+            data_020b6ee0.mSelectedSlotIndex = i;
+            data_020b13b0.mEntryCursor = -1;
             func_0202f110(0x167, 0x64, 0, 0x40, 0xffff, 0);
         }
         x += 0x2d;
     }
-    if (data_020b6ee0.mUnk_c78 == 1) {
-        s = data_020b13b0.mUnk_04;
+    if (data_020b6ee0.mUnslottedVisible == 1) {
+        s = data_020b13b0.mUnslottedStageIndex;
         func_0202cf08(sel->mInfo.mUnk_13 + 0x1089, 0x32, 0x4e, 0x64, 2);
         func_0202cf08(0x1088, 0x32, 0x4e, 0x66, 2);
-        if (data_020b13b0.mUnk_04 == data_020b6ee0.mUnk_a8e4) {
+        if (data_020b13b0.mUnslottedStageIndex == data_020b6ee0.mSelectedStageIndex) {
             sub = (gSystemState.mElapsedFrames >> 1) & 7;
         } else {
             sub = 0;
         }
         func_0202cf08(0x11be + sub, 0x32, 0x4e, 0x65, 2);
         if (gSystemState.mTouchDown == 1 && Length2d(gSystemState.mTouchX - 0x32, gSystemState.mTouchY - 0x42) < 0x10 &&
-            data_020b6ee0.mUnk_a8e4 != s) {
+            data_020b6ee0.mSelectedStageIndex != s) {
             if (s != -1) {
-                data_020b6ee0.mUnk_a8e4 = s;
+                data_020b6ee0.mSelectedStageIndex = s;
             }
-            data_020b13b0.mUnk_08 = -1;
+            data_020b13b0.mEntryCursor = -1;
             func_0202f110(0x167, 0x64, 0, 0x40, 0xffff, 0);
         }
         func_0200bc50(0x38, 0x77, 0, 0, 0xc8, 0x200, 0x11d2, GetText(0x29), data_0201a61c, 2, 0, 0x17d, 1, 0, 0, 0);
         ox += 0x80;
         oy += 0x4e;
-        func_0202cf08(0x11d1, ox + data_020b6ee0.mUnk_c79 * 0x2d, oy, 0xc9, 2);
+        func_0202cf08(0x11d1, ox + data_020b6ee0.mSelectedSlotIndex * 0x2d, oy, 0xc9, 2);
     }
-    if (data_020b6ee0.mUnk_c78 == 1 && data_020b6ee0.mUnk_a8ee >= 5) {
+    if (data_020b6ee0.mUnslottedVisible == 1 && data_020b6ee0.mStageCount >= 5) {
         func_0200bb14(0x1b, 0x29, 0x110, 0x12, 0, 0x20, 0, 1);
         func_0200bb14(0x4e, 0x29, 0x109, 0x10, 0, 0x10, 0, 1);
     }
     func_0200bb14(0, 0xa1, 0x102, 0xe, 0, 0, 0x5a, 1);
-    if (data_020b6ee0.mUnk_c78 == 1 && data_020b13b0.mUnk_03 == 1) {
+    if (data_020b6ee0.mUnslottedVisible == 1 && data_020b13b0.mSlotChanged == 1) {
         func_0200bb14(0xff, 0xa1, 0x101, 0x15, 0, 0, 0x17d, 1);
     }
 }
 
-void func_02013a2c(void) {
+void LeaveSlotScreen(void) {
     func_020102f8();
 }
 
-void func_02013a34(void) {
+void UpdateSlotScreenInput(void) {
     int i;
 
-    if (func_0200bd80(0x20000000, 0x109) && data_020b6ee0.mUnk_c78 == 1) {
-        data_020b13b0.mUnk_04 = data_020b6ee0.mUnk_a8e4 = func_02015294(data_020b13b0.mUnk_04);
+    if (func_0200bd80(0x20000000, 0x109) && data_020b6ee0.mUnslottedVisible == 1) {
+        data_020b13b0.mUnslottedStageIndex = data_020b6ee0.mSelectedStageIndex =
+            FindNextUnslottedStage(data_020b13b0.mUnslottedStageIndex);
         func_0202f110(0x167, 0x64, 0, 0x40, 0xffff, 0);
     }
-    if (func_0200bd80(0x20000000, 0x110) && data_020b6ee0.mUnk_c78 == 1) {
-        data_020b13b0.mUnk_04 = data_020b6ee0.mUnk_a8e4 = func_0201530c(data_020b13b0.mUnk_04);
+    if (func_0200bd80(0x20000000, 0x110) && data_020b6ee0.mUnslottedVisible == 1) {
+        data_020b13b0.mUnslottedStageIndex = data_020b6ee0.mSelectedStageIndex =
+            FindPrevUnslottedStage(data_020b13b0.mUnslottedStageIndex);
         func_0202f110(0x167, 0x64, 0, 0x40, 0xffff, 0);
     }
     if (func_0200bd80(0x20000000, 0x200)) {
-        data_020b13b0.mUnk_04 = func_02015114(data_020b6ee0.mUnk_c79, data_020b13b0.mUnk_04);
-        data_020b13b0.mUnk_03 = 1;
+        data_020b13b0.mUnslottedStageIndex =
+            SetSlotStage(data_020b6ee0.mSelectedSlotIndex, data_020b13b0.mUnslottedStageIndex);
+        data_020b13b0.mSlotChanged = 1;
     }
     if (func_0200bd80(0x20000000, 0x101)) {
         data_020b6ee0.mUnk_a147 = 1;
@@ -1246,7 +1274,7 @@ void func_02013a34(void) {
     }
     if (func_0200bd80(0x20000000, 0x102)) {
         for (i = 0; i < 3; i++) {
-            func_02015114(i, data_020b13bc[i]);
+            SetSlotStage(i, gSavedSlotStages[i]);
         }
         data_020b6ee0.mUnk_a147 = 1;
         PushState(10);
@@ -1331,7 +1359,7 @@ void func_02013d48(StageInfo *info, s16 slot, u8 flag, int a, int b, int c, int 
 
     func_02013b48(info, slot, &icon, &name);
     if (flag == 1) {
-        func_0202cf08(func_0202db1c(&data_020b6ee0.mUnk_a5d4), b, c, 0x93, d);
+        func_0202cf08(func_0202db1c(&data_020b6ee0.mSelectionSprite), b, c, 0x93, d);
     }
     if (!(e & 4)) {
         AddTouchButtonWithSounds(a, b, c, 0, 0, 0x10b4, 0, 0x167);
@@ -1407,7 +1435,7 @@ void func_02013f74(int stage, int *cursor, int x, int y, int mode, int flags) {
                     AddTouchButtonWithSounds(0x500 + i, xx, y, 0, 0, 0x10b4, 0, 0x167);
                 }
                 if (sel) {
-                    func_0202cf08(func_0202db1c(&data_020b6ee0.mUnk_a5d4), xx, y, 0x93, mode);
+                    func_0202cf08(func_0202db1c(&data_020b6ee0.mSelectionSprite), xx, y, 0x93, mode);
                 }
             }
             if (func_0200bd80(0x80000000, 0x500 + i)) {
@@ -1518,46 +1546,49 @@ void func_02014260(void) {
 
 void func_0201438c(void) {}
 
-void func_02014390(int a) {
+void ResetProgress(int a) {
     int i;
 
-    data_020b6ee0.mUnk_a530 = 0;
-    data_020b6ee0.mUnk_a560 = 0;
-    data_020b6ee0.mUnk_a538 = 0;
-    data_020b6ee0.mUnk_a53c = 0;
-    data_020b6ee0.mUnk_a8e4 = -1;
+    data_020b6ee0.mReachedNodeIndex = 0;
+    data_020b6ee0.mLastNodeDone = 0;
+    data_020b6ee0.mNodeState = 0;
+    data_020b6ee0.mNodeStageCount = 0;
+    data_020b6ee0.mSelectedStageIndex = -1;
     data_020b6ee0.mUnk_a147 = 0;
     data_020b6ee0.mUnk_a14a = 1;
-    data_020b6ee0.mUnk_a14c = 0;
-    data_020b6ee0.mUnk_a564 = 1;
+    data_020b6ee0.mSaveRequested = 0;
+    data_020b6ee0.mProgressState = 1;
     data_020b6ee0.mUnk_a568 = 0;
     data_020b6ee0.mUnk_a56c = 0;
     data_020b6ee0.mUnk_a56d = 0;
     data_020b6ee0.mUnk_a56e = 0;
     data_020b6ee0.mUnk_a56f = 0;
     data_020b6ee0.mUnk_a570 = 0;
-    data_020b6ee0.mUnk_a5d0 = 1;
-    func_02011bcc(-1, 0, 0);
-    data_020b10fc.mUnk_08 = 0;
+    data_020b6ee0.mButtonsEnabled = 1;
+    SetTextAndImage(-1, 0, 0);
+    data_020b10fc.mTableRow = 0;
     for (i = 0; i < 5; i++) {
-        data_020b10fc.mUnk_14[i] = 0;
+        data_020b10fc.mBestScores[i] = 0;
     }
 }
 
-void func_020143f4(void) {
-    func_02014390(0);
-    func_02014d8c(0);
-    func_020150ec(0);
+void ResetAllProgress(void) {
+    ResetProgress(0);
+    ResetStages(0);
+    ResetSlots(0);
 }
 
-void func_0201440c(void) {
-    func_02014390(1);
-    func_02014d8c(1);
-    func_020150ec(1);
-    ReadSaveSlot(data_020b1084.mUnk_0c);
+void ResetAndReadSaveSlot(void) {
+    ResetProgress(1);
+    ResetStages(1);
+    ResetSlots(1);
+    ReadSaveSlot(data_020b1084.mSaveSlot);
 }
 
-void func_02014430(int a) {
+// Only when OpenPromptScreen returns 1 (else nothing is saved): runs a 0x78-frame loop with the volume faded down
+// and, once IsFadeState(3, FADE_STATE_CLEAR), stores the stage offsets and writes the save: a = 0 the slot mSaveSlot
+// (WriteSaveSlot), a = 1 every slot through func_02010cfc. Then closes the prompt screen.
+void RunSaveScreen(int a) {
     int local;
     int timer;
     int fired;
@@ -1576,10 +1607,10 @@ void func_02014430(int a) {
             }
             if (IsFadeState(3, FADE_STATE_CLEAR) != 0 && fired == 0) {
                 fired = 1;
-                func_0201944c();
+                StoreStageOffsets();
                 switch (a) {
                     case 0:
-                        WriteSaveSlot(data_020b1084.mUnk_0c);
+                        WriteSaveSlot(data_020b1084.mSaveSlot);
                         break;
                     case 1:
                         func_02010cfc();
@@ -1595,12 +1626,13 @@ void func_02014430(int a) {
     }
 }
 
-int func_020144a4(int a) {
+// Row of table 0x1d9 whose column 2 holds id; -1 for id -1. Terminates when no row holds id.
+int FindTableEntryIndex(int id) {
     int i;
 
-    if (a != -1) {
+    if (id != -1) {
         for (i = 0; i < TABLE_ENTRY_COUNT; i++) {
-            if (a == func_02021e44(0x1d9, i * 20 + 2)) {
+            if (id == func_02021e44(0x1d9, i * 20 + 2)) {
                 return i;
             }
         }
@@ -1611,51 +1643,51 @@ int func_020144a4(int a) {
     return -1;
 }
 
-int func_020144e0(int a, int b) {
-    if ((u32) a >= TABLE_ENTRY_COUNT) {
+int GetTableEntryValue(int row, int column) {
+    if ((u32) row >= TABLE_ENTRY_COUNT) {
         OS_Terminate();
     }
-    if ((u32) (func_02021e08(0x1d9, b + a * 20) - 2) <= 1) {
-        return func_02021e44(0x1d9, b + a * 20);
+    if ((u32) (func_02021e08(0x1d9, column + row * 20) - 2) <= 1) {
+        return func_02021e44(0x1d9, column + row * 20);
     }
     return -1;
 }
 
-int func_02014518(int stage, int field) {
-    int index = func_020144a4(stage);
+int GetTableEntryValueById(int id, int column) {
+    int index = FindTableEntryIndex(id);
 
     if (index == -1) {
         OS_Terminate();
     }
-    return func_020144e0(index, field);
+    return GetTableEntryValue(index, column);
 }
 
-int func_02014538(int a, int b) {
+int GetNodeValue(int node, int column) {
     int index;
 
-    if ((u32) a >= 0x19) {
+    if ((u32) node >= MAP_NODE_COUNT) {
         OS_Terminate();
     }
-    index = b + a * 17;
+    index = column + node * 17;
     if ((u32) (func_02021e08(0xda2, index) - 2) <= 1) {
         return func_02021e44(0xda2, index);
     }
     return -1;
 }
 
-int func_0201456c(int a) {
+int GetSelectedNodeStageId(int a) {
     int result;
     int other;
 
     if ((u32) a >= 3) {
         OS_Terminate();
     }
-    if (data_020b6ee0.mUnk_a534 == -1) {
+    if (data_020b6ee0.mSelectedNodeIndex == -1) {
         OS_Terminate();
     }
-    result = func_02014538(data_020b6ee0.mUnk_a534, a + 8);
-    if (func_020149b0() == 0) {
-        other = func_02014538(data_020b6ee0.mUnk_a534, a + 11);
+    result = GetNodeValue(data_020b6ee0.mSelectedNodeIndex, a + 8);
+    if (IsReachedNodeSelected() == 0) {
+        other = GetNodeValue(data_020b6ee0.mSelectedNodeIndex, a + 11);
         if (other != -1) {
             result = other;
         }

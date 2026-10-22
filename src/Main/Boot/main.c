@@ -42,9 +42,9 @@ void main(void) {
     InitGameFlow();
     func_0200d6c8();
     func_0200dacc();
-    func_020143f4();
+    ResetAllProgress();
     func_0200e474();
-    func_0202de60(&data_020b6ee0.mUnk_a5d4, data_0201abec[2]);
+    func_0202de60(&data_020b6ee0.mSelectionSprite, data_0201abec[2]);
     data_020b6ee0.mUnk_a91b = 0;
     func_0200dbac();
     data_020b6ee0.mUnk_a91a = 1;
@@ -74,8 +74,8 @@ void main(void) {
         if (gStatePromptScreenEnabled[flow->mState] != 0 && (gSystemState.mKeysPressed & 8)) {
             RunPromptScreen();
         }
-        func_020149e0();
-        func_020145bc();
+        UpdateNodeState();
+        UpdateProgress();
         func_0200d8bc();
         func_0200daf8();
         flow->mFrame++;
