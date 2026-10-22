@@ -59,23 +59,24 @@ static void func_0202fcc4(QrkProbs *p, u8 *dst, const u8 *src, u32 size) {
     u32 reps[4];
     u32 dist;
     u32 bound;
-    u32 i;
+    s32 i;
     s32 len;
-    s32 k;
     u8 slot;
-    u32 sym;
-    u32 code;
     u32 tmp; // the literal/match bit, then the matched byte's bit, then a probability step
     s32 nbits;
     u32 uprob;
     u32 idx;
-    u32 bit;
     u16 *pp;
     u32 direct;
     u8 matching;
-    u32 range;
     s32 prob;
     u16 *probs;
+    u16 *lo;
+    s32 k;
+    u32 sym;
+    u32 bit;
+    u32 code;
+    u32 range;
 
     end = dst + size;
     for (i = 0; i < sizeof(p->mUnk_000) / 4; i++) {
@@ -112,60 +113,70 @@ static void func_0202fcc4(QrkProbs *p, u8 *dst, const u8 *src, u32 size) {
         ((u32 *) p->mUnk_f88)[i] = (QRK_PROB_INIT << 16) | QRK_PROB_INIT;
     }
 
-    code = (((((src[0] << 8) + src[1]) << 8) + src[2]) << 8) + src[3];
+    bound = src[0];
+    bound = (bound << 8) + src[1];
+    bound = (bound << 8) + src[2];
+    code = (bound << 8) + src[3];
     range = 0xffffffff;
     state = 0xf;
     lenState = 0x1f;
-    for (k = 0; k < 4; k++) {
-        reps[k] = 1;
+    for (i = 0; i < 4; i++) {
+        reps[i] = 1;
     }
     src += 4;
 
     // The first byte is a plain literal.
-    sym = 1;
-    for (k = 7; k >= 0; k--) {
-        pp = &p->mUnk_f88[0][sym];
-        uprob = *pp;
-        bound = (range >> QRK_PROB_BITS) * uprob;
-        if (code < bound) {
-            range = bound;
-            bit = 0;
-        } else {
-            range -= bound;
-            bit = 1;
-            code -= bound;
+    {
+        s32 lk;
+        u32 lsym;
+        u32 lprob;
+        u32 lbit;
+
+        lsym = 1;
+        for (lk = 7; lk >= 0; lk--) {
+            pp = &p->mUnk_f88[0][lsym];
+            lprob = *pp;
+            bound = (range >> QRK_PROB_BITS) * lprob;
+            if (code < bound) {
+                range = bound;
+                lbit = 0;
+            } else {
+                lbit = 1;
+                range -= bound;
+                code -= bound;
+            }
+            while (range < QRK_RANGE_TOP) {
+                code = (code << 8) + *src++;
+                range <<= 8;
+            }
+            lsym <<= 1;
+            if (!lbit) {
+                *pp += (u16) ((QRK_PROB_ONE - lprob) >> QRK_MOVE_BITS);
+            } else {
+                lsym++;
+                *pp -= lprob >> QRK_MOVE_BITS;
+            }
         }
-        while (range < QRK_RANGE_TOP) {
-            code = (code << 8) + *src++;
-            range <<= 8;
-        }
-        sym <<= 1;
-        if (!bit) {
-            *pp += (u16) ((QRK_PROB_ONE - uprob) >> QRK_MOVE_BITS);
-        } else {
-            sym++;
-            *pp -= uprob >> QRK_MOVE_BITS;
-        }
+        matchByte = (u8) lsym;
     }
-    matchByte = (u8) sym;
     *dst++ = matchByte;
     if (dst >= end) {
         return;
     }
 
     do {
-        probs = &p->mUnk_f48[state * 2];
-        sym = 1;
-        for (k = 0; k >= 0; k--) {
-            prob = probs[sym];
+        len = 1;
+        pp = &p->mUnk_f48[state * 2];
+        for (i = 0; i >= 0; i--) {
+            prob = pp[len];
             bound = (range >> QRK_PROB_BITS) * prob;
             if (code < bound) {
-                probs[sym] = prob + ((QRK_PROB_ONE - prob) >> QRK_MOVE_BITS);
+                pp[len] = prob + ((QRK_PROB_ONE - prob) >> QRK_MOVE_BITS);
                 range = bound;
-                sym = sym << 1;
+                len = len << 1;
             } else {
-                probs[sym] = prob - (prob >> QRK_MOVE_BITS);
-                sym = (sym << 1) + 1;
+                pp[len] = prob - (prob >> QRK_MOVE_BITS);
+                len = (len << 1) + 1;
                 range -= bound;
                 code -= bound;
             }
@@ -174,15 +185,16 @@ static void func_0202fcc4(QrkProbs *p, u8 *dst, const u8 *src, u32 size) {
                 range <<= 8;
             }
         }
-        tmp = sym & 1;
+        tmp = len & 1;
         if (tmp) {
             // A literal: right after a match (no literal since) its bits are coded against the byte that would
             // have continued the match, until the first bit that differs.
             litState = state & 3;
             if (litState == 0) {
-                matching = 1;
+                k = 7;
                 sym = 1;
-                for (k = 7; k >= 0; k--) {
+                matching = 1;
+                for (; k >= 0; k--) {
                     if (matching) {
                         tmp = (matchByte >> k) & 1;
                         idx = tmp + 1;
@@ -196,8 +208,8 @@ static void func_0202fcc4(QrkProbs *p, u8 *dst, const u8 *src, u32 size) {
                         range = bound;
                         bit = 0;
                     } else {
-                        range -= bound;
                         bit = 1;
+                        range -= bound;
                         code -= bound;
                     }
                     while (range < QRK_RANGE_TOP) {
@@ -217,32 +229,38 @@ static void func_0202fcc4(QrkProbs *p, u8 *dst, const u8 *src, u32 size) {
                 }
                 matchByte = (u8) sym;
             } else {
-                sym = 1;
-                for (k = 7; k >= 0; k--) {
-                    pp = &p->mUnk_f88[0][sym];
-                    uprob = *pp;
-                    bound = (range >> QRK_PROB_BITS) * uprob;
-                    if (code < bound) {
-                        range = bound;
-                        bit = 0;
-                    } else {
-                        range -= bound;
-                        bit = 1;
-                        code -= bound;
+                {
+                    s32 lk;
+                    u32 lsym;
+                    u32 lbit;
+
+                    lsym = 1;
+                    for (lk = 7; lk >= 0; lk--) {
+                        pp = &p->mUnk_f88[0][lsym];
+                        uprob = *pp;
+                        bound = (range >> QRK_PROB_BITS) * uprob;
+                        if (code < bound) {
+                            range = bound;
+                            lbit = 0;
+                        } else {
+                            lbit = 1;
+                            range -= bound;
+                            code -= bound;
+                        }
+                        while (range < QRK_RANGE_TOP) {
+                            code = (code << 8) + *src++;
+                            range <<= 8;
+                        }
+                        lsym <<= 1;
+                        if (!lbit) {
+                            *pp += (u16) ((QRK_PROB_ONE - uprob) >> QRK_MOVE_BITS);
+                        } else {
+                            lsym++;
+                            *pp -= uprob >> QRK_MOVE_BITS;
+                        }
                     }
-                    while (range < QRK_RANGE_TOP) {
-                        code = (code << 8) + *src++;
-                        range <<= 8;
-                    }
-                    sym <<= 1;
-                    if (!bit) {
-                        *pp += (u16) ((QRK_PROB_ONE - uprob) >> QRK_MOVE_BITS);
-                    } else {
-                        sym++;
-                        *pp -= uprob >> QRK_MOVE_BITS;
-                    }
+                    matchByte = (u8) lsym;
                 }
-                matchByte = (u8) sym;
             }
             *dst++ = matchByte;
             if (dst >= end) {
@@ -256,8 +274,8 @@ static void func_0202fcc4(QrkProbs *p, u8 *dst, const u8 *src, u32 size) {
             }
             continue;
         }
-        probs = &p->mUnk_288[state * 2];
         sym = 1;
+        probs = &p->mUnk_288[state * 2];
         for (k = 0; k >= 0; k--) {
             prob = probs[sym];
             bound = (range >> QRK_PROB_BITS) * prob;
@@ -278,9 +296,9 @@ static void func_0202fcc4(QrkProbs *p, u8 *dst, const u8 *src, u32 size) {
         }
         if (!(sym & 1)) {
             // A new match: its length, then its distance.
-            probs = p->mUnk_2c8[lenState];
             sym = 1;
-            for (k = 3; k >= 0; k--) {
+            probs = p->mUnk_2c8[lenState];
+            for (nbits = 3; nbits >= 0; nbits--) {
                 prob = probs[sym];
                 bound = (range >> QRK_PROB_BITS) * prob;
                 if (code < bound) {
@@ -300,8 +318,8 @@ static void func_0202fcc4(QrkProbs *p, u8 *dst, const u8 *src, u32 size) {
             }
             len = sym & 0xf;
             if (len++ == 15) {
-                probs = p->mUnk_6c8;
                 sym = 1;
+                probs = p->mUnk_6c8;
                 for (k = 7; k >= 0; k--) {
                     prob = probs[sym];
                     bound = (range >> QRK_PROB_BITS) * prob;
@@ -323,8 +341,8 @@ static void func_0202fcc4(QrkProbs *p, u8 *dst, const u8 *src, u32 size) {
                 len += sym & 0xff;
             }
             if (len == 1) {
-                probs = p->mUnk_280;
                 sym = 1;
+                probs = p->mUnk_280;
                 for (k = 1; k >= 0; k--) {
                     prob = probs[sym];
                     bound = (range >> QRK_PROB_BITS) * prob;
@@ -349,17 +367,17 @@ static void func_0202fcc4(QrkProbs *p, u8 *dst, const u8 *src, u32 size) {
                 if (k > 7) {
                     k = 7;
                 }
-                probs = p->mUnk_000[k];
                 sym = 1;
-                for (k = 4; k >= 0; k--) {
-                    prob = probs[sym];
+                pp = p->mUnk_000[k];
+                for (nbits = 4; nbits >= 0; nbits--) {
+                    prob = pp[sym];
                     bound = (range >> QRK_PROB_BITS) * prob;
                     if (code < bound) {
-                        probs[sym] = prob + ((QRK_PROB_ONE - prob) >> QRK_MOVE_BITS);
+                        pp[sym] = prob + ((QRK_PROB_ONE - prob) >> QRK_MOVE_BITS);
                         range = bound;
                         sym = sym << 1;
                     } else {
-                        probs[sym] = prob - (prob >> QRK_MOVE_BITS);
+                        pp[sym] = prob - (prob >> QRK_MOVE_BITS);
                         sym = (sym << 1) + 1;
                         range -= bound;
                         code -= bound;
@@ -369,8 +387,8 @@ static void func_0202fcc4(QrkProbs *p, u8 *dst, const u8 *src, u32 size) {
                         range <<= 8;
                     }
                 }
+                nbits = data_02063ab8[sym & 0x1f];
                 slot = sym & 0x1f;
-                nbits = data_02063ab8[slot];
                 dist = data_02063ad8[slot];
                 if (nbits != 0) {
                     direct = 0;
@@ -388,17 +406,17 @@ static void func_0202fcc4(QrkProbs *p, u8 *dst, const u8 *src, u32 size) {
                     } while (--nbits != 0);
                     dist += direct;
                 }
-                probs = p->mUnk_200;
                 sym = 1;
-                for (k = 0; k < 6; k++) {
-                    prob = probs[sym];
+                lo = p->mUnk_200;
+                for (nbits = 0; nbits < 6; nbits++) {
+                    prob = lo[sym];
                     bound = (range >> QRK_PROB_BITS) * prob;
                     if (code < bound) {
                         range = bound;
-                        probs[sym] = prob + ((QRK_PROB_ONE - prob) >> QRK_MOVE_BITS);
+                        lo[sym] = prob + ((QRK_PROB_ONE - prob) >> QRK_MOVE_BITS);
                         sym = sym << 1;
                     } else {
-                        probs[sym] = prob - (prob >> QRK_MOVE_BITS);
+                        lo[sym] = prob - (prob >> QRK_MOVE_BITS);
                         range -= bound;
                         code -= bound;
                         sym = (sym << 1) + 1;
@@ -408,7 +426,8 @@ static void func_0202fcc4(QrkProbs *p, u8 *dst, const u8 *src, u32 size) {
                         range <<= 8;
                     }
                 }
-                dist = data_02063b18[sym - 64] + (dist << 6);
+                dist <<= 6;
+                dist += data_02063b18[sym - 64];
             }
             dist++;
             for (k = 3; k > 0; k--) {
@@ -425,8 +444,8 @@ static void func_0202fcc4(QrkProbs *p, u8 *dst, const u8 *src, u32 size) {
             }
         } else {
             // A repeated match: its length, then which of the last four distances.
-            probs = p->mUnk_8c8[lenState];
             sym = 1;
+            probs = p->mUnk_8c8[lenState];
             for (k = 3; k >= 0; k--) {
                 prob = probs[sym];
                 bound = (range >> QRK_PROB_BITS) * prob;
@@ -447,8 +466,8 @@ static void func_0202fcc4(QrkProbs *p, u8 *dst, const u8 *src, u32 size) {
             }
             len = sym & 0xf;
             if (len++ == 15) {
-                probs = p->mUnk_cc8;
                 sym = 1;
+                probs = p->mUnk_cc8;
                 for (k = 7; k >= 0; k--) {
                     prob = probs[sym];
                     bound = (range >> QRK_PROB_BITS) * prob;
@@ -469,8 +488,8 @@ static void func_0202fcc4(QrkProbs *p, u8 *dst, const u8 *src, u32 size) {
                 }
                 len += sym & 0xff;
             }
-            probs = p->mUnk_ec8[state];
             sym = 1;
+            probs = p->mUnk_ec8[state];
             for (k = 1; k >= 0; k--) {
                 prob = probs[sym];
                 bound = (range >> QRK_PROB_BITS) * prob;
