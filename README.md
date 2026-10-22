@@ -19,12 +19,12 @@ progress below counts what is decompiled and what links from source.
 
 | Measure | Progress |
 |---|---|
-| Matched code | 88.24% (274,822 / 311,460 bytes) |
-| Linked code (complete units) | 67.47% (210,128 bytes) |
+| Matched code | 90.37% (281,462 / 311,460 bytes) |
+| Linked code (complete units) | 71.56% (222,890 bytes) |
 | Overall accuracy (fuzzy) | 97.18% |
-| Matched functions | 1,610 / 1,795 |
+| Matched functions | 1,613 / 1,795 |
 
 The code size went from 389,724 to 311,460 bytes in two steps: the `.text`/`.rodata` boundary moved to where the original's code ends (0x0204df14; the game's constant tables and the Mobiclip decoder after them are in the original's `.rodata`), and the zero fill the linker lays down before 0x02001000 and 0x02003000 is no longer counted as code. The steps in the graph are these changes, not new matching.
 
-_Last updated 2026-10-19. Full history: [`progress/history.csv`](progress/history.csv)._
+_Last updated 2026-10-22. Full history: [`progress/history.csv`](progress/history.csv)._
 <!-- progress:end -->

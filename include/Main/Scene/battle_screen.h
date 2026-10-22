@@ -39,7 +39,6 @@ typedef struct BattleView {
     BattleState mState;
 } BattleView;
 
-extern s32 data_02098d80;
 extern BattleView data_02098d84;
 extern StageRec data_020990e0[3];
 

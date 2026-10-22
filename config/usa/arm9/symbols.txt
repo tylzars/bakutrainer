@@ -1808,8 +1808,23 @@ data_0204e110 kind:data(any) addr:0x0204e110 local
 data_0204e124 kind:data(any) addr:0x0204e124 local
 data_0204e138 kind:data(byte[12]) addr:0x0204e138 local
 data_0204e144 kind:data(any) addr:0x0204e144 local
-data_0204e158 kind:data(any) addr:0x0204e158
-data_0204e19c kind:data(word[4]) addr:0x0204e19c
+@2185 kind:data(byte[2]) addr:0x0204e158 local
+@2075 kind:data(byte[2]) addr:0x0204e15a local
+@2187 kind:data(byte[2]) addr:0x0204e15c local
+@2629 kind:data(byte[2]) addr:0x0204e15e local
+@2631 kind:data(byte[2]) addr:0x0204e160 local
+@2077 kind:data(byte[2]) addr:0x0204e162 local
+@2192 kind:data(byte[4]) addr:0x0204e164 local
+@2190 kind:data(byte[4]) addr:0x0204e168 local
+@2627 kind:data(byte[4]) addr:0x0204e16c local
+@2194 kind:data(byte[4]) addr:0x0204e170 local
+@2196 kind:data(byte[4]) addr:0x0204e174 local
+@2425 kind:data(byte[6]) addr:0x0204e178 local
+@2427 kind:data(byte[6]) addr:0x0204e17e local
+@1702 kind:data(byte[12]) addr:0x0204e184 local
+@1704 kind:data(byte[12]) addr:0x0204e190 local
+data_0204e19c$2177 kind:data(word[4]) addr:0x0204e19c local
+@1694 kind:data(byte[17]) addr:0x0204e1ac local
 data_0204e1c0 kind:data(byte[12]) addr:0x0204e1c0
 data_0204e1cc kind:data(word[6]) addr:0x0204e1cc
 data_0204e1e4 kind:data(byte[4]) addr:0x0204e1e4 local
@@ -1932,7 +1947,7 @@ ARM9_CTOR_END kind:data(any) addr:0x02063900
 data_0206391c kind:data(any) addr:0x0206391c
 @1506 kind:data(any) addr:0x02063920 local
 @2534 kind:data(any) addr:0x02063924 local
-data_0206392c kind:data(any) addr:0x0206392c
+@3357 kind:data(any) addr:0x0206392c local
 @2474 kind:data(any) addr:0x02063930 local
 @2476 kind:data(any) addr:0x02063938 local
 data_02063940 kind:data(any) addr:0x02063940
@@ -2125,31 +2140,9 @@ data_0206d444 kind:bss addr:0x0206d444
 data_0206d448 kind:bss addr:0x0206d448
 data_0206d460 kind:bss addr:0x0206d460
 data_02098d74 kind:bss addr:0x02098d74
-data_02098d80 kind:bss addr:0x02098d80
+data_02098d80$2044 kind:bss addr:0x02098d80 local
 data_02098d84 kind:bss addr:0x02098d84
-data_02098efc kind:bss addr:0x02098efc
-data_02099044 kind:bss addr:0x02099044
-data_02099074 kind:bss addr:0x02099074
-data_0209907c kind:bss addr:0x0209907c
-data_02099084 kind:bss addr:0x02099084
-data_02099087 kind:bss addr:0x02099087
-data_02099090 kind:bss addr:0x02099090
-data_0209909a kind:bss addr:0x0209909a
-data_020990a4 kind:bss addr:0x020990a4
-data_020990b6 kind:bss addr:0x020990b6
-data_020990c4 kind:bss addr:0x020990c4
-data_020990c8 kind:bss addr:0x020990c8
-data_020990d2 kind:bss addr:0x020990d2
-data_020990d4 kind:bss addr:0x020990d4
-data_020990dc kind:bss addr:0x020990dc
 data_020990e0 kind:bss addr:0x020990e0
-data_02099220 kind:bss addr:0x02099220
-data_0209925c kind:bss addr:0x0209925c
-data_0209925e kind:bss addr:0x0209925e
-data_02099260 kind:bss addr:0x02099260
-data_0209926b kind:bss addr:0x0209926b
-data_02099460 kind:bss addr:0x02099460
-data_020996a0 kind:bss addr:0x020996a0
 data_02099770 kind:bss addr:0x02099770
 data_020997a4 kind:bss addr:0x020997a4
 data_020ab7e0 kind:bss addr:0x020ab7e0

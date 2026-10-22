@@ -30,9 +30,14 @@
 // Cursor step that confirms the stage choice in func_02009728 (the other steps are -1, 0 and 1).
 #define SELECT_CONFIRM 0x55
 
-s32 data_02098d80;
 BattleView data_02098d84;
 StageRec data_020990e0[3];
+
+// Layout placeholders: no code reads these two tables and the link drops them. The compiler sorts this file's
+// constant data by size together with the local initialisers in the functions below; with these two taking part,
+// the initialisers land at the original's offsets.
+const u8 battle_unused0[8] = {0};
+const u8 battle_unused1[8] = {0};
 
 void func_020071a8(void) {}
 
@@ -654,6 +659,7 @@ void func_0200827c(void) {
 }
 
 void func_02008288(void) {
+    static s32 data_02098d80;
     char text[8];
     s32 cur[2];
     s32 hp[2];
