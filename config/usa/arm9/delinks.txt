@@ -606,6 +606,7 @@ src/Main/Scene/stage_progress.c:
 // one file: the .bss 0x020b1078-0x020b13b0 follows this compiler's size order for a single file, and its anchor
 // pool words (data_020b1084 reached as 0x020b1078+0xc, ...) only come out with all users in one file
 src/Main/System/game_system.c:
+    complete
     .text       start:0x0200f9c8 end:0x02011518
     .rodata     start:0x0204e804 end:0x0204fedc
     .data       start:0x020639ec end:0x02063a2c

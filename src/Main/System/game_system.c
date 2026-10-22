@@ -1125,6 +1125,8 @@ void func_02010d64(void) {
     data_020b1078.mUnk_08 = 0;
 }
 
+// Search loops (pad bits 0x40 and 0x80): the index is read through a pointer cast ahead of the step, so it is loaded
+// again there instead of reusing the value the loop condition loaded.
 void func_02010dc8(void) {
     int start;
     int i;
@@ -1213,8 +1215,9 @@ void func_02010dc8(void) {
             if (data_020b1094[data_020b1078.mUnk_04] > start) {
                 do {
                     s32 *p = &data_020b1094[data_020b1078.mUnk_04];
+                    s32 idx = *(s32 *) &data_020b1078.mUnk_04;
                     (*p)--;
-                    n = data_020b1078.mUnk_04 * ENTRY_STRIDE + 2;
+                    n = idx * ENTRY_STRIDE + 2;
                     if (func_02021e08(ENTRY_BLOCK, n + *p) != 0) {
                         break;
                     }
@@ -1224,8 +1227,9 @@ void func_02010dc8(void) {
             if (data_020b1094[data_020b1078.mUnk_04] < last) {
                 do {
                     s32 *p = &data_020b1094[data_020b1078.mUnk_04];
+                    s32 idx = *(s32 *) &data_020b1078.mUnk_04;
                     (*p)++;
-                    n = data_020b1078.mUnk_04 * ENTRY_STRIDE + 2;
+                    n = idx * ENTRY_STRIDE + 2;
                     if (func_02021e08(ENTRY_BLOCK, n + *p) != 0) {
                         break;
                     }

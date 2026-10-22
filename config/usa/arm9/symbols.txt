@@ -1840,13 +1840,13 @@ data_0204e218 kind:data(word[12]) addr:0x0204e218
 data_0204e248 kind:data(short[64]) addr:0x0204e248
 data_0204e2c8 kind:data(short[86]) addr:0x0204e2c8
 data_0204e374 kind:data(any) addr:0x0204e374 local
-data_0204e804 kind:data(byte[14]) addr:0x0204e804
-data_0204e812 kind:data(byte[18]) addr:0x0204e812
+@1790 kind:data(byte[14]) addr:0x0204e804 local
+ids$2097 kind:data(byte[18]) addr:0x0204e812 local
 data_0204e824 kind:data(byte[25]) addr:0x0204e824
 data_0204e840 kind:data(word[25]) addr:0x0204e840
 data_0204e8a4 kind:data(word[25]) addr:0x0204e8a4
 data_0204e908 kind:data(word[25]) addr:0x0204e908
-data_0204e96c kind:data(any) addr:0x0204e96c
+data_0204e96c kind:data(any) addr:0x0204e96c local
 data_0204edfc kind:data(any) addr:0x0204edfc
 @2610 kind:data(byte[5]) addr:0x0204fedc local
 data_0204fee2 kind:data(byte[6]) addr:0x0204fee2 local
@@ -1963,13 +1963,13 @@ data_02063988 kind:data(any) addr:0x02063988
 @1669 kind:data(any) addr:0x020639bc local
 @1688 kind:data(any) addr:0x020639c4 local
 @1689 kind:data(any) addr:0x020639d4 local
-data_020639ec kind:data(any) addr:0x020639ec
-data_020639f4 kind:data(any) addr:0x020639f4
-data_02063a00 kind:data(any) addr:0x02063a00
-data_02063a04 kind:data(any) addr:0x02063a04
-data_02063a0c kind:data(any) addr:0x02063a0c
-data_02063a14 kind:data(any) addr:0x02063a14
-data_02063a1c kind:data(any) addr:0x02063a1c
+@3648 kind:data(any) addr:0x020639ec local
+@3649 kind:data(any) addr:0x020639f4 local
+@3650 kind:data(any) addr:0x02063a00 local
+@3651 kind:data(any) addr:0x02063a04 local
+@3652 kind:data(any) addr:0x02063a0c local
+@3653 kind:data(any) addr:0x02063a14 local
+@3692 kind:data(any) addr:0x02063a1c local
 @3073 kind:data(any) addr:0x02063a2c local
 @3096 kind:data(any) addr:0x02063a38 local
 @3098 kind:data(any) addr:0x02063a3c local
