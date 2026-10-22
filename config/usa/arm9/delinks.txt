@@ -489,7 +489,7 @@ libs/mobiclip/src/mobiclip_convert.cpp:
     .bss        start:0x020ca680 end:0x020ca6a4
 
 // provisional: no evidence yet for where these files begin and end
-src/Main/Unknown/arm_system_slot.c:
+src/Main/Link/arm_system_slot.c:
     complete
     .text       start:0x02001000 end:0x020011dc
 
@@ -556,11 +556,11 @@ src/Main/Minigame/stage_minigame.c:
     .bss        start:0x02099770 end:0x020ab7e0
 
 // provisional: the start; nothing before 0x0200b898 calls the helpers, EaseAngleToward calls EaseToward
-src/Main/Unknown/game_util.c:
+src/Main/System/game_util.c:
     complete
     .text       start:0x0200b898 end:0x0200c034
 
-src/Main/Unknown/move_object.c:
+src/Main/Scene/move_object.c:
     complete
     .text       start:0x0200c034 end:0x0200c65c
 
@@ -648,7 +648,7 @@ src/Main/Graphics/gx_pool.c:
     .text       start:0x02021fb0 end:0x020223e8
 
 // provisional: may belong to gx_pool.c
-src/Main/Unknown/angle_blend.c:
+src/Main/Graphics/angle_blend.c:
     complete
     .text       start:0x020223e8 end:0x020225dc
 
@@ -741,7 +741,7 @@ src/Main/System/align_util.c:
 
 // the link buffers data_020c66d4..gCommRecords (ascending sizes; arm_system.c is the one file using all five);
 // the unit's code sits apart from it, in arm_system_slot.c's place (lcf_edits.txt)
-src/Main/Unknown/arm_system.c:
+src/Main/Link/arm_system.c:
     complete
     .bss        start:0x020c66d4 end:0x020c6adc
 

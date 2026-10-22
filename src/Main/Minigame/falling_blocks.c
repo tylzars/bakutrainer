@@ -2,8 +2,8 @@
 #include <Main/System/screen_fade.h>
 #include <Main/Scene/stage_info_panel.h>
 #include <Main/Graphics/sprite_slots.h>
-#include <Main/Unknown/game_util.h>
-#include <Main/Unknown/move_object.h>
+#include <Main/System/game_util.h>
+#include <Main/Scene/move_object.h>
 #include <Main/System/sound_control.h>
 #include <Main/Minigame/falling_blocks.h>
 #include <Main/Scene/mode_select.h>

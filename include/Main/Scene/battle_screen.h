@@ -1,7 +1,7 @@
 #pragma once
 
 #include "types.h"
-#include <Main/Unknown/move_object.h>
+#include <Main/Scene/move_object.h>
 #include <Main/Scene/stage_data.h>
 
 #ifdef __cplusplus

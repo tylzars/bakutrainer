@@ -6,7 +6,7 @@
 #include <Main/System/engine_asm.h>
 #include <Main/System/game_math.h>
 #include <Main/System/system_init.h>
-#include <Main/Unknown/game_util.h>
+#include <Main/System/game_util.h>
 #include <Main/Graphics/model.h>
 #include <Main/Graphics/vram_cache.h>
 #include <Main/System/align_util.h>

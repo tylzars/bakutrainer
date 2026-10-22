@@ -4,10 +4,10 @@
 #include <Main/System/screen_fade.h>
 #include <Main/System/game_math.h>
 #include <Main/Scene/stage_progress.h>
-#include <Main/Unknown/game_util.h>
+#include <Main/System/game_util.h>
 #include <Main/Scene/language_menu.h>
 #include <Main/Scene/mode_select.h>
-#include <Main/Unknown/move_object.h>
+#include <Main/Scene/move_object.h>
 #include <Main/System/prompt_screen.h>
 #include <Main/System/sound_control.h>
 #include <Main/Graphics/sprite_slots.h>

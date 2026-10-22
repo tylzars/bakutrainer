@@ -1,7 +1,7 @@
 #include <Main/Input/touch_buttons.h>
 #include <Main/System/game_math.h>
 #include <Main/System/bg_image.h>
-#include <Main/Unknown/game_util.h>
+#include <Main/System/game_util.h>
 #include <Main/System/state_flow.h>
 #include <Main/System/prompt_screen.h>
 #include <Main/System/sound_control.h>

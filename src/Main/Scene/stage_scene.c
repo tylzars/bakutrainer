@@ -5,9 +5,9 @@
 #include <Main/System/system_init.h>
 #include <Main/Scene/stage_info_panel.h>
 #include <Main/System/sound_control.h>
-#include <Main/Unknown/game_util.h>
+#include <Main/System/game_util.h>
 #include <Main/Scene/mode_select.h>
-#include <Main/Unknown/move_object.h>
+#include <Main/Scene/move_object.h>
 #include <Main/Scene/stage_scene.h>
 #include <Main/Graphics/sprite_slots.h>
 #include <Main/Graphics/text_draw.h>

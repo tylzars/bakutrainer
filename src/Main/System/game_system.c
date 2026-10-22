@@ -9,13 +9,13 @@
 #include <Main/System/system_init.h>
 #include <Main/System/sound_control.h>
 #include <Main/Graphics/sprite_slots.h>
-#include <Main/Unknown/game_util.h>
+#include <Main/System/game_util.h>
 #include <Main/System/prompt_screen.h>
 #include <Main/System/save_data.h>
 #include <Main/Scene/stage_progress.h>
 #include <Main/Scene/stage_info_panel.h>
 #include <Main/Scene/language_menu.h>
-#include <Main/Unknown/move_object.h>
+#include <Main/Scene/move_object.h>
 #include <Main/System/save_slot_menu.h>
 #include <Main/Graphics/text_draw.h>
 #include <Main/Graphics/model.h>

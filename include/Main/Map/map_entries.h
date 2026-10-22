@@ -2,8 +2,8 @@
 
 #include "types.h"
 #include <nitro/fx.h>
-#include <Main/Unknown/move_object.h>
-#include <Main/Unknown/game_util.h>
+#include <Main/Scene/move_object.h>
+#include <Main/System/game_util.h>
 
 #ifdef __cplusplus
 extern "C" {

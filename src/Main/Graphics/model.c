@@ -4,11 +4,11 @@
 #include <nitro/mi.h>
 #include <nitro/os.h>
 #include <Main/clib.h>
-#include <Main/Unknown/angle_blend.h>
+#include <Main/Graphics/angle_blend.h>
 #include <Main/System/game_math.h>
-#include <Main/Unknown/game_util.h>
+#include <Main/System/game_util.h>
 #include <Main/Graphics/model.h>
-#include <Main/Unknown/move_object.h>
+#include <Main/Scene/move_object.h>
 #include <Main/System/random_angle.h>
 #include <Main/System/system_init.h>
 #include <Main/Graphics/vram_cache.h>

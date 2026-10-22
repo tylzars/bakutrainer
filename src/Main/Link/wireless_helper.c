@@ -6,7 +6,7 @@
 #include <Main/Graphics/texture_blocks.h>
 #include <Main/System/screen_fade.h>
 #include <Main/Link/comm_link.h>
-#include <Main/Unknown/arm_system.h>
+#include <Main/Link/arm_system.h>
 #include <Main/Graphics/text_draw.h>
 #include <Main/System/system_init.h>
 #include <Main/Link/wireless_helper.h>

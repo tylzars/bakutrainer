@@ -9,7 +9,7 @@
 #include <Main/Scene/stage_info_panel.h>
 #include <Main/Scene/stage_map_menu.h>
 #include <stdio.h>
-#include <Main/Unknown/game_util.h>
+#include <Main/System/game_util.h>
 #include <Main/Scene/language_menu.h>
 #include <Main/System/prompt_screen.h>
 #include <Main/System/sound_control.h>

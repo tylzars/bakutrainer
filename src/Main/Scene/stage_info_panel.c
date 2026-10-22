@@ -12,7 +12,7 @@
 #include <Main/Scene/stage_progress.h>
 #include <Main/System/sound_control.h>
 #include <Main/System/save_data.h>
-#include <Main/Unknown/game_util.h>
+#include <Main/System/game_util.h>
 #include <Main/Graphics/sprite_slots.h>
 #include <Main/Scene/mode_select.h>
 #include <Main/System/state_flow.h>

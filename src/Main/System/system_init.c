@@ -14,7 +14,7 @@
 #include <Main/System/game_math.h>
 #include <nitro/fx.h>
 #include <nitro/wm.h>
-#include <Main/Unknown/arm_system.h>
+#include <Main/Link/arm_system.h>
 #include <Main/clib.h>
 #include <nitro/math.h>
 #include <Main/Save/save_blocks.h>

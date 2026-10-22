@@ -11,7 +11,7 @@
 #include <Main/System/screen_fade.h>
 #include <Main/System/bg_image.h>
 #include <Main/System/system_init.h>
-#include <Main/Unknown/game_util.h>
+#include <Main/System/game_util.h>
 #include <Main/System/prompt_screen.h>
 #include <Main/Scene/stage_camera.h>
 #include <Main/Scene/stage_info_panel.h>

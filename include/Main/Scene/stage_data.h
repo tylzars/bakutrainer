@@ -2,7 +2,7 @@
 
 #include "types.h"
 #include <nitro/fx.h>
-#include <Main/Unknown/game_util.h>
+#include <Main/System/game_util.h>
 
 // Per-stage settings; the table of records has 0x230 bytes per stage.
 typedef struct StageInfo {

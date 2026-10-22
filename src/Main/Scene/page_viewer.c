@@ -3,7 +3,7 @@
 #include <Main/System/bg_image.h>
 #include <Main/System/system_init.h>
 #include <Main/Scene/stage_info_panel.h>
-#include <Main/Unknown/game_util.h>
+#include <Main/System/game_util.h>
 #include <Main/System/sound_control.h>
 #include <Main/System/state_flow.h>
 #include <Main/Scene/page_viewer.h>

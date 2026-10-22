@@ -12,7 +12,7 @@
 #include <Main/System/sound_control.h>
 #include <Main/Graphics/sprite_slots.h>
 #include <Main/Scene/slide_transition.h>
-#include <Main/Unknown/game_util.h>
+#include <Main/System/game_util.h>
 #include <Main/Graphics/text_draw.h>
 #include <Main/Graphics/model.h>
 #include <Main/Graphics/texture_blocks.h>

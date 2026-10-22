@@ -5,8 +5,8 @@
 #include <Main/System/bg_image.h>
 #include <Main/System/system_init.h>
 #include <Main/System/sound_control.h>
-#include <Main/Unknown/game_util.h>
-#include <Main/Unknown/move_object.h>
+#include <Main/System/game_util.h>
+#include <Main/Scene/move_object.h>
 #include <Main/Graphics/model.h>
 #include <Main/Graphics/sprite_script.h>
 #include <Main/Map/map_entries.h>

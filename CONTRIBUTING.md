@@ -4,7 +4,7 @@
 | Path | Contents |
 | --- | --- |
 | `config/<ver>/` | `dsd` configuration: symbols, relocations and translation-unit boundaries (`delinks.txt`) |
-| `src/Main/` | Game code from the main ARM9 binary, grouped by subsystem; `Unknown/` for units whose role isn't settled |
+| `src/Main/` | Game code from the main ARM9 binary, grouped by subsystem |
 | `src/ITCM/` | Game code that runs from ITCM |
 | `src/NN_Name/` | Game code from overlay `NN`, named once its purpose is known; unnamed overlays use just the number |
 | `include/` | Game headers, grouped by subsystem |

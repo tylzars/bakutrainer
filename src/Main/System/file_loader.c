@@ -6,7 +6,7 @@
 #include <Main/System/qrk_decode.h>
 #include <Main/System/align_util.h>
 #include <Main/Link/comm_link.h>
-#include <Main/Unknown/arm_system.h>
+#include <Main/Link/arm_system.h>
 #include <Main/Link/wireless_helper.h>
 #include <nitro/mi.h>
 #include <nitro/os.h>

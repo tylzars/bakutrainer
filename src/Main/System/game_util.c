@@ -2,7 +2,7 @@
 #include <Main/System/random_angle.h>
 #include <Main/System/game_math.h>
 #include <Main/System/state_flow.h>
-#include <Main/Unknown/game_util.h>
+#include <Main/System/game_util.h>
 #include <Main/Graphics/text_draw.h>
 #include <Main/Graphics/model.h>
 #include <Main/Sound/wave_player.h>

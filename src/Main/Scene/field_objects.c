@@ -5,7 +5,7 @@
 #include <Main/System/game_math.h>
 #include <Main/System/system_init.h>
 #include <Main/Scene/stage_info_panel.h>
-#include <Main/Unknown/game_util.h>
+#include <Main/System/game_util.h>
 #include <Main/clib.h>
 #include <Main/Graphics/sprite_slots.h>
 #include <Main/System/prompt_screen.h>

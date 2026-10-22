@@ -3,7 +3,7 @@
 #include "types.h"
 #include <nitro/fx.h>
 #include <Main/Scene/stage_data.h>
-#include <Main/Unknown/move_object.h>
+#include <Main/Scene/move_object.h>
 #include <Main/Minigame/falling_blocks.h>
 #include <Main/Scene/stage_camera.h>
 

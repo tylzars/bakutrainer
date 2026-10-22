@@ -1,7 +1,7 @@
 #include <Main/System/random_angle.h>
 #include <Main/Minigame/stage_minigame.h>
 #include <Main/Scene/stage_info_panel.h>
-#include <Main/Unknown/game_util.h>
+#include <Main/System/game_util.h>
 #include <Main/Scene/stage_scene.h>
 #include <Main/System/prompt_screen.h>
 #include <Main/System/state_flow.h>
