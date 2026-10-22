@@ -18,7 +18,7 @@ typedef struct ResultState {
     s32 mStateFramesEnabled;
     s32 mStageIndex;
     // Amount still to add to the stage's mValue, in 1/256 units (only while data_020b10fc.mUnk_0c is 1): from frame 54
-    // it falls by a sixtieth of mValueGainTotal per frame and the whole units go to func_02014f98; 0 once mValue
+    // it falls by a sixtieth of mValueGainTotal per frame and the whole units go to AddValue; 0 once mValue
     // reaches its upper bound.
     s32 mValueGain;
     // Start amount (file 488, value 5), never changed.
@@ -40,7 +40,8 @@ typedef struct ResultState {
     // Set by button 0x200 (the picked id replaces an entry) or 0x201 (the entries stay), cleared by 0x102.
     s32 mEntryDecided;
     s32 mPrevEntryDecided;
-    // 0..4: one of the stage's five entries (func_02013f74); 5: the picked table entry (button 0x505).
+    // 0..4: one of the stage's five entries (DrawTableEntryRowAndHandleButtons); 5: the picked table entry (button
+    // 0x505).
     s32 mEntryCursor;
     // 0..4 into the stage's mTableEntryIds (buttons 0x500-0x504): button 0x200 writes the picked id there and 0x102
     // puts mReplacedTableEntryId back.

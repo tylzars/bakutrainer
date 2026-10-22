@@ -23,7 +23,7 @@ void SetupMoveObj(MoveObj *o, int sprite, int model, const Vec2i *pos, int e, in
     o->mX = pos->x << 8;
     o->mY = pos->y << 8;
     o->mRepeat = g;
-    o->mUnk_294 = e;
+    o->mDrawOrder = e;
     o->mLayer = f;
     o->mSpeed = 0;
     o->mFlags = 0;
@@ -196,7 +196,7 @@ void DrawMoveObj(MoveObj *o) {
             layer = o->mLayer;
             if (o->mSpeed == 0 || o->mUnk_2b4 != 0 || o->mX != o->mTargetX || o->mY != o->mTargetY) {
                 GetMoveObjDrawPos(o, &sx, &sy, &layer);
-                func_0202de80(o->mSprite.mUnk_04, o->mX >> 8, sy, o->mUnk_294, -1, layer);
+                func_0202de80(o->mSprite.mUnk_04, o->mX >> 8, sy, o->mDrawOrder, -1, layer);
             }
             if (o->mTrailEnd - o->mTrailStart > 0) {
                 for (i = 0; i < o->mTrailEnd - o->mTrailStart; i++) {
@@ -205,7 +205,7 @@ void DrawMoveObj(MoveObj *o) {
                     tmp.mSprite.mUnk_04 = o->mSprite.mUnk_04 + o->mTrailStart + i;
                     tmp.mX = o->mTrail[i].x;
                     tmp.mY = o->mTrail[i].y;
-                    tmp.mUnk_294 = o->mUnk_294 + 1 >= 255 ? 255 : o->mUnk_294 + 1;
+                    tmp.mDrawOrder = o->mDrawOrder + 1 >= 255 ? 255 : o->mDrawOrder + 1;
                     DrawMoveObj(&tmp);
                 }
             }
@@ -214,7 +214,7 @@ void DrawMoveObj(MoveObj *o) {
             func_020242a8(&params, o->mX >> 8, o->mY >> 8, -0x3000, o->mScale, 0x8000, -1, 0);
             params.mUnk_2c = -1;
             params.mUnk_34 = -1;
-            DrawModelFileEx(o->mModel.mUnk_170, &params, &o->mModel, 0);
+            DrawModelFileEx(o->mModel.mId, &params, &o->mModel, 0);
             func_020334f8(0);
         }
     } else {
@@ -222,7 +222,11 @@ void DrawMoveObj(MoveObj *o) {
     }
 }
 
-void func_0200c5d8(int a, int b, int c, int d, int e, int f, int g) {
+// The screen set-up of many states: one system frame (UpdateSystemAndWait), SetFaded(3), ResetKeys, the release of
+// the texture layers and the gx pool, ResetVramBanks, ResetTouchButtons(0, 0), the LCD swap, texture layers 1 and 2
+// (with f and g), the gx pool (with d and e), the images layer1Image on layer 1 and layer2Image on layer 2 when not 0,
+// and the 3D display registers (func_02024208).
+void ResetAndSetupGraphics(int lcdSwap, int layer1Image, int layer2Image, int d, int e, int f, int g) {
     UpdateSystemAndWait();
     SetFaded(3);
     ResetKeys();
@@ -230,15 +234,15 @@ void func_0200c5d8(int a, int b, int c, int d, int e, int f, int g) {
     ReleaseGxPool();
     ResetVramBanks();
     ResetTouchButtons(0, 0);
-    SetLcdSwap(a);
+    SetLcdSwap(lcdSwap);
     SetupTextureLayer(0x10cb, 0x10ca, 0x10cc, f, 1);
     SetupTextureLayer(0x10cb, 0x10ca, 0x10cc, g, 2);
     InitGxPool(0x1c7, 0x1c6, d, e);
-    if (b != 0) {
-        LoadImage(b, 1);
+    if (layer1Image != 0) {
+        LoadImage(layer1Image, 1);
     }
-    if (c != 0) {
-        LoadImage(c, 2);
+    if (layer2Image != 0) {
+        LoadImage(layer2Image, 2);
     }
     func_02024208();
 }

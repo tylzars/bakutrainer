@@ -453,14 +453,14 @@ void func_020242e8(u16 id, int x, int y, int a, int b, u16 c, u8 d, int e) {
 
 void func_02024338(void *a, void *b, int c) {
     UpdateModelScript(a);
-    DrawModelFileEx(((Model *) a)->mUnk_170, b, a, c);
+    DrawModelFileEx(((Model *) a)->mId, b, a, c);
 }
 
 void func_02024368(Model *obj, int x, int y, int scale, u16 angle, int flags) {
     DrawParams params;
     func_020242a8(&params, x, y, 0, scale, angle, -1, flags);
     UpdateModelScript(obj);
-    DrawModelFileEx(obj->mUnk_170, &params, obj, flags);
+    DrawModelFileEx(obj->mId, &params, obj, flags);
 }
 
 // Texture size code of a power-of-two size, indexed by log2(size) - 3.
@@ -687,8 +687,10 @@ s32 func_02024b2c(const u32 *data, const DrawParams *p) {
 
 // Draws model file `id` with the draw parameters `params`. In modes other than 3 and 5, with a model `obj`: when its
 // mUnk_172_0 is set it moves params->mPos to the position of map entry data_020c31dc.mUnk_3c (func_02031fc4) or, when
-// that is 0xffff, so that node mUnk_175 lands on mUnk_158, then clears mUnk_172_0 and sets mUnk_172_7; with
-// mUnk_172_2 set it adds mUnk_164 to params->mPos; with mUnk_172_3 set it stores node 0's position in mUnk_158.
+// that is 0xffff, so that node mNodeIndex lands on mNodePos, then clears mUnk_172_0 and sets mUnk_172_7; with
+// mUnk_172_2 set it adds mPosPerFrame to params->mPos; with mUnk_172_3 set it stores node 0's position in mNodePos.
+// None of these three paths runs in this build: mUnk_172_0 and mUnk_172_2 follow only MC_SET_3C / MC_SET_3E, which no
+// model script uses, and nothing sets mUnk_172_3.
 //
 // The table loads in the order cos2, sin2, cos0, sin0, cos1, sin1 give the index and load block, `y` holding
 // height << 16 gives the texture scale block, and `cur += 0x38` placed right before each DC_StoreRange keeps the
@@ -849,12 +851,12 @@ void DrawModelFileEx(u32 id, void *params, void *obj, int flags) {
             data_020c31dc.mUnk_47 = model->mUnk_172_8;
             if (model->mUnk_172_0 == 1) {
                 if (data_020c31dc.mUnk_3c == 0xffff) {
-                    data_020c31dc.mStopNodeIndex = model->mUnk_175;
+                    data_020c31dc.mStopNodeIndex = model->mNodeIndex;
                     ComputePoseMatrices(-1, 0);
-                    GetPoseNodePos(&pos, model->mUnk_175);
-                    p->mPos.x -= pos.x - model->mUnk_158.x;
-                    p->mPos.y -= pos.y - model->mUnk_158.y;
-                    p->mPos.z -= pos.z - model->mUnk_158.z;
+                    GetPoseNodePos(&pos, model->mNodeIndex);
+                    p->mPos.x -= pos.x - model->mNodePos.x;
+                    p->mPos.y -= pos.y - model->mNodePos.y;
+                    p->mPos.z -= pos.z - model->mNodePos.z;
                 } else {
                     func_02031fc4(data_020c31dc.mUnk_3c, &p->mPos);
                 }
@@ -869,9 +871,9 @@ void DrawModelFileEx(u32 id, void *params, void *obj, int flags) {
                 model->mUnk_172_7 = 1;
             }
             if (model->mUnk_172_2 == 1) {
-                p->mPos.x += model->mUnk_164.x;
-                p->mPos.y += model->mUnk_164.y;
-                p->mPos.z += model->mUnk_164.z;
+                p->mPos.x += model->mPosPerFrame.x;
+                p->mPos.y += model->mPosPerFrame.y;
+                p->mPos.z += model->mPosPerFrame.z;
             }
         } else {
             data_020c31dc.mUnk_45 = 0;
@@ -883,9 +885,9 @@ void DrawModelFileEx(u32 id, void *params, void *obj, int flags) {
         ComputePoseMatrices(-1, 0);
         if (model != NULL && model->mUnk_172_3 == 1) {
             GetPoseNodePos(&ofs, 0);
-            model->mUnk_158.x = ofs.x;
-            model->mUnk_158.y = ofs.y;
-            model->mUnk_158.z = ofs.z;
+            model->mNodePos.x = ofs.x;
+            model->mNodePos.y = ofs.y;
+            model->mNodePos.z = ofs.z;
         }
     } else {
         sc = func_02024b2c(res, p);
@@ -944,8 +946,8 @@ void DrawModelFileEx(u32 id, void *params, void *obj, int flags) {
                 } else {
                     if ((flags & 0x200) && p->mUnk_3f != 0xff) {
                         frame = p->mUnk_3f;
-                    } else if (model != NULL && (model->mUnk_14c.mUnk_0 != 0 || model->mUnk_172_11 == 1)) {
-                        frame = model->mUnk_14c.mUnk_2 / model->mUnk_14c.mUnk_4;
+                    } else if (model != NULL && (model->mUnk_14c.mId != 0 || model->mUnk_172_11 == 1)) {
+                        frame = model->mUnk_14c.mPlayFrames / model->mUnk_14c.mFramesPerAnimFrame;
                     } else {
                         frame = GetDrawFrame(p);
                     }
@@ -981,11 +983,11 @@ void DrawModelFileEx(u32 id, void *params, void *obj, int flags) {
                 }
                 if ((flags & 0x200) && (frame = p->mUnk_3e) != 0xff) {
                 } else if (model != NULL) {
-                    frame = model->mUnk_14c.mUnk_2 - 1;
+                    frame = model->mUnk_14c.mPlayFrames - 1;
                     if (frame < 0) {
-                        frame += GetAnimFrameCount(model->mUnk_14c.mUnk_0) * model->mUnk_14c.mUnk_4;
+                        frame += GetAnimFrameCount(model->mUnk_14c.mId) * model->mUnk_14c.mFramesPerAnimFrame;
                     }
-                    frame = frame / model->mUnk_14c.mUnk_4;
+                    frame = frame / model->mUnk_14c.mFramesPerAnimFrame;
                 } else {
                     frame = GetDrawFrame(p) % track->mCount;
                 }
@@ -1040,7 +1042,7 @@ void DrawModelFileEx(u32 id, void *params, void *obj, int flags) {
             if ((flags & 0x200) && p->mUnk_40 != 0xff) {
                 frame = p->mUnk_40;
             } else if (model != NULL) {
-                frame = model->mUnk_14c.mUnk_2 / model->mUnk_14c.mUnk_4;
+                frame = model->mUnk_14c.mPlayFrames / model->mUnk_14c.mFramesPerAnimFrame;
             } else {
                 frame = GetDrawFrame(p) % track->mCount;
             }
@@ -1166,16 +1168,16 @@ int GetAnimFrameCount(u16 id) {
 }
 
 int GetTrackFrameCount(Model *m, int track) {
-    return GetAnimFrameCount(m->mAnim[track].mUnk_0);
+    return GetAnimFrameCount(m->mAnim[track].mId);
 }
 
 // Sets the frame of animation 0 (mUnk_14c is mAnim[0]) to n; GetModelFrameIndex reads it back.
 void SetModelFrameIndex(Model *m, int n) {
-    m->mUnk_14c.mUnk_2 = n * m->mUnk_14c.mUnk_4;
+    m->mUnk_14c.mPlayFrames = n * m->mUnk_14c.mFramesPerAnimFrame;
 }
 
 int GetModelFrameIndex(Model *m) {
-    return m->mUnk_14c.mUnk_2 / m->mUnk_14c.mUnk_4;
+    return m->mUnk_14c.mPlayFrames / m->mUnk_14c.mFramesPerAnimFrame;
 }
 
 void SplitAnimFrameAndAdvance(u16 id, u16 *frame, u32 count, int step, s32 *whole, s32 *next, s32 *rest, int loop) {
@@ -1196,20 +1198,20 @@ void SplitAnimFrameAndAdvance(u16 id, u16 *frame, u32 count, int step, s32 *whol
 }
 
 int func_02026080(Model *m) {
-    u16 *q = FindOrLoadCachedFile(m->mUnk_170);
+    u16 *q = FindOrLoadCachedFile(m->mId);
     u16 *r;
     int scale, limit, count;
     q = (u16 *) ((u8 *) q + ((*(u32 *) q & 0xffff) * 4 + 1) * 4);
     r = q + q[1];
     limit = r[1];
-    count = m->mUnk_14c.mUnk_4;
+    count = m->mUnk_14c.mFramesPerAnimFrame;
     scale = q[2];
-    if ((u32) ((m->mUnk_14c.mUnk_2 << 8) / (scale * count)) >= limit) {
+    if ((u32) ((m->mUnk_14c.mPlayFrames << 8) / (scale * count)) >= limit) {
         s32 d = (limit * scale * count) / 256;
-        if (m->mUnk_172_13 == 0) {
-            m->mUnk_14c.mUnk_2 -= d;
+        if (m->mHoldAtEnd == 0) {
+            m->mUnk_14c.mPlayFrames -= d;
         } else {
-            m->mUnk_14c.mUnk_2 = d - 1;
+            m->mUnk_14c.mPlayFrames = d - 1;
         }
         return 1;
     }
@@ -1221,54 +1223,54 @@ int func_020260f4(Model *m, u32 track) {
     AnimTrack *t = &data_020c31dc.mAnimTracks[track];
     u32 pos;
     u32 rest;
-    if (a->mUnk_0 != 0) {
-        t->mData = FindOrLoadCachedFile(a->mUnk_0);
-        t->mFlags = a->mUnk_5;
-        if (a->mUnk_4 == 2) {
-            t->mFrameIndex = (u32) a->mUnk_2 >> 1;
-            t->mNextWeight = (a->mUnk_2 & 1) << 7;
+    if (a->mId != 0) {
+        t->mData = FindOrLoadCachedFile(a->mId);
+        t->mFlags = a->mFlags;
+        if (a->mFramesPerAnimFrame == 2) {
+            t->mFrameIndex = (u32) a->mPlayFrames >> 1;
+            t->mNextWeight = (a->mPlayFrames & 1) << 7;
         } else {
-            t->mFrameIndex = DivideWithRemainder(a->mUnk_2, a->mUnk_4, &rest);
-            t->mNextWeight = (rest << 8) / a->mUnk_4;
+            t->mFrameIndex = DivideWithRemainder(a->mPlayFrames, a->mFramesPerAnimFrame, &rest);
+            t->mNextWeight = (rest << 8) / a->mFramesPerAnimFrame;
         }
         data_020c31dc.mTrackFillCount++;
         pos = t->mFrameIndex;
         if (pos == GetTrackFrameCount(m, track) - 1) {
             t->mNextWeight = 0;
-            if (a->mUnk_5 & 0x10) {
-                a->mUnk_0 = 0;
+            if (a->mFlags & 0x10) {
+                a->mId = 0;
                 return 1;
             }
-            if (a->mUnk_5 & 8) {
+            if (a->mFlags & 8) {
                 return 1;
             }
         } else {
             t->mNextFrameIndex = pos + 1;
         }
         if (track < 1) {
-            if (!(a->mUnk_5 & 0x20) && !(gSystemState.mFlags & 0x80000000) && !m->mUnk_172_12) {
-                a->mUnk_2++;
+            if (!(a->mFlags & 0x20) && !(gSystemState.mFlags & 0x80000000) && !m->mUnk_172_12) {
+                a->mPlayFrames++;
             }
             if (m->mUnk_174 == 0) {
                 m->mUnk_172_6 = 0;
                 m->mUnk_172_7 = 0;
             }
-            if (a->mUnk_2 == GetTrackFrameCount(m, track) * a->mUnk_4 - 1) {
-                if (m->mUnk_172_13 == 1) {
-                    a->mUnk_5 |= 0x20;
-                    a->mUnk_2--;
+            if (a->mPlayFrames == GetTrackFrameCount(m, track) * a->mFramesPerAnimFrame - 1) {
+                if (m->mHoldAtEnd == 1) {
+                    a->mFlags |= 0x20;
+                    a->mPlayFrames--;
                 }
                 return 1;
             }
-            if (a->mUnk_2 == GetTrackFrameCount(m, track) * a->mUnk_4) {
-                a->mUnk_2 = 0;
+            if (a->mPlayFrames == GetTrackFrameCount(m, track) * a->mFramesPerAnimFrame) {
+                a->mPlayFrames = 0;
             }
         }
     } else {
         t->mData = NULL;
         if (m->mUnk_172_11 == 1) {
             if (m->mUnk_172_9 == 0) {
-                m->mUnk_14c.mUnk_2++;
+                m->mUnk_14c.mPlayFrames++;
             }
             return func_02026080(m);
         }
@@ -1285,15 +1287,15 @@ int func_02026268(Model *m, u32 track) {
 }
 
 void UpdateModelScript(Model *m) {
-    u32 mask = m->mUnk_134 & m->mUnk_130 & ~m->mUnk_138;
+    u32 mask = m->mSignals & m->mEventMask & ~m->mBlockedSignals;
     if (mask != 0) {
         int best = -1;
         int i = 0;
         u32 bestKey;
         if (mask != 0) {
-            u32 cur = m->mUnk_142;
+            u32 cur = m->mEventKey;
             for (; mask != 0; mask >>= 1) {
-                u32 key = m->mUnk_028[i].mUnk_4;
+                u32 key = m->mEvents[i].mKey;
                 if ((mask & 1) && key != cur && (key >> 8) >= (cur >> 8)) {
                     if (best == -1 || (key >> 8) >= (bestKey >> 8)) {
                         bestKey = key;
@@ -1304,16 +1306,16 @@ void UpdateModelScript(Model *m) {
             }
         }
         if (best != -1) {
-            if (m->mUnk_024 & 4) {
-                m->mUnk_000 = m->mUnk_028[best].mUnk_0;
-                m->mUnk_13c = m->mUnk_028[32].mUnk_0;
+            if (m->mFlags & 4) {
+                m->mReturnCommand = m->mEvents[best].mCommand;
+                m->mCommand = m->mEvents[32].mCommand;
             } else {
-                m->mUnk_13c = m->mUnk_028[best].mUnk_0;
+                m->mCommand = m->mEvents[best].mCommand;
             }
         }
     }
     ExecModelScript(m);
-    m->mUnk_134 = 0;
+    m->mSignals = 0;
 }
 
 void func_0202635c(Model *m, s32 *slot) {
@@ -1331,15 +1333,15 @@ void StartModelAnim(Model *m, s32 *slot, int id, int count, int flags, int mode)
             u16 *hdr = FindOrLoadCachedFile(id);
             VecFx32 target;
             func_02031fc4(data_020c31dc.mUnk_3e, &target);
-            m->mUnk_164.x = (target.x - m->mUnk_158.x) / (hdr[1] * count);
-            m->mUnk_164.y = (target.y - m->mUnk_158.y) / (hdr[1] * count);
-            m->mUnk_164.z = (target.z - m->mUnk_158.z) / (hdr[1] * count);
+            m->mPosPerFrame.x = (target.x - m->mNodePos.x) / (hdr[1] * count);
+            m->mPosPerFrame.y = (target.y - m->mNodePos.y) / (hdr[1] * count);
+            m->mPosPerFrame.z = (target.z - m->mNodePos.z) / (hdr[1] * count);
             m->mUnk_172_2 = 1;
             m->mUnk_172_1 = 0;
         } else {
             m->mUnk_172_2 = 0;
         }
-        if (id != m->mUnk_152.mUnk_0 && m->mUnk_152.mUnk_0 != 0) {
+        if (id != m->mUnk_152.mId && m->mUnk_152.mId != 0) {
             if (flags & 0x20) {
                 m->mUnk_174 = 1;
             } else {
@@ -1350,11 +1352,11 @@ void StartModelAnim(Model *m, s32 *slot, int id, int count, int flags, int mode)
     if (count == 0) {
         OS_Terminate();
     }
-    m->mAnim[*slot].mUnk_0 = id;
-    m->mAnim[*slot].mUnk_4 = count;
-    m->mAnim[*slot].mUnk_5 = flags & ~0x20;
-    m->mAnim[*slot].mUnk_2 = 0;
-    m->mUnk_172_10 = 0;
+    m->mAnim[*slot].mId = id;
+    m->mAnim[*slot].mFramesPerAnimFrame = count;
+    m->mAnim[*slot].mFlags = flags & ~0x20;
+    m->mAnim[*slot].mPlayFrames = 0;
+    m->mAnimEnded = 0;
     if (*slot == 0) {
         if (mode < 0) {
             SetModelFrameIndex(m, ratio);
@@ -1371,28 +1373,28 @@ int GetModelScriptReg(Model *m, u16 id) {
             return NextRandom();
         }
         if (id == 0x1e) {
-            return m->mUnk_142;
+            return m->mEventKey;
         }
         if (id == 0x17) {
-            return m->mUnk_14c.mUnk_0;
+            return m->mUnk_14c.mId;
         }
         if (id == 0x1d) {
-            return m->mUnk_170;
+            return m->mId;
         }
         if (id == 0x1c) {
-            return m->mUnk_130;
+            return m->mEventMask;
         }
         if (id == 0x19) {
-            return m->mUnk_134;
+            return m->mSignals;
         }
         if (id == 0x1b) {
-            return m->mUnk_175;
+            return m->mNodeIndex;
         }
         if (id == 0x1a) {
-            return m->mUnk_138;
+            return m->mBlockedSignals;
         }
         if (id == 0x18) {
-            return (m->mUnk_172_4 << 4) + (((m->mUnk_024 & 3) << 2) + (m->mUnk_172_5 + (m->mUnk_172_7 << 1)));
+            return (m->mUnk_172_4 << 4) + (((m->mFlags & 3) << 2) + (m->mUnk_172_5 + (m->mUnk_172_7 << 1)));
         }
         if (id == 0x16) {
             return gSystemState.mUnk_496;
@@ -1401,47 +1403,47 @@ int GetModelScriptReg(Model *m, u16 id) {
             OS_Terminate();
         }
     }
-    return m->mUnk_004_all[id];
+    return m->mRegs[id];
 }
 
 void SetModelScriptReg(Model *m, u16 id, u32 value) {
     id &= 0x1f;
     if (id > 0xf) {
         if (id == 0x1e) {
-            if (m->mUnk_140 != value) {
-                m->mUnk_140 = m->mUnk_142;
+            if (m->mPrevEventKey != value) {
+                m->mPrevEventKey = m->mEventKey;
             }
-            m->mUnk_142 = value;
+            m->mEventKey = value;
             m->mUnk_149 = m->mUnk_148;
-            m->mUnk_138 = 0;
+            m->mBlockedSignals = 0;
             m->mUnk_148 = 0;
             return;
         }
         if (id == 0x17) {
-            m->mUnk_14c.mUnk_0 = value;
+            m->mUnk_14c.mId = value;
             return;
         }
         if (id == 0x1d) {
-            if (m->mUnk_170 != value) {
+            if (m->mId != value) {
                 m->mUnk_172_6 = 1;
-                m->mUnk_170 = value;
+                m->mId = value;
             }
             return;
         }
         if (id == 0x1c) {
-            m->mUnk_130 = value;
+            m->mEventMask = value;
             return;
         }
         if (id == 0x1b) {
-            m->mUnk_175 = value;
+            m->mNodeIndex = value;
             return;
         }
         if (id == 0x1a) {
-            m->mUnk_138 = value;
+            m->mBlockedSignals = value;
             return;
         }
         if (id == 0x19) {
-            m->mUnk_134 = value;
+            m->mSignals = value;
             return;
         }
         if (id == 0x18) {
@@ -1458,16 +1460,16 @@ void SetModelScriptReg(Model *m, u16 id, u32 value) {
             OS_Terminate();
         }
     }
-    m->mUnk_004_all[id] = value;
+    m->mRegs[id] = value;
 }
 
 void func_020266a8(Model *m, s32 *slot) {
-    switch (m->mUnk_14c.mUnk_0) {
+    switch (m->mUnk_14c.mId) {
         default:
-            m->mUnk_172_10 |= func_02026268(m, 0);
+            m->mAnimEnded |= func_02026268(m, 0);
             break;
         case 0:
-            m->mUnk_172_10 |= func_02026268(m, 0);
+            m->mAnimEnded |= func_02026268(m, 0);
             break;
     }
     if (m->mUnk_174 != 0) {
@@ -1481,27 +1483,29 @@ void func_020266a8(Model *m, s32 *slot) {
     }
 }
 
-// Runs the model's command list at mUnk_13c until a command stops it. A command is a 16-bit word (bits 10-15 the
+// Runs the model's command list at mCommand until a command stops it. A command is a 16-bit word (bits 10-15 the
 // command, bits 8-9 a mode that selects how the operand is given, bits 0-7 a signed argument), mostly followed by a
 // 16-bit operand word. In the register commands the argument names the register (read with GetModelScriptReg, written
 // with SetModelScriptReg); mode 2 takes the operand word as a value, mode 1 as a register number, and mode 0 takes the
-// value from bits 5-7 of the argument and has no operand word. mUnk_024 bit 0 is the equal flag, bit 1 the less flag.
+// value from bits 5-7 of the argument and has no operand word. mFlags bit 0 is the equal flag, bit 1 the less flag.
+// The model scripts of this build (script_data.s) use only MC_ADD, MC_ANIM, MC_EVENT, MC_FLAG, MC_JUMP, MC_SET,
+// MC_STEP, MC_WAIT and MC_WAIT_OR_IDLE.
 int ExecModelScript(Model *m) {
     s32 slot;
     BOOL cont;
-    if (m->mUnk_13c == NULL) {
-        m->mUnk_172_10 = func_02026268(m, 0) | m->mUnk_172_10;
+    if (m->mCommand == NULL) {
+        m->mAnimEnded = func_02026268(m, 0) | m->mAnimEnded;
     } else {
         cont = TRUE;
         slot = 0;
         m->mUnk_172_9 = 0;
-        m->mUnk_172_13 = 0;
+        m->mHoldAtEnd = 0;
         m->mUnk_172_0 = 0;
         do {
-            u16 op = m->mUnk_13c[0];
+            u16 op = m->mCommand[0];
             s8 arg = op;
             u16 mode = (op & 0x300) >> 8;
-            s16 val = m->mUnk_13c[1];
+            s16 val = m->mCommand[1];
             s32 step = 2;
             s32 v;
             switch ((u16) (op >> 10)) {
@@ -1510,15 +1514,15 @@ int ExecModelScript(Model *m) {
                     if (mode == MM_VALUE) {
                         val = arg;
                     }
-                    m->mUnk_13c += val;
+                    m->mCommand += val;
                     break;
                 // MM_BITS returns to the saved position; MM_VALUE saves the next position and jumps.
                 case MC_CALL:
                     if (mode == MM_BITS) {
-                        m->mUnk_13c = m->mUnk_000;
+                        m->mCommand = m->mReturnCommand;
                     } else if (mode == MM_VALUE) {
-                        m->mUnk_000 = m->mUnk_13c + 2;
-                        m->mUnk_13c += val;
+                        m->mReturnCommand = m->mCommand + 2;
+                        m->mCommand += val;
                     }
                     break;
                 // Jump if the equal flag (bit 0) is set.
@@ -1527,10 +1531,10 @@ int ExecModelScript(Model *m) {
                         step = 1;
                         val = arg;
                     }
-                    if (m->mUnk_024 & 1) {
-                        m->mUnk_13c += val;
+                    if (m->mFlags & 1) {
+                        m->mCommand += val;
                     } else {
-                        m->mUnk_13c += step;
+                        m->mCommand += step;
                     }
                     break;
                 // Jump if the less flag (bit 1) is clear.
@@ -1539,10 +1543,10 @@ int ExecModelScript(Model *m) {
                         step = 1;
                         val = arg;
                     }
-                    if (!(m->mUnk_024 & 2)) {
-                        m->mUnk_13c += val;
+                    if (!(m->mFlags & 2)) {
+                        m->mCommand += val;
                     } else {
-                        m->mUnk_13c += step;
+                        m->mCommand += step;
                     }
                     break;
                 // Jump if the less flag is clear or the equal flag is set.
@@ -1551,10 +1555,10 @@ int ExecModelScript(Model *m) {
                         step = 1;
                         val = arg;
                     }
-                    if (!(m->mUnk_024 & 2) || (m->mUnk_024 & 1)) {
-                        m->mUnk_13c += val;
+                    if (!(m->mFlags & 2) || (m->mFlags & 1)) {
+                        m->mCommand += val;
                     } else {
-                        m->mUnk_13c += step;
+                        m->mCommand += step;
                     }
                     break;
                 // Jump if the less flag is set.
@@ -1563,10 +1567,10 @@ int ExecModelScript(Model *m) {
                         step = 1;
                         val = arg;
                     }
-                    if (m->mUnk_024 & 2) {
-                        m->mUnk_13c += val;
+                    if (m->mFlags & 2) {
+                        m->mCommand += val;
                     } else {
-                        m->mUnk_13c += step;
+                        m->mCommand += step;
                     }
                     break;
                 // Jump if either flag is set.
@@ -1575,10 +1579,10 @@ int ExecModelScript(Model *m) {
                         step = 1;
                         val = arg;
                     }
-                    if (m->mUnk_024 & 3) {
-                        m->mUnk_13c += val;
+                    if (m->mFlags & 3) {
+                        m->mCommand += val;
                     } else {
-                        m->mUnk_13c += step;
+                        m->mCommand += step;
                     }
                     break;
                 // Jump if the equal flag is clear.
@@ -1587,15 +1591,15 @@ int ExecModelScript(Model *m) {
                         step = 1;
                         val = arg;
                     }
-                    if (!(m->mUnk_024 & 1)) {
-                        m->mUnk_13c += val;
+                    if (!(m->mFlags & 1)) {
+                        m->mCommand += val;
                     } else {
-                        m->mUnk_13c += step;
+                        m->mCommand += step;
                     }
                     break;
                 // Test a bit of a register: the equal flag is set when the bit is set.
                 case MC_TEST_BIT:
-                    m->mUnk_024 &= ~3;
+                    m->mFlags &= ~3;
                     if (mode == MM_REG) {
                         val = GetModelScriptReg(m, val);
                     } else if (mode == MM_BITS) {
@@ -1603,13 +1607,13 @@ int ExecModelScript(Model *m) {
                         step = 1;
                     }
                     if (GetModelScriptReg(m, arg) & (1 << val)) {
-                        m->mUnk_024 |= 1;
+                        m->mFlags |= 1;
                     }
-                    m->mUnk_13c += step;
+                    m->mCommand += step;
                     break;
                 // Test a bit of a register, then clear it.
                 case MC_TEST_CLEAR_BIT: {
-                    m->mUnk_024 &= ~3;
+                    m->mFlags &= ~3;
                     if (mode == MM_REG) {
                         val = GetModelScriptReg(m, val);
                     } else if (mode == MM_BITS) {
@@ -1618,16 +1622,16 @@ int ExecModelScript(Model *m) {
                     }
                     v = GetModelScriptReg(m, arg);
                     if (v & (1 << val)) {
-                        m->mUnk_024 |= 1;
+                        m->mFlags |= 1;
                     }
                     v &= ~(1 << val);
                     SetModelScriptReg(m, arg, v);
-                    m->mUnk_13c += step;
+                    m->mCommand += step;
                     break;
                 }
                 // Test a bit of a register, then set it.
                 case MC_TEST_SET_BIT: {
-                    m->mUnk_024 &= ~3;
+                    m->mFlags &= ~3;
                     if (mode == MM_REG) {
                         val = GetModelScriptReg(m, val);
                     } else if (mode == MM_BITS) {
@@ -1636,11 +1640,11 @@ int ExecModelScript(Model *m) {
                     }
                     v = GetModelScriptReg(m, arg);
                     if (v & (1 << val)) {
-                        m->mUnk_024 |= 1;
+                        m->mFlags |= 1;
                     }
                     v |= 1 << val;
                     SetModelScriptReg(m, arg, v);
-                    m->mUnk_13c += step;
+                    m->mCommand += step;
                     break;
                 }
                 // Read a register (MM_REG) and drop the value.
@@ -1649,7 +1653,7 @@ int ExecModelScript(Model *m) {
                         GetModelScriptReg(m, arg);
                         step = 1;
                     }
-                    m->mUnk_13c += step;
+                    m->mCommand += step;
                     break;
                 // Register = operand.
                 case MC_SET:
@@ -1660,7 +1664,7 @@ int ExecModelScript(Model *m) {
                         step = 1;
                     }
                     SetModelScriptReg(m, arg, val);
-                    m->mUnk_13c += step;
+                    m->mCommand += step;
                     break;
                 // Register += operand.
                 case MC_ADD:
@@ -1672,7 +1676,7 @@ int ExecModelScript(Model *m) {
                         SetModelScriptReg(m, arg, (arg >> 5) + GetModelScriptReg(m, arg));
                         step = 1;
                     }
-                    m->mUnk_13c += step;
+                    m->mCommand += step;
                     break;
                 // Register -= operand.
                 case MC_SUB:
@@ -1684,7 +1688,7 @@ int ExecModelScript(Model *m) {
                         SetModelScriptReg(m, arg, GetModelScriptReg(m, arg) - (arg >> 5));
                         step = 1;
                     }
-                    m->mUnk_13c += step;
+                    m->mCommand += step;
                     break;
                 // Register *= operand.
                 case MC_MUL:
@@ -1696,7 +1700,7 @@ int ExecModelScript(Model *m) {
                         SetModelScriptReg(m, arg, GetModelScriptReg(m, arg) * (arg >> 5));
                         step = 1;
                     }
-                    m->mUnk_13c += step;
+                    m->mCommand += step;
                     break;
                 // Register &= operand.
                 case MC_AND:
@@ -1708,11 +1712,11 @@ int ExecModelScript(Model *m) {
                         SetModelScriptReg(m, arg, GetModelScriptReg(m, arg) & (arg >> 5));
                         step = 1;
                     }
-                    m->mUnk_13c += step;
+                    m->mCommand += step;
                     break;
                 // Compare a register with the operand: less flag if smaller, equal flag if equal.
                 case MC_COMPARE:
-                    m->mUnk_024 &= ~3;
+                    m->mFlags &= ~3;
                     if (mode == MM_REG) {
                         val = GetModelScriptReg(m, val);
                     } else if (mode == MM_BITS) {
@@ -1720,11 +1724,11 @@ int ExecModelScript(Model *m) {
                         step = 1;
                     }
                     if (GetModelScriptReg(m, arg) < val) {
-                        m->mUnk_024 |= 2;
+                        m->mFlags |= 2;
                     } else if (val == GetModelScriptReg(m, arg)) {
-                        m->mUnk_024 |= 1;
+                        m->mFlags |= 1;
                     }
-                    m->mUnk_13c += step;
+                    m->mCommand += step;
                     break;
                 // Register %= operand (unsigned).
                 case MC_MOD:
@@ -1733,19 +1737,19 @@ int ExecModelScript(Model *m) {
                     } else if (mode == MM_REG) {
                         SetModelScriptReg(m, arg, (u32) GetModelScriptReg(m, arg) % GetModelScriptReg(m, val));
                     }
-                    m->mUnk_13c += 2;
+                    m->mCommand += 2;
                     break;
                 // Set data_020c31dc.mUnk_3c.
                 case MC_SET_3C:
                     if (mode == MM_VALUE) {
                         data_020c31dc.mUnk_3c = val;
-                        m->mUnk_13c += 2;
+                        m->mCommand += 2;
                     } else if (mode == MM_REG) {
                         data_020c31dc.mUnk_3c = GetModelScriptReg(m, arg);
-                        m->mUnk_13c += 1;
+                        m->mCommand += 1;
                     } else if (mode == MM_BITS) {
                         data_020c31dc.mUnk_3c = ((arg & 0xf0) << 4) + (arg & 0xf);
-                        m->mUnk_13c += 1;
+                        m->mCommand += 1;
                     }
                     m->mUnk_172_0 = 1;
                     break;
@@ -1756,13 +1760,13 @@ int ExecModelScript(Model *m) {
                     void *entry;
                     if (mode == MM_VALUE) {
                         id = val;
-                        m->mUnk_13c += 2;
+                        m->mCommand += 2;
                     } else if (mode == MM_REG) {
                         id = GetModelScriptReg(m, arg);
-                        m->mUnk_13c += 1;
+                        m->mCommand += 1;
                     } else if (mode == MM_BITS) {
                         id = ((arg & 0xf0) << 4) + (arg & 0xf);
-                        m->mUnk_13c += 1;
+                        m->mCommand += 1;
                     }
                     // The test against -1 is always true: id is 16-bit.
                     if (id != -1) {
@@ -1784,13 +1788,13 @@ int ExecModelScript(Model *m) {
                 case MC_SET_3E:
                     if (mode == MM_VALUE) {
                         data_020c31dc.mUnk_3e = val;
-                        m->mUnk_13c += 2;
+                        m->mCommand += 2;
                     } else if (mode == MM_REG) {
                         data_020c31dc.mUnk_3e = GetModelScriptReg(m, arg);
-                        m->mUnk_13c += 1;
+                        m->mCommand += 1;
                     } else if (mode == MM_BITS) {
                         data_020c31dc.mUnk_3e = ((arg & 0xf0) << 4) + (arg & 0xf);
-                        m->mUnk_13c += 1;
+                        m->mCommand += 1;
                     }
                     data_020c31dc.mUnk_3c = 0xffff;
                     m->mUnk_172_0 = 1;
@@ -1798,8 +1802,8 @@ int ExecModelScript(Model *m) {
                     break;
                 // Set flag bit 2 from the argument.
                 case MC_FLAG:
-                    m->mUnk_024 = (m->mUnk_024 & ~4) | (arg << 2);
-                    m->mUnk_13c += 1;
+                    m->mFlags = (m->mFlags & ~4) | (arg << 2);
+                    m->mCommand += 1;
                     break;
                 // Set mUnk_148, mUnk_144 and mUnk_146, none of which is read in this build (mUnk_148 is only copied
                 // to mUnk_149, which nothing reads).
@@ -1810,35 +1814,37 @@ int ExecModelScript(Model *m) {
                         m->mUnk_148 = GetModelScriptReg(m, arg);
                     }
                     m->mUnk_144 = val;
-                    m->mUnk_146 = m->mUnk_13c[2];
-                    m->mUnk_13c += 3;
+                    m->mUnk_146 = m->mCommand[2];
+                    m->mCommand += 3;
                     break;
-                // Set event `arg` (target and key) and its bit in mUnk_130; index -1 uses entry 32 and sets flag bit 2.
+                // Set event `arg` (target and key) and its bit in mEventMask; index -1 uses entry 32 and sets flag
+                // bit 2.
                 case MC_EVENT:
                     if (arg == -1) {
-                        m->mUnk_024 |= 4;
+                        m->mFlags |= 4;
                         arg = 32;
                     } else {
-                        m->mUnk_130 |= 1 << arg;
+                        m->mEventMask |= 1 << arg;
                     }
-                    m->mUnk_028[arg].mUnk_0 = m->mUnk_13c + val;
-                    m->mUnk_028[arg].mUnk_4 = m->mUnk_13c[2];
-                    m->mUnk_13c += 3;
+                    m->mEvents[arg].mCommand = m->mCommand + val;
+                    m->mEvents[arg].mKey = m->mCommand[2];
+                    m->mCommand += 3;
                     break;
                 // Set the model id and start animation 0 of it.
                 case MC_MODEL:
                     if (mode == MM_REG) {
                         val = GetModelScriptReg(m, val);
                     }
-                    m->mUnk_170 = val;
+                    m->mId = val;
                     StartModelAnim(m, &slot, 0, arg & 0x7f, 0, 0);
                     slot++;
                     m->mUnk_172_11 = 1;
                     if (arg & 0x80) {
-                        m->mUnk_14c.mUnk_2 = (m->mUnk_152.mUnk_2 * m->mUnk_14c.mUnk_4) / m->mUnk_152.mUnk_4;
+                        m->mUnk_14c.mPlayFrames = (m->mUnk_152.mPlayFrames * m->mUnk_14c.mFramesPerAnimFrame) /
+                                                  m->mUnk_152.mFramesPerAnimFrame;
                         func_02026080(m);
                     }
-                    m->mUnk_13c += 2;
+                    m->mCommand += 2;
                     m->mUnk_172_14 = 0;
                     break;
                 // Start an animation.
@@ -1848,37 +1854,38 @@ int ExecModelScript(Model *m) {
                     }
                     StartModelAnim(m, &slot, val, arg & 0x7f, (arg >> 7) << 5, 0);
                     slot++;
-                    m->mUnk_13c += 2;
+                    m->mCommand += 2;
                     m->mUnk_172_14 = 0;
                     break;
-                // Clear mUnk_142, set bit `arg` of mUnk_134 and return 0.
+                // Clear mEventKey, set bit `arg` of mSignals and return 0.
                 case MC_SIGNAL:
-                    m->mUnk_142 = 0;
-                    m->mUnk_134 |= 1 << arg;
+                    m->mEventKey = 0;
+                    m->mSignals |= 1 << arg;
                     return 0;
                 // Advance the animation and return 1: with mUnk_172_14 set, clear it and step past, else set
                 // mUnk_172_9 and mUnk_172_7.
                 case MC_STEP:
                     if (m->mUnk_172_14 == 1) {
                         m->mUnk_172_14 = 0;
-                        m->mUnk_13c += 1;
+                        m->mCommand += 1;
                     } else {
                         m->mUnk_172_9 = 1;
                         m->mUnk_172_7 = 1;
                     }
                     func_020266a8(m, &slot);
                     return 1;
-                // Set mUnk_172_13; with mUnk_172_10 set, step past and copy the animation state, else go on as MC_WAIT.
+                // Set mHoldAtEnd; with mAnimEnded set, step past and copy the animation state, else go on as MC_WAIT.
                 case MC_WAIT_OR_IDLE:
-                    m->mUnk_172_13 = 1;
-                    if (m->mUnk_172_10) {
-                        m->mUnk_13c += 1;
+                    m->mHoldAtEnd = 1;
+                    if (m->mAnimEnded) {
+                        m->mCommand += 1;
                         func_0202635c(m, &slot);
                         break;
                     }
                     // fall through
-                // Stop for this frame (advance the animation; the command runs again) while the mask bits are set in
-                // mUnk_134 and clear in mUnk_138 and mUnk_172_14 is clear, or while mUnk_172_12 is set; else step past.
+                // Stop for this frame (advance the animation; the command runs again) while the mask bit is set in
+                // mSignals and clear in mBlockedSignals and mUnk_172_14 is clear, or while mUnk_172_12 is set; else
+                // step past.
                 case MC_WAIT: {
                     u32 mask;
                     if (mode == MM_VALUE) {
@@ -1886,9 +1893,10 @@ int ExecModelScript(Model *m) {
                     } else {
                         mask = 1 << GetModelScriptReg(m, arg);
                     }
-                    if ((mask != (m->mUnk_134 & mask & ~m->mUnk_138) || m->mUnk_172_14 == 1) && m->mUnk_172_12 == 0) {
+                    if ((mask != (m->mSignals & mask & ~m->mBlockedSignals) || m->mUnk_172_14 == 1) &&
+                        m->mUnk_172_12 == 0) {
                         m->mUnk_172_14 = 0;
-                        m->mUnk_13c += 1;
+                        m->mCommand += 1;
                         func_0202635c(m, &slot);
                     } else {
                         func_020266a8(m, &slot);
@@ -1913,7 +1921,7 @@ void ClearAnimTracks(void) {
 }
 
 void func_020271e0(Model *m) {
-    m->mUnk_14c.mUnk_0 = 0;
+    m->mUnk_14c.mId = 0;
 }
 
 void InitModel(void *obj, int id, int anim, int count, u32 script) {
@@ -1932,23 +1940,23 @@ void StartModel(void *obj, int id, int anim, int count, u32 script) {
 // Starts model `id` on `script` (or, without one, animation `anim`). A different or zero id clears the whole object
 // first unless mode is -1.
 void StartModelEx(Model *m, int id, int anim, int count, int mode, u32 script) {
-    if (m->mUnk_170 != id || id == 0) {
+    if (m->mId != id || id == 0) {
         if (mode != -1) {
             memset(m, 0, sizeof(Model));
         }
-        m->mUnk_170 = id;
+        m->mId = id;
         m->mUnk_172_6 = 1;
     } else {
         m->mUnk_172_6 = 0;
     }
     m->mUnk_172_12 = 0;
-    m->mUnk_13c = (s16 *) script;
-    m->mUnk_134 = 0;
-    m->mUnk_138 = 0;
+    m->mCommand = (s16 *) script;
+    m->mSignals = 0;
+    m->mBlockedSignals = 0;
     m->mUnk_148 = 0;
     m->mUnk_172_5 = 0;
     m->mUnk_172_0 = 0;
-    m->mUnk_175 = 0xff;
+    m->mNodeIndex = 0xff;
     m->mUnk_172_8 = 1;
     m->mUnk_172_11 = 0;
     // Clear the return position, the registers and the flags (everything before the events).
@@ -1961,7 +1969,7 @@ void StartModelEx(Model *m, int id, int anim, int count, int mode, u32 script) {
         s32 slot = 0;
         StartModelAnim(m, &slot, anim, count, 0, mode);
     }
-    m->mUnk_152.mUnk_0 = m->mUnk_14c.mUnk_0;
+    m->mUnk_152.mId = m->mUnk_14c.mId;
     m->mUnk_174 = 0;
     ClearAnimTracks();
 }
@@ -1970,13 +1978,13 @@ void UpdateAndDrawModel(void *obj, void *params, int flags) {
     Model *m = obj;
     VecFx32 pos;
     UpdateModelScript(m);
-    if (m->mUnk_170 != 0 && !(flags & 0x80)) {
-        DrawModelFileEx(m->mUnk_170, params, m, flags);
-        if (m->mUnk_175 != 0xff) {
-            GetPoseNodePos(&pos, m->mUnk_175);
-            m->mUnk_158.x = pos.x;
-            m->mUnk_158.y = pos.y;
-            m->mUnk_158.z = pos.z;
+    if (m->mId != 0 && !(flags & 0x80)) {
+        DrawModelFileEx(m->mId, params, m, flags);
+        if (m->mNodeIndex != 0xff) {
+            GetPoseNodePos(&pos, m->mNodeIndex);
+            m->mNodePos.x = pos.x;
+            m->mNodePos.y = pos.y;
+            m->mNodePos.z = pos.z;
         }
     } else {
         ClearAnimTracks();

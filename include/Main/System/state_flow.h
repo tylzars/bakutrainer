@@ -96,7 +96,7 @@ typedef struct Unk_020bfd40 {
     Model mModel;
     DrawParams mDraw;
     // Frames left: func_020186fc counts it down in state 4 and calls StartModeSlide(0, ...) at 0. Also the time
-    // func_0201168c draws; func_02018840 adds its signed time amounts to it.
+    // DrawModeScoreAndTime draws; AddMapObjectTimeOrScore adds its signed time amounts to it.
     s32 mEndTimer;
     u32 mScore;
 } Unk_020bfd40;

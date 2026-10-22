@@ -35,12 +35,12 @@ typedef struct BattleState {
     // out but it is still 1.
     s8 mKeptSide;
     // 60 while the side's pick is awaited; 59 after it, counted down while gBattleView.mModel[1] does not play
-    // (mUnk_170 0), and at 0 the next turn starts.
+    // (mId 0), and at 0 the next turn starts.
     u8 mEntryTimer;
     // Frames since the side's total changed, counted up to 18 while the change sprite shows; 0xff parks it past that.
     u8 mChangeFrames[2];
-    // Side whose mSubtracted eases toward mSubtractedTarget (0 or 1), with bit 0x80 once func_02007940 has run; -1:
-    // none.
+    // Side whose mSubtracted eases toward mSubtractedTarget (0 or 1), with bit 0x80 once SetSidesSubtracted has run;
+    // -1: none.
     s8 mSubtractedSide;
     s8 mUnk_1b;
 } BattleState;
@@ -58,27 +58,27 @@ extern StageRec gBattleSlotStages[3];
 
 void func_020071a8(void);
 void func_020071ac(void);
-void func_020071f8(void);
+void DrawConfirmButton(void);
 void SetupStageModels(int a);
 void DrawBattleModels(void);
-void func_02007370(void);
-void func_02007390(void);
+void SetCameraFromMapEntries0And1(void);
+void SetCameraFromMapEntries0And2(void);
 void SetCameraFromModel(void);
 void SetupBattleScreen(void);
 void UpdateBattleScreen(void);
 void LeaveBattleScreen(void);
-int func_02007758(void);
+int IsStageInfosOutClear(void);
 void LoadKindValues(void);
 int GetPercentOfBattleTotal(StageInfo *info);
 void SetupBattleSides(int slotIndex, int stageInfoIndex);
 int func_020078f8(void);
-void func_02007940(void);
+void SetSidesSubtracted(void);
 int GetBattleTotal(const StageInfo *info);
 int GetValuePlusKindValue(const StageInfo *info);
 int FindTableEntryIndexUnbounded(int id);
-void func_02007a1c(int a);
-void func_02007ab0(void);
-void func_02007abc(void);
+void StartBattleViewModel(int a);
+void StopBattleViewModel(void);
+void UpdateBattleViewModel(void);
 int GetTableEntryTotalDiff(int side, int row);
 void ApplyTableEntry(void);
 int ComparePickIndicesWithBestPair(void);
@@ -86,11 +86,11 @@ int FindBestSide1Entry(void);
 void SubtractHalfFromList(int which, int flag);
 void func_02007ffc(u16 *a, u16 *b);
 void DrawBattleStageInfo(StageInfo *info);
-void func_0200827c(void);
+void SetStateFlagTo1(void);
 void UpdateBattleCompare(void);
 int IsEntryPickDone(StageInfo *info, int mode);
-int func_02008920(int side);
-int func_02008950(int side);
+int GetEntryStartSharedModelIndex(int order);
+int GetEntryStartWaveId(int order);
 void UpdateBattleEntryPick(int side);
 void UpdateBattleStagePick(void);
 void UpdateBattleKindValues(void);

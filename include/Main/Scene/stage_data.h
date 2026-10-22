@@ -8,7 +8,7 @@
 typedef struct StageInfo {
     s16 mUnk_00;
     s16 mUnk_02;
-    // -9999 marks a record that is out (tested as > -5000 / < -5000). func_02014f98 adds to it and clamps it to
+    // -9999 marks a record that is out (tested as > -5000 / < -5000). AddValue adds to it and clamps it to
     // columns grade + 4 and grade + 5 of the stage's row of table 0xfd6.
     s16 mValue;
     s16 mKindValue;
@@ -36,6 +36,9 @@ typedef struct StageInfo {
     u8 mBattleX;
     u8 mBattleY;
     u8 mOthersHalfSumAdded;
+    // A random value 0..3 (func_02014ccc; func_02014cdc picks a different one). The panel compares it with
+    // data_020b6ee0.mUnk_a13d while the stage's mUnk_22e is 1. In panel states 2 and 5 the selected stage is drawn
+    // with sprite mUnk_1a + 0x42 (DrawStageSprite) while data_020b6ee0.mUnk_a148 is 0.
     u8 mUnk_1a;
     // Index in gStages; set only on the battle copies (gBattleSlotStages), -1 in gStageInfos.
     s8 mStageIndex;
@@ -47,15 +50,19 @@ typedef struct StageOffset {
     s32 y;
 } StageOffset;
 
+// A stage: its first 0x178 bytes are the stage's Model (the record is passed to InitModel and UpdateAndDrawModel).
 typedef struct StageRec {
     u8 mUnk_000[0x134];
-    u32 mUnk_134;
+    u32 mSignals;
     u8 mUnk_138[0x142 - 0x138];
-    u16 mUnk_142;
+    u16 mEventKey;
     u8 mUnk_144[0x158 - 0x144];
-    VecFx32 mUnk_158;
+    // The stage's position (mPos, or the draw position with the animation offset added), copied into the camera's
+    // mLookAtGoal by SetStageCameraFar / SetStageCameraNear. It is Model.mNodePos, which UpdateAndDrawModel leaves
+    // alone here: a stage's node index stays 0xff.
+    VecFx32 mLookAtPos;
     u8 mUnk_164[0x170 - 0x164];
-    u16 mUnk_170;
+    u16 mModelId;
     u8 mUnk_172[0x178 - 0x172];
     StageInfo mInfo;
     u8 mUnk_19e[2];
@@ -75,15 +82,21 @@ typedef struct StageRec {
     s32 mStoredOffsetX;
     // 0 when mStoredOffsetX/Z hold an offset from map entry 0 (StoreStageOffsets, the save reader), -1 when they hold
     // none (InitStage); state 10's set-up then starts the stage at entry 0 with mDistancePerFrame 0x6000.
-    s32 mUnk_1e8;
+    s32 mNoStoredOffset;
     s32 mStoredOffsetZ;
     s32 mScreenX;
     s32 mScreenY;
     StageOffset mSpriteOffsets[3];
-    VecFx32 mUnk_210;
-    float mUnk_21c;
+    // mPos at the last func_02016008 call that met no map object (type-0x14 objects do not count); meeting a type-0xf
+    // object puts the stage back there.
+    VecFx32 mPrevPos;
+    // Vertical speed, used with both signs: the panel's bounce (UpdatePanel) adds it to mPos.y and lowers it by 2000 a
+    // frame, while UpdateStageMotion subtracts it while the stage is above the ground and raises it by 5120 a frame, up
+    // to 51200.
+    float mPosYPerFrame;
     s32 mDistancePerFrame;
-    u16 mUnk_224;
+    // Angle of the camera around the stage (SetStageCameraFar / SetStageCameraNear); only ever 0 in this build.
+    u16 mCameraAngle;
     // Polygon group (10..15) the stage lies in, minus 10 (FindStagePolygonGroup); 99 = none. Compared with
     // mInfo.mKind.
     s8 mPolygonGroupIndex;

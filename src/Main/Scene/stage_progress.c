@@ -216,22 +216,22 @@ void UpdateNodeState(void) {
             if (GetStateFlag() == 1) {
                 if (IsReachedNodeSelected() == 1) {
                     data_020b6ee0.mNodeState = 0;
-                    if (func_02007758() == 0) {
+                    if (IsStageInfosOutClear() == 0) {
                         func_02014bf0();
-                        func_02014afc(data_020b6ee0.mSelectedNodeIndex, 3);
+                        ApplyBattleSlotFlagsAndSetNodeStages(data_020b6ee0.mSelectedNodeIndex, 3);
                         PushState(0x14);
                         PopState();
                     } else {
                         func_02014bf0();
-                        func_02014afc(data_020b6ee0.mSelectedNodeIndex, 1);
+                        ApplyBattleSlotFlagsAndSetNodeStages(data_020b6ee0.mSelectedNodeIndex, 1);
                         PushState(0x14);
                         PopState();
                     }
                 } else {
                     data_020b6ee0.mNodeState = 0;
-                    func_02007758();
+                    IsStageInfosOutClear();
                     func_02014bf0();
-                    func_02014afc(data_020b6ee0.mSelectedNodeIndex, 1);
+                    ApplyBattleSlotFlagsAndSetNodeStages(data_020b6ee0.mSelectedNodeIndex, 1);
                     PushState(0x14);
                     PopState();
                 }
@@ -254,7 +254,11 @@ void SetupNodeStageInfos(u32 node, int mode) {
     }
 }
 
-void func_02014afc(int node, int flags) {
+// With flags bit 0, applies the battle's slot flags to each slot's stage: BATTLE_SLOT_GRADE_UP raises the grade by
+// one, and a stage that was picked loses 10 percent when BATTLE_SLOT_KEPT is set, else 30. Then empties mNodeStages
+// and, with flags bit 1, refills it with the node's stages (node values 15..17 that are not -1), each found in the
+// stage list or added to it; the first one added becomes the selected stage when none is selected.
+void ApplyBattleSlotFlagsAndSetNodeStages(int node, int flags) {
     int i;
 
     if (flags & 1) {
@@ -262,7 +266,7 @@ void func_02014afc(int node, int flags) {
             StageRec *rec = GetSlotStage(i);
             if (rec != NULL) {
                 if (data_020b6ee0.mBattleSlotFlags[i] & BATTLE_SLOT_GRADE_UP) {
-                    func_020150a0(rec, 1);
+                    AddGrade(rec, 1);
                 }
                 if (!(data_020b6ee0.mBattleSlotFlags[i] & BATTLE_SLOT_NOT_PICKED)) {
                     if (data_020b6ee0.mBattleSlotFlags[i] & BATTLE_SLOT_KEPT) {
@@ -295,6 +299,7 @@ void func_02014afc(int node, int flags) {
     }
 }
 
+// Gives every stage a new random mInfo.mUnk_1a (func_02014ccc) and 10 percent more when it is not in a slot.
 void func_02014bf0(void) {
     int i;
     StageRec *rec;
@@ -329,10 +334,12 @@ void LoadStageInfo(StageInfo *info) {
     func_02014ccc(info);
 }
 
+// Sets mUnk_1a to a random value 0..3.
 void func_02014ccc(StageInfo *info) {
     info->mUnk_1a = NextRandom() & 3;
 }
 
+// Sets mUnk_1a to a random value 0..3 other than its current one (adds 1..3, modulo 4).
 void func_02014cdc(StageInfo *info) {
     u32 r = NextRandom() % 3;
     info->mUnk_1a = (info->mUnk_1a + 1 + r) & 3;
@@ -446,7 +453,7 @@ static void InitStage(int index, int id) {
     rec->mInfo.mStageId = id;
     LoadStageInfo(&rec->mInfo);
     PickTableEntries(&rec->mInfo);
-    rec->mStoredOffsetX = rec->mUnk_1e8 = rec->mStoredOffsetZ = -1;
+    rec->mStoredOffsetX = rec->mNoStoredOffset = rec->mStoredOffsetZ = -1;
 }
 
 static void InitStageInfo(int index, int id) {
@@ -512,7 +519,7 @@ int FindStage(int list, int id) {
     return i;
 }
 
-int func_02014f98(StageRec *rec, int delta) {
+int AddValue(StageRec *rec, int delta) {
     StageInfo *info = &rec->mInfo;
     int low;
     int high;
@@ -558,7 +565,7 @@ int AddPercent(StageRec *rec, int amount, int a, int b) {
     return 0;
 }
 
-int func_020150a0(StageRec *rec, int delta) {
+int AddGrade(StageRec *rec, int delta) {
     StageInfo *info = &rec->mInfo;
 
     info->mGrade += delta;
@@ -569,7 +576,7 @@ int func_020150a0(StageRec *rec, int delta) {
     return 0;
 }
 
-int func_020150c0(StageInfo *info) {
+int IsValueAtMax(StageInfo *info) {
     if (info->mValue >= GetFileValue(0xfd6, info->mGrade + (info->mStageId * 27 + 5))) {
         return 1;
     }

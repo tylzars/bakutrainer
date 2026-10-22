@@ -14,7 +14,8 @@ typedef struct Pos2 {
 
 // Extent of the playing field in 8 x 8 cells.
 typedef struct FieldInfo {
-    VecFx32 mUnk_00;
+    // Position of map entry id 2 (SetupFieldCameraAndInfo), from which mGridShiftDistance is measured.
+    VecFx32 mMapEntry2Pos;
     VecFx32 mUnk_0c;
     s32 mScrolledDistance;
     s32 mGridStartX;
@@ -81,8 +82,8 @@ typedef struct FieldObjects {
     // StartDriveMinusX); cleared, while no drive runs, once the offset is back at or above that bound.
     s32 mBelowMinX;
     s32 mAboveMaxX;
-    // In units of 512: the x / z distance from mScrollOrigin to mInfo.mUnk_00. The grid groups shift each time the
-    // scroll passes it.
+    // In units of 512: the x / z distance from mScrollOrigin to mInfo.mMapEntry2Pos. The grid groups shift each time
+    // the scroll passes it.
     s32 mGridShiftDistance;
     s32 mScrollSpeed;
     VecFx32 mScrollOrigin;

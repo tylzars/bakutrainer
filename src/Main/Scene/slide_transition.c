@@ -415,7 +415,7 @@ void ResetTitleReturnState(void) {
 }
 
 void SetupTitleImageAndModel(void) {
-    func_0200c5d8(0, 0, 0x25e, 0x100, 0x10, 1, 2);
+    ResetAndSetupGraphics(0, 0, 0x25e, 0x100, 0x10, 1, 2);
     func_02024208();
     StartModel(&gTitleScreen.mModel, 0x25d, 0x25c, 2, 0);
 }
@@ -432,11 +432,11 @@ void SetupTitleScreen(void) {
     s->mSlideDirection = -1;
     func_0200dd90();
     if (s->mReturnState < 0) {
-        s->mUnk_1e4 = 0;
-        s->mUnk_1e0 = 0x10000;
+        s->mSpritePairDone = 0;
+        s->mSpritePairOffset = 0x10000;
     } else {
-        s->mUnk_1e4 = 1;
-        s->mUnk_1e0 = 0;
+        s->mSpritePairDone = 1;
+        s->mSpritePairOffset = 0;
     }
     s->mReturnState = -1;
     data_020b6ee0.mUnk_a91a = 0;
@@ -456,10 +456,13 @@ void SetupTitleScreen(void) {
     }
 }
 
-static const s16 data_0204e1e4[1] = {0};
-static const u32 data_0204e1ec[1] = {0xdd1};
-static const u32 data_0204e1e8[1] = {0xdce};
-static const s16 data_0204e1f0[4] = {140, 70, -22, 0};
+// Title state 4's language buttons, one in this build; that state is never reached (see mSelectedLanguage). Per
+// button the index into mSlideOffsets less 2 and the button sprite; the language sprite (only the first entry is
+// read); the button's x and y, the language sprite's x offset from it and a value nothing reads.
+static const s16 sLanguageSlideIndices[1] = {0};
+static const u32 sLanguageSpriteIds[1] = {0xdd1};
+static const u32 sLanguageButtonSpriteIds[1] = {0xdce};
+static const s16 sLanguageButtonPos[4] = {140, 70, -22, 0};
 
 typedef struct MicRange {
     u32 mMin;
@@ -513,19 +516,19 @@ void UpdateTitleScreen(void) {
     func_020242a8(&params, 0xff, 0, 0, 0x1000, 0x8000, -1, 0x100);
     params.mUnk_43_3 = 1;
     UpdateModelScript(&s->mModel);
-    DrawModelFileEx(s->mModel.mUnk_170, &params, &s->mModel, 0);
-    if (s->mUnk_1e4 == 0) {
-        if (s->mUnk_1e0 >= 0) {
-            s32 x = s->mUnk_1e0 - 0x1900;
+    DrawModelFileEx(s->mModel.mId, &params, &s->mModel, 0);
+    if (s->mSpritePairDone == 0) {
+        if (s->mSpritePairOffset >= 0) {
+            s32 x = s->mSpritePairOffset - 0x1900;
             if (x < 0) {
                 x = 0;
             }
-            s->mUnk_1e0 = x;
-            DrawSprite(0xdfa, 0x59 - (s->mUnk_1e0 >> 8), 0x35, 0x96, 2);
-            DrawSprite(0xdfb, (s->mUnk_1e0 >> 8) + 0x59, 0x35, 0x8c, 2);
-            if (s->mUnk_1e0 == 0) {
+            s->mSpritePairOffset = x;
+            DrawSprite(0xdfa, 0x59 - (s->mSpritePairOffset >> 8), 0x35, 0x96, 2);
+            DrawSprite(0xdfb, (s->mSpritePairOffset >> 8) + 0x59, 0x35, 0x8c, 2);
+            if (s->mSpritePairOffset == 0) {
                 PlayWaveKeepAlive(0xe7, 100, 0, 0x40, 0xffff, 0);
-                s->mUnk_1e0 = -1;
+                s->mSpritePairOffset = -1;
                 sShakeTimer = 12;
                 return;
             }
@@ -543,7 +546,7 @@ void UpdateTitleScreen(void) {
             DrawSprite(0xdfa, sShakeX + 0x59, d + 0x35, 0x96, 2);
             DrawSprite(0xdfb, sShakeX + 0x59, sShakeY + 0x35, 0x8c, 2);
             if (--sShakeTimer == 0) {
-                s->mUnk_1e4 = 1;
+                s->mSpritePairDone = 1;
                 return;
             }
         }
@@ -685,12 +688,12 @@ void UpdateTitleScreen(void) {
         case 4:
             DrawSprite(0xe22, 0x2f, (gTitleScreen.mSlideOffsets[0] >> 8) + 0x11, 0x8c, 1);
             DrawText(0x2f, (gTitleScreen.mSlideOffsets[0] >> 8) + 0x11, data_0201a61c, GetText(0xc7), 0, 200, 16, 1);
-            pos = data_0204e1f0;
-            id = data_0204e1ec;
+            pos = sLanguageButtonPos;
+            id = sLanguageSpriteIds;
             for (i = 0; i < 1; i++) {
-                idx = data_0204e1e4[i] + 2;
-                DrawButton((gTitleScreen.mSlideOffsets[idx] >> 8) + data_0204e1f0[0], data_0204e1f0[1], 0x705 + i,
-                           data_0204e1e8[i], 0, 0, 0x167, 1);
+                idx = sLanguageSlideIndices[i] + 2;
+                DrawButton((gTitleScreen.mSlideOffsets[idx] >> 8) + sLanguageButtonPos[0], sLanguageButtonPos[1],
+                           0x705 + i, sLanguageButtonSpriteIds[i], 0, 0, 0x167, 1);
                 if (gTitleScreen.mSelectedLanguage == i) {
                     DrawSprite(0xdd0, pos[0] + (gTitleScreen.mSlideOffsets[idx] >> 8), pos[1], 0xfa, 1);
                 }

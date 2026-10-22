@@ -51,7 +51,7 @@ void SetupResultScreen(void) {
     if (stageIndex < 0) {
         stageIndex = 0;
     }
-    func_0200c5d8(0, imageId, gStages[stageIndex].mInfo.mStageId + 0xdb3, 256, 16, 1, 2);
+    ResetAndSetupGraphics(0, imageId, gStages[stageIndex].mInfo.mStageId + 0xdb3, 256, 16, 1, 2);
     func_02024208();
     gResultState.mState = RESULT_STATE_MODEL;
     gResultState.mPendingState = -1;
@@ -202,10 +202,10 @@ void DrawResultScreenAndHandleButtons(void) {
             UpdateSprite(&gResultState.mUnk_68);
             DrawSprite(gResultState.mUnk_68.mUnk_04, 57, 103, 150, 2);
         }
-        func_02013d48(&rec->mInfo, tableEntryId, gResultState.mEntryCursor == 5, 0x505, 57,
-                      (gResultState.mSlideOffsets[2] >> 8) + 103, 2, 0);
+        DrawTableEntryButton(&rec->mInfo, tableEntryId, gResultState.mEntryCursor == 5, 0x505, 57,
+                             (gResultState.mSlideOffsets[2] >> 8) + 103, 2, 0);
         if (gResultState.mEntryCursor == 5) {
-            func_02013dc8(&rec->mInfo, tableEntryId, 1, 0);
+            DrawTableEntryInfo(&rec->mInfo, tableEntryId, 1, 0);
         }
         if (TestButton(0x80000000, 0x505) && ready) {
             gResultState.mEntryCursor = 5;
@@ -244,7 +244,8 @@ void DrawResultScreenAndHandleButtons(void) {
     DrawSprite(rec->mInfo.mStageId + 0x1089, (gResultState.mSlideOffsets[1] >> 8) + 40, 45, gSystemState.mUnk_308 - 4,
                2);
     DrawSprite(0x1088, (gResultState.mSlideOffsets[1] >> 8) + 40, 45, gSystemState.mUnk_308 - 2, 2);
-    func_02013f74(gResultState.mStageIndex, &gResultState.mEntryCursor, 168, 103, 2, (ready == 1 ? 0 : 4) + 2);
+    DrawTableEntryRowAndHandleButtons(gResultState.mStageIndex, &gResultState.mEntryCursor, 168, 103, 2,
+                                      (ready == 1 ? 0 : 4) + 2);
     gResultState.mPrevEntryDecided = gResultState.mEntryDecided;
 }
 
@@ -258,7 +259,8 @@ void UpdateResultScreen(void) {
                 gResultState.mState = gResultState.mPendingState;
                 gResultState.mPendingState = -1;
                 func_020102f8();
-                func_0200c5d8(1, gStages[gResultState.mStageIndex].mInfo.mStageId + 0xdb3, 456, 128, 16, 1, 130);
+                ResetAndSetupGraphics(1, gStages[gResultState.mStageIndex].mInfo.mStageId + 0xdb3, 456, 128, 16, 1,
+                                      130);
                 gResultState.mSlideOffsets[0] = 1 << 16;
                 gResultState.mSlideOffsets[1] = -0x8000;
                 gResultState.mSlideOffsets[2] = -0x8000 << 2;
@@ -304,7 +306,7 @@ void UpdateResultScreen(void) {
                     gResultRemainder.mValueGainRemainder += old - prev;
                     whole = gResultRemainder.mValueGainRemainder >> 8;
                     if (whole != 0) {
-                        if (func_02014f98(&gStages[gResultState.mStageIndex], whole)) {
+                        if (AddValue(&gStages[gResultState.mStageIndex], whole)) {
                             gResultState.mValueGain = 0;
                         }
                         gResultRemainder.mValueGainRemainder -= gResultRemainder.mValueGainRemainder & ~0xff;
@@ -333,7 +335,7 @@ void UpdateResultScreen(void) {
                         gResultRemainder.mNewBestValueGainRemainder += old - prev;
                         whole = gResultRemainder.mNewBestValueGainRemainder >> 8;
                         if (whole != 0) {
-                            if (func_02014f98(&gStages[gResultState.mStageIndex], whole)) {
+                            if (AddValue(&gStages[gResultState.mStageIndex], whole)) {
                                 gResultState.mNewBestValueGain = 0;
                             }
                             gResultRemainder.mNewBestValueGainRemainder -=

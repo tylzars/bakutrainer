@@ -113,8 +113,8 @@ const StateFunc gStateLeaveFuncs[STATE_COUNT] = {
     LeaveResultScreen,
     LeaveBattleScreen,
     func_0200a3f4,
-    func_02014184,
-    func_0201438c,
+    LeaveSharedModelViewer,
+    LeaveBattleModelViewer,
     LeaveSphereModel,
     LeavePageViewer,
 };
@@ -140,8 +140,8 @@ const StateFunc gStateEnterFuncs[STATE_COUNT] = {
     SetupResultScreen,
     SetupBattleScreen,
     func_0200a384,
-    func_020140d4,
-    func_02014190,
+    SetupSharedModelViewer,
+    SetupBattleModelViewer,
     SetupSphereModel,
     SetupPageViewer,
 };
@@ -167,8 +167,8 @@ const StateFunc gStateUpdateFuncs[STATE_COUNT] = {
     UpdateResultScreen,
     UpdateBattleScreen,
     func_0200a3fc,
-    func_02014124,
-    func_02014260,
+    UpdateSharedModelViewer,
+    UpdateBattleModelViewer,
     UpdateSphereModel,
     UpdatePageViewer,
 };
@@ -1006,7 +1006,7 @@ int ReadSaveSlot(u32 slot) {
             if (rec->mStageWritten[i] == 1) {
                 stage = &gStages[AddStage(0, i)];
                 stage->mStoredOffsetX = (rec->mStoredOffsetXStageUnits[i] - 0x100) * STAGE_UNIT;
-                stage->mUnk_1e8 = 0;
+                stage->mNoStoredOffset = 0;
                 stage->mStoredOffsetZ = (rec->mStoredOffsetZStageUnits[i] - 0x100) * STAGE_UNIT;
                 stage->mInfo.mPercent = rec->mPercent[i];
                 stage->mInfo.mValue = rec->mValue[i];
@@ -1403,7 +1403,7 @@ void LeaveStateMenu(void) {
 }
 
 void SetupSphereModel(void) {
-    func_0200c5d8(0, 0xdaa, 0xdaa, 0x100, 0x10, 0x82, 2);
+    ResetAndSetupGraphics(0, 0xdaa, 0xdaa, 0x100, 0x10, 0x82, 2);
     func_02024208();
     gSphereModel.mSphereIndex = 0;
     gSphereModel.mAngle = 0x8000;
@@ -1415,9 +1415,9 @@ void UpdateSphereModel(void) {
     int idx;
     DrawFormattedTextOnLayer1(8, 0xb2, "sphere_%.2d.imd", gSphereModel.mSphereIndex);
     if (gSystemState.mKeysDown & 8) {
-        gSphereModel.mModel.mUnk_170 = gSphereModel.mSphereIndex * 6 + 0xfdb;
+        gSphereModel.mModel.mId = gSphereModel.mSphereIndex * 6 + 0xfdb;
     } else {
-        gSphereModel.mModel.mUnk_170 = gSphereModel.mSphereIndex * 6 + 0xfd8;
+        gSphereModel.mModel.mId = gSphereModel.mSphereIndex * 6 + 0xfd8;
     }
     func_02024368(&gSphereModel.mModel, 0x80, 0x60, 0x80 << 10, gSphereModel.mAngle, 0);
     PlayObjectSe(&gSphereModel.mModel);
@@ -1428,7 +1428,7 @@ void UpdateSphereModel(void) {
     }
     if ((gSystemState.mKeysPressed & 1) || (gSystemState.mKeysPressed & 2) || (gSystemState.mKeysPressed & 0x400) ||
         (gSystemState.mKeysPressed & 0x800)) {
-        gSphereModel.mModel.mUnk_134 |= gSphereModel.mUnk_180 != 0 ? 2 : 1;
+        gSphereModel.mModel.mSignals |= gSphereModel.mUnk_180 != 0 ? 2 : 1;
         gSphereModel.mUnk_180 = gSphereModel.mUnk_180 == 0 ? 1 : 0;
     }
     if (gSystemState.mKeysPressed & 0x200) {

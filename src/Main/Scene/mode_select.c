@@ -61,7 +61,7 @@ void SelectMode(int mode) {
 }
 
 void SetupModeSelect(void) {
-    func_0200c5d8(0, 0x10d1, gStages[data_020b6ee0.mSelectedStageIndex].mInfo.mStageId + 0xdb3, 32, 16, 130, 2);
+    ResetAndSetupGraphics(0, 0x10d1, gStages[data_020b6ee0.mSelectedStageIndex].mInfo.mStageId + 0xdb3, 32, 16, 130, 2);
     func_02024208();
     if (gKeepSelectedMode == 0) {
         SelectMode(4);

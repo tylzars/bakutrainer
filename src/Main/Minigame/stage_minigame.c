@@ -30,11 +30,11 @@ ParticleGame gParticleGame;
 
 void func_0200a384(void) {
     Unk_02099774 *sel = &data_02099770.mIn;
-    func_0200c5d8(1, 0, 0x1c8, 0x100, 16, 0, 130);
+    ResetAndSetupGraphics(1, 0, 0x1c8, 0x100, 16, 0, 130);
     func_02024208();
     func_0200a5cc(0);
     data_02099770.mIn.mUnk_14 = 0;
-    data_02099770.mIn.mUnk_00 = func_02007758();
+    data_02099770.mIn.mUnk_00 = IsStageInfosOutClear();
     data_02099770.mIn.mUnk_20 = -1;
     data_02099770.mIn.mUnk_24 = 0;
     SetupSharedModel(data_02099770.mIn.mUnk_00 ? 11 : 0, 0);
@@ -106,7 +106,7 @@ void func_0200a3fc(void) {
             }
         }
     } else {
-        if (func_02007758() == 0) {
+        if (IsStageInfosOutClear() == 0) {
             if (IsReachedNodeSelected() == 1) {
                 int r = GetNodeValue(data_020b6ee0.mSelectedNodeIndex, 4);
                 if (data_020b6ee0.mReachedNodeIndex == 24) {
@@ -292,7 +292,7 @@ void func_0200aa2c(Model *obj, u32 a, u32 b, s32 c, u16 d, s32 e) {
     DrawParams params;
     func_0200a99c(&params, a, b, 0, c, d, 4, 255, e);
     UpdateModelScript(obj);
-    DrawModelFileEx(obj->mUnk_170, &params, obj, e);
+    DrawModelFileEx(obj->mId, &params, obj, e);
 }
 
 void func_0200aa68(u16 id, u32 a, u32 b, u32 c, s32 d, u16 e, u8 f, s32 g) {
@@ -613,7 +613,7 @@ void SetupParticleGame(void) {
             OS_Terminate();
         }
     }
-    func_0200c5d8(0, 0, gParticleGame.mInfo.mStageId + 0xdb3, 0x100, 16, 1, 130);
+    ResetAndSetupGraphics(0, 0, gParticleGame.mInfo.mStageId + 0xdb3, 0x100, 16, 1, 130);
     func_02024208();
     RequestTrack(2, 0x4c);
     gParticleGame.mAngle = 0;
@@ -664,8 +664,8 @@ void SetupParticleGame(void) {
 }
 
 void DrawParticleGame(void) {
-    func_0201168c(data_020b6ee0.mSelectedStageIndex, gParticleGame.mScore, gModeSelectState.mScoreThreshold,
-                  gParticleGame.mEndTimer, 2);
+    DrawModeScoreAndTime(data_020b6ee0.mSelectedStageIndex, gParticleGame.mScore, gModeSelectState.mScoreThreshold,
+                         gParticleGame.mEndTimer, 2);
     func_0200aa68(gParticleGame.mInfo.mKind + 0xd28, 256, 0, 0x1000, 0x1000, 0, 255, 256);
     func_0200aa68(gParticleGame.mInfo.mStageId + 0xd31, gParticleGame.mX >> 8, gParticleGame.mY >> 8, 0, 0x6000,
                   gParticleGame.mAngle, 255, 0);

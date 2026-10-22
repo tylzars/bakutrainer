@@ -47,16 +47,16 @@ typedef struct PromptWave {
 } PromptWave;
 
 // Font list of the script text (eight entries, all the first font record).
-extern const struct FontRange *data_02063988[8];
+extern const struct FontRange *gScriptFonts[8];
 extern PromptSprite gPromptSprite;
 extern LangMenu gLangMenu;
 extern const PromptSpriteDef gPromptSpriteDefs[];
 extern const PromptWave gPromptWaves[];
-extern const u16 data_0204e208[1];
-extern const u16 data_0204e20c[1];
-extern const u16 data_0204e210[1];
+extern const u16 gScriptSoundIds[1];
+extern const u16 gScriptImageIds[1];
+extern const u16 gScriptTrackFileIds[1];
 extern const u32 data_0204e214[1];
-extern const u16 data_0204e2c8[86];
+extern const u16 gScriptSpriteIds[86];
 
 void SetupPrompt(void);
 int DrawPromptSprite(void);
@@ -68,10 +68,10 @@ void HandlePromptEvents(void);
 void SetupLangMenu(void);
 void LeaveLangMenu(void);
 void UpdateLangMenu(void);
-void SetupSharedModel(u32 a, int b);
+void SetupSharedModel(u32 index, int loop);
 void DrawSharedModel(void);
 int IsSharedModelDone(void);
-u16 GetSharedModelFrameIndex(void);
+u16 GetSharedModelPlayFrames(void);
 int CountSharedModels(void);
 int GetDefaultLanguage(void);
 

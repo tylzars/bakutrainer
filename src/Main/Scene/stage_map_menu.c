@@ -26,9 +26,10 @@
 #include <Main/Map/map_floor.h>
 #include <Main/Graphics/script_data.h>
 
-// data_020c180c before data_020c1800: the compiler's size sort then leaves the two in address order.
-VecFx32 data_020c180c;
-VecFx32 data_020c1800;
+// gMapMenuLookAt is defined before gMapMenuCameraPos: the compiler's size sort then places gMapMenuCameraPos at the
+// lower address, as in the original.
+VecFx32 gMapMenuLookAt;
+VecFx32 gMapMenuCameraPos;
 s32 gRecapFrameIndex;
 
 void UpdateMapMenu(void) {
@@ -41,7 +42,7 @@ void UpdateMapMenu(void) {
     MapMenu *p = &data_020b6ee0.mMapMenu;
     Unk_020c1454 *q = &data_020b6ee0.mUnk_a574;
 
-    UpdateMapCursorAndCamera(&data_020c180c, &data_020c1800);
+    UpdateMapCursorAndCamera(&gMapMenuLookAt, &gMapMenuCameraPos);
     func_02033614(gMapState.mCamera.mLookAt.x, gMapState.mCamera.mLookAt.z);
     prevSel = data_020b6ee0.mSelectedNodeIndex;
     data_020b6ee0.mSelectedNodeIndex = -1;

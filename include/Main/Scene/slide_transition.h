@@ -21,9 +21,7 @@ typedef struct SaveSlotProgress {
 #define TITLE_SLIDE_STATE_IN_PLACE 1
 #define TITLE_SLIDE_STATE_OUT 2
 
-// The title screen (game state 1). mUnk_1e0 is the offset of the opening sprite pair 0xdfa / 0xdfb: 0x10000 at set-up,
-// 0x1900 less each frame, -1 once the two meet. mUnk_1e4 is 0 while that opening and the shake after it run and 1
-// afterwards (at once when the state is entered with a return state); the slide and the buttons run only at 1.
+// The title screen (game state 1).
 typedef struct TitleScreen {
     SaveSlotProgress mSaveSlots[3];
     u32 mState;
@@ -46,8 +44,12 @@ typedef struct TitleScreen {
     // -1 or 1 (RequestTitleState's b): the direction of the slide-out, and negated, the side the next state's offsets
     // start from. State 1's slide-out ignores it.
     s32 mSlideDirection;
-    s32 mUnk_1e0;
-    s32 mUnk_1e4;
+    // Distance of the opening sprites 0xdfa / 0xdfb from x 0x59, in 1/256 pixel: 0x10000 at set-up (0 with a return
+    // state), 0x1900 less each frame, -1 once the two meet and shake.
+    s32 mSpritePairOffset;
+    // 0 while that opening and the shake after it run, 1 afterwards (at once when the state is entered with a return
+    // state); the slide and the buttons run only at 1.
+    s32 mSpritePairDone;
 } TitleScreen;
 
 extern TitleScreen gTitleScreen;

@@ -23,7 +23,8 @@ typedef struct PopupSlot {
     // Counts down in POPUP_STATE_DISAPPEAR; HandlePopupTouch also sets it to 30 for POPUP_STATE_TOUCHED, which counts
     // it down the same way.
     s32 mDisappearTimer;
-    s32 mUnk_1c;
+    // Set by StartPopup to the scene's amount for the kind (kind 3 leaves it); never read in this build.
+    s32 mAmount;
     s32 mState;
     // Grid cell (3 across) the popup is drawn in; both StartPopup calls pass the slot's own index, so it always equals
     // the slot's position in mSlots.
@@ -44,14 +45,14 @@ typedef struct Scene {
     StageInfo mStage;
     u8 mUnk_19e[0x230 - 0x19e];
     Model mUnk_230;
-    DrawParams mUnk_3a8;
+    DrawParams mDraw;
     Model mUnk_3ec;
     u8 mUnk_564[0x5a8 - 0x564];
     VecFx32 mBasePos;
-    VecFx32 mUnk_5b4;
-    VecFx32 mUnk_5c0;
-    VecFx32 mUnk_5cc;
-    VecFx32 mUnk_5d8;
+    VecFx32 mMapEntry1Pos;
+    VecFx32 mMapEntry0Pos;
+    VecFx32 mMapEntry2Pos;
+    VecFx32 mMapEntry4Pos;
     VecFx32 mShakeTarget;
     VecFx32 mShakeOffset;
     VecFx32 mShakePerFrame;
@@ -59,33 +60,37 @@ typedef struct Scene {
     s32 mShakeTimer;
     u32 mScore;
     s32 mEndTimerMax;
-    // Counts down in SCENE_STATE_RUN; at 0 the scene state becomes SCENE_STATE_END. Also the time func_0201168c draws,
-    // raised by mUnk_65c (up to mEndTimerMax) when a kind-1 popup is touched, and its ratio to mEndTimerMax places the
-    // camera points (UpdateSceneCamera).
+    // Counts down in SCENE_STATE_RUN; at 0 the scene state becomes SCENE_STATE_END. Also the time DrawModeScoreAndTime
+    // draws, raised by mKind1Amount (up to mEndTimerMax) when a kind-1 popup is touched, and its ratio to mEndTimerMax
+    // places the camera points (UpdateSceneCamera).
     s32 mEndTimer;
-    // Row of table 0xd64: advanced by func_0200ce24 every mRowSeconds seconds, stepped back by AddPopups while the
+    // Row of table 0xd64: advanced by AdvancePopupRow every mRowSeconds seconds, stepped back by AddPopups while the
     // row's popup count is 0.
     s32 mPopupRow;
     s32 mRowPopupCount;
-    s32 mUnk_624;
-    s32 mUnk_628;
-    s32 mUnk_62c;
+    // From table 0xd63; a touched kind-3 popup counts it down, and at 0 the scene goes to SCENE_STATE_POPUPS_ONLY.
+    s32 mKind3TouchesRemaining;
+    // AddPopups starts a kind-1 popup first when mTouchCount is more than this.
+    s32 mKind1TouchThreshold;
+    // Popups touched since the last kind-3 touch or the last kind-1 popup AddPopups started (both reset it to 0).
+    s32 mTouchCount;
     u32 mScoreThreshold;
     s32 mPopupTimer;
     s32 mPopupIntervalMs;
-    s32 mUnk_63c;
+    s32 mPopupIntervalMsPerRow;
     s32 mPopupIntervalMinMs;
     s32 mPopupShowMs;
-    s32 mUnk_648;
+    s32 mPopupShowMsPerRow;
     s32 mPopupShowMinMs;
     s32 mRowSeconds;
     s32 mRowTimer;
-    s32 mUnk_658;
-    s32 mUnk_65c;
-    s32 mUnk_660;
+    // What a touched popup of the kind adds: score for kinds 2 and 0, frames of mEndTimer for kind 1.
+    s32 mKind2Amount;
+    s32 mKind1Amount;
+    s32 mKind0Amount;
     s32 mUnk_664;
     PopupSlot mSlots[POPUP_SLOT_COUNT];
-    // The amount ShowNumber was last given (mUnk_658 or mUnk_660, when a popup of a kind other than 1 and 3 is
+    // The amount ShowNumber was last given (mKind2Amount or mKind0Amount, when a popup of a kind other than 1 and 3 is
     // touched); DrawNumber draws nothing while it is 0.
     s32 mNumber;
     u16 mNumberLevel;
@@ -94,8 +99,8 @@ typedef struct Scene {
 } Scene;
 
 extern Scene *gScene;
-extern const u16 data_0204e1c0[];
-extern const s32 data_0204e1cc[][2];
+extern const u16 gSceneMapIds[];
+extern const s32 gKind3TouchPositions[][2];
 
 void GetMapEntryPos(int index, VecFx32 *out);
 void StartShake(int ms);
@@ -105,8 +110,8 @@ void SetupScene(void);
 void UpdateScene(void);
 void LeaveScene(void);
 void DrawScene(void);
-void func_0200cdc4(void);
-void func_0200ce24(void);
+void DrawKind3Touches(void);
+void AdvancePopupRow(void);
 void AddPopups(void);
 void StartPopup(int slot, int type, int index);
 void UpdatePopups(void);

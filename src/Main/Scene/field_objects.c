@@ -20,8 +20,9 @@
 #include <Main/Graphics/script_data.h>
 #include <Main/System/state_flow.h>
 
-static const u16 data_0204e138[6] = {0xd67, 0xd6f, 0xd77, 0xd7f, 0xd87, 0xd8f};
-static const u32 data_0204e144[5] = {0, 0xd97, 0xd9b, 0xd9d, 0xd9e};
+static const u16 sFieldMapIds[6] = {0xd67, 0xd6f, 0xd77, 0xd7f, 0xd87, 0xd8f};
+// Model file per FieldObject kind, drawn for kinds 1 and 4 when mType is not 0; entries 0, 2 and 3 are never read.
+static const u32 sFieldObjectModelIds[5] = {0, 0xd97, 0xd9b, 0xd9d, 0xd9e};
 
 FieldObjects gFieldObjects;
 
@@ -59,7 +60,7 @@ void DrawFieldObjects(void) {
                         break;
                     case 1:
                         if (p->mType != 0) {
-                            DrawModelFile(data_0204e144[p->mKind], &p->mPosX, 0);
+                            DrawModelFile(sFieldObjectModelIds[p->mKind], &p->mPosX, 0);
                         } else {
                             UpdateAndDrawModel(p->mModel, &p->mPosX, 0);
                         }
@@ -69,7 +70,7 @@ void DrawFieldObjects(void) {
                         break;
                     case 4:
                         if (p->mType != 0) {
-                            DrawModelFile(data_0204e144[p->mKind], &p->mPosX, 0);
+                            DrawModelFile(sFieldObjectModelIds[p->mKind], &p->mPosX, 0);
                         }
                         break;
                 }
@@ -330,9 +331,9 @@ void SetupFieldCameraAndInfo(void) {
     if (entry == NULL) {
         OS_Terminate();
     }
-    gFieldObjects.mInfo.mUnk_00.x = GetMapEntryX(entry);
-    gFieldObjects.mInfo.mUnk_00.y = GetMapEntryY(entry);
-    gFieldObjects.mInfo.mUnk_00.z = GetMapEntryZ(entry);
+    gFieldObjects.mInfo.mMapEntry2Pos.x = GetMapEntryX(entry);
+    gFieldObjects.mInfo.mMapEntry2Pos.y = GetMapEntryY(entry);
+    gFieldObjects.mInfo.mMapEntry2Pos.z = GetMapEntryZ(entry);
     gFieldObjects.mInfo.mUnk_0c.x = gMapState.mCamera.mUnk_9c.mUnk_204.x - gMapState.mCamera.mUnk_9c.mUnk_228.x;
     gFieldObjects.mInfo.mUnk_0c.y = gMapState.mCamera.mUnk_9c.mUnk_204.y - gMapState.mCamera.mUnk_9c.mUnk_228.y;
     gFieldObjects.mInfo.mUnk_0c.z = gMapState.mCamera.mUnk_9c.mUnk_204.z - gMapState.mCamera.mUnk_9c.mUnk_228.z;
@@ -408,17 +409,17 @@ void SetupField(void) {
     if (ok == 0) {
         OS_Terminate();
     }
-    func_0200c5d8(0, 0, 0xdb3 + gFieldObjects.mStage.mStageId, 0x100, 16, 1, 0x82);
+    ResetAndSetupGraphics(0, 0, 0xdb3 + gFieldObjects.mStage.mStageId, 0x100, 16, 1, 0x82);
     func_02024208();
     RequestTrack(2, 0x4c);
-    func_0200dc08(data_0204e138[gFieldObjects.mStage.mKind], &v[4], &v[3], &v[2], &v[1], &v[0], NULL);
+    func_0200dc08(sFieldMapIds[gFieldObjects.mStage.mKind], &v[4], &v[3], &v[2], &v[1], &v[0], NULL);
     SetupMap(v[4], v[2], v[3], 0, v[1], v[0]);
     UpdateSystemAndWait();
     SetupFieldCameraAndInfo();
     G3X_SetClearColor(0x7fff, 8, 0x7fff, 0, 0);
     {
-        s64 dx = (gFieldObjects.mInfo.mUnk_00.x - gFieldObjects.mScrollOrigin.x) / 512;
-        s64 dz = (gFieldObjects.mInfo.mUnk_00.z - gFieldObjects.mScrollOrigin.z) / 512;
+        s64 dx = (gFieldObjects.mInfo.mMapEntry2Pos.x - gFieldObjects.mScrollOrigin.x) / 512;
+        s64 dz = (gFieldObjects.mInfo.mMapEntry2Pos.z - gFieldObjects.mScrollOrigin.z) / 512;
         gFieldObjects.mGridShiftDistance = SqrtU64(dx * dx + dz * dz);
     }
     InitModel(&gFieldObjects.mStageModel, 0, 0, 0, data_0201ab04[gFieldObjects.mStage.mStageId]);
@@ -480,8 +481,8 @@ void SetupField(void) {
 }
 
 void DrawField(void) {
-    func_0201168c(data_020b6ee0.mSelectedStageIndex, gFieldObjects.mScore >> 8, gModeSelectState.mScoreThreshold,
-                  gFieldObjects.mEndTimer, 2);
+    DrawModeScoreAndTime(data_020b6ee0.mSelectedStageIndex, gFieldObjects.mScore >> 8, gModeSelectState.mScoreThreshold,
+                         gFieldObjects.mEndTimer, 2);
     func_02033614(gMapState.mCamera.mUnk_9c.mUnk_228.x, gMapState.mCamera.mUnk_9c.mUnk_228.z);
     UpdateAndDrawModel(&gFieldObjects.mStageModel, &gFieldObjects.mStagePos, 0);
     DrawFieldObjects();

@@ -45,11 +45,11 @@ void SetStageCameraFar(int stage) {
     if (stage < 0 || stage >= STAGE_MAX) {
         OS_Terminate();
     }
-    gMapState.mCamera.mLookAtGoal.x = rec->mUnk_158.x;
-    gMapState.mCamera.mLookAtGoal.z = rec->mUnk_158.z;
-    gMapState.mCamera.mLookAtGoal.y = rec->mUnk_158.y;
-    gMapState.mCamera.mPosGoal.x = rec->mPos.x - 400 * FX_SinCosTable_[(rec->mUnk_224 >> 4) * 2];
-    gMapState.mCamera.mPosGoal.z = rec->mPos.z + 400 * FX_SinCosTable_[(rec->mUnk_224 >> 4) * 2 + 1];
+    gMapState.mCamera.mLookAtGoal.x = rec->mLookAtPos.x;
+    gMapState.mCamera.mLookAtGoal.z = rec->mLookAtPos.z;
+    gMapState.mCamera.mLookAtGoal.y = rec->mLookAtPos.y;
+    gMapState.mCamera.mPosGoal.x = rec->mPos.x - 400 * FX_SinCosTable_[(rec->mCameraAngle >> 4) * 2];
+    gMapState.mCamera.mPosGoal.z = rec->mPos.z + 400 * FX_SinCosTable_[(rec->mCameraAngle >> 4) * 2 + 1];
     height = rec->mPos.y + MapRangeFromZero(distancePerFrame, 0xc00, 0x320000, 0x4b0000);
     gMapState.mCamera.mPosGoal.y = height;
     if (height > 0x5dc000) {
@@ -64,11 +64,11 @@ void SetStageCameraNear(int stage) {
     if (stage < 0 || stage >= STAGE_MAX) {
         OS_Terminate();
     }
-    gMapState.mCamera.mLookAtGoal.x = rec->mUnk_158.x;
-    gMapState.mCamera.mLookAtGoal.z = rec->mUnk_158.z;
-    gMapState.mCamera.mLookAtGoal.y = rec->mUnk_158.y;
-    gMapState.mCamera.mPosGoal.x = rec->mPos.x - 300 * FX_SinCosTable_[(rec->mUnk_224 >> 4) * 2];
-    gMapState.mCamera.mPosGoal.z = rec->mPos.z + 300 * FX_SinCosTable_[(rec->mUnk_224 >> 4) * 2 + 1];
+    gMapState.mCamera.mLookAtGoal.x = rec->mLookAtPos.x;
+    gMapState.mCamera.mLookAtGoal.z = rec->mLookAtPos.z;
+    gMapState.mCamera.mLookAtGoal.y = rec->mLookAtPos.y;
+    gMapState.mCamera.mPosGoal.x = rec->mPos.x - 300 * FX_SinCosTable_[(rec->mCameraAngle >> 4) * 2];
+    gMapState.mCamera.mPosGoal.z = rec->mPos.z + 300 * FX_SinCosTable_[(rec->mCameraAngle >> 4) * 2 + 1];
     gMapState.mCamera.mPosGoal.y = rec->mPos.y + 0x64000;
     EaseCameraToGoals();
 }
@@ -104,7 +104,7 @@ void func_02015f34(void) {
 
     for (i = 0; i < data_020b6ee0.mUnk_0c48; i++) {
         obj = &data_020b6ee0.mUnk_0008[i];
-        if (obj->mModel.mUnk_170 != 0) {
+        if (obj->mModel.mId != 0) {
             SetDrawParams(&params, obj->mPosX << 9, 0, obj->mPosZ << 9, 0x1000, obj->mUnk_185 << 8, 0, 0xff, 0x100);
             if (func_02031d0c(&params.mPos, 0x12c000, 0x190000, 0x190000) == 1) {
                 UpdateAndDrawModel(&obj->mModel, &params, 0);
@@ -147,13 +147,13 @@ void func_02016008(int stage) {
         } else if (f->mKind == 0x14) {
             if (abs(dx) < 400 && abs(dz) < 800) {
                 f->mNearFrames++;
-                f->mModel.mUnk_134 |= 1;
+                f->mModel.mSignals |= 1;
                 if (f->mNearFrames > (f->mUnk_187 + 1) * 6) {
                     rec->mMoveAngle += 0x8000;
                     rec->mDistancePerFrame += 0x2000;
                     f->mNearFrames = 0;
-                    func_02018840(rec, 0x14, i);
-                    f->mModel.mUnk_134 |= 2;
+                    AddMapObjectTimeOrScore(rec, 0x14, i);
+                    f->mModel.mSignals |= 2;
                     PlayWaveKeepAlive(0x2b, 0x64, 0, 0x40, 0xffff, 0);
                 }
             } else {
@@ -169,10 +169,10 @@ void func_02016008(int stage) {
     if (i != data_020b6ee0.mUnk_5a54) {
         switch (f->mKind) {
             case 0xf:
-                rec->mPos = rec->mUnk_210;
+                rec->mPos = rec->mPrevPos;
                 rec->mMoveAngle += 0x8000;
                 rec->mDistancePerFrame = 0x2000;
-                func_02018840(rec, 0xf, i);
+                AddMapObjectTimeOrScore(rec, 0xf, i);
                 break;
             case 0x19: {
                 int q = 0x32000 / d;
@@ -188,14 +188,14 @@ void func_02016008(int stage) {
                 break;
             }
             case 0x23:
-                rec->mMoveAngle = ((f->mUnk_184 + 1) & 3) << 14;
+                rec->mMoveAngle = ((f->mQuarterTurns + 1) & 3) << 14;
                 rec->mDistancePerFrame = 0x14000;
                 PlayWaveKeepAlive(1, 0x64, 0, 0x40, 0xffff, 0);
                 break;
             case 0x28:
                 moved = 1;
                 if (rec->mUnk_22c == 0) {
-                    u8 key = f->mUnk_185;
+                    u8 key = f->mTargetId;
                     Unk_020b7ef4 *p = data_020b6ee0.mUnk_1014;
                     int j;
 
@@ -203,7 +203,7 @@ void func_02016008(int stage) {
                     PlayWaveKeepAlive(0x59, 0x64, 0, 0x40, 0xffff, 0);
                     rec->mDistancePerFrame = 0;
                     for (j = 0; j < data_020b6ee0.mUnk_5a54; j++, p++) {
-                        if (p->mKind == 0x28 && p->mUnk_186 == key) {
+                        if (p->mKind == 0x28 && p->mId == key) {
                             rec->mPos.x = p->mPosX << 9;
                             rec->mPos.z = p->mPosZ << 9;
                             break;
@@ -213,7 +213,7 @@ void func_02016008(int stage) {
                 break;
         }
     } else {
-        rec->mUnk_210 = rec->mPos;
+        rec->mPrevPos = rec->mPos;
     }
     rec->mUnk_22c = moved;
     b = data_020b6ee0.mUnk_1014;
@@ -226,32 +226,32 @@ void func_02016008(int stage) {
             switch (b->mKind) {
                 case 0x19:
                     if (b == f) {
-                        b->mModel.mUnk_134 |= 1;
+                        b->mModel.mSignals |= 1;
                     }
                     SetDrawParams(&params, pos.x, pos.y, pos.z, 0x1000, 0, 0, 0xff, 0x100);
                     UpdateAndDrawModel(&b->mModel, &params, 0);
                     break;
                 case 0x14:
                     pos.y = 0;
-                    SetDrawParams(&params, pos.x, pos.y, pos.z, 0x1000, (u16) (((b->mUnk_184 + 1) & 3) << 14), 0, 0xff,
-                                  0x100);
+                    SetDrawParams(&params, pos.x, pos.y, pos.z, 0x1000, (u16) (((b->mQuarterTurns + 1) & 3) << 14), 0,
+                                  0xff, 0x100);
                     UpdateAndDrawModel(&b->mModel, &params, 0);
                     break;
                 case 0x28:
                     pos.y = 0;
-                    SetDrawParams(&params, pos.x, pos.y, pos.z, 0x1000, (u16) (((b->mUnk_184 + 1) & 3) << 14), 0, 0xff,
-                                  0x100);
+                    SetDrawParams(&params, pos.x, pos.y, pos.z, 0x1000, (u16) (((b->mQuarterTurns + 1) & 3) << 14), 0,
+                                  0xff, 0x100);
                     UpdateAndDrawModel(&b->mModel, &params, 0);
                     break;
                 case 0xf:
                     pos.y = 0;
-                    SetDrawParams(&params, pos.x, pos.y, pos.z, 0x1000, (u16) (((b->mUnk_184 + 1) & 3) << 14), 0, 0xff,
-                                  0x100);
+                    SetDrawParams(&params, pos.x, pos.y, pos.z, 0x1000, (u16) (((b->mQuarterTurns + 1) & 3) << 14), 0,
+                                  0xff, 0x100);
                     DrawModelFile(0xc87, &params, 0);
                     break;
                 case 0x23:
                     pos.y = 0;
-                    SetDrawParams(&params, pos.x, pos.y, pos.z, 0x1000, (u16) (b->mUnk_184 << 14), 0, 0xff, 0x100);
+                    SetDrawParams(&params, pos.x, pos.y, pos.z, 0x1000, (u16) (b->mQuarterTurns << 14), 0, 0xff, 0x100);
                     DrawModelFile(0xc8a, &params, 0);
                     break;
             }
@@ -307,7 +307,7 @@ void func_020164e0(int stage) {
     if (found != -1) {
         obj = &data_020b6ee0.mUnk_5a58[found];
         if (obj->mKind == 0x1e) {
-            func_02018840(rec, 0x1e, found);
+            AddMapObjectTimeOrScore(rec, 0x1e, found);
             obj->mPresent = 0;
             PlayWaveKeepAlive(0xe0, 0x64, 0, 0x40, 0xffff, 0);
         }
@@ -351,7 +351,7 @@ void SetupMapObjects(void) {
             data_020b6ee0.mUnk_1014[n7].mPosZ = pos.z / 512;
             data_020b6ee0.mUnk_1014[n7].mUnk_187 = ReadBits(q + 2, 0, 1);
             data_020b6ee0.mUnk_1014[n7].mNearFrames = 0;
-            data_020b6ee0.mUnk_1014[n7].mUnk_184 = (u32) flags >> 6;
+            data_020b6ee0.mUnk_1014[n7].mQuarterTurns = (u32) flags >> 6;
             InitModel(&data_020b6ee0.mUnk_1014[n7].mModel, 0, 0, 0, data_0201aba0[6]);
             n7++;
         } else if (type == 0x19) {
@@ -378,19 +378,19 @@ void SetupMapObjects(void) {
             data_020b6ee0.mUnk_1014[n7].mKind = type;
             data_020b6ee0.mUnk_1014[n7].mPosX = pos.x / 512;
             data_020b6ee0.mUnk_1014[n7].mPosZ = pos.z / 512;
-            data_020b6ee0.mUnk_1014[n7].mUnk_184 = (u32) flags >> 6;
+            data_020b6ee0.mUnk_1014[n7].mQuarterTurns = (u32) flags >> 6;
             n7++;
         } else if (type == 0x28) {
             data_020b6ee0.mUnk_1014[n7].mKind = type;
             data_020b6ee0.mUnk_1014[n7].mPosX = pos.x / 512;
             data_020b6ee0.mUnk_1014[n7].mPosZ = pos.z / 512;
-            data_020b6ee0.mUnk_1014[n7].mUnk_185 = ReadBits(q + 2, 0, 3);
-            data_020b6ee0.mUnk_1014[n7].mUnk_186 = ReadBits(q + 2, 4, 7);
+            data_020b6ee0.mUnk_1014[n7].mTargetId = ReadBits(q + 2, 0, 3);
+            data_020b6ee0.mUnk_1014[n7].mId = ReadBits(q + 2, 4, 7);
             InitModel(&data_020b6ee0.mUnk_1014[n7].mModel, 0xc8e, 0xc8d, 2, 0);
             n7++;
         } else if (type == 5) {
             data_020b6ee0.mFollowerEntries[n5].mPos = pos;
-            data_020b6ee0.mFollowerEntries[n5].mUnk_18 = ReadBits(q + 2, 0, 0);
+            data_020b6ee0.mFollowerEntries[n5].mKind = ReadBits(q + 2, 0, 0);
             data_020b6ee0.mFollowerEntries[n5].mPresent = 1;
             n5++;
         } else if (type == 0xa || type == 0x2d) {
@@ -500,7 +500,7 @@ void UpdateFollowers(int stage) {
     for (i = 0; i < data_020b6ee0.mFollowerEntryCount; i++) {
         if (data_020b6ee0.mFollowerEntries[i].mInRange == 1) {
             func_0200ba94(&data_020b6ee0.mFollowerEntries[i].mPos, 0x38400, 0x400);
-            DrawSprite(data_020b6ee0.mFollowerEntries[i].mUnk_18 == 0 ? 0xe24 : 0xe23,
+            DrawSprite(data_020b6ee0.mFollowerEntries[i].mKind == 0 ? 0xe24 : 0xe23,
                        data_020b6ee0.mFollowerEntries[i].mScreenPos[0], data_020b6ee0.mFollowerEntries[i].mScreenPos[1],
                        0, 1);
         }
@@ -535,14 +535,14 @@ void UpdateFollower(FollowerGroup *followers, int index, u16 angle) {
         pos.z = 512.0f * f->mPos.z;
         if (func_02031824(&pos, f->mDiameter, 0x6e, 0, 0x13, 0)) {
             if ((gMapState.mCamera.mUnk_3a & 0x10) && data_020b6ee0.mFixedTargetTimer != 0 &&
-                data_020b6ee0.mFollowerEntries[f->mFollowerEntryIndex].mUnk_18 == 0 &&
+                data_020b6ee0.mFollowerEntries[f->mFollowerEntryIndex].mKind == 0 &&
                 data_020b6ee0.mUnk_0c4c == gMapState.mCamera.mUnk_10 &&
                 data_020b6ee0.mUnk_0008[data_020b6ee0.mFixedTargetObjectIndex].mUnk_186 > 0) {
-                data_020b6ee0.mUnk_0008[data_020b6ee0.mFixedTargetObjectIndex].mModel.mUnk_134 |= 1;
+                data_020b6ee0.mUnk_0008[data_020b6ee0.mFixedTargetObjectIndex].mModel.mSignals |= 1;
                 data_020b6ee0.mUnk_0008[data_020b6ee0.mFixedTargetObjectIndex].mUnk_186--;
                 if (data_020b6ee0.mUnk_0008[data_020b6ee0.mFixedTargetObjectIndex].mUnk_186 == 0) {
                     func_02031c98(data_020b6ee0.mUnk_0c4c, 0, 0);
-                    data_020b6ee0.mUnk_0008[data_020b6ee0.mFixedTargetObjectIndex].mModel.mUnk_134 |= 2;
+                    data_020b6ee0.mUnk_0008[data_020b6ee0.mFixedTargetObjectIndex].mModel.mSignals |= 2;
                     PlayWaveKeepAlive(0xdb, 0x64, 0, 0x40, 0xffff, 0);
                 } else {
                     PlayWaveKeepAlive(0xdd, 0x64, 0, 0x40, 0xffff, 0);
@@ -609,11 +609,11 @@ void UpdateFollower(FollowerGroup *followers, int index, u16 angle) {
         f->mDistancePerFrame = f->mMaxDistancePerFrame * (float) MapRange(bestDist, avg, limit, 0, 0x400) / 1024.0f;
         f->mNeighbourAhead = 1;
         if (f->mDistancePerFrame < 0.1) {
-            if (data_020b6ee0.mFollowerEntries[f->mFollowerEntryIndex].mUnk_18 == 1 &&
+            if (data_020b6ee0.mFollowerEntries[f->mFollowerEntryIndex].mKind == 1 &&
                 bestIdx == followers->mFollowerCount && gFollowerGroup.mTargetFixed == 0) {
                 data_020b6ee0.mFollowerEntries[f->mFollowerEntryIndex].mPresent = 0;
                 data_020b6ee0.mFollowerEntries[f->mFollowerEntryIndex].mInRange = 0;
-                func_02018840(rec, 5, -1);
+                AddMapObjectTimeOrScore(rec, 5, -1);
             }
         }
     } else {
@@ -723,7 +723,7 @@ static inline s32 cosIdx(int a) {
 #pragma thumb off
 
 // Per-frame step of stage index: clamps mDistancePerFrame to -0x20000..0x20000 and, on a touch press, records the
-// touch point in mUnk_a574. While the stage's mUnk_142 is not 1 or mPanelState is 3, 4, 6, 7 or 8 it then only turns
+// touch point in mUnk_a574. While the stage's mEventKey is not 1 or mPanelState is 3, 4, 6, 7 or 8 it then only turns
 // the selected stage by the decaying spin mUnk_a8e8 or lets a tap select another stage (panel states 0..2). The touch
 // drag that would set the spin here needs panel state 3 or 4 with flags bit 0 clear, which no call reaches in this
 // build (state 10 sets bit 0 in panel states 3 to 5, and state 4 keeps panel state 0). Otherwise it moves the stage
@@ -756,7 +756,7 @@ void UpdateStageMotion(int index, int *sel, int flags) {
         data_020b6ee0.mUnk_a574.mTouchPressX = gSystemState.mTouchX;
         data_020b6ee0.mUnk_a574.mTouchPressY = gSystemState.mTouchY;
     }
-    if (rec->mUnk_142 != 1 || data_020b6ee0.mPanelState == 3 || data_020b6ee0.mPanelState == 4 ||
+    if (rec->mEventKey != 1 || data_020b6ee0.mPanelState == 3 || data_020b6ee0.mPanelState == 4 ||
         data_020b6ee0.mPanelState == 6 || data_020b6ee0.mPanelState == 7 || data_020b6ee0.mPanelState == 8) {
         if (index == *sel) {
             if (!(flags & 1) && (data_020b6ee0.mPanelState == 3 || data_020b6ee0.mPanelState == 4)) {
@@ -779,7 +779,7 @@ void UpdateStageMotion(int index, int *sel, int flags) {
         if (SelectStageOnTap(index, sel) != 1) {
             return;
         }
-        rec->mUnk_134 |= 2;
+        rec->mSignals |= 2;
         return;
     }
     if (!(flags & 1)) {
@@ -844,11 +844,11 @@ void UpdateStageMotion(int index, int *sel, int flags) {
     }
     if (ground >= rec->mPos.y) {
         rec->mPos.y = ground;
-        rec->mUnk_21c = 0.0f;
+        rec->mPosYPerFrame = 0.0f;
     } else {
-        rec->mPos.y = rec->mPos.y - rec->mUnk_21c;
-        if (rec->mUnk_21c < 51200.0f) {
-            rec->mUnk_21c += 5120.0f;
+        rec->mPos.y = rec->mPos.y - rec->mPosYPerFrame;
+        if (rec->mPosYPerFrame < 51200.0f) {
+            rec->mPosYPerFrame += 5120.0f;
         }
     }
     if (!(flags & 2) && rec->mDistancePerFrame != 0) {
@@ -883,7 +883,7 @@ void UpdateStageMotion(int index, int *sel, int flags) {
             if (c[2] < 3 && data_020b6ee0.mPanelState != 2) {
                 other->mMoveAngle = AngleOfVector(-x, -z);
                 other->mDistancePerFrame = Length2d(x, z) >> 1;
-                if (other->mUnk_142 != 1) {
+                if (other->mEventKey != 1) {
                     other->mDistancePerFrame = 0;
                 }
             }
@@ -981,16 +981,16 @@ void UpdateStageMotion(int index, int *sel, int flags) {
         data_020b6ee0.mUnk_0008[i].mUnk_186 -= dmg;
         if (data_020b6ee0.mUnk_0008[i].mUnk_186 < 0) {
             func_02031c98(gMapState.mCamera.mUnk_10, 0, 0);
-            data_020b6ee0.mUnk_0008[i].mModel.mUnk_134 |= 2;
+            data_020b6ee0.mUnk_0008[i].mModel.mSignals |= 2;
             PlayWaveKeepAlive(0xda, 100, 0, 0x40, 0xffff, 0);
         } else {
-            data_020b6ee0.mUnk_0008[i].mModel.mUnk_134 |= 1;
+            data_020b6ee0.mUnk_0008[i].mModel.mSignals |= 1;
         }
     }
     rec->mDistancePerFrame -= rec->mDistancePerFrame / 2 < 1 ? 1 : rec->mDistancePerFrame / 2;
     rec->mPos = old;
     rec->mMoveAngle = angle;
-    data_020b6ee0.mUnk_8e60.mModel.mUnk_134 |= 1;
+    data_020b6ee0.mUnk_8e60.mModel.mSignals |= 1;
 }
 #pragma thumb on
 
@@ -1069,9 +1069,9 @@ void func_020182cc(void) {
     rec->mDraw.mUnk_43 = 2;
     rec->mDraw.mUnk_28 = 2 << 19;
     rec->mDistancePerFrame = 0;
-    rec->mUnk_224 = 0;
+    rec->mCameraAngle = 0;
     InitModel(rec, 0, 0, 0, data_0201ab04[rec->mInfo.mStageId]);
-    rec->mUnk_158 = rec->mPos;
+    rec->mLookAtPos = rec->mPos;
     InitModel(&data_020b6ee0.mUnk_8e60, 0, 0, 0, data_0201aba0[5]);
     data_020b6ee0.mUnk_8e60.mDraw = rec->mDraw;
     data_020b6ee0.mUnk_8e60.mDraw.mUnk_2c = -1;
@@ -1101,18 +1101,19 @@ void func_02018558(void) {
     if (stage >= STAGE_MAX) {
         OS_Terminate();
     }
-    func_0201168c(data_020b6ee0.mSelectedStageIndex, obj->mScore, gModeSelectState.mScoreThreshold, obj->mEndTimer, 2);
+    DrawModeScoreAndTime(data_020b6ee0.mSelectedStageIndex, obj->mScore, gModeSelectState.mScoreThreshold,
+                         obj->mEndTimer, 2);
     SetStageCameraFar(stage);
-    rec->mUnk_158 = rec->mPos;
+    rec->mLookAtPos = rec->mPos;
     func_0200ba94(&rec->mPos, 0x70800, 0x800);
     UpdateAndDrawModel(rec, &rec->mPos, 0);
     PlayObjectSe(rec);
     ProjectToScreen(&rec->mPos, &rec->mScreenX);
     UpdateModelScript(&data_020b6ee0.mUnk_8e60.mModel);
-    if (data_020b6ee0.mUnk_8e60.mModel.mUnk_142 != 1) {
+    if (data_020b6ee0.mUnk_8e60.mModel.mEventKey != 1) {
         data_020b6ee0.mUnk_8e60.mDraw.mPos = rec->mPos;
-        DrawModelFileEx(data_020b6ee0.mUnk_8e60.mModel.mUnk_170, &data_020b6ee0.mUnk_8e60.mDraw,
-                        &data_020b6ee0.mUnk_8e60, 0);
+        DrawModelFileEx(data_020b6ee0.mUnk_8e60.mModel.mId, &data_020b6ee0.mUnk_8e60.mDraw, &data_020b6ee0.mUnk_8e60,
+                        0);
     } else {
         ClearAnimTracks();
     }
@@ -1180,7 +1181,11 @@ void AddStageAmountObjSlots(StageRec *rec, int kind, int amount) {
     slot->mUnk_140 = 1;
 }
 
-void func_02018840(StageRec *rec, int kind, int index) {
+// What meeting a map object of type `kind` gives the mode: types 0xf (mUnk_183 * 100 of the object `index`), 0x14 and
+// 5 (100 each) take time off mEndTimer and signal data_020b6ee0.mUnk_8e60's model (bit 2 for 0x14, else bit 0); type
+// 0x1e adds mUnk_181[0] * 300 time or, for a score object (mUnk_181[1] 0), mUnk_181[0] * 100 score and counts down
+// mUnk_8ad9. The amount is shown at the stage (AddStageAmountObjSlots).
+void AddMapObjectTimeOrScore(StageRec *rec, int kind, int index) {
     Unk_020bfd40 *obj = &data_020b6ee0.mUnk_8e60;
     int time, score;
     time = score = 0;
@@ -1191,15 +1196,15 @@ void func_02018840(StageRec *rec, int kind, int index) {
                 OS_Terminate();
             }
             time = -data_020b6ee0.mUnk_1014[index].mUnk_183 * 100;
-            data_020b6ee0.mUnk_8e60.mModel.mUnk_134 |= 1;
+            data_020b6ee0.mUnk_8e60.mModel.mSignals |= 1;
             break;
         case 0x14:
             time = -100;
-            data_020b6ee0.mUnk_8e60.mModel.mUnk_134 |= 4;
+            data_020b6ee0.mUnk_8e60.mModel.mSignals |= 4;
             break;
         case 5:
             time = -100;
-            data_020b6ee0.mUnk_8e60.mModel.mUnk_134 |= 1;
+            data_020b6ee0.mUnk_8e60.mModel.mSignals |= 1;
             break;
         case 0x1e:
             if (index < 0 || index >= data_020b6ee0.mUnk_8ad8) {
@@ -1270,8 +1275,8 @@ void func_0201896c(void) {
         rec->mDraw = params;
         rec->mMoveAngle = NextRandom();
         rec->mDistancePerFrame = 0;
-        rec->mUnk_224 = 0;
-        if (rec->mUnk_1e8 == -1) {
+        rec->mCameraAngle = 0;
+        if (rec->mNoStoredOffset == -1) {
             func_02031fc4(0, &rec->mPos);
             rec->mDistancePerFrame = 0x6000;
         } else {
@@ -1280,7 +1285,7 @@ void func_0201896c(void) {
         }
         rec->mPos.y = offset.y + 0x32000;
         rec->mPos.y = GetFloorHeightEx(rec->mPos.x, rec->mPos.z, rec->mPos.y + 0xc800, 0, 0, 0, 0) + 0x32000;
-        rec->mUnk_158 = rec->mPos;
+        rec->mLookAtPos = rec->mPos;
     }
     if (data_020b6ee0.mSelectedStageIndex == -1) {
         data_020b6ee0.mPanelState = 0;
@@ -1317,9 +1322,9 @@ void func_0201896c(void) {
     SetDrawParams(&data_020b6ee0.mUnk_8e60.mDraw, 0, 0, 0, 6 << 18, 0, 2, 0, 0x100);
     if (data_020b6ee0.mUnk_a14a == 1) {
         data_020b6ee0.mUnk_a14a = 0;
-        data_020b6ee0.mUnk_9c64.mUnk_134 |= 1;
+        data_020b6ee0.mUnk_9c64.mSignals |= 1;
         if (data_020b6ee0.mSelectedStageIndex != -1) {
-            data_020b6ee0.mUnk_8e60.mModel.mUnk_134 |= 4;
+            data_020b6ee0.mUnk_8e60.mModel.mSignals |= 4;
         }
     }
     if (data_020b6ee0.mSaveRequested == 1) {
@@ -1359,7 +1364,7 @@ void func_02018cd4(void) {
         StageRec *rec = &gStages[i];
         if (i == data_020b6ee0.mSelectedStageIndex) {
             order[i].mKey = 0xffff;
-        } else if (rec->mUnk_142 != 1) {
+        } else if (rec->mEventKey != 1) {
             order[i].mKey = 0xfffe;
         } else if (rec->mDistancePerFrame > 0x1000) {
             order[i].mKey = (rec->mDistancePerFrame >> 12) + 1;
@@ -1371,7 +1376,7 @@ void func_02018cd4(void) {
         if (rec->mDistancePerFrame != 0) {
             c[2]++;
         }
-        if (rec->mDistancePerFrame != 0 || rec->mUnk_142 != 1) {
+        if (rec->mDistancePerFrame != 0 || rec->mEventKey != 1) {
             c[1]++;
         }
     }
@@ -1384,18 +1389,18 @@ void func_02018cd4(void) {
         int lim;
         rec = &gStages[idx];
         params = rec->mDraw;
-        rec->mUnk_158 = params.mPos;
+        rec->mLookAtPos = params.mPos;
         rec->mVisible = func_02031d0c(&rec->mPos, 0x64000, 0x64000, 0x64000);
         if (rec->mVisible == 1 || idx == data_020b6ee0.mSelectedStageIndex) {
             ProjectToScreen(&rec->mPos, &rec->mScreenX);
             lim = (data_020b6ee0.mPanelState == 0 || data_020b6ee0.mPanelState == 1) ? 2 : 1;
             if (order[j].mKey != 0 && j < lim) {
-                rec->mUnk_170 = rec->mInfo.mStageId * 6 + 0xfd8;
+                rec->mModelId = rec->mInfo.mStageId * 6 + 0xfd8;
             } else {
-                rec->mUnk_170 = rec->mInfo.mStageId * 6 + 0xfdb;
+                rec->mModelId = rec->mInfo.mStageId * 6 + 0xfdb;
             }
-            if (rec->mUnk_142 != 1 || rec->mUnk_134 != 0 || idx == data_020b6ee0.mSelectedStageIndex) {
-                if (rec->mUnk_142 != 1 && data_020b6ee0.mUnk_ca8 != 0 && idx == data_020b6ee0.mSelectedStageIndex) {
+            if (rec->mEventKey != 1 || rec->mSignals != 0 || idx == data_020b6ee0.mSelectedStageIndex) {
+                if (rec->mEventKey != 1 && data_020b6ee0.mUnk_ca8 != 0 && idx == data_020b6ee0.mSelectedStageIndex) {
                     SplitAnimFrameAndAdvance(data_020b6ee0.mUnk_ca8, &data_020b6ee0.mUnk_ca6, 2, 1,
                                              &data_020b6ee0.mUnk_c94, &data_020b6ee0.mUnk_c98, &data_020b6ee0.mUnk_c9c,
                                              1);
@@ -1408,7 +1413,7 @@ void func_02018cd4(void) {
                     params.mPos.x += data_020b6ee0.mUnk_c88.x * data_020b6ee0.mUnk_c7c.x;
                     params.mPos.y += data_020b6ee0.mUnk_c88.y * data_020b6ee0.mUnk_c7c.y;
                     params.mPos.z += data_020b6ee0.mUnk_c88.z * data_020b6ee0.mUnk_c7c.z;
-                    rec->mUnk_158 = params.mPos;
+                    rec->mLookAtPos = params.mPos;
                 }
                 if (data_020b6ee0.mUnk_a10c != -1 && idx == data_020b6ee0.mSelectedStageIndex) {
                     SetModelFrameIndex((Model *) rec, data_020b6ee0.mUnk_a10c);
@@ -1416,13 +1421,13 @@ void func_02018cd4(void) {
                 UpdateAndDrawModel(rec, &params, 0x10);
                 PlayObjectSe(rec);
             } else {
-                DrawModelFileEx(rec->mUnk_170, &params, rec, 0x10);
+                DrawModelFileEx(rec->mModelId, &params, rec, 0x10);
             }
             if (idx == data_020b6ee0.mSelectedStageIndex) {
                 UpdateModelScript(&data_020b6ee0.mUnk_8e60.mModel);
-                if (data_020b6ee0.mUnk_8e60.mModel.mUnk_142 != 1) {
+                if (data_020b6ee0.mUnk_8e60.mModel.mEventKey != 1) {
                     data_020b6ee0.mUnk_8e60.mDraw.mPos = rec->mPos;
-                    DrawModelFileEx(data_020b6ee0.mUnk_8e60.mModel.mUnk_170, &data_020b6ee0.mUnk_8e60.mDraw.mPos,
+                    DrawModelFileEx(data_020b6ee0.mUnk_8e60.mModel.mId, &data_020b6ee0.mUnk_8e60.mDraw.mPos,
                                     &data_020b6ee0.mUnk_8e60.mModel, 0);
                 } else {
                     ClearAnimTracks();
@@ -1472,7 +1477,7 @@ void func_02018cd4(void) {
         data_020b6ee0.mPanelLevel = 0;
         data_020b6ee0.mPrevSelectedStageIndex = data_020b6ee0.mSelectedStageIndex;
         fade->mPanelButtonOffsetX = 0x28;
-        func_02019ad8();
+        StopStageMoveObjAndClearObjSlots();
     }
     UpdateTextAndStageInfo();
     if (data_020b6ee0.mUnk_a14b == 1) {
@@ -1570,7 +1575,7 @@ void StoreStageOffsets(void) {
         for (i = 0; i < data_020b6ee0.mStageCount; i++) {
             rec = &gStages[i];
             rec->mStoredOffsetX = rec->mPos.x - pos.x;
-            rec->mUnk_1e8 = 0;
+            rec->mNoStoredOffset = 0;
             rec->mStoredOffsetZ = rec->mPos.z - pos.z;
         }
     }
@@ -1627,7 +1632,7 @@ void UpdateRandomStage(void) {
             case 0:
                 if (c[1] == 0) {
                     rec->mMoveAngle = NextRandom();
-                    rec->mUnk_134 |= 4;
+                    rec->mSignals |= 4;
                 }
                 break;
             case 1:
@@ -1660,9 +1665,9 @@ void UpdateRandomStage(void) {
     }
     if (idx == data_020b6ee0.mSelectedStageIndex) {
         if (result == 2) {
-            data_020b6ee0.mUnk_8e60.mModel.mUnk_134 |= 1;
+            data_020b6ee0.mUnk_8e60.mModel.mSignals |= 1;
         } else if (result == -2) {
-            data_020b6ee0.mUnk_8e60.mModel.mUnk_134 |= 4;
+            data_020b6ee0.mUnk_8e60.mModel.mSignals |= 4;
         }
     }
     AddPercent(rec, result, 0, idx == data_020b6ee0.mSelectedStageIndex ? 1 : 0);
@@ -1824,7 +1829,7 @@ void StartStageMoveObj(StageRec *rec, int x, int y, int c, int d, int mode) {
     Vec2i pos;
     int r;
 
-    o->mUnk_310 = rec;
+    o->mStageRec = rec;
     r = PercentToX(rec->mInfo.mPercent);
     pos.x = mode == 1 ? x : r;
     pos.y = mode == 1 ? y : 0x5e;
@@ -1837,7 +1842,7 @@ void StartStageMoveObj(StageRec *rec, int x, int y, int c, int d, int mode) {
     StartMoveObj(o, 0x800, &pos, 0);
 }
 
-void func_02019ad8(void) {
+void StopStageMoveObjAndClearObjSlots(void) {
     StopMoveObj(&data_020b6ee0.mMoveObj);
     ClearObjSlots();
 }
@@ -1852,32 +1857,32 @@ void UpdateStageMoveObj(void) {
             DrawMoveObj(o);
             return;
         }
-        if (o->mUnk_310 == 0) {
+        if (o->mStageRec == 0) {
             OS_Terminate();
         }
-        AddPercent(o->mUnk_310, 10, 1, 1);
+        AddPercent(o->mStageRec, 10, 1, 1);
     }
 }
 
 void func_02019b38(void) {}
 
-// Per-frame update of the map menu's cursor and camera: sets the camera's two points from a and b, the second blended
-// toward the first by mBlend (eased toward mTargetBlend), eases the camera toward them, draws the cursor sprites once
-// mDelayTimer is 0, moves the cursor by the touch drag (within 0x320 of map entry 0) and moves a and b toward the
-// cursor.
-void UpdateMapCursorAndCamera(VecFx32 *a, VecFx32 *b) {
+// Per-frame update of the map menu's cursor and camera: eases the camera's look-at toward lookAt and its position
+// toward cameraPos blended toward lookAt by mBlend (eased toward mTargetBlend; 0x200 = cameraPos itself), draws the
+// cursor sprites once mDelayTimer is 0, moves the cursor by the touch drag (within 0x320 of map entry 0) and moves
+// lookAt and cameraPos a sixteenth of the way toward the cursor in x and z.
+void UpdateMapCursorAndCamera(VecFx32 *lookAt, VecFx32 *cameraPos) {
     MapMenu *p = &data_020b6ee0.mMapMenu;
     VecFx32 v;
     s32 out1[2];
     s32 out0[2];
 
     func_02031fc4(0, &v);
-    data_020b6ee0.mUnk_a574.mUnk_0c.x = a->x;
-    data_020b6ee0.mUnk_a574.mUnk_0c.y = a->y;
-    data_020b6ee0.mUnk_a574.mUnk_0c.z = a->z;
-    data_020b6ee0.mUnk_a574.mUnk_00.x = b->x;
-    data_020b6ee0.mUnk_a574.mUnk_00.y = b->y;
-    data_020b6ee0.mUnk_a574.mUnk_00.z = b->z;
+    data_020b6ee0.mUnk_a574.mUnk_0c.x = lookAt->x;
+    data_020b6ee0.mUnk_a574.mUnk_0c.y = lookAt->y;
+    data_020b6ee0.mUnk_a574.mUnk_0c.z = lookAt->z;
+    data_020b6ee0.mUnk_a574.mUnk_00.x = cameraPos->x;
+    data_020b6ee0.mUnk_a574.mUnk_00.y = cameraPos->y;
+    data_020b6ee0.mUnk_a574.mUnk_00.z = cameraPos->z;
     EaseToward(&p->mBlend, p->mTargetBlend, 0x20);
     if (p->mBlend != 0x200) {
         data_020b6ee0.mUnk_a574.mUnk_00.x =
@@ -1937,16 +1942,16 @@ void UpdateMapCursorAndCamera(VecFx32 *a, VecFx32 *b) {
     EaseToward(&p->mCursorXPerFrame, 0, 0x10);
     EaseToward(&p->mCursorZPerFrame, 0, 0x10);
     {
-        s32 d = (p->mCursor.mPos.z - a->z) / 16;
+        s32 d = (p->mCursor.mPos.z - lookAt->z) / 16;
 
-        b->z += d;
-        a->z += d;
+        cameraPos->z += d;
+        lookAt->z += d;
     }
     {
-        s32 d = (p->mCursor.mPos.x - a->x) / 16;
+        s32 d = (p->mCursor.mPos.x - lookAt->x) / 16;
 
-        b->x += d;
-        a->x += d;
+        cameraPos->x += d;
+        lookAt->x += d;
     }
 }
 
@@ -1965,8 +1970,8 @@ void SetupMapMenu(void) {
     gMapState.mCamera.mUnk_04 = func_02019b38;
     gMapState.mCamera.mUnk_2dc.mUnk_54 = 0x640;
     gMapState.mCamera.mUnk_2dc.mUnk_44 = 0x9c4000;
-    func_02031fc4(0, &data_020c180c);
-    func_02031fc4(1, &data_020c1800);
+    func_02031fc4(0, &gMapMenuLookAt);
+    func_02031fc4(1, &gMapMenuCameraPos);
     func_02031fc4(0, &gMapState.mCamera.mPos);
     func_02031fc4(0, &gMapState.mCamera.mLookAt);
     gMapState.mCamera.mPos.z += 0x352000;

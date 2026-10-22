@@ -36,10 +36,12 @@ static const Prompt sPrompts[0x49] = {
     {0x650, -1, 0, -1},     {0x658, -1, 0, -1}, {0x660, -1, 0, -1},
 };
 
-// Defined in reverse address order (see gSharedModel below).
-const u16 data_0204e210[1] = {0};
-const u16 data_0204e20c[1] = {0};
-const u16 data_0204e208[1] = {0};
+// Defined in reverse address order (see gSharedModel below). Each table has one entry, 0: the script's track command
+// uses gScriptTrackFileIds only when that entry is not 0, so never in this build, while the image and sound commands
+// index the other two with the script's value, which reads past the entry for any value above 0.
+const u16 gScriptTrackFileIds[1] = {0};
+const u16 gScriptImageIds[1] = {0};
+const u16 gScriptSoundIds[1] = {0};
 const u32 data_0204e214[1] = {0};
 const PromptSpriteDef gPromptSpriteDefs[3] = {
     {0, 0xc0, 0x49, 0x131},
@@ -52,7 +54,7 @@ const PromptWave gPromptWaves[32] = {
     {0x48, 1},  {0xd1, 1}, {0x1b6, 1}, {0x1a8, 1}, {0x174, 1}, {0x1af, 1}, {0x1a1, 1}, {0xc3, 1},
     {0x7d, 1},  {0x32, 0}, {0x1e, 1},  {0x10, 1},  {9, 1},     {0x17, 1},  {0x16d, 1}, {0x59, 0},
 };
-const u16 data_0204e2c8[86] = {
+const u16 gScriptSpriteIds[86] = {
     0xee0, 0xee7, 0xeef, 0xf11, 0xf15, 0xb,   0xf0a, 0xf0c, 0xf1e, 0xf21, 0xf26, 0xf29, 0xef7, 0xef9, 0xef7,
     0xef8, 0xefc, 0xefe, 0xefc, 0xefd, 0xf01, 0xf03, 0xf01, 0xf02, 0xf06, 0xf08, 0xf06, 0xf07, 0xf2f, 0xf31,
     0xf2f, 0xf30, 3,     4,     5,     0,     6,     2,     1,     7,     0xf1c, 0xa,   0xf0d, 0xef4, 0xf57,
@@ -61,15 +63,17 @@ const u16 data_0204e2c8[86] = {
     0xeee, 0xef2, 0xef3, 9,     0xf10, 0xf2c, 0xc,   0xf19, 0xf1a, 0xeea, 8,
 };
 
-// The one model that the prompt, battle and result screens and others play (SetupSharedModel), and the flag stored with
-// it (SetupSharedModel's b): with 0 the model holds its last frame and IsSharedModelDone reports it; with any other
-// value IsSharedModelDone always returns 0.
+// The one model that the prompt, battle and result screens and others play (SetupSharedModel), and SetupSharedModel's
+// loop: with 0 the model holds its last frame (mHoldAtEnd) and IsSharedModelDone reports mAnimEnded; with any other
+// value the model wraps to its start and IsSharedModelDone always returns 0. A start with the model's current index
+// does not clear the model, so after a start with loop 0 a start of the same index with a non-zero loop keeps
+// mHoldAtEnd and still holds.
 typedef struct SharedModel {
-    s32 mUnk_00;
+    s32 mLoop;
     Model mModel;
 } SharedModel;
 
-const FontRange *data_02063988[8] = {
+const FontRange *gScriptFonts[8] = {
     (const FontRange *) data_0201a608, (const FontRange *) data_0201a608, (const FontRange *) data_0201a608,
     (const FontRange *) data_0201a608, (const FontRange *) data_0201a608, (const FontRange *) data_0201a608,
     (const FontRange *) data_0201a608, (const FontRange *) data_0201a608,
@@ -258,46 +262,47 @@ void UpdateLangMenu(void) {
     }
 }
 
-void SetupSharedModel(u32 a, int b) {
-    if (a >= CountSharedModels()) {
+void SetupSharedModel(u32 index, int loop) {
+    if (index >= CountSharedModels()) {
         OS_Terminate();
     }
-    StartModel(&gSharedModel.mModel, a * 2 + 0x1f5, a * 2 + 0x1f4, 2, 0);
-    gSharedModel.mUnk_00 = b;
-    if (b == 0) {
-        gSharedModel.mModel.mUnk_172_13 = 1;
+    StartModel(&gSharedModel.mModel, index * 2 + 0x1f5, index * 2 + 0x1f4, 2, 0);
+    gSharedModel.mLoop = loop;
+    if (loop == 0) {
+        gSharedModel.mModel.mHoldAtEnd = 1;
     }
 }
 
 void DrawSharedModel(void) {
     u8 params[0x44];
-    int idx = (gSharedModel.mModel.mUnk_170 - 0x1f5) / 2;
+    int idx = (gSharedModel.mModel.mId - 0x1f5) / 2;
     int a, x, y, z;
     func_020242a8(params, 0xff, 0, 0, 0x1000, 0x8000, -1, 0x100);
     params[0x43] |= 8;
     UpdateModelScript(&gSharedModel.mModel);
-    DrawModelFileEx(gSharedModel.mModel.mUnk_170, params, &gSharedModel.mModel, 0);
+    DrawModelFileEx(gSharedModel.mModel.mId, params, &gSharedModel.mModel, 0);
     a = GetFileValue(0x235, idx * 4 + 2);
-    if (gSharedModel.mModel.mUnk_14c.mUnk_2 >= a) {
+    if (gSharedModel.mModel.mUnk_14c.mPlayFrames >= a) {
         x = GetFileValue(0x235, idx * 4 + 4);
         y = GetFileValue(0x235, idx * 4 + 5);
         z = GetFileValue(0x235, idx * 4 + 3);
-        if (gSharedModel.mModel.mUnk_14c.mUnk_2 < a + 4) {
-            x = MapRange(gSharedModel.mModel.mUnk_14c.mUnk_2, a, a + 4, x - 0x78, x);
+        if (gSharedModel.mModel.mUnk_14c.mPlayFrames < a + 4) {
+            x = MapRange(gSharedModel.mModel.mUnk_14c.mPlayFrames, a, a + 4, x - 0x78, x);
         }
         DrawSprite(z * 6 + 0xee, x, y, 0x64, 1);
     }
 }
 
 int IsSharedModelDone(void) {
-    if (gSharedModel.mUnk_00 != 0) {
+    if (gSharedModel.mLoop != 0) {
         return 0;
     }
-    return gSharedModel.mModel.mUnk_172_10;
+    return gSharedModel.mModel.mAnimEnded;
 }
 
-u16 GetSharedModelFrameIndex(void) {
-    return gSharedModel.mModel.mUnk_14c.mUnk_2;
+// The shared model's mPlayFrames: two per animation frame, as SetupSharedModel starts it with 2.
+u16 GetSharedModelPlayFrames(void) {
+    return gSharedModel.mModel.mUnk_14c.mPlayFrames;
 }
 
 // Number of rows of table 0x235 (column 2 up to -1): the model indices SetupSharedModel accepts.

@@ -126,27 +126,27 @@ StartPageViewerState kind:function(thumb,size=0x34) addr:0x02007168
 LeavePageViewer kind:function(thumb,size=0xc) addr:0x0200719c
 func_020071a8 kind:function(thumb,size=0x2) addr:0x020071a8
 func_020071ac kind:function(thumb,size=0x4c) addr:0x020071ac
-func_020071f8 kind:function(thumb,size=0x4c) addr:0x020071f8
+DrawConfirmButton kind:function(thumb,size=0x4c) addr:0x020071f8
 SetupStageModels kind:function(thumb,size=0x64) addr:0x02007244
 DrawBattleModels kind:function(thumb,size=0xc8) addr:0x020072a8
-func_02007370 kind:function(thumb,size=0x20) addr:0x02007370
-func_02007390 kind:function(thumb,size=0x20) addr:0x02007390
+SetCameraFromMapEntries0And1 kind:function(thumb,size=0x20) addr:0x02007370
+SetCameraFromMapEntries0And2 kind:function(thumb,size=0x20) addr:0x02007390
 SetCameraFromModel kind:function(thumb,size=0xfc) addr:0x020073b0
 SetupBattleScreen kind:function(thumb,size=0x258) addr:0x020074ac
 UpdateBattleScreen kind:function(thumb,size=0x4c) addr:0x02007704
 LeaveBattleScreen kind:function(thumb,size=0x8) addr:0x02007750
-func_02007758 kind:function(thumb,size=0x18) addr:0x02007758
+IsStageInfosOutClear kind:function(thumb,size=0x18) addr:0x02007758
 LoadKindValues kind:function(thumb,size=0x60) addr:0x02007770
 GetPercentOfBattleTotal kind:function(thumb,size=0x20) addr:0x020077d0
 SetupBattleSides kind:function(thumb,size=0x108) addr:0x020077f0
 func_020078f8 kind:function(thumb,size=0x48) addr:0x020078f8
-func_02007940 kind:function(thumb,size=0x60) addr:0x02007940
+SetSidesSubtracted kind:function(thumb,size=0x60) addr:0x02007940
 GetBattleTotal kind:function(thumb,size=0x2c) addr:0x020079a0
 GetValuePlusKindValue kind:function(thumb,size=0x20) addr:0x020079cc
 FindTableEntryIndexUnbounded kind:function(thumb,size=0x30) addr:0x020079ec
-func_02007a1c kind:function(thumb,size=0x94) addr:0x02007a1c
-func_02007ab0 kind:function(thumb,size=0xc) addr:0x02007ab0
-func_02007abc kind:function(thumb,size=0x5c) addr:0x02007abc
+StartBattleViewModel kind:function(thumb,size=0x94) addr:0x02007a1c
+StopBattleViewModel kind:function(thumb,size=0xc) addr:0x02007ab0
+UpdateBattleViewModel kind:function(thumb,size=0x5c) addr:0x02007abc
 GetTableEntryTotalDiff kind:function(thumb,size=0x16c) addr:0x02007b18
 ApplyTableEntry kind:function(thumb,size=0x250) addr:0x02007c84
 ComparePickIndicesWithBestPair kind:function(thumb,size=0x90) addr:0x02007ed4
@@ -154,11 +154,11 @@ FindBestSide1Entry kind:function(thumb,size=0x40) addr:0x02007f64
 SubtractHalfFromList kind:function(thumb,size=0x58) addr:0x02007fa4
 func_02007ffc kind:function(thumb,size=0x94) addr:0x02007ffc
 DrawBattleStageInfo kind:function(thumb,size=0x1ec) addr:0x02008090
-func_0200827c kind:function(thumb,size=0xc) addr:0x0200827c
+SetStateFlagTo1 kind:function(thumb,size=0xc) addr:0x0200827c
 UpdateBattleCompare kind:function(thumb,size=0x650) addr:0x02008288
 IsEntryPickDone kind:function(thumb,size=0x48) addr:0x020088d8
-func_02008920 kind:function(thumb,size=0x30) addr:0x02008920
-func_02008950 kind:function(thumb,size=0x44) addr:0x02008950
+GetEntryStartSharedModelIndex kind:function(thumb,size=0x30) addr:0x02008920
+GetEntryStartWaveId kind:function(thumb,size=0x44) addr:0x02008950
 UpdateBattleEntryPick kind:function(thumb,size=0xd94) addr:0x02008994
 UpdateBattleStagePick kind:function(thumb,size=0x8c0) addr:0x02009728
 UpdateBattleKindValues kind:function(thumb,size=0x39c) addr:0x02009fe8
@@ -221,7 +221,7 @@ StopMoveObj kind:function(thumb,size=0xe) addr:0x0200c164
 UpdateMoveObj kind:function(thumb,size=0x264) addr:0x0200c174
 GetMoveObjDrawPos kind:function(thumb,size=0x98) addr:0x0200c3d8
 DrawMoveObj kind:function(thumb,size=0x168) addr:0x0200c470
-func_0200c5d8 kind:function(thumb,size=0x84) addr:0x0200c5d8
+ResetAndSetupGraphics kind:function(thumb,size=0x84) addr:0x0200c5d8
 GetMapEntryPos kind:function(thumb,size=0x2c) addr:0x0200c65c
 StartShake kind:function(thumb,size=0x24) addr:0x0200c688
 SetupSceneCamera kind:function(thumb,size=0xf8) addr:0x0200c6ac
@@ -230,8 +230,8 @@ SetupScene kind:function(thumb,size=0x1d4) addr:0x0200ca14
 UpdateScene kind:function(thumb,size=0x134) addr:0x0200cbe8
 LeaveScene kind:function(thumb,size=0xe) addr:0x0200cd1c
 DrawScene kind:function(thumb,size=0x98) addr:0x0200cd2c
-func_0200cdc4 kind:function(thumb,size=0x60) addr:0x0200cdc4
-func_0200ce24 kind:function(thumb,size=0x88) addr:0x0200ce24
+DrawKind3Touches kind:function(thumb,size=0x60) addr:0x0200cdc4
+AdvancePopupRow kind:function(thumb,size=0x88) addr:0x0200ce24
 AddPopups kind:function(thumb,size=0x168) addr:0x0200ceac
 StartPopup kind:function(thumb,size=0x84) addr:0x0200d014
 UpdatePopups kind:function(thumb,size=0x20c) addr:0x0200d098
@@ -279,7 +279,7 @@ UpdateLangMenu kind:function(thumb,size=0xf0) addr:0x0200f758
 SetupSharedModel kind:function(thumb,size=0x50) addr:0x0200f848
 DrawSharedModel kind:function(thumb,size=0xc4) addr:0x0200f898
 IsSharedModelDone kind:function(thumb,size=0x20) addr:0x0200f95c
-GetSharedModelFrameIndex kind:function(thumb,size=0xc) addr:0x0200f97c
+GetSharedModelPlayFrames kind:function(thumb,size=0xc) addr:0x0200f97c
 CountSharedModels kind:function(thumb,size=0x30) addr:0x0200f988
 GetDefaultLanguage kind:function(thumb,size=0x10) addr:0x0200f9b8
 LookupLanguageFileId kind:function(thumb,size=0x28) addr:0x0200f9c8
@@ -330,7 +330,7 @@ LeaveSphereModel kind:function(thumb,size=0x8) addr:0x02011510
 LoadStageOrTextImage kind:function(thumb,size=0x94) addr:0x02011518
 FormatFrameTime kind:function(thumb,size=0x78) addr:0x020115ac
 FormatSignedSeconds kind:function(thumb,size=0x68) addr:0x02011624
-func_0201168c kind:function(thumb,size=0x154) addr:0x0201168c
+DrawModeScoreAndTime kind:function(thumb,size=0x154) addr:0x0201168c
 PercentToX kind:function(thumb,size=0x2a) addr:0x020117e0
 DrawPercentGauge kind:function(thumb,size=0x84) addr:0x0201180c
 DrawStageInfo kind:function(thumb,size=0x204) addr:0x02011890
@@ -352,18 +352,18 @@ SetupSlotScreen kind:function(thumb,size=0x110) addr:0x0201353c
 UpdateSlotScreen kind:function(thumb,size=0x3e0) addr:0x0201364c
 LeaveSlotScreen kind:function(thumb,size=0x8) addr:0x02013a2c
 UpdateSlotScreenInput kind:function(thumb,size=0x114) addr:0x02013a34
-func_02013b48 kind:function(thumb,size=0xdc) addr:0x02013b48
-func_02013c24 kind:function(thumb,size=0x124) addr:0x02013c24
-func_02013d48 kind:function(thumb,size=0x80) addr:0x02013d48
-func_02013dc8 kind:function(thumb,size=0x1ac) addr:0x02013dc8
-func_02013f74 kind:function(thumb,size=0x160) addr:0x02013f74
-func_020140d4 kind:function(thumb,size=0x50) addr:0x020140d4
-func_02014124 kind:function(thumb,size=0x60) addr:0x02014124
-func_02014184 kind:function(thumb,size=0x8) addr:0x02014184
+GetTableEntrySpriteIds kind:function(thumb,size=0xdc) addr:0x02013b48
+GetTableEntryInfoIds kind:function(thumb,size=0x124) addr:0x02013c24
+DrawTableEntryButton kind:function(thumb,size=0x80) addr:0x02013d48
+DrawTableEntryInfo kind:function(thumb,size=0x1ac) addr:0x02013dc8
+DrawTableEntryRowAndHandleButtons kind:function(thumb,size=0x160) addr:0x02013f74
+SetupSharedModelViewer kind:function(thumb,size=0x50) addr:0x020140d4
+UpdateSharedModelViewer kind:function(thumb,size=0x60) addr:0x02014124
+LeaveSharedModelViewer kind:function(thumb,size=0x8) addr:0x02014184
 func_0201418c kind:function(thumb,size=0x2) addr:0x0201418c
-func_02014190 kind:function(thumb,size=0xd0) addr:0x02014190
-func_02014260 kind:function(thumb,size=0x12c) addr:0x02014260
-func_0201438c kind:function(thumb,size=0x2) addr:0x0201438c
+SetupBattleModelViewer kind:function(thumb,size=0xd0) addr:0x02014190
+UpdateBattleModelViewer kind:function(thumb,size=0x12c) addr:0x02014260
+LeaveBattleModelViewer kind:function(thumb,size=0x2) addr:0x0201438c
 ResetProgress kind:function(thumb,size=0x64) addr:0x02014390
 ResetAllProgress kind:function(thumb,size=0x16) addr:0x020143f4
 ResetAndReadSaveSlot kind:function(thumb,size=0x24) addr:0x0201440c
@@ -377,7 +377,7 @@ UpdateProgress kind:function(thumb,size=0x3f4) addr:0x020145bc
 IsReachedNodeSelected kind:function(thumb,size=0x30) addr:0x020149b0
 UpdateNodeState kind:function(thumb,size=0xe8) addr:0x020149e0
 SetupNodeStageInfos kind:function(thumb,size=0x34) addr:0x02014ac8
-func_02014afc kind:function(thumb,size=0xf4) addr:0x02014afc
+ApplyBattleSlotFlagsAndSetNodeStages kind:function(thumb,size=0xf4) addr:0x02014afc
 func_02014bf0 kind:function(thumb,size=0x48) addr:0x02014bf0
 LoadStageInfo kind:function(thumb,size=0x94) addr:0x02014c38
 func_02014ccc kind:function(thumb,size=0x10) addr:0x02014ccc
@@ -389,10 +389,10 @@ AddStage kind:function(thumb,size=0x68) addr:0x02014de4
 InitStage kind:function(thumb,size=0x70) addr:0x02014e4c local
 InitStageInfo kind:function(thumb,size=0x58) addr:0x02014ebc local
 FindStage kind:function(thumb,size=0x84) addr:0x02014f14
-func_02014f98 kind:function(thumb,size=0x64) addr:0x02014f98
+AddValue kind:function(thumb,size=0x64) addr:0x02014f98
 AddPercent kind:function(thumb,size=0xa4) addr:0x02014ffc
-func_020150a0 kind:function(thumb,size=0x1e) addr:0x020150a0
-func_020150c0 kind:function(thumb,size=0x2c) addr:0x020150c0
+AddGrade kind:function(thumb,size=0x1e) addr:0x020150a0
+IsValueAtMax kind:function(thumb,size=0x2c) addr:0x020150c0
 ResetSlots kind:function(thumb,size=0x28) addr:0x020150ec
 SetSlotStage kind:function(thumb,size=0x7c) addr:0x02015114
 GetSlotStage kind:function(thumb,size=0x3c) addr:0x02015190
@@ -432,7 +432,7 @@ func_020186cc kind:function(thumb,size=0x24) addr:0x020186cc
 func_020186f0 kind:function(thumb,size=0xc) addr:0x020186f0
 func_020186fc kind:function(thumb,size=0x74) addr:0x020186fc
 AddStageAmountObjSlots kind:function(thumb,size=0xd0) addr:0x02018770
-func_02018840 kind:function(thumb,size=0x12c) addr:0x02018840
+AddMapObjectTimeOrScore kind:function(thumb,size=0x12c) addr:0x02018840
 func_0201896c kind:function(thumb,size=0x360) addr:0x0201896c
 CompareKeysDescending kind:function(thumb,size=0x8) addr:0x02018ccc
 func_02018cd4 kind:function(thumb,size=0x600) addr:0x02018cd4
@@ -450,7 +450,7 @@ func_02019874 kind:function(thumb,size=0x7c) addr:0x02019874
 func_020198f0 kind:function(thumb,size=0x84) addr:0x020198f0
 DrawStageSprite kind:function(thumb,size=0xc4) addr:0x02019974
 StartStageMoveObj kind:function(thumb,size=0xa0) addr:0x02019a38
-func_02019ad8 kind:function(thumb,size=0x14) addr:0x02019ad8
+StopStageMoveObjAndClearObjSlots kind:function(thumb,size=0x14) addr:0x02019ad8
 UpdateStageMoveObj kind:function(thumb,size=0x4c) addr:0x02019aec
 func_02019b38 kind:function(thumb,size=0x2) addr:0x02019b38
 UpdateMapCursorAndCamera kind:function(thumb,size=0x2bc) addr:0x02019b3c
@@ -1806,8 +1806,8 @@ sThresholdMetWaveIds kind:data(any) addr:0x0204e0f0 local
 sModeStates kind:data(any) addr:0x0204e0fc local
 sModePrompts kind:data(any) addr:0x0204e110 local
 sModeButtonIds kind:data(any) addr:0x0204e124 local
-data_0204e138 kind:data(byte[12]) addr:0x0204e138 local
-data_0204e144 kind:data(any) addr:0x0204e144 local
+sFieldMapIds kind:data(byte[12]) addr:0x0204e138 local
+sFieldObjectModelIds kind:data(any) addr:0x0204e144 local
 @2185 kind:data(byte[2]) addr:0x0204e158 local
 @2075 kind:data(byte[2]) addr:0x0204e15a local
 @2187 kind:data(byte[2]) addr:0x0204e15c local
@@ -1823,22 +1823,22 @@ data_0204e144 kind:data(any) addr:0x0204e144 local
 @2427 kind:data(byte[6]) addr:0x0204e17e local
 @1702 kind:data(byte[12]) addr:0x0204e184 local
 @1704 kind:data(byte[12]) addr:0x0204e190 local
-data_0204e19c$2177 kind:data(word[4]) addr:0x0204e19c local
+sEntryStartWaveIds$2177 kind:data(word[4]) addr:0x0204e19c local
 @1694 kind:data(byte[17]) addr:0x0204e1ac local
-data_0204e1c0 kind:data(byte[12]) addr:0x0204e1c0
-data_0204e1cc kind:data(word[6]) addr:0x0204e1cc
-data_0204e1e4 kind:data(byte[4]) addr:0x0204e1e4 local
-data_0204e1e8 kind:data(byte[4]) addr:0x0204e1e8 local
-data_0204e1ec kind:data(byte[4]) addr:0x0204e1ec local
-data_0204e1f0 kind:data(byte[8]) addr:0x0204e1f0 local
+gSceneMapIds kind:data(byte[12]) addr:0x0204e1c0
+gKind3TouchPositions kind:data(word[6]) addr:0x0204e1cc
+sLanguageSlideIndices kind:data(byte[4]) addr:0x0204e1e4 local
+sLanguageButtonSpriteIds kind:data(byte[4]) addr:0x0204e1e8 local
+sLanguageSpriteIds kind:data(byte[4]) addr:0x0204e1ec local
+sLanguageButtonPos kind:data(byte[8]) addr:0x0204e1f0 local
 sMicRanges kind:data(byte[16]) addr:0x0204e1f8 local
-data_0204e208 kind:data(short[2]) addr:0x0204e208
-data_0204e20c kind:data(short[2]) addr:0x0204e20c
-data_0204e210 kind:data(short[2]) addr:0x0204e210
+gScriptSoundIds kind:data(short[2]) addr:0x0204e208
+gScriptImageIds kind:data(short[2]) addr:0x0204e20c
+gScriptTrackFileIds kind:data(short[2]) addr:0x0204e210
 data_0204e214 kind:data(word[1]) addr:0x0204e214
 gPromptSpriteDefs kind:data(word[12]) addr:0x0204e218
 gPromptWaves kind:data(short[64]) addr:0x0204e248
-data_0204e2c8 kind:data(short[86]) addr:0x0204e2c8
+gScriptSpriteIds kind:data(short[86]) addr:0x0204e2c8
 sPrompts kind:data(any) addr:0x0204e374 local
 @1790 kind:data(byte[14]) addr:0x0204e804 local
 ids$2097 kind:data(byte[18]) addr:0x0204e812 local
@@ -1862,7 +1862,7 @@ data_0204ff50 kind:data(byte[32]) addr:0x0204ff50 local
 data_0204ff70 kind:data(byte[32]) addr:0x0204ff70 local
 data_0204ff90 kind:data(byte[48]) addr:0x0204ff90 local
 data_0204ffc0 kind:data(byte[48]) addr:0x0204ffc0 local
-data_0204fff0 kind:data(byte[72]) addr:0x0204fff0 local
+sPermutationsOf3 kind:data(byte[72]) addr:0x0204fff0 local
 data_02050038 kind:data(byte[156]) addr:0x02050038 local
 data_020500d4 kind:data(byte[3]) addr:0x020500d4
 gShapeCellOffsets kind:data(byte[9]) addr:0x020500d8
@@ -1957,7 +1957,7 @@ gScene kind:data(any) addr:0x02063940
 @2340 kind:data(any) addr:0x02063978 local
 @2341 kind:data(any) addr:0x02063980 local
 @2342 kind:data(any) addr:0x02063984 local
-data_02063988 kind:data(any) addr:0x02063988
+gScriptFonts kind:data(any) addr:0x02063988
 @1591 kind:data(any) addr:0x020639a8 local
 @1627 kind:data(any) addr:0x020639b4 local
 @1669 kind:data(any) addr:0x020639bc local
@@ -2195,8 +2195,8 @@ data_020b1bb0 kind:bss addr:0x020b1bb0
 data_020b1bb6 kind:bss addr:0x020b1bb6
 data_020b6ee0 kind:bss addr:0x020b6ee0
 gRecapFrameIndex kind:bss addr:0x020c17fc
-data_020c1800 kind:bss addr:0x020c1800
-data_020c180c kind:bss addr:0x020c180c
+gMapMenuCameraPos kind:bss addr:0x020c1800
+gMapMenuLookAt kind:bss addr:0x020c180c
 data_020c1818 kind:bss addr:0x020c1818
 gArenaLo kind:bss addr:0x020c181c
 data_020c1820 kind:bss addr:0x020c1820

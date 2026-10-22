@@ -2015,16 +2015,16 @@ void UpdateCamera(void) {
             func_02033c0c(&gMapState.mCamera.mUnk_9c.mUnk_204);
             break;
         case 11:
-            if (gMapState.mCamera.mUnk_9c.mModel.mUnk_170 != 0) {
+            if (gMapState.mCamera.mUnk_9c.mModel.mId != 0) {
                 OS_Terminate();
             }
             UpdateAndDrawModel(&gMapState.mCamera.mUnk_9c.mModel, &gMapState.mCamera.mUnk_9c.mDraw, 0);
-            count = gMapState.mCamera.mUnk_9c.mModel.mUnk_14c.mUnk_4;
-            whole = DivideWithRemainder(gMapState.mCamera.mUnk_9c.mModel.mUnk_14c.mUnk_2, count, (u32 *) &rest);
-            next = (u32) (whole + 1) % GetAnimFrameCount(gMapState.mCamera.mUnk_9c.mModel.mUnk_14c.mUnk_0);
+            count = gMapState.mCamera.mUnk_9c.mModel.mUnk_14c.mFramesPerAnimFrame;
+            whole = DivideWithRemainder(gMapState.mCamera.mUnk_9c.mModel.mUnk_14c.mPlayFrames, count, (u32 *) &rest);
+            next = (u32) (whole + 1) % GetAnimFrameCount(gMapState.mCamera.mUnk_9c.mModel.mUnk_14c.mId);
             rest = (rest << 8) / count;
-            ReadAnimFileNode(gMapState.mCamera.mUnk_9c.mModel.mUnk_14c.mUnk_0, NULL, &eye, NULL, whole, next, rest, 1);
-            ReadAnimFileNode(gMapState.mCamera.mUnk_9c.mModel.mUnk_14c.mUnk_0, NULL, &at, NULL, whole, next, rest, 2);
+            ReadAnimFileNode(gMapState.mCamera.mUnk_9c.mModel.mUnk_14c.mId, NULL, &eye, NULL, whole, next, rest, 1);
+            ReadAnimFileNode(gMapState.mCamera.mUnk_9c.mModel.mUnk_14c.mId, NULL, &at, NULL, whole, next, rest, 2);
             break;
         case 10:
             AdvanceCameraTrack(&gMapState.mCamera.mUnk_9c.mUnk_1ec, &whole, &next, &rest);
@@ -2045,7 +2045,7 @@ void UpdateCamera(void) {
     target = gMapState.mCamera.mUnk_2dc.mUnk_20;
     switch (gMapState.mCamera.mUnk_2dc.mUnk_33) {
         case 6:
-            pos = target->mModel.mUnk_158;
+            pos = target->mModel.mNodePos;
             pos.y += gMapState.mCamera.mUnk_2dc.mUnk_24;
             func_0203393c(&pos);
             func_02033b04();

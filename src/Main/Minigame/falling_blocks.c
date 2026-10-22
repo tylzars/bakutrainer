@@ -763,7 +763,7 @@ void SetupFallingBlocks(void) {
     if (data_020b10fc.mTableRow < 0 || gBoard.mTableRow >= 12) {
         OS_Terminate();
     }
-    func_0200c5d8(0, gBoard.mStage.mKind + 0x1cb, gBoard.mStage.mStageId + 0xdb3, 64, 16, 2, 130);
+    ResetAndSetupGraphics(0, gBoard.mStage.mKind + 0x1cb, gBoard.mStage.mStageId + 0xdb3, 64, 16, 2, 130);
     func_02024208();
     RequestTrack(3, 76);
     func_0200bdcc(2, 16);
@@ -820,8 +820,8 @@ void SetupFallingBlocks(void) {
 }
 
 void DrawFallingBlocks(void) {
-    func_0201168c(data_020b6ee0.mSelectedStageIndex, gBoard.mScore, gModeSelectState.mScoreThreshold, gBoard.mEndTimer,
-                  2);
+    DrawModeScoreAndTime(data_020b6ee0.mSelectedStageIndex, gBoard.mScore, gModeSelectState.mScoreThreshold,
+                         gBoard.mEndTimer, 2);
     DrawPair(&gBoard.mNextPair, 2, 0);
     DrawBoard();
     DrawPair(&gBoard.mPair, 1, 1);

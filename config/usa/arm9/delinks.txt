@@ -538,9 +538,9 @@ src/Main/Graphics/sprite_slots.c:
 
 // .bss sWavePlayed..gBattleSlotStages (ascending sizes: one file); the 0x34-byte data_02099770 after the 0x690-byte
 // gBattleSlotStages starts the next file
-// one file: SetupBattleScreen, UpdateBattleCompare, UpdateBattleEntryPick and UpdateBattleKindValues reach the .rodata blob through one section
-// base, and SetCameraFromModel's table is the blob's last object. The .rodata order of its equal-size local initializers
-// needs two objects the link strips (layout placeholders in the source)
+// one file: SetupBattleScreen, UpdateBattleCompare, UpdateBattleEntryPick and UpdateBattleKindValues reach the .rodata
+// blob through one section base, and SetCameraFromModel's table is the blob's last object. The .rodata order of its
+// equal-size local initializers needs two objects the link strips (layout placeholders in the source)
 src/Main/Scene/battle_screen.c:
     complete
     .text       start:0x020071a8 end:0x0200a384
@@ -586,9 +586,9 @@ src/Main/Scene/language_menu.c:
     .data       start:0x02063988 end:0x020639ec
     .bss        start:0x020ae6ec end:0x020b1078
 
-// one file: func_02014260's local initializer (0x0204fedc) and the panel tables after it share one .rodata section;
-// its strings 0x02063a2c-0x02063a5c follow in creation order and its .bss is the stage selection state. The end is
-// provisional (the lookup helpers FindTableEntryIndex..GetSelectedNodeStageId show no file break)
+// one file: UpdateBattleModelViewer's local initializer (0x0204fedc) and the panel tables after it share one .rodata
+// section; its strings 0x02063a2c-0x02063a5c follow in creation order and its .bss is the stage selection state. The
+// end is provisional (the lookup helpers FindTableEntryIndex..GetSelectedNodeStageId show no file break)
 src/Main/Scene/stage_info_panel.c:
     complete
     .text       start:0x02011518 end:0x020145bc

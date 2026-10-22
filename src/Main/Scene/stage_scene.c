@@ -24,9 +24,9 @@
 #include <nitro/os.h>
 
 // Values of data_020b10fc.mSceneState, the state UpdateScene switches on: start (adds the first popups), run (the
-// timers count), popups only (set when a touched kind-3 popup brings mUnk_624 to 0: the timers stop, touches are
-// ignored and the popups still update; that popup's slot, in POPUP_STATE_END_SCENE, moves the state on to end at the
-// next update), end (waits for the model, then ends the mode).
+// timers count), popups only (set when a touched kind-3 popup brings mKind3TouchesRemaining to 0: the timers stop,
+// touches are ignored and the popups still update; that popup's slot, in POPUP_STATE_END_SCENE, moves the state on to
+// end at the next update), end (waits for the model, then ends the mode).
 #define SCENE_STATE_START 0
 #define SCENE_STATE_RUN 1
 #define SCENE_STATE_POPUPS_ONLY 2
@@ -41,8 +41,8 @@
 #define POPUP_STATE_END_SCENE 5
 #define POPUP_STATE_FREE 7
 
-const u16 data_0204e1c0[6] = {0xd10, 0xd14, 0xd18, 0xd1c, 0xd20, 0xd24};
-const s32 data_0204e1cc[3][2] = {{28, 90}, {48, 90}, {68, 90}};
+const u16 gSceneMapIds[6] = {0xd10, 0xd14, 0xd18, 0xd1c, 0xd20, 0xd24};
+const s32 gKind3TouchPositions[3][2] = {{28, 90}, {48, 90}, {68, 90}};
 
 // The stage scene object; the code reaches it through gScene.
 Scene data_020ab7e0;
@@ -68,10 +68,10 @@ void SetupSceneCamera(void) {
     func_02033e38(1, 1, 1);
     func_02033e38(8, 0, 1);
     gMapState.mCamera.mUnk_2dc.mUnk_30 = 1;
-    GetMapEntryPos(1, &gScene->mUnk_5b4);
-    GetMapEntryPos(0, &gScene->mUnk_5c0);
-    GetMapEntryPos(2, &gScene->mUnk_5cc);
-    GetMapEntryPos(4, &gScene->mUnk_5d8);
+    GetMapEntryPos(1, &gScene->mMapEntry1Pos);
+    GetMapEntryPos(0, &gScene->mMapEntry0Pos);
+    GetMapEntryPos(2, &gScene->mMapEntry2Pos);
+    GetMapEntryPos(4, &gScene->mMapEntry4Pos);
     memset(&gScene->mShakeTarget, 0, 12);
     memset(&gScene->mShakeOffset, 0, 12);
     memset(&gScene->mShakePerFrame, 0, 12);
@@ -90,12 +90,24 @@ void UpdateSceneCamera(void) {
     Unk_020c5f04 *cam = &gMapState.mCamera.mUnk_9c;
     VecFx32 a;
     VecFx32 b;
-    a.x = MapRange(gScene->mEndTimer, 0, gScene->mEndTimerMax, gScene->mUnk_5cc.x >> 8, gScene->mUnk_5b4.x >> 8) << 8;
-    a.y = MapRange(gScene->mEndTimer, 0, gScene->mEndTimerMax, gScene->mUnk_5cc.y >> 8, gScene->mUnk_5b4.y >> 8) << 8;
-    a.z = MapRange(gScene->mEndTimer, 0, gScene->mEndTimerMax, gScene->mUnk_5cc.z >> 8, gScene->mUnk_5b4.z >> 8) << 8;
-    b.x = MapRange(gScene->mEndTimer, 0, gScene->mEndTimerMax, gScene->mUnk_5d8.x >> 8, gScene->mUnk_5c0.x >> 8) << 8;
-    b.y = MapRange(gScene->mEndTimer, 0, gScene->mEndTimerMax, gScene->mUnk_5d8.y >> 8, gScene->mUnk_5c0.y >> 8) << 8;
-    b.z = MapRange(gScene->mEndTimer, 0, gScene->mEndTimerMax, gScene->mUnk_5d8.z >> 8, gScene->mUnk_5c0.z >> 8) << 8;
+    a.x =
+        MapRange(gScene->mEndTimer, 0, gScene->mEndTimerMax, gScene->mMapEntry2Pos.x >> 8, gScene->mMapEntry1Pos.x >> 8)
+        << 8;
+    a.y =
+        MapRange(gScene->mEndTimer, 0, gScene->mEndTimerMax, gScene->mMapEntry2Pos.y >> 8, gScene->mMapEntry1Pos.y >> 8)
+        << 8;
+    a.z =
+        MapRange(gScene->mEndTimer, 0, gScene->mEndTimerMax, gScene->mMapEntry2Pos.z >> 8, gScene->mMapEntry1Pos.z >> 8)
+        << 8;
+    b.x =
+        MapRange(gScene->mEndTimer, 0, gScene->mEndTimerMax, gScene->mMapEntry4Pos.x >> 8, gScene->mMapEntry0Pos.x >> 8)
+        << 8;
+    b.y =
+        MapRange(gScene->mEndTimer, 0, gScene->mEndTimerMax, gScene->mMapEntry4Pos.y >> 8, gScene->mMapEntry0Pos.y >> 8)
+        << 8;
+    b.z =
+        MapRange(gScene->mEndTimer, 0, gScene->mEndTimerMax, gScene->mMapEntry4Pos.z >> 8, gScene->mMapEntry0Pos.z >> 8)
+        << 8;
     EaseVecToward(&cam->mUnk_204, a, 4);
     EaseVecToward(&cam->mUnk_228, b, 4);
     if (gScene->mShakeTimer != 0) {
@@ -136,26 +148,26 @@ void SetupScene(void) {
     if (!ok) {
         OS_Terminate();
     }
-    func_0200c5d8(0, 0, gScene->mStage.mStageId + 0xdb3, 0x180, 16, 0, 2);
+    ResetAndSetupGraphics(0, 0, gScene->mStage.mStageId + 0xdb3, 0x180, 16, 0, 2);
     func_02024208();
     RequestTrack(4, 0x4c);
-    func_0200dc08(data_0204e1c0[gScene->mStage.mKind], &area[4], &area[3], &area[2], &area[1], &area[0], 0);
+    func_0200dc08(gSceneMapIds[gScene->mStage.mKind], &area[4], &area[3], &area[2], &area[1], &area[0], 0);
     SetupMap(area[4], area[2], area[3], 0, area[1], area[0]);
     UpdateSystemAndWait();
     SetupSceneCamera();
     G3X_SetClearColor(0, 8, 0x7fff, 0, 0);
-    memset(&gScene->mUnk_3a8, 0, sizeof(DrawParams));
-    func_02031fc4(3, &gScene->mUnk_3a8.mPos);
-    gScene->mUnk_3a8.mUnk_43 = 0;
+    memset(&gScene->mDraw, 0, sizeof(DrawParams));
+    func_02031fc4(3, &gScene->mDraw.mPos);
+    gScene->mDraw.mUnk_43 = 0;
     InitModel(&gScene->mUnk_230, 0, 0, 0, data_0201abbc[gScene->mStage.mKind + 1]);
-    gScene->mBasePos = gScene->mUnk_3a8.mPos;
+    gScene->mBasePos = gScene->mDraw.mPos;
     InitModel(&gScene->mUnk_3ec, 0, 0, 0, data_0201abbc[0]);
     data_020b10fc.mSceneState = SCENE_STATE_START;
     gScene->mPopupRow = data_020b10fc.mTableRow - 1;
     gScene->mScore = 0;
     gScene->mRowTimer = 0;
     LoadSceneValues();
-    func_0200ce24();
+    AdvancePopupRow();
     ClearNumber();
     for (i = 0; i < POPUP_SLOT_COUNT; i++) {
         gScene->mSlots[i].mState = POPUP_STATE_FREE;
@@ -179,7 +191,7 @@ void UpdateScene(void) {
     }
     UpdateSceneCamera();
     DrawScene();
-    EaseVecToward(&gScene->mUnk_3a8.mPos, gScene->mBasePos, 12);
+    EaseVecToward(&gScene->mDraw.mPos, gScene->mBasePos, 12);
     switch (data_020b10fc.mSceneState) {
         case SCENE_STATE_START:
             AddPopups();
@@ -187,7 +199,7 @@ void UpdateScene(void) {
         case SCENE_STATE_RUN:
             gScene->mRowTimer--;
             if (gScene->mRowTimer <= 0) {
-                func_0200ce24();
+                AdvancePopupRow();
             }
             gScene->mPopupTimer--;
             if (gScene->mPopupTimer <= 0) {
@@ -196,7 +208,7 @@ void UpdateScene(void) {
             gScene->mEndTimer--;
             if (gScene->mEndTimer <= 0) {
                 data_020b10fc.mSceneState = SCENE_STATE_END;
-                gScene->mUnk_230.mUnk_134 |= 2;
+                gScene->mUnk_230.mSignals |= 2;
             }
         case SCENE_STATE_POPUPS_ONLY:
             UpdatePopups();
@@ -215,11 +227,11 @@ void LeaveScene(void) {
 }
 
 void DrawScene(void) {
-    func_0201168c(data_020b6ee0.mSelectedStageIndex, gScene->mScore, gModeSelectState.mScoreThreshold,
-                  gScene->mEndTimer, 2);
-    func_0200cdc4();
+    DrawModeScoreAndTime(data_020b6ee0.mSelectedStageIndex, gScene->mScore, gModeSelectState.mScoreThreshold,
+                         gScene->mEndTimer, 2);
+    DrawKind3Touches();
     func_02033614(gMapState.mCamera.mUnk_9c.mUnk_228.x, gMapState.mCamera.mUnk_9c.mUnk_228.z);
-    UpdateAndDrawModel(&gScene->mUnk_230, &gScene->mUnk_3a8, 0xb0000002);
+    UpdateAndDrawModel(&gScene->mUnk_230, &gScene->mDraw, 0xb0000002);
     PlayObjectSe(&gScene->mUnk_230);
     func_02024368(&gScene->mUnk_3ec, 255, 0, 0x1000, 0, 0);
     if (data_020b10fc.mSceneState < SCENE_STATE_END) {
@@ -227,33 +239,35 @@ void DrawScene(void) {
     }
 }
 
-void func_0200cdc4(void) {
-    int n = 3 - gScene->mUnk_624;
+// Draws sprite 0xe3a and, at gKind3TouchPositions, 3 - mKind3TouchesRemaining sprites 0xe39: one per touched kind-3
+// popup when the scene starts with 3 of them to touch.
+void DrawKind3Touches(void) {
+    int n = 3 - gScene->mKind3TouchesRemaining;
     int i;
     func_0202de80(0xe3a, 8, 84, 100, -1, 2);
     for (i = 0; i < n; i++) {
-        func_0202de80(0xe39, data_0204e1cc[i][0], data_0204e1cc[i][1], 100, -1, 2);
+        func_0202de80(0xe39, gKind3TouchPositions[i][0], gKind3TouchPositions[i][1], 100, -1, 2);
     }
 }
 
-void func_0200ce24(void) {
+void AdvancePopupRow(void) {
     gScene->mPopupRow++;
     gScene->mRowTimer = gScene->mRowSeconds * 60;
-    if (gScene->mPopupIntervalMs >= gScene->mPopupIntervalMinMs + gScene->mUnk_63c) {
-        gScene->mPopupIntervalMs -= gScene->mUnk_63c;
+    if (gScene->mPopupIntervalMs >= gScene->mPopupIntervalMinMs + gScene->mPopupIntervalMsPerRow) {
+        gScene->mPopupIntervalMs -= gScene->mPopupIntervalMsPerRow;
     } else {
         gScene->mPopupIntervalMs = gScene->mPopupIntervalMinMs;
     }
-    if (gScene->mPopupShowMs >= gScene->mPopupShowMinMs + gScene->mUnk_648) {
-        gScene->mPopupShowMs -= gScene->mUnk_648;
+    if (gScene->mPopupShowMs >= gScene->mPopupShowMinMs + gScene->mPopupShowMsPerRow) {
+        gScene->mPopupShowMs -= gScene->mPopupShowMsPerRow;
     } else {
         gScene->mPopupShowMs = gScene->mPopupShowMinMs;
     }
 }
 
 // Restarts mPopupTimer. If a cell is free, steps mPopupRow back while that row of table 0xd64 has a popup count of 0,
-// then starts up to that many popups in free cells: the first of kind 1 when mUnk_62c > mUnk_628 (which resets
-// mUnk_62c), the rest of a kind picked by the row's four weights.
+// then starts up to that many popups in free cells: the first of kind 1 when mTouchCount > mKind1TouchThreshold (which
+// resets mTouchCount), the rest of a kind picked by the row's four weights.
 void AddPopups(void) {
     u32 mask;
     s32 cum[4];
@@ -291,8 +305,8 @@ void AddPopups(void) {
             cum[i] = total;
         }
         n = 0;
-        if (gScene->mUnk_62c > gScene->mUnk_628) {
-            gScene->mUnk_62c = 0;
+        if (gScene->mTouchCount > gScene->mKind1TouchThreshold) {
+            gScene->mTouchCount = 0;
             slot = TakeRandomClearBit(&mask);
             StartPopup(slot, 1, slot);
             n++;
@@ -325,11 +339,11 @@ void StartPopup(int slot, int type, int index) {
     e->mShowTimer = gScene->mPopupShowMs * 60 / 1000;
     e->mWaitTimer = 0;
     if (slots[slot].mKind == 2) {
-        e->mUnk_1c = gScene->mUnk_658;
+        e->mAmount = gScene->mKind2Amount;
     } else if (slots[slot].mKind == 1) {
-        e->mUnk_1c = gScene->mUnk_65c;
+        e->mAmount = gScene->mKind1Amount;
     } else if (slots[slot].mKind != 3) {
-        e->mUnk_1c = gScene->mUnk_660;
+        e->mAmount = gScene->mKind0Amount;
     }
 }
 
@@ -389,7 +403,7 @@ void UpdatePopups(void) {
                 break;
             case POPUP_STATE_END_SCENE:
                 data_020b10fc.mSceneState = SCENE_STATE_END;
-                p->mUnk_230.mUnk_134 |= 2;
+                p->mUnk_230.mSignals |= 2;
                 break;
             case 6:
             case POPUP_STATE_FREE:
@@ -415,11 +429,11 @@ void HandlePopupTouch(PopupSlot *slot) {
     AddAnimObjSlot(5, pos.x, pos.y, 30, 1);
     slot->mState = POPUP_STATE_TOUCHED;
     slot->mDisappearTimer = 30;
-    gScene->mUnk_62c++;
+    gScene->mTouchCount++;
     if (slot->mKind == 3) {
-        gScene->mUnk_624--;
-        gScene->mUnk_62c = 0;
-        if (gScene->mUnk_624 <= 0) {
+        gScene->mKind3TouchesRemaining--;
+        gScene->mTouchCount = 0;
+        if (gScene->mKind3TouchesRemaining <= 0) {
             slot->mShowTimer = 0;
             slot->mState = POPUP_STATE_END_SCENE;
             data_020b10fc.mSceneState = SCENE_STATE_POPUPS_ONLY;
@@ -427,18 +441,18 @@ void HandlePopupTouch(PopupSlot *slot) {
         StartShake(200);
         PlayWaveKeepAlive(0x72, 100, 0, 0x40, 0xffff, 0);
     } else if (slot->mKind == 1) {
-        gScene->mEndTimer += gScene->mUnk_65c;
+        gScene->mEndTimer += gScene->mKind1Amount;
         gScene->mEndTimer = gScene->mEndTimer < gScene->mEndTimerMax ? gScene->mEndTimer : gScene->mEndTimerMax;
         PlayWaveKeepAlive(0x75, 100, 0, 0x40, 0xffff, 0);
     } else if (slot->mKind == 2) {
-        AddCappedAt999Shifted(&gScene->mScore, gScene->mUnk_658, 0);
-        ShowNumber(gScene->mUnk_658, &pos);
-        gScene->mUnk_3a8.mPos.z = gScene->mBasePos.z - 0xc800;
+        AddCappedAt999Shifted(&gScene->mScore, gScene->mKind2Amount, 0);
+        ShowNumber(gScene->mKind2Amount, &pos);
+        gScene->mDraw.mPos.z = gScene->mBasePos.z - 0xc800;
         PlayWaveKeepAlive(0x74, 100, 0, 0x40, 0xffff, 0);
     } else {
-        AddCappedAt999Shifted(&gScene->mScore, gScene->mUnk_660, 0);
-        ShowNumber(gScene->mUnk_660, &pos);
-        gScene->mUnk_3a8.mPos.z = gScene->mBasePos.z - 0xc800;
+        AddCappedAt999Shifted(&gScene->mScore, gScene->mKind0Amount, 0);
+        ShowNumber(gScene->mKind0Amount, &pos);
+        gScene->mDraw.mPos.z = gScene->mBasePos.z - 0xc800;
         PlayWaveKeepAlive(0x73, 100, 0, 0x40, 0xffff, 0);
     }
 }
@@ -451,11 +465,11 @@ void LoadSceneValues(void) {
     base = (data_020b10fc.mTableRow + 1) * 3;
     gScene->mScoreThreshold = GetFileValue(0xd63, base);
     base = data_020b10fc.mTableRow * 3;
-    gScene->mUnk_624 = GetFileValue(0xd63, base + 4);
+    gScene->mKind3TouchesRemaining = GetFileValue(0xd63, base + 4);
     base = data_020b10fc.mTableRow * 11;
     gScene->mPopupIntervalMs = GetFileValue(0xd62, base + 2);
     base = data_020b10fc.mTableRow * 11;
-    gScene->mUnk_63c = GetFileValue(0xd62, base + 3);
+    gScene->mPopupIntervalMsPerRow = GetFileValue(0xd62, base + 3);
     base = data_020b10fc.mTableRow * 11;
     gScene->mPopupIntervalMinMs = GetFileValue(0xd62, base + 4);
     base = data_020b10fc.mTableRow * 11;
@@ -463,17 +477,17 @@ void LoadSceneValues(void) {
     base = data_020b10fc.mTableRow * 11;
     gScene->mPopupShowMs = GetFileValue(0xd62, base + 6);
     base = data_020b10fc.mTableRow * 11;
-    gScene->mUnk_648 = GetFileValue(0xd62, base + 7);
+    gScene->mPopupShowMsPerRow = GetFileValue(0xd62, base + 7);
     base = data_020b10fc.mTableRow * 11;
     gScene->mPopupShowMinMs = GetFileValue(0xd62, base + 8);
     base = (data_020b10fc.mTableRow + 1) * 11;
-    gScene->mUnk_660 = GetFileValue(0xd62, base);
+    gScene->mKind0Amount = GetFileValue(0xd62, base);
     base = data_020b10fc.mTableRow * 11;
-    gScene->mUnk_65c = GetFileValue(0xd62, base + 10) * 60;
+    gScene->mKind1Amount = GetFileValue(0xd62, base + 10) * 60;
     base = data_020b10fc.mTableRow * 11;
-    gScene->mUnk_658 = GetFileValue(0xd62, base + 9);
+    gScene->mKind2Amount = GetFileValue(0xd62, base + 9);
     base = data_020b10fc.mTableRow * 11;
-    gScene->mUnk_628 = GetFileValue(0xd62, base + 12);
+    gScene->mKind1TouchThreshold = GetFileValue(0xd62, base + 12);
 }
 
 void ClearNumber(void) {

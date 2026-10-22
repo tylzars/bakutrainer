@@ -502,7 +502,7 @@ void AddScriptSprite(u8 *text, int mode) {
     sprite = gScriptWork.mSprites + index;
     sprite->mId = buf[0];
     if (mode == 0) {
-        sprite->mDrawId = data_0204e2c8[buf[0]];
+        sprite->mDrawId = gScriptSpriteIds[buf[0]];
         if (buf[4] & SCRIPT_SPRITE_LAYER_1) {
             sprite->mLayer = 1;
         } else {
@@ -775,7 +775,7 @@ void SetScriptScrSprite(u8 *text, int flag) {
                 x = data_0204e214[v[0]] & 0x7fff;
                 sel = 2;
             } else {
-                x = data_0204e2c8[v[0]];
+                x = gScriptSpriteIds[v[0]];
                 sel = 1;
             }
             o->mScrDrawId = x - (sel << 30);
@@ -866,8 +866,8 @@ void ScriptCmdMusic(u8 *text) {
     if (n == 1) {
         v[1] = 100;
     }
-    if (data_0204e210[0] != 0) {
-        gScriptWork.mTrackFileId = data_0204e210[v[0]];
+    if (gScriptTrackFileIds[0] != 0) {
+        gScriptWork.mTrackFileId = gScriptTrackFileIds[v[0]];
     } else {
         gScriptWork.mTrackFileId = v[0];
     }
@@ -893,7 +893,7 @@ void ScriptCmdSound(u8 *text) {
     if (ok == 0) {
         OS_Terminate();
     }
-    gScriptWork.mSoundIds[idx] = data_0204e208[v[0]];
+    gScriptWork.mSoundIds[idx] = gScriptSoundIds[v[0]];
     gScriptWork.mSoundVolumes[idx] = v[1];
     gScriptWork.mSoundModes[idx] = v[2];
 }
@@ -1206,7 +1206,7 @@ void UpdateScript(int (*callback)(void)) {
         gScriptWork.mSpritesBusy = 0;
         for (i = 0; i < 2; i++) {
             if (gScriptWork.mUnk_280.mPendingImageLayers[i] != 0) {
-                u16 image = data_0204e20c[gScriptWork.mUnk_280.mPendingImageIndices[i]];
+                u16 image = gScriptImageIds[gScriptWork.mUnk_280.mPendingImageIndices[i]];
                 SetFaded(gScriptWork.mUnk_280.mPendingImageLayers[i]);
                 LoadImage(image, gScriptWork.mUnk_280.mPendingImageLayers[i]);
                 if (gScriptWork.mUnk_280.mPendingImageLayers[i] == 1) {
@@ -1370,7 +1370,7 @@ void UpdateScript(int (*callback)(void)) {
 
             UpdateScriptEye(sprite->mId, &id, &dx, &dy);
             if (id != -1) {
-                id = data_0204e2c8[id];
+                id = gScriptSpriteIds[id];
                 GetTexInfo(id, &info, 0);
                 if (info.mUnk_12 > 1) {
                     func_0202a1cc();
@@ -1387,11 +1387,11 @@ void UpdateScript(int (*callback)(void)) {
                     gScriptWork.mUnk_280.mLsTimer--;
                     // Always true: mAnimId is 16-bit.
                     if (rec->mAnimId != -1) {
-                        id = data_0204e2c8[rec->mAnimId] +
+                        id = gScriptSpriteIds[rec->mAnimId] +
                              (gSystemState.mElapsedFrames / rec->mFramesPerAnimFrame) % rec->mAnimFrameCount;
                     }
                 } else if (rec->mStillId != -1) {
-                    id = data_0204e2c8[rec->mStillId];
+                    id = gScriptSpriteIds[rec->mStillId];
                 }
                 if (id != -1) {
                     GetTexInfo(id, &info, 0);
@@ -1451,14 +1451,14 @@ void UpdateScript(int (*callback)(void)) {
                 if (callback != 0) {
                     value = callback();
                 }
-                GetTexInfo(data_02063988[entry->mFontIndex]->mGlyph, &info, 0);
+                GetTexInfo(gScriptFonts[entry->mFontIndex]->mGlyph, &info, 0);
                 if (info.mUnk_12 > 1) {
                     extra = TEXT_ROTATE;
                     saved = gSystemState.mUnk_30a[0];
                     gSystemState.mUnk_30a[0] = value;
                     func_0202a1cc();
                 }
-                DrawTextEx(entry->mX, entry->mY + gScriptWork.mTextOffsetY, data_02063988, (u8) entry->mFontIndex,
+                DrawTextEx(entry->mX, entry->mY + gScriptWork.mTextOffsetY, gScriptFonts, (u8) entry->mFontIndex,
                            (const u8 *) text, 0,
                            extra + (entry->mAlign + (TEXT_LINE_WINDOW | TEXT_LIMIT | TEXT_HILITE) +
                                     (gScriptWork.mUnk_280.mTextEscapeFunc != 0 ? TEXT_ESCAPES : 0)),
