@@ -7,7 +7,7 @@
 
 StateC data_020c66d4[1];
 u32 gCommRecordReceived[16] __attribute__((aligned(32)));
-u8 data_020c6720[0xc0] __attribute__((aligned(32)));
+u8 gCommConnectData[0xc0] __attribute__((aligned(32)));
 u8 gCommSendData[0x100] __attribute__((aligned(32)));
 u8 gCommRecords[0x1fc] __attribute__((aligned(32)));
 
@@ -27,7 +27,7 @@ void ReleaseComm(void) {
     memset(gCommSendData, 0, 0xfe);
     memset(gCommRecords, 0, 0x1fc);
     memset(gCommRecordReceived, 0, 0x40);
-    memset(data_020c6720, 0, 0xc0);
+    memset(gCommConnectData, 0, 0xc0);
     data_020c66d4->mUnk_4 = 0;
 }
 

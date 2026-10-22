@@ -175,18 +175,18 @@ void HandlePromptEvents(void) {
     PromptSprite *state = &gPromptSprite;
     int ok;
     while ((rec = NextScriptEvent()) != 0) {
-        switch (rec->mUnk_00) {
+        switch (rec->mKind) {
             case 6:
-                ok = rec->mUnk_02 >= 0 && rec->mUnk_02 <= 3;
+                ok = rec->mParam >= 0 && rec->mParam <= 3;
                 if (!ok) {
                     OS_Terminate();
                 }
-                state->mSpriteIndex = rec->mUnk_02 - 1;
+                state->mSpriteIndex = rec->mParam - 1;
                 state->mSlideLevel = 0;
                 break;
             case 7:
-                if (!gScriptWork.mUnk_1c_2) {
-                    const PromptWave *e = &gPromptWaves[rec->mUnk_02];
+                if (!gScriptWork.mSkipToEnd) {
+                    const PromptWave *e = &gPromptWaves[rec->mParam];
                     u32 base = e->mAddLanguage == 1 ? data_020b1084.mLanguage : 0;
                     PlayWaveKeepAlive(base + e->mWaveId, 100, 0, 0x40, 0xffff, 0);
                 }

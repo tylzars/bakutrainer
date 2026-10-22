@@ -207,7 +207,7 @@ int EvaluateMove(u8 *board, int player, ShapeRec *recs, int x, int y) {
 
 // Tries each free cell for player: EvaluateMove's score, and below mSearchDepth and short of a win, minus the other
 // player's best reply after a 0 score or plus the same player's next move otherwise. Returns the best score (0 when no
-// cell is free); at depth 0 it also stores the best cell in mUnk_01.
+// cell is free); at depth 0 it also stores the best cell in mMoveCell.
 int FindBestMove(ShapeRec *recs, u8 *board, int player, u32 depth) {
     int x, y;
     int bestPos;
@@ -248,17 +248,17 @@ int FindBestMove(ShapeRec *recs, u8 *board, int player, u32 depth) {
         if (best == SCORE_NONE) {
             OS_Terminate();
         }
-        gThreeInRow.mUnk_01 = bestPos;
+        gThreeInRow.mMoveCell = bestPos;
     }
     return best == SCORE_NONE ? 0 : best;
 }
 
 void StartThreeInRowBoard(void) {
     gThreeInRow.mSearchDepth = 4;
-    gThreeInRow.mUnk_01 = 0x40;
+    gThreeInRow.mMoveCell = 0x40;
     gThreeInRow.mMoveTimer = 4;
     gThreeInRow.mEmptyCount = 0;
-    gThreeInRow.mUnk_0c = 0;
+    gThreeInRow.mClearCount = 0;
     gThreeInRow.mTurn++;
     gThreeInRow.mMarkSprite.mUnk_de = 1;
     gThreeInRow.mShapeCount = PlaceRandomShapes(gThreeInRow.mBoards, gThreeInRow.mShapes);
@@ -286,7 +286,7 @@ void UpdateThreeInRowBoard(void) {
         }
         StartThreeInRowBoard();
     }
-    if (s->mUnk_01 & 0x40) {
+    if (s->mMoveCell & 0x40) {
         if (s->mMoveTimer == 0) {
             if (s->mTurn & 1) {
                 DrawText(10, 20, data_0201a6d0, "Ordi", 0, 240, 16, 2);
@@ -298,7 +298,7 @@ void UpdateThreeInRowBoard(void) {
                     y = gSystemState.mTouchY - 0x20;
                     cell = x / 32 + y / 32 * 4;
                     if (x >= 0 && x < 0x60 && y >= 0 && y < 0x80 && (s->mBoards[cell] & 0xf) == CELL_FREE) {
-                        s->mUnk_01 = cell;
+                        s->mMoveCell = cell;
                     }
                 }
             }
@@ -323,24 +323,24 @@ void UpdateThreeInRowBoard(void) {
             }
         }
     }
-    for (i = 0; i < s->mUnk_0c; i++) {
-        if (s->mUnk_04[i] == CELL_HUMAN) {
+    for (i = 0; i < s->mClearCount; i++) {
+        if (s->mClearPlayers[i] == CELL_HUMAN) {
             DrawText(20, 30 + i * 12, data_0201a6d0, "H", 0, 240, 16, 2);
         } else {
             DrawText(20, 30 + i * 12, data_0201a6d0, "O", 0, 240, 16, 2);
         }
     }
-    if (s->mUnk_01 < 0xf) {
-        cell = s->mUnk_01 & 0xf;
+    if (s->mMoveCell < 0xf) {
+        cell = s->mMoveCell & 0xf;
         player = (s->mTurn & 1) ? CELL_COMPUTER : CELL_HUMAN;
         StartSprite(&s->mMarkSprite, (void *) (data_0201aa60 + 37)[player]);
-        s->mUnk_01 |= 0x80;
+        s->mMoveCell |= 0x80;
         s->mBoards[cell] = (s->mBoards[cell] & 0xf0) | player;
     }
     if (s->mMarkSprite.mUnk_de == 1) {
         return;
     }
-    cell = s->mUnk_01 & 0xf;
+    cell = s->mMoveCell & 0xf;
     DrawSprite(UpdateSprite(&s->mMarkSprite), (cell & 3) * 32 + 0x54, (cell >> 2) * 32 + 0x20, 0, 2);
     if (s->mMarkSprite.mUnk_de == 1) {
         player = (s->mTurn & 1) ? CELL_COMPUTER : CELL_HUMAN;
@@ -349,10 +349,10 @@ void UpdateThreeInRowBoard(void) {
         if (result == 0) {
             s->mTurn++;
         } else {
-            s->mUnk_04[s->mUnk_0c++] = player;
+            s->mClearPlayers[s->mClearCount++] = player;
         }
         if (result != 2) {
-            s->mUnk_01 |= 0x40;
+            s->mMoveCell |= 0x40;
         }
         s->mMoveTimer = 4;
     }

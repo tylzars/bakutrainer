@@ -770,7 +770,7 @@ src/Main/Link/wireless_state.c:
     .data       start:0x02063cc8 end:0x02063d04
     .bss        start:0x020c8380 end:0x020c83e0
 
-// the wireless helper state machine (ARM) with the WM buffers data_020c83e0..gWhDataSharing, the state names and
+// the wireless helper state machine (ARM) with the WM buffers gWhWepKey..gWhDataSharing, the state names and
 // the debug strings
 src/Main/Link/wireless_helper.c:
     complete

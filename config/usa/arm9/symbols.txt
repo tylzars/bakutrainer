@@ -896,7 +896,7 @@ ScriptCmdEof kind:function(thumb,size=0x64) addr:0x02029970
 QueueScriptEvent kind:function(thumb,size=0x48) addr:0x020299d4
 ScriptCmdSync kind:function(thumb,size=0x58) addr:0x02029a1c
 ScriptCmdGoto kind:function(thumb,size=0x38) addr:0x02029a74
-func_02029aac kind:function(thumb,size=0x7c) addr:0x02029aac
+SetScriptScrSprite kind:function(thumb,size=0x7c) addr:0x02029aac
 ScriptCmdScreen kind:function(thumb,size=0x44) addr:0x02029b28
 ScriptCmdIf kind:function(thumb,size=0x2c) addr:0x02029b6c
 ScriptCmdEq kind:function(thumb,size=0x40) addr:0x02029b98
@@ -1137,8 +1137,8 @@ GetGlobalVolume kind:function(arm,size=0x10) addr:0x02038694
 WhGetStateCodeName kind:function(arm,size=0x1c) addr:0x020386a4
 WhSetSysState kind:function(arm,size=0x64) addr:0x020386c0
 WhSetError kind:function(arm,size=0x1c) addr:0x02038724
-func_02038740 kind:function(arm,size=0x40) addr:0x02038740
-func_02038780 kind:function(arm,size=0x64) addr:0x02038780
+WhSetParentParam kind:function(arm,size=0x40) addr:0x02038740
+WhSetParentParamCallback kind:function(arm,size=0x64) addr:0x02038780
 WhSetParentWepKey kind:function(arm,size=0x60) addr:0x020387e4
 WhSetParentWepKeyCallback kind:function(arm,size=0x38) addr:0x02038844
 WhStartParent kind:function(arm,size=0x58) addr:0x0203887c
@@ -1888,7 +1888,7 @@ gVramBankRecords kind:data(any) addr:0x02050478
 data_02050898 kind:data(byte[8]) addr:0x02050898 local
 @2070 kind:data(any) addr:0x020508a0 local
 @2013 kind:data(short[1]) addr:0x020508d8 local
-data_020508dc kind:data(byte[4]) addr:0x020508dc local
+sTextAligns kind:data(byte[4]) addr:0x020508dc local
 sCommandNames kind:data(byte[150]) addr:0x020508e0 local
 data_02050978 kind:data(short[16]) addr:0x02050978
 data_02050998 kind:data(byte[32]) addr:0x02050998
@@ -2217,15 +2217,15 @@ gWavePlayer kind:bss addr:0x020c648c
 data_020c661c kind:bss addr:0x020c661c
 data_020c66d4 kind:bss addr:0x020c66d4
 gCommRecordReceived kind:bss addr:0x020c66e0
-data_020c6720 kind:bss addr:0x020c6720
+gCommConnectData kind:bss addr:0x020c6720
 gCommSendData kind:bss addr:0x020c67e0
 gCommRecords kind:bss addr:0x020c68e0
 data_020c6adc kind:bss addr:0x020c6adc
 gTrackerPlayer kind:bss addr:0x020c6b14
 gWirelessWork kind:bss addr:0x020c8380
-data_020c83e0 kind:bss(size=0x30) addr:0x020c83e0
+gWhWepKey kind:bss(size=0x30) addr:0x020c83e0
 gWhParentParam kind:bss addr:0x020c8420
-data_020c8460 kind:bss addr:0x020c8460
+gWhChildConnectData kind:bss addr:0x020c8460
 gWhDataSharingRecv kind:bss addr:0x020c8520
 gWhSendBuffer kind:bss addr:0x020c8720
 gWhRecvBuffer kind:bss addr:0x020c8940

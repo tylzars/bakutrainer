@@ -73,9 +73,9 @@ WMDataSharing gWhDataSharing __attribute__((aligned(32)));
 u8 gWhSendBuffer[0x220];
 WMParentParam gWhParentParam __attribute__((aligned(32)));
 u8 gWhRecvBuffer[0x480];
-u16 data_020c8460[0x60] __attribute__((aligned(32)));
+u16 gWhChildConnectData[0x60] __attribute__((aligned(32)));
 WMDataSharing gWhKeySharing;
-u8 data_020c83e0[0x30];
+u8 gWhWepKey[0x30];
 u16 gWhDataSharingRecv[0x100];
 
 #pragma thumb off
@@ -103,12 +103,14 @@ void WhSetError(int error) {
     }
 }
 
-// Starts the link's initialisation.
-BOOL func_02038740(void) {
+// Enters WH_SYSSTATE_BUSY and hands the parent parameter block gWhParentParam to the wireless library (command 7,
+// with WhSetParentParamCallback as its callback); on a result other than 2 records the error and enters
+// WH_SYSSTATE_ERROR. Returns whether the command went out.
+BOOL WhSetParentParam(void) {
     int r;
 
     WhSetSysState(WH_SYSSTATE_BUSY);
-    r = func_020468c4(func_02038780, &gWhParentParam);
+    r = func_020468c4(WhSetParentParamCallback, &gWhParentParam);
     if (r == 2) {
         return TRUE;
     }
@@ -117,9 +119,10 @@ BOOL func_02038740(void) {
     return FALSE;
 }
 
-// Callback of the initialisation: on success sets the parent's key when mParentWepKeyFunc is set (never in this
-// build), otherwise starts hosting.
-void func_02038780(WirelessMsg *msg) {
+// Callback of WhSetParentParam: on an error records it and enters WH_SYSSTATE_ERROR; otherwise sets the parent's key
+// when mParentWepKeyFunc is set (never in this build), or else starts hosting (WhStartParent), entering
+// WH_SYSSTATE_ERROR when that step fails.
+void WhSetParentParamCallback(WirelessMsg *msg) {
     if (msg->mError != 0) {
         WhSetError(msg->mError);
         WhSetSysState(WH_SYSSTATE_ERROR);
@@ -142,8 +145,8 @@ BOOL WhSetParentWepKey(void) {
     int r;
 
     WhSetSysState(WH_SYSSTATE_BUSY);
-    r = func_02047b70(WhSetParentWepKeyCallback, gWirelessWork.mParentWepKeyFunc(data_020c83e0, &gWhParentParam),
-                      data_020c83e0);
+    r = func_02047b70(WhSetParentWepKeyCallback, gWirelessWork.mParentWepKeyFunc(gWhWepKey, &gWhParentParam),
+                      gWhWepKey);
     if (r == 2) {
         return TRUE;
     }
@@ -397,8 +400,8 @@ BOOL WhSetChildWepKey(void) {
     int r;
 
     WhSetSysState(WH_SYSSTATE_BUSY);
-    r = func_02047b70(WhSetChildWepKeyCallback, gWirelessWork.mChildWepKeyFunc(data_020c83e0, data_020c8460),
-                      data_020c83e0);
+    r = func_02047b70(WhSetChildWepKeyCallback, gWirelessWork.mChildWepKeyFunc(gWhWepKey, gWhChildConnectData),
+                      gWhWepKey);
     if (r == 2) {
         return TRUE;
     }
@@ -421,7 +424,8 @@ void WhSetChildWepKeyCallback(WirelessMsg *msg) {
     }
 }
 
-// Connects to the parent whose record is in data_020c8460.
+// Connects as a child (command 12) with the connect data in gWhChildConnectData, unless the link is already
+// connected.
 BOOL WhStartChild(void) {
     int r;
 
@@ -433,7 +437,7 @@ BOOL WhStartChild(void) {
         return TRUE;
     }
     WhSetSysState(WH_SYSSTATE_BUSY);
-    r = func_02046a9c(WhStartChildCallback, data_020c8460, 0, 1, gWirelessWork.mChildWepKeyFunc != 0 ? 1 : 0);
+    r = func_02046a9c(WhStartChildCallback, gWhChildConnectData, 0, 1, gWirelessWork.mChildWepKeyFunc != 0 ? 1 : 0);
     if (r == 2) {
         return TRUE;
     }
@@ -713,7 +717,7 @@ int WhConnectAsParent(int mode, u16 b, u16 c) {
     gWhParentParam.mUnk_14 = mode == WH_CONNECT_MODE_PARENT_KEYSHARING;
     if (mode == WH_CONNECT_MODE_PARENT || mode == WH_CONNECT_MODE_PARENT_KEYSHARING ||
         mode == WH_CONNECT_MODE_PARENT_DATASHARING) {
-        return func_02038740();
+        return WhSetParentParam();
     }
     if (gWirelessWork.mPrintFunc != 0) {
         gWirelessWork.mPrintFunc("unknown connect mode %d\n", mode);
@@ -721,9 +725,9 @@ int WhConnectAsParent(int mode, u16 b, u16 c) {
     return 0;
 }
 
-// Starts the link as a child in the given child mode (the odd modes), to the parent whose record is data; returns
-// whether it started, 0 for any other mode. Stops the system unless the link is idle (an expression, as in
-// WhConnectAsParent).
+// Starts the link as a child in the given child mode (the odd modes), after copying the 0xc0 bytes at data into
+// gWhChildConnectData; returns whether it started, 0 for any other mode. Stops the system unless the link is idle (an
+// expression, as in WhConnectAsParent).
 int WhConnectAsChild(int mode, const void *data) {
     (void) (gWirelessWork.mSysState == WH_SYSSTATE_IDLE || (OS_Terminate(), 0));
     gWirelessWork.mRecvBufferSize = 0x480;
@@ -738,8 +742,8 @@ int WhConnectAsChild(int mode, const void *data) {
     WhSetSysState(WH_SYSSTATE_BUSY);
     if (mode == WH_CONNECT_MODE_CHILD || mode == WH_CONNECT_MODE_CHILD_KEYSHARING ||
         mode == WH_CONNECT_MODE_CHILD_DATASHARING) {
-        MI_CpuCopy8(data, data_020c8460, 0xc0);
-        DC_FlushRange(data_020c8460, 0xc0);
+        MI_CpuCopy8(data, gWhChildConnectData, 0xc0);
+        DC_FlushRange(gWhChildConnectData, 0xc0);
         DC_WaitWriteBufferEmpty();
         if (gWirelessWork.mChildWepKeyFunc != 0) {
             return WhSetChildWepKey();

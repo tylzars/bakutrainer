@@ -40,13 +40,13 @@ typedef struct {
     vu16 mUnk_2;
     vu16 mUnk_4;
     vu16 mUnk_6;
-} Unk_OamEntry;
+} OamEntry;
 
 // Sets up one object of layer `layer`: calls DrawSprite for the picture `id`, then writes object attribute entry
 // `index` (attr0, attribute 1 from `attr1`, and attribute 2 from a tile offset and the palette) and, when `rotate` is
 // set, the rotation entry of the layer's group from the sine/cosine table at the frame counter's phase.
 void WriteIndicatorOam(int id, u32 shift, u32 index, u32 attr1, u32 attr0, int rotate, int layer) {
-    Unk_OamEntry *oam = layer == 1 ? (Unk_OamEntry *) 0x07000000 : (Unk_OamEntry *) 0x07000400;
+    OamEntry *oam = layer == 1 ? (OamEntry *) 0x07000000 : (OamEntry *) 0x07000400;
     s16 tile;
 
     DrawSprite(id + 0x200000, 0x80, 0x60, 0, layer);

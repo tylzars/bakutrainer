@@ -617,7 +617,7 @@ void StartPlayback(u8 volume, s16 startOrder) {
         c->mTremoloDepth = 0;
         c->mTremoloWave = gSineWave;
         c->mVolume = 0;
-        c->mUnk_25 = 128;
+        c->mVolumeScale = 128;
         c->mPan = 128;
         c->mFadeOutVolume = 0x10000;
         for (k = 0; k < 14; k++) {
@@ -636,7 +636,7 @@ void StartPlayback(u8 volume, s16 startOrder) {
     gTrackerPlayer.mLastRow = 0;
     gTrackerPlayer.mRowIndex = 1;
     gTrackerPlayer.mPlaying = 1;
-    gTrackerPlayer.mUnk_1728 = 0;
+    gTrackerPlayer.mPaused = 0;
     func_02036194();
     StartTrackerTimer();
     if (gTrackerPlayer.mCallback != 0) {
@@ -702,7 +702,7 @@ void StopTrackerTimer(void) {
 // the player's callback with 3 and releases the song; either way the timer is left stopped.
 void HandleTrackerIrq(void) {
     gTrackerPlayer.mFramesSinceIrq = 0;
-    if (gTrackerPlayer.mUnk_1728 == 1) {
+    if (gTrackerPlayer.mPaused == 1) {
         *(vu32 *) (HW_DTCM + 0x3ff8) |= TRACKER_IRQ_TIMER2;
         StopTrackerTimer();
         StartTrackerTimer();
@@ -1344,7 +1344,7 @@ void AdvanceTracker(void) {
                             c->mFadeOutVolume = 0x10000;
                             chVol = func_02040b60(gVolumeTable[ComputeVolumeIndex(
                                 (s8) volume, c->mVolumeEnvState.mValue, c->mFadeOutVolume, gTrackerPlayer.mGlobalVolume,
-                                c->mUnk_25)]);
+                                c->mVolumeScale)]);
                             if (c->mStartKind != TRACKER_START_DELAYED) {
                                 func_020400f4(1 << (gTrackerPlayer.mFirstChannel + i), 0, 0, 0);
                             }
@@ -1371,11 +1371,11 @@ void AdvanceTracker(void) {
                                     goto next;
                                 }
                                 c->mUnk_64 = 0xffb0ff / freq;
-                                c->mUnk_68 = chVol;
+                                c->mSentVolume = chVol;
                                 func_02040240(gTrackerPlayer.mFirstChannel + i,
                                               (c->mSample->mFlags & 0x10) ? TRUE : FALSE, data + sampleOffset, 2, 0,
-                                              (c->mSample->mLength - sampleOffset) >> 2, c->mUnk_68 & 0xff,
-                                              c->mUnk_68 >> 8, c->mUnk_64,
+                                              (c->mSample->mLength - sampleOffset) >> 2, c->mSentVolume & 0xff,
+                                              c->mSentVolume >> 8, c->mUnk_64,
                                               ComputePan(c->mPan, c->mPanEnvState.mValue) >> 1);
                                 func_020400cc(1 << (gTrackerPlayer.mFirstChannel + i), 0, 0, 0);
                             } else {
@@ -1396,11 +1396,11 @@ void AdvanceTracker(void) {
                                     goto next;
                                 }
                                 c->mUnk_64 = 0xffb0ff / freq;
-                                c->mUnk_68 = chVol;
+                                c->mSentVolume = chVol;
                                 s = c->mSample;
                                 func_02040240(gTrackerPlayer.mFirstChannel + i, (s->mFlags & 0x10) ? TRUE : FALSE, data,
-                                              1, s->mLoopStart >> 2, s->mLoopLength >> 2, c->mUnk_68 & 0xff,
-                                              c->mUnk_68 >> 8, c->mUnk_64,
+                                              1, s->mLoopStart >> 2, s->mLoopLength >> 2, c->mSentVolume & 0xff,
+                                              c->mSentVolume >> 8, c->mUnk_64,
                                               ComputePan(c->mPan, c->mPanEnvState.mValue) >> 1);
                                 func_020400cc(1 << (gTrackerPlayer.mFirstChannel + i), 0, 0, 0);
                             }
@@ -1432,11 +1432,11 @@ void AdvanceTracker(void) {
                                 func_020401d8(1 << (gTrackerPlayer.mFirstChannel + i), c->mUnk_64);
                             }
                             if (volUpd == TRUE) {
-                                c->mUnk_68 = func_02040b60(gVolumeTable[ComputeVolumeIndex(
+                                c->mSentVolume = func_02040b60(gVolumeTable[ComputeVolumeIndex(
                                     (s8) volume, c->mVolumeEnvState.mValue, c->mFadeOutVolume,
-                                    gTrackerPlayer.mGlobalVolume, c->mUnk_25)]);
-                                func_020401f8(1 << (gTrackerPlayer.mFirstChannel + i), c->mUnk_68 & 0xff,
-                                              c->mUnk_68 >> 8);
+                                    gTrackerPlayer.mGlobalVolume, c->mVolumeScale)]);
+                                func_020401f8(1 << (gTrackerPlayer.mFirstChannel + i), c->mSentVolume & 0xff,
+                                              c->mSentVolume >> 8);
                             }
                             if (panUpd == TRUE) {
                                 func_02040220(1 << (gTrackerPlayer.mFirstChannel + i),
@@ -1461,10 +1461,11 @@ void AdvanceTracker(void) {
                     changed = AdvanceEnvelope(&gTrackerPlayer, c, TRACKER_ENV_VOLUME, TRUE) |
                               AdvanceFadeOut(&gTrackerPlayer, c);
                     if (changed == TRUE) {
-                        c->mUnk_68 = func_02040b60(
+                        c->mSentVolume = func_02040b60(
                             gVolumeTable[ComputeVolumeIndex(c->mVolume, c->mVolumeEnvState.mValue, c->mFadeOutVolume,
-                                                            gTrackerPlayer.mGlobalVolume, c->mUnk_25)]);
-                        func_020401f8(1 << (gTrackerPlayer.mFirstChannel + i), c->mUnk_68 & 0xff, c->mUnk_68 >> 8);
+                                                            gTrackerPlayer.mGlobalVolume, c->mVolumeScale)]);
+                        func_020401f8(1 << (gTrackerPlayer.mFirstChannel + i), c->mSentVolume & 0xff,
+                                      c->mSentVolume >> 8);
                     }
                     if (AdvanceEnvelope(&gTrackerPlayer, c, TRACKER_ENV_PAN, TRUE) == TRUE) {
                         func_02040220(1 << (gTrackerPlayer.mFirstChannel + i),
@@ -1626,10 +1627,10 @@ void AdvanceTracker(void) {
                     func_020401d8(1 << (gTrackerPlayer.mFirstChannel + i), c->mUnk_64);
                 }
                 if (volUpd == TRUE) {
-                    c->mUnk_68 = func_02040b60(
+                    c->mSentVolume = func_02040b60(
                         gVolumeTable[ComputeVolumeIndex((s8) tickVolume, c->mVolumeEnvState.mValue, c->mFadeOutVolume,
-                                                        gTrackerPlayer.mGlobalVolume, c->mUnk_25)]);
-                    func_020401f8(1 << (gTrackerPlayer.mFirstChannel + i), c->mUnk_68 & 0xff, c->mUnk_68 >> 8);
+                                                        gTrackerPlayer.mGlobalVolume, c->mVolumeScale)]);
+                    func_020401f8(1 << (gTrackerPlayer.mFirstChannel + i), c->mSentVolume & 0xff, c->mSentVolume >> 8);
                 }
                 if (tickPanUpd == TRUE) {
                     func_02040220(1 << (gTrackerPlayer.mFirstChannel + i),
@@ -1652,7 +1653,7 @@ void AdvanceOrder(void) {
     if (gTrackerPlayer.mJumpOrderIndex != -1) {
         gTrackerPlayer.mOrderIndex = gTrackerPlayer.mJumpOrderIndex;
         gTrackerPlayer.mJumpOrderIndex = -1;
-        if (gTrackerPlayer.mUnk_173e == 1) {
+        if (gTrackerPlayer.mStopOnJump == 1) {
             StopTrackerChannels();
         }
     } else {
@@ -1999,9 +2000,10 @@ void SetGlobalVolume(u8 volume, int mode) {
         if (mask & (1 << (gTrackerPlayer.mFirstChannel + i))) {
             TrackerChannel *c = &gTrackerPlayer.mChannels[i];
 
-            c->mUnk_68 = func_02040b60(gVolumeTable[ComputeVolumeIndex(
-                c->mVolume, c->mVolumeEnvState.mValue, c->mFadeOutVolume, gTrackerPlayer.mGlobalVolume, c->mUnk_25)]);
-            func_020401f8(1 << (gTrackerPlayer.mFirstChannel + i), c->mUnk_68 & 0xff, c->mUnk_68 >> 8);
+            c->mSentVolume =
+                func_02040b60(gVolumeTable[ComputeVolumeIndex(c->mVolume, c->mVolumeEnvState.mValue, c->mFadeOutVolume,
+                                                              gTrackerPlayer.mGlobalVolume, c->mVolumeScale)]);
+            func_020401f8(1 << (gTrackerPlayer.mFirstChannel + i), c->mSentVolume & 0xff, c->mSentVolume >> 8);
         }
     }
     while (SND_RecvCommandReply(0) != 0) {

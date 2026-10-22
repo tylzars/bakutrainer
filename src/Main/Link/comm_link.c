@@ -184,7 +184,7 @@ void UpdateCommChild(void) {
 }
 
 void ConnectCommAsChild(void) {
-    WhConnectAsChild(WH_CONNECT_MODE_CHILD_DATASHARING, data_020c6720);
+    WhConnectAsChild(WH_CONNECT_MODE_CHILD_DATASHARING, gCommConnectData);
 }
 
 void func_02034cdc(void) {}

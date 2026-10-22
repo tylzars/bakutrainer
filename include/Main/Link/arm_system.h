@@ -20,7 +20,7 @@ extern StateC data_020c66d4[];
 extern u8 gCommSendData[] __attribute__((aligned(32)));
 extern u8 gCommRecords[] __attribute__((aligned(32)));
 extern u32 gCommRecordReceived[] __attribute__((aligned(32)));
-extern u8 data_020c6720[] __attribute__((aligned(32)));
+extern u8 gCommConnectData[] __attribute__((aligned(32)));
 
 void ReleaseComm(void);
 BOOL func_020010b4(u32 timeout);

@@ -74,11 +74,11 @@ u8 PickPieceType(u8 lo, u8 hi) {
     return lo + i;
 }
 
-// Sets the piece's type, cancels a removal marker (mUnk_110 = -1) and, for a type other than 0, starts the type's
+// Sets the piece's type, cancels a removal marker (mRemovalState = -1) and, for a type other than 0, starts the type's
 // sprite.
 void SetPieceType(Piece *p, u8 type) {
     p->mType = type;
-    p->mUnk_110 = -1;
+    p->mRemovalState = -1;
     if (type != 0) {
         u32 idx;
 
@@ -101,7 +101,7 @@ void DrawPiece(Piece *p, int x, int y, int layer, int flag) {
         } else {
             prio = 0xff;
         }
-        if (p->mUnk_110 >= 0) {
+        if (p->mRemovalState >= 0) {
             prio -= 5;
         }
         frame = UpdateSprite(&p->mSprite);
@@ -134,17 +134,17 @@ void PlacePiece(const Piece *src, u8 col, u8 row, int unused, Vec2i *out) {
 }
 
 void StartPieceRemoval(Piece *p) {
-    if (p->mUnk_110 < 0 && p->mType != 0) {
+    if (p->mRemovalState < 0 && p->mType != 0) {
         gBoard.mRemovingCount++;
-        p->mUnk_110 = 1;
+        p->mRemovalState = 1;
         p->mSprite.mUnk_14 |= 1;
         if (p->mType < 7) {
-            s32 left = gBoard.mUnk_8978[p->mType - 1] - 1;
+            s32 left = gBoard.mTypeRemovalsRemaining[p->mType - 1] - 1;
 
             if (left < 0) {
                 left = 0;
             }
-            gBoard.mUnk_8978[p->mType - 1] = left;
+            gBoard.mTypeRemovalsRemaining[p->mType - 1] = left;
         }
         PlayWaveKeepAlive(0x56, 0x4b, 0, 0x40, 0xffff, 0);
         if (p->mType < 7) {
@@ -596,7 +596,8 @@ BOOL PiecesMatch(u8 col, u8 row, u8 col2, u8 row2) {
     if (a->mType == 0 || b->mType == 0) {
         return FALSE;
     }
-    if (a->mUnk_110 > 0 && a->mSprite.mUnk_04 == gBoard.mUnk_8974 && b->mType == a->mType && b->mUnk_110 < 0) {
+    if (a->mRemovalState > 0 && a->mSprite.mUnk_04 == gBoard.mUnk_8974 && b->mType == a->mType &&
+        b->mRemovalState < 0) {
         return TRUE;
     }
     if (a->mType < 7 && b->mType == a->mType + 7) {
@@ -723,13 +724,13 @@ void UpdateBoard(void) {
             for (k = BOARD_ROWS - 1; k >= 0; k--) {
                 if (gBoard.mGrid[i][k].mType != 0) {
                     Piece *c = &gBoard.mGrid[i][k];
-                    if (c->mUnk_110 > 0) {
+                    if (c->mRemovalState > 0) {
                         if (c->mSprite.mUnk_de != 0) {
-                            c->mUnk_110 = 0;
+                            c->mRemovalState = 0;
                         }
                         if (c->mSprite.mUnk_04 == gBoard.mUnk_8974) {
                             RemoveMatchesAt(i, k);
-                        } else if (c->mUnk_110 == 0) {
+                        } else if (c->mRemovalState == 0) {
                             ClearCell(i, k);
                             gBoard.mRemovingCount--;
                         }
@@ -801,12 +802,12 @@ void SetupFallingBlocks(void) {
     total = RandomRange(GetFallingBlocksValue(gBoard.mTableRow, 12), GetFallingBlocksValue(gBoard.mTableRow, 13));
     for (i = 0; i < 6; i++) {
         if (i < gBoard.mTypeCount - 1) {
-            gBoard.mUnk_8978[i] = RandomRange(total / 8, total / 2);
-            total -= gBoard.mUnk_8978[i];
+            gBoard.mTypeRemovalsRemaining[i] = RandomRange(total / 8, total / 2);
+            total -= gBoard.mTypeRemovalsRemaining[i];
         } else if (i == gBoard.mTypeCount - 1) {
-            gBoard.mUnk_8978[i] = total;
+            gBoard.mTypeRemovalsRemaining[i] = total;
         } else {
-            gBoard.mUnk_8978[i] = -1;
+            gBoard.mTypeRemovalsRemaining[i] = -1;
         }
     }
     PickNextPair();
@@ -828,7 +829,7 @@ void DrawFallingBlocks(void) {
 
 void UpdateFallingBlocks(void) {
     static s32 data_02064824;
-    static s32 data_02064820;
+    static s32 sFirstPairTaken;
     char buf[32];
     int slideState;
     int busy;
@@ -843,7 +844,7 @@ void UpdateFallingBlocks(void) {
             return;
         }
         if (slideState == MODE_SLIDE_STATE_START) {
-            data_02064820 = 0;
+            sFirstPairTaken = 0;
             return;
         }
         return;
@@ -852,8 +853,8 @@ void UpdateFallingBlocks(void) {
     if (gBoard.mUnk_0c > 0x2000) {
         gBoard.mUnk_0c = 0x2000;
     }
-    if (data_02064820 == 0) {
-        data_02064820 = 1;
+    if (sFirstPairTaken == 0) {
+        sFirstPairTaken = 1;
         TakeNextPair();
     }
     if (--gBoard.mEndTimer == 0) {

@@ -39,11 +39,15 @@ typedef struct ShapeRec {
 typedef struct ThreeInRow {
     // Deepest depth FindBestMove recurses to; always 4 in this build.
     u8 mSearchDepth;
-    u8 mUnk_01;
+    // Low 4 bits: the board cell (x + y * 4) of the move. 0x40: waiting for the next move, until the computer's search
+    // or a touch replaces the whole value with the chosen cell; 0x80: the mark for that cell has started.
+    u8 mMoveCell;
     u8 mMoveTimer;
     u8 mEmptyCount;
-    u8 mUnk_04[8];
-    u8 mUnk_0c;
+    // The player of each move after which CheckAndClearLineOrFilledShape cleared cells on this board (drawn as "H" or
+    // "O"), and how many there are.
+    u8 mClearPlayers[8];
+    u8 mClearCount;
     u8 mUnk_0d;
     ShapeRec mShapes[GRID_PIECES];
     u8 *mBoards;

@@ -166,7 +166,8 @@ typedef struct TrackerChannel {
     u8 mTremoloPerTick;
     u8 mTremoloDepth;
     s8 mVolume;
-    u8 mUnk_25;
+    // Multiplies the channel volume out of 128 in ComputeVolumeIndex; always 128 in this build.
+    u8 mVolumeScale;
     s16 mPan;
     TrackerEnvState mVolumeEnvState;
     TrackerEnvState mPanEnvState;
@@ -183,7 +184,8 @@ typedef struct TrackerChannel {
     u32 mStartLoopLength;
     u32 mUnk_60;
     u32 mUnk_64;
-    u16 mUnk_68;
+    // The converted volume last handed to the channel's sound command (low byte and high byte as two arguments).
+    u16 mSentVolume;
     u16 mLastParams[14];
     u8 mUnk_86[0x88 - 0x86];
 } TrackerChannel;
@@ -206,7 +208,9 @@ typedef struct TrackerPlayer {
     u32 mTickLength;
     u32 mTickTime;
     s32 mPlaying;
-    s32 mUnk_1728;
+    // When 1 the timer interrupt handler restarts the timer without advancing the song; only ever set to 0 in this
+    // build.
+    s32 mPaused;
     u16 mSampleFileBase;
     u16 mTrackFileId;
     u16 mPendingTrackFileId;
@@ -217,7 +221,9 @@ typedef struct TrackerPlayer {
     // never runs.
     s16 mJumpOrderIndex;
     u16 mPendingStartOrder;
-    u8 mUnk_173e;
+    // Stops the channels when AdvanceOrder takes mJumpOrderIndex; never written in this build (and the jump never
+    // runs).
+    u8 mStopOnJump;
     u8 mUnk_173f;
     s16 mLastRow;
     s16 mRowIndex;

@@ -49,6 +49,22 @@ ScriptWork gScriptWork;
 // What ReadNumber returns when the text holds no further number.
 #define SCRIPT_NO_NUMBER 0x55aa
 
+// Flags of a script sprite (the fifth value of SPR, SPRX and SHAPE, read by AddScriptSprite). SLIDE: the sprite slides
+// to its position from a start point before x 0 or past x 0x100, or before y 0 or past y 0xc0 (for a sprite, offset
+// from that edge by its rect; for a shape, at 0x100 or 0xc0 itself or a power-of-two size from its table entry before
+// 0); a moving sprite gets that point too but does not slide (see mStartX). SLIDE_X: the point is in x at the sprite's
+// y, otherwise in y at its x; 0x2 (left as a literal: its side differs between x and y) puts it before x 0 or past y
+// 0xc0, otherwise past x 0x100 or before y 0. LAYER_1: a sprite is drawn on layer 1, otherwise 2 (a shape always on 1).
+// ANIM_LOOP: the animation starts again after its last frame instead of stopping on it. MOVE_BOUNCE: a moving sprite
+// turns round at each end. FLIP_ON_RETURN: a moving sprite is drawn mirrored in x while its mMovePerFrame is negative
+// (heading for mStartX and mStartY); sprites only, a shape is drawn without the flip.
+#define SCRIPT_SPRITE_SLIDE_X 1
+#define SCRIPT_SPRITE_SLIDE 4
+#define SCRIPT_SPRITE_LAYER_1 8
+#define SCRIPT_SPRITE_ANIM_LOOP 0x10
+#define SCRIPT_SPRITE_MOVE_BOUNCE 0x20
+#define SCRIPT_SPRITE_FLIP_ON_RETURN 0x40
+
 // Finds the entry of the line-name file (from entry 2 on) whose first word, upper-cased, equals name's and starts the
 // script at it. The search has no end: it does not stop when no entry matches.
 void StartScriptAtName(const char *name) {
@@ -85,9 +101,9 @@ void StartScript(int index) {
     gScriptWork.mState = SCRIPT_STATE_READ;
     gScriptWork.mEofFlags = 0;
     gScriptWork.mTextIncomplete = 0;
-    gScriptWork.mUnk_1c_2 = 0;
+    gScriptWork.mSkipToEnd = 0;
     gScriptWork.mUnk_280.mPendingImageLayers[0] = gScriptWork.mUnk_280.mPendingImageLayers[1] = 0;
-    gScriptWork.mUnk_280.mUnk_1c = 0;
+    gScriptWork.mUnk_280.mScrDrawId = 0;
     gScriptWork.mWaitTimer = 0;
     for (i = 0; i < 0x20; i++) {
         gScriptWork.mEyes[i].mTimer = -1;
@@ -95,25 +111,28 @@ void StartScript(int index) {
 }
 
 // Sets up the script engine: stores the callbacks, releases the old buffers when the file ids change, on first use
-// stores the ids and allocates the buffers, then starts the script at line e and runs its first frame (UpdateScript).
-void SetupScript(int a, int b, int c, int d, int e, int f, void (*g)(u32 id, int x, int y, int w, int mode),
-                 u8 (*h)(void), u32 (*i)(u32)) {
-    gScriptWork.mUnk_280.mTextEscapeFunc = h;
-    gScriptWork.mSoundIdFunc = i;
-    if ((a != gScriptWork.mScriptFileId && a != 0) || (b != gScriptWork.mTextFileId && b != 0)) {
+// stores the ids and allocates the buffers, then starts the script at line index `line` and runs its first frame
+// (UpdateScript).
+void SetupScript(int scriptFileId, int textFileId, int textNameFileId, int lineNameFileId, int line, int charSoundId,
+                 void (*spriteDrawFunc)(u32 id, int x, int y, int w, int mode), u8 (*textEscapeFunc)(void),
+                 u32 (*soundIdFunc)(u32)) {
+    gScriptWork.mUnk_280.mTextEscapeFunc = textEscapeFunc;
+    gScriptWork.mSoundIdFunc = soundIdFunc;
+    if ((scriptFileId != gScriptWork.mScriptFileId && scriptFileId != 0) ||
+        (textFileId != gScriptWork.mTextFileId && textFileId != 0)) {
         ReleaseScript();
     }
     if (gScriptWork.mScriptFileId == 0) {
-        if (a == 0) {
+        if (scriptFileId == 0) {
             OS_Terminate();
         }
-        if (b == 0) {
+        if (textFileId == 0) {
             OS_Terminate();
         }
-        gScriptWork.mScriptFileId = a;
-        gScriptWork.mTextFileId = b;
-        gScriptWork.mTextNameFileId = c;
-        gScriptWork.mLineNameFileId = d;
+        gScriptWork.mScriptFileId = scriptFileId;
+        gScriptWork.mTextFileId = textFileId;
+        gScriptWork.mTextNameFileId = textNameFileId;
+        gScriptWork.mLineNameFileId = lineNameFileId;
         gScriptWork.mTrackFileId = 0;
         gScriptWork.mRecords = Alloc(0x800);
         gScriptWork.mLsList = Alloc(0x200);
@@ -122,14 +141,14 @@ void SetupScript(int a, int b, int c, int d, int e, int f, void (*g)(u32 id, int
         gScriptWork.mTexts = Alloc(0x120);
         gScriptWork.mUnk_68 = Alloc(0x48);
         gScriptWork.mUnk_6c = Alloc(0x48);
-        gScriptWork.mCharSoundId = f;
+        gScriptWork.mCharSoundId = charSoundId;
     }
-    gScriptWork.mUnk_280.mUnk_2c = gScriptWork.mUnk_280.mUnk_2e = gScriptWork.mUnk_280.mUnk_30 = 0;
-    gScriptWork.mUnk_14 = 2;
+    gScriptWork.mUnk_280.mLayer1ImageId = gScriptWork.mUnk_280.mLayer2ImageId = gScriptWork.mUnk_280.mUnk_30 = 0;
+    gScriptWork.mDefaultWindowLineCount = 2;
     gScriptWork.mUnk_24 = 0;
     gScriptWork.mUnk_26 = 0;
-    gScriptWork.mSpriteDrawFunc = g;
-    StartScript(e);
+    gScriptWork.mSpriteDrawFunc = spriteDrawFunc;
+    StartScript(line);
     UpdateScript(0);
 }
 
@@ -289,8 +308,9 @@ static const u8 sCommandNames[SCRIPT_CMD_COUNT][6] = {
     "MUSIC ", "SOUND ", "BRA   ", "FADE  ", "SETEYE", "SETLS ", "SETLSC",
 };
 
-// Entry kind for each value of the fifth field of a list entry.
-static const u8 data_020508dc[4] = {0, 2, 1, 0};
+// DrawTextEx alignment for each value of a text's fifth value: 0 and 3 start the line at x, 1 centres it on x, 2 ends
+// it at x.
+static const u8 sTextAligns[4] = {0, 2, 1, 0};
 
 // Adds (or, for '-', subtracts) count 16-bit values of src to dst.
 void AddOrSubtractValues(const s16 *src, s16 *dst, int count, int op) {
@@ -462,7 +482,7 @@ void AddScriptSprite(u8 *text, int mode) {
     s16 buf[12];
     TexInfo info;
     s32 rect[4];
-    ScriptSprite *cmd;
+    ScriptSprite *sprite;
     u32 index;
     int n = ClearAndEvaluate(buf, text, 0x18);
     u32 tableValue;
@@ -479,123 +499,123 @@ void AddScriptSprite(u8 *text, int mode) {
     }
     SelectLsForSprite(gScriptWork.mSpriteCount, buf[0]);
     index = gScriptWork.mSpriteCount++;
-    cmd = gScriptWork.mSprites + index;
-    cmd->mId = buf[0];
+    sprite = gScriptWork.mSprites + index;
+    sprite->mId = buf[0];
     if (mode == 0) {
-        cmd->mDrawId = data_0204e2c8[buf[0]];
-        if (buf[4] & 8) {
-            cmd->mLayer = 1;
+        sprite->mDrawId = data_0204e2c8[buf[0]];
+        if (buf[4] & SCRIPT_SPRITE_LAYER_1) {
+            sprite->mLayer = 1;
         } else {
-            cmd->mLayer = 2;
+            sprite->mLayer = 2;
         }
-        GetTexInfo(cmd->mDrawId, &info, 0);
+        GetTexInfo(sprite->mDrawId, &info, 0);
         // Both arms clear bit 4 of mUnk_21: one through the bit-field, one as a byte operation, because the
         // compiler's output keeps the test and two separate stores (with one form in both arms the compiler merges
         // the arms and drops the test).
         if (info.mUnk_12 > 1) {
-            cmd->mUnk_21_4 = 0;
+            sprite->mUnk_21_4 = 0;
         } else {
-            cmd->mUnk_21 &= ~0x10;
+            sprite->mUnk_21 &= ~0x10;
         }
     } else {
         tableValue = data_0204e214[buf[0]];
-        cmd->mDrawId = 0x80000000 | (u16) tableValue;
+        sprite->mDrawId = 0x80000000 | (u16) tableValue;
         shiftX = 1 << (tableValue >> 24);
         shiftY = 1 << (u8) (tableValue >> 16);
-        if (cmd->mUnk_1a >= 0x100) {
+        if (sprite->mDrawOrder >= 0x100) {
             OS_Terminate();
         }
-        cmd->mUnk_21_4 = 0;
-        cmd->mLayer = 1;
+        sprite->mUnk_21_4 = 0;
+        sprite->mLayer = 1;
     }
-    cmd->mUnk_08 = buf[1];
-    cmd->mUnk_0a = buf[2];
-    cmd->mUnk_1a = buf[3];
-    cmd->mDelayTimer = buf[5];
-    cmd->mUnk_18 = buf[6];
-    cmd->mAnimFramesRemaining = buf[7];
-    cmd->mAnimFrameCount = cmd->mAnimFramesRemaining;
-    cmd->mFramesPerAnimFrame = buf[8];
-    cmd->mAnimFrameFrames = 0;
-    cmd->mUnk_0c = buf[9] * 100;
-    cmd->mUnk_0e = buf[10] * 100;
-    cmd->mUnk_10 = buf[11];
-    if (buf[4] & 0x10) {
-        cmd->mUnk_21_1 = 1;
+    sprite->mX = buf[1];
+    sprite->mY = buf[2];
+    sprite->mDrawOrder = buf[3];
+    sprite->mDelayTimer = buf[5];
+    sprite->mShowTimer = buf[6];
+    sprite->mAnimFramesRemaining = buf[7];
+    sprite->mAnimFrameCount = sprite->mAnimFramesRemaining;
+    sprite->mFramesPerAnimFrame = buf[8];
+    sprite->mAnimFrameFrames = 0;
+    sprite->mMoveEndX = buf[9] * 100;
+    sprite->mMoveEndY = buf[10] * 100;
+    sprite->mMovePerFrame = buf[11];
+    if (buf[4] & SCRIPT_SPRITE_ANIM_LOOP) {
+        sprite->mAnimLoop = 1;
     } else {
-        cmd->mUnk_21_1 = 0;
+        sprite->mAnimLoop = 0;
     }
-    if (cmd->mUnk_10 != 0) {
-        cmd->mUnk_08 = cmd->mUnk_08 * 100;
-        cmd->mUnk_0a = cmd->mUnk_0a * 100;
-        cmd->mUnk_12 = cmd->mUnk_08;
-        cmd->mUnk_14 = cmd->mUnk_0a;
-        cmd->mUnk_21_0 = 1;
+    if (sprite->mMovePerFrame != 0) {
+        sprite->mX = sprite->mX * 100;
+        sprite->mY = sprite->mY * 100;
+        sprite->mStartX = sprite->mX;
+        sprite->mStartY = sprite->mY;
+        sprite->mNoReverse = 1;
     }
-    if (buf[4] & 0x20) {
-        cmd->mUnk_21_2 = 1;
+    if (buf[4] & SCRIPT_SPRITE_MOVE_BOUNCE) {
+        sprite->mMoveBounce = 1;
     } else {
-        cmd->mUnk_21_2 = 0;
+        sprite->mMoveBounce = 0;
     }
-    if (buf[4] & 0x40) {
-        cmd->mUnk_21_3 = 1;
+    if (buf[4] & SCRIPT_SPRITE_FLIP_ON_RETURN) {
+        sprite->mFlipOnReturn = 1;
     } else {
-        cmd->mUnk_21_3 = 0;
+        sprite->mFlipOnReturn = 0;
     }
-    if (!(buf[4] & 4) && cmd->mUnk_10 == 0) {
-        cmd->mSlideProgress = 0x80;
-        cmd->mUnk_12 = cmd->mUnk_08;
-        cmd->mUnk_14 = cmd->mUnk_0a;
-        cmd->mUnk_21_0 = 0;
+    if (!(buf[4] & SCRIPT_SPRITE_SLIDE) && sprite->mMovePerFrame == 0) {
+        sprite->mSlideProgress = 0x80;
+        sprite->mStartX = sprite->mX;
+        sprite->mStartY = sprite->mY;
+        sprite->mNoReverse = 0;
         return;
     }
     if (mode == 0) {
-        GetSpriteRect(cmd->mDrawId, 0, rect);
-        if (buf[4] & 1) {
-            cmd->mUnk_14 = cmd->mUnk_0a;
+        GetSpriteRect(sprite->mDrawId, 0, rect);
+        if (buf[4] & SCRIPT_SPRITE_SLIDE_X) {
+            sprite->mStartY = sprite->mY;
             if (buf[4] & 2) {
                 s32 v;
-                if (cmd->mDrawId & 0x10000) {
+                if (sprite->mDrawId & 0x10000) {
                     v = -rect[0];
                 } else {
                     v = rect[2];
                 }
-                cmd->mUnk_12 = -v;
+                sprite->mStartX = -v;
             } else {
                 s32 v;
-                if (cmd->mDrawId & 0x10000) {
+                if (sprite->mDrawId & 0x10000) {
                     v = rect[2];
                 } else {
                     v = -rect[0];
                 }
-                cmd->mUnk_12 = v + 0x100;
+                sprite->mStartX = v + 0x100;
             }
         } else {
-            cmd->mUnk_12 = cmd->mUnk_08;
+            sprite->mStartX = sprite->mX;
             if (buf[4] & 2) {
-                cmd->mUnk_14 = 0xc0 - rect[1];
+                sprite->mStartY = 0xc0 - rect[1];
             } else {
-                cmd->mUnk_14 = -rect[3];
+                sprite->mStartY = -rect[3];
             }
         }
     } else {
-        if (buf[4] & 1) {
-            cmd->mUnk_14 = cmd->mUnk_0a;
+        if (buf[4] & SCRIPT_SPRITE_SLIDE_X) {
+            sprite->mStartY = sprite->mY;
             if (buf[4] & 2) {
-                cmd->mUnk_12 = -shiftX;
+                sprite->mStartX = -shiftX;
             } else {
-                cmd->mUnk_12 = 0x100;
+                sprite->mStartX = 0x100;
             }
         } else {
-            cmd->mUnk_12 = cmd->mUnk_08;
+            sprite->mStartX = sprite->mX;
             if (buf[4] & 2) {
-                cmd->mUnk_14 = 0xc0;
+                sprite->mStartY = 0xc0;
             } else {
-                cmd->mUnk_14 = -shiftY;
+                sprite->mStartY = -shiftY;
             }
         }
     }
-    cmd->mSlideProgress = 0;
+    sprite->mSlideProgress = 0;
 }
 
 // Reads a text from the script line and appends it to mTexts, or to mUnk_68 when its seventh value is non-zero
@@ -621,14 +641,14 @@ void AddScriptText(u8 *text) {
     entry->mTextId = gScriptWork.mNextTextId++;
     entry->mX = buf[0];
     entry->mY = buf[1];
-    entry->mUnk_06 = buf[2];
-    entry->mUnk_08 = buf[3];
-    entry->mUnk_0a = data_020508dc[buf[4]];
+    entry->mLineWidth = buf[2];
+    entry->mLineHeight = buf[3];
+    entry->mAlign = sTextAligns[buf[4]];
     entry->mFontIndex = buf[5];
     if (buf[7] == 0) {
-        entry->mUnk_11 = 2;
+        entry->mLayer = 2;
     } else {
-        entry->mUnk_11 = 1;
+        entry->mLayer = 1;
     }
     entry->mCharCount = CountFileStringChars(gScriptWork.mTextFileId, entry->mTextId,
                                              (gScriptWork.mUnk_280.mTextEscapeFunc != 0 ? 2 : 0) + 1);
@@ -645,7 +665,7 @@ void ScriptCmdTxtSpd(u8 *text) {
 }
 
 // Sets the state to SCRIPT_STATE_END and plays the queued MUSIC track; then for each queued sound id (mapped through
-// mSoundIdFunc when set, never in this build) stops it in mode 2 or plays it otherwise unless mUnk_1c_2 is set, and
+// mSoundIdFunc when set, never in this build) stops it in mode 2 or plays it otherwise unless mSkipToEnd is set, and
 // empties the sound list.
 void PlayScriptTrackAndSounds(void) {
     u32 i;
@@ -664,7 +684,7 @@ void PlayScriptTrackAndSounds(void) {
         }
         if (gScriptWork.mSoundModes[i] == 2) {
             StopWave(id);
-        } else if (!gScriptWork.mUnk_1c_2) {
+        } else if (!gScriptWork.mSkipToEnd) {
             PlayWave(id, gScriptWork.mSoundVolumes[i], gScriptWork.mSoundModes[i], 0x40, 0xffff, 0);
         }
     }
@@ -687,14 +707,14 @@ void ScriptCmdEof(u8 *text) {
     if (gScriptWork.mEofFlags & 0x10) {
         gSystemState.mUnk_314 = buf[2];
     } else {
-        gSystemState.mUnk_314 = gScriptWork.mUnk_14;
+        gSystemState.mUnk_314 = gScriptWork.mDefaultWindowLineCount;
     }
 }
 
 // Reads up to 16 values from the text into the next entry of the event queue. There is no full check: a write can
 // overwrite an entry that was not read yet.
 void QueueScriptEvent(u8 *text) {
-    int len = ClearAndEvaluate(&gScriptWork.mEvents[gScriptWork.mUnk_280.mEventWriteIndex].mUnk_00, text, 0x20);
+    int len = ClearAndEvaluate(&gScriptWork.mEvents[gScriptWork.mUnk_280.mEventWriteIndex].mKind, text, 0x20);
     if (len > 0x10) {
         OS_Terminate();
     }
@@ -733,9 +753,11 @@ void ScriptCmdGoto(u8 *text) {
     gScriptWork.mNextTextId += v[1];
 }
 
-// Reads an index and up to two more values; unless mUnk_280.mUnk_40 is set, mUnk_280.mUnk_1c becomes a table entry
-// minus a top-bit marker chosen by flag, and the two values are stored after it.
-void func_02029aac(u8 *text, int flag) {
+// The SPRSCR (flag 1) and SHPSCR (flag 0) commands: reads an index and up to two more values. Unless mUnk_280.mUnk_40
+// is set (SetupPrompt sets it for a prompt with a shared model), mScrDrawId becomes the sprite or shape table entry
+// with the marker bits described at mScrDrawId, and the two values become mScrX and mScrY; while it is set the call
+// stores nothing.
+void SetScriptScrSprite(u8 *text, int flag) {
     s16 v[3];
     int n;
     s32 x;
@@ -756,9 +778,9 @@ void func_02029aac(u8 *text, int flag) {
                 x = data_0204e2c8[v[0]];
                 sel = 1;
             }
-            o->mUnk_1c = x - (sel << 30);
-            gScriptWork.mUnk_280.mUnk_20 = v[1];
-            gScriptWork.mUnk_280.mUnk_22 = v[2];
+            o->mScrDrawId = x - (sel << 30);
+            gScriptWork.mUnk_280.mScrX = v[1];
+            gScriptWork.mUnk_280.mScrY = v[2];
         }
     }
 }
@@ -953,18 +975,18 @@ void ScriptCmdSetEye(u8 *text) {
     }
 }
 
-// Looks up the eye in use whose sprite id equals id, returns the id it shows (mId, or mAltId while the alternate
-// shows; -1 when no eye matches) and its offsets, and steps its countdown; when the countdown is -1 it draws a new
-// delay from mDelayMin up to mDelayLimit - 1.
-void UpdateScriptEye(int id, int *a, int *b, int *c) {
+// Looks up the eye in use whose sprite id equals spriteId, returns in id the id it shows (mId, or mAltId while the
+// alternate shows; -1 when no eye matches) and in dx, dy its offsets, and steps its countdown; when the countdown is -1
+// it draws a new delay from mDelayMin up to mDelayLimit - 1.
+void UpdateScriptEye(int spriteId, int *id, int *dx, int *dy) {
     ScriptEye *slot;
     u32 i;
-    *a = -1;
+    *id = -1;
     for (i = 0, slot = gScriptWork.mEyes; i < 0x20; i++, slot++) {
-        if (slot->mUsed == 1 && slot->mSpriteId == id) {
-            *b = slot->mOffsetX;
-            *c = slot->mOffsetY;
-            *a = slot->mId;
+        if (slot->mUsed == 1 && slot->mSpriteId == spriteId) {
+            *dx = slot->mOffsetX;
+            *dy = slot->mOffsetY;
+            *id = slot->mId;
             if (slot->mTimer == -1) {
                 u16 lo;
                 slot->mShowingAlt = 0;
@@ -973,7 +995,7 @@ void UpdateScriptEye(int id, int *a, int *b, int *c) {
                 return;
             }
             if (slot->mShowingAlt == 1) {
-                *a = slot->mAltId;
+                *id = slot->mAltId;
             }
             slot->mTimer--;
             if (slot->mTimer == 0) {
@@ -1055,10 +1077,10 @@ void ScriptCmdSetLsc(u8 *text) {
 }
 
 // Stores the two selected indexes (each -1 or 0..0x1f) and, when both are set, checks that the Ls entry is in use.
-void SelectLs(int a, int b) {
+void SelectLs(int lsIndex, int spriteIndex) {
     BOOL ok;
-    gScriptWork.mUnk_280.mLsIndex = a;
-    gScriptWork.mUnk_280.mLsSpriteIndex = b;
+    gScriptWork.mUnk_280.mLsIndex = lsIndex;
+    gScriptWork.mUnk_280.mLsSpriteIndex = spriteIndex;
     ok = 0;
     if (gScriptWork.mUnk_280.mLsIndex >= -1 && gScriptWork.mUnk_280.mLsIndex < 0x20) {
         ok = 1;
@@ -1093,16 +1115,16 @@ void SelectLsForSprite(int index, int id) {
     }
 }
 
-// Swaps the sprite's position (mUnk_08, mUnk_0a) with its slide start (mUnk_12, mUnk_14) and restarts the slide, so
-// it slides back; not when mUnk_21_0 is set (moving sprites, and a sprite its show timer already reversed).
+// Swaps the sprite's position with its slide start and restarts the slide, so it slides back; not when mNoReverse is
+// set (moving sprites, and a sprite its show timer already reversed).
 void ReverseScriptSprite(ScriptSprite *rec) {
-    if (!rec->mUnk_21_0) {
-        s16 a = rec->mUnk_08;
-        rec->mUnk_08 = rec->mUnk_12;
-        rec->mUnk_12 = a;
-        a = rec->mUnk_0a;
-        rec->mUnk_0a = rec->mUnk_14;
-        rec->mUnk_14 = a;
+    if (!rec->mNoReverse) {
+        s16 a = rec->mX;
+        rec->mX = rec->mStartX;
+        rec->mStartX = a;
+        a = rec->mY;
+        rec->mY = rec->mStartY;
+        rec->mStartY = a;
         rec->mSlideProgress = 0;
     }
 }
@@ -1155,7 +1177,7 @@ void func_0202a1cc(void) {
 }
 
 // Runs one frame of the script engine: applies queued screen changes, moves and draws the script sprites, builds
-// and draws the message text, then reads script commands until one waits; repeats while mUnk_1c_2 is set (never in
+// and draws the message text, then reads script commands until one waits; repeats while mSkipToEnd is set (never in
 // this build).
 void UpdateScript(int (*callback)(void)) {
     char text[0x200];
@@ -1188,14 +1210,14 @@ void UpdateScript(int (*callback)(void)) {
                 SetFaded(gScriptWork.mUnk_280.mPendingImageLayers[i]);
                 LoadImage(image, gScriptWork.mUnk_280.mPendingImageLayers[i]);
                 if (gScriptWork.mUnk_280.mPendingImageLayers[i] == 1) {
-                    gScriptWork.mUnk_280.mUnk_1c = 0;
-                    gScriptWork.mUnk_280.mUnk_2c = image;
+                    gScriptWork.mUnk_280.mScrDrawId = 0;
+                    gScriptWork.mUnk_280.mLayer1ImageId = image;
                     flag = 1;
                 } else if (gScriptWork.mUnk_280.mPendingImageLayers[i] == 2) {
-                    gScriptWork.mUnk_280.mUnk_2e = image;
+                    gScriptWork.mUnk_280.mLayer2ImageId = image;
                 } else if (gScriptWork.mUnk_280.mPendingImageLayers[i] == 3) {
                     flag = 1;
-                    gScriptWork.mUnk_280.mUnk_2c = gScriptWork.mUnk_280.mUnk_2e = image;
+                    gScriptWork.mUnk_280.mLayer1ImageId = gScriptWork.mUnk_280.mLayer2ImageId = image;
                 }
                 gScriptWork.mUnk_280.mPendingImageLayers[i] = 0;
             }
@@ -1204,157 +1226,157 @@ void UpdateScript(int (*callback)(void)) {
             }
         }
 
-        if (gScriptWork.mUnk_280.mUnk_1c != 0) {
-            if (gScriptWork.mUnk_280.mUnk_1c & 0x80000000) {
-                gScriptWork.mUnk_280.mUnk_1c &= 0x7fffffff;
+        if (gScriptWork.mUnk_280.mScrDrawId != 0) {
+            if (gScriptWork.mUnk_280.mScrDrawId & 0x80000000) {
+                gScriptWork.mUnk_280.mScrDrawId &= 0x7fffffff;
                 SetFaded(1);
-                gScriptWork.mUnk_280.mUnk_30 = gScriptWork.mUnk_280.mUnk_1c;
+                gScriptWork.mUnk_280.mUnk_30 = gScriptWork.mUnk_280.mScrDrawId;
             }
-            if (!(gScriptWork.mUnk_280.mUnk_1c & 0x40000000)) {
-                func_020242e8(gScriptWork.mUnk_280.mUnk_1c, gScriptWork.mUnk_280.mUnk_20, gScriptWork.mUnk_280.mUnk_22,
+            if (!(gScriptWork.mUnk_280.mScrDrawId & 0x40000000)) {
+                func_020242e8(gScriptWork.mUnk_280.mScrDrawId, gScriptWork.mUnk_280.mScrX, gScriptWork.mUnk_280.mScrY,
                               0x4000, 0x1000, 0x8000, 0xff, 0);
             } else {
-                u32 tex = gScriptWork.mUnk_280.mUnk_1c & 0x3fffffff;
+                u32 tex = gScriptWork.mUnk_280.mScrDrawId & 0x3fffffff;
                 GetTexInfo(tex, &info, 0);
                 if (info.mUnk_12 <= 1) {
                     OS_Terminate();
                 }
                 func_0202a1cc();
-                DrawSprite(tex + 0x800000, gScriptWork.mUnk_280.mUnk_20, gScriptWork.mUnk_280.mUnk_22, 0xff, 1);
+                DrawSprite(tex + 0x800000, gScriptWork.mUnk_280.mScrX, gScriptWork.mUnk_280.mScrY, 0xff, 1);
             }
         }
 
         for (i = 0; i < gScriptWork.mSpriteCount; i++) {
-            ScriptSprite *cmd = &gScriptWork.mSprites[i];
+            ScriptSprite *sprite = &gScriptWork.mSprites[i];
             int x;
             int y;
             flip = 0;
-            if (cmd->mDelayTimer != 0) {
+            if (sprite->mDelayTimer != 0) {
                 gScriptWork.mSpritesBusy = 1;
-                cmd->mDelayTimer--;
+                sprite->mDelayTimer--;
                 continue;
             }
-            if (cmd->mUnk_18 != 0) {
+            if (sprite->mShowTimer != 0) {
                 gScriptWork.mSpritesBusy = 1;
-                cmd->mUnk_18--;
-                if (cmd->mUnk_18 == 0) {
-                    if (cmd->mUnk_12 == cmd->mUnk_08 && cmd->mUnk_14 == cmd->mUnk_0a) {
-                        cmd->mDrawId = -1;
+                sprite->mShowTimer--;
+                if (sprite->mShowTimer == 0) {
+                    if (sprite->mStartX == sprite->mX && sprite->mStartY == sprite->mY) {
+                        sprite->mDrawId = -1;
                     } else {
-                        ReverseScriptSprite(cmd);
-                        cmd->mUnk_21_0 = 1;
+                        ReverseScriptSprite(sprite);
+                        sprite->mNoReverse = 1;
                     }
                 }
             }
-            if (cmd->mFramesPerAnimFrame != 0 && cmd->mDrawId != -1) {
+            if (sprite->mFramesPerAnimFrame != 0 && sprite->mDrawId != -1) {
                 gScriptWork.mSpritesBusy = 1;
-                cmd->mAnimFrameFrames++;
-                if (cmd->mAnimFrameFrames == cmd->mFramesPerAnimFrame) {
-                    cmd->mDrawId++;
-                    cmd->mAnimFrameFrames = 0;
-                    cmd->mAnimFramesRemaining--;
-                    if (cmd->mAnimFramesRemaining == 0) {
-                        if (cmd->mUnk_21_1 == 0) {
-                            cmd->mDrawId--;
-                            cmd->mFramesPerAnimFrame = 0;
+                sprite->mAnimFrameFrames++;
+                if (sprite->mAnimFrameFrames == sprite->mFramesPerAnimFrame) {
+                    sprite->mDrawId++;
+                    sprite->mAnimFrameFrames = 0;
+                    sprite->mAnimFramesRemaining--;
+                    if (sprite->mAnimFramesRemaining == 0) {
+                        if (sprite->mAnimLoop == 0) {
+                            sprite->mDrawId--;
+                            sprite->mFramesPerAnimFrame = 0;
                         } else {
                             gScriptWork.mSpritesBusy = 0;
-                            cmd->mDrawId -= cmd->mAnimFrameCount;
-                            cmd->mAnimFramesRemaining = cmd->mAnimFrameCount;
+                            sprite->mDrawId -= sprite->mAnimFrameCount;
+                            sprite->mAnimFramesRemaining = sprite->mAnimFrameCount;
                         }
                     }
                 }
             }
-            if (cmd->mUnk_10 != 0) {
-                s16 to = cmd->mUnk_10 > 0 ? cmd->mUnk_0c : cmd->mUnk_12;
-                if (cmd->mUnk_08 < to) {
-                    cmd->mUnk_08 += abs(cmd->mUnk_10);
-                    if (cmd->mUnk_08 >= to) {
-                        cmd->mUnk_08 = to;
-                        if (cmd->mUnk_21_2 == 1) {
-                            cmd->mUnk_10 = -cmd->mUnk_10;
+            if (sprite->mMovePerFrame != 0) {
+                s16 to = sprite->mMovePerFrame > 0 ? sprite->mMoveEndX : sprite->mStartX;
+                if (sprite->mX < to) {
+                    sprite->mX += abs(sprite->mMovePerFrame);
+                    if (sprite->mX >= to) {
+                        sprite->mX = to;
+                        if (sprite->mMoveBounce == 1) {
+                            sprite->mMovePerFrame = -sprite->mMovePerFrame;
                         }
                     }
-                } else if (cmd->mUnk_08 > to) {
-                    cmd->mUnk_08 -= abs(cmd->mUnk_10);
-                    if (cmd->mUnk_08 <= to) {
-                        cmd->mUnk_08 = to;
-                        if (cmd->mUnk_21_2 == 1) {
-                            cmd->mUnk_10 = -cmd->mUnk_10;
-                        }
-                    }
-                }
-                to = cmd->mUnk_10 > 0 ? cmd->mUnk_0e : cmd->mUnk_14;
-                if (cmd->mUnk_0a < to) {
-                    cmd->mUnk_0a += abs(cmd->mUnk_10);
-                    if (cmd->mUnk_0a >= to) {
-                        cmd->mUnk_0a = to;
-                        if (cmd->mUnk_21_2 == 1) {
-                            cmd->mUnk_10 = -cmd->mUnk_10;
-                        }
-                    }
-                } else if (cmd->mUnk_0a > to) {
-                    cmd->mUnk_0a -= abs(cmd->mUnk_10);
-                    if (cmd->mUnk_0a <= to) {
-                        cmd->mUnk_0a = to;
-                        if (cmd->mUnk_21_2 == 1) {
-                            cmd->mUnk_10 = -cmd->mUnk_10;
+                } else if (sprite->mX > to) {
+                    sprite->mX -= abs(sprite->mMovePerFrame);
+                    if (sprite->mX <= to) {
+                        sprite->mX = to;
+                        if (sprite->mMoveBounce == 1) {
+                            sprite->mMovePerFrame = -sprite->mMovePerFrame;
                         }
                     }
                 }
-                if (cmd->mUnk_10 < 0 && cmd->mUnk_21_3 == 1) {
+                to = sprite->mMovePerFrame > 0 ? sprite->mMoveEndY : sprite->mStartY;
+                if (sprite->mY < to) {
+                    sprite->mY += abs(sprite->mMovePerFrame);
+                    if (sprite->mY >= to) {
+                        sprite->mY = to;
+                        if (sprite->mMoveBounce == 1) {
+                            sprite->mMovePerFrame = -sprite->mMovePerFrame;
+                        }
+                    }
+                } else if (sprite->mY > to) {
+                    sprite->mY -= abs(sprite->mMovePerFrame);
+                    if (sprite->mY <= to) {
+                        sprite->mY = to;
+                        if (sprite->mMoveBounce == 1) {
+                            sprite->mMovePerFrame = -sprite->mMovePerFrame;
+                        }
+                    }
+                }
+                if (sprite->mMovePerFrame < 0 && sprite->mFlipOnReturn == 1) {
                     flip = 0x10000;
                 }
-                x = cmd->mUnk_08 / 100;
-                y = cmd->mUnk_0a / 100;
-            } else if (cmd->mSlideProgress < 0x80) {
-                if (cmd->mUnk_21_4 == 0) {
-                    cmd->mSlideProgress += 20;
-                } else if (cmd->mUnk_21_4 > 1) {
-                    cmd->mUnk_21_4--;
+                x = sprite->mX / 100;
+                y = sprite->mY / 100;
+            } else if (sprite->mSlideProgress < 0x80) {
+                if (sprite->mUnk_21_4 == 0) {
+                    sprite->mSlideProgress += 20;
+                } else if (sprite->mUnk_21_4 > 1) {
+                    sprite->mUnk_21_4--;
                 } else if (gSystemState.mTransferCount == 0) {
-                    cmd->mUnk_21_4 = 0;
+                    sprite->mUnk_21_4 = 0;
                 }
                 gScriptWork.mSpritesBusy = 1;
-                x = MapRangeFromZero(cmd->mSlideProgress < 0x80 ? cmd->mSlideProgress : 0x80, 0x80, cmd->mUnk_12,
-                                     cmd->mUnk_08);
-                y = MapRangeFromZero(cmd->mSlideProgress < 0x80 ? cmd->mSlideProgress : 0x80, 0x80, cmd->mUnk_14,
-                                     cmd->mUnk_0a);
-                if (x == cmd->mUnk_08 && y == cmd->mUnk_0a) {
-                    cmd->mSlideProgress = 0x80;
+                x = MapRangeFromZero(sprite->mSlideProgress < 0x80 ? sprite->mSlideProgress : 0x80, 0x80,
+                                     sprite->mStartX, sprite->mX);
+                y = MapRangeFromZero(sprite->mSlideProgress < 0x80 ? sprite->mSlideProgress : 0x80, 0x80,
+                                     sprite->mStartY, sprite->mY);
+                if (x == sprite->mX && y == sprite->mY) {
+                    sprite->mSlideProgress = 0x80;
                 }
             } else {
-                x = cmd->mUnk_08;
-                y = cmd->mUnk_0a;
+                x = sprite->mX;
+                y = sprite->mY;
             }
 
-            if (gScriptWork.mUnk_1c_2 == 0) {
-                if (!(cmd->mDrawId & 0x80000000)) {
+            if (gScriptWork.mSkipToEnd == 0) {
+                if (!(sprite->mDrawId & 0x80000000)) {
                     if (gScriptWork.mSpriteDrawFunc != 0) {
-                        gScriptWork.mSpriteDrawFunc(cmd->mDrawId ^ flip, x, y, cmd->mUnk_1a, cmd->mLayer);
+                        gScriptWork.mSpriteDrawFunc(sprite->mDrawId ^ flip, x, y, sprite->mDrawOrder, sprite->mLayer);
                     } else {
-                        GetTexInfo(cmd->mDrawId, &info, 0);
+                        GetTexInfo(sprite->mDrawId, &info, 0);
                         if (info.mUnk_12 > 1) {
                             func_0202a1cc();
-                            DrawSprite(cmd->mDrawId ^ (flip + 0x800000), x, y, cmd->mUnk_1a, cmd->mLayer);
+                            DrawSprite(sprite->mDrawId ^ (flip + 0x800000), x, y, sprite->mDrawOrder, sprite->mLayer);
                         } else {
-                            DrawSprite(flip ^ cmd->mDrawId, x, y, cmd->mUnk_1a, cmd->mLayer);
+                            DrawSprite(flip ^ sprite->mDrawId, x, y, sprite->mDrawOrder, sprite->mLayer);
                         }
                     }
                 } else {
-                    func_020242e8(cmd->mDrawId & 0x7fffffff, x, y, cmd->mUnk_1a << 6, 0x1000, 0x8000, 0xff, 0);
+                    func_020242e8(sprite->mDrawId & 0x7fffffff, x, y, sprite->mDrawOrder << 6, 0x1000, 0x8000, 0xff, 0);
                 }
             }
 
-            UpdateScriptEye(cmd->mId, &id, &dx, &dy);
+            UpdateScriptEye(sprite->mId, &id, &dx, &dy);
             if (id != -1) {
                 id = data_0204e2c8[id];
                 GetTexInfo(id, &info, 0);
                 if (info.mUnk_12 > 1) {
                     func_0202a1cc();
-                    DrawSprite(id + flip + 0x800000, x + dx, y + dy, cmd->mUnk_1a - 2, cmd->mLayer);
+                    DrawSprite(id + flip + 0x800000, x + dx, y + dy, sprite->mDrawOrder - 2, sprite->mLayer);
                 } else {
-                    DrawSprite(id + flip, x + dx, y + dy, cmd->mUnk_1a - 2, cmd->mLayer);
+                    DrawSprite(id + flip, x + dx, y + dy, sprite->mDrawOrder - 2, sprite->mLayer);
                 }
             }
 
@@ -1375,10 +1397,11 @@ void UpdateScript(int (*callback)(void)) {
                     GetTexInfo(id, &info, 0);
                     if (info.mUnk_12 > 1) {
                         func_0202a1cc();
-                        DrawSprite(id + flip + 0x800000, x + rec->mOffsetX, y + rec->mOffsetY, cmd->mUnk_1a - 2,
-                                   cmd->mLayer);
+                        DrawSprite(id + flip + 0x800000, x + rec->mOffsetX, y + rec->mOffsetY, sprite->mDrawOrder - 2,
+                                   sprite->mLayer);
                     } else {
-                        DrawSprite(id + flip, x + rec->mOffsetX, y + rec->mOffsetY, cmd->mUnk_1a - 2, cmd->mLayer);
+                        DrawSprite(id + flip, x + rec->mOffsetX, y + rec->mOffsetY, sprite->mDrawOrder - 2,
+                                   sprite->mLayer);
                     }
                 }
             }
@@ -1421,7 +1444,7 @@ void UpdateScript(int (*callback)(void)) {
             }
             text[len] = 0;
 
-            if (gScriptWork.mUnk_1c_2 == 0 && len != 0) {
+            if (gScriptWork.mSkipToEnd == 0 && len != 0) {
                 ScriptText *entry = gScriptWork.mTexts;
                 u8 value = 0;
                 u32 extra = 0;
@@ -1437,9 +1460,9 @@ void UpdateScript(int (*callback)(void)) {
                 }
                 DrawTextEx(entry->mX, entry->mY + gScriptWork.mTextOffsetY, data_02063988, (u8) entry->mFontIndex,
                            (const u8 *) text, 0,
-                           extra + (entry->mUnk_0a + (TEXT_LINE_WINDOW | TEXT_LIMIT | TEXT_HILITE) +
+                           extra + (entry->mAlign + (TEXT_LINE_WINDOW | TEXT_LIMIT | TEXT_HILITE) +
                                     (gScriptWork.mUnk_280.mTextEscapeFunc != 0 ? TEXT_ESCAPES : 0)),
-                           entry->mUnk_06, entry->mUnk_08, entry->mUnk_11);
+                           entry->mLineWidth, entry->mLineHeight, entry->mLayer);
                 if (extra & TEXT_ROTATE) {
                     gSystemState.mUnk_30a[0] = saved;
                 }
@@ -1451,7 +1474,7 @@ void UpdateScript(int (*callback)(void)) {
             return;
         }
         if (gScriptWork.mState == SCRIPT_STATE_WAIT) {
-            if (gScriptWork.mUnk_1c_2 == 1 ||
+            if (gScriptWork.mSkipToEnd == 1 ||
                 (gScriptWork.mSpriteCount == 0 && gScriptWork.mTextCount == 0 && gScriptWork.mWaitTimer == 0)) {
                 StartEofFinish();
             } else {
@@ -1479,7 +1502,7 @@ void UpdateScript(int (*callback)(void)) {
                 }
             }
         } else if (gScriptWork.mState == SCRIPT_STATE_FINISH) {
-            if (gScriptWork.mUnk_1c_2 == 1 || gScriptWork.mSpritesBusy == 0) {
+            if (gScriptWork.mSkipToEnd == 1 || gScriptWork.mSpritesBusy == 0) {
                 if (((gMapState.mCamera.mUnk_2dc.mUnk_0c != 0 && gMapState.mCamera.mUnk_2dc.mUnk_33 == 8 &&
                       (gSystemState.mFlags & 0x80)) ||
                      (gMapState.mCamera.mUnk_2dc.mUnk_0e != 0 && (gSystemState.mFlags & 0x80))) &&
@@ -1516,10 +1539,10 @@ void UpdateScript(int (*callback)(void)) {
                             gScriptWork.mSprites[gScriptWork.mSpriteCount - 1].mDrawId |= 0x10000;
                             break;
                         case SCRIPT_CMD_SPRSCR:
-                            func_02029aac(line, 1);
+                            SetScriptScrSprite(line, 1);
                             break;
                         case SCRIPT_CMD_SHPSCR:
-                            func_02029aac(line, 0);
+                            SetScriptScrSprite(line, 0);
                             break;
                         case SCRIPT_CMD_SHAPE:
                             AddScriptSprite(line, 1);
@@ -1589,5 +1612,5 @@ void UpdateScript(int (*callback)(void)) {
                 gScriptWork.mLineId++;
             } while (done == 0);
         }
-    } while (gScriptWork.mUnk_1c_2);
+    } while (gScriptWork.mSkipToEnd);
 }

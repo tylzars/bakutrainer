@@ -66,7 +66,7 @@ typedef struct WirelessWork {
     u16 mAid;
     u8 mUnk_06[0x16];
     // Fills the key block (first argument) for the parent / the child (second argument is the parent parameter
-    // block / the connection record) and returns the key mode. Neither this nor mChildWepKeyFunc is set in this build.
+    // block / the child connect data) and returns the key mode. Neither this nor mChildWepKeyFunc is set in this build.
     u32 (*mParentWepKeyFunc)(void *key, void *param);
     u32 mSendBufferSize;
     // Last error code recorded by WhSetError; nothing reads it in this build.
@@ -101,11 +101,13 @@ extern char gWhSysStateMeasureChannelName[];
 extern char gWhSysStateConnectFailName[];
 extern char gWhSysStateErrorName[];
 
-extern u8 data_020c83e0[0x30];
-// The parent parameter block, the parent record (flushed from the data cache by range) and the data-sharing block
-// handed to the wireless library are 32-byte aligned.
+// Key block mParentWepKeyFunc / mChildWepKeyFunc fill for WhSetParentWepKey / WhSetChildWepKey; neither runs in
+// this build (the key functions are never set).
+extern u8 gWhWepKey[0x30];
+// The parent parameter block, the child connect data (flushed from the data cache by range; the game code passes it
+// on without reading it) and the data-sharing block handed to the wireless library are 32-byte aligned.
 extern WMParentParam gWhParentParam __attribute__((aligned(32)));
-extern u16 data_020c8460[0x60] __attribute__((aligned(32)));
+extern u16 gWhChildConnectData[0x60] __attribute__((aligned(32)));
 extern u16 gWhDataSharingRecv[0x100];
 extern u8 gWhSendBuffer[0x220];
 extern u8 gWhRecvBuffer[0x480];
@@ -115,8 +117,8 @@ extern WMDataSharing gWhDataSharing __attribute__((aligned(32)));
 const char *WhGetStateCodeName(u32 code);
 void WhSetSysState(int state);
 void WhSetError(int error);
-BOOL func_02038740(void);
-void func_02038780(WirelessMsg *msg);
+BOOL WhSetParentParam(void);
+void WhSetParentParamCallback(WirelessMsg *msg);
 BOOL WhSetParentWepKey(void);
 void WhSetParentWepKeyCallback(WirelessMsg *msg);
 BOOL WhStartParent(void);

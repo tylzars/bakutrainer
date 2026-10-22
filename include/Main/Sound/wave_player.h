@@ -51,10 +51,11 @@ typedef struct WaveChannel {
     /* 0d */ u8 mUsed : 1;
     u8 mUnk_0d_1 : 1;
     u8 mRepeat : 1;
-    u8 mUnk_0d_3 : 1;
+    // Only ever 0 in this build (PlayWaveData clears it).
+    u8 mFading : 1;
     /* 0e */ u8 mUnk_0e[2];
     /* 10 */ u32 mTimer;
-    // Volume last sent; UpdateWaves' fade branch, which never runs in this build (mUnk_0d_3 is only ever 0), would
+    // Volume last sent; UpdateWaves' fade branch, which never runs in this build (mFading is only ever 0), would
     // count it down.
     /* 14 */ u32 mVolume;
 } WaveChannel; /* 18 */
@@ -89,11 +90,11 @@ extern WavePlayer gWavePlayer;
 // `steal` is set and none is free, the first channel in the mask (stopping it first). Returns the channel number, or
 // the number of channels when none can be claimed.
 int ClaimWaveChannel(int steal, u32 mask);
-void PlayWaveBuffer(u32 id, int x, int volume, int repeat, int pan, u32 mask, WaveLoop *loop, const void *data,
+void PlayWaveBuffer(u32 id, int start, int volume, int repeat, int pan, u32 mask, WaveLoop *loop, const void *data,
                     int rate, u32 size, int mode);
 void PlayWave(int id, int volume, int repeat, int pan, u32 mask, WaveLoop *loop);
-void PlayWaveEx(u32 id, int x, int volume, int repeat, int pan, u32 mask, WaveLoop *loop);
-void PlayWaveData(const WaveInfo *info, const void *data, u32 id, int x, u32 volume, int repeat, int pan, u32 mask,
+void PlayWaveEx(u32 id, int start, int volume, int repeat, int pan, u32 mask, WaveLoop *loop);
+void PlayWaveData(const WaveInfo *info, const void *data, u32 id, int start, u32 volume, int repeat, int pan, u32 mask,
                   WaveLoop *loop);
 void StopWaveChannels(u32 mask);
 int StopWave(u32 id);

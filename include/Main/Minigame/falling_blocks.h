@@ -37,7 +37,10 @@ typedef struct Piece {
     u8 mType;
     Sprite mSprite;
     Vec2i mPos;
-    s16 mUnk_110;
+    // -1: not being removed (SetPieceType); 1: removal started (StartPieceRemoval); UpdateBoard sets 0 once the
+    // sprite's mUnk_de is non-zero. On a pass where the sprite's mUnk_04 equals gBoard.mUnk_8974 UpdateBoard runs
+    // RemoveMatchesAt instead of clearing the cell, so 0 does not always mean the cell was cleared.
+    s16 mRemovalState;
     u8 mUnk_112[2];
 } Piece;
 
@@ -106,7 +109,10 @@ typedef struct Board {
     u16 mUnk_8970;
     u16 mUnk_8972;
     s32 mUnk_8974;
-    s32 mUnk_8978[6];
+    // Per piece type (index type - 1), set by SetupFallingBlocks: a random share of a random total for the types
+    // before type mTypeCount, the rest for that type, -1 for the types after it. StartPieceRemoval lowers it by 1 (not
+    // below 0) for types below 7. Not read otherwise in this build.
+    s32 mTypeRemovalsRemaining[6];
     s32 mPieceScore;
     s32 mRemovedCount;
 } Board;

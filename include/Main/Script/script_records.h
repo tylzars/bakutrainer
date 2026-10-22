@@ -15,11 +15,11 @@ extern "C" {
 #define SCRIPT_STATE_FINISH 2
 #define SCRIPT_STATE_END 3
 
-// One entry of the event queue: the values read from the text (the first two are the event and its argument) and
-// how many there are.
+// One entry of the event queue: up to 16 values read from the text (mKind the event, mParam its argument, the rest
+// from mUnk_04 on) and how many there are.
 typedef struct ScriptEvent {
-    s16 mUnk_00;
-    s16 mUnk_02;
+    s16 mKind;
+    s16 mParam;
     u8 mUnk_04[0x20 - 4];
     // Not read in this build.
     u8 mValueCount;
@@ -60,13 +60,16 @@ typedef struct ScriptText {
     u16 mTextId;
     s16 mX;
     s16 mY;
-    s16 mUnk_06;
-    s16 mUnk_08;
-    s16 mUnk_0a;
+    // DrawTextEx's width (the most a line fills before it breaks) and height (the step from one line to the next).
+    s16 mLineWidth;
+    s16 mLineHeight;
+    // DrawTextEx alignment (the TEXT_ALIGN_MASK bits), from sTextAligns.
+    s16 mAlign;
     u16 mCharCount;
     u16 mFontIndex;
     u8 mCharFrameCount;
-    u8 mUnk_11;
+    // 2, or 1 when the text's eighth value is non-zero.
+    u8 mLayer;
 } ScriptText;
 
 // A sprite or shape of the script (AddScriptSprite). Sprites (top bit of mDrawId clear) are drawn through
@@ -75,16 +78,32 @@ typedef struct ScriptText {
 typedef struct ScriptSprite {
     s32 mId;
     u32 mDrawId;
-    s16 mUnk_08;
-    s16 mUnk_0a;
-    s16 mUnk_0c;
-    s16 mUnk_0e;
-    s16 mUnk_10;
-    s16 mUnk_12;
-    s16 mUnk_14;
+    // Where the sprite is drawn when it is not sliding, and the end point of its slide: pixels, or hundredths of a
+    // pixel while mMovePerFrame is non-zero.
+    s16 mX;
+    s16 mY;
+    // Where the move heads while mMovePerFrame is positive, in hundredths of a pixel.
+    s16 mMoveEndX;
+    s16 mMoveEndY;
+    // 0: no move. Otherwise its absolute value is added to or subtracted from mX and mY (hundredths of a pixel) once
+    // per UpdateScript pass, towards mMoveEndX/mMoveEndY while it is positive and towards mStartX/mStartY while it is
+    // negative.
+    s16 mMovePerFrame;
+    // Two roles. Where the slide starts (ReverseScriptSprite swaps them with mX/mY so that the sprite slides back);
+    // and for a moving sprite, the target while mMovePerFrame is negative. A moving sprite first gets its own position
+    // in hundredths of a pixel here, then AddScriptSprite overwrites mStartX (SLIDE_X set) or mStartY (SLIDE_X clear)
+    // with the slide start point in pixels, while mX/mY stay in hundredths; that pixel value is the target when the
+    // move runs back.
+    s16 mStartX;
+    s16 mStartY;
     u16 mDelayTimer;
-    u16 mUnk_18;
-    u16 mUnk_1a;
+    // Counts down once mDelayTimer is 0. At 0 the sprite is removed (mDrawId -1) when mStartX/mStartY equal mX/mY,
+    // otherwise it is sent back (ReverseScriptSprite) and mNoReverse is set.
+    u16 mShowTimer;
+    // DrawSprite's w for a sprite (its eye and Ls overlays use mDrawOrder - 2), shifted left by 6 for a shape's draw.
+    // For a shape AddScriptSprite stops the system when the value is >= 0x100, but that check runs before the new value
+    // is stored, so it tests the slot's previous value.
+    u16 mDrawOrder;
     // Animation frames (cells, not game frames): their number, and those remaining.
     u8 mAnimFrameCount;
     u8 mAnimFramesRemaining;
@@ -94,10 +113,17 @@ typedef struct ScriptSprite {
     union {
         u8 mUnk_21;
         struct {
-            u8 mUnk_21_0 : 1;
-            u8 mUnk_21_1 : 1;
-            u8 mUnk_21_2 : 1;
-            u8 mUnk_21_3 : 1;
+            // While set ReverseScriptSprite does nothing. Set for a moving sprite and after the show timer sent the
+            // sprite back, cleared for a sprite that neither slides nor moves; a sprite that slides without moving
+            // keeps the slot's previous value.
+            u8 mNoReverse : 1;
+            u8 mAnimLoop : 1;
+            // Each axis negates mMovePerFrame on its own when it reaches its target, so the axis that arrives first
+            // turns the other one round as well.
+            u8 mMoveBounce : 1;
+            // Mirrors the drawn sprite in x whenever mMovePerFrame is negative, from the start when it starts negative;
+            // a shape itself is drawn without the flip (the eye and Ls overlays on it still get it).
+            u8 mFlipOnReturn : 1;
             u8 mUnk_21_4 : 1;
             u8 mUnk_21_5 : 3;
         };
@@ -107,7 +133,8 @@ typedef struct ScriptSprite {
 } ScriptSprite;
 
 // The part of gScriptWork from 0x280 on, which the code reaches through one base address: the event queue's write
-// and read indices, the values the conditional commands compare, the callback and the selected indices.
+// and read indices, the queued image changes, the sprite or shape of SPRSCR/SHPSCR (mScrDrawId, mScrX, mScrY), the
+// values the conditional commands compare, the callback, the image ids last loaded and the selected Ls indices.
 typedef struct Unk_020c642c {
     u8 mUnk_00[0x10];
     u8 mEventWriteIndex;
@@ -118,14 +145,20 @@ typedef struct Unk_020c642c {
     u8 mPendingImageLayers[2];
     u16 mPendingImageIndices[2];
     u8 mUnk_1a[2];
-    s32 mUnk_1c;
-    u16 mUnk_20;
-    u16 mUnk_22;
+    // The sprite or shape SetScriptScrSprite set, drawn at mScrX, mScrY on each UpdateScript pass; 0 = none (cleared
+    // by StartScript and by an image queued with layer value 1). Its top bits differ from ScriptSprite.mDrawId's: bit
+    // 31 marks it new (the first pass clears it, calls SetFaded(1) and copies the id to mUnk_30); bit 30 set means a
+    // sprite (drawn with DrawSprite on layer 1), clear a shape (func_020242e8).
+    s32 mScrDrawId;
+    u16 mScrX;
+    u16 mScrY;
     s16 mIfValueA;
     s16 mIfValueB;
     u8 (*mTextEscapeFunc)(void);
-    u16 mUnk_2c;
-    u16 mUnk_2e;
+    // Images last loaded by a queued image change: layer value 1 sets mLayer1ImageId, 2 mLayer2ImageId, 3 both, any
+    // other value neither. Not read in this build.
+    u16 mLayer1ImageId;
+    u16 mLayer2ImageId;
     u16 mUnk_30;
     u8 mUnk_32[2];
     s32 mLsIndex;
@@ -147,7 +180,8 @@ typedef struct ScriptWork {
     u16 mLineNameFileId;
     u16 mLineId;
     u16 mNextTextId;
-    u16 mUnk_14;
+    // Lines shown at a time (gSystemState.mUnk_314) after an EOF line without flag 0x10; always 2 in this build.
+    u16 mDefaultWindowLineCount;
     u16 mSpriteCount;
     u16 mWaitTimer;
     u8 mEofFlags;
@@ -162,7 +196,9 @@ typedef struct ScriptWork {
             // Set by a key press in the wait state while the text is incomplete: the text position then advances 2
             // more per frame.
             u8 mFastText : 1;
-            u8 mUnk_1c_2 : 1;
+            // Never set in this build (StartScript clears it). While set, one UpdateScript call keeps running the
+            // script, drawing no sprites or text, not waiting and playing no queued waves, until SCRIPT_STATE_END.
+            u8 mSkipToEnd : 1;
             // The drawn text still has characters past the text position, not drawn yet.
             u8 mTextIncomplete : 1;
             u8 mUnk_1c_4 : 4;
@@ -213,8 +249,9 @@ extern ScriptWork gScriptWork;
 
 void StartScriptAtName(const char *name);
 void StartScript(int index);
-void SetupScript(int a, int b, int c, int d, int e, int f, void (*g)(u32 id, int x, int y, int w, int mode),
-                 u8 (*h)(void), u32 (*i)(u32));
+void SetupScript(int scriptFileId, int textFileId, int textNameFileId, int lineNameFileId, int line, int charSoundId,
+                 void (*spriteDrawFunc)(u32 id, int x, int y, int w, int mode), u8 (*textEscapeFunc)(void),
+                 u32 (*soundIdFunc)(u32));
 void ReleaseScript(void);
 u8 ToUpper(u8 c);
 int IsLetterOrUnderscore(u8 c);
@@ -241,7 +278,7 @@ void ScriptCmdEof(u8 *text);
 void QueueScriptEvent(u8 *text);
 void ScriptCmdSync(const char *name);
 void ScriptCmdGoto(u8 *text);
-void func_02029aac(u8 *text, int flag);
+void SetScriptScrSprite(u8 *text, int flag);
 void ScriptCmdScreen(u8 *text);
 void ScriptCmdIf(u8 *text);
 void ScriptCmdEq(u8 *text);
@@ -253,10 +290,10 @@ void ScriptCmdSound(u8 *text);
 void ScriptCmdBra(const char *name);
 void ScriptCmdFade(u8 *text);
 void ScriptCmdSetEye(u8 *text);
-void UpdateScriptEye(int id, int *a, int *b, int *c);
+void UpdateScriptEye(int spriteId, int *id, int *dx, int *dy);
 void ScriptCmdSetLs(u8 *text);
 void ScriptCmdSetLsc(u8 *text);
-void SelectLs(int a, int b);
+void SelectLs(int lsIndex, int spriteIndex);
 void SelectLsForSprite(int index, int id);
 void ReverseScriptSprite(ScriptSprite *rec);
 void ReverseScriptSprites(void);

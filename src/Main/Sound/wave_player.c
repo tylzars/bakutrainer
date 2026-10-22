@@ -41,7 +41,7 @@ int ClaimWaveChannel(int steal, u32 mask) {
 
 #pragma thumb on
 
-void PlayWaveBuffer(u32 id, int x, int volume, int repeat, int pan, u32 mask, WaveLoop *loop, const void *data,
+void PlayWaveBuffer(u32 id, int start, int volume, int repeat, int pan, u32 mask, WaveLoop *loop, const void *data,
                     int rate, u32 size, int mode) {
     WaveInfo info;
     info.mRate = rate;
@@ -49,18 +49,18 @@ void PlayWaveBuffer(u32 id, int x, int volume, int repeat, int pan, u32 mask, Wa
     info.mSize = size;
     info.mFormat = (mode == 1) ? 2 : 1;
     info.mUnk_0a = 0;
-    PlayWaveData(&info, data, id | WAVE_ID_NO_FILE, x, volume, repeat, pan, mask, loop);
+    PlayWaveData(&info, data, id | WAVE_ID_NO_FILE, start, volume, repeat, pan, mask, loop);
 }
 
 void PlayWave(int id, int volume, int repeat, int pan, u32 mask, WaveLoop *loop) {
     PlayWaveEx(id, 0, volume, repeat, pan, mask, loop);
 }
 
-void PlayWaveEx(u32 id, int x, int volume, int repeat, int pan, u32 mask, WaveLoop *loop) {
-    PlayWaveData(0, FindOrLoadCachedFile((u16) id), id, x, volume, repeat, pan, mask, loop);
+void PlayWaveEx(u32 id, int start, int volume, int repeat, int pan, u32 mask, WaveLoop *loop) {
+    PlayWaveData(0, FindOrLoadCachedFile((u16) id), id, start, volume, repeat, pan, mask, loop);
 }
 
-void PlayWaveData(const WaveInfo *info, const void *data, u32 id, int x, u32 volume, int repeat, int pan, u32 mask,
+void PlayWaveData(const WaveInfo *info, const void *data, u32 id, int start, u32 volume, int repeat, int pan, u32 mask,
                   WaveLoop *loop) {
     WaveChannel *ch;
     u32 key;
@@ -110,9 +110,9 @@ void PlayWaveData(const WaveInfo *info, const void *data, u32 id, int x, u32 vol
     ch->mUnk_0d_1 = 0;
     gWavePlayer.mChannels[index].mTimer = timer;
     gWavePlayer.mChannels[index].mVolume = volume;
-    ch->mUnk_0d_3 = 0;
-    if (x != 0) {
-        x = rate * x / 60;
+    ch->mFading = 0;
+    if (start != 0) {
+        start = rate * start / 60;
     }
     switch (format) {
         case 0:
@@ -124,20 +124,20 @@ void PlayWaveData(const WaveInfo *info, const void *data, u32 id, int x, u32 vol
             break;
         case 1:
             mode = 1;
-            x <<= 1;
+            start <<= 1;
             break;
         case 2:
             mode = 0;
             break;
     }
-    if (size > x) {
-        x &= ~3;
-        size -= x;
+    if (size > start) {
+        start &= ~3;
+        size -= start;
         if (repeat == 1 && loop != 0) {
             loopStart = loop->mStart >> 2;
             size = loop->mEnd - loop->mStart;
         }
-        func_02040240(index, mode, (u32) body + (x & ~1), (repeat == 1) ? 1 : 2, loopStart, size >> 2,
+        func_02040240(index, mode, (u32) body + (start & ~1), (repeat == 1) ? 1 : 2, loopStart, size >> 2,
                       volume * 0x145 >> 8, 0, timer, pan);
         func_020400cc(1 << index, 0, 0, 0);
         ch->mCommandTag = SND_GetCurrentCommandTag();
@@ -190,7 +190,7 @@ int FindWaveChannel(u32 id, int *index) {
 }
 
 // Sets the volume of the channels playing id. Never runs in this build: its only caller is UpdateWaves' fade branch,
-// and mUnk_0d_3 is only ever 0.
+// and mFading is only ever 0.
 void SetWaveVolume(u32 id, u32 volume) {
     u32 i;
     u32 mask = 0;
@@ -230,8 +230,8 @@ void UpdateWaves(void) {
     WaveChannel *ch;
     for (i = 0; i < gWavePlayer.mChannelCount; i++) {
         ch = &gWavePlayer.mChannels[i];
-        // Fade branch: never runs in this build, mUnk_0d_3 is only ever 0.
-        if (ch->mUnk_0d_3 && ch->mVolume != 0) {
+        // Never runs in this build: mFading is only ever 0.
+        if (ch->mFading && ch->mVolume != 0) {
             u32 v = ch->mVolume;
             ch->mVolume = v - 1;
             SetWaveVolume(ch->mId, v);
