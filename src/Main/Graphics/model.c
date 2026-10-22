@@ -690,7 +690,7 @@ void func_02024b5c(u32 id, void *params, void *obj, int flags) {
     int rot;
     s32 hw, hh;
     long idx;
-    u16 dif, amb, spe, emi;
+    u16 spe, emi;
     u32 se;
     u8 *cur;
 
@@ -715,7 +715,6 @@ void func_02024b5c(u32 id, void *params, void *obj, int flags) {
     if (mode != 3 && mode != 5) {
         ang = ((*res & 0xff000000) >> 16) - p->mUnk_38;
         if (mode != 1) {
-            sh0 = (*res & 0xff0000) >> 16;
             a0 = ang >> 4;
             a1 = (u16) (angOfs + p->mUnk_3a) >> 4;
             a2 = p->mUnk_3c >> 4;
@@ -725,10 +724,13 @@ void func_02024b5c(u32 id, void *params, void *obj, int flags) {
             sin0 = FX_SinCosTable_[a0 * 2];
             cos1 = FX_SinCosTable_[a1 * 2 + 1];
             sin1 = FX_SinCosTable_[a1 * 2];
+            sh0 = (*res & 0xff0000) >> 16;
             c2s0 = (cos2 * sin0) >> 12;
             s2s0 = (sin2 * sin0) >> 12;
             data_020c31dc.mUnk_44 = sh0;
             sx = 16 << sh0;
+            sy = sx;
+            sz = sx;
             if (sh0 != 0) {
                 sh0 = sh0 - 1;
                 sh1 = 19 - sh0;
@@ -736,8 +738,6 @@ void func_02024b5c(u32 id, void *params, void *obj, int flags) {
                 sh0 = 0;
                 sh1 = 19;
             }
-            sy = sx;
-            sz = sx;
             if (p->mUnk_43_3) {
                 sx = -sx;
             }
@@ -996,27 +996,27 @@ void func_02024b5c(u32 id, void *params, void *obj, int flags) {
                     continue;
                 }
             }
-            dif = MatKeyValue((const MatKey *) mkeys[0], track, frame);
-            amb = MatKeyValue((const MatKey *) mkeys[1], track, frame);
+            y = (u16) MatKeyValue((const MatKey *) mkeys[0], track, frame);
+            x = (u16) MatKeyValue((const MatKey *) mkeys[1], track, frame);
             spe = MatKeyValue((const MatKey *) mkeys[2], track, frame);
             emi = MatKeyValue((const MatKey *) mkeys[3], track, frame);
         } else {
-            amb = mesh->mUnk_24;
-            dif = mesh->mUnk_22;
+            x = mesh->mUnk_24;
+            y = mesh->mUnk_22;
             spe = mesh->mUnk_26;
             emi = mesh->mUnk_28;
         }
         if (flags & 4) {
             PutPolygonAttr(data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_5b, 3, 1, 0, alpha, 0);
-            PutMaterial(dif | (((flags & 0x10) ? 0x7fff : amb) << 16), spe | (emi << 16));
+            PutMaterial(y | (((flags & 0x10) ? 0x7fff : x) << 16), spe | (emi << 16));
             cur += 0x38;
             DC_StoreRange(cur, mesh->mUnk_34);
             func_01ff831c(3, cur, mesh->mUnk_34);
             PutPolygonAttr(data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_5b, 3, 3, 8, alpha, 0);
             if (flags & 0x10) {
-                amb = 0x7fff;
+                x = 0x7fff;
             }
-            PutMaterial(dif | (amb << 16) | 0x8000, spe | (emi << 16));
+            PutMaterial(y | (x << 16) | 0x8000, spe | (emi << 16));
             func_01ff831c(3, cur, mesh->mUnk_34);
         } else {
             if (!(p->mUnk_43_3 ^ p->mUnk_43_4)) {
@@ -1025,9 +1025,9 @@ void func_02024b5c(u32 id, void *params, void *obj, int flags) {
                 cull = ((mesh->mUnk_00 & 0x80) >> 6) + ((mesh->mUnk_00 & 0x100) >> 8);
             }
             if (flags & 0x10) {
-                amb = 0x7fff;
+                x = 0x7fff;
             }
-            PutMaterial(dif | (amb << 16) | 0x8000, spe | (emi << 16));
+            PutMaterial(y | (x << 16) | 0x8000, spe | (emi << 16));
             PutPolygonAttr(data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_5b, (flags & 8) ? 2 : 0, cull, polyId, alpha,
                            polyFlags);
             cur += 0x38;
