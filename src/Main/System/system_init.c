@@ -35,6 +35,7 @@
 #include <Main/Sound/tracker_player.h>
 #include <Main/Link/comm_link.h>
 #include <Main/Link/wireless_helper.h>
+#include <Main/Link/link_indicator.h>
 
 // JPEG reader state and the start-up code's arena start (defined below, with the JPEG tables).
 extern u8 data_020c1818;

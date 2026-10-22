@@ -3,6 +3,7 @@
 #include <Main/Unknown/arm_system.h>
 #include <Main/Link/comm_link.h>
 #include <Main/Link/wireless_helper.h>
+#include <Main/Link/link_indicator.h>
 
 StateC data_020c66d4[1];
 u32 data_020c66e0[16] __attribute__((aligned(32)));

@@ -11,6 +11,7 @@
 #include <Main/Graphics/texture_blocks.h>
 #include <Main/System/file_loader.h>
 #include <Main/Link/wireless_helper.h>
+#include <Main/Link/link_indicator.h>
 
 // Block counts by texture size code, used by func_0202b32c.
 const u16 data_02050978[16] = {

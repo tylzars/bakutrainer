@@ -20,7 +20,7 @@ progress below counts what is decompiled and what links from source.
 | Measure | Progress |
 |---|---|
 | Matched code | 90.37% (281,462 / 311,460 bytes) |
-| Linked code (complete units) | 71.56% (222,890 bytes) |
+| Linked code (complete units) | 73.47% (228,828 bytes) |
 | Overall accuracy (fuzzy) | 97.18% |
 | Matched functions | 1,613 / 1,795 |
 

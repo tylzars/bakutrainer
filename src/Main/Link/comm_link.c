@@ -15,6 +15,7 @@
 #include <Main/System/system_init.h>
 #include <Main/System/file_loader.h>
 #include <Main/Link/wireless_helper.h>
+#include <Main/Link/link_indicator.h>
 #include <Main/Graphics/gx_pool.h>
 
 Unk_020c6adc data_020c6adc;

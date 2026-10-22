@@ -20,3 +20,5 @@ alias data_02064c58 ARM9_BSS_START 0x438
 # image footer points at (empty: the game has no overlays); the 32-byte alignment of the .data end follows.
 reserve float_digits.o .data data_020647fc 0x14
 reserve float_digits.o .data OverlaySignatures 0
+# Names other units use for members of the link indicator's block (link_indicator.c defines it as one object).
+inner data_020c9e00 0x20
