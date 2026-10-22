@@ -71,7 +71,6 @@ static void func_0202fcc4(QrkProbs *p, u8 *dst, const u8 *src, u32 size) {
     u8 matching;
     s32 prob;
     u16 *probs;
-    u16 *lo;
     s32 k;
     u32 sym;
     u32 bit;
@@ -407,16 +406,16 @@ static void func_0202fcc4(QrkProbs *p, u8 *dst, const u8 *src, u32 size) {
                     dist += direct;
                 }
                 sym = 1;
-                lo = p->mUnk_200;
                 for (nbits = 0; nbits < 6; nbits++) {
-                    prob = lo[sym];
+                    pp = &p->mUnk_200[sym];
+                    prob = *pp;
                     bound = (range >> QRK_PROB_BITS) * prob;
                     if (code < bound) {
                         range = bound;
-                        lo[sym] = prob + ((QRK_PROB_ONE - prob) >> QRK_MOVE_BITS);
+                        *pp = prob + ((QRK_PROB_ONE - prob) >> QRK_MOVE_BITS);
                         sym = sym << 1;
                     } else {
-                        lo[sym] = prob - (prob >> QRK_MOVE_BITS);
+                        *pp = prob - (prob >> QRK_MOVE_BITS);
                         range -= bound;
                         code -= bound;
                         sym = (sym << 1) + 1;

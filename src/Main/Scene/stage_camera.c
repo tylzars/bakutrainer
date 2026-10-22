@@ -729,6 +729,8 @@ void func_020175e8(int index, int *sel, int flags) {
     s32 ex;
     s32 ez;
     u16 angle;
+    s32 spd;
+    s32 k;
 
     if (index < 0 || index >= STAGE_MAX) {
         OS_Terminate();
@@ -802,20 +804,22 @@ void func_020175e8(int index, int *sel, int flags) {
             func_0201750c(index, sel);
         }
     }
-    rec->mUnk_220 -= 204.8;
-    if (rec->mUnk_220 <= 0) {
+    spd = rec->mUnk_220 - 204.8;
+    rec->mUnk_220 = spd;
+    if (spd <= 0) {
         rec->mUnk_220 = 0;
         return;
     }
     {
-        VecFx32 *pos = &rec->mUnk_1a0;
-        old = *pos;
-        rec->mUnk_1dc += rec->mUnk_220 * 0xc0 >> 12;
+        k = rec->mUnk_1dc;
+        k = k + (spd = spd * 0xc0 >> 12);
+        old = rec->mUnk_1a0;
+        rec->mUnk_1dc = k;
         x = rec->mUnk_220 * sinIdx(rec->mUnk_1d8) >> 12;
         z = rec->mUnk_220 * -cosIdx(rec->mUnk_1d8) >> 12;
         rec->mUnk_1a0.x += x;
         rec->mUnk_1a0.z += z;
-        ground = func_02030830(rec->mUnk_1a0.x, rec->mUnk_1a0.z, pos->y + 0xc800, 0, 0, NULL, &push) + 0x32000;
+        ground = func_02030830(rec->mUnk_1a0.x, rec->mUnk_1a0.z, rec->mUnk_1a0.y + 0xc800, 0, 0, NULL, &push) + 0x32000;
     }
     if (rec->mUnk_220 != 0) {
         func_0202f110(0x1c4, func_0201fb74(abs(rec->mUnk_220 >> 12), 0x20, 0, 0x4b), 1, 0x40, 0xffff, 0);

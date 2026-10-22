@@ -1025,12 +1025,12 @@ func_0202fb4c kind:function(arm,size=0x7c) addr:0x0202fb4c
 func_0202fbc8 kind:function(arm,size=0x94) addr:0x0202fbc8
 func_0202fc5c kind:function(arm,size=0x58) addr:0x0202fc5c
 func_0202fcb4 kind:function(arm,size=0x10) addr:0x0202fcb4
-func_0202fcc4 kind:function(arm,size=0xa3c) addr:0x0202fcc4
+func_0202fcc4 kind:function(arm,size=0xa3c) addr:0x0202fcc4 local
 func_02030700 kind:function(arm,size=0x44) addr:0x02030700
 func_02030744 kind:function(arm,size=0x1c) addr:0x02030744
 func_02030760 kind:function(arm,size=0xc) addr:0x02030760
-func_0203076c kind:function(arm,size=0x28) addr:0x0203076c
-func_02030794 kind:function(arm,size=0x9c) addr:0x02030794
+func_0203076c kind:function(arm,size=0x28) addr:0x0203076c local
+func_02030794 kind:function(arm,size=0x9c) addr:0x02030794 local
 func_02030830 kind:function(arm,size=0xa40) addr:0x02030830
 func_02031270 kind:function(arm,size=0x2c) addr:0x02031270
 func_0203129c kind:function(thumb,size=0x1c) addr:0x0203129c
@@ -1868,9 +1868,9 @@ data_020500d4 kind:data(byte[3]) addr:0x020500d4
 data_020500d8 kind:data(byte[9]) addr:0x020500d8
 data_020500e4 kind:data(byte[20]) addr:0x020500e4
 data_020500f8 kind:data(byte[108]) addr:0x020500f8
-data_02050164 kind:data(byte[48]) addr:0x02050164
-data_02050194 kind:data(byte[48]) addr:0x02050194
-data_020501c4 kind:data(byte[48]) addr:0x020501c4
+data_02050164 kind:data(byte[48]) addr:0x02050164 local
+data_02050194 kind:data(byte[48]) addr:0x02050194 local
+data_020501c4 kind:data(byte[48]) addr:0x020501c4 local
 data_020501f4 kind:data(any) addr:0x020501f4
 data_02050200 kind:data(byte[8]) addr:0x02050200
 data_02050208 kind:data(byte[8]) addr:0x02050208
@@ -1981,16 +1981,16 @@ data_02063988 kind:data(any) addr:0x02063988
 @1806 kind:data(any) addr:0x02063a80 local
 @1808 kind:data(any) addr:0x02063a88 local
 @1809 kind:data(any) addr:0x02063a8c local
-data_02063a90 kind:data(any) addr:0x02063a90
-data_02063a94 kind:data(any) addr:0x02063a94
-data_02063a98 kind:data(any) addr:0x02063a98
+@3485 kind:data(any) addr:0x02063a90 local
+@4398 kind:data(any) addr:0x02063a94 local
+@4399 kind:data(any) addr:0x02063a98 local
 prevSel$1620 kind:data(any) addr:0x02063a9c local
 @1805 kind:data(any) addr:0x02063aa0 local
 @1836 kind:data(any) addr:0x02063aa4 local
 data_02063aac kind:data(any) addr:0x02063aac
-data_02063ab8 kind:data(any) addr:0x02063ab8
-data_02063ad8 kind:data(any) addr:0x02063ad8
-data_02063b18 kind:data(any) addr:0x02063b18
+data_02063ab8 kind:data(any) addr:0x02063ab8 local
+data_02063ad8 kind:data(any) addr:0x02063ad8 local
+data_02063b18 kind:data(any) addr:0x02063b18 local
 @1288 kind:data(any) addr:0x02063b58 local
 @1289 kind:data(any) addr:0x02063b5c local
 @1290 kind:data(any) addr:0x02063b78 local

@@ -615,6 +615,7 @@ src/Main/System/game_system.c:
 // provisional: the start (func_02015d4c may belong to the file before); the end is where the next file's "%d"
 // (0x02063aa0, func_02019fa0) starts
 src/Main/Scene/stage_camera.c:
+    complete
     .text       start:0x02015d4c end:0x02019fa0
     .rodata     start:0x02050164 end:0x020501f4
     .data       start:0x02063a90 end:0x02063a9c
@@ -714,6 +715,7 @@ src/Main/Video/stream_audio.c:
 // provisional: the "QRK" unpacker (range-coded LZ, its three tables in .data); starts where the movie code ends
 // (func_0202fcc4 touches none of its objects); the end is the last function reached only from inside the run
 src/Main/System/qrk_decode.c:
+    complete
     .text       start:0x0202fcc4 end:0x02030830
     .data       start:0x02063ab8 end:0x02063b58
 
