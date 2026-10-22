@@ -800,6 +800,7 @@ src/Main/Graphics/script_data.s:
 // compiler gives an unreferenced constant a section of its own). The end is provisional (no microphone calls after
 // it); "bank.bin" is its only string
 src/Main/System/system_init.c:
+    complete
     .text       start:0x0201b7e0 end:0x02021498
     .rodata     start:0x020501f4 end:0x02050898
     .data       start:0x02063aac end:0x02063ab8

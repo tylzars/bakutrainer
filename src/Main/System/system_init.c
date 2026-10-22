@@ -768,20 +768,22 @@ void func_0201c78c(void) {
 // buffer (packed block files, EZ10 blocks, plain file reads, memory copies), converts textures and palettes, then
 // copies each entry to its destination with the banks mapped. When the system is busy, finished entries are
 // removed from the queue instead.
+// The block-run search and the plain file read take the list pointer through its address and the file id through
+// a cast of the entry pointer.
 void func_0201c7b8(int flags) {
     int i;
     Unk_LoadEntry **list;
     Unk_LoadEntry *e;
     int j;
     BOOL busy;
-    u16 cachedFile;
+    u32 cachedFile;
     u32 total;
     int cachedSize;
     u8 *buf;
-    int cachedOff;
     u32 bits;
     int rest;
     u8 *dst;
+    int cachedOff;
     u32 lastDst;
     u32 part;
     u32 saved;
@@ -923,23 +925,27 @@ void func_0201c7b8(int flags) {
                 MIi_CpuCopy32(data_020c267c.mUnk_004, dst, e->mUnk_0c);
                 data_020c267c.mUnk_017 = 0;
             } else {
-                u32 *offsets = data_020c267c.mUnk_b1c;
-                u32 first = e->mUnk_00 >> 11;
-                u32 last = (e->mUnk_00 + e->mUnk_08) >> 11;
-                u32 next;
                 int size;
-                for (j = i + 1; j < count && (next = (list[j]->mUnk_00 + list[j]->mUnk_08) >> 11) <= last + 1 &&
-                                offsets[next + 1] - offsets[first] <= 0x8000;
-                     j++) {
+                unsigned long first;
+                u32 last;
+                Unk_LoadEntry **p;
+                u32 next;
+                int k;
+                first = e->mUnk_00 >> 11;
+                last = (e->mUnk_00 + e->mUnk_08) >> 11;
+                for (k = i + 1, p = *(Unk_LoadEntry ***) &list;
+                     k < count && (next = (p[k]->mUnk_00 + p[k]->mUnk_08) >> 11) <= last + 1 &&
+                     data_020c267c.mUnk_b1c[next + 1] - data_020c267c.mUnk_b1c[first] <= 0x8000;
+                     k++) {
                     if (next > last) {
                         last = next;
                     }
                 }
-                size = offsets[last + 1] - offsets[first];
+                size = data_020c267c.mUnk_b1c[last + 1] - data_020c267c.mUnk_b1c[first];
                 if (tmp == 0) {
                     tmp = func_0201c43c(0x8000, 1);
                 }
-                if ((int) data_020c267c.mUnk_b1c[first] + size > cachedOff + cachedSize || j == 0 ||
+                if ((int) data_020c267c.mUnk_b1c[first] + size > cachedOff + cachedSize || k == 0 ||
                     list[i]->mUnk_10 != cachedFile) {
                     func_0202e4fc(list[i]->mUnk_10, tmp, size, data_020c267c.mUnk_b1c[first]);
                     cachedSize = size;
@@ -1040,10 +1046,11 @@ void func_0201c7b8(int flags) {
             u32 size = e->mUnk_08;
             j = i + 1;
             if (cachedFile != e->mUnk_10 || e->mUnk_00 + size > cachedOff + cachedSize ||
-                (i > 0 && list[i - 1]->mUnk_00 == e->mUnk_00) || (lastDst & ~0x3ffff) != (e->mUnk_04 & ~0x3ffff)) {
-                cachedFile = list[i]->mUnk_10;
-                cachedOff = list[i]->mUnk_00;
-                lastDst = list[j - 1]->mUnk_04;
+                (i > 0 && list[i - 1]->mUnk_00 == list[i]->mUnk_00) ||
+                (lastDst & ~0x3ffff) != (e->mUnk_04 & ~0x3ffff)) {
+                cachedFile = ((Unk_LoadEntry *) e)->mUnk_10;
+                cachedOff = e->mUnk_00;
+                lastDst = (*(Unk_LoadEntry ***) &list)[j - 1]->mUnk_04;
                 cachedSize = size;
                 func_0202e4fc(cachedFile, dst, size, cachedOff);
                 if (data_020c18bc.mUnk_464 != 0 && (list[i]->mUnk_04 >> 28) == 11) {
@@ -1071,7 +1078,7 @@ void func_0201c7b8(int flags) {
             }
             e = list[i];
             if ((e->mUnk_04 >> 28) == 10 || bg == 1) {
-                int w = (1 << (e->mUnk_12 & 0xf)) / 8;
+                u32 w = (u32) ((1 << (e->mUnk_12 & 0xf)) / 8);
                 u32 h = e->mUnk_08 / (e->mUnk_13 == 0 ? 0x20 : 0x40) / w;
                 if (tex == 0) {
                     tex = func_0201c43c(0x4000, 1);

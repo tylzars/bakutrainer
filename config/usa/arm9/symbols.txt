@@ -1871,12 +1871,12 @@ data_020500f8 kind:data(byte[108]) addr:0x020500f8
 data_02050164 kind:data(byte[48]) addr:0x02050164 local
 data_02050194 kind:data(byte[48]) addr:0x02050194 local
 data_020501c4 kind:data(byte[48]) addr:0x020501c4 local
-data_020501f4 kind:data(any) addr:0x020501f4
+@3365 kind:data(any) addr:0x020501f4 local
 data_02050200 kind:data(byte[8]) addr:0x02050200
 data_02050208 kind:data(byte[8]) addr:0x02050208
 data_02050210 kind:data(byte[16]) addr:0x02050210
 data_02050220 kind:data(word[9]) addr:0x02050220
-data_02050244 kind:data(word[11]) addr:0x02050244
+@3628 kind:data(word[11]) addr:0x02050244 local
 data_02050270 kind:data(word[13]) addr:0x02050270
 data_020502a4 kind:data(byte[4]) addr:0x020502a4
 data_020502a8 kind:data(byte[4]) addr:0x020502a8
@@ -1987,7 +1987,7 @@ data_02063988 kind:data(any) addr:0x02063988
 prevSel$1620 kind:data(any) addr:0x02063a9c local
 @1805 kind:data(any) addr:0x02063aa0 local
 @1836 kind:data(any) addr:0x02063aa4 local
-data_02063aac kind:data(any) addr:0x02063aac
+@5864 kind:data(any) addr:0x02063aac local
 data_02063ab8 kind:data(any) addr:0x02063ab8 local
 data_02063ad8 kind:data(any) addr:0x02063ad8 local
 data_02063b18 kind:data(any) addr:0x02063b18 local
