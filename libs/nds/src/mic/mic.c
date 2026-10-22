@@ -216,6 +216,7 @@ void func_020436b8(u32 result, void *arg) {
 // Not compiled: the address of micWork.busy is kept in ip, with r1-r3 unused. The compiler gives a value the
 // lowest-numbered free register of r0-r3 and ip, so ip only when values live at the same time hold all of r0-r3;
 // here only the loaded word (r0) overlaps the address, and compiled C puts the address in r1.
+// `vu32 *busy = &micWork.busy; while (*busy == 1) {}` compiles to the same code with `ldr r1, =micWork+4`.
 // clang-format off
 asm void func_020436c8(void) {
     ldr ip, =micWork+4

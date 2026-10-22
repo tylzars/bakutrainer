@@ -6,6 +6,8 @@
 // could only leave a moved instruction before `blt L2` (only the compare is there) or at L3 (which starts with a
 // branch). Without optimisation no parameter stays in its incoming register unless an asm statement names it,
 // and this routine works on r0-r2 as they arrive.
+// As a counted C loop, -O2 and up give `strhlt; addlt; blt` (predicated, no branch
+// pairs), -O1 gives `bxge lr` and an unconditional loop (also with `#pragma peephole off`), -O0 spills r0-r2.
 // clang-format off
 asm void MIi_CpuClear16(u16 data, void *dest, u32 size) {
     mov r3, #0
@@ -32,6 +34,8 @@ L5:
 // could only leave a moved instruction before `blt L2` (only the compare is there) or at L3 (which starts with a
 // branch). Without optimisation no parameter stays in its incoming register unless an asm statement names it,
 // and this routine works on r0-r2 as they arrive.
+// As a counted C loop, -O2 and up give `ldrhlt; strhlt; addlt; blt`, -O1 gives `bxge lr` and an
+// unconditional loop.
 // clang-format off
 asm void MIi_CpuCopy16(const void *src, void *dest, u32 size) {
     mov ip, #0
@@ -243,6 +247,7 @@ asm void func_0203fdd8(const void *src, void *dest) {
 // that could only leave a moved instruction before `beq L1` (only the compare is there) or at L2, and L1 returns
 // instead of falling into L2. Without optimisation no parameter stays in its incoming register unless an asm
 // statement names it, and this routine works on r0-r2 as they arrive.
+// In C at -O4,p each skipped instruction comes out predicated (`bxeq lr`, `strhne r3, [r0], #2`).
 // clang-format off
 asm void MI_CpuFill8(void *dest, u8 data, u32 size) {
     cmp r2, #0

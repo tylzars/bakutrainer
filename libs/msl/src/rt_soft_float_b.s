@@ -615,6 +615,8 @@ _f2d:
 ; the branch testing eq, ne, mi or pl (ge and lt become pl and mi, hs becomes always; lo, gt and le are not
 ; folded), or inside 64-bit subtract, compare and shift sequences, where the next sbc, sbcs or conditional orr
 ; reads the flags.
+; In C, `shift -= m >> 23; if (shift > 0)` gives `sub r2, r1, r3, lsr #0x17; cmp r2, #0x0; ble`, and the
+; negate tests `a < 0` as `rsblt` where this routine has `rsbmi`.
 	.global _ffix
 	.type _ffix, @function
 _ffix:
