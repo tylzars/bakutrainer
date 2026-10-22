@@ -90,24 +90,12 @@ void UpdateSceneCamera(void) {
     Unk_020c5f04 *cam = &gMapState.mCamera.mUnk_9c;
     VecFx32 a;
     VecFx32 b;
-    a.x = MapRange(gScene->mEndTimer, 0, gScene->mEndTimerMax, gScene->mUnk_5cc.x >> 8,
-                   gScene->mUnk_5b4.x >> 8)
-          << 8;
-    a.y = MapRange(gScene->mEndTimer, 0, gScene->mEndTimerMax, gScene->mUnk_5cc.y >> 8,
-                   gScene->mUnk_5b4.y >> 8)
-          << 8;
-    a.z = MapRange(gScene->mEndTimer, 0, gScene->mEndTimerMax, gScene->mUnk_5cc.z >> 8,
-                   gScene->mUnk_5b4.z >> 8)
-          << 8;
-    b.x = MapRange(gScene->mEndTimer, 0, gScene->mEndTimerMax, gScene->mUnk_5d8.x >> 8,
-                   gScene->mUnk_5c0.x >> 8)
-          << 8;
-    b.y = MapRange(gScene->mEndTimer, 0, gScene->mEndTimerMax, gScene->mUnk_5d8.y >> 8,
-                   gScene->mUnk_5c0.y >> 8)
-          << 8;
-    b.z = MapRange(gScene->mEndTimer, 0, gScene->mEndTimerMax, gScene->mUnk_5d8.z >> 8,
-                   gScene->mUnk_5c0.z >> 8)
-          << 8;
+    a.x = MapRange(gScene->mEndTimer, 0, gScene->mEndTimerMax, gScene->mUnk_5cc.x >> 8, gScene->mUnk_5b4.x >> 8) << 8;
+    a.y = MapRange(gScene->mEndTimer, 0, gScene->mEndTimerMax, gScene->mUnk_5cc.y >> 8, gScene->mUnk_5b4.y >> 8) << 8;
+    a.z = MapRange(gScene->mEndTimer, 0, gScene->mEndTimerMax, gScene->mUnk_5cc.z >> 8, gScene->mUnk_5b4.z >> 8) << 8;
+    b.x = MapRange(gScene->mEndTimer, 0, gScene->mEndTimerMax, gScene->mUnk_5d8.x >> 8, gScene->mUnk_5c0.x >> 8) << 8;
+    b.y = MapRange(gScene->mEndTimer, 0, gScene->mEndTimerMax, gScene->mUnk_5d8.y >> 8, gScene->mUnk_5c0.y >> 8) << 8;
+    b.z = MapRange(gScene->mEndTimer, 0, gScene->mEndTimerMax, gScene->mUnk_5d8.z >> 8, gScene->mUnk_5c0.z >> 8) << 8;
     EaseVecToward(&cam->mUnk_204, a, 4);
     EaseVecToward(&cam->mUnk_228, b, 4);
     if (gScene->mShakeTimer != 0) {
@@ -440,8 +428,7 @@ void HandlePopupTouch(PopupSlot *slot) {
         PlayWaveKeepAlive(0x72, 100, 0, 0x40, 0xffff, 0);
     } else if (slot->mKind == 1) {
         gScene->mEndTimer += gScene->mUnk_65c;
-        gScene->mEndTimer =
-            gScene->mEndTimer < gScene->mEndTimerMax ? gScene->mEndTimer : gScene->mEndTimerMax;
+        gScene->mEndTimer = gScene->mEndTimer < gScene->mEndTimerMax ? gScene->mEndTimer : gScene->mEndTimerMax;
         PlayWaveKeepAlive(0x75, 100, 0, 0x40, 0xffff, 0);
     } else if (slot->mKind == 2) {
         AddCappedAt999Shifted(&gScene->mScore, gScene->mUnk_658, 0);

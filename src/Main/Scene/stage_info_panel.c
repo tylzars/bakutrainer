@@ -802,8 +802,8 @@ void UpdatePanel(int stage) {
             x = 0x39 - alpha;
             DrawSprite(0xdb, x, 0x12, 0x8c, 1);
             DrawText(x, 0x12, data_0201a61c, GetText(0x15), 0, 0xf0, 0x10, 1);
-            DrawGauge(data_020b6ee0.mUnk_a8e8, 0, 3000, data_020b6ee0.mUnk_a13f, data_020b6ee0.mUnk_a141,
-                          0x2c - alpha, 0x96, 1, &kind, &value);
+            DrawGauge(data_020b6ee0.mUnk_a8e8, 0, 3000, data_020b6ee0.mUnk_a13f, data_020b6ee0.mUnk_a141, 0x2c - alpha,
+                      0x96, 1, &kind, &value);
             if (gSystemState.mUnk_492) {
                 DrawText(0x80, 0x60, data_0201a61c, GetText(0xd3), 2, 0xc0, 0x10, 1);
             }
@@ -894,8 +894,8 @@ void UpdatePanel(int stage) {
             x = 0x39 - alpha;
             DrawSprite(0xdd, x, 0x12, 0x8c, 1);
             DrawText(x, 0x12, data_0201a61c, GetText(0x19), 0, 0xf0, 0x10, 1);
-            DrawGauge(data_020b6ee0.mUnk_a108, 0, 1000, data_020b6ee0.mUnk_a13f, data_020b6ee0.mUnk_a141,
-                          0x2c - alpha, 0x96, 1, &kind, &value);
+            DrawGauge(data_020b6ee0.mUnk_a108, 0, 1000, data_020b6ee0.mUnk_a13f, data_020b6ee0.mUnk_a141, 0x2c - alpha,
+                      0x96, 1, &kind, &value);
             if (gSystemState.mTouchPressed) {
                 data_020b6ee0.mUnk_a574.mPrevTouchX = gSystemState.mTouchX;
                 data_020b6ee0.mUnk_a574.mPrevTouchY = gSystemState.mTouchY;

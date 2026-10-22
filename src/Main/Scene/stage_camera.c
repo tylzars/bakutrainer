@@ -750,8 +750,8 @@ void UpdateStageMotion(int index, int *sel, int flags) {
         OS_Terminate();
     }
     rec->mDistancePerFrame = (rec->mDistancePerFrame < 0x20000 ? rec->mDistancePerFrame : 0x20000) < -0x20000
-                        ? -0x20000
-                        : (rec->mDistancePerFrame < 0x20000 ? rec->mDistancePerFrame : 0x20000);
+                                 ? -0x20000
+                                 : (rec->mDistancePerFrame < 0x20000 ? rec->mDistancePerFrame : 0x20000);
     if (gSystemState.mTouchPressed) {
         data_020b6ee0.mUnk_a574.mTouchPressX = gSystemState.mTouchX;
         data_020b6ee0.mUnk_a574.mTouchPressY = gSystemState.mTouchY;
