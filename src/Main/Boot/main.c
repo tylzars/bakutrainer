@@ -28,15 +28,15 @@ void main(void) {
     }
     gSystemState.mFlags |= 0x10820000;
     SetFaded(3);
-    func_02010d34();
+    ResetLanguageAndMic();
     if (*(vu16 *) 0x027ffc40 != 2) {
         InitSaveStore(SAVE_BLOCK_ID, SAVE_STORE_LARGE, 2, 0x1c6, func_02010648, -1);
-        func_02010c94();
+        ReadLanguageAndMicOrWriteDefaults();
         ClearBackupTimer();
     }
-    gSystemState.mUnk_310 = 0x40;
-    gSystemState.mUnk_493 = 1;
-    gSystemState.mUnk_494 = 1;
+    gSystemState.mTextLineBreakChar = 0x40;
+    gSystemState.mUseTrackerVolume = 1;
+    gSystemState.mUseWaves = 1;
     InitWavePlayer();
     InitSoundCtl(0, 0x80);
     InitGameFlow();

@@ -186,7 +186,7 @@ u32 FindOrLoadTex(u32 kind, u32 key, u32 size, u32 srcSize) {
                 u8 flag;
                 s16 bits;
 
-                off = key - func_0201c538();
+                off = key - GetTexFileKeyCount();
                 GetTexInfo(off >> 6, &info, off & 0x3f);
                 flag = (info.mUnk_12 != 1 && info.mUnk_12 != 4) ? 0xff : 0;
                 if (gTextureBlocks.mBlockFileKind == 2) {
@@ -328,11 +328,12 @@ u32 AllocPlttBlock(Unk_PoolRange *n, u32 size, u32 node) {
     return addr;
 }
 
-// Returns the VRAM byte offset of palette `key`, cached like FindOrLoadTex's textures, with these differences: the
-// hash starts at the key's low 8 bits and wraps its probe with 0x3ff although the table has 0x100 slots; a miss
-// stops only at a never-used slot; more than 200 entries remove the least recently used one; nothing is counted; the
-// node records `size`; and the key range picks the source: below func_0201c544() offset `kind` of mPlttFile, below
-// func_0201c564() palette `kind` of the palette file, else entry key - func_0201c564() of gSystemState.mUnk_390.
+// Returns the VRAM byte offset of palette `key`, cached like FindOrLoadTex's textures, with these differences: the hash
+// starts at the key's low 8 bits and wraps its probe with 0x3ff although the table has 0x100 slots; a miss stops only
+// at a never-used slot; more than 200 entries remove the least recently used one; nothing is counted; the node records
+// `size`; and the key range picks the source: below GetPlttFileKeyCount() offset `kind` of mPlttFile, below
+// GetPaletteFileKeyEnd() palette `kind` of the palette file, else entry key - GetPaletteFileKeyEnd() of
+// gSystemState.mUnk_390.
 u32 FindOrLoadPltt(u32 kind, u32 key, u32 size) {
     u32 idx = key & 0xff;
     int first = -1;
@@ -366,12 +367,12 @@ u32 FindOrLoadPltt(u32 kind, u32 key, u32 size) {
             data_020c31dc.mPlttNodes[node].mSlotIndex = idx;
             data_020c31dc.mPlttNodes[node].mOffset = AllocPlttBlock(data_020c31dc.mPlttBlocks, size, node);
             data_020c31dc.mPlttNodes[node].mSize = size;
-            if (key < func_0201c544()) {
+            if (key < GetPlttFileKeyCount()) {
                 QueueTransfer(data_020c31dc.mPlttFile, kind, data_020c31dc.mPlttNodes[node].mOffset | 0xb0000000, size);
-            } else if (key < func_0201c564()) {
+            } else if (key < GetPaletteFileKeyEnd()) {
                 QueueTransfer(GetPaletteFile(), kind << 5, data_020c31dc.mPlttNodes[node].mOffset | 0xb0000000, size);
             } else {
-                QueueTransfer(0, gSystemState.mUnk_390[key - func_0201c564()] + 4,
+                QueueTransfer(0, gSystemState.mUnk_390[key - GetPaletteFileKeyEnd()] + 4,
                               data_020c31dc.mPlttNodes[node].mOffset | 0xb0000000, size);
             }
             gSystemState.mUnk_2c4 += size;

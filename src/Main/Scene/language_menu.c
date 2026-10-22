@@ -18,7 +18,7 @@
 #include <stdio.h>
 
 // The prompts (this file's copy; the code reads from the second word of each entry).
-static const Unk_0204e96c sPrompts[0x49] = {
+static const Prompt sPrompts[0x49] = {
     {0x6c, -1, 0, -1},      {0x71, -1, 0, -1},  {0x96, -1, 0, 0x2f},    {0xb1, -1, 0, -1},      {0xc2, -1, 0, -1},
     {0xef, -1, 0, -1},      {0x10b, -1, 0, -1}, {0x148, -1, 0, -1},     {0x16f, -1, 0, -1},     {0x174, -1, 0, -1},
     {0x17d, -1, 0, -1},     {0x186, -1, 0, -1}, {0x1b3, -1, 0, -1},     {0x1f0, -1, 0, -1},     {0x22d, -1, 0, -1},
@@ -86,8 +86,8 @@ void SetupPrompt(void) {
     u32 idx = GetFlowValue(0x14);
     u32 v;
     func_02010294(0x180, 1, 1);
-    if (sPrompts[idx].mUnk_04 >= 0) {
-        SetupSharedModel(sPrompts[idx].mUnk_04, sPrompts[idx].mUnk_08);
+    if (sPrompts[idx].mSharedModelIndex >= 0) {
+        SetupSharedModel(sPrompts[idx].mSharedModelIndex, sPrompts[idx].mUnk_08);
         gScriptWork.mUnk_280.mUnk_40 = 1;
     } else {
         gScriptWork.mUnk_280.mUnk_40 = 0;
@@ -133,14 +133,14 @@ void UpdatePrompt(void) {
         id = 0xf8e;
     }
     idx = GetFlowValue(0x14);
-    if (sPrompts[idx].mUnk_04 >= 0) {
+    if (sPrompts[idx].mSharedModelIndex >= 0) {
         DrawSharedModel();
     }
     UpdateScript(DrawPromptSprite);
     HandlePromptEvents();
     if (gScriptWork.mEofFlags & 4) {
-        if (sPrompts[idx].mUnk_0c >= 0) {
-            func_0201033c(sPrompts[idx].mUnk_0c, 0);
+        if (sPrompts[idx].mNextPromptIndex >= 0) {
+            StartPrompt(sPrompts[idx].mNextPromptIndex, 0);
             ReenterState();
         } else {
             PopState();
@@ -216,7 +216,7 @@ void SetupLangMenu(void) {
                 if (menu->mCount >= LANG_MENU_MAX) {
                     OS_Terminate();
                 }
-                menu->mEntries[menu->mCount].mTextId = i;
+                menu->mEntries[menu->mCount].mLineId = i;
                 menu->mEntries[menu->mCount].mIndex = menu->mCount - 1;
                 strcpy(menu->mEntries[menu->mCount].mText, buf);
                 menu->mCount++;
@@ -254,7 +254,7 @@ void UpdateLangMenu(void) {
     if (gSystemState.mKeysPressed & 1) {
         SetFlowValue(0x14, menu->mEntries[menu->mSelected].mIndex);
         SetFlowValue(0x15, menu->mSelected);
-        func_02010364(menu->mEntries[menu->mSelected].mTextId, 0xc);
+        StartPromptAtLine(menu->mEntries[menu->mSelected].mLineId, 0xc);
     }
 }
 

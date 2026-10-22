@@ -363,13 +363,13 @@ void UpdateTextAndStageInfo(void) {
     if (data_020b6ee0.mPanelState <= 1) {
         if (data_020b6ee0.mTextId != -1) {
             EaseToward(&p->mTextButtonOffsetY, 0, 4);
-            func_0200bc50(0x80, p->mTextButtonOffsetY + 0xc0, 0, 0, 0x8c, 0x112, 0xd1, 0, 0, 0, 0, 0x167, 1, 0, 0, 0);
+            DrawButtonEx(0x80, p->mTextButtonOffsetY + 0xc0, 0, 0, 0x8c, 0x112, 0xd1, 0, 0, 0, 0, 0x167, 1, 0, 0, 0);
             if (TestButton(0x20000000, 0x112)) {
                 SetTextAndImage(-2, 0, 0);
             }
         } else if (data_020b6ee0.mSavedTextId != -1) {
             EaseToward(&p->mTextButtonOffsetY, 0, 4);
-            func_0200bc50(0x80, p->mTextButtonOffsetY + 0xc0, 0, 0, 0x8c, 0x111, 0xd3, 0, 0, 0, 0, 0x167, 1, 0, 0, 0);
+            DrawButtonEx(0x80, p->mTextButtonOffsetY + 0xc0, 0, 0, 0x8c, 0x111, 0xd3, 0, 0, 0, 0, 0x167, 1, 0, 0, 0);
             if (TestButton(0x20000000, 0x111)) {
                 SetTextAndImage(-3, 0, 0);
             }
@@ -744,9 +744,9 @@ void UpdatePanel(int stage) {
             bottom = 0xe;
             break;
         case 2:
-            func_0200bc50(0x39 - alpha, 0x12, 0, 0, 0x8c, 0, 0xd9, GetText(0x17), data_0201a61c, 0, 0, 0, 0, 0, 0, 0);
-            func_0200bc50(alpha + 0xff, 0x23, 0, 0, 0x8c, 0xf, 0xc0, 0, 0, 0, 0, 0x167, 1, 0, 0, 0);
-            func_0200bc50(alpha + 0xff, 0x41, 0, 0, 0x8c, 0x10, 0xc2, 0, 0, 0, 0, 0x167, 1, 0, 0, 0);
+            DrawButtonEx(0x39 - alpha, 0x12, 0, 0, 0x8c, 0, 0xd9, GetText(0x17), data_0201a61c, 0, 0, 0, 0, 0, 0, 0);
+            DrawButtonEx(alpha + 0xff, 0x23, 0, 0, 0x8c, 0xf, 0xc0, 0, 0, 0, 0, 0x167, 1, 0, 0, 0);
+            DrawButtonEx(alpha + 0xff, 0x41, 0, 0, 0x8c, 0x10, 0xc2, 0, 0, 0, 0, 0x167, 1, 0, 0, 0);
             top = -1;
             bottom = 0x11;
             break;
@@ -791,8 +791,8 @@ void UpdatePanel(int stage) {
             rec->mMoveAngle += AngleDelta(rec->mMoveAngle, 0) / 8;
             if (data_020b6ee0.mUnk_a148 == 0) {
                 for (i = 0; i < 3; i++) {
-                    func_0200bc50(i * 0x32 + 0x3a, 0x60, 0, 0, 0x8c, i + 0x1e, i * 2 + 0xdf, 0, 0, 0, 0, 0x167, 1, 0, 0,
-                                  0);
+                    DrawButtonEx(i * 0x32 + 0x3a, 0x60, 0, 0, 0x8c, i + 0x1e, i * 2 + 0xdf, 0, 0, 0, 0, 0x167, 1, 0, 0,
+                                 0);
                 }
             }
             top = -1;
@@ -925,10 +925,10 @@ void UpdatePanel(int stage) {
             break;
     }
     if (top >= 0) {
-        func_0200bc50(alpha + 0xff, 0xa1, 0, 0, 0x8c, top, 0x15, 0, 0, 0, 0, 0x17d, 1, 0, 0, 0);
+        DrawButtonEx(alpha + 0xff, 0xa1, 0, 0, 0x8c, top, 0x15, 0, 0, 0, 0, 0x17d, 1, 0, 0, 0);
     }
     if (bottom >= 0) {
-        func_0200bc50(0, 0xa1, 0, 0, 0x8c, bottom, 0xe, 0, 0, 0, 0, 0x5a, 1, 0, 0, 0);
+        DrawButtonEx(0, 0xa1, 0, 0, 0x8c, bottom, 0xe, 0, 0, 0, 0, 0x5a, 1, 0, 0, 0);
     }
     key = (u16) gTouchInput.mTrail.mTouchState.mButtonState;
     if ((gTouchInput.mTrail.mTouchState.mButtonState & 0x20000000) && key != 0xffff &&
@@ -1228,18 +1228,18 @@ void UpdateSlotScreen(void) {
             data_020b13b0.mEntryCursor = -1;
             PlayWaveKeepAlive(0x167, 0x64, 0, 0x40, 0xffff, 0);
         }
-        func_0200bc50(0x38, 0x77, 0, 0, 0xc8, 0x200, 0x11d2, GetText(0x29), data_0201a61c, 2, 0, 0x17d, 1, 0, 0, 0);
+        DrawButtonEx(0x38, 0x77, 0, 0, 0xc8, 0x200, 0x11d2, GetText(0x29), data_0201a61c, 2, 0, 0x17d, 1, 0, 0, 0);
         ox += 0x80;
         oy += 0x4e;
         DrawSprite(0x11d1, ox + data_020b6ee0.mSelectedSlotIndex * 0x2d, oy, 0xc9, 2);
     }
     if (data_020b6ee0.mUnslottedVisible == 1 && data_020b6ee0.mStageCount >= 5) {
-        func_0200bb14(0x1b, 0x29, 0x110, 0x12, 0, 0x20, 0, 1);
-        func_0200bb14(0x4e, 0x29, 0x109, 0x10, 0, 0x10, 0, 1);
+        DrawButton(0x1b, 0x29, 0x110, 0x12, 0, 0x20, 0, 1);
+        DrawButton(0x4e, 0x29, 0x109, 0x10, 0, 0x10, 0, 1);
     }
-    func_0200bb14(0, 0xa1, 0x102, 0xe, 0, 0, 0x5a, 1);
+    DrawButton(0, 0xa1, 0x102, 0xe, 0, 0, 0x5a, 1);
     if (data_020b6ee0.mUnslottedVisible == 1 && data_020b13b0.mSlotChanged == 1) {
-        func_0200bb14(0xff, 0xa1, 0x101, 0x15, 0, 0, 0x17d, 1);
+        DrawButton(0xff, 0xa1, 0x101, 0x15, 0, 0, 0x17d, 1);
     }
 }
 
@@ -1510,7 +1510,7 @@ void func_02014260(void) {
     SetCameraFromModel();
     func_02033614(gMapState.mCamera.mPosGoal.x, gMapState.mCamera.mPosGoal.z);
     DrawBattleModels();
-    func_0200b8dc(10, 10, "t:%i a:%i", data_020b13b0.mUnk_00, data_020b13b0.mUnk_01);
+    DrawFormattedTextOnLayer1(10, 10, "t:%i a:%i", data_020b13b0.mUnk_00, data_020b13b0.mUnk_01);
     keys = gSystemState.mKeysPressed;
     if (keys & 0x10) {
         if (data_020b13b0.mUnk_00 < 4) {
@@ -1585,7 +1585,7 @@ void ResetAndReadSaveSlot(void) {
 
 // Only when OpenPromptScreen returns 1 (else nothing is saved): runs a 0x78-frame loop with the volume faded down
 // and, once IsFadeState(3, FADE_STATE_CLEAR), stores the stage offsets and writes the save: a = 0 the slot mSaveSlot
-// (WriteSaveSlot), a = 1 every slot through func_02010cfc. Then closes the prompt screen.
+// (WriteSaveSlot), a = 1 every slot through WriteLanguageAndMic. Then closes the prompt screen.
 void RunSaveScreen(int a) {
     int local;
     int timer;
@@ -1611,11 +1611,11 @@ void RunSaveScreen(int a) {
                         WriteSaveSlot(data_020b1084.mSaveSlot);
                         break;
                     case 1:
-                        func_02010cfc();
+                        WriteLanguageAndMic();
                         break;
                 }
             }
-            func_020101d0();
+            DrawSaveScreen();
             UpdateSoundCtl();
             UpdateSystemAndWait();
         } while (running == 1);

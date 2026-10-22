@@ -75,8 +75,8 @@ void DrawModeSelect(void) {
     StageRec *rec = &gStages[data_020b6ee0.mSelectedStageIndex];
     DrawStageInfo(data_020b6ee0.mSelectedStageIndex, 2);
     DrawText(48, 17, data_0201a61c, GetText(26), 0, 200, 16, 1);
-    func_0200bb14(255, 161, 161 + 96, 21, 0, 0, 0x17d, 1);
-    func_0200bb14(0, 161, 161 + 97, 14, 0, 0, 90, 1);
+    DrawButton(255, 161, 161 + 96, 21, 0, 0, 0x17d, 1);
+    DrawButton(0, 161, 161 + 97, 14, 0, 0, 90, 1);
     func_0200bb58(67, 61, 0, 0, 140, 0x303, sModeButtonIds[data_020b10fc.mMode], 0x11dc, 0, 0, 140 + 219, 1, 0, 0, 0);
     if (rec->mInfo.mGrade > 1) {
         func_0200bb58(29, 84, 0, 0, 140, 0x300, sModeButtonIds[data_020b10fc.mMode], 0x11d8, 0, 0, 140 + 219, 1, 0, 0,
@@ -101,7 +101,7 @@ void DrawModeSelect(void) {
     DrawText(106, 144, data_0201a61c, GetText(29), 0, 200, 16, 1);
     sprintf(text, "%d", gModeSelectState.mBestScore);
     DrawText(215, 144, data_0201a61c, text, 0, 200, 16, 1);
-    func_0200bb14(153, 181, 50 << 4, 0x11de, 0, 0, 0x167, 1);
+    DrawButton(153, 181, 50 << 4, 0x11de, 0, 0, 0x167, 1);
     DrawText(153, 181, data_0201a61c, GetText(30), 2, 200, 16, 1);
 }
 
@@ -128,7 +128,7 @@ void UpdateModeSelect(void) {
     if (TestButton(0x20000000, 0x101)) {
         idx = data_020b10fc.mMode;
         if (data_020b10fc.mBestScores[idx] == 0) {
-            func_0201033c(sModePrompts[idx], sModeStates[idx]);
+            StartPrompt(sModePrompts[idx], sModeStates[idx]);
         } else {
             PushState(sModeStates[idx]);
             PopState();
@@ -136,7 +136,7 @@ void UpdateModeSelect(void) {
     }
     if (TestButton(0x20000000, 0x320)) {
         gKeepSelectedMode = 1;
-        func_0201033c(sModePrompts[data_020b10fc.mMode], 13);
+        StartPrompt(sModePrompts[data_020b10fc.mMode], 13);
     }
     DrawModeSelect();
 }

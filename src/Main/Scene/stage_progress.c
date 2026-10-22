@@ -30,7 +30,7 @@ void UpdateProgress(void) {
         case 1:
             if (GetState() == 10 && data_020b6ee0.mPanelState <= 1) {
                 data_020b6ee0.mProgressState = 2;
-                func_0201033c(1, 10);
+                StartPrompt(1, 10);
                 SetTextAndImage(0x4c, 2, 0x1e0);
             }
             break;
@@ -82,7 +82,7 @@ void UpdateProgress(void) {
         case 8:
             if (GetState() == 13) {
                 data_020b6ee0.mProgressState = 9;
-                func_0201033c(0x27, 13);
+                StartPrompt(0x27, 13);
             }
             break;
         case 9:
@@ -95,14 +95,14 @@ void UpdateProgress(void) {
             if (GetState() == 10) {
                 data_020b6ee0.mProgressState = 11;
                 data_020b6ee0.mUnk_a56e = 2;
-                func_0201033c(2, 10);
+                StartPrompt(2, 10);
                 SetTextAndImage(0x4e, 1, 0x1e0);
             }
             break;
         case 11:
             if (GetState() == 6) {
                 data_020b6ee0.mProgressState = 12;
-                func_0201033c(4, 6);
+                StartPrompt(4, 6);
             }
             break;
         case 12:
@@ -163,7 +163,7 @@ void UpdateProgress(void) {
                 data_020b6ee0.mUnk_a56d = 1;
                 data_020b6ee0.mUnk_a56e = 1;
                 data_020b6ee0.mUnk_a56f = 1;
-                func_0201033c(0x2d, 9);
+                StartPrompt(0x2d, 9);
                 SetTextAndImage(-1, 0, 0);
             }
             break;
@@ -202,13 +202,13 @@ void UpdateNodeState(void) {
                     data_020b6ee0.mNodeState = 2;
                     sel = GetNodeValue(data_020b6ee0.mSelectedNodeIndex, 3);
                     SetupNodeStageInfos(data_020b6ee0.mSelectedNodeIndex, 0);
-                    func_0201033c(sel, 0x13);
+                    StartPrompt(sel, 0x13);
                 } else {
                     int sel;
                     data_020b6ee0.mNodeState = 2;
                     sel = GetNodeValue(data_020b6ee0.mSelectedNodeIndex, 5);
                     SetupNodeStageInfos(data_020b6ee0.mSelectedNodeIndex, 1);
-                    func_0201033c(sel, 0x13);
+                    StartPrompt(sel, 0x13);
                 }
             }
             break;

@@ -75,7 +75,7 @@ void PlayWaveData(const WaveInfo *info, const void *data, u32 id, int start, u32
     if ((u16) id == 0xffff) {
         OS_Terminate();
     }
-    if (gSystemState.mUnk_494 == 0) {
+    if (gSystemState.mUseWaves == 0) {
         return;
     }
     key = id & 0x4000ffff;
@@ -237,7 +237,7 @@ void UpdateWaves(void) {
             SetWaveVolume(ch->mId, v);
         }
         if (ch->mUsed == 1) {
-            if ((ch->mRepeat == 0 || gSystemState.mUnk_494 == 0) && (busy & (1 << i)) == 0 &&
+            if ((ch->mRepeat == 0 || gSystemState.mUseWaves == 0) && (busy & (1 << i)) == 0 &&
                 SND_IsFinishedCommandTag(ch->mCommandTag) == 1) {
                 mask |= 1 << i;
             } else if ((ch->mId & WAVE_ID_NO_FILE) == 0) {

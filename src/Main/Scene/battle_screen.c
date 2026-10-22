@@ -77,7 +77,7 @@ void SetupStageModels(int a) {
 // func_02007abc then draws gBattleView.mModel[1].
 void DrawBattleModels(void) {
     int flags = 0;
-    u16 color = func_0200be10(0x1f, 0x15, 0xc);
+    u16 color = PackColor(0x1f, 0x15, 0xc);
     u16 count;
     SetLightFromAngles(flags, 0xf618, 14 << 12, color);
     count = data_020b6ee0.mModel[1].mUnk_170;

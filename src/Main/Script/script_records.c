@@ -703,11 +703,11 @@ void ScriptCmdEof(u8 *text) {
         PlayScriptTrackAndSounds();
         gScriptWork.mWaitTimer = buf[1];
     }
-    gSystemState.mUnk_313 = 0;
+    gSystemState.mTextWindowLineIndex = 0;
     if (gScriptWork.mEofFlags & 0x10) {
-        gSystemState.mUnk_314 = buf[2];
+        gSystemState.mTextWindowLineCount = buf[2];
     } else {
-        gSystemState.mUnk_314 = gScriptWork.mDefaultWindowLineCount;
+        gSystemState.mTextWindowLineCount = gScriptWork.mDefaultWindowLineCount;
     }
 }
 
@@ -1195,7 +1195,7 @@ void UpdateScript(int (*callback)(void)) {
     u8 saved;
 
     if (gScriptWork.mUnk_280.mTextEscapeFunc != 0) {
-        gSystemState.mUnk_304 = (u32 (*)(u32)) gScriptWork.mUnk_280.mTextEscapeFunc;
+        gSystemState.mTextEscapeFunc = (u32 (*)(u32)) gScriptWork.mUnk_280.mTextEscapeFunc;
     }
     do {
         done = 0;
@@ -1422,12 +1422,12 @@ void UpdateScript(int (*callback)(void)) {
                 } else {
                     s = GetFileString(gScriptWork.mTextFileId, entry->mTextId);
                 }
-                pos = gSystemState.mUnk_30c;
+                pos = gSystemState.mTextCharLimit;
                 if (pos >= start && pos <= start + entry->mCharCount) {
                     gScriptWork.mCharFrames++;
                     if (gScriptWork.mCharFrames > entry->mCharFrameCount && gScriptWork.mTextIncomplete == 1) {
                         gScriptWork.mUnk_280.mLsTimer = entry->mCharFrameCount + 1;
-                        gSystemState.mUnk_30c = pos + 1;
+                        gSystemState.mTextCharLimit = pos + 1;
                         if (gScriptWork.mCharSoundId != 0) {
                             PlayWave(gScriptWork.mCharSoundId, 100, 0, 0x40, 0xffff, 0);
                         }
@@ -1466,7 +1466,7 @@ void UpdateScript(int (*callback)(void)) {
                 if (extra & TEXT_ROTATE) {
                     gSystemState.mUnk_30a[0] = saved;
                 }
-                gScriptWork.mTextIncomplete = gSystemState.mUnk_317_0;
+                gScriptWork.mTextIncomplete = gSystemState.mTextIncomplete;
             }
         }
 
@@ -1479,7 +1479,7 @@ void UpdateScript(int (*callback)(void)) {
                 StartEofFinish();
             } else {
                 if (gScriptWork.mFastText == 1 && gScriptWork.mTextIncomplete == 1) {
-                    gSystemState.mUnk_30c += 2;
+                    gSystemState.mTextCharLimit += 2;
                 }
                 if (gScriptWork.mWaitTimer != 0 && --gScriptWork.mWaitTimer == 0) {
                     StartEofFinish();
@@ -1493,8 +1493,9 @@ void UpdateScript(int (*callback)(void)) {
                         }
                     } else if ((gSystemState.mKeysPressed & 1) ||
                                (gTouchInput.mTrail.mTouchState.mButtonState & 0xc000ffff) == 0xc0000400) {
-                        if (gSystemState.mUnk_313 + gSystemState.mUnk_314 < gSystemState.mUnk_315) {
-                            gSystemState.mUnk_313 += gSystemState.mUnk_314;
+                        if (gSystemState.mTextWindowLineIndex + gSystemState.mTextWindowLineCount <
+                            gSystemState.mTextLineCount) {
+                            gSystemState.mTextWindowLineIndex += gSystemState.mTextWindowLineCount;
                         } else {
                             StartEofFinish();
                         }
@@ -1549,7 +1550,7 @@ void UpdateScript(int (*callback)(void)) {
                             break;
                         case SCRIPT_CMD_TXT:
                             AddScriptText(line);
-                            gSystemState.mUnk_30c = 0;
+                            gSystemState.mTextCharLimit = 0;
                             break;
                         case SCRIPT_CMD_TXTSPD:
                             ScriptCmdTxtSpd(line);

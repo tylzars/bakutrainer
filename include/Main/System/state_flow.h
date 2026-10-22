@@ -54,7 +54,9 @@ typedef struct Unk_020b10fc {
 } Unk_020b10fc;
 extern Unk_020b10fc data_020b10fc;
 
-// Language and three more settings words (the first is saved under the key "LANGUAGE").
+// Language and three more settings words (the language is saved under the key "LANGUAGE"). mUnk_04 and mUnk_08 are
+// the mic settings: mUnk_04 is SetupMic's second argument; mUnk_08 (at most 7) sets the level func_020213e8 tests
+// the mic against, (8 - mUnk_08) * 25, and picks the entries of data_0204ff50 and data_0204ff70.
 typedef struct Unk_020b1084 {
     u32 mLanguage;
     u32 mUnk_04;

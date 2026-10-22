@@ -20,7 +20,7 @@ void ReleaseComm(void) {
     Free(&data_020c66d4->mPacket);
     Free(&gSystemState.mUnk_250.mUnk_24);
     memset(&gSystemState.mUnk_250, 0, 0x2c);
-    gSystemState.mUnk_2a2 = 0;
+    gSystemState.mConnectAttemptCount = 0;
     gSystemState.mUnk_2a8 = 0;
     gSystemState.mUnk_296 = 0;
     gSystemState.mUnk_292 = 0;

@@ -15,7 +15,7 @@ extern "C" {
 #define TEXT_SINGLE_LINE 0x80
 #define TEXT_ROTATE 0x100
 #define TEXT_ALT_DRAW 0x200
-// Measures and draws only the characters before gSystemState.mUnk_30c (spaces not counted); the character at that
+// Measures and draws only the characters before gSystemState.mTextCharLimit (spaces not counted); the character at that
 // position is not drawn.
 #define TEXT_LIMIT 0x400
 #define TEXT_BOUNDS 0x800

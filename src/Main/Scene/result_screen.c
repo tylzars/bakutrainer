@@ -149,7 +149,7 @@ void DrawResultScreenAndHandleButtons(void) {
                 break;
         }
         if (gResultState.mNextButtonVisible != 0) {
-            func_0200bb14(255, 161, 161 + 96, 21, 0, 0, 0x17d, 1);
+            DrawButton(255, 161, 161 + 96, 21, 0, 0, 0x17d, 1);
         }
         return;
     }
@@ -191,10 +191,10 @@ void DrawResultScreenAndHandleButtons(void) {
         }
     }
     if (gResultState.mPrevEntryDecided == 1) {
-        func_0200bb14(255, 161, 161 + 96, 21, 0, 0, 0x17d, 1);
+        DrawButton(255, 161, 161 + 96, 21, 0, 0, 0x17d, 1);
     }
     if (gResultState.mEntryDecided == 1) {
-        func_0200bb14(0, 161, 161 + 97, 14, 0, 0, 90, 1);
+        DrawButton(0, 161, 161 + 97, 14, 0, 0, 90, 1);
     }
     if (tableEntryId != -1 && gResultState.mEntryDecided == 0) {
         DrawText(70 + (gResultState.mSlideOffsets[0] >> 8), 37, data_0201a64e, GetText(52), 0, 256, 16, 2);
@@ -217,16 +217,16 @@ void DrawResultScreenAndHandleButtons(void) {
                 DrawSprite(0xfb4, gResultState.mReplaceEntryIndex * 26 + 116, 103, 141, 2);
             }
         }
-        func_0200bc50((gResultState.mSlideOffsets[4] >> 8) + 181, 174, 0, 0, 140, 512, 0xfb5, GetText(41),
-                      data_0201a61c, 2, 0, 359, ready, 0, 0, 0);
+        DrawButtonEx((gResultState.mSlideOffsets[4] >> 8) + 181, 174, 0, 0, 140, 512, 0xfb5, GetText(41), data_0201a61c,
+                     2, 0, 359, ready, 0, 0, 0);
         if (TestButton(0x20000000, 0x200) && ready) {
             gResultRemainder.mEntryReplaced = 1;
             gResultState.mReplacedTableEntryId = rec->mInfo.mTableEntryIds[gResultState.mReplaceEntryIndex];
             rec->mInfo.mTableEntryIds[gResultState.mReplaceEntryIndex] = tableEntryId;
             gResultState.mEntryDecided = 1;
         }
-        func_0200bc50((gResultState.mSlideOffsets[3] >> 8) + 73, 174, 0, 0, 140, 513, 0xfd7, GetText(61), data_0201a61c,
-                      2, 0, 90, ready, 0, 0, 0);
+        DrawButtonEx((gResultState.mSlideOffsets[3] >> 8) + 73, 174, 0, 0, 140, 513, 0xfd7, GetText(61), data_0201a61c,
+                     2, 0, 90, ready, 0, 0, 0);
         if (TestButton(0x20000000, 0x201) && ready) {
             gResultRemainder.mEntryReplaced = 0;
             gResultState.mEntryDecided = 1;

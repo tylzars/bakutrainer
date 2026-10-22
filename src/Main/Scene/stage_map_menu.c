@@ -47,13 +47,13 @@ void UpdateMapMenu(void) {
     data_020b6ee0.mSelectedNodeIndex = -1;
     for (i = 0; i < MAP_NODE_COUNT; i++) {
         if (i < data_020b6ee0.mReachedNodeIndex) {
-            func_0200ba68(0xde6, i + MAP_NODE_POS_ID, 0, 0, 0x1000, 0);
+            DrawModelFileAtMapEntry(0xde6, i + MAP_NODE_POS_ID, 0, 0, 0x1000, 0);
         } else if (i == data_020b6ee0.mReachedNodeIndex) {
             func_02031fc4(i + MAP_NODE_POS_ID, &dp.mPos);
             SetDrawParams(&dp, dp.mPos.x, dp.mPos.y, dp.mPos.z, 0x1000, 0, 0, gSystemState.mElapsedFrames % 400, 0x100);
             UpdateAndDrawModel(&p->mReachedNodeModel, &dp, 0);
         } else {
-            func_0200ba68(0xde3, i + MAP_NODE_POS_ID, 0, 0, 0x1000, 0);
+            DrawModelFileAtMapEntry(0xde3, i + MAP_NODE_POS_ID, 0, 0, 0x1000, 0);
         }
         if (i < data_020b6ee0.mReachedNodeIndex || i == data_020b6ee0.mReachedNodeIndex) {
             func_02031fc4(i + MAP_NODE_POS_ID, &pos);
@@ -109,8 +109,8 @@ void UpdateMapMenu(void) {
                 }
             }
             EaseToward(&q->mMapButtonOffsetX, 0, 4);
-            func_0200bb14(q->mMapButtonOffsetX + 0xff, 0xa1, 0x101, 0x15, 0, 0, 0x17d, 1);
-            func_0200bb14(-q->mMapButtonOffsetX, 0xa1, 0x102, 0xe, 0, 0, 0x5a, 1);
+            DrawButton(q->mMapButtonOffsetX + 0xff, 0xa1, 0x101, 0x15, 0, 0, 0x17d, 1);
+            DrawButton(-q->mMapButtonOffsetX, 0xa1, 0x102, 0xe, 0, 0, 0x5a, 1);
         } else {
             DrawText(0x5a, 0x5a, data_0201a64e, GetText(0x47), 2, 0xc8, 0x10, 2);
         }
@@ -120,7 +120,7 @@ void UpdateMapMenu(void) {
     }
     if (p->mNodeInfoHidden == 1) {
         EaseToward(&q->mMapButtonOffsetX, 0, 4);
-        func_0200bb14(-q->mMapButtonOffsetX, 0xa1, 0x102, 0xe, 0, 0, 0x5a, 1);
+        DrawButton(-q->mMapButtonOffsetX, 0xa1, 0x102, 0xe, 0, 0, 0x5a, 1);
     }
     UpdateMapMenuInput();
 }
@@ -192,7 +192,7 @@ void UpdateRecap(void) {
     } else {
         DrawSprite(0x1088, 0x7f, 0x62, 0x66, 1);
     }
-    func_0200bb14(0xff, 0xa1, 0x101, 0x15, 0, 0, 0x17d, 1);
+    DrawButton(0xff, 0xa1, 0x101, 0x15, 0, 0, 0x17d, 1);
     if (TestButton(0x20000000, 0x101)) {
         SetStateFlag(1);
     }

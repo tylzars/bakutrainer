@@ -38,12 +38,12 @@ void DrawPageViewerButtons(void) {
     PageViewState *p = &gPageViewState;
     switch (gPageViewState.mState) {
         case 0:
-            func_0200bb14(0x80, 0x60, 0x600, 0xf8e, 0, 0, 0, 1);
+            DrawButton(0x80, 0x60, 0x600, 0xf8e, 0, 0, 0, 1);
             break;
         case 1:
-            func_0200bb14(0, 0xa1, 0x600, 14, 0, 0, 90, 1);
+            DrawButton(0, 0xa1, 0x600, 14, 0, 0, 90, 1);
             if (p->mNextPageTimer == 0) {
-                func_0200bb14(0xff, 0xa1, 0x601, 21, 0, 0, 0x17d, 1);
+                DrawButton(0xff, 0xa1, 0x601, 21, 0, 0, 0x17d, 1);
             }
             break;
     }

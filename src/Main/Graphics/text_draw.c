@@ -16,7 +16,7 @@ u16 ReadTextChar(const u8 **text) {
     const u8 *p;
     u16 acc;
     count = 0;
-    if (gSystemState.mUnk_318 == 1 && **text == '$') {
+    if (gSystemState.mUseTextEscapes == 1 && **text == '$') {
         p = *text;
         num = 0;
         for (;;) {
@@ -26,7 +26,7 @@ u16 ReadTextChar(const u8 **text) {
             }
             num = *p + num * 10 - '0';
         }
-        first = gSystemState.mUnk_304(num);
+        first = gSystemState.mTextEscapeFunc(num);
         if (first == 0) {
             *text = p;
         } else if ((first & 0x80) == 0) {
@@ -38,7 +38,7 @@ u16 ReadTextChar(const u8 **text) {
                 do {
                     acc2 <<= 6;
                     count++;
-                    value = gSystemState.mUnk_304(num);
+                    value = gSystemState.mTextEscapeFunc(num);
                     if (value == 0) {
                         break;
                     }
@@ -159,10 +159,10 @@ int DrawTextEx(int x, int y, const FontRange *const *fonts, u8 fontIndex, const 
         OS_Terminate();
     }
     if (flags & TEXT_BOUNDS) {
-        gSystemState.mUnk_2fe = 0x7fff;
-        gSystemState.mUnk_302 = -0x7fff;
-        gSystemState.mUnk_2fc = 0x7fff;
-        gSystemState.mUnk_300 = -0x7fff;
+        gSystemState.mTextBoundsMinY = 0x7fff;
+        gSystemState.mTextBoundsMaxY = -0x7fff;
+        gSystemState.mTextBoundsMinX = 0x7fff;
+        gSystemState.mTextBoundsMaxX = -0x7fff;
     }
     if ((flags & (TEXT_VERTICAL | TEXT_VERTICAL_FLIP)) == (TEXT_VERTICAL | TEXT_VERTICAL_FLIP)) {
         OS_Terminate();
@@ -184,13 +184,13 @@ int DrawTextEx(int x, int y, const FontRange *const *fonts, u8 fontIndex, const 
             y = t;
         }
     }
-    gSystemState.mUnk_318 = (flags & TEXT_ESCAPES) ? 1 : 0;
+    gSystemState.mUseTextEscapes = (flags & TEXT_ESCAPES) ? 1 : 0;
 
     k = 0;
     do {
         chars[k++] = ReadTextChar(&text);
     } while (chars[k - 1] != 0);
-    gSystemState.mUnk_317_0 = 0;
+    gSystemState.mTextIncomplete = 0;
 
     font = fonts[fontIndex];
     GetSpriteRect(font->mGlyph, 0, rect);
@@ -241,11 +241,11 @@ int DrawTextEx(int x, int y, const FontRange *const *fonts, u8 fontIndex, const 
                     break;
                 }
                 if (fr->mLast == 0 || fr->mFirst > c) {
-                    if (gSystemState.mUnk_30e == 0x20) {
+                    if (gSystemState.mTextReplacementChar == 0x20) {
                         chars[n] = 0x20;
                         glyphs[n] = fr->mGlyph + (chars[n] - fr->mFirst);
                     } else {
-                        *q = gSystemState.mUnk_30e;
+                        *q = gSystemState.mTextReplacementChar;
                         n--;
                     }
                     break;
@@ -274,7 +274,7 @@ int DrawTextEx(int x, int y, const FontRange *const *fonts, u8 fontIndex, const 
             spaces++;
             widths[k] = spaceW;
         }
-        if (!(flags & TEXT_LIMIT) || k < gSystemState.mUnk_30c + spaces) {
+        if (!(flags & TEXT_LIMIT) || k < gSystemState.mTextCharLimit + spaces) {
             result += widths[k];
         }
         k++;
@@ -296,7 +296,7 @@ int DrawTextEx(int x, int y, const FontRange *const *fonts, u8 fontIndex, const 
             maxW = 0;
             lineW = maxW;
             breakW = maxW;
-            nl = gSystemState.mUnk_310;
+            nl = gSystemState.mTextLineBreakChar;
             while ((c = chars[i + maxW]) > 1 && lineW < width) {
                 brk = 0;
                 if (c == 0x20) {
@@ -345,9 +345,10 @@ int DrawTextEx(int x, int y, const FontRange *const *fonts, u8 fontIndex, const 
                 if (chars[i] == 0) {
                     break;
                 }
-                if (NormalizeSpace(chars[i]) != 0x20 && gSystemState.mUnk_310 != chars[i] && !nodraw) {
-                    if (!(window && (lineNo < gSystemState.mUnk_313 ||
-                                     lineNo >= gSystemState.mUnk_313 + gSystemState.mUnk_314))) {
+                if (NormalizeSpace(chars[i]) != 0x20 && gSystemState.mTextLineBreakChar != chars[i] && !nodraw) {
+                    if (!(window &&
+                          (lineNo < gSystemState.mTextWindowLineIndex ||
+                           lineNo >= gSystemState.mTextWindowLineIndex + gSystemState.mTextWindowLineCount))) {
                         if (dirMode != 0) {
                             if (dirMode == 1) {
                                 px = y;
@@ -362,7 +363,7 @@ int DrawTextEx(int x, int y, const FontRange *const *fonts, u8 fontIndex, const 
                         }
                         pal = gSystemState.mUnk_308;
                         odd = i & 1;
-                        if (!((flags & TEXT_LIMIT) && i >= gSystemState.mUnk_30c + spaces)) {
+                        if (!((flags & TEXT_LIMIT) && i >= gSystemState.mTextCharLimit + spaces)) {
                             if (flags & TEXT_ROTATE) {
                                 int dx = px - x;
                                 int dy = py - y;
@@ -386,21 +387,21 @@ int DrawTextEx(int x, int y, const FontRange *const *fonts, u8 fontIndex, const 
                             }
                             if (flags & TEXT_BOUNDS) {
                                 GetSpriteRect(glyphHigh + glyphs[i], 0, rect);
-                                if (px + rect[0] < gSystemState.mUnk_2fc) {
-                                    gSystemState.mUnk_2fc = px + rect[0];
+                                if (px + rect[0] < gSystemState.mTextBoundsMinX) {
+                                    gSystemState.mTextBoundsMinX = px + rect[0];
                                 }
-                                if (px + rect[2] > gSystemState.mUnk_300) {
-                                    gSystemState.mUnk_300 = px + rect[2];
+                                if (px + rect[2] > gSystemState.mTextBoundsMaxX) {
+                                    gSystemState.mTextBoundsMaxX = px + rect[2];
                                 }
-                                if (py + rect[1] < gSystemState.mUnk_2fe) {
-                                    gSystemState.mUnk_2fe = py + rect[1];
+                                if (py + rect[1] < gSystemState.mTextBoundsMinY) {
+                                    gSystemState.mTextBoundsMinY = py + rect[1];
                                 }
-                                if (py + rect[3] > gSystemState.mUnk_302) {
-                                    gSystemState.mUnk_302 = py + rect[3];
+                                if (py + rect[3] > gSystemState.mTextBoundsMaxY) {
+                                    gSystemState.mTextBoundsMaxY = py + rect[3];
                                 }
                             }
                         } else {
-                            gSystemState.mUnk_317_0 = 1;
+                            gSystemState.mTextIncomplete = 1;
                         }
                     }
                 } else {
@@ -410,12 +411,12 @@ int DrawTextEx(int x, int y, const FontRange *const *fonts, u8 fontIndex, const 
                 lineW += widths[i];
                 i++;
             }
-            while (NormalizeSpace(chars[i]) == 0x20 || chars[i] == 1 || chars[i] == gSystemState.mUnk_310) {
+            while (NormalizeSpace(chars[i]) == 0x20 || chars[i] == 1 || chars[i] == gSystemState.mTextLineBreakChar) {
                 i++;
                 spaces++;
             }
-            if (!window ||
-                (lineNo >= gSystemState.mUnk_313 && lineNo < gSystemState.mUnk_313 + gSystemState.mUnk_314)) {
+            if (!window || (lineNo >= gSystemState.mTextWindowLineIndex &&
+                            lineNo < gSystemState.mTextWindowLineIndex + gSystemState.mTextWindowLineCount)) {
                 if (dirMode != 0) {
                     if (dirMode == 1) {
                         y -= height;
@@ -429,7 +430,7 @@ int DrawTextEx(int x, int y, const FontRange *const *fonts, u8 fontIndex, const 
             lineNo++;
         } while (!(flags & TEXT_SINGLE_LINE) && chars[i] != 0);
     }
-    gSystemState.mUnk_315 = lineNo;
+    gSystemState.mTextLineCount = lineNo;
     if (flags & TEXT_RETURN_HEIGHT) {
         return y - height - startY;
     }
@@ -490,12 +491,12 @@ int GetFileValue(u16 id, int index) {
 void CopyFileString(int id, int index, u8 *dst, int flags, ...) {
     const u8 *src = GetFileString(id, index);
     if (flags & 1) {
-        u8 saved = gSystemState.mUnk_318;
-        gSystemState.mUnk_318 = 1;
+        u8 saved = gSystemState.mUseTextEscapes;
+        gSystemState.mUseTextEscapes = 1;
         while (*src != 0) {
             WriteTextChar(&dst, ReadTextChar(&src));
         }
-        gSystemState.mUnk_318 = saved;
+        gSystemState.mUseTextEscapes = saved;
     } else {
         while (*src != 0) {
             *dst++ = *src++;

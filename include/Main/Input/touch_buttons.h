@@ -60,7 +60,7 @@ typedef struct TouchInput {
 extern TouchInput gTouchInput;
 
 int IsLcdSwapped(void);
-int func_02020890(void);
+int ConsumeKeyOrTouchPress(void);
 void SetTouchButtonSoundsAndKeys(int flags, u16 a, u16 b, u16 c);
 void AddTouchButtonEx(int a, int b, int c, int d, int e, int f, u16 g, u16 h, u16 i);
 void AddTouchButtonWithSounds(int a, int b, int c, int d, int e, int f, u16 g, u16 h);

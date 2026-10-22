@@ -19,7 +19,7 @@ extern "C" {
 // the sub screen's 0x04001050 and 0x04001052 registers, zeroed while it is open), and the position of the buttons and
 // the text while they slide in and out.
 typedef struct PromptScreen {
-    // func_020101d0 also reads entry 1.
+    // DrawSaveScreen also reads entry 1.
     u16 mSavedImageIds[2];
     u8 mUnk_04[0x0c - 0x04];
     s32 mSavedWindowBits;
@@ -49,25 +49,25 @@ typedef struct PromptScreen {
 } PromptScreen;
 extern PromptScreen gPromptScreen;
 
-// A prompt (0x49 of them, indexed by the prompt number, state variable 0x14): the message shown, an id passed with
-// the word after it to SetupSharedModel when it is not negative, and the prompt that follows (-1: none).
-// language_menu.c and game_system.c each hold a copy of the table.
-typedef struct Unk_0204e96c {
-    /* 00 */ s32 mUnk_00;
-    /* 04 */ s32 mUnk_04;
+// A prompt (0x49 of them, indexed by the prompt number, flow value 0x14). mUnk_08 goes to SetupSharedModel with
+// mSharedModelIndex when that is not negative; mNextPromptIndex -1 means none. language_menu.c and game_system.c each
+// hold a copy of the table.
+typedef struct Prompt {
+    /* 00 */ s32 mLineId;
+    /* 04 */ s32 mSharedModelIndex;
     /* 08 */ s32 mUnk_08;
-    /* 0c */ s32 mUnk_0c;
-} Unk_0204e96c;
+    /* 0c */ s32 mNextPromptIndex;
+} Prompt;
 
 int OpenPromptScreen(int *a, int *b);
 void ClosePromptScreen(void);
 void DrawPromptScreen(void);
 void RunPromptScreen(void);
-void func_020101d0(void);
+void DrawSaveScreen(void);
 void func_02010294(int a, int b, int c);
 void func_020102f8(void);
-void func_0201033c(int a, int b);
-void func_02010364(int a, int b);
+void StartPrompt(int prompt, int nextState);
+void StartPromptAtLine(int lineId, int nextState);
 
 #ifdef __cplusplus
 }

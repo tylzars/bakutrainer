@@ -559,17 +559,17 @@ void UpdateTitleScreen(void) {
     flag = gTitleScreen.mSlideState == TITLE_SLIDE_STATE_IN_PLACE ? 1 : 0;
     switch (s->mState) {
         case 1:
-            func_0200bc50((gTitleScreen.mSlideOffsets[0] >> 8) + 0x80, 0x3e, 0, 0, 0x8c, 0x701, 0xdda, GetText(0xc4),
-                          data_0201a61c, 2, 0, 0x167, flag, 0, 0, 0);
+            DrawButtonEx((gTitleScreen.mSlideOffsets[0] >> 8) + 0x80, 0x3e, 0, 0, 0x8c, 0x701, 0xdda, GetText(0xc4),
+                         data_0201a61c, 2, 0, 0x167, flag, 0, 0, 0);
             if (s->mAnySaveWritten != 0) {
-                func_0200bc50((gTitleScreen.mSlideOffsets[1] >> 8) + 0x80, 0x66, 0, 0, 0x8c, 0x700, 0xdda,
-                              GetText(0xc5), data_0201a61c, 2, 0, 0x167, flag, 0, 0, 0);
+                DrawButtonEx((gTitleScreen.mSlideOffsets[1] >> 8) + 0x80, 0x66, 0, 0, 0x8c, 0x700, 0xdda, GetText(0xc5),
+                             data_0201a61c, 2, 0, 0x167, flag, 0, 0, 0);
             } else {
-                func_0200bc50((gTitleScreen.mSlideOffsets[1] >> 8) + 0x80, 0x66, 0, 0, 0x8c, 0x700, 0xddc,
-                              GetText(0xc5), data_0201a626, 2, 0, 0x167, 0, 0, 0, 0);
+                DrawButtonEx((gTitleScreen.mSlideOffsets[1] >> 8) + 0x80, 0x66, 0, 0, 0x8c, 0x700, 0xddc, GetText(0xc5),
+                             data_0201a626, 2, 0, 0x167, 0, 0, 0, 0);
             }
-            func_0200bc50((gTitleScreen.mSlideOffsets[2] >> 8) + 0x80, 0x8e, 0, 0, 0x8c, 0x706, 0xdda, GetText(0xc6),
-                          data_0201a61c, 2, 0, 0x167, flag, 0, 0, 0);
+            DrawButtonEx((gTitleScreen.mSlideOffsets[2] >> 8) + 0x80, 0x8e, 0, 0, 0x8c, 0x706, 0xdda, GetText(0xc6),
+                         data_0201a61c, 2, 0, 0x167, flag, 0, 0, 0);
             if (TestButton(0x20000000, 0x700)) {
                 RequestTitleState(2, -1);
                 s->mReadSelected = 1;
@@ -597,8 +597,8 @@ void UpdateTitleScreen(void) {
                     pct = s->mSaveSlots[i].mLastNodeDone != 0
                               ? 100
                               : s->mSaveSlots[i].mReachedNodeIndex * 100 / MAP_NODE_COUNT;
-                    func_0200bc50((gTitleScreen.mSlideOffsets[i] >> 8) + 0x39, i * 0x2c + 0x36, 0, 0, 0x8c, 0x704 + i,
-                                  0xdf6, 0, 0, 2, 0, 0x167, flag, 0, 0, 0);
+                    DrawButtonEx((gTitleScreen.mSlideOffsets[i] >> 8) + 0x39, i * 0x2c + 0x36, 0, 0, 0x8c, 0x704 + i,
+                                 0xdf6, 0, 0, 2, 0, 0x167, flag, 0, 0, 0);
                     sprintf(text, "%s %d", GetText(0xcd), i + 1);
                     DrawText((gTitleScreen.mSlideOffsets[i] >> 8) + 0x39, i * 0x2c + 0x36, data_0201a61c, text, 0, 0xf0,
                              0x10, 1);
@@ -610,13 +610,13 @@ void UpdateTitleScreen(void) {
                     DrawText((gTitleScreen.mSlideOffsets[i] >> 8) + 0xa0, i * 0x2c + 0x36, data_0201a662, text, 2, 0xf0,
                              0x10, 1);
                 } else if (s->mReadSelected == 0) {
-                    func_0200bc50((gTitleScreen.mSlideOffsets[i] >> 8) + 0x39, i * 0x2c + 0x36, 0, 0, 0x8c, 0x704 + i,
-                                  0xdf8, 0, 0, 2, 0, 0, flag, 0, 0, 0);
+                    DrawButtonEx((gTitleScreen.mSlideOffsets[i] >> 8) + 0x39, i * 0x2c + 0x36, 0, 0, 0x8c, 0x704 + i,
+                                 0xdf8, 0, 0, 2, 0, 0, flag, 0, 0, 0);
                     DrawText((gTitleScreen.mSlideOffsets[i] >> 8) + 0x39, i * 0x2c + 0x36, data_0201a61c, GetText(0xcc),
                              0, 0xf0, 0x10, 1);
                 }
             }
-            func_0200bb14(0, (gTitleScreen.mSlideOffsets[4] >> 8) + 0xa1, 0x102, 0xe, 0, 0, 0x5a, flag);
+            DrawButton(0, (gTitleScreen.mSlideOffsets[4] >> 8) + 0xa1, 0x102, 0xe, 0, 0, 0x5a, flag);
             if (TestButtonRange(0x20000000, 0x704, 0x706)) {
                 data_020b1084.mSaveSlot = (u16) gTouchInput.mTrail.mTouchState.mButtonState - 0x704;
                 if (s->mReadSelected == 0) {
@@ -641,8 +641,8 @@ void UpdateTitleScreen(void) {
         case 3:
             DrawSprite(0xe21, (gTitleScreen.mSlideOffsets[0] >> 8) + 0x7f, 0x50, 0x8c, 1);
             DrawText((gTitleScreen.mSlideOffsets[0] >> 8) + 0x7f, 0x50, data_0201a61c, GetText(0xcf), 2, 0xc0, 0xc, 1);
-            func_0200bb14(0xff, (gTitleScreen.mSlideOffsets[4] >> 8) + 0xa1, 0x101, 0x15, 0, 0, 0x17d, flag);
-            func_0200bb14(0, (gTitleScreen.mSlideOffsets[4] >> 8) + 0xa1, 0x102, 0xe, 0, 0, 0x5a, flag);
+            DrawButton(0xff, (gTitleScreen.mSlideOffsets[4] >> 8) + 0xa1, 0x101, 0x15, 0, 0, 0x17d, flag);
+            DrawButton(0, (gTitleScreen.mSlideOffsets[4] >> 8) + 0xa1, 0x102, 0xe, 0, 0, 0x5a, flag);
             if (TestButton(0x20000000, 0x101)) {
                 ResetAllProgress();
                 RunSaveScreen(0);
@@ -658,11 +658,11 @@ void UpdateTitleScreen(void) {
         case 5:
             DrawSprite(0xe22, 0x2f, (gTitleScreen.mSlideOffsets[3] >> 8) + 0x11, 0x8c, 1);
             DrawText(0x2f, (gTitleScreen.mSlideOffsets[3] >> 8) + 0x11, data_0201a61c, GetText(0xc6), 0, 200, 16, 1);
-            func_0200bc50((gTitleScreen.mSlideOffsets[1] >> 8) + 0x80, 0x48, 0, 0, 0x8c, 0x703, 0xdda, GetText(0xc8),
-                          data_0201a61c, 2, 0, 0x167, flag, 0, 0, 0);
-            func_0200bc50((gTitleScreen.mSlideOffsets[2] >> 8) + 0x80, 0x70, 0, 0, 0x8c, 0x708, 0xdda, GetText(0xc9),
-                          data_0201a61c, 2, 0, 0x167, flag, 0, 0, 0);
-            func_0200bb14(0, (gTitleScreen.mSlideOffsets[4] >> 8) + 0xa1, 0x102, 0xe, 0, 0, 0x5a, flag);
+            DrawButtonEx((gTitleScreen.mSlideOffsets[1] >> 8) + 0x80, 0x48, 0, 0, 0x8c, 0x703, 0xdda, GetText(0xc8),
+                         data_0201a61c, 2, 0, 0x167, flag, 0, 0, 0);
+            DrawButtonEx((gTitleScreen.mSlideOffsets[2] >> 8) + 0x80, 0x70, 0, 0, 0x8c, 0x708, 0xdda, GetText(0xc9),
+                         data_0201a61c, 2, 0, 0x167, flag, 0, 0, 0);
+            DrawButton(0, (gTitleScreen.mSlideOffsets[4] >> 8) + 0xa1, 0x102, 0xe, 0, 0, 0x5a, flag);
             // Never true in this build: no button 0x702 is added, so title state 4 is not reached.
             if (TestButton(0x20000000, 0x702)) {
                 gTitleScreen.mSelectedLanguage = data_020b1084.mLanguage;
@@ -689,15 +689,15 @@ void UpdateTitleScreen(void) {
             id = data_0204e1ec;
             for (i = 0; i < 1; i++) {
                 idx = data_0204e1e4[i] + 2;
-                func_0200bb14((gTitleScreen.mSlideOffsets[idx] >> 8) + data_0204e1f0[0], data_0204e1f0[1], 0x705 + i,
-                              data_0204e1e8[i], 0, 0, 0x167, 1);
+                DrawButton((gTitleScreen.mSlideOffsets[idx] >> 8) + data_0204e1f0[0], data_0204e1f0[1], 0x705 + i,
+                           data_0204e1e8[i], 0, 0, 0x167, 1);
                 if (gTitleScreen.mSelectedLanguage == i) {
                     DrawSprite(0xdd0, pos[0] + (gTitleScreen.mSlideOffsets[idx] >> 8), pos[1], 0xfa, 1);
                 }
                 DrawSprite(*id, (gTitleScreen.mSlideOffsets[idx] >> 8) + (pos[0] + pos[2]), pos[1], 0xff, 1);
             }
-            func_0200bb14(0xff, (gTitleScreen.mSlideOffsets[1] >> 8) + 0xa1, 0x101, 0x15, 0, 0, 0x17d, flag);
-            func_0200bb14(0, (gTitleScreen.mSlideOffsets[1] >> 8) + 0xa1, 0x102, 0xe, 0, 0, 0x5a, flag);
+            DrawButton(0xff, (gTitleScreen.mSlideOffsets[1] >> 8) + 0xa1, 0x101, 0x15, 0, 0, 0x17d, flag);
+            DrawButton(0, (gTitleScreen.mSlideOffsets[1] >> 8) + 0xa1, 0x102, 0xe, 0, 0, 0x5a, flag);
             for (i = 0; i < 1; i++) {
                 if (TestButton(0x80000000, 0x705 + i)) {
                     gTitleScreen.mSelectedLanguage = i;
@@ -729,12 +729,12 @@ void UpdateTitleScreen(void) {
             sprintf(num, "%d", *level + 1);
             DrawText((gTitleScreen.mSlideOffsets[1] >> 8) + 0x82, 0xb4, data_0201a676, num, 0, 0xf0, 1, 1);
             if (*level > range->mMin) {
-                func_0200bb14((gTitleScreen.mSlideOffsets[1] >> 8) + 0x50, 0x85, 0x70b, 0xdfc, 0, 0, 0x17d,
-                              gSystemState.mUnk_492 == 0 ? 1 : 0);
+                DrawButton((gTitleScreen.mSlideOffsets[1] >> 8) + 0x50, 0x85, 0x70b, 0xdfc, 0, 0, 0x17d,
+                           gSystemState.mUnk_492 == 0 ? 1 : 0);
             }
             if (*level < range->mMax) {
-                func_0200bb14((gTitleScreen.mSlideOffsets[1] >> 8) + 0xaf, 0x85, 0x70c, 0xdfe, 0, 0, 0x17d,
-                              gSystemState.mUnk_492 == 0 ? 1 : 0);
+                DrawButton((gTitleScreen.mSlideOffsets[1] >> 8) + 0xaf, 0x85, 0x70c, 0xdfe, 0, 0, 0x17d,
+                           gSystemState.mUnk_492 == 0 ? 1 : 0);
             }
             if (gSystemState.mUnk_492 == 0) {
                 DrawText((gTitleScreen.mSlideOffsets[0] >> 8) + 0x7f, 0x28, data_0201a61c, GetText(0xd1), 2, 0xc0, 0xc,
@@ -760,8 +760,8 @@ void UpdateTitleScreen(void) {
                 DrawSprite(sMicEdit.mPeak + 0xe01, (gTitleScreen.mSlideOffsets[1] >> 8) + 0x7f, 0x8f, 0x8c, 1);
                 sMicEdit.mPeak--;
             }
-            func_0200bb14(0xff, (gTitleScreen.mSlideOffsets[4] >> 8) + 0xa1, 0x101, 0x15, 0, 0, 0x17d, flag);
-            func_0200bb14(0, (gTitleScreen.mSlideOffsets[4] >> 8) + 0xa1, 0x102, 0xe, 0, 0, 0x5a, flag);
+            DrawButton(0xff, (gTitleScreen.mSlideOffsets[4] >> 8) + 0xa1, 0x101, 0x15, 0, 0, 0x17d, flag);
+            DrawButton(0, (gTitleScreen.mSlideOffsets[4] >> 8) + 0xa1, 0x102, 0xe, 0, 0, 0x5a, flag);
             if (TestButton(0x20000000, 0x709)) {
                 func_02021054(--sMicEdit.mUnk_00);
             } else if (TestButton(0x20000000, 0x70a)) {

@@ -51,10 +51,10 @@ void func_0200a3fc(void) {
     int id;
     DrawSharedModel();
     if (data_02099770.mIn.mUnk_08 == 1) {
-        func_0200bb14(255, 161, 0x101, 21, 0, 0, 0x17d, 1);
+        DrawButton(255, 161, 0x101, 21, 0, 0, 0x17d, 1);
     }
     if (sel->mUnk_0c == 1) {
-        func_0200bb14(0, 161, 0x102, 14, 0, 0, 90, 1);
+        DrawButton(0, 161, 0x102, 14, 0, 0, 90, 1);
     }
     switch (sel->mState) {
         case 0:
@@ -112,10 +112,10 @@ void func_0200a3fc(void) {
                 if (data_020b6ee0.mReachedNodeIndex == 24) {
                     data_020b6ee0.mLastNodeDone = 1;
                     data_020b6ee0.mUnk_a91b = 1;
-                    func_0201033c(r, 24);
+                    StartPrompt(r, 24);
                 } else {
                     data_020b6ee0.mReachedNodeIndex++;
-                    func_0201033c(r, 10);
+                    StartPrompt(r, 10);
                 }
             } else {
                 PushState(10);

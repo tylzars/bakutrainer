@@ -127,8 +127,8 @@ void InitSystemEx(u32 a, int b, int c) {
     gSystemState.mUnk_470 = 0;
     gMapState.mCamera.mMapFile = 0;
     gSystemState.mTransferLimit = a;
-    gSystemState.mUnk_30e = 0x20;
-    gSystemState.mUnk_310 = 10;
+    gSystemState.mTextReplacementChar = 0x20;
+    gSystemState.mTextLineBreakChar = 10;
     gSystemState.mUnk_311[0] = 9;
     gSystemState.mUnk_311[1] = 12;
     gSystemState.mUnk_308 = 0x80;
@@ -219,7 +219,7 @@ void InitSystemEx(u32 a, int b, int c) {
     func_0204445c(&gPmCallbackInfo);
     func_020402f0();
     *(vu16 *) 0x04000304 &= ~0xc;
-    gSystemState.mUnk_24c = ShowCommError;
+    gSystemState.mCommErrorFunc = ShowCommError;
     gSystemState.mUnk_280 = 0;
     gSystemState.mUnk_2a4[0] = 0;
     gSystemState.mUnk_240 = 0;
@@ -457,14 +457,14 @@ void UpdateSystem(int flags) {
             EndLinkMessage();
             gSystemState.mUnk_2a8 = func_02047264(&data_020c9e60, data_020c9e10, data_020c9e14);
             data_020c9e04 &= ~0x800;
-            gSystemState.mUnk_288 = 0;
+            gSystemState.mLinkSlotMask = 0;
             i = 0;
             offset = 0;
             for (; i < 2; i++) {
                 u8 *entry = func_02047ac4(&data_020c9e60, data_020c9e14, (u16) i);
                 if (entry != 0) {
                     MIi_CpuCopy16(entry, data_020c9e1c + offset, 0x54);
-                    gSystemState.mUnk_288 |= 1 << i;
+                    gSystemState.mLinkSlotMask |= 1 << i;
                 }
                 offset += 0x54;
             }
@@ -673,20 +673,20 @@ int Free(void *p) {
     return 0;
 }
 
-u16 func_0201c538(void) {
+u16 GetTexFileKeyCount(void) {
     return data_020c31dc.mTexFileKeyCount;
 }
 
-u16 func_0201c544(void) {
+u16 GetPlttFileKeyCount(void) {
     return data_020c31dc.mPlttFileKeyCount;
 }
 
 u32 func_0201c550(void) {
-    return func_0201c538() + (GetBlockCount() << 7);
+    return GetTexFileKeyCount() + (GetBlockCount() << 7);
 }
 
-u32 func_0201c564(void) {
-    return func_0201c544() + ((GetStoredFileSize(gTextureBlocks.mPaletteFile) >> 5) << 2);
+u32 GetPaletteFileKeyEnd(void) {
+    return GetPlttFileKeyCount() + ((GetStoredFileSize(gTextureBlocks.mPaletteFile) >> 5) << 2);
 }
 
 #pragma thumb off
@@ -2166,7 +2166,7 @@ void *CreateNearestColorTable(int id, int layers) {
     int cell;
     u32 i;
     u16 *dist;
-    Unk_ColorQueue *queue;
+    ColorQueueEntry *queue;
 
     src = FindOrLoadCachedFile(id);
     pal = Alloc(0x300);
@@ -2186,7 +2186,7 @@ void *CreateNearestColorTable(int id, int layers) {
         queue[tail].mUnk_0 = p[0];
         queue[tail].mUnk_1 = p[1];
         queue[tail].mUnk_2 = p[2];
-        queue[tail++].mUnk_3 = i;
+        queue[tail++].mPaletteIndex = i;
         cube[p[0] + ((p[2] << 10) + (p[1] << 5))] = i;
         dist[p[0] + ((p[2] << 10) + (p[1] << 5))] = 0;
     }
@@ -2194,7 +2194,7 @@ void *CreateNearestColorTable(int id, int layers) {
         r = queue[head].mUnk_0;
         g = queue[head].mUnk_1;
         b = queue[head].mUnk_2;
-        idx = queue[head].mUnk_3;
+        idx = queue[head].mPaletteIndex;
         head = (head + 1) & 0x1fff;
         cell = r + ((b << 10) + (g << 5));
         // Offers the entry idx to each neighbouring cell: the cell takes it when it is nearer to the cell's colour
@@ -2209,7 +2209,7 @@ void *CreateNearestColorTable(int id, int layers) {
                     queue[tail].mUnk_0 = r - 1;
                     queue[tail].mUnk_1 = g;
                     queue[tail].mUnk_2 = b;
-                    queue[tail].mUnk_3 = idx;
+                    queue[tail].mPaletteIndex = idx;
                     tail = (tail + 1) & 0x1fff;
                 }
             }
@@ -2224,7 +2224,7 @@ void *CreateNearestColorTable(int id, int layers) {
                     queue[tail].mUnk_0 = r + 1;
                     queue[tail].mUnk_1 = g;
                     queue[tail].mUnk_2 = b;
-                    queue[tail].mUnk_3 = idx;
+                    queue[tail].mPaletteIndex = idx;
                     tail = (tail + 1) & 0x1fff;
                 }
             }
@@ -2239,7 +2239,7 @@ void *CreateNearestColorTable(int id, int layers) {
                     queue[tail].mUnk_0 = r;
                     queue[tail].mUnk_1 = g - 1;
                     queue[tail].mUnk_2 = b;
-                    queue[tail].mUnk_3 = idx;
+                    queue[tail].mPaletteIndex = idx;
                     tail = (tail + 1) & 0x1fff;
                 }
             }
@@ -2254,7 +2254,7 @@ void *CreateNearestColorTable(int id, int layers) {
                     queue[tail].mUnk_0 = r;
                     queue[tail].mUnk_1 = g + 1;
                     queue[tail].mUnk_2 = b;
-                    queue[tail].mUnk_3 = idx;
+                    queue[tail].mPaletteIndex = idx;
                     tail = (tail + 1) & 0x1fff;
                 }
             }
@@ -2269,7 +2269,7 @@ void *CreateNearestColorTable(int id, int layers) {
                     queue[tail].mUnk_0 = r;
                     queue[tail].mUnk_1 = g;
                     queue[tail].mUnk_2 = b - 1;
-                    queue[tail].mUnk_3 = idx;
+                    queue[tail].mPaletteIndex = idx;
                     tail = (tail + 1) & 0x1fff;
                 }
             }
@@ -2284,7 +2284,7 @@ void *CreateNearestColorTable(int id, int layers) {
                     queue[tail].mUnk_0 = r;
                     queue[tail].mUnk_1 = g;
                     queue[tail].mUnk_2 = b + 1;
-                    queue[tail].mUnk_3 = idx;
+                    queue[tail].mPaletteIndex = idx;
                     tail = (tail + 1) & 0x1fff;
                 }
             }
@@ -2429,18 +2429,23 @@ void UpdateFade(void) {
     }
 }
 
-void func_0201f6d0(int a, int b, int c, u16 d, u16 e) {
+// Loads image `image` on both screens, sets up texture layer 1 from files b, c and a, swaps the LCDs and draws
+// sprite + step at (0x2c, 0x5d) each frame (the step goes up every fourth frame to 10, then loops through 10 to 24 one
+// per frame) until UpdateWaitForReleaseOrTimeout with 0x3c and 0x78 frames ends; then fades both screens. It never
+// starts the fade to clear itself, so the frames count only once UpdateSystem's automatic fade to clear
+// (gSystemState.mFlags 0x20000) has cleared both screens.
+void RunImageWithSprite(int a, int b, int c, u16 image, u16 sprite) {
     int phase = 0;
     int touched = 0;
     u32 frames = 0;
     u32 step = 0;
 
     SetFaded(3);
-    LoadImage(d, 3);
+    LoadImage(image, 3);
     ReleaseTextureLayers();
     SetupTextureLayer(b, c, a, 0, 1);
     SetLcdSwap(1);
-    while (func_0201f910(&frames, &touched, 0x3c, 0x78, 3) == 0) {
+    while (UpdateWaitForReleaseOrTimeout(&frames, &touched, 0x3c, 0x78, 3) == 0) {
         if (phase == 0) {
             if ((gSystemState.mElapsedFrames & 3) == 0) {
                 step++;
@@ -2455,7 +2460,7 @@ void func_0201f6d0(int a, int b, int c, u16 d, u16 e) {
             }
         }
         UpdateSystemAndWait();
-        DrawSprite(e + step, 0x2c, 0x5d, 0, 1);
+        DrawSprite(sprite + step, 0x2c, 0x5d, 0, 1);
     }
     gSystemState.mFlags |= 0x40000;
     FadeAndWait(3);
@@ -2539,7 +2544,12 @@ void SetFadeClear(int a) {
     }
 }
 
-int func_0201f910(u32 *frames, int *touched, u32 minFrames, u32 maxFrames, int layers) {
+// One frame of a wait: returns 1 once nothing is held (key bits 0 or 3, the touch) after something was and more than
+// minFrames frames have passed, or once *frames reaches maxFrames. *touched latches, so a press released before
+// minFrames ends the wait as soon as minFrames has passed. *frames counts up only while the screens in `layers` are
+// FADE_STATE_CLEAR. RunImage and RunImageWithSprite start it at 0; func_0201fed4 starts it at the frames elapsed since
+// gSystemState.mUnk_324.
+int UpdateWaitForReleaseOrTimeout(u32 *frames, int *touched, u32 minFrames, u32 maxFrames, int layers) {
     if ((gSystemState.mKeysDown & 9) || ReadTouchAndAppendTrail(0, 0) == 1) {
         *touched = 1;
     }
@@ -2566,7 +2576,7 @@ void RunImage(int a, int b, int c, int d, int e) {
     FadeAndWait(e);
     LoadImage(a, e);
     StartFadeClear(e);
-    while (func_0201f910(&frames, &touched, b, c, e) == 0) {
+    while (UpdateWaitForReleaseOrTimeout(&frames, &touched, b, c, e) == 0) {
         UpdateSystemAndWait();
     }
     if (d != 0) {
@@ -2899,7 +2909,7 @@ void func_0201fed4(int a) {
     if (limit == 0) {
         limit = 180;
     }
-    while (func_0201f910(&elapsed, &flag, 60, limit, 3) == 0) {
+    while (UpdateWaitForReleaseOrTimeout(&elapsed, &flag, 60, limit, 3) == 0) {
         UpdateSystemAndWait();
     }
     gSystemState.mUnk_450 |= 4;
@@ -2985,7 +2995,7 @@ void InitSaveStore(u32 a, int b, u16 c, int d, void (*fn)(u32), int e) {
     func_0201fed4(1);
     if (gSystemState.mUnk_32f == 1) {
         gSystemState.mSaveCallback(2);
-        while (func_02020890() == 0) {
+        while (ConsumeKeyOrTouchPress() == 0) {
             UpdateSystemAndWait();
         }
         gSystemState.mFlags &= ~0xc0000;
@@ -3237,7 +3247,9 @@ int IsLcdSwapped(void) {
     return 0;
 }
 
-int func_02020890(void) {
+// Only while both screens are FADE_STATE_CLEAR: returns 1 for a press of key bit 0 or of the touch and clears both
+// (bit 0 of mKeysPressed and mTouchPressed).
+int ConsumeKeyOrTouchPress(void) {
     if (gSystemState.mFadeState[0] == FADE_STATE_CLEAR && gSystemState.mFadeState[1] == FADE_STATE_CLEAR &&
         ((gSystemState.mKeysPressed & 1) || gSystemState.mTouchPressed == 1)) {
         gSystemState.mKeysPressed &= ~1;
@@ -3680,8 +3692,8 @@ void SumMicBands(const u8 *spectrum, const u16 *ranges, u32 count, u32 *totals, 
         OS_Terminate();
     }
     for (i = 0; i < count; i++) {
-        lo = func_02021364(ranges[0]);
-        hi = func_02021364(ranges[1]);
+        lo = GetMicSpectrumIndex(ranges[0]);
+        hi = GetMicSpectrumIndex(ranges[1]);
         sums[i] = 0;
         for (; lo < hi; lo++) {
             sums[i] += spectrum[lo];
@@ -3726,7 +3738,7 @@ void ComputeMicSpectrum(u8 *out, u32 nShift) {
     }
 }
 
-u32 func_02021364(u32 x) {
+u32 GetMicSpectrumIndex(u32 x) {
     return (x << gSystemState.mMicSpectrumShift) / gSystemState.mMicParam.rate;
 }
 

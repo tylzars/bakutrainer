@@ -115,14 +115,17 @@ typedef struct SystemState {
     void (*mUnk_240)(void);
     s32 mUnk_244;
     s32 mUnk_248;
-    void (*mUnk_24c)(int);
+    void (*mCommErrorFunc)(int);
     Unk_020c1b0c mUnk_250;
     u8 mUnk_27c[4];
     s32 mUnk_280;
     u16 *mUnk_284;
-    u16 mUnk_288;
-    u16 mUnk_28a;
-    u16 mUnk_28c;
+    // Bit i set when entry i came in on the last exchange: ExchangeCommRecords writes it for the 16 comm slots and
+    // UpdateSystem's other link exchange for its 2 entries; neither runs in this build. CountUnchangedSlotMask keeps
+    // the previous mask and counts, up to 0x800, the calls that left it unchanged; nothing else reads the count.
+    u16 mLinkSlotMask;
+    u16 mPrevLinkSlotMask;
+    u16 mUnchangedLinkSlotMaskCount;
     u16 mUnk_28e;
     u16 mUnk_290;
     u16 mUnk_292;
@@ -130,7 +133,9 @@ typedef struct SystemState {
     u16 mUnk_296;
     u8 *mUnk_298;
     u8 mUnk_29c[0x2a2 - 0x29c];
-    u8 mUnk_2a2;
+    // Connection tries of the comm link (UpdateCommChild enters the error case after 5); the comm link does not run
+    // in this build.
+    u8 mConnectAttemptCount;
     u8 mUnk_2a3;
     s8 mUnk_2a4[2];
     u8 mUnk_2a6_0 : 1;
@@ -193,24 +198,35 @@ typedef struct SystemState {
     u16 mSubWin1V;
     u8 mSubWindowBits;
     u8 mUnk_2fb;
-    s16 mUnk_2fc;
-    s16 mUnk_2fe;
-    s16 mUnk_300;
-    s16 mUnk_302;
-    u32 (*mUnk_304)(u32);
+    // With TEXT_BOUNDS, DrawTextEx keeps here the bounds of the glyphs it draws, in screen coordinates (after the swap
+    // for vertical text and the rotation); nothing reads them in this build.
+    s16 mTextBoundsMinX;
+    s16 mTextBoundsMinY;
+    s16 mTextBoundsMaxX;
+    s16 mTextBoundsMaxY;
+    u32 (*mTextEscapeFunc)(u32);
     u16 mUnk_308;
     u8 mUnk_30a[2];
-    u16 mUnk_30c;
-    u16 mUnk_30e;
-    u8 mUnk_310;
+    u16 mTextCharLimit;
+    // Replaces a character no font in the chain holds. Only start-up writes it (0x20), so DrawTextEx's branch for any
+    // other replacement never runs in this build.
+    u16 mTextReplacementChar;
+    // Ends a line in DrawTextEx and is not drawn: 10 from start-up, 0x40 once main has set it.
+    u8 mTextLineBreakChar;
     u8 mUnk_311[2];
-    u8 mUnk_313;
-    u8 mUnk_314;
-    u8 mUnk_315;
+    // With TEXT_LINE_WINDOW DrawTextEx draws (and advances the line position for) only mTextWindowLineCount lines from
+    // line mTextWindowLineIndex, the 0-based number of the window's first line. The script code sets both.
+    u8 mTextWindowLineIndex;
+    u8 mTextWindowLineCount;
+    // Lines laid out by the last DrawTextEx call; only the script code reads it.
+    u8 mTextLineCount;
     u8 mUnk_316;
-    u8 mUnk_317_0 : 1;
+    // Cleared by each DrawTextEx call and set when TEXT_LIMIT holds a character back.
+    u8 mTextIncomplete : 1;
     u8 mUnk_317_1 : 7;
-    u8 mUnk_318;
+    // While it is 1 ReadTextChar decodes a $<number> escape through mTextEscapeFunc. Each DrawTextEx call copies
+    // TEXT_ESCAPES into it; CopyFileString sets it for its copy and restores it.
+    u8 mUseTextEscapes;
     u8 mUnk_319[3];
     void (*mSaveCallback)(u32);
     u8 *mUnk_320;
@@ -273,8 +289,10 @@ typedef struct SystemState {
     u8 mUnk_48f;
     u8 mFadeState[2];
     u8 mUnk_492;
-    u8 mUnk_493;
-    u8 mUnk_494;
+    // Only main sets it (to 1). While it is 0 PlayTrack and SetGlobalVolume force the tracker volume to 0; the song
+    // still plays.
+    u8 mUseTrackerVolume;
+    u8 mUseWaves;
     u8 mUnk_495;
     s16 mUnk_496;
     s32 mUnk_498;
@@ -297,10 +315,10 @@ void ResetKeys(void);
 void *Alloc(u32 size);
 void *AllocWithFlags(u32 size, u32 flags);
 int Free(void *p);
-u16 func_0201c538(void);
-u16 func_0201c544(void);
+u16 GetTexFileKeyCount(void);
+u16 GetPlttFileKeyCount(void);
 u32 func_0201c550(void);
-u32 func_0201c564(void);
+u32 GetPaletteFileKeyEnd(void);
 
 // Objects of the per-frame system code.
 

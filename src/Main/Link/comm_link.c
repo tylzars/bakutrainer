@@ -55,7 +55,7 @@ typedef struct Unk_CommRecord {
 
 // With the link in WH_SYSSTATE_DATASHARING and this frame's exchange gone through, reads each of the 16 slots: a slot
 // that holds data has its record stored in gCommRecords and its flag set (gCommRecordReceived, and a bit in the mask at
-// gSystemState.mUnk_288); then CountUnchangedSlotMask follows the mask.
+// gSystemState.mLinkSlotMask); then CountUnchangedSlotMask follows the mask.
 void ExchangeCommRecords(void) {
     u16 i;
 
@@ -66,13 +66,13 @@ void ExchangeCommRecords(void) {
         return;
     }
     *data_020c66d4->mUnk_4 = 0;
-    gSystemState.mUnk_288 = 0;
+    gSystemState.mLinkSlotMask = 0;
     for (i = 0; i < COMM_SLOTS; i++) {
         void *src = WhGetSharedData(i);
         if (src != NULL) {
             MI_CpuCopy8(src, gCommRecords + i * COMM_RECORD_SIZE, COMM_RECORD_SIZE);
             gCommRecordReceived[i] = 1;
-            gSystemState.mUnk_288 |= 1 << i;
+            gSystemState.mLinkSlotMask |= 1 << i;
         } else {
             gCommRecordReceived[i] = 0;
         }
@@ -82,11 +82,11 @@ void ExchangeCommRecords(void) {
 
 // Counts (up to 0x800) the calls for which the slot mask has not changed.
 void CountUnchangedSlotMask(void) {
-    if (gSystemState.mUnk_288 != gSystemState.mUnk_28a) {
-        gSystemState.mUnk_28a = gSystemState.mUnk_288;
-        gSystemState.mUnk_28c = 0;
-    } else if (gSystemState.mUnk_28c < 0x800) {
-        (gSystemState.mUnk_28c)++;
+    if (gSystemState.mLinkSlotMask != gSystemState.mPrevLinkSlotMask) {
+        gSystemState.mPrevLinkSlotMask = gSystemState.mLinkSlotMask;
+        gSystemState.mUnchangedLinkSlotMaskCount = 0;
+    } else if (gSystemState.mUnchangedLinkSlotMaskCount < 0x800) {
+        (gSystemState.mUnchangedLinkSlotMaskCount)++;
     }
 }
 
@@ -94,10 +94,10 @@ void ClearCommSendData(void) {
     memset(gCommSendData, 0, 0xfe);
 }
 
-// Link error handler (the callback in gSystemState.mUnk_24c, run only by HaltOnCommError, so never in this build):
-// with 0 it tears down the display, the track and the waves; otherwise it opens the text screen and prints a message
-// that the wireless communication failed, in the owner's language (2 French, 3 German, 4 Italian, 5 Spanish, English
-// otherwise).
+// Link error handler (the callback in gSystemState.mCommErrorFunc, run only by HaltOnCommError, so never in this
+// build): with 0 it tears down the display, the track and the waves; otherwise it opens the text screen and prints a
+// message that the wireless communication failed, in the owner's language (2 French, 3 German, 4 Italian, 5 Spanish,
+// English otherwise).
 void ShowCommError(int a) {
     OSOwnerInfo info;
 
@@ -148,9 +148,9 @@ void HaltOnCommError(void) {
     if (gSystemState.mUnk_2a4[1] != -2) {
         return;
     }
-    gSystemState.mUnk_24c(0);
+    gSystemState.mCommErrorFunc(0);
     while (1) {
-        gSystemState.mUnk_24c(1);
+        gSystemState.mCommErrorFunc(1);
         UpdateSystem(0);
     }
 }
@@ -166,9 +166,9 @@ void UpdateCommChild(void) {
             WhShutDownOrFail();
             break;
         case WH_SYSSTATE_IDLE:
-            if (gSystemState.mUnk_2a2 < 5) {
+            if (gSystemState.mConnectAttemptCount < 5) {
                 ConnectCommAsChild();
-                gSystemState.mUnk_2a2++;
+                gSystemState.mConnectAttemptCount++;
                 break;
             }
         case WH_SYSSTATE_ERROR:
@@ -177,7 +177,7 @@ void UpdateCommChild(void) {
         case WH_SYSSTATE_CONNECTED:
         case WH_SYSSTATE_DATASHARING:
         case WH_SYSSTATE_KEYSHARING:
-            gSystemState.mUnk_2a2 = 0;
+            gSystemState.mConnectAttemptCount = 0;
             ExchangeCommRecords();
             break;
     }

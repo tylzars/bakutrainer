@@ -242,14 +242,14 @@ const s16 *gEffectWaves[8] = {gSineWave, gFallingWave, gSquareWave, gSineWave,
 
 #pragma thumb off
 
-// Loads the song in file fileId and starts it with volume (at most 0x80; 0 while gSystemState.mUnk_493 is 0). The
-// song already loaded, with the global fade at TRACKER_GLOBAL_FADE_NONE and restart 0, only takes the new volume.
+// Loads the song in file fileId and starts it with volume (at most 0x80; 0 while gSystemState.mUseTrackerVolume is 0).
+// The song already loaded, with the global fade at TRACKER_GLOBAL_FADE_NONE and restart 0, only takes the new volume.
 // sampleFileBase is the number added to each sample name's number to get the sample's file id (0 keeps the last one);
 // startOrder goes to StartPlayback. With fadeFirst == 1 while a song plays the request is stored and the global fade
 // started (TRACKER_GLOBAL_FADE_TO_PENDING), for UpdateTracker to play once it is done. A new song's file gives the
 // header bytes, the order table, the patterns (a cell byte with bit 7 set says which of the five bytes follow; the
-// others become 0xff, 0, 0, 0xff, 0), the instruments with their two envelopes, and their samples, whose data is
-// loaded by the number in the sample's name.
+// others become 0xff, 0, 0, 0xff, 0), the instruments with their two envelopes, and their samples, whose data is loaded
+// by the number in the sample's name.
 void PlayTrack(u16 fileId, u16 sampleFileBase, u8 volume, u16 startOrder, int fadeFirst, int restart) {
     u8 name[0x17];
     u8 *patterns;
@@ -266,7 +266,7 @@ void PlayTrack(u16 fileId, u16 sampleFileBase, u8 volume, u16 startOrder, int fa
     if (volume > 0x80) {
         OS_Terminate();
     }
-    if (gSystemState.mUnk_493 == 0) {
+    if (gSystemState.mUseTrackerVolume == 0) {
         volume = 0;
     }
     if (fileId == gTrackerPlayer.mTrackFileId && gTrackerPlayer.mGlobalFadeState == TRACKER_GLOBAL_FADE_NONE &&
@@ -1976,13 +1976,13 @@ u32 ComputePan(int pan, u16 level) {
     return v < 255 ? v : 255;
 }
 
-// Sets the master volume (0 unless the system flag allows sound, at most 128) and, while a song plays, sends the
+// Sets the master volume (0 while gSystemState.mUseTrackerVolume is 0, at most 128) and, while a song plays, sends the
 // new volume of each active hardware channel.
 void SetGlobalVolume(u8 volume, int mode) {
     u32 mask;
     u32 i;
 
-    if (gSystemState.mUnk_493 == 0) {
+    if (gSystemState.mUseTrackerVolume == 0) {
         volume = 0;
     }
     if (volume > 128) {

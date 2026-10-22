@@ -30,12 +30,12 @@ void ReallocVramBanks(int type, int size, int addr);
 void AllocVramBanks(int type, u32 size, u32 addr);
 
 // Entry of the colour fill queue: a 5-bit colour (three components) and the palette index that reached it.
-typedef struct Unk_ColorQueue {
+typedef struct ColorQueueEntry {
     u8 mUnk_0;
     u8 mUnk_1;
     u8 mUnk_2;
-    u8 mUnk_3;
-} Unk_ColorQueue;
+    u8 mPaletteIndex;
+} ColorQueueEntry;
 
 // Nearest-palette lookup: CreateNearestColorTable uploads the 256 colours of file `id` to the palettes of the layers
 // in mask `layers` and returns a 0x8000-byte table indexed by a 15-bit colour (r + (g << 5) + (b << 10)) that holds

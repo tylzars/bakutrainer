@@ -24,7 +24,7 @@ typedef struct IndexNode16 {
 void SetupImageLayer(int a, int b, u32 c, u32 d);
 u8 *UploadPalette(u8 *palette, u32 count, int a, int layers);
 void UpdateFade(void);
-void func_0201f6d0(int a, int b, int c, u16 d, u16 e);
+void RunImageWithSprite(int a, int b, int c, u16 image, u16 sprite);
 int IsFadeState(int layers, int state);
 int TestBits(int a, int b);
 void StartFade(int a);
@@ -33,7 +33,7 @@ void FadeClearAndWait(int a);
 void FadeAndWait(int a);
 void SetFaded(int a);
 void SetFadeClear(int a);
-int func_0201f910(u32 *frames, int *touched, u32 minFrames, u32 maxFrames, int layers);
+int UpdateWaitForReleaseOrTimeout(u32 *frames, int *touched, u32 minFrames, u32 maxFrames, int layers);
 void RunImage(int a, int b, int c, int d, int e);
 void MoveIndexNode16ToEnd(IndexNode16 *list, u32 index);
 

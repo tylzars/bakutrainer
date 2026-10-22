@@ -531,11 +531,11 @@ void func_020243c0(int id, fx32 x, fx32 y, fx32 z, u16 angle, fx32 sx, fx32 sy, 
     for (i = 0; i < n; i++) {
         GetTexInfo(id, &info, i);
         GetSpriteRect(id, 0, clip);
-        base = func_0201c538();
+        base = GetTexFileKeyCount();
         slot = id << 6;
         slot += i;
         col = pal[info.mUnk_14] & 0x7fff;
-        key = func_0201c544() + (c ^ (col << 2));
+        key = GetPlttFileKeyCount() + (c ^ (col << 2));
         opaque = pal[info.mUnk_14] >> 15;
         size = info.mWidth * info.mHeight;
         switch (info.mUnk_12) {

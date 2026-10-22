@@ -5,17 +5,18 @@
 // Work area of the "QRK" unpacker: 11-bit bit probabilities (0x400 = even) for its range decoder, filled with
 // 0x04000400 words before each file. 0x1588 bytes (GetQrkWorkSize).
 typedef struct QrkProbs {
-    /* 000 */ u16 mUnk_000[8][32];   // 5-bit trees: distance slot, by match length
-    /* 200 */ u16 mUnk_200[64];      // 6-bit tree: low distance bits
-    /* 280 */ u16 mUnk_280[4];       // 2-bit tree: distance of a 1-byte match
-    /* 288 */ u16 mUnk_288[32];      // 1-bit trees (two entries per state): repeat match or new match
-    /* 2c8 */ u16 mUnk_2c8[32][16];  // 4-bit trees: match length, by length state
-    /* 6c8 */ u16 mUnk_6c8[256];     // 8-bit tree: long match length
-    /* 8c8 */ u16 mUnk_8c8[32][16];  // 4-bit trees: repeat match length, by length state
-    /* cc8 */ u16 mUnk_cc8[256];     // 8-bit tree: long repeat match length
-    /* ec8 */ u16 mUnk_ec8[16][4];   // 2-bit trees: which of the four last distances, by state
-    /* f48 */ u16 mUnk_f48[32];      // 1-bit trees (two entries per state): literal or match
-    /* f88 */ u16 mUnk_f88[3][256];  // 8-bit trees: literal bytes (plain, then matched against a 0 or a 1 bit)
+    /* 000 */ u16 mDistSlotProbs[8][32];         // 5-bit trees: distance slot, by match length
+    /* 200 */ u16 mDistLowBitProbs[64];          // 6-bit tree: low distance bits
+    /* 280 */ u16 mOneByteMatchDistProbs[4];     // 2-bit tree: distance of a 1-byte match
+    /* 288 */ u16 mRepeatOrNewMatchProbs[32];    // 1-bit trees (two entries per state): repeat match or new match
+    /* 2c8 */ u16 mMatchLenProbs[32][16];        // 4-bit trees: match length, by length state
+    /* 6c8 */ u16 mMatchLongLenProbs[256];       // 8-bit tree: long match length
+    /* 8c8 */ u16 mRepeatLenProbs[32][16];       // 4-bit trees: repeat match length, by length state
+    /* cc8 */ u16 mRepeatLongLenProbs[256];      // 8-bit tree: long repeat match length
+    /* ec8 */ u16 mRepeatDistIndexProbs[16][4];  // 2-bit trees: which of the four last distances, by state
+    /* f48 */ u16 mLiteralOrMatchProbs[32];      // 1-bit trees (two entries per state): literal or match
+    // 8-bit trees: literal bytes (plain, then matched against a 0 or a 1 bit)
+    /* f88 */ u16 mLiteralProbs[3][256];
 } QrkProbs;
 
 // Header: "QRK", a byte whose top three bits are the format version (QRK_VERSION), then the unpacked size as a
@@ -57,7 +58,7 @@ static u8 sQrkLowBitOrder[64] = {
 // locals; the literal/match bit is decoded with len as the symbol, i as the one-pass counter and pp as the table;
 // the matched-literal loop sets k, sym and matching before a `for (; k >= 0; k--)`; nbits counts the 4-bit length
 // tree and the 5-bit slot tree (whose table is pp) and is read through `sym & 0x1f` before slot is set; and the
-// 6-bit tree takes a fresh pp = &p->mUnk_200[sym] each step, which puts the moves of 1 and 0 ahead of the table
+// 6-bit tree takes a fresh pp = &p->mDistLowBitProbs[sym] each step, which puts the moves of 1 and 0 ahead of the table
 // address add before that loop.
 static void UnpackQrkData(QrkProbs *p, u8 *dst, const u8 *src, u32 size) {
     u8 *end;
@@ -87,38 +88,38 @@ static void UnpackQrkData(QrkProbs *p, u8 *dst, const u8 *src, u32 size) {
     u32 range;
 
     end = dst + size;
-    for (i = 0; i < sizeof(p->mUnk_000) / 4; i++) {
-        ((u32 *) p->mUnk_000)[i] = (QRK_PROB_INIT << 16) | QRK_PROB_INIT;
+    for (i = 0; i < sizeof(p->mDistSlotProbs) / 4; i++) {
+        ((u32 *) p->mDistSlotProbs)[i] = (QRK_PROB_INIT << 16) | QRK_PROB_INIT;
     }
-    for (i = 0; i < sizeof(p->mUnk_200) / 4; i++) {
-        ((u32 *) p->mUnk_200)[i] = (QRK_PROB_INIT << 16) | QRK_PROB_INIT;
+    for (i = 0; i < sizeof(p->mDistLowBitProbs) / 4; i++) {
+        ((u32 *) p->mDistLowBitProbs)[i] = (QRK_PROB_INIT << 16) | QRK_PROB_INIT;
     }
-    for (i = 0; i < sizeof(p->mUnk_280) / 4; i++) {
-        ((u32 *) p->mUnk_280)[i] = (QRK_PROB_INIT << 16) | QRK_PROB_INIT;
+    for (i = 0; i < sizeof(p->mOneByteMatchDistProbs) / 4; i++) {
+        ((u32 *) p->mOneByteMatchDistProbs)[i] = (QRK_PROB_INIT << 16) | QRK_PROB_INIT;
     }
-    for (i = 0; i < sizeof(p->mUnk_288) / 4; i++) {
-        ((u32 *) p->mUnk_288)[i] = (QRK_PROB_INIT << 16) | QRK_PROB_INIT;
+    for (i = 0; i < sizeof(p->mRepeatOrNewMatchProbs) / 4; i++) {
+        ((u32 *) p->mRepeatOrNewMatchProbs)[i] = (QRK_PROB_INIT << 16) | QRK_PROB_INIT;
     }
-    for (i = 0; i < sizeof(p->mUnk_2c8) / 4; i++) {
-        ((u32 *) p->mUnk_2c8)[i] = (QRK_PROB_INIT << 16) | QRK_PROB_INIT;
+    for (i = 0; i < sizeof(p->mMatchLenProbs) / 4; i++) {
+        ((u32 *) p->mMatchLenProbs)[i] = (QRK_PROB_INIT << 16) | QRK_PROB_INIT;
     }
-    for (i = 0; i < sizeof(p->mUnk_6c8) / 4; i++) {
-        ((u32 *) p->mUnk_6c8)[i] = (QRK_PROB_INIT << 16) | QRK_PROB_INIT;
+    for (i = 0; i < sizeof(p->mMatchLongLenProbs) / 4; i++) {
+        ((u32 *) p->mMatchLongLenProbs)[i] = (QRK_PROB_INIT << 16) | QRK_PROB_INIT;
     }
-    for (i = 0; i < sizeof(p->mUnk_8c8) / 4; i++) {
-        ((u32 *) p->mUnk_8c8)[i] = (QRK_PROB_INIT << 16) | QRK_PROB_INIT;
+    for (i = 0; i < sizeof(p->mRepeatLenProbs) / 4; i++) {
+        ((u32 *) p->mRepeatLenProbs)[i] = (QRK_PROB_INIT << 16) | QRK_PROB_INIT;
     }
-    for (i = 0; i < sizeof(p->mUnk_cc8) / 4; i++) {
-        ((u32 *) p->mUnk_cc8)[i] = (QRK_PROB_INIT << 16) | QRK_PROB_INIT;
+    for (i = 0; i < sizeof(p->mRepeatLongLenProbs) / 4; i++) {
+        ((u32 *) p->mRepeatLongLenProbs)[i] = (QRK_PROB_INIT << 16) | QRK_PROB_INIT;
     }
-    for (i = 0; i < sizeof(p->mUnk_ec8) / 4; i++) {
-        ((u32 *) p->mUnk_ec8)[i] = (QRK_PROB_INIT << 16) | QRK_PROB_INIT;
+    for (i = 0; i < sizeof(p->mRepeatDistIndexProbs) / 4; i++) {
+        ((u32 *) p->mRepeatDistIndexProbs)[i] = (QRK_PROB_INIT << 16) | QRK_PROB_INIT;
     }
-    for (i = 0; i < sizeof(p->mUnk_f48) / 4; i++) {
-        ((u32 *) p->mUnk_f48)[i] = (QRK_PROB_INIT << 16) | QRK_PROB_INIT;
+    for (i = 0; i < sizeof(p->mLiteralOrMatchProbs) / 4; i++) {
+        ((u32 *) p->mLiteralOrMatchProbs)[i] = (QRK_PROB_INIT << 16) | QRK_PROB_INIT;
     }
-    for (i = 0; i < sizeof(p->mUnk_f88) / 4; i++) {
-        ((u32 *) p->mUnk_f88)[i] = (QRK_PROB_INIT << 16) | QRK_PROB_INIT;
+    for (i = 0; i < sizeof(p->mLiteralProbs) / 4; i++) {
+        ((u32 *) p->mLiteralProbs)[i] = (QRK_PROB_INIT << 16) | QRK_PROB_INIT;
     }
 
     bound = src[0];
@@ -142,7 +143,7 @@ static void UnpackQrkData(QrkProbs *p, u8 *dst, const u8 *src, u32 size) {
 
         lsym = 1;
         for (lk = 7; lk >= 0; lk--) {
-            pp = &p->mUnk_f88[0][lsym];
+            pp = &p->mLiteralProbs[0][lsym];
             lprob = *pp;
             bound = (range >> QRK_PROB_BITS) * lprob;
             if (code < bound) {
@@ -174,7 +175,7 @@ static void UnpackQrkData(QrkProbs *p, u8 *dst, const u8 *src, u32 size) {
 
     do {
         len = 1;
-        pp = &p->mUnk_f48[state * 2];
+        pp = &p->mLiteralOrMatchProbs[state * 2];
         for (i = 0; i >= 0; i--) {
             prob = pp[len];
             bound = (range >> QRK_PROB_BITS) * prob;
@@ -209,7 +210,7 @@ static void UnpackQrkData(QrkProbs *p, u8 *dst, const u8 *src, u32 size) {
                     } else {
                         idx = 0;
                     }
-                    pp = &p->mUnk_f88[0][(idx << 8) + sym];
+                    pp = &p->mLiteralProbs[0][(idx << 8) + sym];
                     uprob = *pp;
                     bound = (range >> QRK_PROB_BITS) * uprob;
                     if (code < bound) {
@@ -244,7 +245,7 @@ static void UnpackQrkData(QrkProbs *p, u8 *dst, const u8 *src, u32 size) {
 
                     lsym = 1;
                     for (lk = 7; lk >= 0; lk--) {
-                        pp = &p->mUnk_f88[0][lsym];
+                        pp = &p->mLiteralProbs[0][lsym];
                         uprob = *pp;
                         bound = (range >> QRK_PROB_BITS) * uprob;
                         if (code < bound) {
@@ -283,7 +284,7 @@ static void UnpackQrkData(QrkProbs *p, u8 *dst, const u8 *src, u32 size) {
             continue;
         }
         sym = 1;
-        probs = &p->mUnk_288[state * 2];
+        probs = &p->mRepeatOrNewMatchProbs[state * 2];
         for (k = 0; k >= 0; k--) {
             prob = probs[sym];
             bound = (range >> QRK_PROB_BITS) * prob;
@@ -305,7 +306,7 @@ static void UnpackQrkData(QrkProbs *p, u8 *dst, const u8 *src, u32 size) {
         if (!(sym & 1)) {
             // A new match: its length, then its distance.
             sym = 1;
-            probs = p->mUnk_2c8[lenState];
+            probs = p->mMatchLenProbs[lenState];
             for (nbits = 3; nbits >= 0; nbits--) {
                 prob = probs[sym];
                 bound = (range >> QRK_PROB_BITS) * prob;
@@ -327,7 +328,7 @@ static void UnpackQrkData(QrkProbs *p, u8 *dst, const u8 *src, u32 size) {
             len = sym & 0xf;
             if (len++ == 15) {
                 sym = 1;
-                probs = p->mUnk_6c8;
+                probs = p->mMatchLongLenProbs;
                 for (k = 7; k >= 0; k--) {
                     prob = probs[sym];
                     bound = (range >> QRK_PROB_BITS) * prob;
@@ -350,7 +351,7 @@ static void UnpackQrkData(QrkProbs *p, u8 *dst, const u8 *src, u32 size) {
             }
             if (len == 1) {
                 sym = 1;
-                probs = p->mUnk_280;
+                probs = p->mOneByteMatchDistProbs;
                 for (k = 1; k >= 0; k--) {
                     prob = probs[sym];
                     bound = (range >> QRK_PROB_BITS) * prob;
@@ -376,7 +377,7 @@ static void UnpackQrkData(QrkProbs *p, u8 *dst, const u8 *src, u32 size) {
                     k = 7;
                 }
                 sym = 1;
-                pp = p->mUnk_000[k];
+                pp = p->mDistSlotProbs[k];
                 for (nbits = 4; nbits >= 0; nbits--) {
                     prob = pp[sym];
                     bound = (range >> QRK_PROB_BITS) * prob;
@@ -416,7 +417,7 @@ static void UnpackQrkData(QrkProbs *p, u8 *dst, const u8 *src, u32 size) {
                 }
                 sym = 1;
                 for (nbits = 0; nbits < 6; nbits++) {
-                    pp = &p->mUnk_200[sym];
+                    pp = &p->mDistLowBitProbs[sym];
                     prob = *pp;
                     bound = (range >> QRK_PROB_BITS) * prob;
                     if (code < bound) {
@@ -453,7 +454,7 @@ static void UnpackQrkData(QrkProbs *p, u8 *dst, const u8 *src, u32 size) {
         } else {
             // A repeated match: its length, then which of the last four distances.
             sym = 1;
-            probs = p->mUnk_8c8[lenState];
+            probs = p->mRepeatLenProbs[lenState];
             for (k = 3; k >= 0; k--) {
                 prob = probs[sym];
                 bound = (range >> QRK_PROB_BITS) * prob;
@@ -475,7 +476,7 @@ static void UnpackQrkData(QrkProbs *p, u8 *dst, const u8 *src, u32 size) {
             len = sym & 0xf;
             if (len++ == 15) {
                 sym = 1;
-                probs = p->mUnk_cc8;
+                probs = p->mRepeatLongLenProbs;
                 for (k = 7; k >= 0; k--) {
                     prob = probs[sym];
                     bound = (range >> QRK_PROB_BITS) * prob;
@@ -497,7 +498,7 @@ static void UnpackQrkData(QrkProbs *p, u8 *dst, const u8 *src, u32 size) {
                 len += sym & 0xff;
             }
             sym = 1;
-            probs = p->mUnk_ec8[state];
+            probs = p->mRepeatDistIndexProbs[state];
             for (k = 1; k >= 0; k--) {
                 prob = probs[sym];
                 bound = (range >> QRK_PROB_BITS) * prob;

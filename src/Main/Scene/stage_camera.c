@@ -1119,7 +1119,7 @@ void func_02018558(void) {
     pos.x = gMapState.mCamera.mLookAt.x;
     pos.z = gMapState.mCamera.mLookAt.z;
     pos.y = -0x19000;
-    func_0200ba08(data_020b6ee0.mMapIndex + 0xfbe, &pos, (gSystemState.mElapsedFrames >> 1) % 100, 0, 0x3000, 0);
+    DrawModelFileAtPos(data_020b6ee0.mMapIndex + 0xfbe, &pos, (gSystemState.mElapsedFrames >> 1) % 100, 0, 0x3000, 0);
     func_02033614(gMapState.mCamera.mLookAt.x, gMapState.mCamera.mLookAt.z);
     UpdateFollowers(stage);
     func_02015f34();
@@ -1433,7 +1433,7 @@ void func_02018cd4(void) {
             }
             if (data_020b6ee0.mPanelState <= 1) {
                 if (idx == data_020b6ee0.mSelectedStageIndex) {
-                    func_0200ba08(0x10c8, &marker, 0, gSystemState.mElapsedFrames << 10, 0x100000, 0);
+                    DrawModelFileAtPos(0x10c8, &marker, 0, gSystemState.mElapsedFrames << 10, 0x100000, 0);
                     func_02019800(rec);
                 }
                 if (rec->mInSlot == 1 && (u32) data_020b6ee0.mProgressState >= 0x11) {

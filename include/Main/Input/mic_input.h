@@ -21,7 +21,7 @@ void CopyMicSamples(u32 count);
 void ClearMicBands(void);
 void SumMicBands(const u8 *spectrum, const u16 *ranges, u32 count, u32 *totals, u32 *sums);
 void ComputeMicSpectrum(u8 *out, u32 nShift);
-u32 func_02021364(u32 x);
+u32 GetMicSpectrumIndex(u32 x);
 u32 GetMicBandAverage(u32 index);
 void UpdateMicBands(void);
 int func_020213e8(u32 a);

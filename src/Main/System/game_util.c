@@ -17,8 +17,8 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-// Prints a formatted line with the debug font on the given screen layer.
-void func_0200b898(int x, int y, const char *format, ...) {
+// DrawFormattedTextOnLayer2 and DrawFormattedTextOnLayer1 draw with font data_0201a6d0, width 240.
+void DrawFormattedTextOnLayer2(int x, int y, const char *format, ...) {
     char buf[256];
     va_list args;
     va_start(args, format);
@@ -26,7 +26,7 @@ void func_0200b898(int x, int y, const char *format, ...) {
     DrawText(x, y, data_0201a6d0, buf, 0, 240, 16, 2);
 }
 
-void func_0200b8dc(int x, int y, const char *format, ...) {
+void DrawFormattedTextOnLayer1(int x, int y, const char *format, ...) {
     char buf[256];
     va_list args;
     va_start(args, format);
@@ -90,7 +90,7 @@ int MoveTowardZero(s32 *p, int delta) {
     return *p;
 }
 
-void func_0200ba08(u32 a, const VecFx32 *pos, u32 b, u32 c, int d, int e) {
+void DrawModelFileAtPos(u32 a, const VecFx32 *pos, u32 b, u32 c, int d, int e) {
     DrawParams p;
     memset(&p, 0, sizeof(p));
     p.mPos.x = pos->x;
@@ -110,16 +110,17 @@ void func_0200ba08(u32 a, const VecFx32 *pos, u32 b, u32 c, int d, int e) {
     DrawModelFile(a, &p, e);
 }
 
-void func_0200ba68(u32 a, int index, int b, int c, int d, int e) {
+// `index` is a map entry id (group in the high byte, key in the low byte).
+void DrawModelFileAtMapEntry(u32 a, int index, int b, int c, int d, int e) {
     VecFx32 v;
     func_02031fc4(index, &v);
-    func_0200ba08(a, &v, b, c, d, e);
+    DrawModelFileAtPos(a, &v, b, c, d, e);
 }
 
 void func_0200ba94(const VecFx32 *src, int dy, int d) {
     VecFx32 v = *src;
     v.y -= dy;
-    func_0200ba08(0x1c5, &v, 0, 0, d, 0x38000006);
+    DrawModelFileAtPos(0x1c5, &v, 0, 0, d, 0x38000006);
 }
 
 u32 MaxAbs3(int x, int y, int z) {
@@ -133,16 +134,16 @@ u32 MaxAbsDeltaXz(const VecFx32 *a, const VecFx32 *b) {
     return MaxAbs3(b->x - a->x, 0, b->z - a->z);
 }
 
-void func_0200bb14(int a, int b, int c, int d, int e, int f, int g, int h) {
-    func_0200bc50(a, b, 0, 0, 140, c, d, GetText(e), 0, 0, f, g, h, 0, 0, 0);
+void DrawButton(int a, int b, int c, int d, int e, int f, int g, int h) {
+    DrawButtonEx(a, b, 0, 0, 140, c, d, GetText(e), 0, 0, f, g, h, 0, 0, 0);
 }
 
 void func_0200bb58(int a, int b, int c, int d, int e, int f, int g, int h, int i, int j, int k, int l, int m, int n,
                    int o) {
     if (f == g) {
-        func_0200bc50(a, b, c, d, e, f, h + 1, (const char *) i, 0, 0, j, k, l, m, 1, o);
+        DrawButtonEx(a, b, c, d, e, f, h + 1, (const char *) i, 0, 0, j, k, l, m, 1, o);
     } else {
-        func_0200bc50(a, b, c, d, e, f, h, (const char *) i, 0, 0, j, k, l, m, n, o);
+        DrawButtonEx(a, b, c, d, e, f, h, (const char *) i, 0, 0, j, k, l, m, n, o);
     }
 }
 
@@ -154,12 +155,18 @@ void func_0200bbd0(int a, int b, int c, int d, int e, int f, int g, const char *
         } else {
             g += 4;
         }
-        func_0200bc50(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p);
+        DrawButtonEx(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p);
     }
 }
 
-void func_0200bc50(int a, int b, int c, int d, int e, int f, int g, const char *h, const void *i, int j, int k, int l,
-                   int m, int n, int o, int p) {
+// Draws button f for this frame at (a, b) on layer 2 while the LCDs are swapped, else layer 1. The sprite is g, or
+// g + 1 while button f is held (only with o == 0, p == 0 and data_020b6ee0.mButtonsEnabled set); it is drawn only
+// when n == 0, and with p == 1 only while button f is held. Text h, when given, is drawn at (a, b) with font i (or
+// data_0201a6c6), alignment j and width 200. With m == 1 it also adds touch button f for this frame (the rectangle
+// a - c..a + c, b - d..b + d when c is not 0, else the area AddTouchButton takes from sprite g at (a, b); key mask k)
+// and plays sound l when button f is released.
+void DrawButtonEx(int a, int b, int c, int d, int e, int f, int g, const char *h, const void *i, int j, int k, int l,
+                  int m, int n, int o, int p) {
     int layer = IsLcdSwapped() ? 2 : 1;
     int g2 = g;
     if (o == 0 && data_020b6ee0.mButtonsEnabled != 0 && p == 0) {
@@ -223,7 +230,7 @@ void func_0200bdcc(int a, int b) {
     }
 }
 
-u16 func_0200be10(u32 r, u32 g, u32 b) {
+u16 PackColor(u32 r, u32 g, u32 b) {
     return r | (g << 5) | (b << 10);
 }
 

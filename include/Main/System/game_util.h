@@ -32,29 +32,29 @@ typedef struct DrawParams {
     u8 mUnk_43_5 : 3;
 } DrawParams;
 
-void func_0200b898(int x, int y, const char *format, ...);
-void func_0200b8dc(int x, int y, const char *format, ...);
+void DrawFormattedTextOnLayer2(int x, int y, const char *format, ...);
+void DrawFormattedTextOnLayer1(int x, int y, const char *format, ...);
 void func_0200b920(int line, const char *format, ...);
 int EaseToward(s32 *p, s32 target, int steps);
 int EaseVecToward(VecFx32 *p, VecFx32 target, int steps);
 int EaseAngleToward(s32 *p, s32 target, int steps);
 int MoveTowardZero(s32 *p, int delta);
-void func_0200ba08(u32 a, const VecFx32 *pos, u32 b, u32 c, int d, int e);
-void func_0200ba68(u32 a, int index, int b, int c, int d, int e);
+void DrawModelFileAtPos(u32 a, const VecFx32 *pos, u32 b, u32 c, int d, int e);
+void DrawModelFileAtMapEntry(u32 a, int index, int b, int c, int d, int e);
 void func_0200ba94(const VecFx32 *src, int dy, int d);
 u32 MaxAbs3(int x, int y, int z);
 u32 MaxAbsDeltaXz(const VecFx32 *a, const VecFx32 *b);
-void func_0200bb14(int a, int b, int c, int d, int e, int f, int g, int h);
+void DrawButton(int a, int b, int c, int d, int e, int f, int g, int h);
 void func_0200bb58(int a, int b, int c, int d, int e, int f, int g, int h, int i, int j, int k, int l, int m, int n,
                    int o);
 void func_0200bbd0(int a, int b, int c, int d, int e, int f, int g, const char *h, const void *i, int j, int k, int l,
                    int m, int n, int o, int p, const u8 *q);
-void func_0200bc50(int a, int b, int c, int d, int e, int f, int g, const char *h, const void *i, int j, int k, int l,
-                   int m, int n, int o, int p);
+void DrawButtonEx(int a, int b, int c, int d, int e, int f, int g, const char *h, const void *i, int j, int k, int l,
+                  int m, int n, int o, int p);
 int TestButton(u32 mask, u32 id);
 int TestButtonRange(u32 mask, u32 lo, u32 hi);
 void func_0200bdcc(int a, int b);
-u16 func_0200be10(u32 r, u32 g, u32 b);
+u16 PackColor(u32 r, u32 g, u32 b);
 void SetLightFromAngles(u32 num, int a, int b, u16 color);
 void SetLight(u32 num, s8 x, s8 y, s8 z, u32 color);
 void VecFromAngles(VecFx32 *out, int a, int b, int scale);

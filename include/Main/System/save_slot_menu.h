@@ -9,10 +9,10 @@ extern "C" {
 
 void SetupStateMenu(void);
 void UpdateStateMenu(void);
-void func_0201133c(void);
+void LeaveStateMenu(void);
 void SetupSphereModel(void);
 void UpdateSphereModel(void);
-void func_02011510(void);
+void LeaveSphereModel(void);
 
 #ifdef __cplusplus
 }

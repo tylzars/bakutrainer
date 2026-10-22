@@ -10,11 +10,11 @@ extern "C" {
 #define LANG_TEXT_SIZE 0x20
 
 // One row of the list: a non-empty string of table 0x246 before "LAST" (its text, and its index in the table, which
-// UpdateLangMenu passes to func_02010364) and mIndex, its list position minus 1, which becomes the prompt number
+// UpdateLangMenu passes to StartPromptAtLine) and mIndex, its list position minus 1, which becomes the prompt number
 // (flow value 0x14) when the row is chosen.
 typedef struct LangEntry {
     char mText[LANG_TEXT_SIZE];
-    s32 mTextId;
+    s32 mLineId;
     s32 mIndex;
 } LangEntry;
 

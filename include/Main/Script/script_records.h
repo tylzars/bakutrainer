@@ -180,7 +180,7 @@ typedef struct ScriptWork {
     u16 mLineNameFileId;
     u16 mLineId;
     u16 mNextTextId;
-    // Lines shown at a time (gSystemState.mUnk_314) after an EOF line without flag 0x10; always 2 in this build.
+    // Lines shown at a time (gSystemState.mTextWindowLineCount) after an EOF line without flag 0x10; 2 in this build.
     u16 mDefaultWindowLineCount;
     u16 mSpriteCount;
     u16 mWaitTimer;
