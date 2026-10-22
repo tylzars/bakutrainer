@@ -430,7 +430,7 @@ void SetupTitleScreen(void) {
     s->mAnySaveWritten = 0;
     s->mIntroTimer = (data_020b6ee0.mUnk_a91a != 0 && s->mReturnState < 0) ? 1 : 0x4b0;
     s->mSlideDirection = -1;
-    func_0200dd90();
+    StartTitleSlideIn();
     if (s->mReturnState < 0) {
         s->mSpritePairDone = 0;
         s->mSpritePairOffset = 0x10000;
@@ -513,7 +513,7 @@ void UpdateTitleScreen(void) {
             s->mIntroTimer--;
         }
     }
-    func_020242a8(&params, 0xff, 0, 0, 0x1000, 0x8000, -1, 0x100);
+    SetOrthoDrawParams(&params, 0xff, 0, 0, 0x1000, 0x8000, -1, 0x100);
     params.mUnk_43_3 = 1;
     UpdateModelScript(&s->mModel);
     DrawModelFileEx(s->mModel.mId, &params, &s->mModel, 0);
@@ -557,7 +557,7 @@ void UpdateTitleScreen(void) {
     if (UpdateTitleSlide() != 0 && s->mNextState >= 0) {
         s->mState = s->mNextState;
         s->mNextState = -1;
-        func_0200dd90();
+        StartTitleSlideIn();
     }
     flag = gTitleScreen.mSlideState == TITLE_SLIDE_STATE_IN_PLACE ? 1 : 0;
     switch (s->mState) {

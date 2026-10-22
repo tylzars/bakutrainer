@@ -283,7 +283,7 @@ void UpdateSystem(int flags) {
     if ((gSystemState.mFlags & 0x10000080) == 0x10000080) {
         if (IsCommReading() == 0) {
             ClearTrackCount();
-            if (gMapState.mCamera.mUnk_2dc.mUnk_4a == 0 && !(gSystemState.mFlags & 0x10000)) {
+            if (gMapState.mCamera.mUnk_2dc.mViewKind == VIEW_KIND_CAMERA && !(gSystemState.mFlags & 0x10000)) {
                 *(vu32 *) HW_SWAP_BUFFERS = 3;
             } else {
                 *(vu32 *) HW_SWAP_BUFFERS = 1;
@@ -409,7 +409,7 @@ void UpdateSystem(int flags) {
         }
         gSystemState.mBackupTimer -= (gSystemState.mBackupTimer != 0) ? 1 : 0;
         if (gSystemState.mFlags & 0x20) {
-            func_0202fbc8();
+            UpdateScreensForLid();
         } else if ((flags & 4) == 0 && ((*(vu16 *) HW_SHARED_BUTTONS & LID_CLOSED) >> 15) == 1 &&
                    gSystemState.mBackupTimer == 0) {
             if (gSystemState.mFlags & 0x200) {
@@ -674,11 +674,11 @@ int Free(void *p) {
 }
 
 u16 GetTexFileKeyCount(void) {
-    return data_020c31dc.mTexFileKeyCount;
+    return gGxState.mTexFileKeyCount;
 }
 
 u16 GetPlttFileKeyCount(void) {
-    return data_020c31dc.mPlttFileKeyCount;
+    return gGxState.mPlttFileKeyCount;
 }
 
 u32 func_0201c550(void) {
@@ -1033,7 +1033,7 @@ void ProcessTransfers(int flags) {
                 MIi_CpuCopyFast(gSystemState.mUnk_34c + sub, dst, e->mUnpackedSize);
                 list[i]->mSize = list[i]->mUnpackedSize;
             }
-        } else if (data_020c31dc.mTexFile == e->mFile && e->mSize < e->mUnpackedSize) {
+        } else if (gGxState.mTexFile == e->mFile && e->mSize < e->mUnpackedSize) {
             u32 size = e->mSize;
             u32 *packed = (u32 *) (((u32) dst + e->mUnpackedSize + 0x80 - size) & ~3);
             ReadFileBytes(e->mFile, packed, size, e->mSrc);
@@ -1091,12 +1091,12 @@ void ProcessTransfers(int flags) {
                 if (tex == 0) {
                     tex = AllocWithFlags(0x4000, 1);
                 }
-                func_0202c2f0(tex, dst, w, h, list[i]->mUnk_13 == 0);
+                ArrangeTilesInRows(tex, dst, w, h, list[i]->mUnk_13 == 0);
                 e = list[i];
                 if ((e->mDst >> 28) == 10) {
                     MIi_CpuCopy16(tex, dst, e->mSize);
                 } else {
-                    func_0202c3e0(e, tex, w);
+                    ExpandRowsToColors(e, tex, w);
                 }
             }
         }

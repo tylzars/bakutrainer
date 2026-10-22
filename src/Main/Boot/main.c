@@ -44,7 +44,7 @@ void main(void) {
     ClearAnimSlots();
     ResetAllProgress();
     ResetTitleReturnState();
-    StartSprite(&data_020b6ee0.mSelectionSprite, data_0201abec[2]);
+    StartSprite(&data_020b6ee0.mSelectionSprite, gSpriteScripts[2]);
     data_020b6ee0.mUnk_a91b = 0;
     func_0200dbac();
     data_020b6ee0.mUnk_a91a = 1;

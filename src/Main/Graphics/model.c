@@ -56,12 +56,12 @@
 #define MM_REG 1
 #define MM_VALUE 2
 
-// This file's .bss (ascending sizes as one file's): the working matrix, data_020c31dc, the map state and the matrix of
+// This file's .bss (ascending sizes as one file's): the working matrix, gGxState, the map state and the matrix of
 // each pose node. Objects without an initialiser join the compiler's size order of this file's data after the others,
 // in reverse definition order; this order (with data_02050898 defined below, before its users) puts the vector
-// initialisers of func_02023ff0 and func_020240ec in the game's .rodata order.
-MtxFx43 data_020c31ac;
-Unk_020c31dc data_020c31dc;
+// initialisers of SetupOrthoModelView and SetupOrthoSpriteView in the game's .rodata order.
+MtxFx43 gCurrentMtx;
+GxState gGxState;
 MapState gMapState;
 MtxFx43 gPoseNodeMatrices[64];
 
@@ -146,11 +146,11 @@ void ReadAnimTrackNode(u16 *rot, s32 *pos, s32 *vec, u32 node, u32 track) {
     s32 tmpPos[3];
     s32 tmpVec[3];
 
-    hdr = data_020c31dc.mAnimTracks[track].mData;
+    hdr = gGxState.mAnimTracks[track].mData;
     f = &hdr->mUnk_8[node];
-    t = data_020c31dc.mAnimTracks[track].mNextWeight;
-    next = data_020c31dc.mAnimTracks[track].mNextFrameIndex;
-    cur = data_020c31dc.mAnimTracks[track].mFrameIndex;
+    t = gGxState.mAnimTracks[track].mNextWeight;
+    next = gGxState.mAnimTracks[track].mNextFrameIndex;
+    cur = gGxState.mAnimTracks[track].mFrameIndex;
 
     if (!(hdr->mUnk_0 & 1)) {
         OS_Terminate();
@@ -211,9 +211,9 @@ void ReadAnimTrackNode(u16 *rot, s32 *pos, s32 *vec, u32 node, u32 track) {
 // Walks the pose tree from `node` through each node's first child and next sibling. The matrix of `from` is the
 // starting matrix; each node's matrix is stored in gPoseNodeMatrices[node], and nodes with a slot in mMtxStoreIndex
 // are also loaded into the geometry engine's matrix stack. Without track data a node's scale is applied squared
-// (mScaleX * (mScaleX << 4)). The walk stops at mStopNodeIndex, mUnk_4a keeps the highest node number reached, and
-// bits 0-1 of mUnk_f reduce rows of the matrix to their length on the diagonal (all three, or with bit 1 rows 0
-// and 2).
+// (mScaleX * (mScaleX << 4)). The walk stops at mStopNodeIndex, mHighestNodeIndex keeps the highest node number
+// reached, and bits 0-1 of mUnk_f reduce rows of the matrix to their length on the diagonal (all three, or with bit 1
+// rows 0 and 2).
 void ComputePoseMatrices(int from, int node) {
     PoseNode *n;
     MtxFx43 m;
@@ -233,20 +233,20 @@ void ComputePoseMatrices(int from, int node) {
     u32 step;
     VecFx32 *v;
 
-    n = &data_020c31dc.mPoseNodes[node];
+    n = &gGxState.mPoseNodes[node];
     if (from != -1) {
-        func_0203fdd8(&gPoseNodeMatrices[from], &data_020c31ac);
+        func_0203fdd8(&gPoseNodeMatrices[from], &gCurrentMtx);
     }
     if (n->mNextSibling != 0xff) {
-        func_0203fdd8(&data_020c31ac, &gPoseNodeMatrices[n->mNextSibling]);
+        func_0203fdd8(&gCurrentMtx, &gPoseNodeMatrices[n->mNextSibling]);
     }
-    if (n->mFirstChild == 0xff && n->mMtxStoreIndex == -1 && data_020c31dc.mUnk_47 != 0) {
+    if (n->mFirstChild == 0xff && n->mMtxStoreIndex == -1 && gGxState.mUnk_47 != 0) {
         goto sibling;
     }
-    if (data_020c31dc.mTrackFillCount == 0) {
-        rot[0] = n->mUnk_5 << 8;
-        rot[1] = n->mUnk_6 << 8;
-        rot[2] = n->mUnk_7 << 8;
+    if (gGxState.mTrackFillCount == 0) {
+        rot[0] = n->mAngleX << 8;
+        rot[1] = n->mAngleY << 8;
+        rot[2] = n->mAngleZ << 8;
         pos[0] = n->mPosX << 5;
         pos[1] = n->mPosY << 5;
         pos[2] = n->mPosZ << 5;
@@ -256,18 +256,18 @@ void ComputePoseMatrices(int from, int node) {
     } else {
         done = 0;
         ApplyAnimTrack(0, rot, pos, scale, node, &done, n);
-        if (data_020c31dc.mUnk_48 != 0) {
+        if (gGxState.mTrack1Blend != 0) {
             done = 0;
             ApplyAnimTrack(1, tmpRot, tmpPos, tmpScale, node, &done, n);
-            BlendAngles(data_020c31dc.mUnk_48, 4, rot, tmpRot);
-            BlendVec3(data_020c31dc.mUnk_48, 4, scale, tmpScale);
-            if (data_020c31dc.mUnk_45 == 0 || node > data_020c31dc.mStopNodeIndex) {
-                BlendVec3(data_020c31dc.mUnk_48, 4, pos, tmpPos);
+            BlendAngles(gGxState.mTrack1Blend, 4, rot, tmpRot);
+            BlendVec3(gGxState.mTrack1Blend, 4, scale, tmpScale);
+            if (gGxState.mUnk_45 == 0 || node > gGxState.mStopNodeIndex) {
+                BlendVec3(gGxState.mTrack1Blend, 4, pos, tmpPos);
             }
         }
-        pos[0] = pos[0] >> data_020c31dc.mModelShift;
-        pos[1] = pos[1] >> data_020c31dc.mModelShift;
-        pos[2] = pos[2] >> data_020c31dc.mModelShift;
+        pos[0] = pos[0] >> gGxState.mModelShift;
+        pos[1] = pos[1] >> gGxState.mModelShift;
+        pos[2] = pos[2] >> gGxState.mModelShift;
     }
     ax = -rot[0];
     az = -rot[2];
@@ -304,18 +304,18 @@ void ComputePoseMatrices(int from, int node) {
     m._[6] = (ix * r20) / 4096;
     m._[7] = (iy * r21) / 4096;
     m._[8] = (iz * r22) / 4096;
-    if (node == data_020c31dc.mUnk_42) {
-        pos[0] = pos[0] * data_020c31dc.mUnk_40 / 256;
-        pos[1] = pos[1] * data_020c31dc.mUnk_40 / 256;
-        pos[2] = pos[2] * data_020c31dc.mUnk_40 / 256;
+    if (node == gGxState.mInverseScaleNodeIndex) {
+        pos[0] = pos[0] * gGxState.mInverseScale / 256;
+        pos[1] = pos[1] * gGxState.mInverseScale / 256;
+        pos[2] = pos[2] * gGxState.mInverseScale / 256;
     }
     m._[9] = pos[0];
     m._[10] = pos[1];
     m._[11] = pos[2];
-    func_0203bdec(&m, &data_020c31ac, &data_020c31ac);
+    func_0203bdec(&m, &gCurrentMtx, &gCurrentMtx);
     if (n->mUnk_f & 3) {
         step = (n->mUnk_f & 2) ? 2 : 1;
-        v = (VecFx32 *) &data_020c31ac;
+        v = (VecFx32 *) &gCurrentMtx;
         for (i = 0; i < 3; i += step) {
             s32 x = v->x, y = v->y, z = v->z;
             u32 len = SqrtU64((s64) x * x + (s64) y * y + (s64) z * z);
@@ -326,19 +326,19 @@ void ComputePoseMatrices(int from, int node) {
             v += step;
         }
     }
-    func_0203fdd8(&data_020c31ac, &gPoseNodeMatrices[node]);
-    if (data_020c31dc.mUnk_4a < node) {
-        data_020c31dc.mUnk_4a = node;
+    func_0203fdd8(&gCurrentMtx, &gPoseNodeMatrices[node]);
+    if (gGxState.mHighestNodeIndex < node) {
+        gGxState.mHighestNodeIndex = node;
     }
-    if (node == data_020c31dc.mStopNodeIndex) {
-        data_020c31dc.mStopNodeIndex = 0xff;
+    if (node == gGxState.mStopNodeIndex) {
+        gGxState.mStopNodeIndex = 0xff;
         return;
     }
     if (n->mMtxStoreIndex != -1) {
         if (n->mMtxStoreIndex >= 0x1f) {
             OS_Terminate();
         }
-        G3_LoadMtx43(&data_020c31ac);
+        G3_LoadMtx43(&gCurrentMtx);
         reg_G3X_MTX_STORE = n->mMtxStoreIndex;
     }
     if (n->mFirstChild != 0xff) {
@@ -387,25 +387,32 @@ void SetDrawParams(DrawParams *p, int x, int y, int z, int a, u16 b, u8 c, u8 d,
     p->mUnk_3e = d;
 }
 
-void func_02023ff0(void) {
-    if (gMapState.mCamera.mUnk_2dc.mUnk_4a != 1) {
+// Unless mViewKind is already VIEW_KIND_ORTHO_MODEL: loads a view matrix looking from (0, 0, 0x1000) at the origin
+// (kept in gMapState.mViewMtx, with mUnk_6c derived from it) and the orthographic projection over 0x4000 x 0x3000
+// (kept in mUnk_9c), the 0x100 x 0xc0 sprite space shifted left by 6, as draw mode 4 places models at positions << 6.
+void SetupOrthoModelView(void) {
+    if (gMapState.mCamera.mUnk_2dc.mViewKind != VIEW_KIND_ORTHO_MODEL) {
         VecFx32 pos = {0, 0, 0x1000};
         VecFx32 target = {0, 0, 0};
         VecFx32 up = {0, 0x1000, 0};
 
-        func_0203d0f0(&pos, &up, &target, TRUE, &gMapState.mUnk_3c);
-        func_0203ba60(&gMapState.mUnk_3c, &gMapState.mUnk_6c);
+        func_0203d0f0(&pos, &up, &target, TRUE, &gMapState.mViewMtx);
+        func_0203ba60(&gMapState.mViewMtx, &gMapState.mUnk_6c);
         func_0203d08c(0, 0x3000, 0, 0x4000, 0x4000, -0x4000, 0x1000, TRUE, &gMapState.mUnk_9c);
         reg_G3X_MTX_MODE = 3;
         reg_G3X_MTX_IDENTITY = 0;
         reg_G3X_MTX_MODE = 2;
         reg_G3X_MTX_PUSH = 0;
-        gMapState.mCamera.mUnk_2dc.mUnk_4a = 1;
+        gMapState.mCamera.mUnk_2dc.mViewKind = VIEW_KIND_ORTHO_MODEL;
     }
 }
 
-void func_020240ec(void) {
-    if (gMapState.mCamera.mUnk_2dc.mUnk_4a != 2) {
+// Unless mViewKind is already VIEW_KIND_ORTHO_SPRITE: loads a view matrix looking from (0, 0, 0x1000) at the origin
+// and the orthographic projection over the 0x100 x 0xc0 sprite space (kept in gMapState.mUnk_9c) that
+// DrawSpritePolygons draws in, then writes the POLYGON_ATTR (alpha 0x1f and id 0, recorded in mPolygonAlpha and
+// mPolygonId), TEXIMAGE_PARAM, DIF_AMB, SPE_EMI and LIGHT_COLOR registers.
+void SetupOrthoSpriteView(void) {
+    if (gMapState.mCamera.mUnk_2dc.mViewKind != VIEW_KIND_ORTHO_SPRITE) {
         VecFx32 pos = {0, 0, 0x1000};
         VecFx32 target = {0, 0, 0};
         VecFx32 up = {0, 0x1000, 0};
@@ -416,14 +423,14 @@ void func_020240ec(void) {
         reg_G3X_MTX_IDENTITY = 0;
         reg_G3X_MTX_MODE = 2;
         reg_G3X_MTX_PUSH = 0;
-        gMapState.mCamera.mUnk_2dc.mUnk_4b = 0x1f;
-        gMapState.mCamera.mUnk_2dc.mUnk_4c = 0;
+        gMapState.mCamera.mUnk_2dc.mPolygonAlpha = 0x1f;
+        gMapState.mCamera.mUnk_2dc.mPolygonId = 0;
         reg_G3X_POLYGON_ATTR = 0x1f00c1;
         reg_G3X_TEXIMAGE_PARAM = 0x20000000;
         reg_G3X_DIF_AMB = 0x7fff0000;
         reg_G3X_SPE_EMI = 0;
         reg_G3X_LIGHT_COLOR = 0x7fff;
-        gMapState.mCamera.mUnk_2dc.mUnk_4a = 2;
+        gMapState.mCamera.mUnk_2dc.mViewKind = VIEW_KIND_ORTHO_SPRITE;
     }
 }
 
@@ -440,15 +447,16 @@ void func_02024208(void) {
     SetLight0(0x1f, 0x1f, 0x1f, -0xffc);
 }
 
-void func_020242a8(void *out, int x, int y, int z, int scale, u16 angle, int flags, int w) {
-    SetDrawParams(out, x, y, z, scale, angle, 4, flags, w);
+// SetDrawParams for draw mode 4 (x and y in the pixel space of SetupOrthoModelView).
+void SetOrthoDrawParams(void *out, int x, int y, int z, int scale, u16 angle, int frame, int flags) {
+    SetDrawParams(out, x, y, z, scale, angle, 4, frame, flags);
 }
 
-void func_020242e8(u16 id, int x, int y, int a, int b, u16 c, u8 d, int e) {
+void DrawModelFileOrtho(u16 id, int x, int y, int z, int scale, u16 angle, u8 frame, int flags) {
     DrawParams params;
 
-    func_020242a8(&params, x, y, a, b, c, d, e);
-    DrawModelFileEx(id, &params, NULL, e);
+    SetOrthoDrawParams(&params, x, y, z, scale, angle, frame, flags);
+    DrawModelFileEx(id, &params, NULL, flags);
 }
 
 void func_02024338(void *a, void *b, int c) {
@@ -456,9 +464,11 @@ void func_02024338(void *a, void *b, int c) {
     DrawModelFileEx(((Model *) a)->mId, b, a, c);
 }
 
-void func_02024368(Model *obj, int x, int y, int scale, u16 angle, int flags) {
+// Runs obj's model script and draws it in mode 4 at (x, y) with frame 0xff (the elapsed frame count). Unlike
+// UpdateAndDrawModel it also draws a model id of 0 and with flag 0x80.
+void UpdateAndDrawModelOrtho(Model *obj, int x, int y, int scale, u16 angle, int flags) {
     DrawParams params;
-    func_020242a8(&params, x, y, 0, scale, angle, -1, flags);
+    SetOrthoDrawParams(&params, x, y, 0, scale, angle, -1, flags);
     UpdateModelScript(obj);
     DrawModelFileEx(obj->mId, &params, obj, flags);
 }
@@ -466,7 +476,7 @@ void func_02024368(Model *obj, int x, int y, int scale, u16 angle, int flags) {
 // Texture size code of a power-of-two size, indexed by log2(size) - 3.
 static const u8 data_02050898[8] = {0, 1, 2, 3, 4, 5, 6, 7};
 
-void func_020243c0(int id, fx32 x, fx32 y, fx32 z, u16 angle, fx32 sx, fx32 sy, u32 alpha) {
+void DrawSpritePolygons(int id, fx32 x, fx32 y, fx32 z, u16 angle, fx32 sx, fx32 sy, u32 alpha) {
     MtxFx33 rot;
     s32 rect[4];
     TexInfo info;
@@ -501,10 +511,10 @@ void func_020243c0(int id, fx32 x, fx32 y, fx32 z, u16 angle, fx32 sx, fx32 sy, 
     if (rect[2] == rect[0] && rect[3] == rect[1]) {
         return;
     }
-    func_020240ec();
-    if (gMapState.mCamera.mUnk_2dc.mUnk_4b != alpha) {
-        reg_G3X_POLYGON_ATTR = (gMapState.mCamera.mUnk_2dc.mUnk_4c << 24) | 0xc1 | (alpha << 16);
-        gMapState.mCamera.mUnk_2dc.mUnk_4b = alpha;
+    SetupOrthoSpriteView();
+    if (gMapState.mCamera.mUnk_2dc.mPolygonAlpha != alpha) {
+        reg_G3X_POLYGON_ATTR = (gMapState.mCamera.mUnk_2dc.mPolygonId << 24) | 0xc1 | (alpha << 16);
+        gMapState.mCamera.mUnk_2dc.mPolygonAlpha = alpha;
     }
     hdr = GetBlockHeader(id);
     w = hdr[0];
@@ -534,9 +544,9 @@ void func_020243c0(int id, fx32 x, fx32 y, fx32 z, u16 angle, fx32 sx, fx32 sy, 
         base = GetTexFileKeyCount();
         slot = id << 6;
         slot += i;
-        col = pal[info.mUnk_14] & 0x7fff;
+        col = pal[info.mPaletteListIndex] & 0x7fff;
         key = GetPlttFileKeyCount() + (c ^ (col << 2));
-        opaque = pal[info.mUnk_14] >> 15;
+        opaque = pal[info.mPaletteListIndex] >> 15;
         size = info.mWidth * info.mHeight;
         switch (info.mUnk_12) {
             case 1:
@@ -547,28 +557,28 @@ void func_020243c0(int id, fx32 x, fx32 y, fx32 z, u16 angle, fx32 sx, fx32 sy, 
             case 0:
             case 7:
                 fmt = 4;
-                if (info.mUnk_14 != 0) {
+                if (info.mPaletteListIndex != 0) {
                     OS_Terminate();
                 }
                 break;
             case 6:
                 fmt = 1;
-                if (info.mUnk_15 > 2) {
+                if (info.mPaletteCount > 2) {
                     OS_Terminate();
                 }
-                if (info.mUnk_14 != 0) {
+                if (info.mPaletteListIndex != 0) {
                     OS_Terminate();
                 }
                 break;
             case 5:
                 fmt = 6;
-                if (info.mUnk_15 != 1) {
+                if (info.mPaletteCount != 1) {
                     OS_Terminate();
                 }
                 break;
         }
         tex = FindOrLoadTex(1, slot + base, size, 0);
-        pltt = FindOrLoadPltt(col, key, info.mUnk_15 << 5);
+        pltt = FindOrLoadPltt(col, key, info.mPaletteCount << 5);
         s = data_02050898[0x1c - LeadingZeroCount(info.mWidth)];
         t = data_02050898[0x1c - LeadingZeroCount(info.mHeight)];
         reg_G3X_TEXIMAGE_PARAM = (tex >> 3) | (fmt << 26) | 0x40000000 | (s << 20) | (t << 23) | ((opaque == 0) << 29);
@@ -601,7 +611,7 @@ void DrawModelFile(u32 id, void *p, int flags) {
 }
 
 void ClearTrackCount(void) {
-    data_020c31dc.mTrackFillCount = 0;
+    gGxState.mTrackFillCount = 0;
 }
 
 ModelPart *GetFirstModelPart(int id, int a) {
@@ -677,8 +687,8 @@ u32 GetDrawFrame(const DrawParams *p) {
     return p->mUnk_3e;
 }
 
-s32 func_02024b2c(const u32 *data, const DrawParams *p) {
-    int s = ((*data & 0xff0000) >> 16) - data_020c31dc.mModelShift;
+s32 GetRelativeScale(const u32 *data, const DrawParams *p) {
+    int s = ((*data & 0xff0000) >> 16) - gGxState.mModelShift;
     if (s >= 0) {
         return p->mUnk_28 << s;
     }
@@ -686,7 +696,7 @@ s32 func_02024b2c(const u32 *data, const DrawParams *p) {
 }
 
 // Draws model file `id` with the draw parameters `params`. In modes other than 3 and 5, with a model `obj`: when its
-// mUnk_172_0 is set it moves params->mPos to the position of map entry data_020c31dc.mUnk_3c (func_02031fc4) or, when
+// mUnk_172_0 is set it moves params->mPos to the position of map entry gGxState.mPlaceEntryId (func_02031fc4) or, when
 // that is 0xffff, so that node mNodeIndex lands on mNodePos, then clears mUnk_172_0 and sets mUnk_172_7; with
 // mUnk_172_2 set it adds mPosPerFrame to params->mPos; with mUnk_172_3 set it stores node 0's position in mNodePos.
 // None of these three paths runs in this build: mUnk_172_0 and mUnk_172_2 follow only MC_SET_3C / MC_SET_3E, which no
@@ -761,15 +771,15 @@ void DrawModelFileEx(u32 id, void *params, void *obj, int flags) {
         OS_Terminate();
     }
     res = FindOrLoadCachedFile(id);
-    data_020c31dc.mPoseNodes = (PoseNode *) (res + 1);
-    data_020c31dc.mUnk_42 = 0xff;
-    data_020c31dc.mUnk_4a = 0;
+    gGxState.mPoseNodes = (PoseNode *) (res + 1);
+    gGxState.mInverseScaleNodeIndex = 0xff;
+    gGxState.mHighestNodeIndex = 0;
     if (p->mUnk_43 >= 4) {
-        if (gMapState.mCamera.mUnk_2dc.mUnk_4a != 1) {
-            func_02023ff0();
+        if (gMapState.mCamera.mUnk_2dc.mViewKind != VIEW_KIND_ORTHO_MODEL) {
+            SetupOrthoModelView();
         }
         angOfs = 0x8000;
-    } else if (gMapState.mCamera.mUnk_2dc.mUnk_4a != 0) {
+    } else if (gMapState.mCamera.mUnk_2dc.mViewKind != VIEW_KIND_CAMERA) {
         func_020334f8(0);
     }
     mode = p->mUnk_43;
@@ -788,7 +798,7 @@ void DrawModelFileEx(u32 id, void *params, void *obj, int flags) {
             sh0 = (*res & 0xff0000) >> 16;
             c2s0 = (cos2 * sin0) >> 12;
             s2s0 = (sin2 * sin0) >> 12;
-            data_020c31dc.mModelShift = sh0;
+            gGxState.mModelShift = sh0;
             sx = 16 << sh0;
             sy = sx;
             sz = sx;
@@ -819,17 +829,17 @@ void DrawModelFileEx(u32 id, void *params, void *obj, int flags) {
                     m._[9] = p->mPos.x;
                     m._[10] = p->mPos.y;
                     m._[11] = p->mPos.z;
-                    func_0203bdec(&m, &gMapState.mUnk_3c, &data_020c31ac);
+                    func_0203bdec(&m, &gMapState.mViewMtx, &gCurrentMtx);
                     break;
                 case 2:
                     m._[9] = p->mPos.x;
                     m._[10] = p->mPos.y;
                     m._[11] = p->mPos.z;
-                    func_0203bdec(&m, &gMapState.mUnk_3c, &data_020c31ac);
-                    func_0203ba2c(&data_020c31ac, &data_020c31ac, p->mUnk_28, p->mUnk_28, p->mUnk_28);
+                    func_0203bdec(&m, &gMapState.mViewMtx, &gCurrentMtx);
+                    func_0203ba2c(&gCurrentMtx, &gCurrentMtx, p->mUnk_28, p->mUnk_28, p->mUnk_28);
                     if (p->mUnk_42 != -1 && p->mUnk_28 != 0x1000) {
-                        data_020c31dc.mUnk_42 = p->mUnk_42;
-                        data_020c31dc.mUnk_40 = 0x100000 / p->mUnk_28;
+                        gGxState.mInverseScaleNodeIndex = p->mUnk_42;
+                        gGxState.mInverseScale = 0x100000 / p->mUnk_28;
                     }
                     lightOfs = p->mUnk_41;
                     break;
@@ -838,34 +848,34 @@ void DrawModelFileEx(u32 id, void *params, void *obj, int flags) {
                     m._[10] = p->mPos.y << 6;
                     m._[11] = p->mPos.z;
                     sc = (p->mUnk_28 << 2) / 32;
-                    func_0203ba2c(&m, &data_020c31ac, sc, sc, sc);
+                    func_0203ba2c(&m, &gCurrentMtx, sc, sc, sc);
                     lightOfs = p->mUnk_41;
                     break;
             }
         } else {
-            sc = func_02024b2c(res, p);
-            func_0203ba2c(&gPoseNodeMatrices[p->mUnk_38], &data_020c31ac, sc, sc, sc);
+            sc = GetRelativeScale(res, p);
+            func_0203ba2c(&gPoseNodeMatrices[p->mUnk_38], &gCurrentMtx, sc, sc, sc);
         }
         if (model != NULL) {
-            data_020c31dc.mUnk_45 = model->mUnk_172_0 | model->mUnk_172_7;
-            data_020c31dc.mUnk_47 = model->mUnk_172_8;
+            gGxState.mUnk_45 = model->mUnk_172_0 | model->mUnk_172_7;
+            gGxState.mUnk_47 = model->mUnk_172_8;
             if (model->mUnk_172_0 == 1) {
-                if (data_020c31dc.mUnk_3c == 0xffff) {
-                    data_020c31dc.mStopNodeIndex = model->mNodeIndex;
+                if (gGxState.mPlaceEntryId == 0xffff) {
+                    gGxState.mStopNodeIndex = model->mNodeIndex;
                     ComputePoseMatrices(-1, 0);
                     GetPoseNodePos(&pos, model->mNodeIndex);
                     p->mPos.x -= pos.x - model->mNodePos.x;
                     p->mPos.y -= pos.y - model->mNodePos.y;
                     p->mPos.z -= pos.z - model->mNodePos.z;
                 } else {
-                    func_02031fc4(data_020c31dc.mUnk_3c, &p->mPos);
+                    func_02031fc4(gGxState.mPlaceEntryId, &p->mPos);
                 }
                 m._[9] = p->mPos.x;
                 m._[10] = p->mPos.y;
                 m._[11] = p->mPos.z;
-                func_0203bdec(&m, &gMapState.mUnk_3c, &data_020c31ac);
-                if (gMapState.mCamera.mUnk_2dc.mUnk_4a == 1) {
-                    func_0203ba2c(&data_020c31ac, &data_020c31ac, 0x80, 0x80, 0x80);
+                func_0203bdec(&m, &gMapState.mViewMtx, &gCurrentMtx);
+                if (gMapState.mCamera.mUnk_2dc.mViewKind == VIEW_KIND_ORTHO_MODEL) {
+                    func_0203ba2c(&gCurrentMtx, &gCurrentMtx, 0x80, 0x80, 0x80);
                 }
                 model->mUnk_172_0 = 0;
                 model->mUnk_172_7 = 1;
@@ -876,11 +886,11 @@ void DrawModelFileEx(u32 id, void *params, void *obj, int flags) {
                 p->mPos.z += model->mPosPerFrame.z;
             }
         } else {
-            data_020c31dc.mUnk_45 = 0;
-            data_020c31dc.mUnk_47 = 0;
+            gGxState.mUnk_45 = 0;
+            gGxState.mUnk_47 = 0;
         }
         if (model != NULL && (model->mUnk_172_6 | model->mUnk_172_5) == 1) {
-            data_020c31dc.mUnk_48 = 0;
+            gGxState.mTrack1Blend = 0;
         }
         ComputePoseMatrices(-1, 0);
         if (model != NULL && model->mUnk_172_3 == 1) {
@@ -890,7 +900,7 @@ void DrawModelFileEx(u32 id, void *params, void *obj, int flags) {
             model->mNodePos.z = ofs.z;
         }
     } else {
-        sc = func_02024b2c(res, p);
+        sc = GetRelativeScale(res, p);
         G3_LoadMtx43(&gPoseNodeMatrices[p->mUnk_38]);
         PutScale(sc, sc, sc);
         reg_G3X_MTX_STORE = 0;
@@ -1104,15 +1114,15 @@ void ProjectToScreen(void *pos, s32 *out) {
     ProjectToScreenEx(pos, out, 0);
 }
 
-// Projects `pos` through gMapState.mUnk_3c to the screen, centred on 128, 96. With steps 0 out receives the point;
-// otherwise out (in 1/0x1000 pixels) moves 1/steps of the way to it and jumps there when the distance is below
-// `steps` or 0xc000 or more. That path does not run in this build: the only caller, ProjectToScreen, passes 0.
+// Projects `pos` through gMapState.mViewMtx to the screen, centred on 128, 96. With steps 0 out receives the point;
+// otherwise out (in 1/0x1000 pixels) moves 1/steps of the way to it and jumps there when the distance is below `steps`
+// or 0xc000 or more. That path does not run in this build: the only caller, ProjectToScreen, passes 0.
 void ProjectToScreenEx(const VecFx32 *pos, s32 *out, int steps) {
     VecFx32 v;
     fx32 w;
     s32 x, y, z;
     reg_G3X_MTX_MODE = 1;
-    G3_LoadMtx43(&gMapState.mUnk_3c);
+    G3_LoadMtx43(&gMapState.mViewMtx);
     z = pos->z;
     y = pos->y;
     x = pos->x;
@@ -1220,7 +1230,7 @@ int func_02026080(Model *m) {
 
 int func_020260f4(Model *m, u32 track) {
     ModelAnim *a = &m->mAnim[track];
-    AnimTrack *t = &data_020c31dc.mAnimTracks[track];
+    AnimTrack *t = &gGxState.mAnimTracks[track];
     u32 pos;
     u32 rest;
     if (a->mId != 0) {
@@ -1233,7 +1243,7 @@ int func_020260f4(Model *m, u32 track) {
             t->mFrameIndex = DivideWithRemainder(a->mPlayFrames, a->mFramesPerAnimFrame, &rest);
             t->mNextWeight = (rest << 8) / a->mFramesPerAnimFrame;
         }
-        data_020c31dc.mTrackFillCount++;
+        gGxState.mTrackFillCount++;
         pos = t->mFrameIndex;
         if (pos == GetTrackFrameCount(m, track) - 1) {
             t->mNextWeight = 0;
@@ -1332,7 +1342,7 @@ void StartModelAnim(Model *m, s32 *slot, int id, int count, int flags, int mode)
         if (m->mUnk_172_1 == 1) {
             u16 *hdr = FindOrLoadCachedFile(id);
             VecFx32 target;
-            func_02031fc4(data_020c31dc.mUnk_3e, &target);
+            func_02031fc4(gGxState.mMoveEntryId, &target);
             m->mPosPerFrame.x = (target.x - m->mNodePos.x) / (hdr[1] * count);
             m->mPosPerFrame.y = (target.y - m->mNodePos.y) / (hdr[1] * count);
             m->mPosPerFrame.z = (target.z - m->mNodePos.z) / (hdr[1] * count);
@@ -1477,7 +1487,7 @@ void func_020266a8(Model *m, s32 *slot) {
         func_02026268(m, 1);
         t = m->mUnk_174;
         m->mUnk_174 = t - 1;
-        data_020c31dc.mUnk_48 = t;
+        gGxState.mTrack1Blend = t;
     } else {
         func_0202635c(m, slot);
     }
@@ -1739,16 +1749,17 @@ int ExecModelScript(Model *m) {
                     }
                     m->mCommand += 2;
                     break;
-                // Set data_020c31dc.mUnk_3c.
+                // Set gGxState.mPlaceEntryId and mUnk_172_0: the next DrawModelFileEx moves the model to that map
+                // entry. No model script in this build uses this command.
                 case MC_SET_3C:
                     if (mode == MM_VALUE) {
-                        data_020c31dc.mUnk_3c = val;
+                        gGxState.mPlaceEntryId = val;
                         m->mCommand += 2;
                     } else if (mode == MM_REG) {
-                        data_020c31dc.mUnk_3c = GetModelScriptReg(m, arg);
+                        gGxState.mPlaceEntryId = GetModelScriptReg(m, arg);
                         m->mCommand += 1;
                     } else if (mode == MM_BITS) {
-                        data_020c31dc.mUnk_3c = ((arg & 0xf0) << 4) + (arg & 0xf);
+                        gGxState.mPlaceEntryId = ((arg & 0xf0) << 4) + (arg & 0xf);
                         m->mCommand += 1;
                     }
                     m->mUnk_172_0 = 1;
@@ -1784,19 +1795,21 @@ int ExecModelScript(Model *m) {
                     }
                     break;
                 }
-                // Set data_020c31dc.mUnk_3e and reset mUnk_3c.
+                // Set gGxState.mMoveEntryId (the map entry StartModelAnim moves the model towards), reset
+                // mPlaceEntryId to 0xffff and set mUnk_172_0 and mUnk_172_1. No model script in this build uses this
+                // command.
                 case MC_SET_3E:
                     if (mode == MM_VALUE) {
-                        data_020c31dc.mUnk_3e = val;
+                        gGxState.mMoveEntryId = val;
                         m->mCommand += 2;
                     } else if (mode == MM_REG) {
-                        data_020c31dc.mUnk_3e = GetModelScriptReg(m, arg);
+                        gGxState.mMoveEntryId = GetModelScriptReg(m, arg);
                         m->mCommand += 1;
                     } else if (mode == MM_BITS) {
-                        data_020c31dc.mUnk_3e = ((arg & 0xf0) << 4) + (arg & 0xf);
+                        gGxState.mMoveEntryId = ((arg & 0xf0) << 4) + (arg & 0xf);
                         m->mCommand += 1;
                     }
-                    data_020c31dc.mUnk_3c = 0xffff;
+                    gGxState.mPlaceEntryId = 0xffff;
                     m->mUnk_172_0 = 1;
                     m->mUnk_172_1 = 1;
                     break;
@@ -1913,11 +1926,11 @@ int ExecModelScript(Model *m) {
     return 1;
 }
 
-// Zeroes mTrackFillCount and mUnk_48 and clears track 0's data; track 1's data pointer is left.
+// Zeroes mTrackFillCount and mTrack1Blend and clears track 0's data; track 1's data pointer is left.
 void ClearAnimTracks(void) {
-    data_020c31dc.mTrackFillCount = 0;
-    data_020c31dc.mUnk_48 = 0;
-    data_020c31dc.mAnimTracks[0].mData = NULL;
+    gGxState.mTrackFillCount = 0;
+    gGxState.mTrack1Blend = 0;
+    gGxState.mAnimTracks[0].mData = NULL;
 }
 
 void func_020271e0(Model *m) {

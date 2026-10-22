@@ -50,7 +50,7 @@ void WriteIndicatorOam(int id, u32 shift, u32 index, u32 attr1, u32 attr0, int r
     s16 tile;
 
     DrawSprite(id + 0x200000, 0x80, 0x60, 0, layer);
-    tile = func_0202ad9c();
+    tile = GetSpriteTile();
     if (tile < 0) {
         return;
     }
@@ -70,7 +70,7 @@ void WriteIndicatorOam(int id, u32 shift, u32 index, u32 attr1, u32 attr0, int r
         oam[index].mUnk_0 = 0x300 | attr0;
         oam[index].mUnk_2 = attr1 + 0x8000 + group * 512;
     }
-    oam[index].mUnk_4 = tile + (func_0202adac() << 12);
+    oam[index].mUnk_4 = tile + (GetSpritePalette() << 12);
 }
 
 // Holds a countdown at 20 while IsCommReading reports 1 and counts it down otherwise. When the screens are flagged,

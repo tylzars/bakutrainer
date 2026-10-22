@@ -56,11 +56,14 @@ u8 GetUnitShift(int layer) {
     return gTextureBlocks.mLayers[layer != 1].mUnitShift;
 }
 
-int func_0202ad9c(void) {
+// The tile kept by the last DrawSprite call with id bit 21 (0x200000) set; -1 after any other call that gets past
+// the id check (a call that returns there leaves it as it was).
+int GetSpriteTile(void) {
     return gTextureBlocks.mUnk_b28;
 }
 
-s8 func_0202adac(void) {
+// The palette kept by the same call as GetSpriteTile's tile; -1 otherwise.
+s8 GetSpritePalette(void) {
     return gTextureBlocks.mUnk_b2c;
 }
 
@@ -124,9 +127,9 @@ void GetTexInfo(u32 index, TexInfo *out, u32 sub) {
     out->mUnk_12 = e[sub].mUnk_00_18;
     out->mSizeCode = e[sub].mUnk_00_21;
     out->mUnk_13 = e[sub].mUnk_00_25;
-    out->mUnk_00 = e[sub].mUnk_04 & 0xffffff;
-    out->mUnk_14 = (e[sub].mUnk_04 << 4) >> 28;
-    out->mUnk_15 = (e[sub].mUnk_04 >> 28) + 1;
+    out->mDataOffset = e[sub].mUnk_04 & 0xffffff;
+    out->mPaletteListIndex = (e[sub].mUnk_04 << 4) >> 28;
+    out->mPaletteCount = (e[sub].mUnk_04 >> 28) + 1;
     out->mWidth = data_02050998[out->mSizeCode][0];
     out->mHeight = data_02050998[out->mSizeCode][1];
 }
@@ -661,7 +664,7 @@ void ReleaseTextureLayersEx(int a) {
 // Rearranges `w` x `h` tiles from sequential order into rows of a bitmap `w` tiles wide: for each tile, `mode` 1
 // copies eight words (4 bits per pixel), any other mode eight word pairs (8 bits per pixel). Terminates when the
 // source and destination are the same.
-void func_0202c2f0(void *dst, const void *src, u32 w, u32 h, BOOL mode) {
+void ArrangeTilesInRows(void *dst, const void *src, u32 w, u32 h, BOOL mode) {
     u32 *d = dst;
     u32(*d8)[2] = dst;
     const u32 *s = src;
@@ -699,7 +702,7 @@ void func_0202c2f0(void *dst, const void *src, u32 w, u32 h, BOOL mode) {
 // destination belongs to and written with bit 15 set; the rows of the destination are GetLayerWidth(layer)
 // halfwords apart. Sets the entry's palette byte to 0xff. In the 8-bit branch the test uses the low four bits of
 // the pixel but the palette index is the whole byte.
-void func_0202c3e0(Transfer *entry, const void *src, u32 w) {
+void ExpandRowsToColors(Transfer *entry, const void *src, u32 w) {
     u32 dst = entry->mDst;
     u32 size = entry->mSize;
     int layer = (dst >> 20) == 0x60 ? 1 : 2;
@@ -1082,7 +1085,7 @@ void DrawSprite(int id, int x, int y, int w, int layer) {
 // it horizontally and vertically, bit 18 sets the semi-transparent mode, bit 19 the double size of a rotated
 // sprite, bit 20 copies the tiles straight into the layer's background VRAM instead, bit 21 draws nothing and keeps
 // the tile and palette of the first record it reaches in mUnk_b28 and mUnk_b2c, bit 22 sets attribute 2 bit 11,
-// and bit 23 hands the sprite to func_020243c0 with the alpha in bits 27-31 (0 = 31). w >> 8 is the priority and
+// and bit 23 hands the sprite to DrawSpritePolygons with the alpha in bits 27-31 (0 = 31). w >> 8 is the priority and
 // its low byte the sort key of each entry. angle and the scales sx, sy (0x100 = 1) give the sprite a rotation/scale
 // matrix. The checks that stop the system are written as `(void) (cond || (OS_Terminate(), 0))` because the
 // compiler's output needs it: the expression form computes each condition's value and loads the 0, which an `if`
@@ -1125,7 +1128,7 @@ void DrawSpriteEx(int id, int x, int y, int w, int angle, int sx, int sy, int la
         if (alpha == 0) {
             alpha = 0x1f;
         }
-        func_020243c0(id | flags, x, y, -w << 6, -angle << 8, sx << 4, sy << 4, alpha);
+        DrawSpritePolygons(id | flags, x, y, -w << 6, -angle << 8, sx << 4, sy << 4, alpha);
         return;
     }
     p = GetBlockHeader(key);

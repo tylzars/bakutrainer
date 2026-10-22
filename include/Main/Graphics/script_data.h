@@ -32,7 +32,7 @@ extern const u32 data_0201aa60[];
 extern const u32 data_0201ab04[];
 extern u32 data_0201aba0[7];
 extern u32 data_0201abbc[];
-extern void *data_0201abec[];
+extern void *gSpriteScripts[];
 
 #ifdef __cplusplus
 }

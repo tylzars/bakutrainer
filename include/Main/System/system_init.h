@@ -509,9 +509,9 @@ typedef struct PoseNode {
     s8 mScaleX;
     s8 mScaleY;
     s8 mScaleZ;
-    s8 mUnk_5;
-    s8 mUnk_6;
-    s8 mUnk_7;
+    s8 mAngleX;
+    s8 mAngleY;
+    s8 mAngleZ;
     s16 mPosX;
     s16 mPosY;
     s16 mPosZ;
@@ -520,8 +520,8 @@ typedef struct PoseNode {
 } PoseNode;
 
 // The two VRAM caches (texture at 0x00, palette at 0x0c: nodes, hash-table slots and the heap of 512-byte (or 32-byte)
-// VRAM blocks, not the block file) and the state of the pose walk.
-typedef struct Unk_020c31dc {
+// VRAM blocks, not the block file) and the state of the model draw and pose walk (mAnimTracks to mUnk_4b).
+typedef struct GxState {
     VramCacheNode *mTexNodes;
     VramCacheSlot *mTexSlots;
     Unk_PoolRange *mTexBlocks;
@@ -530,13 +530,21 @@ typedef struct Unk_020c31dc {
     Unk_PoolRange *mPlttBlocks;
     AnimTrack mAnimTracks[2];
     PoseNode *mPoseNodes;
-    u16 mUnk_3c;
-    u16 mUnk_3e;
-    s16 mUnk_40;
-    u8 mUnk_42;
+    // The map entry DrawModelFileEx moves a model to while its mUnk_172_0 is set (0xffff: it moves the model so that
+    // node mNodeIndex lands on mNodePos instead). Written by MC_SET_3C and set to 0xffff by MC_SET_3E; no model
+    // script in this build uses either command.
+    u16 mPlaceEntryId;
+    // The map entry StartModelAnim moves a model towards after MC_SET_3E, which writes it.
+    u16 mMoveEntryId;
+    // 0x100000 / the mode-2 draw scale (fx32): 1 / scale in units of 1/256.
+    s16 mInverseScale;
+    // The node whose translation ComputePoseMatrices multiplies by mInverseScale / 256, which cancels the mode-2 draw
+    // scale for that offset (the node's rotation and scale and its children still get it). DrawModelFileEx sets it to
+    // 0xff (none) and, in mode 2 with a scale other than 0x1000 and a DrawParams mUnk_42 other than -1, to that node.
+    u8 mInverseScaleNodeIndex;
     u8 mUnk_43;
     // The shift byte of the last model drawn in a mode other than 1, 3 and 5: positions read from the tracks are
-    // shifted right by it, and func_02024b2c scales relative to it.
+    // shifted right by it, and GetRelativeScale scales relative to it.
     u8 mModelShift;
     u8 mUnk_45;
     // ComputePoseMatrices stops at this node once it has stored its matrix (its children and later siblings are
@@ -544,11 +552,12 @@ typedef struct Unk_020c31dc {
     // numbered above it.
     u8 mStopNodeIndex;
     u8 mUnk_47;
-    u8 mUnk_48;
+    u8 mTrack1Blend;
     // Raised each time a track is filled with data (the same track can be filled twice, and clearing a track does not
     // lower it); while it is 0 the pose walk uses the nodes' own values.
     u8 mTrackFillCount;
-    u8 mUnk_4a;
+    // The highest node number ComputePoseMatrices has reached since DrawModelFileEx zeroed it; nothing reads it.
+    u8 mHighestNodeIndex;
     u8 mUnk_4b;
     // Counted by FindOrLoadTex; never read in this build.
     u32 mTexLookupCount;
@@ -565,7 +574,7 @@ typedef struct Unk_020c31dc {
     u16 mTexBlockCount;
     u16 mPlttBlockCount;
     u8 mUnk_66[2];
-} Unk_020c31dc;
+} GxState;
 
 extern Unk_020c1834 data_020c1834;
 

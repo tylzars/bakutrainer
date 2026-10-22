@@ -202,7 +202,7 @@ void SetupBattleScreen(void) {
     SetupMap(a[sel], 0, b[sel], 0, 0, 0);
     gMapState.mCamera.mUnk_04 = func_020071a8;
     gMapState.mCamera.mUnk_2dc.mUnk_54 = 25 << 6;
-    gMapState.mCamera.mUnk_2dc.mUnk_44 = 0x128e000;
+    gMapState.mCamera.mUnk_2dc.mViewDistance = 0x128e000;
     gMapState.mCamera.mEaseShift = 1;
     memset(&data_020b6ee0.mModelPos, 0, 0x44);
     data_020b6ee0.mUnk_fc8.x = -1;
@@ -371,7 +371,7 @@ void StopBattleViewModel(void) {
 void UpdateBattleViewModel(void) {
     if (gBattleView.mModel[1].mId != 0) {
         if (gBattleView.mState.mUnk_0a == 0) {
-            func_02024368(&gBattleView.mModel[1], 0x80, 0x60, 0x1000, 0, 0x100);
+            UpdateAndDrawModelOrtho(&gBattleView.mModel[1], 0x80, 0x60, 0x1000, 0, 0x100);
         } else {
             UpdateAndDrawModel(&gBattleView.mModel[1], &data_020b6ee0.mModelPos, 0);
         }
@@ -702,7 +702,7 @@ void UpdateBattleCompare(void) {
     } else if (data_020b6ee0.mUnk_fee != 0) {
         if (hp[0] > hp[1]) {
             if (gStageInfos[sideB].mValue > -5000) {
-                StartSprite(&data_020b6ee0.mSideSprites[1], data_0201abec[pb->mKind + 33]);
+                StartSprite(&data_020b6ee0.mSideSprites[1], gSpriteScripts[pb->mKind + 33]);
                 gBattleSlotStages[sideA].mInfo.mValue = hp[0] - hp[1] - gBattleSlotStages[sideA].mInfo.mKindValue;
                 memcpy(gBattleSlotStages[sideA].mInfo.mTableEntryIds, gBattleView.mSide[0].mTableEntryIds, 10);
                 gStageInfos[sideB].mValue = -9999;
@@ -719,10 +719,10 @@ void UpdateBattleCompare(void) {
             data_020b6ee0.mBattleSlotFlags[sideA] &= ~BATTLE_SLOT_KEPT;
             SubtractHalfFromList(0, pa->mOthersHalfSumAdded);
             pa->mOthersHalfSumAdded = 0;
-            StartSprite(&data_020b6ee0.mSideSprites[0], data_0201abec[pa->mKind + 33]);
+            StartSprite(&data_020b6ee0.mSideSprites[0], gSpriteScripts[pa->mKind + 33]);
             if (hp[1] == 0) {
                 gStageInfos[sideB].mValue = -9999;
-                StartSprite(&data_020b6ee0.mSideSprites[1], data_0201abec[pb->mKind + 33]);
+                StartSprite(&data_020b6ee0.mSideSprites[1], gSpriteScripts[pb->mKind + 33]);
             }
         }
         if (hp[0] >= hp[1]) {
@@ -817,7 +817,7 @@ void UpdateBattleCompare(void) {
         }
         if (data_020b6ee0.mModel[0].mUnk_00c != 2 || data_020b6ee0.mModel[0].mAnimEnded != 1) {
             SetCameraFromModel();
-            func_02033614(gMapState.mCamera.mPosGoal.x, gMapState.mCamera.mPosGoal.z);
+            DrawMap(gMapState.mCamera.mPosGoal.x, gMapState.mCamera.mPosGoal.z);
             func_020071ac();
             DrawBattleModels();
         } else {
@@ -1179,20 +1179,20 @@ void UpdateBattleEntryPick(int side) {
                         if (oldA < newA) {
                             data_020b6ee0.mModel[0].mSignals |= 8;
                             gBattleView.mState.mTotalFell[side] = 0;
-                            StartSprite(&data_020b6ee0.mSideSprites[side], data_0201abec[32]);
+                            StartSprite(&data_020b6ee0.mSideSprites[side], gSpriteScripts[32]);
                         } else {
                             gBattleView.mState.mTotalFell[side] = 1;
-                            StartSprite(&data_020b6ee0.mSideSprites[side], data_0201abec[info->mKind + 33]);
+                            StartSprite(&data_020b6ee0.mSideSprites[side], gSpriteScripts[info->mKind + 33]);
                         }
                     }
                     if (oldB != newB) {
                         gBattleView.mState.mChangeFrames[side ^ 1] = 0;
                         if (oldB < newB) {
                             gBattleView.mState.mTotalFell[side ^ 1] = 0;
-                            StartSprite(&data_020b6ee0.mSideSprites[side ^ 1], data_0201abec[32]);
+                            StartSprite(&data_020b6ee0.mSideSprites[side ^ 1], gSpriteScripts[32]);
                         } else {
                             gBattleView.mState.mTotalFell[side ^ 1] = 1;
-                            StartSprite(&data_020b6ee0.mSideSprites[side ^ 1], data_0201abec[other->mKind + 33]);
+                            StartSprite(&data_020b6ee0.mSideSprites[side ^ 1], gSpriteScripts[other->mKind + 33]);
                         }
                     }
                 }
@@ -1230,7 +1230,7 @@ void UpdateBattleEntryPick(int side) {
         } else {
             SetCameraFromModel();
         }
-        func_02033614(gMapState.mCamera.mPosGoal.x, gMapState.mCamera.mPosGoal.z);
+        DrawMap(gMapState.mCamera.mPosGoal.x, gMapState.mCamera.mPosGoal.z);
     }
 }
 
@@ -1488,7 +1488,7 @@ void UpdateBattleStagePick(void) {
         SetCameraFromModel();
         DrawBattleModels();
     }
-    func_02033614(gMapState.mCamera.mPosGoal.x, gMapState.mCamera.mPosGoal.z);
+    DrawMap(gMapState.mCamera.mPosGoal.x, gMapState.mCamera.mPosGoal.z);
 }
 
 void UpdateBattleKindValues(void) {
@@ -1519,7 +1519,7 @@ void UpdateBattleKindValues(void) {
             }
         }
         SetCameraFromMapEntries0And1();
-        func_02033614(gMapState.mCamera.mPosGoal.x, gMapState.mCamera.mPosGoal.z);
+        DrawMap(gMapState.mCamera.mPosGoal.x, gMapState.mCamera.mPosGoal.z);
         DrawSprite(0xec4, 128, 45, 100, 2);
         DrawSprite(0x11cf, 127, 153, 200, 2);
         DrawText(127, 153, data_0201a61c, GetText(69), 2, 240, 16, 2);

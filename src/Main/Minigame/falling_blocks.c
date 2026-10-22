@@ -87,7 +87,7 @@ void SetPieceType(Piece *p, u8 type) {
         } else {
             idx = type + 11;
         }
-        StartSprite(&p->mSprite, data_0201abec[(u16) idx]);
+        StartSprite(&p->mSprite, gSpriteScripts[(u16) idx]);
     }
 }
 
@@ -782,7 +782,7 @@ void SetupFallingBlocks(void) {
     }
     gBoard.mCount = 0;
     gBoard.mUnk_8974 = 3738;
-    StartSprite(&gBoard.mPairMarker, data_0201abec[26]);
+    StartSprite(&gBoard.mPairMarker, gSpriteScripts[26]);
     gBoard.mTypeCount = GetFallingBlocksValue(gBoard.mTableRow, 2);
     stagger = GetFallingBlocksValue(gBoard.mTableRow, 3);
     gBoard.mEndTimer = gBoard.mEndFrameCount = GetFallingBlocksValue(gBoard.mTableRow, 5) * 60000 / 1000;

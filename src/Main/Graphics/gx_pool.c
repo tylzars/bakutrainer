@@ -13,7 +13,7 @@
 #define TEX_MAGIC 0x32584554
 
 typedef struct Unk_TexHeader {
-    u32 mUnk_0;
+    u32 mMagic;
     u32 mUnk_4;
 } Unk_TexHeader;
 
@@ -28,23 +28,23 @@ void InitGxPool(int texFile, int plttFile, int c, int d) {
     G3X_InitMtxStack();
     ReallocVramBanks(10, c, -1);
     ReallocVramBanks(11, d, -1);
-    data_020c31dc.mTexBlockCount = (gSystemState.mTexVramGroup.mSize16Kb << 14) / 512;
-    data_020c31dc.mPlttBlockCount = (gSystemState.mPlttVramGroup.mSize16Kb << 14) / 32;
+    gGxState.mTexBlockCount = (gSystemState.mTexVramGroup.mSize16Kb << 14) / 512;
+    gGxState.mPlttBlockCount = (gSystemState.mPlttVramGroup.mSize16Kb << 14) / 32;
     *(vu32 *) 0x04000060 |= 9;
-    data_020c31dc.mTexFile = texFile;
-    data_020c31dc.mPlttFile = plttFile;
+    gGxState.mTexFile = texFile;
+    gGxState.mPlttFile = plttFile;
     v = FindCachedFile(texFile);
     if (v < 0) {
         SeekBank(-v);
         ReadBank(&hdr, 8);
     } else {
-        hdr.mUnk_0 = ((Unk_TexHeader *) v)->mUnk_0;
+        hdr.mMagic = ((Unk_TexHeader *) v)->mMagic;
         hdr.mUnk_4 = ((Unk_TexHeader *) v)->mUnk_4;
     }
-    if (hdr.mUnk_0 != TEX_MAGIC) {
+    if (hdr.mMagic != TEX_MAGIC) {
         OS_Terminate();
     }
-    data_020c31dc.mTexFileKeyCount = (GetStoredFileSize(texFile) - hdr.mUnk_4) >> 2;
+    gGxState.mTexFileKeyCount = (GetStoredFileSize(texFile) - hdr.mUnk_4) >> 2;
     v = FindCachedFile(plttFile);
     if (v < 0) {
         SeekBank(4 - v);
@@ -52,8 +52,8 @@ void InitGxPool(int texFile, int plttFile, int c, int d) {
     } else {
         v = ((Unk_TexHeader *) v)->mUnk_4;
     }
-    data_020c31dc.mPlttFileKeyCount = (GetStoredFileSize(plttFile) - v) >> 2;
-    data_020c31dc.mStopNodeIndex = 0xff;
+    gGxState.mPlttFileKeyCount = (GetStoredFileSize(plttFile) - v) >> 2;
+    gGxState.mStopNodeIndex = 0xff;
     ResetTexCache();
     ResetPlttCache();
     gSystemState.mFlags |= POOL_FLAG;
@@ -86,38 +86,38 @@ void func_020220c8(int a) {
 void ResetTexCache(void) {
     int i;
     if (gSystemState.mFlags & POOL_FLAG) {
-        Free(&data_020c31dc.mTexSlots);
-        Free(&data_020c31dc.mTexNodes);
-        Free(&data_020c31dc.mTexBlocks);
+        Free(&gGxState.mTexSlots);
+        Free(&gGxState.mTexNodes);
+        Free(&gGxState.mTexBlocks);
     }
-    data_020c31dc.mTexSlots = Alloc(0x2000);
-    data_020c31dc.mTexNodes = Alloc(0x2be0);
-    data_020c31dc.mTexNodes[0].mPrev = 1;
-    data_020c31dc.mTexNodes[1].mNext = 0;
-    data_020c31dc.mTexNodes[1].mPrev = 2;
-    data_020c31dc.mTexEntryCount = 0;
+    gGxState.mTexSlots = Alloc(0x2000);
+    gGxState.mTexNodes = Alloc(0x2be0);
+    gGxState.mTexNodes[0].mPrev = 1;
+    gGxState.mTexNodes[1].mNext = 0;
+    gGxState.mTexNodes[1].mPrev = 2;
+    gGxState.mTexEntryCount = 0;
     gSystemState.mUnk_2bc = 0;
     gSystemState.mUnk_2b8 = 0;
-    for (i = data_020c31dc.mTexNodes[1].mPrev; i < 0x2bd; i++) {
-        data_020c31dc.mTexNodes[i].mPrev = i + 1;
+    for (i = gGxState.mTexNodes[1].mPrev; i < 0x2bd; i++) {
+        gGxState.mTexNodes[i].mPrev = i + 1;
     }
-    data_020c31dc.mTexNodes[i].mPrev = data_020c31dc.mTexNodes[1].mPrev;
+    gGxState.mTexNodes[i].mPrev = gGxState.mTexNodes[1].mPrev;
     for (i = 0; i < 0x400; i++) {
-        data_020c31dc.mTexSlots[i].mKey = -1;
+        gGxState.mTexSlots[i].mKey = -1;
     }
-    data_020c31dc.mTexBlocks = Alloc((data_020c31dc.mTexBlockCount + 2) * 8);
-    data_020c31dc.mTexBlocks[0].mUnk_0 = (gSystemState.mTexVramGroup.mSize16Kb << 14) / 512;
-    data_020c31dc.mTexBlocks[0].mUnk_6 = 0xffff;
-    data_020c31dc.mTexBlocks[0].mPrev = data_020c31dc.mTexBlocks[0].mUnk_0;
-    data_020c31dc.mTexBlocks[0].mNext = data_020c31dc.mTexBlocks[0].mUnk_0 + 1;
-    data_020c31dc.mTexBlocks[data_020c31dc.mTexBlocks[0].mUnk_0].mUnk_0 = 0xffff;
-    data_020c31dc.mTexBlocks[data_020c31dc.mTexBlocks[0].mUnk_0].mNext = 0;
-    data_020c31dc.mTexBlocks[data_020c31dc.mTexBlocks[0].mUnk_0].mPrev = 0xffff;
-    data_020c31dc.mTexBlocks[data_020c31dc.mTexBlocks[0].mUnk_0 + 1].mUnk_0 = 0;
-    data_020c31dc.mTexBlocks[data_020c31dc.mTexBlocks[0].mUnk_0 + 1].mNext = 0xffff;
-    data_020c31dc.mTexBlocks[data_020c31dc.mTexBlocks[0].mUnk_0 + 1].mPrev = 0;
-    data_020c31dc.mTexLookupCount = 0;
-    data_020c31dc.mTexProbeCount = 0;
+    gGxState.mTexBlocks = Alloc((gGxState.mTexBlockCount + 2) * 8);
+    gGxState.mTexBlocks[0].mUnk_0 = (gSystemState.mTexVramGroup.mSize16Kb << 14) / 512;
+    gGxState.mTexBlocks[0].mUnk_6 = 0xffff;
+    gGxState.mTexBlocks[0].mPrev = gGxState.mTexBlocks[0].mUnk_0;
+    gGxState.mTexBlocks[0].mNext = gGxState.mTexBlocks[0].mUnk_0 + 1;
+    gGxState.mTexBlocks[gGxState.mTexBlocks[0].mUnk_0].mUnk_0 = 0xffff;
+    gGxState.mTexBlocks[gGxState.mTexBlocks[0].mUnk_0].mNext = 0;
+    gGxState.mTexBlocks[gGxState.mTexBlocks[0].mUnk_0].mPrev = 0xffff;
+    gGxState.mTexBlocks[gGxState.mTexBlocks[0].mUnk_0 + 1].mUnk_0 = 0;
+    gGxState.mTexBlocks[gGxState.mTexBlocks[0].mUnk_0 + 1].mNext = 0xffff;
+    gGxState.mTexBlocks[gGxState.mTexBlocks[0].mUnk_0 + 1].mPrev = 0;
+    gGxState.mTexLookupCount = 0;
+    gGxState.mTexProbeCount = 0;
 }
 
 // The same for the palette cache (32-byte VRAM blocks, no lookup counters); zeroes gSystemState.mUnk_2c4 and
@@ -125,53 +125,53 @@ void ResetTexCache(void) {
 void ResetPlttCache(void) {
     int i;
     if (gSystemState.mFlags & POOL_FLAG) {
-        Free(&data_020c31dc.mPlttSlots);
-        Free(&data_020c31dc.mPlttNodes);
-        Free(&data_020c31dc.mPlttBlocks);
+        Free(&gGxState.mPlttSlots);
+        Free(&gGxState.mPlttNodes);
+        Free(&gGxState.mPlttBlocks);
     }
-    data_020c31dc.mPlttSlots = Alloc(0x800);
-    data_020c31dc.mPlttNodes = Alloc(0xca0);
-    data_020c31dc.mPlttNodes[0].mPrev = 1;
-    data_020c31dc.mPlttNodes[1].mNext = 0;
-    data_020c31dc.mPlttNodes[1].mPrev = 2;
-    data_020c31dc.mPlttEntryCount = 0;
+    gGxState.mPlttSlots = Alloc(0x800);
+    gGxState.mPlttNodes = Alloc(0xca0);
+    gGxState.mPlttNodes[0].mPrev = 1;
+    gGxState.mPlttNodes[1].mNext = 0;
+    gGxState.mPlttNodes[1].mPrev = 2;
+    gGxState.mPlttEntryCount = 0;
     gSystemState.mUnk_2c4 = 0;
     gSystemState.mUnk_2c0 = 0;
-    for (i = data_020c31dc.mPlttNodes[1].mPrev; i < 0xc9; i++) {
-        data_020c31dc.mPlttNodes[i].mPrev = i + 1;
+    for (i = gGxState.mPlttNodes[1].mPrev; i < 0xc9; i++) {
+        gGxState.mPlttNodes[i].mPrev = i + 1;
     }
-    data_020c31dc.mPlttNodes[i].mPrev = data_020c31dc.mPlttNodes[1].mPrev;
+    gGxState.mPlttNodes[i].mPrev = gGxState.mPlttNodes[1].mPrev;
     for (i = 0; i < 0x100; i++) {
-        data_020c31dc.mPlttSlots[i].mKey = -1;
+        gGxState.mPlttSlots[i].mKey = -1;
     }
-    data_020c31dc.mPlttBlocks = Alloc((data_020c31dc.mPlttBlockCount + 2) * 8);
-    data_020c31dc.mPlttBlocks[0].mUnk_0 = (gSystemState.mPlttVramGroup.mSize16Kb << 14) / 32;
-    data_020c31dc.mPlttBlocks[0].mUnk_6 = 0xffff;
-    data_020c31dc.mPlttBlocks[0].mPrev = data_020c31dc.mPlttBlocks[0].mUnk_0;
-    data_020c31dc.mPlttBlocks[0].mNext = data_020c31dc.mPlttBlocks[0].mUnk_0 + 1;
-    data_020c31dc.mPlttBlocks[data_020c31dc.mPlttBlocks[0].mUnk_0].mUnk_0 = 0xffff;
-    data_020c31dc.mPlttBlocks[data_020c31dc.mPlttBlocks[0].mUnk_0].mNext = 0;
-    data_020c31dc.mPlttBlocks[data_020c31dc.mPlttBlocks[0].mUnk_0].mPrev = 0xffff;
-    data_020c31dc.mPlttBlocks[data_020c31dc.mPlttBlocks[0].mUnk_0 + 1].mUnk_0 = 0;
-    data_020c31dc.mPlttBlocks[data_020c31dc.mPlttBlocks[0].mUnk_0 + 1].mNext = 0xffff;
-    data_020c31dc.mPlttBlocks[data_020c31dc.mPlttBlocks[0].mUnk_0 + 1].mPrev = 0;
+    gGxState.mPlttBlocks = Alloc((gGxState.mPlttBlockCount + 2) * 8);
+    gGxState.mPlttBlocks[0].mUnk_0 = (gSystemState.mPlttVramGroup.mSize16Kb << 14) / 32;
+    gGxState.mPlttBlocks[0].mUnk_6 = 0xffff;
+    gGxState.mPlttBlocks[0].mPrev = gGxState.mPlttBlocks[0].mUnk_0;
+    gGxState.mPlttBlocks[0].mNext = gGxState.mPlttBlocks[0].mUnk_0 + 1;
+    gGxState.mPlttBlocks[gGxState.mPlttBlocks[0].mUnk_0].mUnk_0 = 0xffff;
+    gGxState.mPlttBlocks[gGxState.mPlttBlocks[0].mUnk_0].mNext = 0;
+    gGxState.mPlttBlocks[gGxState.mPlttBlocks[0].mUnk_0].mPrev = 0xffff;
+    gGxState.mPlttBlocks[gGxState.mPlttBlocks[0].mUnk_0 + 1].mUnk_0 = 0;
+    gGxState.mPlttBlocks[gGxState.mPlttBlocks[0].mUnk_0 + 1].mNext = 0xffff;
+    gGxState.mPlttBlocks[gGxState.mPlttBlocks[0].mUnk_0 + 1].mPrev = 0;
 }
 
 // Undoes InitGxPool when it ran: clears POOL_FLAG, frees both caches' tables and the VRAM banks of uses 10 and 11,
-// sets the camera's mUnk_2dc.mUnk_4a to 0xff and clears the bits InitGxPool set at 0x04000304 (not those at
+// sets the camera's mViewKind to VIEW_KIND_NONE and clears the bits InitGxPool set at 0x04000304 (not those at
 // 0x04000060).
 void ReleaseGxPool(void) {
     if (gSystemState.mFlags & POOL_FLAG) {
         gSystemState.mFlags &= ~POOL_FLAG;
-        Free(&data_020c31dc.mTexSlots);
-        Free(&data_020c31dc.mTexNodes);
-        Free(&data_020c31dc.mTexBlocks);
-        Free(&data_020c31dc.mPlttBlocks);
-        Free(&data_020c31dc.mPlttSlots);
-        Free(&data_020c31dc.mPlttNodes);
+        Free(&gGxState.mTexSlots);
+        Free(&gGxState.mTexNodes);
+        Free(&gGxState.mTexBlocks);
+        Free(&gGxState.mPlttBlocks);
+        Free(&gGxState.mPlttSlots);
+        Free(&gGxState.mPlttNodes);
         FreeVramBanks(10);
         FreeVramBanks(11);
-        gMapState.mCamera.mUnk_2dc.mUnk_4a = 0xff;
+        gMapState.mCamera.mUnk_2dc.mViewKind = VIEW_KIND_NONE;
         *(vu16 *) 0x04000304 &= ~0xc;
     }
 }

@@ -874,9 +874,9 @@ data_0201abbc:
 	.size data_0201abbc, 48
 
 ; Table of sprite scripts
-	.global data_0201abec
-	.type data_0201abec, @object
-data_0201abec:
+	.global gSpriteScripts
+	.type gSpriteScripts, @object
+gSpriteScripts:
 	.word data_0201b68a
 	.word data_0201b6a6
 	.word data_0201b6cc
@@ -916,7 +916,7 @@ data_0201abec:
 	.word data_0201b760
 	.word data_0201b77a
 	.word data_0201b794
-	.size data_0201abec, 156
+	.size gSpriteScripts, 156
 
 ; sprite script
 	.global data_0201ac88

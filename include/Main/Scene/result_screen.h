@@ -49,7 +49,7 @@ typedef struct ResultState {
     s32 mReplacedTableEntryId;
     // In 1/256 pixel; entries 0-4 are used ([2] is a y offset, the others x) and 5-7 are never read.
     s32 mSlideOffsets[8];
-    // mUnk_68 and mUnk_16c are started at set-up (data_0201abec[3] and [4]) and played in RESULT_STATE_TABLE_ENTRY,
+    // mUnk_68 and mUnk_16c are started at set-up (gSpriteScripts[3] and [4]) and played in RESULT_STATE_TABLE_ENTRY,
     // mUnk_16c only once mUnk_68's mUnk_de is set.
     Sprite mUnk_68;
     Sprite mUnk_16c;

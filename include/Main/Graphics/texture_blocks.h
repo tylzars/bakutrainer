@@ -9,7 +9,9 @@ extern "C" {
 
 // Header of one texture block (GetTexInfo fills it).
 typedef struct TexInfo {
-    u32 mUnk_00;
+    // The offset of the block's data in the block file: in 128-byte units (plus mUnk_13) when mBlockFileKind is 2,
+    // else in 32-byte units.
+    u32 mDataOffset;
     u32 mUnk_04;
     s16 mX;
     s16 mY;
@@ -20,8 +22,8 @@ typedef struct TexInfo {
     u8 mSizeCode;
     s8 mUnk_12;
     u8 mUnk_13;
-    u8 mUnk_14;
-    u8 mUnk_15;
+    u8 mPaletteListIndex;
+    u8 mPaletteCount;
     u8 mUnk_16[2];
 } TexInfo;
 
@@ -51,8 +53,8 @@ void func_0202ad54(void);
 u16 GetPaletteFile(void);
 u16 GetBlockFile(void);
 u8 GetUnitShift(int layer);
-int func_0202ad9c(void);
-s8 func_0202adac(void);
+int GetSpriteTile(void);
+s8 GetSpritePalette(void);
 u32 *GetBlockHeader(u32 index);
 u16 GetBlockCount(void);
 u32 GetOamFillCount(int layer);
@@ -67,8 +69,8 @@ void ResetTextureLayer(int layer);
 void SetupTextureLayer(int a, int b, int c, u32 d, int e);
 void ReleaseTextureLayers(void);
 void ReleaseTextureLayersEx(int a);
-void func_0202c2f0(void *dst, const void *src, u32 w, u32 h, BOOL mode);
-void func_0202c3e0(Transfer *entry, const void *src, u32 w);
+void ArrangeTilesInRows(void *dst, const void *src, u32 w, u32 h, BOOL mode);
+void ExpandRowsToColors(Transfer *entry, const void *src, u32 w);
 void MoveChainEntryToListEnd(u32 i, TextureLayer *textureLayer);
 u32 FindChainEntry(u32 key, u32 val, TextureLayer *textureLayer);
 u32 func_0202c5fc(u32 index, u32 key, u32 val, TextureLayer *textureLayer);

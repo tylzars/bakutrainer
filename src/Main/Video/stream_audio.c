@@ -10,45 +10,49 @@
 #include <Main/System/screen_fade.h>
 #include <mobiclip.h>
 
-Unk_MovieAudio data_020c661c;
+VideoState gVideoState;
 
 #pragma thumb off
 
-void *func_0202f500(u32 size) {
+// The allocation hooks of the movie player library (libs/mobiclip).
+void *MobiclipAlloc(u32 size) {
     return Alloc(size);
 }
 
-void func_0202f50c(void *p) {
+// Frees through a local copy of p, so the caller's pointer is not cleared.
+void MobiclipFree(void *p) {
     void *q = p;
     Free(&q);
 }
 
-void func_0202f520(void *arg) {
-    data_020c661c.mUnk_2c++;
+void VideoAudioCallback(void *arg) {
+    gVideoState.mAudioCallbackCount++;
 }
 
 void StartVideoAudio(u32 a, u32 b) {
     u32 step = 0xffb0ff / a;
     u32 total = (b >> 6) * (step * 2);
-    DC_StoreRange(data_020c661c.mUnk_34, (data_020c661c.mUnk_3c * b) << 1);
+    DC_StoreRange(gVideoState.mAudioBuffer, (gVideoState.mAudioEntryCount * b) << 1);
     func_02040198(1, 0);
-    func_02040240(0, 1, (u32) data_020c661c.mUnk_34, 1, 0, (data_020c661c.mUnk_3c * b) >> 1, 0x7f, 0, step, 0x40);
-    func_02040158(0, total, total, func_0202f520, 0);
+    func_02040240(0, 1, (u32) gVideoState.mAudioBuffer, 1, 0, (gVideoState.mAudioEntryCount * b) >> 1, 0x7f, 0, step,
+                  0x40);
+    func_02040158(0, total, total, VideoAudioCallback, 0);
     func_020400cc(1, 0, 1, 0);
     SND_FlushCommand(1);
 }
 
-void func_0202f614(void *arg) {
-    data_020c661c.mUnk_40 = 1;
+// The periodic alarm StartVideo sets: sets mUnk_40, which nothing reads.
+void VideoAlarmCallback(void *arg) {
+    gVideoState.mUnk_40 = 1;
 }
 
-void *func_0202f628(u32 screen) {
-    return (screen & 1) ? (void *) 0x6000000 : (void *) 0x6200000;
+void *GetImageLayerAddr(u32 layer) {
+    return (layer & 1) ? (void *) 0x6000000 : (void *) 0x6200000;
 }
 
-// Starts playing the movie file `path` on screen `b`: reads the player's header, allocates the decoded audio ring and
-// starts the alarm that paces the audio.
-void StartVideo(const char *path, int b) {
+// Starts playing the movie file `path` on layer `layer`: reads the player's header, allocates the decoded audio ring
+// and starts the alarm that paces the audio.
+void StartVideo(const char *path, int layer) {
     u32 a;
     u32 c;
     u32 lo;
@@ -58,13 +62,13 @@ void StartVideo(const char *path, int b) {
     if (gSystemState.mFlags & 0x20) {
         StopVideo();
     }
-    data_020c661c.mUnk_b6 = b;
-    data_020c661c.mUnk_ac = 0;
-    data_020c661c.mAudioStarted = 0;
-    data_020c661c.mScreensOff = 0;
+    gVideoState.mLayer = layer;
+    gVideoState.mUnk_ac = 0;
+    gVideoState.mAudioStarted = 0;
+    gVideoState.mScreensOff = 0;
     gSystemState.mFlags |= 0x20;
-    if (func_0201db58(b) != 0x8000 || GetLayerRowSize(b) != 0x200) {
-        SetupImageLayer(b, 1, 0x100, 0xc0);
+    if (func_0201db58(layer) != 0x8000 || GetLayerRowSize(layer) != 0x200) {
+        SetupImageLayer(layer, 1, 0x100, 0xc0);
     }
     lo = (u32) OS_GetArenaLo(3);
     a = (u32) OS_GetArenaHi(3) - lo;
@@ -78,80 +82,81 @@ void StartVideo(const char *path, int b) {
         c = func_0203b534();
     }
     func_0203b55c(OS_GetArenaLo(4), c);
-    func_020421f8(&data_020c661c.mFile);
-    if (func_02042490(&data_020c661c.mFile, path) == 0) {
+    func_020421f8(&gVideoState.mFile);
+    if (func_02042490(&gVideoState.mFile, path) == 0) {
         OS_Terminate();
     }
-    data_020c661c.mUnk_98 = 6;
-    data_020c661c.mPlayer = func_02039e08(&data_020c661c.mFile, 6);
-    if (data_020c661c.mPlayer == 0) {
+    gVideoState.mUnk_98 = 6;
+    gVideoState.mPlayer = func_02039e08(&gVideoState.mFile, 6);
+    if (gVideoState.mPlayer == 0) {
         OS_Terminate();
     }
-    data_020c661c.mUnk_a4 = func_02039f40(data_020c661c.mPlayer);
-    data_020c661c.mUnk_9c = func_02039f58(data_020c661c.mPlayer);
-    if (data_020c661c.mUnk_9c != 0) {
-        x = func_02039f10(data_020c661c.mPlayer);
-        y = func_02039f28(data_020c661c.mPlayer);
-        z = data_020c661c.mUnk_9c;
-        data_020c661c.mUnk_a0 = (u32) (((u64) x << 24) / ((u64) z * y)) + 1;
-        data_020c661c.mUnk_3c = data_020c661c.mUnk_a0 * (data_020c661c.mUnk_98 + 1);
-        data_020c661c.mUnk_34 = Alloc(data_020c661c.mUnk_3c * data_020c661c.mUnk_9c * 2);
-        data_020c661c.mUnk_2c = 0;
-        data_020c661c.mUnk_38 = 0;
-        data_020c661c.mUnk_30 = 0;
-        OS_CreateAlarm(&data_020c661c.mAlarm);
+    gVideoState.mUnk_a4 = func_02039f40(gVideoState.mPlayer);
+    gVideoState.mAudioEntryLength = func_02039f58(gVideoState.mPlayer);
+    if (gVideoState.mAudioEntryLength != 0) {
+        x = func_02039f10(gVideoState.mPlayer);
+        y = func_02039f28(gVideoState.mPlayer);
+        z = gVideoState.mAudioEntryLength;
+        gVideoState.mUnk_a0 = (u32) (((u64) x << 24) / ((u64) z * y)) + 1;
+        gVideoState.mAudioEntryCount = gVideoState.mUnk_a0 * (gVideoState.mUnk_98 + 1);
+        gVideoState.mAudioBuffer = Alloc(gVideoState.mAudioEntryCount * gVideoState.mAudioEntryLength * 2);
+        gVideoState.mAudioCallbackCount = 0;
+        gVideoState.mAudioWritePos = 0;
+        gVideoState.mAudioWriteCount = 0;
+        OS_CreateAlarm(&gVideoState.mAlarm);
         {
             OSTick tick = OS_GetTick();
-            u32 d = func_02039f28(data_020c661c.mPlayer);
+            u32 d = func_02039f28(gVideoState.mPlayer);
             u64 step = 0xf4240000000ULL / d;
             u32 period = (step * 0x82ea >> 6) / 1000;
-            OS_SetPeriodicAlarm(&data_020c661c.mAlarm, tick + 5, period, func_0202f614, 0);
+            OS_SetPeriodicAlarm(&gVideoState.mAlarm, tick + 5, period, VideoAlarmCallback, 0);
         }
     }
-    data_020c661c.mUnk_44 = 0;
-    data_020c661c.mUnk_a8 = 0;
+    gVideoState.mUnk_44 = 0;
+    gVideoState.mUnk_a8 = 0;
 }
 
 // Decodes the next movie frame and its audio into the ring, starts the audio once enough frames are queued, and
 // pauses or resumes the player to keep the audio and video in step. Returns 0 when the movie is over.
 int UpdateVideo(void) {
     u32 i;
-    if (data_020c661c.mScreensOff == 0 || data_020c661c.mAudioStarted == 0) {
-        if (func_02039f70(data_020c661c.mPlayer) == 0) {
+    if (gVideoState.mScreensOff == 0 || gVideoState.mAudioStarted == 0) {
+        if (func_02039f70(gVideoState.mPlayer) == 0) {
             return 0;
         }
-        func_02039f94(data_020c661c.mPlayer);
-        data_020c661c.mUnk_ac++;
+        func_02039f94(gVideoState.mPlayer);
+        gVideoState.mUnk_ac++;
     }
-    data_020c661c.mUnk_b0 = func_0203a000(data_020c661c.mPlayer);
-    for (i = 0; i < data_020c661c.mUnk_b0; i++) {
-        if (data_020c661c.mAudioStarted != 0 && data_020c661c.mUnk_2c < data_020c661c.mUnk_30) {
-            while (data_020c661c.mUnk_3c - (data_020c661c.mUnk_30 - data_020c661c.mUnk_2c) == 0) {
+    gVideoState.mUnk_b0 = func_0203a000(gVideoState.mPlayer);
+    for (i = 0; i < gVideoState.mUnk_b0; i++) {
+        if (gVideoState.mAudioStarted != 0 && gVideoState.mAudioCallbackCount < gVideoState.mAudioWriteCount) {
+            while (gVideoState.mAudioEntryCount - (gVideoState.mAudioWriteCount - gVideoState.mAudioCallbackCount) ==
+                   0) {
             }
         }
-        func_0203a018(data_020c661c.mPlayer, data_020c661c.mUnk_34 + data_020c661c.mUnk_38);
-        DC_StoreRange(data_020c661c.mUnk_34 + data_020c661c.mUnk_38, data_020c661c.mUnk_9c * 2);
-        data_020c661c.mUnk_38 += data_020c661c.mUnk_9c;
-        if (data_020c661c.mUnk_38 == data_020c661c.mUnk_3c * data_020c661c.mUnk_9c) {
-            data_020c661c.mUnk_38 = 0;
+        func_0203a018(gVideoState.mPlayer, gVideoState.mAudioBuffer + gVideoState.mAudioWritePos);
+        DC_StoreRange(gVideoState.mAudioBuffer + gVideoState.mAudioWritePos, gVideoState.mAudioEntryLength * 2);
+        gVideoState.mAudioWritePos += gVideoState.mAudioEntryLength;
+        if (gVideoState.mAudioWritePos == gVideoState.mAudioEntryCount * gVideoState.mAudioEntryLength) {
+            gVideoState.mAudioWritePos = 0;
         }
-        data_020c661c.mUnk_30++;
-        if (data_020c661c.mAudioStarted == 0 && data_020c661c.mUnk_ac >= data_020c661c.mUnk_98) {
-            StartVideoAudio(func_02039f10(data_020c661c.mPlayer), data_020c661c.mUnk_9c);
-            data_020c661c.mAudioStarted = 1;
+        gVideoState.mAudioWriteCount++;
+        if (gVideoState.mAudioStarted == 0 && gVideoState.mUnk_ac >= gVideoState.mUnk_98) {
+            StartVideoAudio(func_02039f10(gVideoState.mPlayer), gVideoState.mAudioEntryLength);
+            gVideoState.mAudioStarted = 1;
         }
     }
-    if (data_020c661c.mAudioStarted == 1 || func_02039f10(data_020c661c.mPlayer) == 0) {
-        s32 queued = data_020c661c.mUnk_30 - data_020c661c.mUnk_2c;
-        if (data_020c661c.mScreensOff != 0 || (queued <= data_020c661c.mUnk_a0 * 3 && data_020c661c.mUnk_a8 == 0 &&
-                                               func_02039f10(data_020c661c.mPlayer) != 0)) {
-            data_020c661c.mUnk_ac--;
-            func_02039fdc(data_020c661c.mPlayer);
-            data_020c661c.mUnk_a8 = 1;
+    if (gVideoState.mAudioStarted == 1 || func_02039f10(gVideoState.mPlayer) == 0) {
+        s32 queued = gVideoState.mAudioWriteCount - gVideoState.mAudioCallbackCount;
+        if (gVideoState.mScreensOff != 0 || (queued <= gVideoState.mUnk_a0 * 3 && gVideoState.mUnk_a8 == 0 &&
+                                             func_02039f10(gVideoState.mPlayer) != 0)) {
+            gVideoState.mUnk_ac--;
+            func_02039fdc(gVideoState.mPlayer);
+            gVideoState.mUnk_a8 = 1;
         } else {
-            data_020c661c.mUnk_ac--;
-            func_02039fb8(data_020c661c.mPlayer, func_0202f628(data_020c661c.mUnk_b6), 0x100, 0);
-            data_020c661c.mUnk_a8 = 0;
+            gVideoState.mUnk_ac--;
+            func_02039fb8(gVideoState.mPlayer, GetImageLayerAddr(gVideoState.mLayer), 0x100, 0);
+            gVideoState.mUnk_a8 = 0;
         }
     }
     return 1;
@@ -159,7 +164,7 @@ int UpdateVideo(void) {
 
 // Does nothing unless the audio has started.
 void StopVideoAudio(void) {
-    if (data_020c661c.mAudioStarted != 1) {
+    if (gVideoState.mAudioStarted != 1) {
         return;
     }
     func_020400f4(1, 0, 1, 0);
@@ -173,19 +178,23 @@ void StopVideo(void) {
         return;
     }
     StopVideoAudio();
-    OS_CancelAlarm(&data_020c661c.mAlarm);
-    Free(&data_020c661c.mUnk_34);
-    func_02039ef0(data_020c661c.mPlayer);
-    func_020424d8(&data_020c661c.mFile);
-    FreeVramBanks(data_020c661c.mUnk_b6 == 1 ? 2 : 6);
-    func_0202fc5c();
+    OS_CancelAlarm(&gVideoState.mAlarm);
+    Free(&gVideoState.mAudioBuffer);
+    func_02039ef0(gVideoState.mPlayer);
+    func_020424d8(&gVideoState.mFile);
+    FreeVramBanks(gVideoState.mLayer == 1 ? 2 : 6);
+    TurnScreensOn();
     gSystemState.mFlags &= ~0x20;
 }
 
-// Turns the screens off and on again with that bit (bit 15 of the shared key state).
-void func_0202fbc8(void) {
+// Follows the lid while a movie plays. The test reads bit 15 of the shared key state at 0x027fffa8 (LID_CLOSED of
+// HW_SHARED_BUTTONS, written as literals here because those defines are local to system_init.c). With the lid closed
+// and mScreensOff 0 it switches the displays off (func_0203c994), clears bit 16 of 0x04001000 and sets mScreensOff
+// when func_020443ac(0) then returns 1; with the lid open and mScreensOff 1 it calls TurnScreensOn and then
+// func_0204028c(0x7f).
+void UpdateScreensForLid(void) {
     if (((s32) (*(vu16 *) 0x27fffa8 & 0x8000)) >> 15 == 1) {
-        if (data_020c661c.mScreensOff != 0) {
+        if (gVideoState.mScreensOff != 0) {
             return;
         }
         func_0203f6a4();
@@ -195,18 +204,20 @@ void func_0202fbc8(void) {
         if (func_020443ac(0) != 1) {
             return;
         }
-        data_020c661c.mScreensOff = 1;
+        gVideoState.mScreensOff = 1;
     } else {
-        if (data_020c661c.mScreensOff != 1) {
+        if (gVideoState.mScreensOff != 1) {
             return;
         }
-        func_0202fc5c();
+        TurnScreensOn();
         func_0204028c(0x7f);
     }
 }
 
-void func_0202fc5c(void) {
-    if (data_020c661c.mScreensOff != 1) {
+// Only when mScreensOff is 1 and func_020443ac(1) returns 1: switches the displays on, sets bit 16 of 0x04001000
+// again and clears mScreensOff.
+void TurnScreensOn(void) {
+    if (gVideoState.mScreensOff != 1) {
         return;
     }
     if (func_020443ac(1) != 1) {
@@ -216,12 +227,12 @@ void func_0202fc5c(void) {
     GX_DispOn();
     *(vu32 *) 0x4001000 |= 0x10000;
     func_0203f6a4();
-    data_020c661c.mScreensOff = 0;
+    gVideoState.mScreensOff = 0;
 }
 
 // Whether the screens are currently off.
 u8 AreScreensOff(void) {
-    return data_020c661c.mScreensOff;
+    return gVideoState.mScreensOff;
 }
 
 #pragma thumb on

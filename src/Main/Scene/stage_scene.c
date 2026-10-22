@@ -63,7 +63,7 @@ void StartShake(int ms) {
 }
 
 void SetupSceneCamera(void) {
-    gMapState.mCamera.mUnk_2dc.mUnk_44 = 0x030d4000;
+    gMapState.mCamera.mUnk_2dc.mViewDistance = 0x030d4000;
     gMapState.mCamera.mUnk_2dc.mUnk_54 = 0x640;
     func_02033e38(1, 1, 1);
     func_02033e38(8, 0, 1);
@@ -151,7 +151,7 @@ void SetupScene(void) {
     ResetAndSetupGraphics(0, 0, gScene->mStage.mStageId + 0xdb3, 0x180, 16, 0, 2);
     func_02024208();
     RequestTrack(4, 0x4c);
-    func_0200dc08(gSceneMapIds[gScene->mStage.mKind], &area[4], &area[3], &area[2], &area[1], &area[0], 0);
+    GetSetupMapArgs(gSceneMapIds[gScene->mStage.mKind], &area[4], &area[3], &area[2], &area[1], &area[0], 0);
     SetupMap(area[4], area[2], area[3], 0, area[1], area[0]);
     UpdateSystemAndWait();
     SetupSceneCamera();
@@ -230,10 +230,10 @@ void DrawScene(void) {
     DrawModeScoreAndTime(data_020b6ee0.mSelectedStageIndex, gScene->mScore, gModeSelectState.mScoreThreshold,
                          gScene->mEndTimer, 2);
     DrawKind3Touches();
-    func_02033614(gMapState.mCamera.mUnk_9c.mUnk_228.x, gMapState.mCamera.mUnk_9c.mUnk_228.z);
+    DrawMap(gMapState.mCamera.mUnk_9c.mUnk_228.x, gMapState.mCamera.mUnk_9c.mUnk_228.z);
     UpdateAndDrawModel(&gScene->mUnk_230, &gScene->mDraw, 0xb0000002);
     PlayObjectSe(&gScene->mUnk_230);
-    func_02024368(&gScene->mUnk_3ec, 255, 0, 0x1000, 0, 0);
+    UpdateAndDrawModelOrtho(&gScene->mUnk_3ec, 255, 0, 0x1000, 0, 0);
     if (data_020b10fc.mSceneState < SCENE_STATE_END) {
         DrawNumber();
     }
@@ -396,7 +396,7 @@ void UpdatePopups(void) {
                 break;
             case POPUP_STATE_TOUCHED:
                 e->mDisappearTimer--;
-                func_020242e8(0xd0f, x, y, 0x1000, 0x1000, 0, 0xff, 0);
+                DrawModelFileOrtho(0xd0f, x, y, 0x1000, 0x1000, 0, 0xff, 0);
                 if (e->mDisappearTimer <= 0) {
                     e->mState = POPUP_STATE_FREE;
                 }
@@ -410,7 +410,7 @@ void UpdatePopups(void) {
                 break;
         }
         if (redraw == 1) {
-            func_020242e8(e->mKind + 0xd0b, x, y, 0x1000, 0x1000, 0, 0xff, 0);
+            DrawModelFileOrtho(e->mKind + 0xd0b, x, y, 0x1000, 0x1000, 0, 0xff, 0);
             AddTouchButton(i + 0x100, x, y, 0, 0, 0xe83);
         }
     }

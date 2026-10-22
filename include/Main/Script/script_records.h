@@ -73,8 +73,8 @@ typedef struct ScriptText {
 } ScriptText;
 
 // A sprite or shape of the script (AddScriptSprite). Sprites (top bit of mDrawId clear) are drawn through
-// mSpriteDrawFunc or DrawSprite, shapes (SHAPE, top bit set) through func_020242e8; the eye and Ls overlays are drawn
-// on both.
+// mSpriteDrawFunc or DrawSprite, shapes (SHAPE, top bit set) through DrawModelFileOrtho; the eye and Ls overlays are
+// drawn on both.
 typedef struct ScriptSprite {
     s32 mId;
     u32 mDrawId;
@@ -148,7 +148,7 @@ typedef struct Unk_020c642c {
     // The sprite or shape SetScriptScrSprite set, drawn at mScrX, mScrY on each UpdateScript pass; 0 = none (cleared
     // by StartScript and by an image queued with layer value 1). Its top bits differ from ScriptSprite.mDrawId's: bit
     // 31 marks it new (the first pass clears it, calls SetFaded(1) and copies the id to mUnk_30); bit 30 set means a
-    // sprite (drawn with DrawSprite on layer 1), clear a shape (func_020242e8).
+    // sprite (drawn with DrawSprite on layer 1), clear a shape (DrawModelFileOrtho).
     s32 mScrDrawId;
     u16 mScrX;
     u16 mScrY;

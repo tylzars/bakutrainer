@@ -104,7 +104,7 @@ typedef struct StageRec {
     u8 mUnk_22c;
     u8 mInSlot;
     u8 mUnk_22e;
-    // 1 when any part of the stage is in view (func_02031d0c, set every frame of state 10); the selected stage is
+    // 1 when any part of the stage is in view (IsBoxInView, set every frame of state 10); the selected stage is
     // still projected and drawn while it is 0, but DrawStageSprite draws nothing for it.
     u8 mVisible;
 } StageRec;

@@ -17,7 +17,7 @@ extern "C" {
 #define MAP_FLOOR_LAST 0x8000
 
 // mUnk_14 of a region: with MAP_FLOOR_SINGLE set, the low byte is the region's attribute and its height data follows
-// mUnk_14 directly; otherwise the low 15 bits are the offset of the height data from mUnk_14 and mUnk_16 outlines
+// mUnk_14 directly; otherwise the low 15 bits are the offset of the height data from mUnk_14 and mShapeCount outlines
 // (MapFloorShape) follow it, each with its own attribute.
 #define MAP_FLOOR_SINGLE 0x8000
 // The first halfword of the height data: the number of samples per side in the low byte, MAP_FLOOR_WIDE when the
@@ -28,28 +28,29 @@ extern "C" {
 
 // One point of an outline, relative to the region's corner.
 typedef struct MapFloorPoint {
-    s16 mUnk_00;
-    s16 mUnk_02;
+    s16 mX;
+    s16 mZ;
 } MapFloorPoint;
 
-// An outline: mUnk_00 points, attribute mUnk_01.
+// An outline of a region, with its own attribute.
 typedef struct MapFloorShape {
-    u8 mUnk_00;
-    u8 mUnk_01;
-    MapFloorPoint mUnk_02[1];
+    u8 mPointCount;
+    u8 mAttr;
+    MapFloorPoint mPoints[1];
 } MapFloorShape;
 
-// A floor region: its x/z bounds in units of 512 (mUnk_00..mUnk_0c), the heights of its lowest and highest sample
-// in the same units (mUnk_10, mUnk_12), then mUnk_14/mUnk_16 as described above.
+// A floor region: its x/z bounds and the heights of its lowest and highest sample, all in units of 512 (mMinX and
+// mMinZ are also the corner the outline points and the height samples are placed from), then mUnk_14 and the outline
+// count as described above.
 typedef struct MapFloorRegion {
-    u32 mUnk_00;
-    u32 mUnk_04;
-    u32 mUnk_08;
-    u32 mUnk_0c;
-    s16 mUnk_10;
-    s16 mUnk_12;
+    u32 mMinX;
+    u32 mMinZ;
+    u32 mMaxX;
+    u32 mMaxZ;
+    s16 mMinY;
+    s16 mMaxY;
     u16 mUnk_14;
-    u8 mUnk_16;
+    u8 mShapeCount;
     u8 mUnk_17;
 } MapFloorRegion;
 
@@ -59,8 +60,9 @@ typedef struct MapFloorRegion {
 int GetFloorHeightEx(fx32 x, fx32 z, fx32 y, int a, u32 mask, u8 *out, VecFx32 *vec);
 // GetFloorHeightEx without the normal.
 int GetFloorHeight(fx32 x, fx32 z, fx32 y, int a, u32 mask, u8 *out);
-// AngleOfVector of the camera's point mUnk_14 relative to its point mUnk_20.
-u32 func_0203129c(void);
+// AngleOfVector of the vector from the end of the nearest ring segment to its start (mNearestSegmentStart relative to
+// mNearestSegmentEnd), as FindNearestRingSegment last recorded them.
+u32 GetNearestSegmentAngle(void);
 
 #ifdef __cplusplus
 }

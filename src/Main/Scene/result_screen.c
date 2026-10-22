@@ -77,8 +77,8 @@ void SetupResultScreen(void) {
         gResultState.mSlideOffsets[i] = 0;
     }
     SetupSharedModel(sResultSharedModelIndices[data_020b10fc.mUnk_0c], 0);
-    StartSprite(&gResultState.mUnk_68, data_0201abec[3]);
-    StartSprite(&gResultState.mUnk_16c, data_0201abec[4]);
+    StartSprite(&gResultState.mUnk_68, gSpriteScripts[3]);
+    StartSprite(&gResultState.mUnk_16c, gSpriteScripts[4]);
     RequestTrack(data_020b10fc.mUnk_0c == 1 ? 7 : 8, 102);
 }
 

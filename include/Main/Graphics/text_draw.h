@@ -38,8 +38,8 @@ u32 NormalizeSpace(u32 code);
 void DrawText(int x, int y, const void *font, const char *text, int align, int width, int height, int layer);
 int DrawTextEx(int x, int y, const FontRange *const *fonts, u8 fontIndex, const u8 *text, u16 angle, u32 flags,
                u32 width, int height, int layer);
-const u8 *func_02021dd8(u16 id, int index);
-const u8 *func_02021df4(u32 base, const u8 *entry);
+const u8 *GetFileValueEntry(u16 id, int index);
+const u8 *GetFileValueData(u32 id, const u8 *entry);
 int GetFileValueType(u16 id, int index);
 const u8 *GetFileString(u16 id, int index);
 int GetFileValue(u16 id, int index);

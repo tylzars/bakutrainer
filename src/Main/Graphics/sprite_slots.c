@@ -13,91 +13,94 @@
 #include <Main/Graphics/sprite_script.h>
 #include <Main/Graphics/script_data.h>
 
-SlotCounters data_020abfc0;
-AnimSlot data_020abfcc[ANIM_SLOT_COUNT];
-ObjSlot data_020ace4c[OBJ_SLOT_COUNT];
+SlotCounters gSlotCounters;
+AnimSlot gAnimSlots[ANIM_SLOT_COUNT];
+ObjSlot gObjSlots[OBJ_SLOT_COUNT];
 
 void ClearObjSlots(void) {
     u32 i;
-    data_020abfc0.mLastId = 0;
+    gSlotCounters.mLastId = 0;
     for (i = 0; i < OBJ_SLOT_COUNT; i++) {
-        data_020ace4c[i].mKind = OBJ_KIND_FREE;
+        gObjSlots[i].mKind = OBJ_KIND_FREE;
     }
 }
 
-ObjSlot *AddObjSlot(int kind, int a, int x, int y, int vx, int vy, int life, int h) {
+// Takes the first free slot (NULL when all 16 are in use); a negative drawOrder stops the system once a free slot is
+// found.
+ObjSlot *AddObjSlot(int kind, int a, int x, int y, int vx, int vy, int drawOrder, int layer) {
     u32 i;
-    ObjSlot *s = data_020ace4c;
+    ObjSlot *s = gObjSlots;
     for (i = 0; i < OBJ_SLOT_COUNT; i++, s++) {
         if (s->mKind == OBJ_KIND_FREE) {
-            if (life < 0) {
+            if (drawOrder < 0) {
                 OS_Terminate();
             }
             s->mKind = kind;
             s->mUnk_0c = a;
-            data_020abfc0.mLastId++;
-            s->mId = data_020abfc0.mLastId;
+            gSlotCounters.mLastId++;
+            s->mId = gSlotCounters.mLastId;
             s->mX = x << 8;
             s->mY = y << 8;
             s->mVx = vx;
             s->mVy = vy;
-            s->mUnk_158 = life;
-            s->mUnk_15c = h;
-            s->mUnk_140 = 0;
+            s->mDrawOrder = drawOrder;
+            s->mLayer = layer;
+            s->mUsePos = 0;
             return s;
         }
     }
     return 0;
 }
 
-int AddAnimObjSlot(int script, int a, int b, int c, int d) {
-    return AddAnimObjSlotEx(script, 0, a, b, 0, 0, c, d);
+int AddAnimObjSlot(int script, int x, int y, int drawOrder, int layer) {
+    return AddAnimObjSlotEx(script, 0, x, y, 0, 0, drawOrder, layer);
 }
 
-int AddAnimObjSlotEx(int script, int a, int b, int c, int d, int e, int f, int g) {
-    ObjSlot *s = AddObjSlot(OBJ_KIND_ANIM, a, b, c, d, e, f, g);
+int AddAnimObjSlotEx(int script, int a, int x, int y, int vx, int vy, int drawOrder, int layer) {
+    ObjSlot *s = AddObjSlot(OBJ_KIND_ANIM, a, x, y, vx, vy, drawOrder, layer);
     if (s != 0) {
         s->mUnk_08 = script;
-        StartSprite(&s->mUnk_30, data_0201abec[script]);
+        StartSprite(&s->mUnk_30, gSpriteScripts[script]);
         return s->mId;
     }
     return 0;
 }
 
-int AddSpriteObjSlot(int a, int b, int duration, int c, int d, int e, int f, int g, int h, int i) {
+int AddSpriteObjSlot(int a, int b, int duration, int x, int y, int vx, int vy, int drawOrder, int layer, int i) {
     ObjSlot *s;
     if (duration == 0) {
         OS_Terminate();
     }
-    if (duration <= 0 && f > 0) {
+    if (duration <= 0 && vy > 0) {
         OS_Terminate();
     }
-    s = AddObjSlot(OBJ_KIND_SPRITE, b, c, d, e, f, g, h);
+    s = AddObjSlot(OBJ_KIND_SPRITE, b, x, y, vx, vy, drawOrder, layer);
     if (s != 0) {
         s->mUnk_44 = a;
         s->mUnk_08 = a;
         if (duration > 0) {
-            s->mUnk_10a = duration;
+            s->mTimer = duration;
         } else {
-            s->mUnk_10a = 0;
-            s->mUnk_154 = -duration;
+            s->mTimer = 0;
+            s->mVyPerFrame = -duration;
         }
         return s->mId;
     }
     return 0;
 }
 
-int AddTextObjSlot(const char *text, int a, const void *font, int b, int x, int y, int c, int d, int e, int f, int g) {
+int AddTextObjSlot(const char *text, int align, const void *font, int duration, int x, int y, int vx, int vy,
+                   int drawOrder, int layer, int g) {
     ObjSlot *s;
-    if (b < 0) {
+    if (duration < 0) {
         OS_Terminate();
     }
-    s = AddObjSlot(OBJ_KIND_TEXT, 0, x, y, c, d, e, f);
+    s = AddObjSlot(OBJ_KIND_TEXT, 0, x, y, vx, vy, drawOrder, layer);
     if (s != 0) {
         strcpy(s->mText, text);
-        s->mUnk_44 = a;
+        s->mUnk_44 = align;
         s->mUnk_30 = font;
-        s->mUnk_10a = b;
+        s->mTimer = duration;
         return s->mId;
     }
     return 0;
@@ -105,7 +108,7 @@ int AddTextObjSlot(const char *text, int a, const void *font, int b, int x, int 
 
 ObjSlot *FindObjSlot(int id) {
     u32 i;
-    ObjSlot *s = data_020ace4c;
+    ObjSlot *s = gObjSlots;
     for (i = 0; i < OBJ_SLOT_COUNT; i++, s++) {
         if (s->mKind != OBJ_KIND_FREE && s->mId == id) {
             return s;
@@ -120,7 +123,7 @@ void UpdateObjSlots(void) {
     ObjSlot *s;
     s32 obj;
     s32 done;
-    for (i = 0, s = data_020ace4c; i < OBJ_SLOT_COUNT; s++, i++) {
+    for (i = 0, s = gObjSlots; i < OBJ_SLOT_COUNT; s++, i++) {
         s32 rect[4];
         s32 pt[2];
         char buf[0x20];
@@ -138,37 +141,37 @@ void UpdateObjSlots(void) {
                 if (s->mUnk_10e == 1) {
                     done = 1;
                 }
-            } else if (s->mUnk_10a == 0) {
+            } else if (s->mTimer == 0) {
                 obj = s->mUnk_44;
                 GetSpriteRect(obj, 0, rect);
                 if (sx + rect[0] > 0x100 || sx + rect[2] < 0 || sy + rect[1] > 0xc0 || sy + rect[3] < 0) {
                     done = 1;
                 } else {
-                    s->mVy += s->mUnk_154;
+                    s->mVy += s->mVyPerFrame;
                 }
             } else {
-                s->mUnk_10a--;
-                if (s->mUnk_10a != 0) {
+                s->mTimer--;
+                if (s->mTimer != 0) {
                     obj = s->mUnk_44;
                 } else {
                     done = 1;
                 }
             }
             if (done == 0) {
-                if (s->mUnk_140 != 0) {
-                    ProjectToScreen(&s->mUnk_134, pt);
-                    DrawSprite(obj + s->mUnk_0c, pt[0] + sx, pt[1] + sy, s->mUnk_158, s->mUnk_15c);
+                if (s->mUsePos != 0) {
+                    ProjectToScreen(&s->mPos, pt);
+                    DrawSprite(obj + s->mUnk_0c, pt[0] + sx, pt[1] + sy, s->mDrawOrder, s->mLayer);
                 } else {
-                    DrawSprite(obj + s->mUnk_0c, sx, sy, s->mUnk_158, s->mUnk_15c);
+                    DrawSprite(obj + s->mUnk_0c, sx, sy, s->mDrawOrder, s->mLayer);
                 }
             } else {
                 s->mKind = OBJ_KIND_FREE;
             }
         } else {
-            s->mUnk_10a--;
-            if (s->mUnk_10a != 0) {
+            s->mTimer--;
+            if (s->mTimer != 0) {
                 u16 saved;
-                s32 textObj = s->mUnk_44;
+                s32 align = s->mUnk_44;
                 // No slot is created with OBJ_KIND_TEXT_PLUS in this build (AddObjSlot's callers pass OBJ_KIND_ANIM,
                 // OBJ_KIND_SPRITE or OBJ_KIND_TEXT), so this branch does not run.
                 if (s->mKind == OBJ_KIND_TEXT_PLUS) {
@@ -180,12 +183,12 @@ void UpdateObjSlots(void) {
                     strcpy(buf, s->mText);
                 }
                 saved = gSystemState.mUnk_308;
-                gSystemState.mUnk_308 = s->mUnk_158;
-                if (s->mUnk_140 != 0) {
-                    ProjectToScreen(&s->mUnk_134, pt);
-                    DrawText(pt[0] + sx, pt[1] + sy, s->mUnk_30, buf, textObj, 0x100, 0x18, s->mUnk_15c);
+                gSystemState.mUnk_308 = s->mDrawOrder;
+                if (s->mUsePos != 0) {
+                    ProjectToScreen(&s->mPos, pt);
+                    DrawText(pt[0] + sx, pt[1] + sy, s->mUnk_30, buf, align, 0x100, 0x18, s->mLayer);
                 } else {
-                    DrawText(sx, sy, s->mUnk_30, buf, textObj, 0x100, 0x18, s->mUnk_15c);
+                    DrawText(sx, sy, s->mUnk_30, buf, align, 0x100, 0x18, s->mLayer);
                 }
                 gSystemState.mUnk_308 = saved;
             } else {
@@ -198,13 +201,13 @@ void UpdateObjSlots(void) {
 void ClearAnimSlots(void) {
     u32 i;
     for (i = 0; i < ANIM_SLOT_COUNT; i++) {
-        data_020abfcc[i].mKind = 0;
+        gAnimSlots[i].mKind = 0;
     }
     func_0200daec();
 }
 
 void func_0200daec(void) {
-    data_020abfc0.mUnk_04 = 0;
+    gSlotCounters.mUnk_04 = 0;
 }
 
 // Draws the animation slots of kind 1 (UpdateAndDrawModel) and 2 (func_02024338) and counts their lifetimes down.
@@ -212,16 +215,16 @@ void func_0200daec(void) {
 // body does not run.
 void UpdateAnimSlots(void) {
     u32 i;
-    AnimSlot *s = data_020abfcc;
+    AnimSlot *s = gAnimSlots;
     for (i = 0; i < ANIM_SLOT_COUNT; i++, s++) {
         if ((u32) (s->mKind - 1) <= 1) {
-            s->mUnk_17e = (s->mUnk_17e & ~0x1000) | (((u16) data_020abfc0.mUnk_04 & 1) << 12);
+            s->mUnk_17e = (s->mUnk_17e & ~0x1000) | (((u16) gSlotCounters.mUnk_04 & 1) << 12);
             if (s->mKind == 1) {
                 UpdateAndDrawModel(&s->mUnk_0c, s->mUnk_18c, 1);
             } else {
                 func_02024338(&s->mUnk_0c, s->mUnk_18c, 1);
             }
-            if (data_020abfc0.mUnk_04 == 0 && !(s->mUnk_15d & 0x20)) {
+            if (gSlotCounters.mUnk_04 == 0 && !(s->mUnk_15d & 0x20)) {
                 if (s->mUnk_188 == 0) {
                     if (s->mUnk_158 == 0) {
                         s->mKind = 0;
@@ -244,7 +247,10 @@ void func_0200dbac(void) {
     RunImage(0x249, 0x3c, 0x3c, 0, 3);
 }
 
-void func_0200dc08(int id, u16 *outId, u16 *outVal, u16 *outOpt1, u16 *outZ1, u16 *outZ2, u16 *outOpt2) {
+// The SetupMap arguments for map file `id`: *outId = id, *outVal = id + 1, and 0 in *outZ1, *outZ2 and (when given)
+// *outOpt1 and *outOpt2. An unknown id opens a text screen ("Map inconnue") and leaves *outVal, *outZ1 and *outZ2
+// unwritten.
+void GetSetupMapArgs(int id, u16 *outId, u16 *outVal, u16 *outOpt1, u16 *outZ1, u16 *outZ2, u16 *outOpt2) {
     u16 zero = 0;
     switch (id) {
         case 0xd10:
@@ -321,15 +327,17 @@ void func_0200dc08(int id, u16 *outId, u16 *outVal, u16 *outOpt1, u16 *outZ1, u1
     }
 }
 
-void RunVideo(const char *path, int b) {
-    StartVideo(path, b);
+void RunVideo(const char *path, int layer) {
+    StartVideo(path, layer);
     while (UpdateVideo() == 1 && gSystemState.mKeysPressed == 0 && !gSystemState.mTouchPressed) {
         UpdateSystemAndWait();
     }
     StopVideo();
 }
 
-void func_0200dd90(void) {
+// Starts the title screen's slide-in: sets TITLE_SLIDE_STATE_IN and the starting offsets for the current state, which
+// UpdateTitleSlide moves to 0 before it sets TITLE_SLIDE_STATE_IN_PLACE. With mReturnState >= 0 the offsets stay 0.
+void StartTitleSlideIn(void) {
     int i;
     gTitleScreen.mSlideState = TITLE_SLIDE_STATE_IN;
     for (i = 0; i < 8; i++) {

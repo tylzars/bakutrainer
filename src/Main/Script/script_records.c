@@ -1170,10 +1170,10 @@ ScriptEvent *NextScriptEvent(void) {
 
 // Resets one camera byte and steps another through 0..0x1f.
 void func_0202a1cc(void) {
-    func_020240ec();
-    gMapState.mCamera.mUnk_2dc.mUnk_4b = 0;
-    gMapState.mCamera.mUnk_2dc.mUnk_4c++;
-    gMapState.mCamera.mUnk_2dc.mUnk_4c &= 0x1f;
+    SetupOrthoSpriteView();
+    gMapState.mCamera.mUnk_2dc.mPolygonAlpha = 0;
+    gMapState.mCamera.mUnk_2dc.mPolygonId++;
+    gMapState.mCamera.mUnk_2dc.mPolygonId &= 0x1f;
 }
 
 // Runs one frame of the script engine: applies queued screen changes, moves and draws the script sprites, builds
@@ -1233,8 +1233,8 @@ void UpdateScript(int (*callback)(void)) {
                 gScriptWork.mUnk_280.mUnk_30 = gScriptWork.mUnk_280.mScrDrawId;
             }
             if (!(gScriptWork.mUnk_280.mScrDrawId & 0x40000000)) {
-                func_020242e8(gScriptWork.mUnk_280.mScrDrawId, gScriptWork.mUnk_280.mScrX, gScriptWork.mUnk_280.mScrY,
-                              0x4000, 0x1000, 0x8000, 0xff, 0);
+                DrawModelFileOrtho(gScriptWork.mUnk_280.mScrDrawId, gScriptWork.mUnk_280.mScrX,
+                                   gScriptWork.mUnk_280.mScrY, 0x4000, 0x1000, 0x8000, 0xff, 0);
             } else {
                 u32 tex = gScriptWork.mUnk_280.mScrDrawId & 0x3fffffff;
                 GetTexInfo(tex, &info, 0);
@@ -1364,7 +1364,8 @@ void UpdateScript(int (*callback)(void)) {
                         }
                     }
                 } else {
-                    func_020242e8(sprite->mDrawId & 0x7fffffff, x, y, sprite->mDrawOrder << 6, 0x1000, 0x8000, 0xff, 0);
+                    DrawModelFileOrtho(sprite->mDrawId & 0x7fffffff, x, y, sprite->mDrawOrder << 6, 0x1000, 0x8000,
+                                       0xff, 0);
                 }
             }
 
@@ -1504,7 +1505,7 @@ void UpdateScript(int (*callback)(void)) {
             }
         } else if (gScriptWork.mState == SCRIPT_STATE_FINISH) {
             if (gScriptWork.mSkipToEnd == 1 || gScriptWork.mSpritesBusy == 0) {
-                if (((gMapState.mCamera.mUnk_2dc.mUnk_0c != 0 && gMapState.mCamera.mUnk_2dc.mUnk_33 == 8 &&
+                if (((gMapState.mCamera.mUnk_2dc.mUnk_0c != 0 && gMapState.mCamera.mUnk_2dc.mLookAtMode == 8 &&
                       (gSystemState.mFlags & 0x80)) ||
                      (gMapState.mCamera.mUnk_2dc.mUnk_0e != 0 && (gSystemState.mFlags & 0x80))) &&
                     !(gSystemState.mFlags & 0x08000000)) {

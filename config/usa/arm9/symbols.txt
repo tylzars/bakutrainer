@@ -253,9 +253,9 @@ ClearAnimSlots kind:function(thumb,size=0x20) addr:0x0200dacc
 func_0200daec kind:function(thumb,size=0xc) addr:0x0200daec
 UpdateAnimSlots kind:function(thumb,size=0xb4) addr:0x0200daf8
 func_0200dbac kind:function(thumb,size=0x5c) addr:0x0200dbac
-func_0200dc08 kind:function(thumb,size=0x154) addr:0x0200dc08
+GetSetupMapArgs kind:function(thumb,size=0x154) addr:0x0200dc08
 RunVideo kind:function(thumb,size=0x34) addr:0x0200dd5c
-func_0200dd90 kind:function(thumb,size=0xd8) addr:0x0200dd90
+StartTitleSlideIn kind:function(thumb,size=0xd8) addr:0x0200dd90
 UpdateTitleSlide kind:function(thumb,size=0x568) addr:0x0200de68
 RequestTitleState kind:function(thumb,size=0x1c) addr:0x0200e3d0
 OpenMicEdit kind:function(thumb,size=0x38) addr:0x0200e3ec
@@ -626,7 +626,7 @@ data_0201aa60 kind:data(word[41]) addr:0x0201aa60
 data_0201ab04 kind:data(word[39]) addr:0x0201ab04
 data_0201aba0 kind:data(word[7]) addr:0x0201aba0
 data_0201abbc kind:data(word[12]) addr:0x0201abbc
-data_0201abec kind:data(word[39]) addr:0x0201abec
+gSpriteScripts kind:data(word[39]) addr:0x0201abec
 InitSystem kind:function(thumb,size=0xc) addr:0x0201b7e0
 InitSystemEx kind:function(thumb,size=0x344) addr:0x0201b7ec
 UpdateSystemAndWait kind:function(thumb,size=0xe) addr:0x0201bb30
@@ -760,8 +760,8 @@ WriteTextChar kind:function(thumb,size=0x64) addr:0x0202158c
 NormalizeSpace kind:function(thumb,size=0xc) addr:0x020215f0
 DrawText kind:function(thumb,size=0x26) addr:0x020215fc
 DrawTextEx kind:function(thumb,size=0x7b4) addr:0x02021624
-func_02021dd8 kind:function(thumb,size=0x1c) addr:0x02021dd8
-func_02021df4 kind:function(thumb,size=0x12) addr:0x02021df4
+GetFileValueEntry kind:function(thumb,size=0x1c) addr:0x02021dd8
+GetFileValueData kind:function(thumb,size=0x12) addr:0x02021df4
 GetFileValueType kind:function(thumb,size=0x10) addr:0x02021e08
 GetFileString kind:function(thumb,size=0x2a) addr:0x02021e18
 GetFileValue kind:function(thumb,size=0x50) addr:0x02021e44
@@ -789,21 +789,21 @@ ReadAnimTrackNode kind:function(arm,size=0x470) addr:0x0202350c
 ComputePoseMatrices kind:function(arm,size=0x590) addr:0x0202397c
 GetPoseNodePos kind:function(arm,size=0x4c) addr:0x02023f0c
 SetDrawParams kind:function(arm,size=0x98) addr:0x02023f58
-func_02023ff0 kind:function(arm,size=0xfc) addr:0x02023ff0
-func_020240ec kind:function(arm,size=0x11c) addr:0x020240ec
+SetupOrthoModelView kind:function(arm,size=0xfc) addr:0x02023ff0
+SetupOrthoSpriteView kind:function(arm,size=0x11c) addr:0x020240ec
 func_02024208 kind:function(arm,size=0xa0) addr:0x02024208
-func_020242a8 kind:function(arm,size=0x40) addr:0x020242a8
-func_020242e8 kind:function(arm,size=0x50) addr:0x020242e8
+SetOrthoDrawParams kind:function(arm,size=0x40) addr:0x020242a8
+DrawModelFileOrtho kind:function(arm,size=0x50) addr:0x020242e8
 func_02024338 kind:function(arm,size=0x30) addr:0x02024338
-func_02024368 kind:function(arm,size=0x58) addr:0x02024368
-func_020243c0 kind:function(arm,size=0x528) addr:0x020243c0
+UpdateAndDrawModelOrtho kind:function(arm,size=0x58) addr:0x02024368
+DrawSpritePolygons kind:function(arm,size=0x528) addr:0x020243c0
 DrawModelFile kind:function(arm,size=0x14) addr:0x020248e8
 ClearTrackCount kind:function(arm,size=0x14) addr:0x020248fc
 GetFirstModelPart kind:function(arm,size=0x58) addr:0x02024910
 GetAnimKeyAngle kind:function(arm,size=0xfc) addr:0x02024968
 GetAnimKeyValue kind:function(arm,size=0xb0) addr:0x02024a64
 GetDrawFrame kind:function(arm,size=0x18) addr:0x02024b14
-func_02024b2c kind:function(arm,size=0x30) addr:0x02024b2c
+GetRelativeScale kind:function(arm,size=0x30) addr:0x02024b2c
 DrawModelFileEx kind:function(arm,size=0x1258) addr:0x02024b5c
 ProjectToScreen kind:function(arm,size=0x10) addr:0x02025db4
 ProjectToScreenEx kind:function(arm,size=0x194) addr:0x02025dc4
@@ -933,8 +933,8 @@ func_0202ad54 kind:function(arm,size=0x4) addr:0x0202ad54
 GetPaletteFile kind:function(arm,size=0x10) addr:0x0202ad58
 GetBlockFile kind:function(arm,size=0x10) addr:0x0202ad68
 GetUnitShift kind:function(arm,size=0x24) addr:0x0202ad78
-func_0202ad9c kind:function(arm,size=0x10) addr:0x0202ad9c
-func_0202adac kind:function(arm,size=0x14) addr:0x0202adac
+GetSpriteTile kind:function(arm,size=0x10) addr:0x0202ad9c
+GetSpritePalette kind:function(arm,size=0x14) addr:0x0202adac
 GetBlockHeader kind:function(arm,size=0x20) addr:0x0202adc0
 GetBlockCount kind:function(arm,size=0x10) addr:0x0202ade0
 GetOamFillCount kind:function(arm,size=0x44) addr:0x0202adf0
@@ -949,8 +949,8 @@ ResetTextureLayer kind:function(arm,size=0x2a8) addr:0x0202bb30
 SetupTextureLayer kind:function(arm,size=0x3ec) addr:0x0202bdd8
 ReleaseTextureLayers kind:function(arm,size=0x10) addr:0x0202c1c4
 ReleaseTextureLayersEx kind:function(arm,size=0x11c) addr:0x0202c1d4
-func_0202c2f0 kind:function(arm,size=0xf0) addr:0x0202c2f0
-func_0202c3e0 kind:function(arm,size=0x168) addr:0x0202c3e0
+ArrangeTilesInRows kind:function(arm,size=0xf0) addr:0x0202c2f0
+ExpandRowsToColors kind:function(arm,size=0x168) addr:0x0202c3e0
 MoveChainEntryToListEnd kind:function(arm,size=0x78) addr:0x0202c548
 FindChainEntry kind:function(arm,size=0x3c) addr:0x0202c5c0
 func_0202c5fc kind:function(arm,size=0x17c) addr:0x0202c5fc
@@ -1012,18 +1012,18 @@ CloseWaveStream kind:function(thumb,size=0x34) addr:0x0202f2e8
 UpdateWaveStream kind:function(thumb,size=0xf4) addr:0x0202f31c
 PauseWaveStream kind:function(thumb,size=0x60) addr:0x0202f410
 ResumeWaveStream kind:function(thumb,size=0x90) addr:0x0202f470
-func_0202f500 kind:function(arm,size=0xc) addr:0x0202f500
-func_0202f50c kind:function(arm,size=0x14) addr:0x0202f50c
-func_0202f520 kind:function(arm,size=0x18) addr:0x0202f520
+MobiclipAlloc kind:function(arm,size=0xc) addr:0x0202f500
+MobiclipFree kind:function(arm,size=0x14) addr:0x0202f50c
+VideoAudioCallback kind:function(arm,size=0x18) addr:0x0202f520
 StartVideoAudio kind:function(arm,size=0xdc) addr:0x0202f538
-func_0202f614 kind:function(arm,size=0x14) addr:0x0202f614
-func_0202f628 kind:function(arm,size=0x10) addr:0x0202f628
+VideoAlarmCallback kind:function(arm,size=0x14) addr:0x0202f614
+GetImageLayerAddr kind:function(arm,size=0x10) addr:0x0202f628
 StartVideo kind:function(arm,size=0x298) addr:0x0202f638
 UpdateVideo kind:function(arm,size=0x238) addr:0x0202f8d0
 StopVideoAudio kind:function(arm,size=0x44) addr:0x0202fb08
 StopVideo kind:function(arm,size=0x7c) addr:0x0202fb4c
-func_0202fbc8 kind:function(arm,size=0x94) addr:0x0202fbc8
-func_0202fc5c kind:function(arm,size=0x58) addr:0x0202fc5c
+UpdateScreensForLid kind:function(arm,size=0x94) addr:0x0202fbc8
+TurnScreensOn kind:function(arm,size=0x58) addr:0x0202fc5c
 AreScreensOff kind:function(arm,size=0x10) addr:0x0202fcb4
 UnpackQrkData kind:function(arm,size=0xa3c) addr:0x0202fcc4 local
 UnpackQrk kind:function(arm,size=0x44) addr:0x02030700
@@ -1033,13 +1033,13 @@ GetQrkVersion kind:function(arm,size=0x28) addr:0x0203076c local
 ReadQrkHeader kind:function(arm,size=0x9c) addr:0x02030794 local
 GetFloorHeightEx kind:function(arm,size=0xa40) addr:0x02030830
 GetFloorHeight kind:function(arm,size=0x2c) addr:0x02031270
-func_0203129c kind:function(thumb,size=0x1c) addr:0x0203129c
-func_020312b8 kind:function(arm,size=0x56c) addr:0x020312b8 local
-func_02031824 kind:function(arm,size=0x44c) addr:0x02031824
-func_02031c70 kind:function(thumb,size=0x28) addr:0x02031c70
-func_02031c98 kind:function(thumb,size=0x30) addr:0x02031c98
-func_02031cc8 kind:function(thumb,size=0x44) addr:0x02031cc8 local
-func_02031d0c kind:function(thumb,size=0xb8) addr:0x02031d0c
+GetNearestSegmentAngle kind:function(thumb,size=0x1c) addr:0x0203129c
+ReadMapRings kind:function(arm,size=0x56c) addr:0x020312b8 local
+FindNearestRingSegment kind:function(arm,size=0x44c) addr:0x02031824
+GetFirstLinkedRing kind:function(thumb,size=0x28) addr:0x02031c70
+SetLinkedRingKeys kind:function(thumb,size=0x30) addr:0x02031c98
+IsInViewDistance kind:function(thumb,size=0x44) addr:0x02031cc8 local
+IsBoxInView kind:function(thumb,size=0xb8) addr:0x02031d0c
 func_02031dc4 kind:function(thumb,size=0xf4) addr:0x02031dc4
 GetMapChunk kind:function(arm,size=0xe0) addr:0x02031eb8
 GetMapEntryX kind:function(thumb,size=0xa) addr:0x02031f98
@@ -1050,13 +1050,13 @@ func_02031fc4 kind:function(thumb,size=0x28) addr:0x02031fc4
 func_02031fec kind:function(thumb,size=0x2c) addr:0x02031fec local
 func_02032018 kind:function(thumb,size=0x32) addr:0x02032018
 GetMapEntry kind:function(thumb,size=0x28) addr:0x0203204c
-func_02032074 kind:function(thumb,size=0x4c) addr:0x02032074 local
-func_020320c0 kind:function(thumb,size=0xda) addr:0x020320c0
+FindMapEntry kind:function(thumb,size=0x4c) addr:0x02032074 local
+IsPosInMapPoly kind:function(thumb,size=0xda) addr:0x020320c0
 GetMapEntries kind:function(thumb,size=0x10) addr:0x0203219c local
-func_020321ac kind:function(thumb,size=0x98) addr:0x020321ac
-func_02032244 kind:function(thumb,size=0x74) addr:0x02032244
+FindMapPolyVerts kind:function(thumb,size=0x98) addr:0x020321ac
+FindMapPolys kind:function(thumb,size=0x74) addr:0x02032244
 AllocMapPairs kind:function(thumb,size=0x3c) addr:0x020322b8
-func_020322f4 kind:function(thumb,size=0x74) addr:0x020322f4
+GetCameraRectDistSq kind:function(thumb,size=0x74) addr:0x020322f4
 func_02032368 kind:function(thumb,size=0x134) addr:0x02032368
 func_0203249c kind:function(thumb,size=0x114) addr:0x0203249c
 SetupMap kind:function(thumb,size=0x20) addr:0x020325b0
@@ -1065,15 +1065,15 @@ ReleaseMap kind:function(thumb,size=0x48) addr:0x02032850
 GetMapCellChunk kind:function(thumb,size=0x18) addr:0x02032898
 func_020328b0 kind:function(thumb,size=0x120) addr:0x020328b0
 func_020329d0 kind:function(thumb,size=0x1b8) addr:0x020329d0
-func_02032b88 kind:function(thumb,size=0x30) addr:0x02032b88
+ClearMapRecords kind:function(thumb,size=0x30) addr:0x02032b88
 func_02032bb8 kind:function(thumb,size=0x198) addr:0x02032bb8
 func_02032d50 kind:function(thumb,size=0x40c) addr:0x02032d50
 func_0203315c kind:function(thumb,size=0x32c) addr:0x0203315c
 EaseCameraToGoals kind:function(thumb,size=0x64) addr:0x02033488
 func_020334ec kind:function(thumb,size=0xc) addr:0x020334ec
 func_020334f8 kind:function(thumb,size=0x28) addr:0x020334f8
-func_02033520 kind:function(thumb,size=0xf4) addr:0x02033520
-func_02033614 kind:function(arm,size=0x328) addr:0x02033614
+SetupCameraView kind:function(thumb,size=0xf4) addr:0x02033520
+DrawMap kind:function(arm,size=0x328) addr:0x02033614
 func_0203393c kind:function(arm,size=0x1c8) addr:0x0203393c
 func_02033b04 kind:function(arm,size=0x88) addr:0x02033b04
 func_02033b8c kind:function(arm,size=0x80) addr:0x02033b8c
@@ -2146,9 +2146,9 @@ gBattleSlotStages kind:bss addr:0x020990e0
 data_02099770 kind:bss addr:0x02099770
 gParticleGame kind:bss addr:0x020997a4
 data_020ab7e0 kind:bss addr:0x020ab7e0
-data_020abfc0 kind:bss addr:0x020abfc0
-data_020abfcc kind:bss addr:0x020abfcc
-data_020ace4c kind:bss addr:0x020ace4c
+gSlotCounters kind:bss addr:0x020abfc0
+gAnimSlots kind:bss addr:0x020abfcc
+gObjSlots kind:bss addr:0x020ace4c
 sShakeY$1705 kind:bss addr:0x020ae44c local
 sShakeX$1706 kind:bss addr:0x020ae450 local
 sShakeTimer$1704 kind:bss addr:0x020ae454 local
@@ -2207,14 +2207,14 @@ gBankFile kind:bss addr:0x020c1874
 gSystemState kind:bss addr:0x020c18bc
 gTouchInput kind:bss addr:0x020c1d60
 gTextureBlocks kind:bss addr:0x020c267c
-data_020c31ac kind:bss addr:0x020c31ac
-data_020c31dc kind:bss addr:0x020c31dc
+gCurrentMtx kind:bss addr:0x020c31ac
+gGxState kind:bss addr:0x020c31dc
 gPoseNodeMatrices kind:bss addr:0x020c3244
 gMapState kind:bss addr:0x020c3e44
 gScriptWork kind:bss addr:0x020c61ac
 gFileCache kind:bss addr:0x020c6470
 gWavePlayer kind:bss addr:0x020c648c
-data_020c661c kind:bss addr:0x020c661c
+gVideoState kind:bss addr:0x020c661c
 data_020c66d4 kind:bss addr:0x020c66d4
 gCommRecordReceived kind:bss addr:0x020c66e0
 gCommConnectData kind:bss addr:0x020c6720

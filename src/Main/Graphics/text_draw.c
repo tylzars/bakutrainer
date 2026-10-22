@@ -375,8 +375,8 @@ int DrawTextEx(int x, int y, const FontRange *const *fonts, u8 fontIndex, const 
                                 if (hilite) {
                                     attr = 0x1f;
                                 }
-                                func_020243c0(glyphHigh + glyphs[i], px, py, -gSystemState.mUnk_30a[0] << 6, angle,
-                                              0x1000, 0x1000, attr);
+                                DrawSpritePolygons(glyphHigh + glyphs[i], px, py, -gSystemState.mUnk_30a[0] << 6, angle,
+                                                   0x1000, 0x1000, attr);
                             } else if (alt) {
                                 if (dirMode != 0) {
                                     OS_Terminate();
@@ -437,7 +437,9 @@ int DrawTextEx(int x, int y, const FontRange *const *fonts, u8 fontIndex, const 
     return (flags & TEXT_NO_WIDTH) ? 0 : result;
 }
 
-const u8 *func_02021dd8(u16 id, int index) {
+// The 4-byte entry of value `index` (from 2) in the table of indexed file `id`, which starts at 0x10; an index of 0
+// or 1 stops the system.
+const u8 *GetFileValueEntry(u16 id, int index) {
     const u8 *table = (const u8 *) FindOrLoadCachedFile(id);
     if ((u32) index < 2) {
         OS_Terminate();
@@ -445,14 +447,15 @@ const u8 *func_02021dd8(u16 id, int index) {
     return table + (index - 2) * 4 + 0x10;
 }
 
-const u8 *func_02021df4(u32 base, const u8 *entry) {
-    return (const u8 *) FindOrLoadCachedFile(base + entry[1]) + *(const u16 *) (entry + 2);
+// The bytes of an entry's value: in file id + entry[1], at the offset in the entry's halfword at 2.
+const u8 *GetFileValueData(u32 id, const u8 *entry) {
+    return (const u8 *) FindOrLoadCachedFile(id + entry[1]) + *(const u16 *) (entry + 2);
 }
 
 // The type of value `index` of indexed file `id`: 1 and 4 strings (GetFileString; CountFileStringChars counts type 1
 // in encoded characters, type 4 in bytes), 2 a 16-bit and 3 a 32-bit number (GetFileValue); 0 for any type above 4.
 int GetFileValueType(u16 id, int index) {
-    const u8 *entry = func_02021dd8(id, index);
+    const u8 *entry = GetFileValueEntry(id, index);
     if (entry[0] > 4) {
         return 0;
     }
@@ -460,7 +463,7 @@ int GetFileValueType(u16 id, int index) {
 }
 
 const u8 *GetFileString(u16 id, int index) {
-    const u8 *entry = func_02021dd8(id, index);
+    const u8 *entry = GetFileValueEntry(id, index);
     BOOL ok = 1;
     if (entry[0] != 4 && entry[0] != 1) {
         ok = 0;
@@ -468,11 +471,11 @@ const u8 *GetFileString(u16 id, int index) {
     if (ok == 0) {
         OS_Terminate();
     }
-    return func_02021df4(id, entry);
+    return GetFileValueData(id, entry);
 }
 
 int GetFileValue(u16 id, int index) {
-    const u8 *entry = func_02021dd8(id, index);
+    const u8 *entry = GetFileValueEntry(id, index);
     const u8 *p;
     BOOL ok = 1;
     if (entry[0] != 2 && entry[0] != 3) {
@@ -481,7 +484,7 @@ int GetFileValue(u16 id, int index) {
     if (ok == 0) {
         OS_Terminate();
     }
-    p = func_02021df4(id, entry);
+    p = GetFileValueData(id, entry);
     if (entry[0] == 2) {
         return (s16) (p[0] + (p[1] << 8));
     }

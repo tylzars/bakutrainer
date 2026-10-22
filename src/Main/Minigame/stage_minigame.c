@@ -405,7 +405,7 @@ int AddParticle(Particle *src, int kind) {
                      (dist + 1))
                     << 8;
             }
-            StartSprite(&p->mSprite, data_0201abec[p->mKind + 6]);
+            StartSprite(&p->mSprite, gSpriteScripts[p->mKind + 6]);
             gParticleGame.mCount++;
             return 1;
         }
@@ -482,19 +482,19 @@ void ApplyParticleFacingHit(Particle *p, int angle) {
             q.mKind = 0;
             q.mFacingHitTimer = 16;
             SetParticleDirection(&q, base);
-            StartSprite(&q.mSprite, data_0201abec[q.mKind + 6]);
+            StartSprite(&q.mSprite, gSpriteScripts[q.mKind + 6]);
             AddParticle(&q, -1);
             q = *p;
             q.mKind = 0;
             q.mFacingHitTimer = 16;
             SetParticleDirection(&q, (u16) (base - 0x2000));
-            StartSprite(&q.mSprite, data_0201abec[q.mKind + 6]);
+            StartSprite(&q.mSprite, gSpriteScripts[q.mKind + 6]);
             AddParticle(&q, -1);
             q = *p;
             q.mKind = 0;
             q.mFacingHitTimer = 16;
             SetParticleDirection(&q, (u16) (base + 0x2000));
-            StartSprite(&q.mSprite, data_0201abec[q.mKind + 6]);
+            StartSprite(&q.mSprite, gSpriteScripts[q.mKind + 6]);
             AddParticle(&q, -1);
             AddCappedAt999Shifted(&gParticleGame.mScore, gParticleGame.mKindScores[p->mKind], 0);
             RemoveParticle(p, 1);

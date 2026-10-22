@@ -5,11 +5,11 @@
 #include <Main/Video/stream_audio.h>
 
 void *Player::operator new(unsigned long size) {
-    return func_0202f500(size);
+    return MobiclipAlloc(size);
 }
 
 void Player::operator delete(void *p) {
-    func_0202f50c(p);
+    MobiclipFree(p);
 }
 
 Player::Player() {
@@ -58,7 +58,7 @@ int func_0203a0b0(Player *p, Reader *r, u32 n) {
     if (p->mAudioType != 0 && p->mAudioType != 1 && p->mAudioType != 2 && p->mAudioType != 3 && p->mAudioType != 4) {
         return 0;
     }
-    p->mCtx = (Ctx *) func_0202f500(sizeof(Ctx));
+    p->mCtx = (Ctx *) MobiclipAlloc(sizeof(Ctx));
     MIi_CpuClearFast(0, p->mCtx, sizeof(Ctx));
     p->mUnk_38 = (int (*)(Ctx *)) func_0203b584();
     p->mCtx->mUnk_3c = func_0203b600();
@@ -76,27 +76,27 @@ int func_0203a0b0(Player *p, Reader *r, u32 n) {
         return 0;
     }
     p->mNumPlanes = n;
-    p->mPlaneY = (u8 **) func_0202f500(n * 4);
+    p->mPlaneY = (u8 **) MobiclipAlloc(n * 4);
     if (p->mPlaneY == 0) {
         return 0;
     }
-    p->mPlaneC = (u8 **) func_0202f500(p->mNumPlanes * 4);
+    p->mPlaneC = (u8 **) MobiclipAlloc(p->mNumPlanes * 4);
     if (p->mPlaneC == 0) {
         return 0;
     }
     for (u32 i = 0; i < p->mNumPlanes; i++) {
-        p->mPlaneY[i] = (u8 *) func_0202f500(p->mHeight << 8);
+        p->mPlaneY[i] = (u8 *) MobiclipAlloc(p->mHeight << 8);
         if (p->mPlaneY[i] == 0) {
             return 0;
         }
-        p->mPlaneC[i] = (u8 *) func_0202f500((p->mHeight >> 1) << 8);
+        p->mPlaneC[i] = (u8 *) MobiclipAlloc((p->mHeight >> 1) << 8);
         if (p->mPlaneC[i] == 0) {
             return 0;
         }
         MIi_CpuClearFast(0, p->mPlaneY[i], p->mHeight << 8);
         MI_CpuFill8(p->mPlaneC[i], 0x80, (p->mHeight >> 1) << 8);
     }
-    p->mUnk_64 = (void **) func_0202f500(p->mNumPlanes * 4);
+    p->mUnk_64 = (void **) MobiclipAlloc(p->mNumPlanes * 4);
     if (p->mUnk_64 == 0) {
         return 0;
     }
@@ -109,13 +109,13 @@ int func_0203a0b0(Player *p, Reader *r, u32 n) {
     p->mUnk_a0 = 0;
     p->mUnk_9c = 0;
     for (int i = 0; i < 2; i++) {
-        p->mBuf[i] = (u8 *) func_0202f500(p->mUnk_24 + MOBICLIP_BUFFER_PAD);
+        p->mBuf[i] = (u8 *) MobiclipAlloc(p->mUnk_24 + MOBICLIP_BUFFER_PAD);
         if (p->mBuf[i] == 0) {
             return 0;
         }
     }
     if (p->mAudioType != 0) {
-        p->mAudio = (u8 *) func_0202f500(p->mChannels * MOBICLIP_AUDIO_STRIDE);
+        p->mAudio = (u8 *) MobiclipAlloc(p->mChannels * MOBICLIP_AUDIO_STRIDE);
         if (p->mAudio == 0) {
             return 0;
         }
@@ -123,7 +123,7 @@ int func_0203a0b0(Player *p, Reader *r, u32 n) {
     }
     int saved = p->mReader->mPos;
     p->mReader->Seek((void *) (p->mUnk_2c + p->mBase));
-    p->mUnk_94 = (u8 *) func_0202f500(p->mUnk_30 << 3);
+    p->mUnk_94 = (u8 *) MobiclipAlloc(p->mUnk_30 << 3);
     if (!p->mReader->Read(p->mUnk_94, p->mUnk_30 << 3)) {
         return 0;
     }
@@ -162,39 +162,39 @@ void func_0203a65c(Player *p) {
             delete p->mReader;
         }
     }
-    func_0202f50c(p->mCtx);
+    MobiclipFree(p->mCtx);
     if (p->mPlaneY != 0) {
         for (u32 i = 0; i < p->mNumPlanes; i++) {
-            func_0202f50c(p->mPlaneY[i]);
+            MobiclipFree(p->mPlaneY[i]);
         }
-        func_0202f50c(p->mPlaneY);
+        MobiclipFree(p->mPlaneY);
     }
     if (p->mPlaneC != 0) {
         for (u32 i = 0; i < p->mNumPlanes; i++) {
-            func_0202f50c(p->mPlaneC[i]);
+            MobiclipFree(p->mPlaneC[i]);
         }
-        func_0202f50c(p->mPlaneC);
+        MobiclipFree(p->mPlaneC);
     }
     if (p->mUnk_64 != 0) {
-        func_0202f50c(p->mUnk_64);
+        MobiclipFree(p->mUnk_64);
     }
     if (p->mUnk_68 != 0) {
-        func_0202f50c(p->mUnk_68);
+        MobiclipFree(p->mUnk_68);
     }
     if (p->mUnk_6c != 0) {
-        func_0202f50c(p->mUnk_6c);
+        MobiclipFree(p->mUnk_6c);
     }
     for (int i = 0; i < 2; i++) {
         if (p->mBuf[i] != 0) {
-            func_0202f50c(p->mBuf[i]);
+            MobiclipFree(p->mBuf[i]);
         }
         p->mBuf[i] = 0;
     }
     if (p->mUnk_94 != 0) {
-        func_0202f50c(p->mUnk_94);
+        MobiclipFree(p->mUnk_94);
     }
     if (p->mAudio != 0) {
-        func_0202f50c(p->mAudio);
+        MobiclipFree(p->mAudio);
     }
     p->mReader = 0;
     p->mPlaneY = 0;
@@ -288,13 +288,13 @@ int func_0203aa1c(Player *p, u32 a, u32 b, int c) {
     }
     if (c != 0) {
         if (p->mUnk_68 == 0) {
-            p->mUnk_68 = func_0202f500(p->mHeight << 8);
+            p->mUnk_68 = MobiclipAlloc(p->mHeight << 8);
             if (p->mUnk_68 == 0) {
                 return 0;
             }
         }
         if (p->mUnk_6c == 0) {
-            p->mUnk_6c = func_0202f500((p->mHeight >> 1) << 8);
+            p->mUnk_6c = MobiclipAlloc((p->mHeight >> 1) << 8);
             if (p->mUnk_6c == 0) {
                 return 0;
             }
@@ -388,11 +388,11 @@ int func_0203abf0(Player *p, void *buffer) {
 }
 
 void *Reader::operator new(unsigned long size) {
-    return func_0202f500(size);
+    return MobiclipAlloc(size);
 }
 
 void Reader::operator delete(void *p) {
-    func_0202f50c(p);
+    MobiclipFree(p);
 }
 
 // Binds the reader to an open file; the position is kept relative to the start of the file.

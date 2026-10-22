@@ -106,7 +106,7 @@ void func_02015f34(void) {
         obj = &data_020b6ee0.mUnk_0008[i];
         if (obj->mModel.mId != 0) {
             SetDrawParams(&params, obj->mPosX << 9, 0, obj->mPosZ << 9, 0x1000, obj->mUnk_185 << 8, 0, 0xff, 0x100);
-            if (func_02031d0c(&params.mPos, 0x12c000, 0x190000, 0x190000) == 1) {
+            if (IsBoxInView(&params.mPos, 0x12c000, 0x190000, 0x190000) == 1) {
                 UpdateAndDrawModel(&obj->mModel, &params, 0);
                 if (obj->mKind == 10) {
                     sprintf(text, "%d", obj->mUnk_186);
@@ -222,7 +222,7 @@ void func_02016008(int stage) {
         pos.x = b->mPosX << 9;
         pos.z = b->mPosZ << 9;
         pos.y = 0;
-        if (func_02031d0c(&pos, 0x190000, 0x190000, 0x190000) == 1) {
+        if (IsBoxInView(&pos, 0x190000, 0x190000, 0x190000) == 1) {
             switch (b->mKind) {
                 case 0x19:
                     if (b == f) {
@@ -284,7 +284,7 @@ void func_020164e0(int stage) {
         if (obj->mPresent == 1) {
             pos.x = obj->mPosX << 9;
             pos.z = obj->mPosZ << 9;
-            if (func_02031d0c(&pos, 0x190000, 0x190000, 0x190000) == 1) {
+            if (IsBoxInView(&pos, 0x190000, 0x190000, 0x190000) == 1) {
                 params.mPos.x = pos.x;
                 params.mPos.z = pos.z;
                 if (obj->mKind == 0x1e) {
@@ -533,15 +533,15 @@ void UpdateFollower(FollowerGroup *followers, int index, u16 angle) {
         pos.x = 512.0f * f->mPos.x;
         pos.y = 512.0f * f->mPos.y;
         pos.z = 512.0f * f->mPos.z;
-        if (func_02031824(&pos, f->mDiameter, 0x6e, 0, 0x13, 0)) {
-            if ((gMapState.mCamera.mUnk_3a & 0x10) && data_020b6ee0.mFixedTargetTimer != 0 &&
+        if (FindNearestRingSegment(&pos, f->mDiameter, 0x6e, 0, 0x13, 0)) {
+            if ((gMapState.mCamera.mNearestRingKey & 0x10) && data_020b6ee0.mFixedTargetTimer != 0 &&
                 data_020b6ee0.mFollowerEntries[f->mFollowerEntryIndex].mKind == 0 &&
-                data_020b6ee0.mUnk_0c4c == gMapState.mCamera.mUnk_10 &&
+                data_020b6ee0.mUnk_0c4c == gMapState.mCamera.mNearestRing &&
                 data_020b6ee0.mUnk_0008[data_020b6ee0.mFixedTargetObjectIndex].mUnk_186 > 0) {
                 data_020b6ee0.mUnk_0008[data_020b6ee0.mFixedTargetObjectIndex].mModel.mSignals |= 1;
                 data_020b6ee0.mUnk_0008[data_020b6ee0.mFixedTargetObjectIndex].mUnk_186--;
                 if (data_020b6ee0.mUnk_0008[data_020b6ee0.mFixedTargetObjectIndex].mUnk_186 == 0) {
-                    func_02031c98(data_020b6ee0.mUnk_0c4c, 0, 0);
+                    SetLinkedRingKeys(data_020b6ee0.mUnk_0c4c, 0, 0);
                     data_020b6ee0.mUnk_0008[data_020b6ee0.mFixedTargetObjectIndex].mModel.mSignals |= 2;
                     PlayWaveKeepAlive(0xdb, 0x64, 0, 0x40, 0xffff, 0);
                 } else {
@@ -551,9 +551,10 @@ void UpdateFollower(FollowerGroup *followers, int index, u16 angle) {
                 data_020b6ee0.mFollowerEntries[f->mFollowerEntryIndex].mInRange = 0;
             }
             {
-                u32 cam = func_0203129c();
-                int cross = Cross2d(gMapState.mCamera.mUnk_14.x, gMapState.mCamera.mUnk_14.z,
-                                    gMapState.mCamera.mUnk_20.x, gMapState.mCamera.mUnk_20.z, f->mPos.x, f->mPos.z);
+                u32 cam = GetNearestSegmentAngle();
+                int cross = Cross2d(gMapState.mCamera.mNearestSegmentStart.x, gMapState.mCamera.mNearestSegmentStart.z,
+                                    gMapState.mCamera.mNearestSegmentEnd.x, gMapState.mCamera.mNearestSegmentEnd.z,
+                                    f->mPos.x, f->mPos.z);
                 f->mPos = f->mPrevPos;
                 f->mAngle = cam + (((cross != 0) ? ((cross >> 31) | 1) : 0) << 14);
                 f->mTargetAngle = f->mAngle;
@@ -727,7 +728,7 @@ static inline s32 cosIdx(int a) {
 // the selected stage by the decaying spin mUnk_a8e8 or lets a tap select another stage (panel states 0..2). The touch
 // drag that would set the spin here needs panel state 3 or 4 with flags bit 0 clear, which no call reaches in this
 // build (state 10 sets bit 0 in panel states 3 to 5, and state 4 keeps panel state 0). Otherwise it moves the stage
-// along mMoveAngle, keeps it on the ground and handles its hits with other stages and the map (func_02031824).
+// along mMoveAngle, keeps it on the ground and handles its hits with other stages and the map (FindNearestRingSegment).
 void UpdateStageMotion(int index, int *sel, int flags) {
     StageRec *rec = &gStages[index];
     int hit = 0;
@@ -901,26 +902,28 @@ void UpdateStageMotion(int index, int *sel, int flags) {
     }
     {
         int mask = 1;
-        if (func_02031824(&rec->mPos, 400, 200, 0, 0x400, 0)) {
+        if (FindNearestRingSegment(&rec->mPos, 400, 200, 0, 0x400, 0)) {
             s32 oz = old.z / 512;
             s32 ox = old.x / 512;
-            if (Cross2d(gMapState.mCamera.mUnk_14.x, gMapState.mCamera.mUnk_14.z, gMapState.mCamera.mUnk_20.x,
-                        gMapState.mCamera.mUnk_20.z, ox, oz) > 0) {
-                if (AngleDistance(AngleOfVector(gMapState.mCamera.mUnk_2c.x - ox, gMapState.mCamera.mUnk_2c.z - oz),
-                                  rec->mMoveAngle) < 0x4000) {
+            if (Cross2d(gMapState.mCamera.mNearestSegmentStart.x, gMapState.mCamera.mNearestSegmentStart.z,
+                        gMapState.mCamera.mNearestSegmentEnd.x, gMapState.mCamera.mNearestSegmentEnd.z, ox, oz) > 0) {
+                if (AngleDistance(
+                        AngleOfVector(gMapState.mCamera.mNearestPoint.x - ox, gMapState.mCamera.mNearestPoint.z - oz),
+                        rec->mMoveAngle) < 0x4000) {
                     mask |= 0x400;
                 }
             }
         }
-        res = func_02031824(&rec->mPos, 400, 200, 0, mask, 0);
+        res = FindNearestRingSegment(&rec->mPos, 400, 200, 0, mask, 0);
     }
     if (res == 0) {
         return;
     }
-    base = func_0203129c();
+    base = GetNearestSegmentAngle();
     PlayWaveKeepAlive(0x30, 100, 0, 0x40, 0xffff, 0);
-    turn = Cross2d(gMapState.mCamera.mUnk_14.x, gMapState.mCamera.mUnk_14.z, gMapState.mCamera.mUnk_20.x,
-                   gMapState.mCamera.mUnk_20.z, old.x / 512, old.z / 512);
+    turn = Cross2d(gMapState.mCamera.mNearestSegmentStart.x, gMapState.mCamera.mNearestSegmentStart.z,
+                   gMapState.mCamera.mNearestSegmentEnd.x, gMapState.mCamera.mNearestSegmentEnd.z, old.x / 512,
+                   old.z / 512);
     turn = turn != 0 ? (turn >> 31) | 1 : 0;
     turn = -(turn * 0x4000);
     if (!(res & 0x10000000)) {
@@ -928,9 +931,9 @@ void UpdateStageMotion(int index, int *sel, int flags) {
     } else {
         angle = base - turn;
     }
-    if (gMapState.mCamera.mUnk_3a & 0x10) {
-        s32 cx = gMapState.mCamera.mUnk_2c.x;
-        s32 cz = gMapState.mCamera.mUnk_2c.z;
+    if (gMapState.mCamera.mNearestRingKey & 0x10) {
+        s32 cx = gMapState.mCamera.mNearestPoint.x;
+        s32 cz = gMapState.mCamera.mNearestPoint.z;
         int j;
         u32 best;
         int near;
@@ -947,10 +950,10 @@ void UpdateStageMotion(int index, int *sel, int flags) {
         data_020b6ee0.mFixedTargetX = data_020b6ee0.mUnk_0008[near].mPosX;
         data_020b6ee0.mFixedTargetZ = data_020b6ee0.mUnk_0008[near].mPosZ;
         data_020b6ee0.mFixedTargetObjectIndex = near;
-        data_020b6ee0.mUnk_0c4c = gMapState.mCamera.mUnk_10;
+        data_020b6ee0.mUnk_0c4c = gMapState.mCamera.mNearestRing;
     }
-    if (gMapState.mCamera.mUnk_3a & 2) {
-        void *key = func_02031c70(gMapState.mCamera.mUnk_10);
+    if (gMapState.mCamera.mNearestRingKey & 2) {
+        void *key = GetFirstLinkedRing(gMapState.mCamera.mNearestRing);
         int count = data_020b6ee0.mUnk_0c48;
         s32 dmg;
 
@@ -980,7 +983,7 @@ void UpdateStageMotion(int index, int *sel, int flags) {
         dmg = abs(rec->mDistancePerFrame * cosIdx((u16) AngleDistance(angle, rec->mMoveAngle)) / 4096 >> 12);
         data_020b6ee0.mUnk_0008[i].mUnk_186 -= dmg;
         if (data_020b6ee0.mUnk_0008[i].mUnk_186 < 0) {
-            func_02031c98(gMapState.mCamera.mUnk_10, 0, 0);
+            SetLinkedRingKeys(gMapState.mCamera.mNearestRing, 0, 0);
             data_020b6ee0.mUnk_0008[i].mModel.mSignals |= 2;
             PlayWaveKeepAlive(0xda, 100, 0, 0x40, 0xffff, 0);
         } else {
@@ -1062,7 +1065,7 @@ void func_020182cc(void) {
     SetupMap(sMapFileIds[data_020b6ee0.mMapIndex], 0, data_02050194[data_020b6ee0.mMapIndex], 0, 0, 0);
     gMapState.mCamera.mUnk_04 = func_02015d48;
     gMapState.mCamera.mUnk_2dc.mUnk_54 = 0x640;
-    gMapState.mCamera.mUnk_2dc.mUnk_44 = 0x186a000;
+    gMapState.mCamera.mUnk_2dc.mViewDistance = 0x186a000;
     RequestTrack(3, 0x4c);
     MI_CpuFill8(&rec->mDraw, 0, 0x44);
     func_02031fc4(0, &rec->mPos);
@@ -1121,7 +1124,7 @@ void func_02018558(void) {
     pos.z = gMapState.mCamera.mLookAt.z;
     pos.y = -0x19000;
     DrawModelFileAtPos(data_020b6ee0.mMapIndex + 0xfbe, &pos, (gSystemState.mElapsedFrames >> 1) % 100, 0, 0x3000, 0);
-    func_02033614(gMapState.mCamera.mLookAt.x, gMapState.mCamera.mLookAt.z);
+    DrawMap(gMapState.mCamera.mLookAt.x, gMapState.mCamera.mLookAt.z);
     UpdateFollowers(stage);
     func_02015f34();
     func_02016008(stage);
@@ -1174,11 +1177,11 @@ void AddStageAmountObjSlots(StageRec *rec, int kind, int amount) {
         sprintf(buf, "-%d", amount < 0 ? -amount : amount);
     }
     slot = FindObjSlot(AddSpriteObjSlot(kind, 0, 30, 0, -15, 0, -256, 110, 1, 0));
-    slot->mUnk_134 = rec->mPos;
-    slot->mUnk_140 = 1;
+    slot->mPos = rec->mPos;
+    slot->mUsePos = 1;
     slot = FindObjSlot(AddTextObjSlot(buf, 2, data_0201a61c, 30, 0, 0, 0, -256, 100, 1, 0));
-    slot->mUnk_134 = rec->mPos;
-    slot->mUnk_140 = 1;
+    slot->mPos = rec->mPos;
+    slot->mUsePos = 1;
 }
 
 // What meeting a map object of type `kind` gives the mode: types 0xf (mUnk_183 * 100 of the object `index`), 0x14 and
@@ -1253,7 +1256,7 @@ void func_0201896c(void) {
     gMapState.mCamera.mUnk_04 = func_02015d48;
     gMapState.mCamera.mUnk_2dc.mUnk_54 = 0x640;
     RequestTrackDelayed(6, 0x4c, 3);
-    gMapState.mCamera.mUnk_2dc.mUnk_44 = 0x186a000;
+    gMapState.mCamera.mUnk_2dc.mViewDistance = 0x186a000;
     func_02031fc4(0, &offset);
     func_02033df4(0x18);
     gMapState.mCamera.mEaseShift = 0;
@@ -1390,7 +1393,7 @@ void func_02018cd4(void) {
         rec = &gStages[idx];
         params = rec->mDraw;
         rec->mLookAtPos = params.mPos;
-        rec->mVisible = func_02031d0c(&rec->mPos, 0x64000, 0x64000, 0x64000);
+        rec->mVisible = IsBoxInView(&rec->mPos, 0x64000, 0x64000, 0x64000);
         if (rec->mVisible == 1 || idx == data_020b6ee0.mSelectedStageIndex) {
             ProjectToScreen(&rec->mPos, &rec->mScreenX);
             lim = (data_020b6ee0.mPanelState == 0 || data_020b6ee0.mPanelState == 1) ? 2 : 1;
@@ -1466,7 +1469,7 @@ void func_02018cd4(void) {
     SetDrawParams(&view, view.mPos.x, view.mPos.y, view.mPos.z, 0x1000, 0, 0, 0, 0x100);
     UpdateAndDrawModel(&data_020b6ee0.mUnk_9c64, &view, 0);
     func_02019788();
-    func_02033614(gMapState.mCamera.mLookAt.x, gMapState.mCamera.mLookAt.z);
+    DrawMap(gMapState.mCamera.mLookAt.x, gMapState.mCamera.mLookAt.z);
     if (data_020b6ee0.mPrevSelectedStageIndex != data_020b6ee0.mSelectedStageIndex) {
         if (data_020b6ee0.mSelectedStageIndex == -1) {
             data_020b6ee0.mPanelState = 0;
@@ -1581,7 +1584,7 @@ void StoreStageOffsets(void) {
     }
 }
 
-// Stores in mPolygonGroupIndex the first polygon group of 10..15 that holds the stage's position (func_020320c0),
+// Stores in mPolygonGroupIndex the first polygon group of 10..15 that holds the stage's position (IsPosInMapPoly),
 // minus 10, or 99 when none does.
 void FindStagePolygonGroup(int stage) {
     StageRec *rec = &gStages[stage];
@@ -1591,7 +1594,7 @@ void FindStagePolygonGroup(int stage) {
         OS_Terminate();
     }
     for (i = 10; i < 16; i++) {
-        if (func_020320c0(i, 0, &rec->mPos) == 1) {
+        if (IsPosInMapPoly(i, 0, &rec->mPos) == 1) {
             if (rec->mPolygonGroupIndex != i - 10) {
                 rec->mPolygonGroupIndex = i - 10;
             }
@@ -1899,7 +1902,7 @@ void UpdateMapCursorAndCamera(VecFx32 *lookAt, VecFx32 *cameraPos) {
     EaseVecToward(&gMapState.mCamera.mLookAt, data_020b6ee0.mUnk_a574.mUnk_0c,
                   data_020b6ee0.mUnk_a574.mCameraEaseDivisor);
     func_02033b8c();
-    func_02033520();
+    SetupCameraView();
     ProjectToScreen(p, out1);
     if (p->mDelayTimer == 0) {
         DrawSprite(0xe25, 0x7f, out1[1], 0xdc, 1);
@@ -1969,7 +1972,7 @@ void SetupMapMenu(void) {
     SetupMap(0xdda, 0, 0xddb, 0, 0, 0);
     gMapState.mCamera.mUnk_04 = func_02019b38;
     gMapState.mCamera.mUnk_2dc.mUnk_54 = 0x640;
-    gMapState.mCamera.mUnk_2dc.mUnk_44 = 0x9c4000;
+    gMapState.mCamera.mUnk_2dc.mViewDistance = 0x9c4000;
     func_02031fc4(0, &gMapMenuLookAt);
     func_02031fc4(1, &gMapMenuCameraPos);
     func_02031fc4(0, &gMapState.mCamera.mPos);

@@ -111,10 +111,11 @@ typedef struct ModelPart {
     u8 mUnk_36[2];
 } ModelPart;
 
-// This file's .bss: the working matrix, the graphics pools and model animation state, the map state and the matrix of
-// each pose node.
-extern MtxFx43 data_020c31ac;
-extern Unk_020c31dc data_020c31dc;
+// This file's .bss: gCurrentMtx, the matrix DrawModelFileEx and ComputePoseMatrices build each node's matrix in (a
+// copy in RAM, not the geometry engine's current matrix), the VRAM caches and the pose walk state, the map state and
+// the matrix of each pose node.
+extern MtxFx43 gCurrentMtx;
+extern GxState gGxState;
 extern MapState gMapState;
 extern MtxFx43 gPoseNodeMatrices[64];
 
@@ -122,21 +123,21 @@ void ReadAnimTrackNode(u16 *rot, s32 *pos, s32 *vec, u32 node, u32 track);
 void ComputePoseMatrices(int from, int node);
 void GetPoseNodePos(VecFx32 *out, int node);
 void SetDrawParams(DrawParams *p, int x, int y, int z, int a, u16 b, u8 c, u8 d, int flags);
-void func_02023ff0(void);
-void func_020240ec(void);
+void SetupOrthoModelView(void);
+void SetupOrthoSpriteView(void);
 void func_02024208(void);
-void func_020242a8(void *out, int x, int y, int z, int scale, u16 angle, int flags, int w);
-void func_020242e8(u16 id, int x, int y, int a, int b, u16 c, u8 d, int e);
+void SetOrthoDrawParams(void *out, int x, int y, int z, int scale, u16 angle, int frame, int flags);
+void DrawModelFileOrtho(u16 id, int x, int y, int z, int scale, u16 angle, u8 frame, int flags);
 void func_02024338(void *a, void *b, int c);
-void func_02024368(Model *obj, int x, int y, int scale, u16 angle, int flags);
-void func_020243c0(int id, fx32 x, fx32 y, fx32 z, u16 angle, fx32 sx, fx32 sy, u32 alpha);
+void UpdateAndDrawModelOrtho(Model *obj, int x, int y, int scale, u16 angle, int flags);
+void DrawSpritePolygons(int id, fx32 x, fx32 y, fx32 z, u16 angle, fx32 sx, fx32 sy, u32 alpha);
 void DrawModelFile(u32 id, void *p, int flags);
 void ClearTrackCount(void);
 ModelPart *GetFirstModelPart(int id, int a);
 u16 GetAnimKeyAngle(const AnimKey *key, const u8 *table, int t);
 int GetAnimKeyValue(const AnimKey16 *key, const u8 *table, int t);
 u32 GetDrawFrame(const DrawParams *p);
-s32 func_02024b2c(const u32 *data, const DrawParams *p);
+s32 GetRelativeScale(const u32 *data, const DrawParams *p);
 void DrawModelFileEx(u32 id, void *params, void *obj, int flags);
 void ProjectToScreen(void *pos, s32 *out);
 void ProjectToScreenEx(const VecFx32 *pos, s32 *out, int steps);

@@ -277,7 +277,7 @@ void DrawSharedModel(void) {
     u8 params[0x44];
     int idx = (gSharedModel.mModel.mId - 0x1f5) / 2;
     int a, x, y, z;
-    func_020242a8(params, 0xff, 0, 0, 0x1000, 0x8000, -1, 0x100);
+    SetOrthoDrawParams(params, 0xff, 0, 0, 0x1000, 0x8000, -1, 0x100);
     params[0x43] |= 8;
     UpdateModelScript(&gSharedModel.mModel);
     DrawModelFileEx(gSharedModel.mModel.mId, params, &gSharedModel.mModel, 0);

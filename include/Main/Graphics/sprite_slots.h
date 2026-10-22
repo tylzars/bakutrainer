@@ -28,22 +28,32 @@ typedef struct ObjSlot {
     const void *mUnk_30;
     u8 mUnk_34[0xc];
     s32 mUnk_40;
+    // The sprite id (OBJ_KIND_SPRITE) or DrawText's align (OBJ_KIND_TEXT).
     s32 mUnk_44;
     u8 mUnk_48[0x10a - 0x48];
-    u16 mUnk_10a;
+    // Frames left for a text or a timed sprite, which is freed when it counts down to 0 (a text added with 0 wraps
+    // to 0xffff on its first update). A sprite added with a negative duration gets 0 here instead: it falls (mVy
+    // grows by mVyPerFrame) until it leaves the 0x100 x 0xc0 screen area. For OBJ_KIND_ANIM this halfword lies inside
+    // the sprite script state at mUnk_30 and is not used as a timer.
+    u16 mTimer;
     u8 mUnk_10c[2];
     u8 mUnk_10e;
     u8 mUnk_10f[0x134 - 0x10f];
-    VecFx32 mUnk_134;
-    u8 mUnk_140;
+    // While mUsePos is set, the slot is drawn at mPos projected to the screen (ProjectToScreen) plus (mX, mY) >> 8.
+    VecFx32 mPos;
+    u8 mUsePos;
     u8 mUnk_141[3];
+    // The position in 1/256 pixels, moved by mVx and mVy each update; drawn at (mX, mY) >> 8, or that far from the
+    // projected mPos while mUsePos is set.
     s32 mX;
     s32 mY;
     s32 mVx;
     s32 mVy;
-    s32 mUnk_154;
-    s32 mUnk_158;
-    s32 mUnk_15c;
+    s32 mVyPerFrame;
+    // DrawSprite's w (a text slot's glyphs get it through gSystemState.mUnk_308): the low byte is the sort key and
+    // w >> 8 would be the priority; every caller passes a value below 0x100.
+    s32 mDrawOrder;
+    s32 mLayer;
 } ObjSlot;
 
 // A running animation object.
@@ -68,25 +78,26 @@ typedef struct SlotCounters {
     s32 mUnk_08;
 } SlotCounters;
 
-extern SlotCounters data_020abfc0;
-extern AnimSlot data_020abfcc[ANIM_SLOT_COUNT];
-extern ObjSlot data_020ace4c[OBJ_SLOT_COUNT];
+extern SlotCounters gSlotCounters;
+extern AnimSlot gAnimSlots[ANIM_SLOT_COUNT];
+extern ObjSlot gObjSlots[OBJ_SLOT_COUNT];
 
 void ClearObjSlots(void);
-ObjSlot *AddObjSlot(int kind, int a, int x, int y, int vx, int vy, int life, int h);
-int AddAnimObjSlot(int script, int a, int b, int c, int d);
-int AddAnimObjSlotEx(int script, int a, int b, int c, int d, int e, int f, int g);
-int AddSpriteObjSlot(int a, int b, int duration, int c, int d, int e, int f, int g, int h, int i);
-int AddTextObjSlot(const char *text, int a, const void *font, int b, int x, int y, int c, int d, int e, int f, int g);
+ObjSlot *AddObjSlot(int kind, int a, int x, int y, int vx, int vy, int drawOrder, int layer);
+int AddAnimObjSlot(int script, int x, int y, int drawOrder, int layer);
+int AddAnimObjSlotEx(int script, int a, int x, int y, int vx, int vy, int drawOrder, int layer);
+int AddSpriteObjSlot(int a, int b, int duration, int x, int y, int vx, int vy, int drawOrder, int layer, int i);
+int AddTextObjSlot(const char *text, int align, const void *font, int duration, int x, int y, int vx, int vy,
+                   int drawOrder, int layer, int g);
 ObjSlot *FindObjSlot(int id);
 void UpdateObjSlots(void);
 void ClearAnimSlots(void);
 void func_0200daec(void);
 void UpdateAnimSlots(void);
 void func_0200dbac(void);
-void func_0200dc08(int id, u16 *outId, u16 *outVal, u16 *outOpt1, u16 *outZ1, u16 *outZ2, u16 *outOpt2);
-void RunVideo(const char *path, int b);
-void func_0200dd90(void);
+void GetSetupMapArgs(int id, u16 *outId, u16 *outVal, u16 *outOpt1, u16 *outZ1, u16 *outZ2, u16 *outOpt2);
+void RunVideo(const char *path, int layer);
+void StartTitleSlideIn(void);
 
 #ifdef __cplusplus
 }

@@ -320,7 +320,7 @@ void ApplyObjectsAtStage(void) {
 
 void SetupFieldCameraAndInfo(void) {
     void *entry;
-    gMapState.mCamera.mUnk_2dc.mUnk_44 = 0x186a000;
+    gMapState.mCamera.mUnk_2dc.mViewDistance = 0x186a000;
     gMapState.mCamera.mUnk_2dc.mUnk_54 = 0x578;
     func_02033e38(1, 1, 1);
     func_02033e38(8, 0, 1);
@@ -412,7 +412,7 @@ void SetupField(void) {
     ResetAndSetupGraphics(0, 0, 0xdb3 + gFieldObjects.mStage.mStageId, 0x100, 16, 1, 0x82);
     func_02024208();
     RequestTrack(2, 0x4c);
-    func_0200dc08(sFieldMapIds[gFieldObjects.mStage.mKind], &v[4], &v[3], &v[2], &v[1], &v[0], NULL);
+    GetSetupMapArgs(sFieldMapIds[gFieldObjects.mStage.mKind], &v[4], &v[3], &v[2], &v[1], &v[0], NULL);
     SetupMap(v[4], v[2], v[3], 0, v[1], v[0]);
     UpdateSystemAndWait();
     SetupFieldCameraAndInfo();
@@ -483,7 +483,7 @@ void SetupField(void) {
 void DrawField(void) {
     DrawModeScoreAndTime(data_020b6ee0.mSelectedStageIndex, gFieldObjects.mScore >> 8, gModeSelectState.mScoreThreshold,
                          gFieldObjects.mEndTimer, 2);
-    func_02033614(gMapState.mCamera.mUnk_9c.mUnk_228.x, gMapState.mCamera.mUnk_9c.mUnk_228.z);
+    DrawMap(gMapState.mCamera.mUnk_9c.mUnk_228.x, gMapState.mCamera.mUnk_9c.mUnk_228.z);
     UpdateAndDrawModel(&gFieldObjects.mStageModel, &gFieldObjects.mStagePos, 0);
     DrawFieldObjects();
 }

@@ -109,33 +109,33 @@ int GetFloorHeightEx(fx32 x, fx32 z, fx32 y, int a, u32 mask, u8 *out, VecFx32 *
     attrp = attrs;
     do {
         region = (MapFloorRegion *) (regions + (*entry & MAP_FLOOR_INDEX) * 16);
-        if (y >= (region->mUnk_10 << 9) - a && (a == 0 || y <= (region->mUnk_12 << 9)) && region->mUnk_00 <= cx &&
-            region->mUnk_08 >= cx && region->mUnk_04 <= cz && region->mUnk_0c >= cz) {
+        if (y >= (region->mMinY << 9) - a && (a == 0 || y <= (region->mMaxY << 9)) && region->mMinX <= cx &&
+            region->mMaxX >= cx && region->mMinZ <= cz && region->mMaxZ >= cz) {
             head = &region->mUnk_14;
             rec = (MapFloorShape *) (head + 2);
             miss = 0;
             if (!(*head & MAP_FLOOR_SINGLE)) {
                 off = *head & 0x7fff;
-                for (k = 0; k < region->mUnk_16; k++) {
+                for (k = 0; k < region->mShapeCount; k++) {
                     miss = 1;
-                    px = region->mUnk_00 + rec->mUnk_02[0].mUnk_00;
-                    pz = region->mUnk_04 + rec->mUnk_02[0].mUnk_02;
-                    id = rec->mUnk_01;
+                    px = region->mMinX + rec->mPoints[0].mX;
+                    pz = region->mMinZ + rec->mPoints[0].mZ;
+                    id = rec->mAttr;
                     if (id == MAP_FLOOR_NONE || (mask & (1 << id))) {
-                        rec = (MapFloorShape *) ((u8 *) rec + rec->mUnk_00 * 4 + 2);
+                        rec = (MapFloorShape *) ((u8 *) rec + rec->mPointCount * 4 + 2);
                         continue;
                     }
-                    for (n = 1; n < rec->mUnk_00; n++) {
+                    for (n = 1; n < rec->mPointCount; n++) {
                         int ox = px;
                         int oz = pz;
-                        px = region->mUnk_00 + rec->mUnk_02[n].mUnk_00;
-                        pz = region->mUnk_04 + rec->mUnk_02[n].mUnk_02;
+                        px = region->mMinX + rec->mPoints[n].mX;
+                        pz = region->mMinZ + rec->mPoints[n].mZ;
                         if (Cross2d(ox, oz, px, pz, cx, cz) > 0) {
                             break;
                         }
                     }
-                    if (n != rec->mUnk_00) {
-                        rec = (MapFloorShape *) ((u8 *) rec + rec->mUnk_00 * 4 + 2);
+                    if (n != rec->mPointCount) {
+                        rec = (MapFloorShape *) ((u8 *) rec + rec->mPointCount * 4 + 2);
                         continue;
                     }
                     miss = 0;
@@ -148,8 +148,8 @@ int GetFloorHeightEx(fx32 x, fx32 z, fx32 y, int a, u32 mask, u8 *out, VecFx32 *
             }
             if (!miss) {
                 data = (u8 *) head + off;
-                hi = region->mUnk_12;
-                lo = region->mUnk_10;
+                hi = region->mMaxY;
+                lo = region->mMinY;
                 if (lo == hi) {
                     if (vec != NULL) {
                         normp->x = 0;
@@ -159,10 +159,10 @@ int GetFloorHeightEx(fx32 x, fx32 z, fx32 y, int a, u32 mask, u8 *out, VecFx32 *
                 } else {
                     info = *(u16 *) data;
                     res = info & 0xff;
-                    dx = cx - region->mUnk_00;
-                    w = region->mUnk_08 - region->mUnk_00;
-                    dz = cz - region->mUnk_04;
-                    d = region->mUnk_0c - region->mUnk_04;
+                    dx = cx - region->mMinX;
+                    w = region->mMaxX - region->mMinX;
+                    dz = cz - region->mMinZ;
+                    d = region->mMaxZ - region->mMinZ;
                     ix = dx * (res - 1) / w;
                     iz = dz * (res - 1) / d;
                     inv = 0x10000 / (res - 1);
@@ -275,7 +275,7 @@ int GetFloorHeightEx(fx32 x, fx32 z, fx32 y, int a, u32 mask, u8 *out, VecFx32 *
                 if (!miss) {
                     int slot;
 
-                    h = (region->mUnk_10 + ((region->mUnk_12 - region->mUnk_10) * t >> bits)) << 9;
+                    h = (region->mMinY + ((region->mMaxY - region->mMinY) * t >> bits)) << 9;
                     if (count >= 12) {
                         OS_Terminate();
                     }
@@ -345,7 +345,7 @@ int GetFloorHeight(fx32 x, fx32 z, fx32 y, int a, u32 mask, u8 *out) {
 
 #pragma thumb on
 
-u32 func_0203129c(void) {
-    return AngleOfVector(gMapState.mCamera.mUnk_14.x - gMapState.mCamera.mUnk_20.x,
-                         gMapState.mCamera.mUnk_14.z - gMapState.mCamera.mUnk_20.z);
+u32 GetNearestSegmentAngle(void) {
+    return AngleOfVector(gMapState.mCamera.mNearestSegmentStart.x - gMapState.mCamera.mNearestSegmentEnd.x,
+                         gMapState.mCamera.mNearestSegmentStart.z - gMapState.mCamera.mNearestSegmentEnd.z);
 }

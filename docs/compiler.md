@@ -109,11 +109,11 @@ the same way on every build and flag set (register assignment following the sour
   code (96 multiplies in the functions found so far) or the SDK code (14). On sp2 and earlier the `StartVideo`
   probe is 4 bytes larger; sp2p2 ... sp2p4 reproduce its size. Thumb code calls a helper for 64-bit multiplies, so
   the idiom only exists in ARM code.
-- **sp2p3 rather than sp2p2: matches, given one assumption.** `data_020c661c` (at least 0xb7 bytes) is accessed by
+- **sp2p3 rather than sp2p2: matches, given one assumption.** `gVideoState` (at least 0xb7 bytes) is accessed by
   member and by address in `StopVideo` and `StartVideo` through one pool word each. With `-ipa file` and the
   object defined in the probe's file, sp2p2 and every earlier build add a second pool word; sp2p3 and sp2p4
   reproduce `StopVideo` exactly (the 64-byte section rule above). With the object `extern`, every build matches.
-  So sp2p3 holds if `data_020c661c` is defined in the file of those functions. Two Thumb probes with their global
+  So sp2p3 holds if `gVideoState` is defined in the file of those functions. Two Thumb probes with their global
   defined in the file (`func_02026268`, `WaitForLinkStep`) split the same way and rest on the same kind of
   assumption. No probe matches on sp2p2 and misses on sp2p3.
 - sp2p3 and sp2p4 gave the same code on every probe: not separated, sp2p3 kept.
@@ -178,7 +178,7 @@ variants above.
 
 ## Open
 
-- sp2p3 over sp2p2 rests on `data_020c661c` being defined in the file of `StopVideo` and `StartVideo`.
+- sp2p3 over sp2p2 rests on `gVideoState` being defined in the file of `StopVideo` and `StartVideo`.
 - `-O4,p` vs `-O3,p`, `-enum int` vs `min`, and `-inline on,noauto` vs the default are not separated by any probe.
 - `-ipa file` for game code holds for C; written as C++ the deciding probes match without it too.
 - `-char signed` is shown for the C runtime and the Mobiclip glue code, not for the game's own code.

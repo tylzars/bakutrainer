@@ -43,7 +43,7 @@ void UpdateMapMenu(void) {
     Unk_020c1454 *q = &data_020b6ee0.mUnk_a574;
 
     UpdateMapCursorAndCamera(&gMapMenuLookAt, &gMapMenuCameraPos);
-    func_02033614(gMapState.mCamera.mLookAt.x, gMapState.mCamera.mLookAt.z);
+    DrawMap(gMapState.mCamera.mLookAt.x, gMapState.mCamera.mLookAt.z);
     prevSel = data_020b6ee0.mSelectedNodeIndex;
     data_020b6ee0.mSelectedNodeIndex = -1;
     for (i = 0; i < MAP_NODE_COUNT; i++) {
@@ -79,8 +79,8 @@ void UpdateMapMenu(void) {
             p->mCursorXPerFrame = 0;
             p->mCursorZPerFrame = 0;
             q->mMapButtonOffsetX = 0x28;
-            StartSprite(&p->mUnk_1c8, data_0201abec[0]);
-            StartSprite(&p->mUnk_2cc, data_0201abec[1]);
+            StartSprite(&p->mUnk_1c8, gSpriteScripts[0]);
+            StartSprite(&p->mUnk_2cc, gSpriteScripts[1]);
         }
         if (p->mNodeInfoHidden == 0) {
             int a = GetNodeValue(data_020b6ee0.mSelectedNodeIndex, 0xe);

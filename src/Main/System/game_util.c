@@ -250,7 +250,7 @@ static inline void G3_LightColor(u32 num, u16 color) {
 
 // Sets the direction and color of light num; the light mask is replaced by num's bit, so only that light stays on.
 void SetLight(u32 num, s8 x, s8 y, s8 z, u32 color) {
-    G3_LoadMtx43(&gMapState.mUnk_3c);
+    G3_LoadMtx43(&gMapState.mViewMtx);
     reg_G3X_MTX_MODE = 2;
     gMapState.mCamera.mUnk_2dc.mLightMask = 0;
     G3_LightVector(num, x << 5, y << 5, z << 5);

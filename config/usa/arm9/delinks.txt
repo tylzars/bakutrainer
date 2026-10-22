@@ -652,7 +652,7 @@ src/Main/Graphics/angle_blend.c:
     complete
     .text       start:0x020223e8 end:0x020225dc
 
-// provisional: the pool allocator and hash lookups of the graphics pools (data_020c31dc, like gx_pool.c);
+// provisional: the pool allocator and hash lookups of the graphics pools (gGxState, like gx_pool.c);
 // ApplyAnimTrack/ReadAnimFileNode work on the animation tracks and may belong with the model code after it
 src/Main/Graphics/vram_cache.c:
     complete
@@ -706,7 +706,7 @@ src/Main/Sound/wave_player.c:
     .text       start:0x0202ea50 end:0x0202f500
     .bss        start:0x020c648c end:0x020c661c
 
-// provisional: movie playback with its audio stream (ARM, on data_020c661c); the allocator pair at the start
+// provisional: movie playback with its audio stream (ARM, on gVideoState); the allocator pair at the start
 // (only referenced from far away) is placed by address; UnpackQrkData after it uses other objects
 src/Main/Video/stream_audio.c:
     complete
@@ -728,7 +728,8 @@ src/Main/Map/map_floor.c:
 
 // provisional: the stage data file's chunks and entries, the placed objects, the visible cells and the camera
 // projection, blends and modes (gMapState, which holds the camera object); it starts with the ring quadtree of
-// chunk 0x5540, whose rings func_02031c70 walks (func_0203129c before it also reads what func_02031824 writes)
+// chunk 0x5540, whose rings GetFirstLinkedRing walks (GetNearestSegmentAngle before it also reads what
+// FindNearestRingSegment writes)
 src/Main/Map/map_entries.c:
     complete
     .text       start:0x020312b8 end:0x02034918

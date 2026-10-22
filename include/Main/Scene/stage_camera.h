@@ -102,7 +102,7 @@ typedef struct FollowerGroup {
     s16 mSlowRange;
     // Only followers nearer than this fill the sector distances and slow a follower; always 0x640 in this build.
     s16 mNearDistance;
-    // UpdateFollower runs the ring test (func_02031824) only while 1; always 1 in this build.
+    // UpdateFollower runs the ring test (FindNearestRingSegment) only while 1; always 1 in this build.
     u8 mUseRingTest;
     u8 mTargetFixed;
 } FollowerGroup;

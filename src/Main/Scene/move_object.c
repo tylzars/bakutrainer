@@ -35,7 +35,7 @@ void SetupMoveObj(MoveObj *o, int sprite, int model, const Vec2i *pos, int e, in
     }
     if (sprite >= 0) {
         o->mFlags |= 1;
-        StartSprite(o, data_0201abec[sprite]);
+        StartSprite(o, gSpriteScripts[sprite]);
     }
     if (model >= 0) {
         o->mFlags |= 2;
@@ -211,7 +211,7 @@ void DrawMoveObj(MoveObj *o) {
             }
         }
         if (o->mFlags & 2) {
-            func_020242a8(&params, o->mX >> 8, o->mY >> 8, -0x3000, o->mScale, 0x8000, -1, 0);
+            SetOrthoDrawParams(&params, o->mX >> 8, o->mY >> 8, -0x3000, o->mScale, 0x8000, -1, 0);
             params.mUnk_2c = -1;
             params.mUnk_34 = -1;
             DrawModelFileEx(o->mModel.mId, &params, &o->mModel, 0);

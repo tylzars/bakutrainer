@@ -13,7 +13,7 @@
 // Frees the run of 512-byte VRAM blocks that starts at block i of the texture cache's heap, merges it with free
 // neighbours, links it into the free list ordered by size and returns the merged run's length in blocks.
 u32 FreeTexBlock(u32 i) {
-    Unk_PoolRange *n = data_020c31dc.mTexBlocks;
+    Unk_PoolRange *n = gGxState.mTexBlocks;
     u32 q;
     u32 j;
     u32 k;
@@ -21,14 +21,14 @@ u32 FreeTexBlock(u32 i) {
 
     n[i].mUnk_0 &= ~POOL_BLOCK_USED;
     j = i + n[i].mUnk_0;
-    if (j < data_020c31dc.mTexBlockCount && !(n[j].mUnk_0 & POOL_BLOCK_USED)) {
+    if (j < gGxState.mTexBlockCount && !(n[j].mUnk_0 & POOL_BLOCK_USED)) {
         n[i].mUnk_0 += n[j].mUnk_0;
         n[i + n[i].mUnk_0].mUnk_6 = i;
         n[n[j].mNext].mPrev = n[j].mPrev;
         n[n[j].mPrev].mNext = n[j].mNext;
     }
     k = n[i].mUnk_6;
-    if (k < data_020c31dc.mTexBlockCount && !(n[k].mUnk_0 & POOL_BLOCK_USED)) {
+    if (k < gGxState.mTexBlockCount && !(n[k].mUnk_0 & POOL_BLOCK_USED)) {
         n[k].mUnk_0 += n[i].mUnk_0;
         n[k + n[k].mUnk_0].mUnk_6 = k;
         n[n[k].mNext].mPrev = n[k].mPrev;
@@ -37,7 +37,7 @@ u32 FreeTexBlock(u32 i) {
     }
     size = n[i].mUnk_0;
     if (size < 4) {
-        j = data_020c31dc.mTexBlockCount + 1;
+        j = gGxState.mTexBlockCount + 1;
         q = n[j].mPrev;
         while (size > n[q].mUnk_0) {
             j = q;
@@ -48,7 +48,7 @@ u32 FreeTexBlock(u32 i) {
         n[j].mPrev = i;
         n[q].mNext = i;
     } else {
-        j = data_020c31dc.mTexBlockCount;
+        j = gGxState.mTexBlockCount;
         q = n[j].mNext;
         while (size < n[q].mUnk_0) {
             j = q;
@@ -68,13 +68,13 @@ u32 FreeTexBlock(u32 i) {
 u32 RemoveLeastRecentTexCacheEntry(u32 i) {
     u32 result;
 
-    data_020c31dc.mTexEntryCount--;
-    data_020c31dc.mTexSlots[data_020c31dc.mTexNodes[i].mSlotIndex].mKey = -2;
-    result = FreeTexBlock(data_020c31dc.mTexNodes[i].mOffset >> 9);
-    data_020c31dc.mTexNodes[1].mNext = data_020c31dc.mTexNodes[i].mNext;
-    data_020c31dc.mTexNodes[data_020c31dc.mTexNodes[i].mNext].mPrev = 1;
-    data_020c31dc.mTexNodes[i].mPrev = data_020c31dc.mTexNodes[1].mPrev;
-    data_020c31dc.mTexNodes[1].mPrev = i;
+    gGxState.mTexEntryCount--;
+    gGxState.mTexSlots[gGxState.mTexNodes[i].mSlotIndex].mKey = -2;
+    result = FreeTexBlock(gGxState.mTexNodes[i].mOffset >> 9);
+    gGxState.mTexNodes[1].mNext = gGxState.mTexNodes[i].mNext;
+    gGxState.mTexNodes[gGxState.mTexNodes[i].mNext].mPrev = 1;
+    gGxState.mTexNodes[i].mPrev = gGxState.mTexNodes[1].mPrev;
+    gGxState.mTexNodes[1].mPrev = i;
     return result;
 }
 
@@ -103,13 +103,13 @@ u32 AllocTexBlock(Unk_PoolRange *n, u32 size, u32 node) {
         }
         victim = 1;
         do {
-            victim = data_020c31dc.mTexNodes[victim].mNext;
+            victim = gGxState.mTexNodes[victim].mNext;
         } while (RemoveLeastRecentTexCacheEntry(victim) < size);
     }
     spare = n[found].mUnk_0;
     n[found].mUnk_0 = size + POOL_BLOCK_USED;
     addr = found << 9;
-    data_020c31dc.mTexNodes[node].mOffset = addr;
+    gGxState.mTexNodes[node].mOffset = addr;
     p = n[found].mPrev;
     n[n[found].mNext].mPrev = p;
     n[n[found].mPrev].mNext = n[found].mNext;
@@ -147,40 +147,39 @@ u32 FindOrLoadTex(u32 kind, u32 key, u32 size, u32 srcSize) {
 
     step = gHashSteps[(key >> 10) & 0x7f];
     idx = key & 0x3ff;
-    data_020c31dc.mTexLookupCount++;
+    gGxState.mTexLookupCount++;
     for (;;) {
-        data_020c31dc.mTexProbeCount++;
-        if (key == data_020c31dc.mTexSlots[idx].mKey) {
-            node = data_020c31dc.mTexSlots[idx].mNodeIndex;
-            MoveIndexNode16ToEnd((IndexNode16 *) data_020c31dc.mTexNodes, node);
-            return data_020c31dc.mTexNodes[node].mOffset;
+        gGxState.mTexProbeCount++;
+        if (key == gGxState.mTexSlots[idx].mKey) {
+            node = gGxState.mTexSlots[idx].mNodeIndex;
+            MoveIndexNode16ToEnd((IndexNode16 *) gGxState.mTexNodes, node);
+            return gGxState.mTexNodes[node].mOffset;
         }
-        if (data_020c31dc.mTexSlots[idx].mKey == -2 && first == -1) {
+        if (gGxState.mTexSlots[idx].mKey == -2 && first == -1) {
             first = idx;
-        } else if (data_020c31dc.mTexSlots[idx].mKey == -1 ||
-                   (data_020c31dc.mTexSlots[idx].mKey == -2 && idx == first)) {
-            u16 count = data_020c31dc.mTexEntryCount + 1;
+        } else if (gGxState.mTexSlots[idx].mKey == -1 || (gGxState.mTexSlots[idx].mKey == -2 && idx == first)) {
+            u16 count = gGxState.mTexEntryCount + 1;
 
-            data_020c31dc.mTexEntryCount = count;
+            gGxState.mTexEntryCount = count;
             if (count > 0x2bc) {
-                RemoveLeastRecentTexCacheEntry(data_020c31dc.mTexNodes[1].mNext);
+                RemoveLeastRecentTexCacheEntry(gGxState.mTexNodes[1].mNext);
             }
             if (srcSize == 0) {
                 srcSize = size;
             }
-            node = data_020c31dc.mTexNodes[1].mPrev;
-            data_020c31dc.mTexNodes[1].mPrev = data_020c31dc.mTexNodes[node].mPrev;
-            data_020c31dc.mTexNodes[node].mPrev = data_020c31dc.mTexNodes[0].mPrev;
-            data_020c31dc.mTexNodes[node].mNext = 0;
-            data_020c31dc.mTexNodes[0].mPrev = node;
-            data_020c31dc.mTexNodes[data_020c31dc.mTexNodes[node].mPrev].mNext = node;
+            node = gGxState.mTexNodes[1].mPrev;
+            gGxState.mTexNodes[1].mPrev = gGxState.mTexNodes[node].mPrev;
+            gGxState.mTexNodes[node].mPrev = gGxState.mTexNodes[0].mPrev;
+            gGxState.mTexNodes[node].mNext = 0;
+            gGxState.mTexNodes[0].mPrev = node;
+            gGxState.mTexNodes[gGxState.mTexNodes[node].mPrev].mNext = node;
             if (first != -1) {
                 idx = first;
             }
-            data_020c31dc.mTexSlots[idx].mKey = key;
-            data_020c31dc.mTexSlots[idx].mNodeIndex = node;
-            data_020c31dc.mTexNodes[node].mSlotIndex = idx;
-            data_020c31dc.mTexNodes[node].mOffset = AllocTexBlock(data_020c31dc.mTexBlocks, size, node);
+            gGxState.mTexSlots[idx].mKey = key;
+            gGxState.mTexSlots[idx].mNodeIndex = node;
+            gGxState.mTexNodes[node].mSlotIndex = idx;
+            gGxState.mTexNodes[node].mOffset = AllocTexBlock(gGxState.mTexBlocks, size, node);
             if (kind == 1) {
                 u32 shift;
                 u8 flag;
@@ -190,32 +189,32 @@ u32 FindOrLoadTex(u32 kind, u32 key, u32 size, u32 srcSize) {
                 GetTexInfo(off >> 6, &info, off & 0x3f);
                 flag = (info.mUnk_12 != 1 && info.mUnk_12 != 4) ? 0xff : 0;
                 if (gTextureBlocks.mBlockFileKind == 2) {
-                    kind = (info.mUnk_00 << 7) + info.mUnk_13;
+                    kind = (info.mDataOffset << 7) + info.mUnk_13;
                 } else {
-                    kind = info.mUnk_00 << 5;
+                    kind = info.mDataOffset << 5;
                 }
                 bits = info.mWidth;
                 shift = 32 - CountLeadingZeros(~bits & (bits - 1));
-                QueueTransferEx(GetBlockFile(), kind, data_020c31dc.mTexNodes[node].mOffset | 0xa0000000, size, 0,
-                                shift, flag);
+                QueueTransferEx(GetBlockFile(), kind, gGxState.mTexNodes[node].mOffset | 0xa0000000, size, 0, shift,
+                                flag);
             } else if (kind == 2) {
                 off = key - func_0201c550();
-                QueueTransferEx(gSystemState.mUnk_42c, off, data_020c31dc.mTexNodes[node].mOffset | 0xa0000000, srcSize,
+                QueueTransferEx(gSystemState.mUnk_42c, off, gGxState.mTexNodes[node].mOffset | 0xa0000000, srcSize,
                                 size, 0, 0);
             } else {
-                QueueTransferEx(data_020c31dc.mTexFile, kind, data_020c31dc.mTexNodes[node].mOffset | 0xa0000000,
-                                srcSize, size, 0, 0);
+                QueueTransferEx(gGxState.mTexFile, kind, gGxState.mTexNodes[node].mOffset | 0xa0000000, srcSize, size,
+                                0, 0);
             }
             gSystemState.mUnk_2bc += size;
             gSystemState.mUnk_2b8 += size;
-            return data_020c31dc.mTexNodes[node].mOffset;
+            return gGxState.mTexNodes[node].mOffset;
         }
         idx = (idx + step) & 0x3ff;
     }
 }
 
 u32 FreePlttBlock(u32 i) {
-    Unk_PoolRange *n = data_020c31dc.mPlttBlocks;
+    Unk_PoolRange *n = gGxState.mPlttBlocks;
     u32 q;
     u32 j;
     u32 k;
@@ -223,14 +222,14 @@ u32 FreePlttBlock(u32 i) {
 
     n[i].mUnk_0 &= ~POOL_BLOCK_USED;
     j = i + n[i].mUnk_0;
-    if (j < data_020c31dc.mPlttBlockCount && !(n[j].mUnk_0 & POOL_BLOCK_USED)) {
+    if (j < gGxState.mPlttBlockCount && !(n[j].mUnk_0 & POOL_BLOCK_USED)) {
         n[i].mUnk_0 += n[j].mUnk_0;
         n[i + n[i].mUnk_0].mUnk_6 = i;
         n[n[j].mNext].mPrev = n[j].mPrev;
         n[n[j].mPrev].mNext = n[j].mNext;
     }
     k = n[i].mUnk_6;
-    if (k < data_020c31dc.mPlttBlockCount && !(n[k].mUnk_0 & POOL_BLOCK_USED)) {
+    if (k < gGxState.mPlttBlockCount && !(n[k].mUnk_0 & POOL_BLOCK_USED)) {
         n[k].mUnk_0 += n[i].mUnk_0;
         n[k + n[k].mUnk_0].mUnk_6 = k;
         n[n[k].mNext].mPrev = n[k].mPrev;
@@ -239,7 +238,7 @@ u32 FreePlttBlock(u32 i) {
     }
     size = n[i].mUnk_0;
     if (size < 4) {
-        j = data_020c31dc.mPlttBlockCount + 1;
+        j = gGxState.mPlttBlockCount + 1;
         q = n[j].mPrev;
         while (size > n[q].mUnk_0) {
             j = q;
@@ -250,7 +249,7 @@ u32 FreePlttBlock(u32 i) {
         n[j].mPrev = i;
         n[q].mNext = i;
     } else {
-        j = data_020c31dc.mPlttBlockCount;
+        j = gGxState.mPlttBlockCount;
         q = n[j].mNext;
         while (size < n[q].mUnk_0) {
             j = q;
@@ -267,13 +266,13 @@ u32 FreePlttBlock(u32 i) {
 u32 RemoveLeastRecentPlttCacheEntry(u32 i) {
     u32 result;
 
-    data_020c31dc.mPlttEntryCount--;
-    data_020c31dc.mPlttSlots[data_020c31dc.mPlttNodes[i].mSlotIndex].mKey = -2;
-    result = FreePlttBlock(data_020c31dc.mPlttNodes[i].mOffset >> 5);
-    data_020c31dc.mPlttNodes[1].mNext = data_020c31dc.mPlttNodes[i].mNext;
-    data_020c31dc.mPlttNodes[data_020c31dc.mPlttNodes[i].mNext].mPrev = 1;
-    data_020c31dc.mPlttNodes[i].mPrev = data_020c31dc.mPlttNodes[1].mPrev;
-    data_020c31dc.mPlttNodes[1].mPrev = i;
+    gGxState.mPlttEntryCount--;
+    gGxState.mPlttSlots[gGxState.mPlttNodes[i].mSlotIndex].mKey = -2;
+    result = FreePlttBlock(gGxState.mPlttNodes[i].mOffset >> 5);
+    gGxState.mPlttNodes[1].mNext = gGxState.mPlttNodes[i].mNext;
+    gGxState.mPlttNodes[gGxState.mPlttNodes[i].mNext].mPrev = 1;
+    gGxState.mPlttNodes[i].mPrev = gGxState.mPlttNodes[1].mPrev;
+    gGxState.mPlttNodes[1].mPrev = i;
     return result;
 }
 
@@ -300,13 +299,13 @@ u32 AllocPlttBlock(Unk_PoolRange *n, u32 size, u32 node) {
         }
         victim = 1;
         do {
-            victim = data_020c31dc.mPlttNodes[victim].mNext;
+            victim = gGxState.mPlttNodes[victim].mNext;
         } while (RemoveLeastRecentPlttCacheEntry(victim) < size);
     }
     spare = n[found].mUnk_0;
     n[found].mUnk_0 = size + POOL_BLOCK_USED;
     addr = found << 5;
-    data_020c31dc.mPlttNodes[node].mOffset = addr;
+    gGxState.mPlttNodes[node].mOffset = addr;
     p = n[found].mPrev;
     n[n[found].mNext].mPrev = p;
     n[n[found].mPrev].mNext = n[found].mNext;
@@ -341,43 +340,43 @@ u32 FindOrLoadPltt(u32 kind, u32 key, u32 size) {
     u32 node;
 
     for (;;) {
-        if (key == data_020c31dc.mPlttSlots[idx].mKey) {
-            node = data_020c31dc.mPlttSlots[idx].mNodeIndex;
-            MoveIndexNode16ToEnd((IndexNode16 *) data_020c31dc.mPlttNodes, node);
-            return data_020c31dc.mPlttNodes[node].mOffset;
+        if (key == gGxState.mPlttSlots[idx].mKey) {
+            node = gGxState.mPlttSlots[idx].mNodeIndex;
+            MoveIndexNode16ToEnd((IndexNode16 *) gGxState.mPlttNodes, node);
+            return gGxState.mPlttNodes[node].mOffset;
         }
-        if (data_020c31dc.mPlttSlots[idx].mKey == -2 && first == -1) {
+        if (gGxState.mPlttSlots[idx].mKey == -2 && first == -1) {
             first = idx;
-        } else if (data_020c31dc.mPlttSlots[idx].mKey == -1) {
-            data_020c31dc.mPlttEntryCount++;
-            if (data_020c31dc.mPlttEntryCount > 200) {
-                RemoveLeastRecentPlttCacheEntry(data_020c31dc.mPlttNodes[1].mNext);
+        } else if (gGxState.mPlttSlots[idx].mKey == -1) {
+            gGxState.mPlttEntryCount++;
+            if (gGxState.mPlttEntryCount > 200) {
+                RemoveLeastRecentPlttCacheEntry(gGxState.mPlttNodes[1].mNext);
             }
-            node = data_020c31dc.mPlttNodes[1].mPrev;
-            data_020c31dc.mPlttNodes[1].mPrev = data_020c31dc.mPlttNodes[node].mPrev;
-            data_020c31dc.mPlttNodes[node].mPrev = data_020c31dc.mPlttNodes[0].mPrev;
-            data_020c31dc.mPlttNodes[node].mNext = 0;
-            data_020c31dc.mPlttNodes[0].mPrev = node;
-            data_020c31dc.mPlttNodes[data_020c31dc.mPlttNodes[node].mPrev].mNext = node;
+            node = gGxState.mPlttNodes[1].mPrev;
+            gGxState.mPlttNodes[1].mPrev = gGxState.mPlttNodes[node].mPrev;
+            gGxState.mPlttNodes[node].mPrev = gGxState.mPlttNodes[0].mPrev;
+            gGxState.mPlttNodes[node].mNext = 0;
+            gGxState.mPlttNodes[0].mPrev = node;
+            gGxState.mPlttNodes[gGxState.mPlttNodes[node].mPrev].mNext = node;
             if (first != -1) {
                 idx = first;
             }
-            data_020c31dc.mPlttSlots[idx].mKey = key;
-            data_020c31dc.mPlttSlots[idx].mNodeIndex = node;
-            data_020c31dc.mPlttNodes[node].mSlotIndex = idx;
-            data_020c31dc.mPlttNodes[node].mOffset = AllocPlttBlock(data_020c31dc.mPlttBlocks, size, node);
-            data_020c31dc.mPlttNodes[node].mSize = size;
+            gGxState.mPlttSlots[idx].mKey = key;
+            gGxState.mPlttSlots[idx].mNodeIndex = node;
+            gGxState.mPlttNodes[node].mSlotIndex = idx;
+            gGxState.mPlttNodes[node].mOffset = AllocPlttBlock(gGxState.mPlttBlocks, size, node);
+            gGxState.mPlttNodes[node].mSize = size;
             if (key < GetPlttFileKeyCount()) {
-                QueueTransfer(data_020c31dc.mPlttFile, kind, data_020c31dc.mPlttNodes[node].mOffset | 0xb0000000, size);
+                QueueTransfer(gGxState.mPlttFile, kind, gGxState.mPlttNodes[node].mOffset | 0xb0000000, size);
             } else if (key < GetPaletteFileKeyEnd()) {
-                QueueTransfer(GetPaletteFile(), kind << 5, data_020c31dc.mPlttNodes[node].mOffset | 0xb0000000, size);
+                QueueTransfer(GetPaletteFile(), kind << 5, gGxState.mPlttNodes[node].mOffset | 0xb0000000, size);
             } else {
                 QueueTransfer(0, gSystemState.mUnk_390[key - GetPaletteFileKeyEnd()] + 4,
-                              data_020c31dc.mPlttNodes[node].mOffset | 0xb0000000, size);
+                              gGxState.mPlttNodes[node].mOffset | 0xb0000000, size);
             }
             gSystemState.mUnk_2c4 += size;
             gSystemState.mUnk_2c0 += size;
-            return data_020c31dc.mPlttNodes[node].mOffset;
+            return gGxState.mPlttNodes[node].mOffset;
         }
         idx = (idx + step) & 0x3ff;
     }
@@ -394,7 +393,7 @@ void ApplyAnimTrack(u32 track, u16 *out, s32 *pos, s32 *vec, u32 nodeIndex, int 
     s32 v[3];
     u32 kind;
 
-    if (data_020c31dc.mAnimTracks[track].mData == NULL) {
+    if (gGxState.mAnimTracks[track].mData == NULL) {
         return;
     }
     if (*done == 0) {
@@ -403,15 +402,15 @@ void ApplyAnimTrack(u32 track, u16 *out, s32 *pos, s32 *vec, u32 nodeIndex, int 
         return;
     }
     ReadAnimTrackNode(r, p, v, nodeIndex, track);
-    kind = data_020c31dc.mAnimTracks[track].mFlags & 3;
+    kind = gGxState.mAnimTracks[track].mFlags & 3;
     if (kind == 1) {
-        out[0] += AngleDelta((u16) (node->mUnk_5 << 8), r[0]);
-        out[1] += AngleDelta((u16) (node->mUnk_6 << 8), r[1]);
-        out[2] += AngleDelta((u16) (node->mUnk_7 << 8), r[2]);
+        out[0] += AngleDelta((u16) (node->mAngleX << 8), r[0]);
+        out[1] += AngleDelta((u16) (node->mAngleY << 8), r[1]);
+        out[2] += AngleDelta((u16) (node->mAngleZ << 8), r[2]);
     } else if (kind == 2) {
-        if (AngleDistance((u16) (node->mUnk_5 << 8), r[0]) > 0x100 ||
-            AngleDistance((u16) (node->mUnk_6 << 8), r[1]) > 0x100 ||
-            AngleDistance((u16) (node->mUnk_7 << 8), r[2]) > 0x100) {
+        if (AngleDistance((u16) (node->mAngleX << 8), r[0]) > 0x100 ||
+            AngleDistance((u16) (node->mAngleY << 8), r[1]) > 0x100 ||
+            AngleDistance((u16) (node->mAngleZ << 8), r[2]) > 0x100) {
             out[0] = r[0];
             out[1] = r[1];
             out[2] = r[2];
@@ -424,10 +423,10 @@ void ApplyAnimTrack(u32 track, u16 *out, s32 *pos, s32 *vec, u32 nodeIndex, int 
 // Loads file `file` into track 0 (it stays there), sets the track's frames and weight, reads node `node` into
 // rot/pos/vec and shifts pos right by 3.
 void ReadAnimFileNode(u16 file, u16 *rot, VecFx32 *pos, VecFx32 *vec, int frame, int nextFrame, int weight, int node) {
-    data_020c31dc.mAnimTracks[0].mNextWeight = weight;
-    data_020c31dc.mAnimTracks[0].mNextFrameIndex = nextFrame;
-    data_020c31dc.mAnimTracks[0].mFrameIndex = frame;
-    data_020c31dc.mAnimTracks[0].mData = FindOrLoadCachedFile(file);
+    gGxState.mAnimTracks[0].mNextWeight = weight;
+    gGxState.mAnimTracks[0].mNextFrameIndex = nextFrame;
+    gGxState.mAnimTracks[0].mFrameIndex = frame;
+    gGxState.mAnimTracks[0].mData = FindOrLoadCachedFile(file);
     ReadAnimTrackNode(rot, (s32 *) pos, (s32 *) vec, node, 0);
     if (pos != NULL) {
         pos->x >>= 3;

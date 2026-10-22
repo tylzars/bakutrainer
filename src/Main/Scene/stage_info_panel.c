@@ -755,7 +755,7 @@ void UpdatePanel(int stage) {
             x = 0x39 - alpha;
             DrawSprite(0xda, x, 0x12, 0x8c, 1);
             DrawText(x, 0x12, data_0201a61c, GetText(0x10), 0, 0xf0, 0x10, 1);
-            gMapState.mCamera.mUnk_2dc.mUnk_4c = 1;
+            gMapState.mCamera.mUnk_2dc.mPolygonId = 1;
             DrawSprite(0x800017, 0, 0, 0x64, 1);
             for (i = 0, y = 0x54; i < 3; i++, y += 0x16) {
                 id = data_020b6ee0.mUnk_1000[i];
@@ -1497,7 +1497,7 @@ void SetupBattleModelViewer(void) {
     SetupMap(0xf87, 0, 0xf88, 0, 0, 0);
     gMapState.mCamera.mUnk_04 = func_0201418c;
     gMapState.mCamera.mUnk_2dc.mUnk_54 = 0x640;
-    gMapState.mCamera.mUnk_2dc.mUnk_44 = 0x128e000;
+    gMapState.mCamera.mUnk_2dc.mViewDistance = 0x128e000;
     memset(&data_020b6ee0.mModelPos, 0, 0x44);
     func_02031fc4(0, &data_020b6ee0.mModelPos);
     data_020b6ee0.mUnk_fdf &= ~7;
@@ -1511,7 +1511,7 @@ void UpdateBattleModelViewer(void) {
     u16 keys;
 
     SetCameraFromModel();
-    func_02033614(gMapState.mCamera.mPosGoal.x, gMapState.mCamera.mPosGoal.z);
+    DrawMap(gMapState.mCamera.mPosGoal.x, gMapState.mCamera.mPosGoal.z);
     DrawBattleModels();
     DrawFormattedTextOnLayer1(10, 10, "t:%i a:%i", data_020b13b0.mSignalBit, data_020b13b0.mStageId);
     keys = gSystemState.mKeysPressed;

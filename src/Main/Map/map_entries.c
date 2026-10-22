@@ -32,7 +32,7 @@
 
 #define MAP_VIEWPORT_FULL 0xbfff0000
 
-// func_020312b8: the count bits and the top-height flag of a ring's format byte; the most rings and points it unpacks.
+// ReadMapRings: the count bits and the top-height flag of a ring's format byte; the most rings and points it unpacks.
 #define MAP_RING_POINTS 0x1f
 #define MAP_RING_TOP 0x20
 #define MAP_RING_MAX 0x80
@@ -53,8 +53,8 @@ static inline void PutScale(fx32 x, fx32 y, fx32 z) {
 // Chunk 0x5513: the number of entries and the entries, sorted by group.
 typedef struct MapEntryChunk {
     u8 mUnk_00[8];
-    u16 mUnk_08;
-    MapEntry mUnk_0a[1];
+    u16 mCount;
+    MapEntry mEntries[1];
 } MapEntryChunk;
 
 typedef struct MapPoint {
@@ -62,38 +62,38 @@ typedef struct MapPoint {
     int z;
 } MapPoint;
 
-// One polygon of chunk 0x5516: the index of its first vertex in the vertex list (chunk 0x5517), its group and key.
+// One polygon of chunk 0x5516: where its run starts in the vertex index list of chunk 0x5517 (whose values are
+// MapEntry indices), its group and key.
 typedef struct MapPoly {
-    u16 mUnk_00;
-    u8 mUnk_02;
-    u8 mUnk_03;
+    u16 mFirstVertIndex;
+    u8 mGroup;
+    u8 mKey;
 } MapPoly;
 
 // A leaf of the quadtree of chunk 0x5540 (an inner node holds the offsets of its four children instead, and its
-// first halfword is never 0): mUnk_02 set means the cell has no rings, mUnk_03 is the number of rings, mUnk_04 the
-// shift applied to the point coordinates and mUnk_06 the base height. The rings follow the leaf.
+// first halfword is never 0): mUnk_02 set means the cell has no rings. The rings follow the leaf.
 typedef struct MapRingLeaf {
     u16 mUnk_00;
     u8 mUnk_02;
-    u8 mUnk_03;
-    u8 mUnk_04;
+    u8 mRingCount;
+    u8 mPointShift;
     u8 mUnk_05;
-    s16 mUnk_06;
+    s16 mBaseY;
 } MapRingLeaf;
 
-// One area of chunk 0x5530: its size in cells, the position of its first cell and w * h halfwords, one per cell
-// (the low ten bits name an object, the top four bits tell which neighbours are connected).
+// One area of chunk 0x5530: mCells holds w * h halfwords, one per cell (the low ten bits name an object, the top four
+// bits tell which neighbours are connected).
 typedef struct MapArea {
-    u8 mUnk_00;
-    u8 mUnk_01;
-    u16 mUnk_02;
-    u16 mUnk_04;
-    u16 mUnk_06[1];
+    u8 mCellCountX;
+    u8 mCellCountZ;
+    u16 mCellX;
+    u16 mCellZ;
+    u16 mCells[1];
 } MapArea;
 
-static int func_02031cc8(int x, int z);
+static int IsInViewDistance(int x, int z);
 static void func_02031fec(u16 group, u16 key, VecFx32 *out);
-static MapEntry *func_02032074(u8 group, u8 key, u8 *count);
+static MapEntry *FindMapEntry(u8 group, u8 key, u8 *count);
 static MapEntry *GetMapEntries(void);
 
 #pragma thumb off
@@ -101,10 +101,10 @@ static MapEntry *GetMapEntries(void);
 // Finds the quadtree leaf of chunk 0x5540 under pos and unpacks its rings: for each ring its address goes to rings,
 // its key to keys and its point count to counts (followed by a 0), and its points to out, scaled down by shift. A
 // ring is a halfword key, a byte holding the point count (MAP_RING_POINTS) and the point format, a byte, the offset
-// of the next ring of the same group (see func_02031c70) and the points: x and z offsets from the leaf's corner
+// of the next ring of the same group (see GetFirstLinkedRing) and the points: x and z offsets from the leaf's corner
 // (bytes, or halfwords at the next even address with bit 7 set), with bit 6 a bottom height above the leaf's base
 // height and with MAP_RING_TOP a top height above the bottom.
-static void func_020312b8(VecFx32 *pos, MapRingPoint *out, u8 *counts, u16 *keys, u16 **rings, int shift) {
+static void ReadMapRings(VecFx32 *pos, MapRingPoint *out, u8 *counts, u16 *keys, u16 **rings, int shift) {
     int total;
     int n;
     int npts;
@@ -149,7 +149,7 @@ static void func_020312b8(VecFx32 *pos, MapRingPoint *out, u8 *counts, u16 *keys
         return;
     }
     p = (u8 *) (leaf + 1);
-    i = leaf->mUnk_03;
+    i = leaf->mRingCount;
     while (i-- != 0) {
         npts = p[2] & MAP_RING_POINTS;
         if (++n >= MAP_RING_MAX) {
@@ -167,10 +167,10 @@ static void func_020312b8(VecFx32 *pos, MapRingPoint *out, u8 *counts, u16 *keys
             case 0:
                 p += 6;
                 while (npts-- != 0) {
-                    out->x = (x0 + (((s8 *) p)[0] << leaf->mUnk_04)) >> shift;
-                    out->z = (z0 + (((s8 *) p)[1] << leaf->mUnk_04)) >> shift;
-                    out->mUnk_08 = leaf->mUnk_06 >> shift;
-                    out->mUnk_0a = 0;
+                    out->x = (x0 + (((s8 *) p)[0] << leaf->mPointShift)) >> shift;
+                    out->z = (z0 + (((s8 *) p)[1] << leaf->mPointShift)) >> shift;
+                    out->mBottomY = leaf->mBaseY >> shift;
+                    out->mTopY = 0;
                     p += 2;
                     out++;
                 }
@@ -178,10 +178,10 @@ static void func_020312b8(VecFx32 *pos, MapRingPoint *out, u8 *counts, u16 *keys
             case 1:
                 p += 6;
                 while (npts-- != 0) {
-                    out->x = (x0 + (((s8 *) p)[0] << leaf->mUnk_04)) >> shift;
-                    out->z = (z0 + (((s8 *) p)[1] << leaf->mUnk_04)) >> shift;
-                    out->mUnk_08 = ((leaf->mUnk_06 + p[2]) << leaf->mUnk_04) >> shift;
-                    out->mUnk_0a = 0;
+                    out->x = (x0 + (((s8 *) p)[0] << leaf->mPointShift)) >> shift;
+                    out->z = (z0 + (((s8 *) p)[1] << leaf->mPointShift)) >> shift;
+                    out->mBottomY = ((leaf->mBaseY + p[2]) << leaf->mPointShift) >> shift;
+                    out->mTopY = 0;
                     p += 3;
                     out++;
                 }
@@ -189,10 +189,10 @@ static void func_020312b8(VecFx32 *pos, MapRingPoint *out, u8 *counts, u16 *keys
             case 2:
                 p = AlignPtrUp2(p + 6);
                 while (npts-- != 0) {
-                    out->x = (x0 + (((s16 *) p)[0] << leaf->mUnk_04)) >> shift;
-                    out->z = (z0 + (((s16 *) p)[1] << leaf->mUnk_04)) >> shift;
-                    out->mUnk_08 = leaf->mUnk_06 >> shift;
-                    out->mUnk_0a = 0;
+                    out->x = (x0 + (((s16 *) p)[0] << leaf->mPointShift)) >> shift;
+                    out->z = (z0 + (((s16 *) p)[1] << leaf->mPointShift)) >> shift;
+                    out->mBottomY = leaf->mBaseY >> shift;
+                    out->mTopY = 0;
                     p += 4;
                     out++;
                 }
@@ -200,10 +200,10 @@ static void func_020312b8(VecFx32 *pos, MapRingPoint *out, u8 *counts, u16 *keys
             case 3:
                 p = AlignPtrUp2(p + 6);
                 while (npts-- != 0) {
-                    out->x = (x0 + (((s16 *) p)[0] << leaf->mUnk_04)) >> shift;
-                    out->z = (z0 + (((s16 *) p)[1] << leaf->mUnk_04)) >> shift;
-                    out->mUnk_08 = ((leaf->mUnk_06 + ((u16 *) p)[2]) << leaf->mUnk_04) >> shift;
-                    out->mUnk_0a = 0;
+                    out->x = (x0 + (((s16 *) p)[0] << leaf->mPointShift)) >> shift;
+                    out->z = (z0 + (((s16 *) p)[1] << leaf->mPointShift)) >> shift;
+                    out->mBottomY = ((leaf->mBaseY + ((u16 *) p)[2]) << leaf->mPointShift) >> shift;
+                    out->mTopY = 0;
                     p += 6;
                     out++;
                 }
@@ -211,10 +211,10 @@ static void func_020312b8(VecFx32 *pos, MapRingPoint *out, u8 *counts, u16 *keys
             case 4:
                 p += 6;
                 while (npts-- != 0) {
-                    out->x = (x0 + (((s8 *) p)[0] << leaf->mUnk_04)) >> shift;
-                    out->z = (z0 + (((s8 *) p)[1] << leaf->mUnk_04)) >> shift;
-                    out->mUnk_08 = leaf->mUnk_06 >> shift;
-                    out->mUnk_0a = out->mUnk_08 + ((((s8 *) p)[2] << leaf->mUnk_04) >> shift);
+                    out->x = (x0 + (((s8 *) p)[0] << leaf->mPointShift)) >> shift;
+                    out->z = (z0 + (((s8 *) p)[1] << leaf->mPointShift)) >> shift;
+                    out->mBottomY = leaf->mBaseY >> shift;
+                    out->mTopY = out->mBottomY + ((((s8 *) p)[2] << leaf->mPointShift) >> shift);
                     p += 3;
                     out++;
                 }
@@ -222,10 +222,10 @@ static void func_020312b8(VecFx32 *pos, MapRingPoint *out, u8 *counts, u16 *keys
             case 5:
                 p += 6;
                 while (npts-- != 0) {
-                    out->x = (x0 + (((s8 *) p)[0] << leaf->mUnk_04)) >> shift;
-                    out->z = (z0 + (((s8 *) p)[1] << leaf->mUnk_04)) >> shift;
-                    out->mUnk_08 = ((leaf->mUnk_06 + p[2]) << leaf->mUnk_04) >> shift;
-                    out->mUnk_0a = out->mUnk_08 + ((p[3] << leaf->mUnk_04) >> shift);
+                    out->x = (x0 + (((s8 *) p)[0] << leaf->mPointShift)) >> shift;
+                    out->z = (z0 + (((s8 *) p)[1] << leaf->mPointShift)) >> shift;
+                    out->mBottomY = ((leaf->mBaseY + p[2]) << leaf->mPointShift) >> shift;
+                    out->mTopY = out->mBottomY + ((p[3] << leaf->mPointShift) >> shift);
                     p += 4;
                     out++;
                 }
@@ -233,10 +233,10 @@ static void func_020312b8(VecFx32 *pos, MapRingPoint *out, u8 *counts, u16 *keys
             case 6:
                 p = AlignPtrUp2(p + 6);
                 while (npts-- != 0) {
-                    out->x = (x0 + (((s16 *) p)[0] << leaf->mUnk_04)) >> shift;
-                    out->z = (z0 + (((s16 *) p)[1] << leaf->mUnk_04)) >> shift;
-                    out->mUnk_08 = leaf->mUnk_06 >> shift;
-                    out->mUnk_0a = out->mUnk_08 + ((((s16 *) p)[2] << leaf->mUnk_04) >> shift);
+                    out->x = (x0 + (((s16 *) p)[0] << leaf->mPointShift)) >> shift;
+                    out->z = (z0 + (((s16 *) p)[1] << leaf->mPointShift)) >> shift;
+                    out->mBottomY = leaf->mBaseY >> shift;
+                    out->mTopY = out->mBottomY + ((((s16 *) p)[2] << leaf->mPointShift) >> shift);
                     p += 6;
                     out++;
                 }
@@ -244,10 +244,10 @@ static void func_020312b8(VecFx32 *pos, MapRingPoint *out, u8 *counts, u16 *keys
             case 7:
                 p = AlignPtrUp2(p + 6);
                 while (npts-- != 0) {
-                    out->x = (x0 + (((s16 *) p)[0] << leaf->mUnk_04)) >> shift;
-                    out->z = (z0 + (((s16 *) p)[1] << leaf->mUnk_04)) >> shift;
-                    out->mUnk_08 = ((leaf->mUnk_06 + ((u16 *) p)[2]) << leaf->mUnk_04) >> shift;
-                    out->mUnk_0a = out->mUnk_08 + ((((u16 *) p)[3] << leaf->mUnk_04) >> shift);
+                    out->x = (x0 + (((s16 *) p)[0] << leaf->mPointShift)) >> shift;
+                    out->z = (z0 + (((s16 *) p)[1] << leaf->mPointShift)) >> shift;
+                    out->mBottomY = ((leaf->mBaseY + ((u16 *) p)[2]) << leaf->mPointShift) >> shift;
+                    out->mTopY = out->mBottomY + ((((u16 *) p)[3] << leaf->mPointShift) >> shift);
                     p += 8;
                     out++;
                 }
@@ -259,11 +259,11 @@ static void func_020312b8(VecFx32 *pos, MapRingPoint *out, u8 *counts, u16 *keys
 // Collects the ring segments of the quadtree leaf under pos whose key has a bit of any and none of none, and keeps
 // those whose nearest point to pos lies within half of radius (squared distances, in units of 512) and, when the
 // segment has a top height, whose height range overlaps pos.y + bottom .. pos.y + top. The camera records the
-// nearest one: its ring (mUnk_10), its two ends (mUnk_14, mUnk_20), the nearest point (mUnk_2c), the squared
-// distance (mUnk_38) and the ring's key (mUnk_3a). Returns 0 when nothing was found, else the MAP_RING_* result.
+// nearest one: its ring, its two ends, the nearest point, the squared distance and the ring's key. Returns 0 when
+// nothing was found, else the MAP_RING_* result.
 // atEnd and the block-local end are u8 and atEnd is set after best because the compiler's output needs it: as int,
 // end adds a mask when it is or-ed into atEnd, and an int atEnd or an earlier init reorders the stack stores.
-u32 func_02031824(VecFx32 *pos, int radius, int top, int bottom, u16 any, u16 none) {
+u32 FindNearestRingSegment(VecFx32 *pos, int radius, int top, int bottom, u16 any, u16 none) {
     MapRingPoint pts[MAP_RING_MAX_POINTS];
     u8 counts[MAP_RING_MAX];
     u16 keys[MAP_RING_MAX];
@@ -289,7 +289,7 @@ u32 func_02031824(VecFx32 *pos, int radius, int top, int bottom, u16 any, u16 no
     best = -1;
     atEnd = 0;
     counts[0] = 0;
-    func_020312b8(pos, pts, counts, keys, rings, 9);
+    ReadMapRings(pos, pts, counts, keys, rings, 9);
     i = 0;
     px = pos->x;
     pz = pos->z;
@@ -320,25 +320,25 @@ u32 func_02031824(VecFx32 *pos, int radius, int top, int bottom, u16 any, u16 no
                 next = &pts[j + 1];
                 dx = next->x - cur->x;
                 ax = (px >> 9) - cur->x;
-                dh = next->mUnk_08 - cur->mUnk_08;
+                dh = next->mBottomY - cur->mBottomY;
                 az = (pz >> 9) - cur->z;
                 dz = next->z - cur->z;
-                dh2 = next->mUnk_0a - cur->mUnk_0a;
+                dh2 = next->mTopY - cur->mTopY;
                 t = ax * dx + az * dz;
 
                 if (t <= 0) {
                     nearest.x = cur->x;
                     nearest.z = cur->z;
-                    nearest.mUnk_08 = cur->mUnk_08;
-                    nearest.mUnk_0a = cur->mUnk_0a;
+                    nearest.mBottomY = cur->mBottomY;
+                    nearest.mTopY = cur->mTopY;
                     end = 1;
                 } else {
                     len2 = dx * dx + dz * dz;
                     if (len2 <= t) {
                         nearest.x = next->x;
-                        nearest.mUnk_08 = next->mUnk_08;
+                        nearest.mBottomY = next->mBottomY;
                         nearest.z = next->z;
-                        nearest.mUnk_0a = next->mUnk_0a;
+                        nearest.mTopY = next->mTopY;
                         end = 1;
                     } else {
                         sh = LeadingZeroCount(t) - 1;
@@ -349,25 +349,25 @@ u32 func_02031824(VecFx32 *pos, int radius, int top, int bottom, u16 any, u16 no
                             frac = (t << sh) / len2;
                         }
                         nearest.x = cur->x + ((frac * dx) >> sh);
-                        nearest.mUnk_08 = cur->mUnk_08 + ((frac * dh) >> sh);
+                        nearest.mBottomY = cur->mBottomY + ((frac * dh) >> sh);
                         nearest.z = cur->z + ((frac * dz) >> sh);
-                        nearest.mUnk_0a = cur->mUnk_0a + ((frac * dh2) >> sh);
+                        nearest.mTopY = cur->mTopY + ((frac * dh2) >> sh);
                     }
                 }
                 dist = LengthSquared2d(nearest.x - (px >> 9), nearest.z - (pz >> 9));
                 if (dist < limit) {
-                    if (nearest.mUnk_0a == 0 || (bottom + y < nearest.mUnk_0a && top + y > nearest.mUnk_08)) {
+                    if (nearest.mTopY == 0 || (bottom + y < nearest.mTopY && top + y > nearest.mBottomY)) {
                         atEnd |= end;
                         hits++;
                         if (dist < best) {
                             best = dist;
-                            gMapState.mCamera.mUnk_10 = rings[i];
+                            gMapState.mCamera.mNearestRing = rings[i];
                             result = (i << 8) + k + MAP_RING_HIT;
-                            gMapState.mCamera.mUnk_38 = dist;
-                            gMapState.mCamera.mUnk_3a = keys[i];
-                            gMapState.mCamera.mUnk_14 = *cur;
-                            gMapState.mCamera.mUnk_20 = *next;
-                            gMapState.mCamera.mUnk_2c = nearest;
+                            gMapState.mCamera.mNearestDistSq = dist;
+                            gMapState.mCamera.mNearestRingKey = keys[i];
+                            gMapState.mCamera.mNearestSegmentStart = *cur;
+                            gMapState.mCamera.mNearestSegmentEnd = *next;
+                            gMapState.mCamera.mNearestPoint = nearest;
                         } else if (dist == best) {
                             tie = 1;
                         }
@@ -393,7 +393,7 @@ u32 func_02031824(VecFx32 *pos, int radius, int top, int bottom, u16 any, u16 no
 
 // Returns the lowest address among the nodes of the ring of chunk 0x5540 that p belongs to (each node's halfword at
 // 4 is the offset of the next node).
-void *func_02031c70(void *p) {
+void *GetFirstLinkedRing(void *p) {
     u16 *cur = p;
     u16 *base = GetMapChunk(MAP_CHUNK_RINGS);
     u16 *start = cur;
@@ -410,7 +410,7 @@ void *func_02031c70(void *p) {
 
 // Walks the same ring from entry, replacing each node's first halfword with (value & mask) | bits; returns the
 // number of nodes.
-int func_02031c98(u16 *entry, u16 mask, u16 bits) {
+int SetLinkedRingKeys(u16 *entry, u16 mask, u16 bits) {
     u16 *base = GetMapChunk(MAP_CHUNK_RINGS);
     u16 *start = entry;
     int count = 0;
@@ -424,10 +424,10 @@ int func_02031c98(u16 *entry, u16 mask, u16 bits) {
 }
 
 // 1 when (x, z) is within the view radius of the camera position.
-static int func_02031cc8(int x, int z) {
+static int IsInViewDistance(int x, int z) {
     int dx = (gMapState.mCamera.mPos.x - x) / 0x1000;
     int dz = (gMapState.mCamera.mPos.z - z) / 0x1000;
-    u32 r = (u32) gMapState.mCamera.mUnk_2dc.mUnk_44 >> 12;
+    u32 r = (u32) gMapState.mCamera.mUnk_2dc.mViewDistance >> 12;
 
     if ((u32) (dx * dx + dz * dz) <= r * r) {
         return 1;
@@ -436,18 +436,18 @@ static int func_02031cc8(int x, int z) {
 }
 
 // Box test of a box around pos, scaled by a, b and c, against the view volume; 1 when any part is visible.
-int func_02031d0c(VecFx32 *pos, int a, int b, int c) {
+int IsBoxInView(VecFx32 *pos, int a, int b, int c) {
     u32 result;
     s16 box[6];
 
-    if (func_02031cc8(pos->x, pos->z) == 0) {
+    if (IsInViewDistance(pos->x, pos->z) == 0) {
         return 0;
     }
-    if (gMapState.mCamera.mUnk_2dc.mUnk_4a != 0) {
+    if (gMapState.mCamera.mUnk_2dc.mViewKind != VIEW_KIND_CAMERA) {
         func_020334f8(0);
     }
     reg_G3X_MTX_MODE = 2;
-    G3_LoadMtx43(&gMapState.mUnk_3c);
+    G3_LoadMtx43(&gMapState.mViewMtx);
     box[0] = -256;
     box[1] = 0;
     box[2] = -256;
@@ -482,7 +482,7 @@ int func_02031dc4(s32 x, s32 z) {
     int n;
     int count;
 
-    if (func_02031cc8(x, z) == 0) {
+    if (IsInViewDistance(x, z) == 0) {
         return 0;
     }
     cells = GetMapCellChunk();
@@ -540,7 +540,7 @@ u16 *GetMapChunk(u32 id) {
     }
     if (gMapState.mCamera.mUnk_4c != gMapState.mCamera.mMapData) {
         gMapState.mCamera.mUnk_4c = gMapState.mCamera.mMapData;
-        func_02032b88(0);
+        ClearMapRecords(0);
     }
     if (p[0] != MAP_FILE_MAGIC) {
         OS_Terminate();
@@ -562,15 +562,15 @@ u16 *GetMapChunk(u32 id) {
 #pragma thumb on
 
 s32 GetMapEntryX(MapEntry *entry) {
-    return entry->mUnk_04[0] + (entry->mUnk_04[1] << 16);
+    return entry->mX[0] + (entry->mX[1] << 16);
 }
 
 s32 GetMapEntryY(MapEntry *entry) {
-    return entry->mUnk_08[0] + (entry->mUnk_08[1] << 16);
+    return entry->mY[0] + (entry->mY[1] << 16);
 }
 
 s32 GetMapEntryZ(MapEntry *entry) {
-    return entry->mUnk_0c[0] + (entry->mUnk_0c[1] << 16);
+    return entry->mZ[0] + (entry->mZ[1] << 16);
 }
 
 u16 GetMapEntryAngle(MapEntry *entry) {
@@ -586,7 +586,7 @@ void func_02031fc4(u32 id, VecFx32 *out) {
 }
 
 static void func_02031fec(u16 group, u16 key, VecFx32 *out) {
-    MapEntry *entry = func_02032074(group, key, 0);
+    MapEntry *entry = FindMapEntry(group, key, 0);
 
     out->x = GetMapEntryX(entry);
     out->y = GetMapEntryY(entry);
@@ -611,10 +611,10 @@ MapEntry *GetMapEntry(u32 a, u8 *count) {
     if (a & 0xffff0000) {
         OS_Terminate();
     }
-    return func_02032074((u8) (a >> 8), (u8) a, count);
+    return FindMapEntry((u8) (a >> 8), (u8) a, count);
 }
 
-static MapEntry *func_02032074(u8 group, u8 key, u8 *count) {
+static MapEntry *FindMapEntry(u8 group, u8 key, u8 *count) {
     MapEntryChunk *chunk = (MapEntryChunk *) GetMapChunk(MAP_CHUNK_ENTRIES);
     MapEntry *entry;
     int i;
@@ -623,16 +623,16 @@ static MapEntry *func_02032074(u8 group, u8 key, u8 *count) {
     if (chunk == 0) {
         OS_Terminate();
     }
-    entry = chunk->mUnk_0a;
+    entry = chunk->mEntries;
     if (count != 0) {
-        *count = chunk->mUnk_08;
+        *count = chunk->mCount;
     }
-    n = chunk->mUnk_08;
+    n = chunk->mCount;
     for (i = 0; i < n; i++) {
-        if (entry->mUnk_03 > group) {
+        if (entry->mGroup > group) {
             break;
         }
-        if (entry->mUnk_03 == group && entry->mUnk_00 == key) {
+        if (entry->mGroup == group && entry->mKey == key) {
             return entry;
         }
         entry++;
@@ -640,8 +640,9 @@ static MapEntry *func_02032074(u8 group, u8 key, u8 *count) {
     return 0;
 }
 
-// 1 when pos lies on the inner side of every edge of one of the polygons that func_02032244 selects for (a, b).
-int func_020320c0(int a, int b, VecFx32 *pos) {
+// 1 when pos lies on the inner side of every edge of one of the polygons that FindMapPolys selects for (a, b). Only
+// consecutive vertices form edges: the last vertex is not joined back to the first.
+int IsPosInMapPoly(int a, int b, VecFx32 *pos) {
     MapEntry *entries;
     u16 *verts;
     u32 j;
@@ -655,11 +656,11 @@ int func_020320c0(int a, int b, VecFx32 *pos) {
     int pz;
 
     entries = GetMapEntries();
-    count = func_02032244(a, b, keys, 0x30);
+    count = FindMapPolys(a, b, keys, 0x30);
     px = pos->x >> 12;
     pz = pos->z >> 12;
     for (i = 0; i < count; i++) {
-        verts = func_020321ac(keys[i] >> 8, keys[i] & 0xff, &nverts);
+        verts = FindMapPolyVerts(keys[i] >> 8, keys[i] & 0xff, &nverts);
         if (nverts < 3) {
             continue;
         }
@@ -684,30 +685,32 @@ int func_020320c0(int a, int b, VecFx32 *pos) {
 static MapEntry *GetMapEntries(void) {
     MapEntryChunk *chunk = (MapEntryChunk *) GetMapChunk(MAP_CHUNK_ENTRIES);
 
-    return chunk->mUnk_0a;
+    return chunk->mEntries;
 }
 
 // The vertex index list of the polygon of chunk 0x5516 with group a and key b (-1 matches any); *count receives its
-// vertex count and the matched group and key are kept in the camera.
-u16 *func_020321ac(int a, int b, u32 *count) {
+// vertex count, or 0 when the walk passes group a. When no polygon matches (or the chunk is missing) it returns NULL
+// and leaves *count unwritten. A match also stores its group and key in mCamera.mUnk_3c and mUnk_3d, which nothing
+// reads.
+u16 *FindMapPolyVerts(int a, int b, u32 *count) {
     MapPoly *p = (MapPoly *) GetMapChunk(MAP_CHUNK_POLYS);
     u16 n;
 
     if (p != NULL) {
         for (n = (((u16 *) p)[-1] * 16 - 4) >> 2; n != 0; n--, p++) {
-            if (a != -1 && p->mUnk_02 > a) {
+            if (a != -1 && p->mGroup > a) {
                 if (count != NULL) {
                     *count = 0;
                 }
                 return NULL;
             }
-            if ((a == -1 || p->mUnk_02 == a) && (b == -1 || p->mUnk_03 == b)) {
-                gMapState.mCamera.mUnk_3c = p->mUnk_02;
-                gMapState.mCamera.mUnk_3d = p->mUnk_03;
+            if ((a == -1 || p->mGroup == a) && (b == -1 || p->mKey == b)) {
+                gMapState.mCamera.mUnk_3c = p->mGroup;
+                gMapState.mCamera.mUnk_3d = p->mKey;
                 if (count != NULL) {
-                    *count = p[1].mUnk_00 - p->mUnk_00;
+                    *count = p[1].mFirstVertIndex - p->mFirstVertIndex;
                 }
-                return GetMapChunk(MAP_CHUNK_POLY_VERTS) + p->mUnk_00;
+                return GetMapChunk(MAP_CHUNK_POLY_VERTS) + p->mFirstVertIndex;
             }
         }
     }
@@ -715,15 +718,15 @@ u16 *func_020321ac(int a, int b, u32 *count) {
 }
 
 // Stores the group and key of up to max polygons matching (a, b) (-1 matches any) in out; returns how many.
-u32 func_02032244(int a, int b, u16 *out, u32 max) {
+u32 FindMapPolys(int a, int b, u16 *out, u32 max) {
     MapPoly *p = (MapPoly *) GetMapChunk(MAP_CHUNK_POLYS);
     u32 n;
     u32 found = 0;
 
     if (p != NULL) {
-        for (n = (u32) (((u16 *) p)[-1] * 16 - 4) >> 2; n != 0 && (a == -1 || p->mUnk_02 <= a); p++, n--) {
-            if ((a == -1 || p->mUnk_02 == a) && (b == -1 || p->mUnk_03 == b)) {
-                *out = (p->mUnk_02 << 8) | p->mUnk_03;
+        for (n = (u32) (((u16 *) p)[-1] * 16 - 4) >> 2; n != 0 && (a == -1 || p->mGroup <= a); p++, n--) {
+            if ((a == -1 || p->mGroup == a) && (b == -1 || p->mKey == b)) {
+                *out = (p->mGroup << 8) | p->mKey;
                 found++;
                 out++;
                 if (found >= max) {
@@ -750,8 +753,9 @@ void AllocMapPairs(u16 count) {
     }
 }
 
-// The distance in cells from the camera's map position to the rectangle (x, z) of w by h cells, 0 when it lies inside.
-u32 func_020322f4(int x, int z, int w, int h) {
+// The squared distance from the camera's map position to the rectangle at (x, z) of w by h cells, in units of 512
+// (only w and h are in cells); 0 when the position lies inside.
+u32 GetCameraRectDistSq(int x, int z, int w, int h) {
     u32 k = gMapState.mCamera.mCellSize;
     int cw = k * w;
     int ch = k * h;
@@ -801,7 +805,7 @@ u32 func_02032368(u32 flags, int x, int z, int w, int h) {
         int k;
         MapState *st = &gMapState;
 
-        if (gMapState.mUnk_00 != gMapState.mCamera.mUnk_2dc.mUnk_44) {
+        if (gMapState.mUnk_00 != gMapState.mCamera.mUnk_2dc.mViewDistance) {
             base = (gMapState.mUnk_10 * 5 * 256) / 256 - 256;
             k = 0;
             t = 0;
@@ -810,13 +814,13 @@ u32 func_02032368(u32 flags, int x, int z, int w, int h) {
                 int r;
                 t += 256;
                 v = InterpolateQuadratic(0, 0x400, base, t);
-                r = ((u32) gMapState.mCamera.mUnk_2dc.mUnk_44 >> 6) * 41 >> 15;
+                r = ((u32) gMapState.mCamera.mUnk_2dc.mViewDistance >> 6) * 41 >> 15;
                 v = v * r / 1024;
                 st->mUnk_04[k++] = v * v;
             }
-            gMapState.mUnk_00 = gMapState.mCamera.mUnk_2dc.mUnk_44;
+            gMapState.mUnk_00 = gMapState.mCamera.mUnk_2dc.mViewDistance;
         }
-        d = func_020322f4(x, z, w, h);
+        d = GetCameraRectDistSq(x, z, w, h);
         if (d == 0) {
             return flags & MAP_LOD_KEEP;
         }
@@ -920,8 +924,8 @@ void func_020325d0(u16 a, u16 b, u16 c, u16 count) {
     gMapState.mCamera.mMapData = NULL;
     gMapState.mCamera.mUnk_4c = NULL;
     gMapState.mCamera.mMapFile = a;
-    gMapState.mCamera.mUnk_52 = b;
-    gMapState.mCamera.mUnk_58 = c;
+    gMapState.mCamera.mCameraModelFile = b;
+    gMapState.mCamera.mMarkerFileBase = c;
     *(vu32 *) 0x04000060 &= ~0x20;
     reg_GX_DISP3DCNT &= ~0x3002;
     *(vu16 *) 0x04000050 = 0;
@@ -957,7 +961,7 @@ void func_020325d0(u16 a, u16 b, u16 c, u16 count) {
         gMapState.mCamera.mUnk_9c.mUnk_204.y = 0x32000 >> 2;
         gMapState.mCamera.mUnk_9c.mUnk_204.z = 0x32000;
     }
-    gMapState.mCamera.mUnk_2dc.mUnk_32 = 1;
+    gMapState.mCamera.mUnk_2dc.mPosMode = 1;
     gMapState.mCamera.mUnk_9c.mUnk_21c = gMapState.mCamera.mUnk_9c.mUnk_204;
     entry = GetMapEntry(1, NULL);
     if (entry != NULL) {
@@ -969,9 +973,9 @@ void func_020325d0(u16 a, u16 b, u16 c, u16 count) {
         gMapState.mCamera.mUnk_9c.mUnk_228.y = 0x19000;
         gMapState.mCamera.mUnk_9c.mUnk_228.z = 0x4b000;
     }
-    gMapState.mCamera.mUnk_2dc.mUnk_33 = 8;
+    gMapState.mCamera.mUnk_2dc.mLookAtMode = 8;
     *(VecFx32 *) &gMapState.mCamera.mUnk_2dc = gMapState.mCamera.mUnk_9c.mUnk_228;
-    gMapState.mUnk_38 = 0;
+    gMapState.mMarkerFilter = 0;
     gMapState.mCamera.mUnk_2dc.mUnk_54 = 0x190;
     gMapState.mCamera.mUnk_2dc.mUnk_30 = 0x3c00;
     gMapState.mCamera.mUnk_2dc.mUnk_0f = 1;
@@ -993,7 +997,7 @@ void func_020325d0(u16 a, u16 b, u16 c, u16 count) {
     gMapState.mCamera.mLookAt.z = gMapState.mCamera.mUnk_9c.mUnk_228.z;
     gMapState.mCamera.mUnk_2dc.mUnk_40 = 0;
     gMapState.mCamera.mUnk_2dc.mUnk_42[0] = 0;
-    gMapState.mCamera.mUnk_2dc.mUnk_44 = 0x1f4000;
+    gMapState.mCamera.mUnk_2dc.mViewDistance = 0x1f4000;
     gMapState.mCamera.mUnk_2dc.mUnk_64 = 0;
     gMapState.mUnk_00 = -1;
     gMapState.mUnk_10 = 0x80;
@@ -1008,7 +1012,7 @@ void func_020325d0(u16 a, u16 b, u16 c, u16 count) {
 // Frees the map buffers and clears the records.
 void ReleaseMap(void) {
     gMapState.mPairCount = 0;
-    func_02032b88(1);
+    ClearMapRecords(1);
     Free(&gMapState.mPairs);
     Free(&gMapState.mUnk_24);
     Free(&gMapState.mUnk_28);
@@ -1027,14 +1031,16 @@ u16 *GetMapCellChunk(void) {
 }
 
 // Runs the actions of the object's definition: each halfword (kind in the top bit, a 6-bit action and a 6-bit
-// animation) may call the camera's callback and picks the animation to show; starts it when it changed.
+// animation) may call the camera's callback and picks the animation to show; starts it when it changed. DrawMap
+// zeroes the camera's action mask mUnk_44 before it runs the lists, so in this build only halfwords with action 0x3f
+// pick an animation.
 void func_020328b0(MapRecord *rec) {
     u16 anim = 0x3f;
     int kind = 0;
     int i = 0;
 
-    for (; i < rec->mUnk_00->mUnk_03; i++) {
-        int v = rec->mUnk_00->mUnk_04[i];
+    for (; i < rec->mDef->mUnk_03; i++) {
+        int v = rec->mDef->mUnk_04[i];
         int a = v & 0x3f;
         u16 b = (v >> 6) & 0x3f;
 
@@ -1046,7 +1052,7 @@ void func_020328b0(MapRecord *rec) {
         }
         if (a == 0x3f || (gMapState.mCamera.mUnk_44 & (1 << a))) {
             anim = b;
-            kind = (rec->mUnk_00->mUnk_04[i] >> 12) & 7;
+            kind = (rec->mDef->mUnk_04[i] >> 12) & 7;
         }
     }
     if (anim != 0x3f) {
@@ -1056,7 +1062,7 @@ void func_020328b0(MapRecord *rec) {
     }
     if (rec->mUnk_150 != anim) {
         if (rec->mUnk_176_10 == 1 || rec->mUnk_150 == 0) {
-            StartModel(rec->mUnk_04, rec->mUnk_174, anim, 2, 0);
+            StartModel(rec->mModel, rec->mUnk_174, anim, 2, 0);
         }
     }
     if (rec->mUnk_176_10 == 1) {
@@ -1088,7 +1094,7 @@ void func_020329d0(u8 *objs) {
 
         for (i = 0; i < MAP_RECORDS; i++) {
             rec = &gMapState.mRecords[i];
-            if (rec->mUnk_00 == def) {
+            if (rec->mDef == def) {
                 break;
             }
         }
@@ -1099,7 +1105,7 @@ void func_020329d0(u8 *objs) {
 
             r = gMapState.mRecords;
             for (i = 0; i < MAP_RECORDS; i++, r++) {
-                if (r->mUnk_00 == NULL) {
+                if (r->mDef == NULL) {
                     fresh = r;
                     break;
                 }
@@ -1107,18 +1113,18 @@ void func_020329d0(u8 *objs) {
             if (i == MAP_RECORDS) {
                 return;
             }
-            fresh->mUnk_00 = def;
-            fresh->mUnk_174 = def->mUnk_02 + gMapState.mCamera.mUnk_00;
+            fresh->mDef = def;
+            fresh->mUnk_174 = def->mModelFile + gMapState.mCamera.mUnk_00;
             fresh->mUnk_176_10 = 0;
             fresh->mUnk_176_4 = 0;
             fresh->mUnk_176_9 = 0;
             fresh->mUnk_176_12 = 0;
             rec = fresh;
-            off = fresh->mUnk_00->mUnk_00 * 16;
-            fresh->mUnk_17c.x = GetMapEntryX((MapEntry *) (entries + off));
-            fresh->mUnk_17c.y = GetMapEntryY((MapEntry *) (entries + off));
-            fresh->mUnk_17c.z = GetMapEntryZ((MapEntry *) (entries + off));
-            fresh->mUnk_188 = GetMapEntryAngle((MapEntry *) (entries + off));
+            off = fresh->mDef->mEntryIndex * 16;
+            fresh->mPos.x = GetMapEntryX((MapEntry *) (entries + off));
+            fresh->mPos.y = GetMapEntryY((MapEntry *) (entries + off));
+            fresh->mPos.z = GetMapEntryZ((MapEntry *) (entries + off));
+            fresh->mAngle = GetMapEntryAngle((MapEntry *) (entries + off));
             fresh->mUnk_18a = 0;
             fresh->mUnk_18c = 0;
             fresh->mUnk_18b = 0;
@@ -1130,11 +1136,11 @@ void func_020329d0(u8 *objs) {
 
             dp.mUnk_43_4 = 0;
             dp.mUnk_43_3 = dp.mUnk_43_4;
-            dp.mUnk_38 = rec->mUnk_188;
+            dp.mUnk_38 = rec->mAngle;
             dp.mUnk_3c = 0;
             dp.mUnk_3a = dp.mUnk_3c;
             dp.mUnk_43 = 0;
-            dp.mPos = rec->mUnk_17c;
+            dp.mPos = rec->mPos;
             dp.mUnk_30 = -1;
             dp.mUnk_34 = -1;
             dp.mUnk_2c = -1;
@@ -1144,7 +1150,7 @@ void func_020329d0(u8 *objs) {
             func_020328b0(rec);
             if (rec->mUnk_18a == 0) {
                 gMapState.mCamera.mUnk_2dc.mUnk_60++;
-                UpdateAndDrawModel(rec->mUnk_04, &dp, flags);
+                UpdateAndDrawModel(rec->mModel, &dp, flags);
             }
         }
         objs += def->mUnk_03 * 2 + 4;
@@ -1152,11 +1158,11 @@ void func_020329d0(u8 *objs) {
 }
 
 // Clears the 20 records (and the camera's halfwords mUnk_00 and mUnk_02 when a == 1).
-void func_02032b88(int a) {
+void ClearMapRecords(int a) {
     int i;
 
     for (i = 0; i < MAP_RECORDS; i++) {
-        gMapState.mRecords[i].mUnk_00 = NULL;
+        gMapState.mRecords[i].mDef = NULL;
     }
     if (a == 1) {
         gMapState.mCamera.mUnk_00 = 0;
@@ -1291,10 +1297,10 @@ void func_02032d50(u32 px, u32 pz) {
     left = n - 1;
     if (n != 0) {
         do {
-            w = ((MapArea *) area)->mUnk_00;
-            h = ((MapArea *) area)->mUnk_01;
-            x0 = ((MapArea *) area)->mUnk_02;
-            z0 = ((MapArea *) area)->mUnk_04;
+            w = ((MapArea *) area)->mCellCountX;
+            h = ((MapArea *) area)->mCellCountZ;
+            x0 = ((MapArea *) area)->mCellX;
+            z0 = ((MapArea *) area)->mCellZ;
             if (cx >= x0 && cx < x0 + w && cz >= z0 && cz < z0 + h) {
                 cx -= x0;
                 cz -= z0;
@@ -1314,7 +1320,7 @@ void func_02032d50(u32 px, u32 pz) {
     }
     reg_G3X_POLYGON_ATTR = 0x10c0;
     reg_G3X_MTX_MODE = 2;
-    G3_LoadMtx43(&gMapState.mUnk_3c);
+    G3_LoadMtx43(&gMapState.mViewMtx);
     reg_G3X_MTX_STORE = 0x1e;
     box[0] = 0;
     box[1] = -0x1000;
@@ -1337,7 +1343,7 @@ void func_02032d50(u32 px, u32 pz) {
             head = (u8) (head + 1);
             row = q >> shift;
             col = q & low;
-            v = ((MapArea *) area)->mUnk_06[col + row * w];
+            v = ((MapArea *) area)->mCells[col + row * w];
             x = gMapState.mCamera.mCellSize * (col + x0);
             z = gMapState.mCamera.mCellSize * (row + z0);
             if ((v & 0x3ff) == 0) {
@@ -1345,10 +1351,10 @@ void func_02032d50(u32 px, u32 pz) {
                 gMapState.mUnk_dc = x;
                 gMapState.mUnk_e0 = z;
             } else {
-                gMapState.mMarkers[gMapState.mMarkerCount].mUnk_04 = x;
-                gMapState.mMarkers[gMapState.mMarkerCount].mUnk_08 = z;
-                gMapState.mMarkers[gMapState.mMarkerCount].mUnk_00 =
-                    gMapState.mCamera.mUnk_58 - 1 + func_0203249c(v & 0x3ff);
+                gMapState.mMarkers[gMapState.mMarkerCount].mX = x;
+                gMapState.mMarkers[gMapState.mMarkerCount].mZ = z;
+                gMapState.mMarkers[gMapState.mMarkerCount].mModelFile =
+                    gMapState.mCamera.mMarkerFileBase - 1 + func_0203249c(v & 0x3ff);
                 gMapState.mMarkerCount++;
                 if (gMapState.mMarkerCount >= 0x180) {
                     OS_Terminate();
@@ -1399,7 +1405,7 @@ void func_02032d50(u32 px, u32 pz) {
             gMapState.mMarkerCount = saved;
         } else {
             gMapState.mCamera.mUnk_5b_4 = 0;
-            gMapState.mCamera.mUnk_0c = 0;
+            gMapState.mCamera.mObjListCount = 0;
             MIi_CpuClearFast(0, gMapState.mUnk_24, gMapState.mUnk_34);
             for (j = saved; j < gMapState.mMarkerCount; j++) {
                 gMapState.mMarkers[j - saved] = gMapState.mMarkers[j];
@@ -1410,18 +1416,17 @@ void func_02032d50(u32 px, u32 pz) {
 }
 
 // One record of chunk 0x5512 (the offsets of the records are in the table at Unk_020c6144.mUnk_50): the key, the
-// size of the cell block in cells (mUnk_02 wide, mUnk_03 deep, mUnk_04 high), its position as three 32-bit values
-// split into halfwords (x, z, y) and the number of cells it lists; the list of cell numbers follows the 0x14-byte
-// header at halfword 0x14.
+// size of the cell block in cells, its position as three 32-bit values split into halfwords and the number of cells
+// it lists; the list of cell numbers follows the 0x14-byte header at halfword 0x14.
 typedef struct MapCellRec {
     u16 mUnk_00;
-    u8 mUnk_02;
-    u8 mUnk_03;
-    u8 mUnk_04;
+    u8 mCellCountX;
+    u8 mCellCountZ;
+    u8 mCellCountY;
     u8 mUnk_05;
-    u16 mUnk_06[2];
-    u16 mUnk_0a[2];
-    u16 mUnk_0e[2];
+    u16 mX[2];
+    u16 mZ[2];
+    u16 mY[2];
     u8 mUnk_12;
     u8 mUnk_13;
 } MapCellRec;
@@ -1448,7 +1453,7 @@ void func_0203315c(int x, int z) {
     n = 0;
     m = 0;
     reg_G3X_MTX_MODE = 2;
-    G3_LoadMtx43(&gMapState.mUnk_3c);
+    G3_LoadMtx43(&gMapState.mViewMtx);
     reg_G3X_MTX_STORE = 0x1e;
     box[0] = 0;
     box[1] = 0;
@@ -1500,26 +1505,26 @@ void func_0203315c(int x, int z) {
             if (chunk[offs[idx]] == 0) {
                 OS_Terminate();
             }
-            if (rec->mUnk_02 == 0) {
+            if (rec->mCellCountX == 0) {
                 OS_Terminate();
             }
-            if (rec->mUnk_03 == 0) {
+            if (rec->mCellCountZ == 0) {
                 OS_Terminate();
             }
-            if (rec->mUnk_04 == 0) {
+            if (rec->mCellCountY == 0) {
                 OS_Terminate();
             }
-            px = rec->mUnk_06[0] + (rec->mUnk_06[1] << 16);
-            pz = rec->mUnk_0a[0] + (rec->mUnk_0a[1] << 16);
-            py = rec->mUnk_0e[0] + (rec->mUnk_0e[1] << 16);
-            r = (u32) gMapState.mCamera.mUnk_2dc.mUnk_44 >> 9;
-            if (func_020322f4(px, pz, rec->mUnk_02, rec->mUnk_03) > r * r) {
+            px = rec->mX[0] + (rec->mX[1] << 16);
+            pz = rec->mZ[0] + (rec->mZ[1] << 16);
+            py = rec->mY[0] + (rec->mY[1] << 16);
+            r = (u32) gMapState.mCamera.mUnk_2dc.mViewDistance >> 9;
+            if (GetCameraRectDistSq(px, pz, rec->mCellCountX, rec->mCellCountZ) > r * r) {
                 continue;
             }
             *(vu32 *) 0x04000450 = 0x1e;
             PutTrans(px, py, pz);
-            PutScale(gMapState.mCamera.mCellSize * rec->mUnk_02, gMapState.mCamera.mCellSize * rec->mUnk_04,
-                     gMapState.mCamera.mCellSize * rec->mUnk_03);
+            PutScale(gMapState.mCamera.mCellSize * rec->mCellCountX, gMapState.mCamera.mCellSize * rec->mCellCountY,
+                     gMapState.mCamera.mCellSize * rec->mCellCountZ);
             reg_G3X_BEGIN_VTXS = 0;
             reg_G3X_END_VTXS = 0;
             reg_G3X_BOX_TEST = *(u32 *) &box[0];
@@ -1528,17 +1533,18 @@ void func_0203315c(int x, int z) {
             while (G3X_GetBoxTestResult(&result) != 0) {
             }
             if (result != 0 && rec->mUnk_12 > 1) {
-                gMapState.mCamera.mUnk_08[gMapState.mCamera.mUnk_0c++] = &rec->mUnk_13;
+                gMapState.mCamera.mObjLists[gMapState.mCamera.mObjListCount++] = &rec->mUnk_13;
             }
             if (result == 0 && gMapState.mMarkerCount != 0) {
                 continue;
             }
             if (result != 0) {
-                u32 k = func_02032368(rec->mUnk_00, px, pz, rec->mUnk_02, rec->mUnk_03);
+                u32 k = func_02032368(rec->mUnk_00, px, pz, rec->mCellCountX, rec->mCellCountZ);
 
-                gMapState.mMarkers[gMapState.mMarkerCount].mUnk_04 = px;
-                gMapState.mMarkers[gMapState.mMarkerCount].mUnk_08 = pz;
-                gMapState.mMarkers[gMapState.mMarkerCount].mUnk_00 = gMapState.mCamera.mUnk_58 - 1 + func_0203249c(k);
+                gMapState.mMarkers[gMapState.mMarkerCount].mX = px;
+                gMapState.mMarkers[gMapState.mMarkerCount].mZ = pz;
+                gMapState.mMarkers[gMapState.mMarkerCount].mModelFile =
+                    gMapState.mCamera.mMarkerFileBase - 1 + func_0203249c(k);
                 gMapState.mMarkerCount++;
                 if (gMapState.mMarkerCount >= 0x180) {
                     OS_Terminate();
@@ -1586,7 +1592,7 @@ void EaseCameraToGoals(void) {
     gMapState.mCamera.mPos.y += (gMapState.mCamera.mPosGoal.y - gMapState.mCamera.mPos.y) >> s;
     gMapState.mCamera.mPos.z += (gMapState.mCamera.mPosGoal.z - gMapState.mCamera.mPos.z) >> s;
     func_02033b8c();
-    func_02033520();
+    SetupCameraView();
 }
 
 // The camera's field of view angle.
@@ -1596,7 +1602,7 @@ u16 func_020334ec(void) {
 
 // Sets the projection with the far distance scaled by 8 when a is 1, then restores it.
 void func_020334f8(int a) {
-    s32 saved = gMapState.mCamera.mUnk_2dc.mUnk_44;
+    s32 saved = gMapState.mCamera.mUnk_2dc.mViewDistance;
     int sh;
 
     if (a == 1) {
@@ -1604,15 +1610,16 @@ void func_020334f8(int a) {
     } else {
         sh = 0;
     }
-    gMapState.mCamera.mUnk_2dc.mUnk_44 <<= sh;
-    func_02033520();
-    gMapState.mCamera.mUnk_2dc.mUnk_44 = saved;
+    gMapState.mCamera.mUnk_2dc.mViewDistance <<= sh;
+    SetupCameraView();
+    gMapState.mCamera.mUnk_2dc.mViewDistance = saved;
 }
 
 // Sets up the projection (from the field of view angle and the far distance) and the view matrix from the camera
 // position and target, once a map is loaded, and keeps the view matrix's rotation and the negated translation
-// derived from it.
-void func_02033520(void) {
+// derived from it. It first resets the geometry engine and, when the position equals the look-at point, raises
+// mPos.y by 0xc800.
+void SetupCameraView(void) {
     int a = func_020334ec();
 
     if (gMapState.mCamera.mMapFile != 0) {
@@ -1625,34 +1632,34 @@ void func_02033520(void) {
             gMapState.mCamera.mPos.y += 0xc800;
         }
         i = (a >> 4) * 2;
-        func_0203d030(FX_SinCosTable_[i], FX_SinCosTable_[i + 1], 0x1555, 0x400, gMapState.mCamera.mUnk_2dc.mUnk_44,
-                      0x1000, 1, &gMapState.mUnk_9c);
+        func_0203d030(FX_SinCosTable_[i], FX_SinCosTable_[i + 1], 0x1555, 0x400,
+                      gMapState.mCamera.mUnk_2dc.mViewDistance, 0x1000, 1, &gMapState.mUnk_9c);
         *(vu32 *) 0x040004c8 = 0x20000000;
         func_0203d0f0(&gMapState.mCamera.mPos, (VecFx32 *) &gMapState.mCamera.mUnk_68, &gMapState.mCamera.mLookAt, 1,
-                      &gMapState.mUnk_3c);
-        func_0203b8bc((MtxFx33 *) &gMapState.mUnk_3c, (MtxFx33 *) &gMapState.mUnk_6c);
-        func_0203b9b0((VecFx32 *) &gMapState.mUnk_3c._[9], (MtxFx33 *) &gMapState.mUnk_6c,
+                      &gMapState.mViewMtx);
+        func_0203b8bc((MtxFx33 *) &gMapState.mViewMtx, (MtxFx33 *) &gMapState.mUnk_6c);
+        func_0203b9b0((VecFx32 *) &gMapState.mViewMtx._[9], (MtxFx33 *) &gMapState.mUnk_6c,
                       (VecFx32 *) &gMapState.mUnk_6c._[9]);
         gMapState.mUnk_6c._[9] = -gMapState.mUnk_6c._[9];
         gMapState.mUnk_6c._[10] = -gMapState.mUnk_6c._[10];
         gMapState.mUnk_6c._[11] = -gMapState.mUnk_6c._[11];
         reg_G3X_MTX_MODE = 2;
-        gMapState.mCamera.mUnk_2dc.mUnk_4a = 0;
+        gMapState.mCamera.mUnk_2dc.mViewKind = VIEW_KIND_CAMERA;
     }
 }
 
 // Rebuilds the visible cells and objects for a camera at (x, z), then draws the markers of the stage (filtered by
-// mUnk_38 when its top bit is set) and the camera's own model.
+// mMarkerFilter when its bit 15 is set) and the camera's own model.
 #pragma thumb off
-void func_02033614(s32 x, s32 z) {
+void DrawMap(s32 x, s32 z) {
     u32 i;
     s32 a;
     s32 b;
     DrawParams marker;
     DrawParams camera;
 
-    gMapState.mCamera.mUnk_08 = Alloc(0x80);
-    gMapState.mCamera.mUnk_0c = 0;
+    gMapState.mCamera.mObjLists = Alloc(0x80);
+    gMapState.mCamera.mObjListCount = 0;
     if (gMapState.mCamera.mUnk_2dc.mUnk_42[0] != 0) {
         a = gMapState.mCamera.mUnk_2dc.mUnk_38;
         b = gMapState.mCamera.mUnk_2dc.mUnk_3c;
@@ -1676,11 +1683,11 @@ void func_02033614(s32 x, s32 z) {
     gMapState.mCamera.mUnk_5a = (gMapState.mCamera.mUnk_5b_3 << 1) + gMapState.mCamera.mUnk_5b_4;
     gMapState.mCamera.mUnk_2dc.mUnk_60 = 0;
     if (gMapState.mCamera.mUnk_2dc.mUnk_5c == 0) {
-        for (i = 0; i < gMapState.mCamera.mUnk_0c; i++) {
-            func_020329d0(gMapState.mCamera.mUnk_08[i]);
+        for (i = 0; i < gMapState.mCamera.mObjListCount; i++) {
+            func_020329d0(gMapState.mCamera.mObjLists[i]);
         }
     }
-    Free(&gMapState.mCamera.mUnk_08);
+    Free(&gMapState.mCamera.mObjLists);
     marker.mUnk_43_4 = 0;
     marker.mUnk_43_3 = marker.mUnk_43_4;
     marker.mUnk_43 = 0;
@@ -1696,18 +1703,19 @@ void func_02033614(s32 x, s32 z) {
         marker.mUnk_34 = v;
     }
     for (i = 0; i < gMapState.mMarkerCount; i++) {
-        if ((gMapState.mUnk_38 & 0x8000) == 0 ||
-            (gMapState.mUnk_38 & ~0x8000) + gMapState.mCamera.mUnk_58 == gMapState.mMarkers[i].mUnk_00) {
+        if ((gMapState.mMarkerFilter & 0x8000) == 0 ||
+            (gMapState.mMarkerFilter & ~0x8000) + gMapState.mCamera.mMarkerFileBase ==
+                gMapState.mMarkers[i].mModelFile) {
             MapMarker *m = &gMapState.mMarkers[i];
-            marker.mPos.x = m->mUnk_04;
-            marker.mPos.z = m->mUnk_08;
-            DrawModelFile(m->mUnk_00 & 0x7fff, &marker, gMapState.mCamera.mUnk_5b_0 == 1 ? 0x10 : 0);
+            marker.mPos.x = m->mX;
+            marker.mPos.z = m->mZ;
+            DrawModelFile(m->mModelFile & 0x7fff, &marker, gMapState.mCamera.mUnk_5b_0 == 1 ? 0x10 : 0);
             if (*(vu16 *) 0x04000604 > gMapState.mCamera.mUnk_2dc.mUnk_54) {
                 break;
             }
         }
     }
-    if (gMapState.mCamera.mUnk_52 == 0) {
+    if (gMapState.mCamera.mCameraModelFile == 0) {
         return;
     }
     func_020334ec();
@@ -1722,7 +1730,7 @@ void func_02033614(s32 x, s32 z) {
     camera.mUnk_3a = 0;
     camera.mUnk_28 = 0x1000;
     camera.mUnk_43 = 0;
-    DrawModelFile(gMapState.mCamera.mUnk_52, &camera, gMapState.mCamera.mUnk_5b_1 == 0);
+    DrawModelFile(gMapState.mCamera.mCameraModelFile, &camera, gMapState.mCamera.mUnk_5b_1 == 0);
     func_020334f8(0);
 }
 
@@ -1895,7 +1903,7 @@ void func_02033e38(int a, int b, int c) {
             dst = &gMapState.mCamera.mUnk_9c.mUnk_204;
             src = &gMapState.mCamera.mPos;
             gMapState.mCamera.mUnk_2dc.mUnk_4d = 0;
-            gMapState.mCamera.mUnk_2dc.mUnk_32 = a;
+            gMapState.mCamera.mUnk_2dc.mPosMode = a;
             gMapState.mCamera.mUnk_2dc.mUnk_0f = c;
             gMapState.mCamera.mUnk_2dc.mUnk_0e = 0;
             break;
@@ -1904,7 +1912,7 @@ void func_02033e38(int a, int b, int c) {
             dst = &gMapState.mCamera.mUnk_9c.mUnk_228;
             src = &gMapState.mCamera.mLookAt;
             gMapState.mCamera.mUnk_2dc.mUnk_4e = 0;
-            gMapState.mCamera.mUnk_2dc.mUnk_33 = a;
+            gMapState.mCamera.mUnk_2dc.mLookAtMode = a;
             gMapState.mCamera.mUnk_2dc.mUnk_0d = c;
             gMapState.mCamera.mUnk_2dc.mUnk_0c = 0;
             break;
@@ -1946,12 +1954,12 @@ void AdvanceCameraTrack(CameraTrack *t, s32 *whole, s32 *next, s32 *rest) {
 }
 #pragma thumb on
 
-// Moves the camera (position mode mUnk_32, look-at mode mUnk_33), then sets up the view. Position modes: 0 orbits
-// target mUnk_1c at distance mUnk_28 and height mUnk_2c, turned by its angle; 1 and 2 blend towards mUnk_204; 3 plays
-// track mUnk_1bc; 4 follows the target; 10 plays track mUnk_1ec and 11 the camera's own model, both giving a position
-// and a look-at point. Look-at modes: 5 the position of target mUnk_20 and 6 its model point, raised by mUnk_24; 7
-// and 8 blend towards mUnk_228; 9 plays track mUnk_1d4; 10 and 11 take the point mode 10 or 11 gave (jumping there
-// when flag 3 or 4 of track mUnk_1ec is set, else moving an eighth of the way). While the top bit of
+// Moves the camera (position mode mPosMode, look-at mode mLookAtMode), then sets up the view. Position modes: 0 orbits
+// target mPosTarget at distance mUnk_28 and height mUnk_2c, turned by its angle; 1 and 2 blend towards mUnk_204; 3
+// plays track mUnk_1bc; 4 follows the target; 10 plays track mUnk_1ec and 11 the camera's own model, both giving a
+// position and a look-at point. Look-at modes: 5 the position of target mLookAtTarget and 6 its model point, raised by
+// mUnk_24; 7 and 8 blend towards mUnk_228; 9 plays track mUnk_1d4; 10 and 11 take the point mode 10 or 11 gave (jumping
+// there when flag 3 or 4 of track mUnk_1ec is set, else moving an eighth of the way). While the top bit of
 // gSystemState.mFlags is set only the tracks' timestamps follow the frame counter.
 #pragma thumb off
 void UpdateCamera(void) {
@@ -1974,11 +1982,11 @@ void UpdateCamera(void) {
         gMapState.mCamera.mUnk_9c.mUnk_1ec.mUnk_0c = gSystemState.mElapsedFrames;
         gMapState.mCamera.mUnk_9c.mUnk_1d4.mUnk_0c = gSystemState.mElapsedFrames;
         gMapState.mCamera.mUnk_9c.mUnk_1bc.mUnk_0c = gSystemState.mElapsedFrames;
-        func_02033520();
+        SetupCameraView();
         return;
     }
-    target = gMapState.mCamera.mUnk_2dc.mUnk_1c;
-    switch (gMapState.mCamera.mUnk_2dc.mUnk_32) {
+    target = gMapState.mCamera.mUnk_2dc.mPosTarget;
+    switch (gMapState.mCamera.mUnk_2dc.mPosMode) {
         case 0:
             idx = (u16) (target->mDraw.mUnk_38 + 0x8000) >> 4 << 1;
             dx = gMapState.mCamera.mUnk_2dc.mUnk_28 * FX_SinCosTable_[idx];
@@ -2042,8 +2050,8 @@ void UpdateCamera(void) {
             OS_Terminate();
             break;
     }
-    target = gMapState.mCamera.mUnk_2dc.mUnk_20;
-    switch (gMapState.mCamera.mUnk_2dc.mUnk_33) {
+    target = gMapState.mCamera.mUnk_2dc.mLookAtTarget;
+    switch (gMapState.mCamera.mUnk_2dc.mLookAtMode) {
         case 6:
             pos = target->mModel.mNodePos;
             pos.y += gMapState.mCamera.mUnk_2dc.mUnk_24;
@@ -2106,7 +2114,7 @@ void UpdateCamera(void) {
             OS_Terminate();
             break;
     }
-    func_02033520();
+    SetupCameraView();
 }
 
 // Sets the fog with the default density table.

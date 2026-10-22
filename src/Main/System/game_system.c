@@ -1419,7 +1419,7 @@ void UpdateSphereModel(void) {
     } else {
         gSphereModel.mModel.mId = gSphereModel.mSphereIndex * 6 + 0xfd8;
     }
-    func_02024368(&gSphereModel.mModel, 0x80, 0x60, 0x80 << 10, gSphereModel.mAngle, 0);
+    UpdateAndDrawModelOrtho(&gSphereModel.mModel, 0x80, 0x60, 0x80 << 10, gSphereModel.mAngle, 0);
     PlayObjectSe(&gSphereModel.mModel);
     if (gSystemState.mKeysDown & 0x20) {
         gSphereModel.mAngle -= 0x100;
