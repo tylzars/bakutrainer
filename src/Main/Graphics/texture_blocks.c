@@ -189,7 +189,7 @@ u16 FreeLayerBlock(u32 index, int layer) {
 // free if no path goes through it, removed otherwise.
 void RemoveLayerKey(int layer, u32 key) {
     TextureLayer *half = &gTextureBlocks.mLayers[layer == 2];
-    unsigned long idx = key & 0x3ff;
+    unsigned long idx = key & 0x3ff; // unsigned long, not u32: the compiler's output needs it (register choice)
     u32 step = gHashSteps[(key >> 10) & 0x7f];
     TextureSlot *e;
 
@@ -254,7 +254,7 @@ u32 GetSizeCodeBytes(u32 index, int mode) {
 // removed one once the search comes round to it), a list entry and a run of VRAM units from the block heap (dropping
 // the oldest list entries until a large enough run is free), and queues the block's transfer from the packed file.
 u16 FindOrLoadLayerBlock(u32 code, u32 key, u32 sub, u32 mode, u32 count, int layer) {
-    unsigned long entry;
+    unsigned long entry; // unsigned long, not u32: the compiler's output needs it (stack slot order)
     s32 stored;
     u32 val;
     TextureLayer *half = &gTextureBlocks.mLayers[layer == 2];
@@ -1081,7 +1081,9 @@ void DrawSprite(int id, int x, int y, int w, int mode) {
 // the tile and palette of the first record it reaches in mUnk_b28 and mUnk_b2c, bit 22 sets attribute 2 bit 11,
 // and bit 23 hands the sprite to func_020243c0 with the alpha in bits 27-31 (0 = 31). w >> 8 is the priority and
 // its low byte the sort key of each entry. angle and the scales sx, sy (0x100 = 1) give the sprite a rotation/scale
-// matrix.
+// matrix. The checks that stop the system are written as `(void) (cond || (OS_Terminate(), 0))` because the
+// compiler's output needs it: the expression form computes each condition's value and loads the 0, which an `if`
+// drops.
 void DrawSpriteEx(int id, int x, int y, int w, int angle, int sx, int sy, int mode) {
     u32 bit;
     u32 flags;

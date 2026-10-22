@@ -821,17 +821,18 @@ void UpdateStageMotion(int index, int *sel, int flags) {
         rec->mDistancePerFrame = 0;
         return;
     }
-    {
-        k = rec->mUnk_1dc;
-        k = k + (spd = spd * 0xc0 >> 12);
-        old = rec->mPos;
-        rec->mUnk_1dc = k;
-        x = rec->mDistancePerFrame * sinIdx(rec->mMoveAngle) >> 12;
-        z = rec->mDistancePerFrame * -cosIdx(rec->mMoveAngle) >> 12;
-        rec->mPos.x += x;
-        rec->mPos.z += z;
-        ground = GetFloorHeightEx(rec->mPos.x, rec->mPos.z, rec->mPos.y + 0xc800, 0, 0, NULL, &push) + 0x32000;
-    }
+    // k is loaded before spd is scaled and stored after the position copy, as the compiler's output needs: adding
+    // in one statement (or with +=) gives the load and the multiply other registers.
+    k = rec->mUnk_1dc;
+    spd = spd * 0xc0 >> 12;
+    k = k + spd;
+    old = rec->mPos;
+    rec->mUnk_1dc = k;
+    x = rec->mDistancePerFrame * sinIdx(rec->mMoveAngle) >> 12;
+    z = rec->mDistancePerFrame * -cosIdx(rec->mMoveAngle) >> 12;
+    rec->mPos.x += x;
+    rec->mPos.z += z;
+    ground = GetFloorHeightEx(rec->mPos.x, rec->mPos.z, rec->mPos.y + 0xc800, 0, 0, NULL, &push) + 0x32000;
     if (rec->mDistancePerFrame != 0) {
         PlayWaveKeepAlive(0x1c4, MapRangeFromZero(abs(rec->mDistancePerFrame >> 12), 0x20, 0, 0x4b), 1, 0x40, 0xffff,
                           0);

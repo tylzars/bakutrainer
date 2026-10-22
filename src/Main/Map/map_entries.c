@@ -261,6 +261,8 @@ static void func_020312b8(VecFx32 *pos, MapRingPoint *out, u8 *counts, u16 *keys
 // segment has a top height, whose height range overlaps pos.y + bottom .. pos.y + top. The camera records the
 // nearest one: its ring (mUnk_10), its two ends (mUnk_14, mUnk_20), the nearest point (mUnk_2c), the squared
 // distance (mUnk_38) and the ring's key (mUnk_3a). Returns 0 when nothing was found, else the MAP_RING_* result.
+// atEnd and the block-local end are u8 and atEnd is set after best because the compiler's output needs it: as int,
+// end adds a mask when it is or-ed into atEnd, and an int atEnd or an earlier init reorders the stack stores.
 u32 func_02031824(VecFx32 *pos, int radius, int top, int bottom, u16 any, u16 none) {
     MapRingPoint pts[MAP_RING_MAX_POINTS];
     u8 counts[MAP_RING_MAX];
@@ -282,10 +284,10 @@ u32 func_02031824(VecFx32 *pos, int radius, int top, int bottom, u16 any, u16 no
 
     hits = 0;
     limit = radius * radius / 4;
-    tie = hits;
-    result = hits;
-    best = hits - 1;
-    atEnd = hits;
+    tie = 0;
+    result = 0;
+    best = -1;
+    atEnd = 0;
     counts[0] = 0;
     func_020312b8(pos, pts, counts, keys, rings, 9);
     i = 0;

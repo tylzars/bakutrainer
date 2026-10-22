@@ -489,8 +489,9 @@ void AddScriptSprite(u8 *text, int mode) {
             cmd->mLayer = 2;
         }
         GetTexInfo(cmd->mDrawId, &info, 0);
-        // Both arms clear bit 4 of mUnk_21: one through the bit-field, one as a byte operation (the code keeps two
-        // separate stores).
+        // Both arms clear bit 4 of mUnk_21: one through the bit-field, one as a byte operation, because the
+        // compiler's output keeps the test and two separate stores (with one form in both arms the compiler merges
+        // the arms and drops the test).
         if (info.mUnk_12 > 1) {
             cmd->mUnk_21_4 = 0;
         } else {

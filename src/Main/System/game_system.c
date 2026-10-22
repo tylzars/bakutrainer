@@ -1204,8 +1204,11 @@ void SetupStateMenu(void) {
     gStateMenu.mCardPage = 0;
 }
 
-// Search loops (pad bits 0x40 and 0x80): the index is read through a pointer cast ahead of the step, so it is loaded
-// again there instead of reusing the value the loop condition loaded.
+// Forms kept because the compiler's output needs them: in the search loops (pad bits 0x40 and 0x80) the depth is
+// read into the block-local idx through a pointer cast ahead of the step, so it is loaded again there; a plain
+// `gStateMenu.mDepth` reuses the value the loop condition loaded and the registers differ. The selection one level up
+// is read as `*(gStateMenuSelection + i - 1)` (and `+ gStateMenu.mDepth - 1`), which folds the -1 into the load
+// offset; indexing with `[i - 1]` subtracts first and adds an instruction.
 void UpdateStateMenu(void) {
     int start;
     int i;

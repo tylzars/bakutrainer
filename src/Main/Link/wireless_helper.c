@@ -687,7 +687,8 @@ int WhGetSysState(void) {
 }
 
 // Sets up the host (b and c go into the parent parameter block) and starts the link in the given parent mode (the
-// even modes); returns whether it started, 0 for any other mode. Stops the system unless the link is idle.
+// even modes); returns whether it started, 0 for any other mode. Stops the system unless the link is idle; that
+// check is an expression rather than an `if` because the compiler's output needs it (it loads the 0 an `if` drops).
 int WhConnectAsParent(int mode, u16 b, u16 c) {
     (void) (gWirelessWork.mSysState == WH_SYSSTATE_IDLE || (OS_Terminate(), 0));
     gWirelessWork.mRecvBufferSize = 0x240;
@@ -721,7 +722,8 @@ int WhConnectAsParent(int mode, u16 b, u16 c) {
 }
 
 // Starts the link as a child in the given child mode (the odd modes), to the parent whose record is data; returns
-// whether it started, 0 for any other mode. Stops the system unless the link is idle.
+// whether it started, 0 for any other mode. Stops the system unless the link is idle (an expression, as in
+// WhConnectAsParent).
 int WhConnectAsChild(int mode, const void *data) {
     (void) (gWirelessWork.mSysState == WH_SYSSTATE_IDLE || (OS_Terminate(), 0));
     gWirelessWork.mRecvBufferSize = 0x480;

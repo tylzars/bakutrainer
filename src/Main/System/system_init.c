@@ -773,8 +773,11 @@ void func_0201c78c(void) {
 // buffer (packed block files, EZ10 blocks, plain file reads, memory copies), converts textures and palettes, then
 // copies each entry to its destination with the banks mapped. The removal of finished entries at the end, for a busy
 // system, never runs: while busy no entry is picked and the function returns before it.
-// The block-run search and the plain file read take the list pointer through its address and the file id through
-// a cast of the entry pointer.
+// Forms kept because the compiler's output needs them: the block-run search (block locals first, k and p, with
+// first an unsigned long) and the plain file read take the list through its address (`*(Transfer ***) &list`); the
+// plain file read takes the file id through a cast of e and the entry as list[j - 1] after j = i + 1; cachedFile and
+// w are u32. A plain `list`, `e->mFile` or `list[i]`, a u16 cachedFile, a u32 first or an int w changes the register
+// choice or the order of the loads and stores.
 void ProcessTransfers(int flags) {
     int i;
     Transfer **list;
@@ -1082,7 +1085,7 @@ void ProcessTransfers(int flags) {
             }
             e = list[i];
             if ((e->mDst >> 28) == 10 || bg == 1) {
-                u32 w = (u32) ((1 << (e->mUnk_12 & 0xf)) / 8);
+                u32 w = (1 << (e->mUnk_12 & 0xf)) / 8;
                 u32 h = e->mSize / (e->mUnk_13 == 0 ? 0x20 : 0x40) / w;
                 if (tex == 0) {
                     tex = AllocWithFlags(0x4000, 1);
@@ -1254,6 +1257,7 @@ restart:
     state = 0;
     i = 0;
     remaining = size;
+    // An expression rather than an `if`, as the compiler's output needs: it keeps the register copy an `if` drops.
     (void) (size <= 0xfb800 || (OS_Terminate(), 0));
     for (; remaining > 0; remaining -= 0x1f7) {
         gSystemState.mUnk_250.mUnk_24[i >> 3] &= ~(1 << (i & 7));

@@ -51,6 +51,14 @@ static u8 sQrkLowBitOrder[64] = {
 };
 
 // Unpacks `size` bytes of range-coded LZ data from `src` to `dst`; `p` is the probability work area.
+// Several forms here are kept only because the compiler's output needs them; the plainer forms give other
+// registers or another instruction order. The locals are declared in this order (code and range last); code is
+// built up through bound; the reps loop counts with i; the two plain literal decoders sit in blocks with their own
+// locals; the literal/match bit is decoded with len as the symbol, i as the one-pass counter and pp as the table;
+// the matched-literal loop sets k, sym and matching before a `for (; k >= 0; k--)`; nbits counts the 4-bit length
+// tree and the 5-bit slot tree (whose table is pp) and is read through `sym & 0x1f` before slot is set; and the
+// 6-bit tree takes a fresh pp = &p->mUnk_200[sym] each step, which puts the moves of 1 and 0 ahead of the table
+// address add before that loop.
 static void UnpackQrkData(QrkProbs *p, u8 *dst, const u8 *src, u32 size) {
     u8 *end;
     u32 matchByte;

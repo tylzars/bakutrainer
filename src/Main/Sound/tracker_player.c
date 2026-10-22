@@ -256,7 +256,7 @@ void PlayTrack(u16 fileId, u16 sampleFileBase, u8 volume, u16 startOrder, int fa
     TrackerInstrument *instruments;
     u8 *next;
     u32 size;
-    unsigned long i;
+    unsigned long i; // unsigned long, not u32: the compiler's output needs it (register choice)
     u8 *src;
     u8 *pattern;
     u32 j;

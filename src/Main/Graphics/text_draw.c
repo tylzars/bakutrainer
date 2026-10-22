@@ -96,7 +96,8 @@ void DrawText(int x, int y, const void *font, const char *text, int align, int w
 // The `const u16 *` read into c keeps the glyph's own *q load (without the cast the compiler merges it with the load
 // into c), maxW doubles as the line loop's character count (zero first, so lineW and breakW copy it), spaces and lineW
 // are reused for the skipped count and the drawn width, and spaceW is reloaded inside the width loop: these keep the
-// stack slots in the original's order.
+// stack slots in the original's order. i is an unsigned long: as u32 it changes the saved registers and the stack
+// frame.
 int DrawTextEx(int x, int y, const FontRange *const *fonts, u8 fontIndex, const u8 *text, u16 angle, u32 flags,
                u32 width, int height, int mode) {
     u8 widths[0x400];
