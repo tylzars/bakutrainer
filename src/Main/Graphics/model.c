@@ -181,7 +181,7 @@ void func_0202397c(int from, int node) {
     u16 rot[3];
     int done;
     u16 tmpRot[3];
-    s16 sx, cx, sy, cy, sz, cz;
+    s32 sx, cx, sy, cy, sz, cz;
     s32 a, b;
     s32 r00, r01, r02, r10, r11, r12, r20, r21, r22;
     u32 i;
@@ -230,14 +230,14 @@ void func_0202397c(int from, int node) {
     az = -rot[2];
     ay = rot[1];
     ix = (ax >> 4) * 2;
-    iy = (ay >> 4) * 2;
+    cx = FX_SinCosTable_[ix + 1];
     sx = FX_SinCosTable_[ix];
-    iz = (az >> 4) * 2;
+    iy = (ay >> 4) * 2;
+    cy = FX_SinCosTable_[iy + 1];
     sy = FX_SinCosTable_[iy];
+    iz = (az >> 4) * 2;
     cz = FX_SinCosTable_[iz + 1];
     sz = FX_SinCosTable_[iz];
-    cx = FX_SinCosTable_[ix + 1];
-    cy = FX_SinCosTable_[iy + 1];
     b = (cx * sy) >> 12;
     a = (sx * sy) >> 12;
     r00 = (cy * cz) >> 12;
