@@ -34,7 +34,7 @@ Unk_020c6adc data_020c6adc;
 #define COMM_CHUNK 0x1f7
 // Bit 9 of data_020c9e04: a packet is out.
 #define COMM_BUSY 0x200
-// Bit 23 of data_020c18bc.mUnk_2c8. Where the code tests it, the result goes nowhere (the test survives but whatever
+// Bit 23 of gSystemState.mUnk_2c8. Where the code tests it, the result goes nowhere (the test survives but whatever
 // it guarded does not): written below as a conditional expression whose value is unused.
 #define COMM_TRACE 0x800000
 
@@ -50,7 +50,7 @@ typedef struct Unk_CommRecord {
 #pragma thumb off
 
 // With the link in state 5 and the state check passed, reads each of the 16 slots: a slot that holds data has its
-// record stored in data_020c68e0 and its flag set (data_020c66e0, and a bit in the mask at data_020c18bc.mUnk_288);
+// record stored in data_020c68e0 and its flag set (data_020c66e0, and a bit in the mask at gSystemState.mUnk_288);
 // then func_02034a08 follows the mask.
 void func_02034954(void) {
     u16 i;
@@ -62,13 +62,13 @@ void func_02034954(void) {
         return;
     }
     *data_020c66d4->mUnk_4 = 0;
-    data_020c18bc.mUnk_288 = 0;
+    gSystemState.mUnk_288 = 0;
     for (i = 0; i < COMM_SLOTS; i++) {
         void *src = func_02039698(i);
         if (src != NULL) {
             MI_CpuCopy8(src, data_020c68e0 + i * COMM_RECORD_SIZE, COMM_RECORD_SIZE);
             data_020c66e0[i] = 1;
-            data_020c18bc.mUnk_288 |= 1 << i;
+            gSystemState.mUnk_288 |= 1 << i;
         } else {
             data_020c66e0[i] = 0;
         }
@@ -78,11 +78,11 @@ void func_02034954(void) {
 
 // Counts (up to 0x800) the calls for which the slot mask has not changed.
 void func_02034a08(void) {
-    if (data_020c18bc.mUnk_288 != data_020c18bc.mUnk_28a) {
-        data_020c18bc.mUnk_28a = data_020c18bc.mUnk_288;
-        data_020c18bc.mUnk_28c = 0;
-    } else if (data_020c18bc.mUnk_28c < 0x800) {
-        (data_020c18bc.mUnk_28c)++;
+    if (gSystemState.mUnk_288 != gSystemState.mUnk_28a) {
+        gSystemState.mUnk_28a = gSystemState.mUnk_288;
+        gSystemState.mUnk_28c = 0;
+    } else if (gSystemState.mUnk_28c < 0x800) {
+        (gSystemState.mUnk_28c)++;
     }
 }
 
@@ -91,62 +91,62 @@ void func_02034a44(void) {
     memset(data_020c67e0, 0, 0xfe);
 }
 
-// Link error handler (the callback in data_020c18bc.mUnk_24c): with 0 it restores the display set-up; otherwise it
+// Link error handler (the callback in gSystemState.mUnk_24c): with 0 it restores the display set-up; otherwise it
 // shows a message that the wireless communication failed, in the owner's language (2 French, 3 German, 4 Italian,
 // 5 Spanish, English otherwise).
 void func_02034a60(int a) {
     OSOwnerInfo info;
 
     if (a == 0) {
-        func_0201f880(3);
+        SetFaded(3);
         func_0202c1c4();
         func_02022370();
-        func_02020854(0);
-        func_0201eb74(2);
-        func_0201eb74(6);
-        data_020c18bc.mUnk_46c &= ~0x20000;
-        func_0201f8d0(2);
-        func_02020854(1);
+        SetLcdSwap(0);
+        FreeVramBanks(2);
+        FreeVramBanks(6);
+        gSystemState.mFlags &= ~0x20000;
+        SetFadeClear(2);
+        SetLcdSwap(1);
         func_020359d0(0);
         func_0202eeec();
         return;
     }
     OS_GetOwnerInfo(&info);
-    func_02027fc2("");
+    OpenTextScreen("");
     switch (info.language) {
         case 2:
-            func_02028036("    ERREUR DE COMMUNICATION", 10);
-            func_02028036(" VEUILLEZ ETEINDRE LA CONSOLE", 12);
+            PrintTextScreenRow("    ERREUR DE COMMUNICATION", 10);
+            PrintTextScreenRow(" VEUILLEZ ETEINDRE LA CONSOLE", 12);
             break;
         case 3:
-            func_02028036("        FEHLER BEI DER", 10);
-            func_02028036("       DATENUBERTRAGUNG", 12);
-            func_02028036(" BITTE SCHALTE DAS SYSTEM AUS", 14);
+            PrintTextScreenRow("        FEHLER BEI DER", 10);
+            PrintTextScreenRow("       DATENUBERTRAGUNG", 12);
+            PrintTextScreenRow(" BITTE SCHALTE DAS SYSTEM AUS", 14);
             break;
         case 4:
-            func_02028036("   ERRORE NELLA COMUNICAZIONE", 10);
-            func_02028036("       SPEGNI LA CONSOLE", 12);
+            PrintTextScreenRow("   ERRORE NELLA COMUNICAZIONE", 10);
+            PrintTextScreenRow("       SPEGNI LA CONSOLE", 12);
             break;
         case 5:
-            func_02028036("    ERROR EN LA COMUNICACION", 10);
-            func_02028036("        APAGA LA CONSOLA", 12);
+            PrintTextScreenRow("    ERROR EN LA COMUNICACION", 10);
+            PrintTextScreenRow("        APAGA LA CONSOLA", 12);
             break;
         default:
-            func_02028036(" WIRELESS COMMUNICATIONS ERROR", 10);
-            func_02028036("  PLEASE TURN THE POWER OFF", 12);
+            PrintTextScreenRow(" WIRELESS COMMUNICATIONS ERROR", 10);
+            PrintTextScreenRow("  PLEASE TURN THE POWER OFF", 12);
             break;
     }
 }
 
 // When the error state (-2) is set: runs the handler with 0, then runs it with 1 and the frame update forever.
 void func_02034be4(void) {
-    if (data_020c18bc.mUnk_2a4[1] != -2) {
+    if (gSystemState.mUnk_2a4[1] != -2) {
         return;
     }
-    data_020c18bc.mUnk_24c(0);
+    gSystemState.mUnk_24c(0);
     while (1) {
-        data_020c18bc.mUnk_24c(1);
-        func_0201bb40(0);
+        gSystemState.mUnk_24c(1);
+        UpdateSystem(0);
     }
 }
 
@@ -162,9 +162,9 @@ void func_02034c38(void) {
             func_0203970c();
             break;
         case 1:
-            if (data_020c18bc.mUnk_2a2 < 5) {
+            if (gSystemState.mUnk_2a2 < 5) {
                 func_02034cc4();
-                data_020c18bc.mUnk_2a2++;
+                gSystemState.mUnk_2a2++;
                 break;
             }
         case 9:
@@ -173,7 +173,7 @@ void func_02034c38(void) {
         case 4:
         case 5:
         case 6:
-            data_020c18bc.mUnk_2a2 = 0;
+            gSystemState.mUnk_2a2 = 0;
             func_02034954();
             break;
     }
@@ -226,7 +226,7 @@ void func_02034d1c(void) {
     u32 len;
     u8 *buf2;
 
-    (void) data_020c18bc.mUnk_45c;
+    (void) gSystemState.mElapsedFrames;
     n = 0;
     for (i = 0; i < 1; i++) {
         n++;
@@ -235,10 +235,10 @@ void func_02034d1c(void) {
             n = 0;
         }
     }
-    c = &data_020c18bc.mUnk_250;
+    c = &gSystemState.mUnk_250;
     for (i = 0; i < 1; i++) {
         idxA = order[i];
-        if (data_020c18bc.mUnk_250.mUnk_10[idxA] == COMM_PENDING && (data_020c9e04 & COMM_BUSY) == 0) {
+        if (gSystemState.mUnk_250.mUnk_10[idxA] == COMM_PENDING && (data_020c9e04 & COMM_BUSY) == 0) {
             buf = data_020c66d4->mUnk_8;
             len = c->mUnk_1c[idxA];
 
@@ -247,16 +247,16 @@ void func_02034d1c(void) {
             }
             buf[0] = COMM_PENDING;
             func_02034d00(c->mUnk_14[idxA], buf + 1);
-            func_020425f4(&data_020c1874, c->mUnk_14[idxA], 0);
-            func_020425e4(&data_020c1874, buf + 5, len);
+            func_020425f4(&gBankFile, c->mUnk_14[idxA], 0);
+            func_020425e4(&gBankFile, buf + 5, len);
             data_020c9e04 |= COMM_BUSY;
             buf = data_020c66d4->mUnk_8;
             if (func_02046e28(func_02039d74, 0, buf, len + 5, 3, 10, 0) == 2) {
                 c->mUnk_14[idxA] += len;
                 c->mUnk_1c[idxA] -= len;
                 if (c->mUnk_1c[idxA] == 0) {
-                    data_020c18bc.mUnk_250.mUnk_10[idxA] = 0;
-                    (void) ((data_020c18bc.mUnk_2c8 & COMM_TRACE) ? 0 : 0);
+                    gSystemState.mUnk_250.mUnk_10[idxA] = 0;
+                    (void) ((gSystemState.mUnk_2c8 & COMM_TRACE) ? 0 : 0);
                 }
             }
         }
@@ -269,16 +269,16 @@ void func_02034d1c(void) {
         }
         switch (rec->mUnk_0) {
             case COMM_REQUEST: {
-                data_020c18bc.mUnk_296 = 0;
+                gSystemState.mUnk_296 = 0;
                 buf2 = func_02039cd4(0x12);
                 rec->mUnk_0 = 0;
                 buf2[0] = COMM_REPLY;
                 buf2[2] = idxB;
                 *(u16 *) (buf2 + 4) = rec->mUnk_4;
-                func_02034ce0(((Unk_FileEntry *) data_020c18bc.mUnk_000)[rec->mUnk_4].mUnk_0, buf2 + 6);
-                func_02034ce0(((Unk_FileEntry *) data_020c18bc.mUnk_000)[rec->mUnk_4].mUnk_4, buf2 + 10);
-                func_02034ce0(data_020c18bc.mUnk_334, buf2 + 14);
-                (void) ((data_020c18bc.mUnk_2c8 & COMM_TRACE) ? 0 : 0);
+                func_02034ce0(((FileEntry *) gSystemState.mFileTable)[rec->mUnk_4].mOffset, buf2 + 6);
+                func_02034ce0(((FileEntry *) gSystemState.mFileTable)[rec->mUnk_4].mStoredSize, buf2 + 10);
+                func_02034ce0(gSystemState.mFileTableSize, buf2 + 14);
+                (void) ((gSystemState.mUnk_2c8 & COMM_TRACE) ? 0 : 0);
                 break;
             }
             case COMM_RANGE:
@@ -290,21 +290,21 @@ void func_02034d1c(void) {
                     if (idxB == j) {
                         continue;
                     }
-                    if (data_020c18bc.mUnk_250.mUnk_10[j] != COMM_PENDING) {
+                    if (gSystemState.mUnk_250.mUnk_10[j] != COMM_PENDING) {
                         continue;
                     }
-                    if ((a <= data_020c18bc.mUnk_250.mUnk_14[j] && a + b > data_020c18bc.mUnk_250.mUnk_14[j]) ||
-                        (data_020c18bc.mUnk_250.mUnk_14[j] <= a &&
-                         data_020c18bc.mUnk_250.mUnk_14[j] + data_020c18bc.mUnk_250.mUnk_1c[j] > a)) {
+                    if ((a <= gSystemState.mUnk_250.mUnk_14[j] && a + b > gSystemState.mUnk_250.mUnk_14[j]) ||
+                        (gSystemState.mUnk_250.mUnk_14[j] <= a &&
+                         gSystemState.mUnk_250.mUnk_14[j] + gSystemState.mUnk_250.mUnk_1c[j] > a)) {
                         state = 0;
                     }
                 }
                 if (state != 0) {
-                    data_020c18bc.mUnk_250.mUnk_10[idxB] = state;
-                    data_020c18bc.mUnk_250.mUnk_14[idxB] = a;
-                    data_020c18bc.mUnk_250.mUnk_1c[idxB] = b;
+                    gSystemState.mUnk_250.mUnk_10[idxB] = state;
+                    gSystemState.mUnk_250.mUnk_14[idxB] = a;
+                    gSystemState.mUnk_250.mUnk_1c[idxB] = b;
                 } else {
-                    (void) ((data_020c18bc.mUnk_2c8 & COMM_TRACE) ? 0 : 0);
+                    (void) ((gSystemState.mUnk_2c8 & COMM_TRACE) ? 0 : 0);
                 }
                 break;
         }
@@ -314,8 +314,8 @@ void func_02034d1c(void) {
 // 1 when the file access goes through the link: bit 9 of the system flags is set and either data is still to be
 // received or the command buffer's high nibble is 5.
 int func_02035058(void) {
-    if (data_020c18bc.mUnk_46c & 0x200) {
-        if (data_020c18bc.mUnk_250.mUnk_08 != 0 || (data_020c67e0[0] >> 4) == 5) {
+    if (gSystemState.mFlags & 0x200) {
+        if (gSystemState.mUnk_250.mUnk_08 != 0 || (data_020c67e0[0] >> 4) == 5) {
             return 1;
         }
     }

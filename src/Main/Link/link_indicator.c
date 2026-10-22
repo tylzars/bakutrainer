@@ -53,7 +53,7 @@ void func_02039830(int id, u32 shift, u32 index, u32 attr2, u32 attr0, int rotat
         oam[index].mUnk_0 = attr0;
         oam[index].mUnk_2 = attr2 + 0x4000;
     } else {
-        int angle = (data_020c18bc.mUnk_45c & 0xff) << 8;
+        int angle = (gSystemState.mElapsedFrames & 0xff) << 8;
         u32 group = func_0202cdac(screen);
         int k = (angle >> 4) * 2;
 
@@ -77,14 +77,14 @@ void func_02039908(u32 attr2, u32 attr0, int screen) {
     u32 mask;
 
     if (func_02035058() == 1) {
-        data_020c18bc.mUnk_250.mUnk_28[0]++;
-        if (data_020c18bc.mUnk_250.mUnk_28[0] != 0) {
-            data_020c18bc.mUnk_250.mUnk_28[0] = 20;
+        gSystemState.mUnk_250.mUnk_28[0]++;
+        if (gSystemState.mUnk_250.mUnk_28[0] != 0) {
+            gSystemState.mUnk_250.mUnk_28[0] = 20;
         }
-    } else if (data_020c18bc.mUnk_250.mUnk_28[0] != 0) {
-        data_020c18bc.mUnk_250.mUnk_28[0]--;
+    } else if (gSystemState.mUnk_250.mUnk_28[0] != 0) {
+        gSystemState.mUnk_250.mUnk_28[0]--;
     }
-    if (!(data_020c18bc.mUnk_46c & 3)) {
+    if (!(gSystemState.mFlags & 3)) {
         return;
     }
     {
@@ -93,45 +93,45 @@ void func_02039908(u32 attr2, u32 attr0, int screen) {
 
         if (screen == 1) {
             layer = 1;
-            if (!(data_020c18bc.mUnk_46c & 1)) {
+            if (!(gSystemState.mFlags & 1)) {
                 layer = 2;
             }
         } else {
             layer = 2;
-            if (!(data_020c18bc.mUnk_46c & 2)) {
+            if (!(gSystemState.mFlags & 2)) {
                 layer = 1;
             }
         }
         other = layer == 1 ? 0 : 1;
         for (i = 0; i < 2; i++) {
-            if (data_020c18bc.mUnk_27c[2] == 1) {
+            if (gSystemState.mUnk_27c[2] == 1) {
                 mask = DISPCNT_BGS;
                 if (i == other) {
-                    func_0201f8d0(1 << i);
+                    SetFadeClear(1 << i);
                 } else {
                     mask |= DISPCNT_OBJ;
                 }
                 reg = regs[i];
-                data_020c18bc.mUnk_27c[i] |= (*reg >> 8) & 0x1f;
+                gSystemState.mUnk_27c[i] |= (*reg >> 8) & 0x1f;
                 *reg &= ~mask;
-            } else if (data_020c18bc.mUnk_27c[i] != 0) {
-                *regs[i] |= data_020c18bc.mUnk_27c[i] << 8;
-                data_020c18bc.mUnk_27c[i] = 0;
+            } else if (gSystemState.mUnk_27c[i] != 0) {
+                *regs[i] |= gSystemState.mUnk_27c[i] << 8;
+                gSystemState.mUnk_27c[i] = 0;
             }
         }
-        if ((data_020c18bc.mUnk_46c & 0xc0000) && data_020c18bc.mUnk_250.mUnk_28[0] != 0) {
-            func_02039830(data_020c18bc.mUnk_290 + 9, 0, 0x7e, 0x61, 0x41, 1, layer);
+        if ((gSystemState.mFlags & 0xc0000) && gSystemState.mUnk_250.mUnk_28[0] != 0) {
+            func_02039830(gSystemState.mUnk_290 + 9, 0, 0x7e, 0x61, 0x41, 1, layer);
         }
-        func_02039830(data_020c18bc.mUnk_290 + 10, 3 - func_0204672c(), 0x7f, attr2, attr0, 0, layer);
+        func_02039830(gSystemState.mUnk_290 + 10, 3 - func_0204672c(), 0x7f, attr2, attr0, 0, layer);
     }
 }
 
 // The screen (1 or 2) that carries the indicator, by bit 2 of mUnk_2a4[0] and the screen flags.
 u32 func_02039a64(void) {
-    if (data_020c18bc.mUnk_2a4[0] & 4) {
-        return (data_020c18bc.mUnk_46c & 2) ? 2 : 1;
+    if (gSystemState.mUnk_2a4[0] & 4) {
+        return (gSystemState.mFlags & 2) ? 2 : 1;
     }
-    return (data_020c18bc.mUnk_46c & 1) ? 1 : 2;
+    return (gSystemState.mFlags & 1) ? 1 : 2;
 }
 
 // While the link is flagged, draws an object (through func_02039908 when the 0x200 flag is set) and calls the hook;
@@ -146,7 +146,7 @@ void func_02039a94(void) {
     int col;
     int row;
 
-    if (!data_020c18bc.mUnk_2a6_0 && !data_020c18bc.mUnk_2a6_1) {
+    if (!gSystemState.mUnk_2a6_0 && !gSystemState.mUnk_2a6_1) {
         return;
     }
     if (func_02046380() != 0) {
@@ -155,23 +155,23 @@ void func_02039a94(void) {
     {
         u8 colors[8] = {0, 0, 0xf0, 0, 0xf0, 0xb0, 0, 0xb0};
 
-        x = colors[(data_020c18bc.mUnk_2a4[0] & 3) * 2];
-        y = colors[(data_020c18bc.mUnk_2a4[0] & 3) * 2 + 1];
+        x = colors[(gSystemState.mUnk_2a4[0] & 3) * 2];
+        y = colors[(gSystemState.mUnk_2a4[0] & 3) * 2 + 1];
     }
     screen = func_02039a64();
     level = 3 - func_0204672c();
-    if (data_020c18bc.mUnk_46c & 3) {
-        if (data_020c18bc.mUnk_46c & 0x200) {
+    if (gSystemState.mFlags & 3) {
+        if (gSystemState.mFlags & 0x200) {
             func_02039908(x, y, screen);
         } else {
-            func_0202cf08(data_020c18bc.mUnk_290 + level, x, y, 0, screen);
+            func_0202cf08(gSystemState.mUnk_290 + level, x, y, 0, screen);
         }
-        if (data_020c18bc.mUnk_240 != 0) {
-            data_020c18bc.mUnk_240();
+        if (gSystemState.mUnk_240 != 0) {
+            gSystemState.mUnk_240();
         }
-        func_0201c4f0(&data_020c18bc.mUnk_284);
+        Free(&gSystemState.mUnk_284);
     } else {
-        src = data_020c18bc.mUnk_284;
+        src = gSystemState.mUnk_284;
         if (src == 0) {
             return;
         }
@@ -192,7 +192,7 @@ void func_02039b70(void) {
     char spin[4] = {'-', '\\', '|', '/'};
     u16 buf[1000];
 
-    data_020c18bc.mUnk_2a3 = 60;
+    gSystemState.mUnk_2a3 = 60;
     if (func_020465b0(buf) == 0 && buf[0] == 3) {
         func_02039c88(LINK_STEP_STATUS, 0x78);
     }
@@ -203,10 +203,10 @@ void func_02039b70(void) {
 // 1 and drops the result (the compiler does not optimise a function that uses the 32-byte aligned data_020c9e00, so
 // the test stays).
 void func_02039ba8(void) {
-    data_020c18bc.mUnk_2a3 = 60;
+    gSystemState.mUnk_2a3 = 60;
     func_02021fa8("WIR Shut Down\n");
-    (void) ((data_020c18bc.mUnk_2a4[1] >= 1) ? 0 : 0);
-    if ((data_020c18bc.mUnk_46c & 0x600) || data_020c18bc.mUnk_2a4[1] >= 1) {
+    (void) ((gSystemState.mUnk_2a4[1] >= 1) ? 0 : 0);
+    if ((gSystemState.mFlags & 0x600) || gSystemState.mUnk_2a4[1] >= 1) {
         if (func_0204684c(func_02039d98) == 2) {
             func_02039c88(LINK_STEP_PARENT, 0x2d0);
         }
@@ -214,33 +214,33 @@ void func_02039ba8(void) {
             func_02039c88(LINK_STEP_CHILD, 0x3c);
         }
     }
-    data_020c18bc.mUnk_2a4[1] = -1;
-    data_020c18bc.mUnk_2a6_0 = 0;
-    data_020c18bc.mUnk_2a6_1 = 0;
-    data_020c18bc.mUnk_250.mUnk_08 = 0;
-    func_0201c4f0(&data_020c9e00.mUnk_08);
-    func_0201c4f0(&data_020c9e00.mUnk_0c);
-    func_0201c4f0(&data_020c9e00.mUnk_14);
-    func_0201c4f0(&data_020c9e00.mUnk_1c);
-    func_0201c4f0(&data_020c9e00.mUnk_10);
-    func_0201c4f0(&data_020c9e00.mUnk_18);
+    gSystemState.mUnk_2a4[1] = -1;
+    gSystemState.mUnk_2a6_0 = 0;
+    gSystemState.mUnk_2a6_1 = 0;
+    gSystemState.mUnk_250.mUnk_08 = 0;
+    Free(&data_020c9e00.mUnk_08);
+    Free(&data_020c9e00.mUnk_0c);
+    Free(&data_020c9e00.mUnk_14);
+    Free(&data_020c9e00.mUnk_1c);
+    Free(&data_020c9e00.mUnk_10);
+    Free(&data_020c9e00.mUnk_18);
     data_020c9e00.mUnk_04 = 0;
-    data_020c18bc.mUnk_46c &= ~0x400;
+    gSystemState.mFlags &= ~0x400;
 }
 
 // Waits until a step in `mask` has finished (a bit set by the callbacks below), calling the system frame function
 // whenever the frame counter changes; gives up and returns FALSE after `timeout` frames. Clears the bits on success.
 BOOL func_02039c88(u32 mask, u32 timeout) {
-    u32 start = data_020c18bc.mUnk_45c;
-    u32 last = data_020c18bc.mUnk_45c;
+    u32 start = gSystemState.mElapsedFrames;
+    u32 last = gSystemState.mElapsedFrames;
 
     if (!(data_020c9e00.mUnk_04 & mask)) {
         do {
-            if (data_020c18bc.mUnk_45c != last) {
-                func_0201bb40(3);
-                last = data_020c18bc.mUnk_45c;
+            if (gSystemState.mElapsedFrames != last) {
+                UpdateSystem(3);
+                last = gSystemState.mElapsedFrames;
             }
-            if (data_020c18bc.mUnk_45c - start > timeout) {
+            if (gSystemState.mElapsedFrames - start > timeout) {
                 return FALSE;
             }
         } while (!(data_020c9e00.mUnk_04 & mask));
@@ -255,17 +255,17 @@ u8 *func_02039cd4(u32 size) {
     u32 pos;
     u8 *p;
 
-    if (data_020c18bc.mUnk_2a4[1] > 1) {
-        pos = data_020c18bc.mUnk_296;
+    if (gSystemState.mUnk_2a4[1] > 1) {
+        pos = gSystemState.mUnk_296;
         if (pos + size <= 0x54) {
-            if (data_020c18bc.mUnk_46c & 0x600) {
+            if (gSystemState.mFlags & 0x600) {
                 p = data_020c67e0;
             } else {
                 p = data_020c9e00.mUnk_18;
             }
             p += pos;
             p[1] = size;
-            data_020c18bc.mUnk_296 += size;
+            gSystemState.mUnk_296 += size;
             return p;
         }
     }
@@ -276,14 +276,14 @@ u8 *func_02039cd4(u32 size) {
 void func_02039d24(void) {
     u8 *p;
 
-    if (data_020c18bc.mUnk_2a4[1] > 1) {
+    if (gSystemState.mUnk_2a4[1] > 1) {
         p = func_02039cd4(2);
         if (p != 0) {
             p[0] = 0xff;
             p[1] = 0;
         }
-        data_020c18bc.mUnk_296 = 0;
-        if (!(data_020c18bc.mUnk_46c & 0x600)) {
+        gSystemState.mUnk_296 = 0;
+        if (!(gSystemState.mFlags & 0x600)) {
             MIi_CpuCopyFast(data_020c9e00.mUnk_18, data_020c9e00.mUnk_10, 0x200);
         }
     }

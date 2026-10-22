@@ -14,13 +14,13 @@ u8 data_020c68e0[0x1fc] __attribute__((aligned(32)));
 #pragma thumb off
 
 void func_02001000(void) {
-    func_0201c4f0(&data_020c66d4->mUnk_8);
-    func_0201c4f0(&data_020c18bc.mUnk_250.mUnk_24);
-    memset(&data_020c18bc.mUnk_250, 0, 0x2c);
-    data_020c18bc.mUnk_2a2 = 0;
-    data_020c18bc.mUnk_2a8 = 0;
-    data_020c18bc.mUnk_296 = 0;
-    data_020c18bc.mUnk_292 = 0;
+    Free(&data_020c66d4->mUnk_8);
+    Free(&gSystemState.mUnk_250.mUnk_24);
+    memset(&gSystemState.mUnk_250, 0, 0x2c);
+    gSystemState.mUnk_2a2 = 0;
+    gSystemState.mUnk_2a8 = 0;
+    gSystemState.mUnk_296 = 0;
+    gSystemState.mUnk_292 = 0;
     memset(data_020c67e0, 0, 0xfe);
     memset(data_020c68e0, 0, 0x1fc);
     memset(data_020c66e0, 0, 0x40);
@@ -29,16 +29,16 @@ void func_02001000(void) {
 }
 
 BOOL func_020010b4(u32 timeout) {
-    u32 start = data_020c18bc.mUnk_45c;
-    u32 last = data_020c18bc.mUnk_45c;
+    u32 start = gSystemState.mElapsedFrames;
+    u32 last = gSystemState.mElapsedFrames;
 
     if (func_020350f8() != 0) {
         do {
-            if (data_020c18bc.mUnk_45c != last) {
-                func_0201bb40(3);
-                last = data_020c18bc.mUnk_45c;
+            if (gSystemState.mElapsedFrames != last) {
+                UpdateSystem(3);
+                last = gSystemState.mElapsedFrames;
             }
-            if (data_020c18bc.mUnk_45c - start > timeout) {
+            if (gSystemState.mElapsedFrames - start > timeout) {
                 return FALSE;
             }
         } while (func_020350f8() != 0);
@@ -47,8 +47,8 @@ BOOL func_020010b4(u32 timeout) {
 }
 
 void func_02001120(void) {
-    data_020c18bc.mUnk_2a6_1 = 0;
-    data_020c18bc.mUnk_2a3 = 0x10;
+    gSystemState.mUnk_2a6_1 = 0;
+    gSystemState.mUnk_2a3 = 0x10;
     if (func_020350f8() != 5 && func_020350f8() != 0) {
         func_020350a0();
         func_020010b4(0x3c);
@@ -60,7 +60,7 @@ void func_02001120(void) {
 void func_02001170(void) {
     switch (func_0203946c()) {
         case 1:
-            func_0203947c(4, data_020c18bc.mUnk_294 + 1, data_020c66d4->mUnk_0);
+            func_0203947c(4, gSystemState.mUnk_294 + 1, data_020c66d4->mUnk_0);
             break;
         case 4:
         case 5:

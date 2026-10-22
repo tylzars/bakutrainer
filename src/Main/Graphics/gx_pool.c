@@ -20,23 +20,23 @@ typedef struct Unk_TexHeader {
 void func_02021fb0(int a, int b, int c, int d) {
     int v;
     Unk_TexHeader hdr;
-    if (data_020c18bc.mUnk_46c & POOL_FLAG) {
+    if (gSystemState.mFlags & POOL_FLAG) {
         return;
     }
     *(vu16 *) 0x04000304 |= 0xc;
     G3X_Init();
     G3X_InitMtxStack();
-    func_0201ebf4(10, c, -1);
-    func_0201ebf4(11, d, -1);
-    data_020c31dc.mUnk_62 = (data_020c18bc.mUnk_070.mUnk_2c << 14) / 512;
-    data_020c31dc.mUnk_64 = (data_020c18bc.mUnk_040.mUnk_2c << 14) / 32;
+    ReallocVramBanks(10, c, -1);
+    ReallocVramBanks(11, d, -1);
+    data_020c31dc.mUnk_62 = (gSystemState.mTexVramGroup.mSize16Kb << 14) / 512;
+    data_020c31dc.mUnk_64 = (gSystemState.mPlttVramGroup.mSize16Kb << 14) / 32;
     *(vu32 *) 0x04000060 |= 9;
     data_020c31dc.mUnk_54 = a;
     data_020c31dc.mUnk_56 = b;
-    v = func_0202e988(a);
+    v = FindCachedFile(a);
     if (v < 0) {
-        func_0201d9a8(-v);
-        func_0201d9d4(&hdr, 8);
+        SeekBank(-v);
+        ReadBank(&hdr, 8);
     } else {
         hdr.mUnk_0 = ((Unk_TexHeader *) v)->mUnk_0;
         hdr.mUnk_4 = ((Unk_TexHeader *) v)->mUnk_4;
@@ -44,23 +44,23 @@ void func_02021fb0(int a, int b, int c, int d) {
     if (hdr.mUnk_0 != TEX_MAGIC) {
         OS_Terminate();
     }
-    data_020c31dc.mUnk_58 = (func_0202e760(a) - hdr.mUnk_4) >> 2;
-    v = func_0202e988(b);
+    data_020c31dc.mUnk_58 = (GetStoredFileSize(a) - hdr.mUnk_4) >> 2;
+    v = FindCachedFile(b);
     if (v < 0) {
-        func_0201d9a8(4 - v);
-        func_0201d9d4(&v, 4);
+        SeekBank(4 - v);
+        ReadBank(&v, 4);
     } else {
         v = ((Unk_TexHeader *) v)->mUnk_4;
     }
-    data_020c31dc.mUnk_5a = (func_0202e760(b) - v) >> 2;
+    data_020c31dc.mUnk_5a = (GetStoredFileSize(b) - v) >> 2;
     data_020c31dc.mUnk_46 = 0xff;
     func_02022120();
     func_0202224c();
-    data_020c18bc.mUnk_46c |= POOL_FLAG;
+    gSystemState.mFlags |= POOL_FLAG;
 }
 
 void func_020220c8(int a) {
-    u16 *p = func_0202ded8(a);
+    u16 *p = FindOrLoadCachedFile(a);
     if (p[0] != 0x5645) {
         OS_Terminate();
     }
@@ -81,19 +81,19 @@ void func_020220c8(int a) {
 
 void func_02022120(void) {
     int i;
-    if (data_020c18bc.mUnk_46c & POOL_FLAG) {
-        func_0201c4f0(&data_020c31dc.mUnk_04);
-        func_0201c4f0(&data_020c31dc.mUnk_00);
-        func_0201c4f0(&data_020c31dc.mUnk_08);
+    if (gSystemState.mFlags & POOL_FLAG) {
+        Free(&data_020c31dc.mUnk_04);
+        Free(&data_020c31dc.mUnk_00);
+        Free(&data_020c31dc.mUnk_08);
     }
-    data_020c31dc.mUnk_04 = func_0201c430(0x2000);
-    data_020c31dc.mUnk_00 = func_0201c430(0x2be0);
+    data_020c31dc.mUnk_04 = Alloc(0x2000);
+    data_020c31dc.mUnk_00 = Alloc(0x2be0);
     data_020c31dc.mUnk_00[0].mUnk_0a = 1;
     data_020c31dc.mUnk_00[1].mUnk_0c = 0;
     data_020c31dc.mUnk_00[1].mUnk_0a = 2;
     data_020c31dc.mUnk_60 = 0;
-    data_020c18bc.mUnk_2bc = 0;
-    data_020c18bc.mUnk_2b8 = 0;
+    gSystemState.mUnk_2bc = 0;
+    gSystemState.mUnk_2b8 = 0;
     for (i = data_020c31dc.mUnk_00[1].mUnk_0a; i < 0x2bd; i++) {
         data_020c31dc.mUnk_00[i].mUnk_0a = i + 1;
     }
@@ -101,8 +101,8 @@ void func_02022120(void) {
     for (i = 0; i < 0x400; i++) {
         data_020c31dc.mUnk_04[i].mUnk_00 = -1;
     }
-    data_020c31dc.mUnk_08 = func_0201c430((data_020c31dc.mUnk_62 + 2) * 8);
-    data_020c31dc.mUnk_08[0].mUnk_0 = (data_020c18bc.mUnk_070.mUnk_2c << 14) / 512;
+    data_020c31dc.mUnk_08 = Alloc((data_020c31dc.mUnk_62 + 2) * 8);
+    data_020c31dc.mUnk_08[0].mUnk_0 = (gSystemState.mTexVramGroup.mSize16Kb << 14) / 512;
     data_020c31dc.mUnk_08[0].mUnk_6 = 0xffff;
     data_020c31dc.mUnk_08[0].mUnk_2 = data_020c31dc.mUnk_08[0].mUnk_0;
     data_020c31dc.mUnk_08[0].mUnk_4 = data_020c31dc.mUnk_08[0].mUnk_0 + 1;
@@ -118,19 +118,19 @@ void func_02022120(void) {
 
 void func_0202224c(void) {
     int i;
-    if (data_020c18bc.mUnk_46c & POOL_FLAG) {
-        func_0201c4f0(&data_020c31dc.mUnk_10);
-        func_0201c4f0(&data_020c31dc.mUnk_0c);
-        func_0201c4f0(&data_020c31dc.mUnk_14);
+    if (gSystemState.mFlags & POOL_FLAG) {
+        Free(&data_020c31dc.mUnk_10);
+        Free(&data_020c31dc.mUnk_0c);
+        Free(&data_020c31dc.mUnk_14);
     }
-    data_020c31dc.mUnk_10 = func_0201c430(0x800);
-    data_020c31dc.mUnk_0c = func_0201c430(0xca0);
+    data_020c31dc.mUnk_10 = Alloc(0x800);
+    data_020c31dc.mUnk_0c = Alloc(0xca0);
     data_020c31dc.mUnk_0c[0].mUnk_0a = 1;
     data_020c31dc.mUnk_0c[1].mUnk_0c = 0;
     data_020c31dc.mUnk_0c[1].mUnk_0a = 2;
     data_020c31dc.mUnk_5e = 0;
-    data_020c18bc.mUnk_2c4 = 0;
-    data_020c18bc.mUnk_2c0 = 0;
+    gSystemState.mUnk_2c4 = 0;
+    gSystemState.mUnk_2c0 = 0;
     for (i = data_020c31dc.mUnk_0c[1].mUnk_0a; i < 0xc9; i++) {
         data_020c31dc.mUnk_0c[i].mUnk_0a = i + 1;
     }
@@ -138,8 +138,8 @@ void func_0202224c(void) {
     for (i = 0; i < 0x100; i++) {
         data_020c31dc.mUnk_10[i].mUnk_00 = -1;
     }
-    data_020c31dc.mUnk_14 = func_0201c430((data_020c31dc.mUnk_64 + 2) * 8);
-    data_020c31dc.mUnk_14[0].mUnk_0 = (data_020c18bc.mUnk_040.mUnk_2c << 14) / 32;
+    data_020c31dc.mUnk_14 = Alloc((data_020c31dc.mUnk_64 + 2) * 8);
+    data_020c31dc.mUnk_14[0].mUnk_0 = (gSystemState.mPlttVramGroup.mSize16Kb << 14) / 32;
     data_020c31dc.mUnk_14[0].mUnk_6 = 0xffff;
     data_020c31dc.mUnk_14[0].mUnk_2 = data_020c31dc.mUnk_14[0].mUnk_0;
     data_020c31dc.mUnk_14[0].mUnk_4 = data_020c31dc.mUnk_14[0].mUnk_0 + 1;
@@ -152,16 +152,16 @@ void func_0202224c(void) {
 }
 
 void func_02022370(void) {
-    if (data_020c18bc.mUnk_46c & POOL_FLAG) {
-        data_020c18bc.mUnk_46c &= ~POOL_FLAG;
-        func_0201c4f0(&data_020c31dc.mUnk_04);
-        func_0201c4f0(&data_020c31dc.mUnk_00);
-        func_0201c4f0(&data_020c31dc.mUnk_08);
-        func_0201c4f0(&data_020c31dc.mUnk_14);
-        func_0201c4f0(&data_020c31dc.mUnk_10);
-        func_0201c4f0(&data_020c31dc.mUnk_0c);
-        func_0201eb74(10);
-        func_0201eb74(11);
+    if (gSystemState.mFlags & POOL_FLAG) {
+        gSystemState.mFlags &= ~POOL_FLAG;
+        Free(&data_020c31dc.mUnk_04);
+        Free(&data_020c31dc.mUnk_00);
+        Free(&data_020c31dc.mUnk_08);
+        Free(&data_020c31dc.mUnk_14);
+        Free(&data_020c31dc.mUnk_10);
+        Free(&data_020c31dc.mUnk_0c);
+        FreeVramBanks(10);
+        FreeVramBanks(11);
         data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_4a = 0xff;
         *(vu16 *) 0x04000304 &= ~0xc;
     }

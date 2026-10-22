@@ -206,8 +206,8 @@ void func_020388d4(Unk_WirelessMsg *msg) {
             if (data_020c8380.mUnk_30 != 0) {
                 data_020c8380.mUnk_30("StartParent - child (aid 0x%x) disconnected\n", msg->mUnk_10);
             }
-            if (data_020c18bc.mUnk_230 != 0) {
-                data_020c18bc.mUnk_230(msg->mUnk_10);
+            if (gSystemState.mUnk_230 != 0) {
+                gSystemState.mUnk_230(msg->mUnk_10);
             }
             data_020c8380.mUnk_02 &= ~bit;
             return;
@@ -442,21 +442,21 @@ void func_02038f04(Unk_WirelessMsg *msg) {
     if (msg->mUnk_02 != 0) {
         func_02038724(msg->mUnk_02);
         if (msg->mUnk_02 == 12) {
-            data_020c18bc.mUnk_46c |= 0x100;
+            gSystemState.mFlags |= 0x100;
             func_020386c0(WH_SYSSTATE_ERROR);
             return;
         }
         if (msg->mUnk_02 == 11) {
-            data_020c18bc.mUnk_46c |= 0x100;
+            gSystemState.mFlags |= 0x100;
             func_020386c0(WH_SYSSTATE_ERROR);
             return;
         }
         if (msg->mUnk_02 == 1) {
-            data_020c18bc.mUnk_46c |= 0x100;
+            gSystemState.mFlags |= 0x100;
             func_020386c0(WH_SYSSTATE_CONNECT_FAIL);
             return;
         }
-        data_020c18bc.mUnk_46c |= 0x100;
+        gSystemState.mFlags |= 0x100;
         func_020386c0(WH_SYSSTATE_ERROR);
         return;
     }
@@ -487,11 +487,11 @@ void func_02038f04(Unk_WirelessMsg *msg) {
         }
         func_02038724(20);
         func_020386c0(WH_SYSSTATE_ERROR);
-        data_020c18bc.mUnk_46c |= 0x100;
+        gSystemState.mFlags |= 0x100;
         return;
     }
     if (msg->mUnk_08 == WM_STATECODE_DISCONNECTED_FROM_MYSELF) {
-        data_020c18bc.mUnk_46c |= 0x100;
+        gSystemState.mFlags |= 0x100;
         return;
     }
     if (data_020c8380.mUnk_30 != 0) {
@@ -826,4 +826,3 @@ void func_02039728(void) {
 u16 func_0203981c(void) {
     return data_020c8380.mUnk_04;
 }
-

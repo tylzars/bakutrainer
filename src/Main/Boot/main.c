@@ -17,29 +17,29 @@
 #include <nitro/init.h>
 
 void main(void) {
-    GameFlow *flow = &data_020b1194;
+    GameFlow *flow = &gGameFlow;
     int i;
 
-    data_020c18bc.mUnk_46c = 0;
+    gSystemState.mFlags = 0;
     if (*(vu16 *) 0x027ffc40 != 2) {
-        data_020c18bc.mUnk_2a7 = 0;
-        func_0201b7e0(0xfa);
-        func_0201eb20();
+        gSystemState.mUnk_2a7 = 0;
+        InitSystem(0xfa);
+        ResetVramBanks();
     }
-    data_020c18bc.mUnk_46c |= 0x10820000;
-    func_0201f880(3);
+    gSystemState.mFlags |= 0x10820000;
+    SetFaded(3);
     func_02010d34();
     if (*(vu16 *) 0x027ffc40 != 2) {
-        func_0202002c(0xfba, 0xd01, 2, 0x1c6, func_02010648, -1);
+        InitSaveStore(SAVE_BLOCK_ID, SAVE_STORE_LARGE, 2, 0x1c6, func_02010648, -1);
         func_02010c94();
-        func_02020348();
+        ClearBackupTimer();
     }
-    data_020c18bc.mUnk_310 = 0x40;
-    data_020c18bc.mUnk_493 = 1;
-    data_020c18bc.mUnk_494 = 1;
+    gSystemState.mUnk_310 = 0x40;
+    gSystemState.mUnk_493 = 1;
+    gSystemState.mUnk_494 = 1;
     func_0202f00c();
-    func_02010388(0, 0x80);
-    func_0200fa24();
+    InitSoundCtl(0, 0x80);
+    InitGameFlow();
     func_0200d6c8();
     func_0200dacc();
     func_020143f4();
@@ -48,31 +48,31 @@ void main(void) {
     data_020b6ee0.mUnk_a91b = 0;
     func_0200dbac();
     data_020b6ee0.mUnk_a91a = 1;
-    func_0200fa80(1);
-    func_0200fab0();
+    PushState(1);
+    PopState();
 
     while (1) {
-        while (flow->mState != flow->mNextState || flow->mUnk_10 == 1) {
-            flow->mUnk_10 = 0;
-            if (data_0204e908[flow->mState] != NULL) {
-                data_0204e908[flow->mState]();
+        while (flow->mState != flow->mNextState || flow->mReenterRequested == 1) {
+            flow->mReenterRequested = 0;
+            if (gStateLeaveFuncs[flow->mState] != NULL) {
+                gStateLeaveFuncs[flow->mState]();
             }
             if (flow->mNextState >= STATE_COUNT) {
                 OS_Terminate();
             }
             flow->mPrevState = flow->mState;
             flow->mState = flow->mNextState;
-            flow->mUnk_94 = 0;
-            if (data_0204e840[flow->mState] != NULL) {
-                data_0204e840[flow->mState]();
+            flow->mStateFlag = 0;
+            if (gStateEnterFuncs[flow->mState] != NULL) {
+                gStateEnterFuncs[flow->mState]();
             }
         }
-        if (data_0204e8a4[flow->mState] == NULL) {
+        if (gStateUpdateFuncs[flow->mState] == NULL) {
             OS_Terminate();
         }
-        data_0204e8a4[flow->mState]();
-        if (data_0204e824[flow->mState] != 0 && (data_020c18bc.mUnk_12 & 8)) {
-            func_0201004c();
+        gStateUpdateFuncs[flow->mState]();
+        if (gStatePromptScreenEnabled[flow->mState] != 0 && (gSystemState.mKeysPressed & 8)) {
+            RunPromptScreen();
         }
         func_020149e0();
         func_020145bc();
@@ -80,7 +80,7 @@ void main(void) {
         func_0200daf8();
         flow->mFrame++;
         func_0202f200();
-        func_020103c0();
-        func_0201bb30();
+        UpdateSoundCtl();
+        UpdateSystemAndWait();
     }
 }

@@ -42,12 +42,12 @@ const u8 battle_unused1[8] = {0};
 void func_020071a8(void) {}
 
 void func_020071ac(void) {
-    func_02020944(0x190, 0, 0xa2, 0, 0, 0xd5, 0, 0x17d);
+    AddTouchButtonWithSounds(0x190, 0, 0xa2, 0, 0, 0xd5, 0, 0x17d);
     func_0202cf08((data_020c1d60.mUnk_800.mUnk_100.mUnk_04 == 0x40000190) + 0xd5, 0, 0xa2, 0x8e, 2);
 }
 
 void func_020071f8(void) {
-    func_02020944(0xc8, 0xff, 0xa2, 0, 0, 0x15, 0, 0x17d);
+    AddTouchButtonWithSounds(0xc8, 0xff, 0xa2, 0, 0, 0x15, 0, 0x17d);
     func_0202cf08((data_020c1d60.mUnk_800.mUnk_100.mUnk_04 == 0x400000c8) + 0x15, 0xff, 0xa2, 0x8e, 2);
 }
 
@@ -78,11 +78,11 @@ void func_020072a8(void) {
         data_020b6ee0.mModel[1].mUnk_152 = data_020b6ee0.mModel[1].mUnk_14c;
         data_020b6ee0.mModel[1].mUnk_172 |= 0x80;
         func_0202733c(&data_020b6ee0.mModel[1], &data_020b6ee0.mUnk_f9c, flags);
-        func_020105f4(&data_020b6ee0.mModel[1]);
+        PlayObjectSe(&data_020b6ee0.mModel[1]);
     }
     data_020b6ee0.mModel[0].mUnk_172 |= 0x80;
     func_0202733c(&data_020b6ee0.mModel[0], &data_020b6ee0.mUnk_f9c, flags);
-    func_020105f4(&data_020b6ee0.mModel[0]);
+    PlayObjectSe(&data_020b6ee0.mModel[0]);
     if (data_020b6ee0.mModel[0].mUnk_022 >= 0) {
         func_02007a1c(data_020b6ee0.mModel[0].mUnk_022);
         data_020b6ee0.mModel[0].mUnk_022 = -1;
@@ -133,13 +133,13 @@ void func_020074ac(void) {
     u16 b[6] = {0xf88, 0xf4a, 0xf99, 0xf77, 0xf66, 0xfa9};
     int sel;
     u32 i;
-    func_0201eb20();
+    ResetVramBanks();
     func_0202c1c4();
     func_02022370();
     func_0202bdd8(0x10cb, 0x10ca, 0x10cc, 0x80, 1);
     func_0202bdd8(0x10cb, 0x10ca, 0x10cc, 0x82, 2);
     func_02021fb0(0x1c7, 0x1c6, 0x100, 16);
-    func_02020854(1);
+    SetLcdSwap(1);
     {
         BOOL ok = 0;
         if (data_020b6ee0.mUnk_a534 >= 0 && data_020b6ee0.mUnk_a534 < 25) {
@@ -153,9 +153,9 @@ void func_020074ac(void) {
     if (!((u32) sel < 6)) {
         OS_Terminate();
     }
-    func_0201dde0(sel + 0xf5f, 2);
+    LoadImage(sel + 0xf5f, 2);
     func_02024208();
-    func_020104c0(1, 0x4c);
+    RequestTrack(1, 0x4c);
     data_020b6ee0.mUnk_fe0 = 21;
     data_020b6ee0.mUnk_fe2 = 0;
     data_020b6ee0.mUnk_fe4 = 0;
@@ -386,7 +386,7 @@ int func_02007b18(int side, int row) {
         case 3:
         case 4:
             if (other->mUnk_15 == 1 && data_02098d84.mState.mUnk_15 < 2) {
-                result = myPower + func_0201fb74(data_020b6ee0.mUnk_a534, 25, 40, 150) * 3;
+                result = myPower + MapRangeFromZero(data_020b6ee0.mUnk_a534, 25, 40, 150) * 3;
             }
             break;
         case 5:
@@ -619,8 +619,8 @@ void func_02007fa4(int which, int flag) {
 }
 
 void func_02007ffc(u16 *a, u16 *b) {
-    int x = func_0201fb74(*a, 0x4000, 150, 0);
-    int y = func_0201fb74(*b, 0x4000, 150, 0);
+    int x = MapRangeFromZero(*a, 0x4000, 150, 0);
+    int y = MapRangeFromZero(*b, 0x4000, 150, 0);
     int z = func_02014538(data_020b6ee0.mUnk_a534, 7);
     func_0202cf08(0x1195, x + 255, 44, 150, 2);
     func_0202cf08(0x1196, x + 255, 55, 150, 2);
@@ -634,28 +634,28 @@ void func_02008090(StageInfo *info) {
     char textBuf[8];
     func_020079cc(info);
     func_0202cf08(0x801082 + info->mUnk_10, 0, 30, 150, 1);
-    func_020215fc(5, 19, data_0201a61c, func_0200f9f0(info->mUnk_13 + 98), 0, 250, 0, 1);
+    func_020215fc(5, 19, data_0201a61c, GetText(info->mUnk_13 + 98), 0, 250, 0, 1);
     func_0202cf08(0x80113f, 5, 191, 150, 1);
     func_0202cf08(0xf8d, 0, 121, 250, 1);
-    func_020215fc(37, 131, data_0201a61c, func_0200f9f0(13), 2, 250, 0, 1);
+    func_020215fc(37, 131, data_0201a61c, GetText(13), 2, 250, 0, 1);
     func_0202cf08(0xf4a, 39, 163, 250, 1);
     func_0202cf08(0xf4a + info->mUnk_11, 39, 163, 250, 1);
     func_0202cf08(0xf38, 71, 139, 148, 1);
-    func_020215fc(133, 131, data_0201a61c, func_0200f9f0(24), 2, 250, 0, 1);
+    func_020215fc(133, 131, data_0201a61c, GetText(24), 2, 250, 0, 1);
     func_0202cf08(0xf42 + info->mUnk_10, 116, 170, 250, 1);
-    *func_0201fc08(func_020079cc(info), numBuf) = 0;
+    *FormatDecimal(func_020079cc(info), numBuf) = 0;
     func_020215fc(116, 170, data_0201a694, numBuf, 0, 250, 10, 1);
     if (func_020150c0(info)) {
-        func_0202cf08(0xf57 + (data_020c18bc.mUnk_45c % 60 <= 3), 130, 187, 140, 1);
+        func_0202cf08(0xf57 + (gSystemState.mElapsedFrames % 60 <= 3), 130, 187, 140, 1);
     }
     sprintf(textBuf, "+%d", func_020077d0(info));
     func_020215fc(190, 164, data_0201a68a, textBuf, 0, 250, 10, 1);
-    func_020215fc(232, 179, data_0201a61c, func_0200f9f0(15), 1, 250, 0, 1);
+    func_020215fc(232, 179, data_0201a61c, GetText(15), 1, 250, 0, 1);
     func_0202cf08(func_02021e44(0x10d5, info->mUnk_10 * 2 + 3) + 0xf32, 242, 175, 248, 1);
 }
 
 void func_0200827c(void) {
-    func_0200fb50(1);
+    SetStateFlag(1);
 }
 
 void func_02008288(void) {
@@ -675,7 +675,7 @@ void func_02008288(void) {
     hp[1] = func_020079a0(pb);
     func_02007ffc(&data_020b6ee0.mUnk_fe2, &data_020b6ee0.mUnk_fe4);
     if (data_020b6ee0.mUnk_fee == 0x4000) {
-        func_0201fb5c(&data_020b6ee0.mUnk_ff0, 400);
+        AddLevel(&data_020b6ee0.mUnk_ff0, 400);
     } else if (data_020b6ee0.mUnk_fee != 0) {
         if (hp[0] > hp[1]) {
             if (data_020b1524[sideB].mUnk_04 > -5000) {
@@ -715,22 +715,22 @@ void func_02008288(void) {
         info = &data_02098d84.mSide[0];
         for (; i < 2; info++, i++) {
             if (hp[i] > hp[i ^ 1] || data_020b6ee0.mUnk_fee < 10) {
-                x = func_0201fb74(data_020b6ee0.mUnk_ff0, 0x4000, startX[i], info->mUnk_17);
-                y = func_0201fb74(data_020b6ee0.mUnk_ff0, 0x4000, startY[i], info->mUnk_18);
+                x = MapRangeFromZero(data_020b6ee0.mUnk_ff0, 0x4000, startX[i], info->mUnk_17);
+                y = MapRangeFromZero(data_020b6ee0.mUnk_ff0, 0x4000, startY[i], info->mUnk_18);
                 func_0202cf08(info->mUnk_13 + ((i == 1 ? 0x10000 : 0) + 0x1089), x, y, 250, 2);
                 func_0202cf08(0x41088, x, y, 252, 2);
                 if (data_020b6ee0.mUnk_a6d8[i].mUnk_de == 0) {
                     func_0202cf08(func_0202db1c(&data_020b6ee0.mUnk_a6d8[i]), x, y, 240, 2);
                 }
                 cur[i] = func_020079a0(info);
-                *func_0201fc08(cur[i], text) = 0;
+                *FormatDecimal(cur[i], text) = 0;
                 func_020215fc(x - 10, y - 40, data_0201a6bc, text, 0, 96, 0, 2);
                 func_0202cf08(info->mUnk_10 + 0x11a1, x - 10, y - 40, 240, 2);
                 if (data_02098d84.mState.mUnk_18[i] < 18) {
                     func_0202cf08(data_02098d84.mState.mUnk_18[i]++ / 3 + 0x11a7, x - 10, y - 40, 100, 2);
                 }
             } else {
-                int r = func_0201fb74(data_020b6ee0.mUnk_fee, 0x4000, 0, 20);
+                int r = MapRangeFromZero(data_020b6ee0.mUnk_fee, 0x4000, 0, 20);
                 if (data_020b6ee0.mUnk_fee < 0x4000) {
                     func_0202cf08(r + 0xfec + info->mUnk_10 * 21, startX[i], startY[i], 100, 2);
                     if (r == 1 && data_02098d80 == 0) {
@@ -782,8 +782,8 @@ void func_02008288(void) {
             } else if (phase == 2 && (data_020b6ee0.mModel[0].mUnk_172_10 == 1 ||
                                       data_020c1d60.mUnk_800.mUnk_100.mUnk_04 == 0x20000190)) {
                 int id = func_02014538(data_020b6ee0.mUnk_a534, 7) + 23;
-                func_0201fb5c(&data_020b6ee0.mUnk_fee, 480);
-                func_0201f880(1);
+                AddLevel(&data_020b6ee0.mUnk_fee, 480);
+                SetFaded(1);
                 if (cur[0] <= 0) {
                     id = 11;
                 }
@@ -798,7 +798,7 @@ void func_02008288(void) {
             func_020072a8();
         } else {
             func_0200f898();
-            func_0201fb5c(&data_020b6ee0.mUnk_fee, 480);
+            AddLevel(&data_020b6ee0.mUnk_fee, 480);
         }
     }
     if (data_020b6ee0.mUnk_fee == 0x4000 && data_020b6ee0.mUnk_ff0 == 0x4000) {
@@ -817,12 +817,12 @@ void func_02008288(void) {
         data_020b6ee0.mUnk_fe0 = 0;
         data_02098d84.mState.mUnk_1b = -1;
         data_020b6ee0.mUnk_ff0 = 0;
-        func_0201f880(1);
+        SetFaded(1);
     }
 }
 
 int func_020088d8(StageInfo *info, int mode) {
-    if (info->mUnk_16 == 1 || (mode == 0 && (data_020c18bc.mUnk_12 & 1)) ||
+    if (info->mUnk_16 == 1 || (mode == 0 && (gSystemState.mKeysPressed & 1)) ||
         data_020c1d60.mUnk_800.mUnk_100.mUnk_04 == 0x200000c8 || (mode == 1 && data_020b6ee0.mUnk_ff4++ > 90)) {
         return 1;
     }
@@ -868,24 +868,24 @@ void func_02008994(int side) {
     StageInfo *info;
     StageInfo *other;
 
-    func_0201fb5c(&data_020b6ee0.mUnk_fee, 400);
+    AddLevel(&data_020b6ee0.mUnk_fee, 400);
     active = 0;
     if (data_020b6ee0.mUnk_fee == 0x4000) {
         func_02007ffc(&data_020b6ee0.mUnk_fe2, &data_020b6ee0.mUnk_fe4);
         if (data_020b6ee0.mUnk_ff6 == 0x4000) {
-            func_0201fb5c(&data_020b6ee0.mUnk_ff0, 400);
+            AddLevel(&data_020b6ee0.mUnk_ff0, 400);
             if (data_020b6ee0.mUnk_ff0 < 0x4000) {
-                *(vu16 *) 0x04001052 = func_0201fb74(data_020b6ee0.mUnk_ff0, 0x4000, 0, 16);
+                *(vu16 *) 0x04001052 = MapRangeFromZero(data_020b6ee0.mUnk_ff0, 0x4000, 0, 16);
             } else if (data_020b6ee0.mUnk_ff8 == 0x4000) {
                 int a;
-                func_0201fb24(&data_020b6ee0.mUnk_ff2, 4);
-                a = func_0201fb74(data_020b6ee0.mUnk_ff2, 0x4000, 0, 8);
+                EaseLevel(&data_020b6ee0.mUnk_ff2, 4);
+                a = MapRangeFromZero(data_020b6ee0.mUnk_ff2, 0x4000, 0, 8);
                 *(vu16 *) 0x04001050 = 0x2840;
                 *(vu16 *) 0x04001052 = (a << 8) + 16 - a;
             } else if (data_020b6ee0.mUnk_ff8 == 0) {
                 j = func_020078f8();
                 if (j != -1) {
-                    func_0201f880(1);
+                    SetFaded(1);
                     func_02022120();
                     func_0202224c();
                     func_0200f848(j + 12, 0);
@@ -899,8 +899,8 @@ void func_02008994(int side) {
             } else if (data_020b6ee0.mUnk_ff8 == 1) {
                 func_0200f898();
                 if (func_0200f97c() > 50) {
-                    int t = func_0201fbe4(func_0200f97c() < 100 ? func_0200f97c() : 100, 50, 100, 100, 0);
-                    *func_0201fc08(func_020079a0(&data_02098d84.mSide[data_02098d84.mState.mUnk_1a & 0x7f]),
+                    int t = MapRange(func_0200f97c() < 100 ? func_0200f97c() : 100, 50, 100, 100, 0);
+                    *FormatDecimal(func_020079a0(&data_02098d84.mSide[data_02098d84.mState.mUnk_1a & 0x7f]),
                                    valueText) = 0;
                     func_0202cf08(data_02098d84.mSide[data_02098d84.mState.mUnk_1a & 0x7f].mUnk_10 + 0xf42, 106,
                                   t + 168, 200, 1);
@@ -908,14 +908,14 @@ void func_02008994(int side) {
                     if (func_0200f97c() >= 100) {
                         if (func_0200f97c() <= 250) {
                             data_02098d84.mSide[data_02098d84.mState.mUnk_1a & 0x7f].mUnk_08 =
-                                func_0201fbe4(func_0200f97c(), 100, 250, 0, data_02098d84.mState.mUnk_08);
+                                MapRange(func_0200f97c(), 100, 250, 0, data_02098d84.mState.mUnk_08);
                         } else {
                             if (!(data_02098d84.mState.mUnk_1a & 0x80)) {
                                 func_02007940();
                                 data_02098d84.mState.mUnk_1a |= 0x80;
                             }
                             if (func_0200f95c() == 1) {
-                                func_0201f880(1);
+                                SetFaded(1);
                                 data_020b6ee0.mUnk_ff8 = 0x4000;
                             }
                         }
@@ -927,7 +927,7 @@ void func_02008994(int side) {
                 case 0:
                     func_0200f848(func_02008920(0), 0);
                     data_020b6ee0.mUnk_ffa++;
-                    func_0201f880(1);
+                    SetFaded(1);
                     func_0202f110(func_02008950(0), 100, 0, 64, 0xffff, 0);
                     break;
                 case 1:
@@ -935,7 +935,7 @@ void func_02008994(int side) {
                     if (func_0200f95c() == 1) {
                         data_020b6ee0.mUnk_ffa++;
                         func_02007244(data_02098d84.mSide[data_02098d84.mState.mUnk_14].mUnk_13);
-                        func_0201f880(1);
+                        SetFaded(1);
                     }
                     break;
                 case 2:
@@ -947,7 +947,7 @@ void func_02008994(int side) {
                         data_020c1d60.mUnk_800.mUnk_100.mUnk_04 == 0x20000190) {
                         func_0200f848(func_02008920(1), 0);
                         data_020b6ee0.mUnk_ffa++;
-                        func_0201f880(1);
+                        SetFaded(1);
                         func_0202f110(func_02008950(1), 100, 0, 64, 0xffff, 0);
                     }
                     break;
@@ -956,7 +956,7 @@ void func_02008994(int side) {
                     if (func_0200f95c() == 1) {
                         data_020b6ee0.mUnk_ffa++;
                         func_02007244(data_02098d84.mSide[data_02098d84.mState.mUnk_14 ^ 1].mUnk_13);
-                        func_0201f880(1);
+                        SetFaded(1);
                     }
                     break;
                 case 4:
@@ -967,7 +967,7 @@ void func_02008994(int side) {
                     if (data_020b6ee0.mModel[0].mUnk_172_10 == 1 ||
                         data_020c1d60.mUnk_800.mUnk_100.mUnk_04 == 0x20000190) {
                         data_020b6ee0.mUnk_ffa = 6;
-                        func_0201f880(1);
+                        SetFaded(1);
                         if (data_020b6ee0.mModel[0].mUnk_172_10 == 1 ||
                             data_020c1d60.mUnk_800.mUnk_100.mUnk_04 == 0x20000190) {
                             data_020b6ee0.mUnk_ff6 = 0x4000;
@@ -987,11 +987,11 @@ void func_02008994(int side) {
             flags = 0;
             if (j == data_02098d84.mState.mUnk_0e[i]) {
                 info = &data_02098d84.mSide[i];
-                x = func_0201fb74(data_020b6ee0.mUnk_fee, 0x4000, info->mUnk_17, curX[i]);
-                y = func_0201fb74(data_020b6ee0.mUnk_fee, 0x4000, info->mUnk_18, curY[i]);
+                x = MapRangeFromZero(data_020b6ee0.mUnk_fee, 0x4000, info->mUnk_17, curX[i]);
+                y = MapRangeFromZero(data_020b6ee0.mUnk_fee, 0x4000, info->mUnk_18, curY[i]);
                 if (i == data_02098d84.mState.mUnk_1a ||
                     (data_02098d84.mState.mUnk_18[i] < 18 && data_02098d84.mState.mUnk_10[i] == 1)) {
-                    x += func_0201fd84(-2, 2);
+                    x += RandomRange(-2, 2);
                 }
             } else {
                 info = (i == 0) ? &data_020990e0[j].mInfo : &data_020b1524[j];
@@ -1012,13 +1012,13 @@ void func_02008994(int side) {
             }
             if (j == data_02098d84.mState.mUnk_0e[i]) {
                 if (i == side && data_020b6ee0.mUnk_ff6 == 0x4000) {
-                    int frame = (data_020c18bc.mUnk_45c >> 2) & 7;
+                    int frame = (gSystemState.mElapsedFrames >> 2) & 7;
                     func_0202cf08(frame + 0x11be + (i == 1) * 8, x, y, 251, 2);
                 }
                 if (data_020b6ee0.mUnk_a6d8[i].mUnk_de == 0) {
                     func_0202cf08(func_0202db1c(&data_020b6ee0.mUnk_a6d8[i]), x, y, 240, 2);
                 }
-                *func_0201fc08(func_020079a0(info), numText) = 0;
+                *FormatDecimal(func_020079a0(info), numText) = 0;
                 func_020215fc(x - 10, y - 40, data_0201a6bc, numText, 0, 96, 0, 2);
                 func_0202cf08(info->mUnk_10 + 0x11a1, x - 10, y - 40, 240, 2);
                 if (data_02098d84.mState.mUnk_18[i] < 18) {
@@ -1041,7 +1041,7 @@ void func_02008994(int side) {
                 int slotX = j * 26 + 24;
                 func_02013b48(info, info->mUnk_1c[j], &iconA, &iconB);
                 func_02013c24(info, info->mUnk_1c[j], &baseId, &spriteA, &spriteB, &spriteC, &kind, &kindId);
-                func_02020944(j, baseX + slotX, 141, 0, 0, 0x10b4, 0, (side == 0) ? 0x167 : 0);
+                AddTouchButtonWithSounds(j, baseX + slotX, 141, 0, 0, 0x10b4, 0, (side == 0) ? 0x167 : 0);
                 if (side == 0 || (data_02098d84.mState.mUnk_12 == j && data_020b6ee0.mUnk_ff4 > 10)) {
                     func_0202cf08(iconA, baseX + slotX, 141, 148, 2);
                     func_0202cf08(iconB, baseX + slotX + 8, 137, 146, 2);
@@ -1049,11 +1049,11 @@ void func_02008994(int side) {
                     func_0202cf08(0x1194, baseX + slotX, 141, 148, 2);
                 }
                 if (data_02098d84.mState.mUnk_12 == j && info->mUnk_16 == 0) {
-                    int panelX = func_0201fb74(data_020b6ee0.mUnk_ffc, 0x4000, -50, 53);
-                    int panelY = func_0201fb74(data_020b6ee0.mUnk_ffe, 0x4000, 80, 0);
+                    int panelX = MapRangeFromZero(data_020b6ee0.mUnk_ffc, 0x4000, -50, 53);
+                    int panelY = MapRangeFromZero(data_020b6ee0.mUnk_ffe, 0x4000, 80, 0);
                     int textId0, textId1;
-                    func_0201fb24(&data_020b6ee0.mUnk_ffc, 4);
-                    func_0201fb24(&data_020b6ee0.mUnk_ffe, 4);
+                    EaseLevel(&data_020b6ee0.mUnk_ffc, 4);
+                    EaseLevel(&data_020b6ee0.mUnk_ffe, 4);
                     func_0202cf08(func_0202db1c(&data_020b6ee0.mUnk_a5d4), baseX + slotX, 141, 147, 2);
                     func_0202cf08(spriteA, panelX, 133, 150, 1);
                     func_0202cf08(spriteB, panelX, 133, 140, 1);
@@ -1070,9 +1070,9 @@ void func_02008994(int side) {
                         textId0 = baseId + 138;
                         textId1 = baseId + 155;
                     }
-                    func_020215fc(95, panelY + 147, data_0201a61c, func_0200f9f0(textId0), 0, 240, 16, 1);
+                    func_020215fc(95, panelY + 147, data_0201a61c, GetText(textId0), 0, 240, 16, 1);
                     panelY += 164;
-                    func_020215fc(18, panelY, data_0201a612, func_0200f9f0(textId1), 0, 232, 10, 1);
+                    func_020215fc(18, panelY, data_0201a612, GetText(textId1), 0, 232, 10, 1);
                 }
             }
         }
@@ -1093,14 +1093,14 @@ void func_02008994(int side) {
                 if ((touch & 0x80000000) && pos != 0xffff && pos < 200) {
                     data_02098d84.mState.mUnk_12 = pos;
                 }
-                if (data_020c18bc.mUnk_12 & 0x10) {
+                if (gSystemState.mKeysPressed & 0x10) {
                     do {
                         data_02098d84.mState.mUnk_12++;
                         if (data_02098d84.mState.mUnk_12 == 5) {
                             data_02098d84.mState.mUnk_12 = 0;
                         }
                     } while (info->mUnk_1c[data_02098d84.mState.mUnk_12] == -1);
-                } else if (data_020c18bc.mUnk_12 & 0x20) {
+                } else if (gSystemState.mKeysPressed & 0x20) {
                     do {
                         data_02098d84.mState.mUnk_12--;
                         if (data_02098d84.mState.mUnk_12 < 0) {
@@ -1111,7 +1111,7 @@ void func_02008994(int side) {
                 if (prev != data_02098d84.mState.mUnk_12) {
                     data_020b6ee0.mUnk_ffc = 0;
                 }
-                if (data_020c18bc.mUnk_12 & 2) {
+                if (gSystemState.mKeysPressed & 2) {
                     info->mUnk_16 = 1;
                 }
             } else {
@@ -1186,9 +1186,9 @@ void func_02008994(int side) {
             if (info->mUnk_1c[data_02098d84.mState.mUnk_12] >= 0) {
                 func_020071f8();
             }
-            func_02020944(201, 128, 179, 0, 0, 0x10b2, 0, 0x167);
+            AddTouchButtonWithSounds(201, 128, 179, 0, 0, 0x10b2, 0, 0x167);
             func_0202cf08((data_020c1d60.mUnk_800.mUnk_100.mUnk_04 == 0x400000c9) + 0x10b2, 128, 179, 142, 2);
-            func_020215fc(128, 179, data_0201a61c, func_0200f9f0(61), 2, 250, 0, 2);
+            func_020215fc(128, 179, data_0201a61c, GetText(61), 2, 250, 0, 2);
             if (data_020c1d60.mUnk_800.mUnk_100.mUnk_04 == 0x200000c9) {
                 info->mUnk_16 = 1;
             }
@@ -1226,24 +1226,24 @@ void func_02009728(void) {
         data_020b6ee0.mModel[0].mUnk_172 |= 0x10;
         data_02098d84.mState.mUnk_1b = -2;
     }
-    func_0201fb5c(&data_020b6ee0.mUnk_fee, 400);
+    AddLevel(&data_020b6ee0.mUnk_fee, 400);
     if (data_020b6ee0.mUnk_fee == 0x4000) {
-        func_0201fb5c(&data_020b6ee0.mUnk_ff0, 400);
+        AddLevel(&data_020b6ee0.mUnk_ff0, 400);
         if (data_020b6ee0.mUnk_ff0 < 0x4000) {
-            *(vu16 *) 0x04001052 = func_0201fb74(data_020b6ee0.mUnk_ff0, 0x4000, 0, 16);
+            *(vu16 *) 0x04001052 = MapRangeFromZero(data_020b6ee0.mUnk_ff0, 0x4000, 0, 16);
         } else {
             int level;
-            func_0201fb24(&data_020b6ee0.mUnk_ff2, 4);
-            level = func_0201fb74(data_020b6ee0.mUnk_ff2, 0x4000, 0, 8);
+            EaseLevel(&data_020b6ee0.mUnk_ff2, 4);
+            level = MapRangeFromZero(data_020b6ee0.mUnk_ff2, 0x4000, 0, 8);
             *(vu16 *) 0x04001050 = 0x2840;
             *(vu16 *) 0x04001052 = (level << 8) + 16 - level;
-            func_0201fb5c(&data_020b6ee0.mUnk_fe2, 800);
+            AddLevel(&data_020b6ee0.mUnk_fe2, 800);
         }
     }
     if (data_020b6ee0.mUnk_fe6[0] == 0x4000) {
-        func_0201fb5c(&data_020b6ee0.mUnk_fe4, 800);
+        AddLevel(&data_020b6ee0.mUnk_fe4, 800);
         if (data_020b6ee0.mUnk_fe6[1] == 0x4000) {
-            func_0201fb5c(&data_020b6ee0.mUnk_fea, 800);
+            AddLevel(&data_020b6ee0.mUnk_fea, 800);
         }
     }
     func_02007ffc(&data_020b6ee0.mUnk_fe2, &data_020b6ee0.mUnk_fe4);
@@ -1252,7 +1252,7 @@ void func_02009728(void) {
             if (i != 0 && data_020b6ee0.mUnk_fe4 != 0x4000) {
                 continue;
             }
-            func_0201fb5c(&data_020b6ee0.mUnk_fe6[i], 170);
+            AddLevel(&data_020b6ee0.mUnk_fe6[i], 170);
             for (j = 0; j < 3; j++) {
                 info = i == 0 ? &data_020990e0[j].mInfo : &data_020b1524[j];
                 if (func_020079cc(info) > -5000) {
@@ -1261,9 +1261,9 @@ void func_02009728(void) {
                     int d = (2 - j) * 1920;
                     if (data_020b6ee0.mUnk_fe6[0] >= j * 1920) {
                         int hit;
-                        a = func_0201fb74(data_020b6ee0.mUnk_fe6[i] < 0x4000 - d ? data_020b6ee0.mUnk_fe6[i]
-                                                                                 : 0x4000 - d,
-                                          0x4000 - d, 0, 23);
+                        a = MapRangeFromZero(data_020b6ee0.mUnk_fe6[i] < 0x4000 - d ? data_020b6ee0.mUnk_fe6[i]
+                                                                                    : 0x4000 - d,
+                                             0x4000 - d, 0, 23);
                         if (data_020b6ee0.mUnk_fe6[i] < 0x4000) {
                             func_0202cf08(a + 0x106a, x, y, 248, 2);
                         }
@@ -1272,7 +1272,7 @@ void func_02009728(void) {
                                  (data_02098d84.mState.mUnk_16 == i && j == data_02098d84.mState.mUnk_0e[i]))
                                     ? 0
                                     : 0x40000;
-                            func_02020944(j + 16 + i * 4, x, y, 0, 0, 0x1089, 0, 0x167);
+                            AddTouchButtonWithSounds(j + 16 + i * 4, x, y, 0, 0, 0x1089, 0, 0x167);
                             func_0202cf08(a | (info->mUnk_13 + ((i == 1 ? 0x10000 : 0) + 0x1089)), x, y, 250, 2);
                             func_0202cf08(0x41088, x, y, 252, 2);
                             info->mUnk_17 = x;
@@ -1290,8 +1290,8 @@ void func_02009728(void) {
                                 }
                             }
                             if (hit == 1) {
-                                func_0202cf08(func_0201fb74(data_020c18bc.mUnk_45c & 31, 31, 0, 8) + 0x11ad, x + 22,
-                                              y - 5, 230, 2);
+                                func_0202cf08(MapRangeFromZero(gSystemState.mElapsedFrames & 31, 31, 0, 8) + 0x11ad,
+                                              x + 22, y - 5, 230, 2);
                             }
                         }
                     }
@@ -1302,17 +1302,17 @@ void func_02009728(void) {
     if (data_02098d84.mState.mUnk_04 > 0x3f6a && data_02098d84.mState.mUnk_04 < 0x4000) {
         data_02098d84.mState.mUnk_18[0] = 0;
     }
-    func_0201fb5c(&data_02098d84.mState.mUnk_04, 150);
+    AddLevel(&data_02098d84.mState.mUnk_04, 150);
     for (j = 0; j < 2; j++) {
         for (i = 0; i < 3; i++) {
             int v;
             info = j == 0 ? &data_020990e0[i].mInfo : &data_020b1524[i];
             v = func_020079cc(info);
-            v -= func_0201fb74(data_02098d84.mState.mUnk_04, 0x4000, info->mUnk_06, 0);
+            v -= MapRangeFromZero(data_02098d84.mState.mUnk_04, 0x4000, info->mUnk_06, 0);
             if (v > -5000) {
-                int x = func_0201fb74(data_020b6ee0.mUnk_fee, 0x4000, info->mUnk_17, xs[j * 3 + i]) - 10;
-                int y = func_0201fb74(data_020b6ee0.mUnk_fee, 0x4000, info->mUnk_18, ys[j * 3 + i]) - 40;
-                *func_0201fc08(v, text) = 0;
+                int x = MapRangeFromZero(data_020b6ee0.mUnk_fee, 0x4000, info->mUnk_17, xs[j * 3 + i]) - 10;
+                int y = MapRangeFromZero(data_020b6ee0.mUnk_fee, 0x4000, info->mUnk_18, ys[j * 3 + i]) - 40;
+                *FormatDecimal(v, text) = 0;
                 func_020215fc(x, y, data_0201a6bc, text, 0, 96, 0, 2);
                 func_0202cf08(info->mUnk_10 + 0x11a1, x, y, 240, 2);
                 if (data_02098d84.mState.mUnk_18[0] < 18 && info->mUnk_06 != 0) {
@@ -1341,7 +1341,7 @@ void func_02009728(void) {
                     data_02098d84.mState.mUnk_0e[data_02098d84.mState.mUnk_06] = col;
                 }
             }
-            keys = data_020c18bc.mUnk_12;
+            keys = gSystemState.mKeysPressed;
             if (keys & 0x40) {
                 if (data_02098d84.mState.mUnk_06 == 0) {
                     data_02098d84.mState.mUnk_06 = 1;
@@ -1402,7 +1402,7 @@ void func_02009728(void) {
                     data_02098d84.mState.mUnk_0e[j] = 0;
                 }
             }
-            a = j == data_02098d84.mState.mUnk_06 ? (data_020c18bc.mUnk_45c >> 2) & 7 : 0;
+            a = j == data_02098d84.mState.mUnk_06 ? (gSystemState.mElapsedFrames >> 2) & 7 : 0;
             yi = j == 0 ? s : s + 3;
             hi = j == 1 ? 1 : 0;
             func_0202cf08(a + (hi * 8 + 0x11be), xs[j == 0 ? s : s + 3], ys[yi], 251, 2);
@@ -1422,7 +1422,7 @@ void func_02009728(void) {
                 data_02098d84.mState.mUnk_10[0] = data_02098d84.mState.mUnk_10[1];
                 func_020077f0(data_02098d84.mState.mUnk_0e[0], data_02098d84.mState.mUnk_0e[1]);
                 memset(&data_020b6ee0.mUnk_fee, 0, 18);
-                func_0201eb74(2);
+                FreeVramBanks(2);
                 func_02021fb0(0x1c7, 0x1c6, 0x100, 16);
                 return;
             }
@@ -1475,14 +1475,14 @@ void func_02009fe8(void) {
     }
     if (data_020b6ee0.mUnk_fee == 0) {
         func_0202cf08(0x8011d0, 128, 36, 200, 1);
-        func_020215fc(128, 36, data_0201a61c, func_0200f9f0(68), 2, 240, 16, 1);
+        func_020215fc(128, 36, data_0201a61c, GetText(68), 2, 240, 16, 1);
         for (j = 0; j < 3; j++) {
             for (i = 0; i < 2; i++) {
                 k = j * 2 + i;
                 value = func_02021e44(0x1e7, k + 3 + base);
                 func_0202cf08(0x11ce, i * 110 + 67, j * 34 + 76, 210, 1);
                 func_0202cf08(k + 0xebe, i * 110 + 46, j * 34 + 71, 200, 1);
-                *func_0201fc08(value, text) = 0;
+                *FormatDecimal(value, text) = 0;
                 func_020215fc(i * 110 + 67, j * 34 + 76, data_0201a64e, text, 0, 250, 100, 1);
             }
         }
@@ -1490,15 +1490,15 @@ void func_02009fe8(void) {
         func_02033614(data_020c3e44.mUnk_2024.mUnk_80.x, data_020c3e44.mUnk_2024.mUnk_80.z);
         func_0202cf08(0xec4, 128, 45, 100, 2);
         func_0202cf08(0x11cf, 127, 153, 200, 2);
-        func_020215fc(127, 153, data_0201a61c, func_0200f9f0(69), 2, 240, 16, 2);
+        func_020215fc(127, 153, data_0201a61c, GetText(69), 2, 240, 16, 2);
         func_020071f8();
-        func_0201fb24(&data_020b6ee0.mUnk_fe2, 4);
-        func_0201fb24(&data_020b6ee0.mUnk_fe4, 4);
-        func_0201fb24(&data_020b6ee0.mUnk_ff0, 4);
+        EaseLevel(&data_020b6ee0.mUnk_fe2, 4);
+        EaseLevel(&data_020b6ee0.mUnk_fe4, 4);
+        EaseLevel(&data_020b6ee0.mUnk_ff0, 4);
     } else {
         func_0200f898();
-        func_0201fb24(&data_020b6ee0.mUnk_fe2, -8);
-        func_0201fb24(&data_020b6ee0.mUnk_fe4, -8);
+        EaseLevel(&data_020b6ee0.mUnk_fe2, -8);
+        EaseLevel(&data_020b6ee0.mUnk_fe4, -8);
     }
     side = 0;
     {
@@ -1511,11 +1511,11 @@ void func_02009fe8(void) {
             for (i = 0; i < 3; i++) {
                 StageInfo *info = (side == 0) ? &data_020990e0[2 - i].mInfo : &data_020b1524[2 - i];
                 if (func_020079cc(info) > -5000) {
-                    int x = func_0201fbe4(data_020b6ee0.mUnk_ff0, 0, 0x4000, from, end[o] + i * step[o]);
+                    int x = MapRange(data_020b6ee0.mUnk_ff0, 0, 0x4000, from, end[o] + i * step[o]);
                     int y = i * 20 + 70;
                     info->mUnk_17 = x + 10;
                     info->mUnk_18 = y + 40;
-                    *func_0201fc08(func_020079cc(info), text) = 0;
+                    *FormatDecimal(func_020079cc(info), text) = 0;
                     func_0202cf08(info->mUnk_10 + 0x11a1, x, y, 150, 2);
                     func_020215fc(x, y, data_0201a6bc, text, 0, 96, 0, 2);
                 }
@@ -1523,8 +1523,8 @@ void func_02009fe8(void) {
         }
     }
     if (data_020b6ee0.mUnk_fee == 0) {
-        if ((data_020c18bc.mUnk_12 & 1) || data_020c1d60.mUnk_800.mUnk_100.mUnk_04 == 0x200000c8) {
-            func_0201f880(1);
+        if ((gSystemState.mKeysPressed & 1) || data_020c1d60.mUnk_800.mUnk_100.mUnk_04 == 0x200000c8) {
+            SetFaded(1);
             func_02022120();
             func_0200f848(func_02014538(data_020b6ee0.mUnk_a534, 7) + 19, 0);
             func_0202f110(91, 100, 0, 64, 0xffff, 0);
@@ -1532,7 +1532,7 @@ void func_02009fe8(void) {
         }
     } else if (func_0200f95c() == 1) {
         int id;
-        func_0201f880(1);
+        SetFaded(1);
         data_020b6ee0.mUnk_fe0 = 0;
         data_020b6ee0.mUnk_fe2 = 0;
         data_020b6ee0.mUnk_fe4 = 0;
@@ -1544,7 +1544,7 @@ void func_02009fe8(void) {
         *(vu16 *) 0x04001050 = 0x2848;
         *(vu16 *) 0x04001052 = 0;
         *(vu16 *) 0x05000400 = 0;
-        func_0201dde0(id + 0xf59, 2);
+        LoadImage(id + 0xf59, 2);
         func_02007770();
     }
 }

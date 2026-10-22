@@ -134,7 +134,7 @@ u32 func_0200baf8(const VecFx32 *a, const VecFx32 *b) {
 }
 
 void func_0200bb14(int a, int b, int c, int d, int e, int f, int g, int h) {
-    func_0200bc50(a, b, 0, 0, 140, c, d, func_0200f9f0(e), 0, 0, f, g, h, 0, 0, 0);
+    func_0200bc50(a, b, 0, 0, 140, c, d, GetText(e), 0, 0, f, g, h, 0, 0, 0);
 }
 
 void func_0200bb58(int a, int b, int c, int d, int e, int f, int g, int h, int i, int j, int k, int l, int m, int n,
@@ -150,7 +150,7 @@ void func_0200bbd0(int a, int b, int c, int d, int e, int f, int g, const char *
                    int m, int n, int o, int p, const u8 *q) {
     if (*q != 0) {
         if (m == 1) {
-            g += (*q == 2 && ((data_020c18bc.mUnk_45c / 10) & 1) == 0) ? 2 : 0;
+            g += (*q == 2 && ((gSystemState.mElapsedFrames / 10) & 1) == 0) ? 2 : 0;
         } else {
             g += 4;
         }
@@ -160,7 +160,7 @@ void func_0200bbd0(int a, int b, int c, int d, int e, int f, int g, const char *
 
 void func_0200bc50(int a, int b, int c, int d, int e, int f, int g, const char *h, const void *i, int j, int k, int l,
                    int m, int n, int o, int p) {
-    int mode = func_02020878() ? 2 : 1;
+    int mode = IsLcdSwapped() ? 2 : 1;
     int g2 = g;
     if (o == 0 && data_020b6ee0.mUnk_a5d0 != 0 && p == 0) {
         g2 = g + (data_020c1d60.mUnk_800.mUnk_100.mUnk_04 == f + 0x40000000);
@@ -177,9 +177,9 @@ void func_0200bc50(int a, int b, int c, int d, int e, int f, int g, const char *
     }
     if (m == 1) {
         if (c != 0) {
-            func_02020914(f, a - c, b - d, a + c, b + d, -1, 0, 0, (u16) k);
+            AddTouchButtonEx(f, a - c, b - d, a + c, b + d, -1, 0, 0, (u16) k);
         } else {
-            func_02020914(f, a, b, 0, 0, g, 0, 0, (u16) k);
+            AddTouchButtonEx(f, a, b, 0, 0, g, 0, 0, (u16) k);
         }
         if (l != 0 && func_0200bd80(0x20000000, f)) {
             func_0202f110(l, 100, 0, 64, 0xffff, 0);
@@ -287,7 +287,7 @@ int func_0200bf68(u32 *p) {
         i++;
     }
     if (n != 0) {
-        u32 pick = bits[func_0201fd84(0, n - 1)];
+        u32 pick = bits[RandomRange(0, n - 1)];
         *p |= 1 << pick;
         return pick;
     }
@@ -295,7 +295,7 @@ int func_0200bf68(u32 *p) {
 }
 
 int func_0200bfc4(int a, int b, int c, int d, int e) {
-    int r = func_0201fbe4(a, b, c, d, e);
+    int r = MapRange(a, b, c, d, e);
     int lo = d < e ? d : e;
     int hi = d < e ? e : d;
     return (r < hi ? r : hi) < lo ? lo : (r < hi ? r : hi);
@@ -303,6 +303,6 @@ int func_0200bfc4(int a, int b, int c, int d, int e) {
 
 void func_0200bffc(int x, int y, int value, const void *font, int align, int mode) {
     char buf[16];
-    *func_0201fc08(value, buf) = 0;
+    *FormatDecimal(value, buf) = 0;
     func_020215fc(x, y, font, buf, align, 100, 10, mode);
 }

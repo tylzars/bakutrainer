@@ -35,7 +35,7 @@ void func_020031c8(const Vec2i *pos, s8 *col, s8 *row) {
 }
 
 u16 func_020031f0(void) {
-    return (func_0201fd68() % 10 == 0) ? 0 : func_0201fd84(data_02064828.mUnk_896a, data_02064828.mUnk_896c);
+    return (NextRandom() % 10 == 0) ? 0 : RandomRange(data_02064828.mUnk_896a, data_02064828.mUnk_896c);
 }
 
 void func_02003218(u8 *p) {
@@ -47,7 +47,7 @@ void func_02003218(u8 *p) {
 }
 
 u16 func_02003240(void) {
-    return func_0201fd84(data_02064828.mUnk_8970, data_02064828.mUnk_8972);
+    return RandomRange(data_02064828.mUnk_8970, data_02064828.mUnk_8972);
 }
 
 void func_02003258(u8 *p) {
@@ -59,7 +59,7 @@ void func_02003258(u8 *p) {
 }
 
 u8 func_0200327c(u8 lo, u8 hi) {
-    int roll = func_0201fd84(1, 100);
+    int roll = RandomRange(1, 100);
     int span = hi - lo;
     int step = 100 / (span + 1);
     int i;
@@ -443,7 +443,7 @@ BOOL func_02003b3c(Pair *pr) {
             func_02003338(&pr->mPiece[1], cell[1], cell[0], 1, &data_02064828.mUnk_895c);
             if (pr->mDir == 3 || pr->mDir == 1) {
                 pr->mUnk_234 = 1;
-                pr->mUnk_238 = data_020c18bc.mUnk_45c;
+                pr->mUnk_238 = gSystemState.mElapsedFrames;
                 pr->mUnk_240 = 0;
             } else {
                 func_02003338(&pr->mPiece[0], cell[3], cell[2], 1, &data_02064828.mUnk_8954);
@@ -461,7 +461,7 @@ BOOL func_02003b3c(Pair *pr) {
             if (pr->mUnk_234 == 0) {
                 if (pr->mDir == 3 || pr->mDir == 1) {
                     pr->mUnk_234 = 1;
-                    pr->mUnk_238 = data_020c18bc.mUnk_45c;
+                    pr->mUnk_238 = gSystemState.mElapsedFrames;
                     pr->mUnk_240 = 0;
                     pr->mPiece[0] = pr->mPiece[1];
                     pr->mPos = partner;
@@ -475,7 +475,7 @@ BOOL func_02003b3c(Pair *pr) {
                 }
             } else {
                 data_02064828.mUnk_8950 = result;
-                if (data_020c18bc.mUnk_45c - pr->mUnk_238 > 1) {
+                if (gSystemState.mElapsedFrames - pr->mUnk_238 > 1) {
                     func_0202f110(0x57, 0x4b, 0, 0x40, 0xffff, 0);
                 }
                 return TRUE;
@@ -759,7 +759,7 @@ void func_0200445c(void) {
     }
     func_0200c5d8(0, data_02064828.mStage.mUnk_10 + 0x1cb, data_02064828.mStage.mUnk_13 + 0xdb3, 64, 16, 2, 130);
     func_02024208();
-    func_020104c0(3, 76);
+    RequestTrack(3, 76);
     func_0200bdcc(2, 16);
     for (i = 0; i < BOARD_COLS; i++) {
         for (j = 0; j < BOARD_ROWS; j++) {
@@ -793,10 +793,10 @@ void func_0200445c(void) {
     data_02064828.mUnk_8964 = func_02003194(data_02064828.mUnk_00, 4) << 8;
     data_02064828.mUnk_8990 = func_02003194(data_02064828.mUnk_00, 7);
     data_02064828.mUnk_8994 = 0;
-    total = func_0201fd84(func_02003194(data_02064828.mUnk_00, 12), func_02003194(data_02064828.mUnk_00, 13));
+    total = RandomRange(func_02003194(data_02064828.mUnk_00, 12), func_02003194(data_02064828.mUnk_00, 13));
     for (i = 0; i < 6; i++) {
         if (i < data_02064828.mUnk_01 - 1) {
-            data_02064828.mUnk_8978[i] = func_0201fd84(total / 8, total / 2);
+            data_02064828.mUnk_8978[i] = RandomRange(total / 8, total / 2);
             total -= data_02064828.mUnk_8978[i];
         } else if (i == data_02064828.mUnk_01 - 1) {
             data_02064828.mUnk_8978[i] = total;
@@ -873,28 +873,28 @@ void func_02004768(void) {
         }
     }
     func_02004304();
-    if (data_020c18bc.mUnk_12 & 0x20) {
+    if (gSystemState.mKeysPressed & 0x20) {
         func_020035b0(cursor);
-    } else if (data_020c18bc.mUnk_12 & 0x10) {
+    } else if (gSystemState.mKeysPressed & 0x10) {
         func_02003670(cursor);
     }
-    if (data_020c18bc.mUnk_10 & 0x80) {
+    if (gSystemState.mKeysDown & 0x80) {
         data_02064828.mUnk_83c4.mUnk_23c = 25 << 12;
-    } else if (data_020c18bc.mUnk_12 & 0x40) {
+    } else if (gSystemState.mKeysPressed & 0x40) {
         func_02003e50(cursor);
     } else {
         data_02064828.mUnk_83c4.mUnk_23c = data_02064828.mUnk_8964;
     }
-    if (data_020c18bc.mUnk_12 & 1) {
+    if (gSystemState.mKeysPressed & 1) {
         func_02003924(cursor);
-    } else if (data_020c18bc.mUnk_12 & 2) {
+    } else if (gSystemState.mKeysPressed & 2) {
         func_0200396c(cursor);
     }
     func_02004720();
 }
 
 void func_02004930(void) {
-    func_0201f880(3);
+    SetFaded(3);
     func_02022370();
 }
 

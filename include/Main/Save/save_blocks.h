@@ -7,16 +7,21 @@
 extern "C" {
 #endif
 
-u16 func_0201ffd4(int id, u32 index);
-void func_0202002c(u32 a, int b, u16 c, int d, void (*fn)(u32), int e);
-u32 func_02020140(u32 index, void *buf, int c);
-void func_02020224(u32 index, int c);
-void func_02020258(u32 index, void *buf, int c);
-void func_02020348(void);
-void func_02020354(u32 *order, const u32 *key, int count);
-int func_0202043c(const u32 *values, u32 *out, u32 id);
-void func_0202062c(u32 *out, u32 *packed, u32 id);
-void func_02020854(int a);
+// Store kinds accepted by InitSaveStore: a store of 0x200 bytes and one of 0x2000 bytes, split evenly into the set's
+// blocks.
+#define SAVE_STORE_SMALL 0x901
+#define SAVE_STORE_LARGE 0xd01
+
+u16 GetSaveBlockTag(int id, u32 index);
+void InitSaveStore(u32 a, int b, u16 c, int d, void (*fn)(u32), int e);
+u32 ReadSaveBlock(u32 index, void *buf, int c);
+void WriteZeroSaveBlock(u32 index, int c);
+void WriteSaveBlock(u32 index, void *buf, int c);
+void ClearBackupTimer(void);
+void SortIndicesByKey(u32 *order, const u32 *key, int count);
+int PackSaveFields(const u32 *values, u32 *out, u32 id);
+void UnpackSaveFields(u32 *out, u32 *packed, u32 id);
+void SetLcdSwap(int a);
 
 #ifdef __cplusplus
 }

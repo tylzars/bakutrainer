@@ -1,20 +1,20 @@
 ; Hand-written routines of the game's engine, with two sample packed blocks and the font of the error screen:
-;   - an error screen on the sub display (Thumb): func_02027fc2 shows a message, func_02028036 prints a line;
-;   - unpackers: a byte run-length format (func_020280dc, func_02028150) and three packed formats with a
-;     four-byte tag, "EZ00" (Huffman-coded runs), "EZ01" and "EZ10" (two bit-flag LZ formats), func_020282ec;
+;   - an error screen on the sub display (Thumb): OpenTextScreen shows a message, PrintTextScreenRow prints a line;
+;   - unpackers: a byte run-length format (UnpackRle, UnpackRlePart) and three packed formats with a
+;     four-byte tag, "EZ00" (Huffman-coded runs), "EZ01" and "EZ10" (two bit-flag LZ formats), UnpackEz;
 ;   - the JPEG block decoder (func_02028980) and the colour conversion of a 16x16 block (func_02028b8c);
 ;   - small helpers: leading-zero count, palette row remapping, 4bpp to 8bpp tile conversion.
 ; Many routines pass values in registers and do not follow the C calling convention; each one says what it
-; takes and returns. The C-callable ones are func_02027fb8, func_02027fc2, func_02028012, func_02028036,
-; func_020280dc, func_02028150, func_02028250, func_02028258, func_020282a0, func_020282ec, func_0202875c,
-; func_02028928, func_02028980, func_02028b8c, func_02028d48 and func_02028df4. Most of them save and restore
-; every register they use, the argument registers included.
+; takes and returns. The C-callable ones are func_02027fb8, OpenTextScreen, ScrollAndPrintTextScreen,
+; PrintTextScreenRow, UnpackRle, UnpackRlePart, LeadingZeroCount, func_02028258, GetEzUnpackedSize, UnpackEz,
+; UnpackEz10, RemapPaletteRows, func_02028980, func_02028b8c, func_02028d48 and func_02028df4. Most of them save and
+; restore every register they use, the argument registers included.
 ; The bytes of the packed samples and of the font are read from the ROM at build time.
 ; Each routine's "Not compiled" lines say why the compiler cannot have produced it. "Save rule": in a compiled
 ; ARM function the stmfd/ldmfd register list holds the callee-saved registers the function writes, r3 as a
 ; stack pad, the frame pointer and lr; r0-r3 and r12 appear only in functions with the compiler's special entry
-; flag (the one that also makes it return with ldm ^), which then also save every register they write. Compiled functions each start their own 4-byte-aligned
-; section with their own literal pool.
+; flag (the one that also makes it return with ldm ^), which then also save every register they write. Compiled
+; functions each start their own 4-byte-aligned section with their own literal pool.
 
 	.extern data_020c1818
 	.extern data_020c1820
@@ -37,11 +37,11 @@ data_02027410:
 	.size data_02027410, 104
 
 ; Font of the error screen: 90 tiles of 8x8 pixels at 4 bits per pixel, the characters '!' to 'z'.
-	.global data_02027478
-	.type data_02027478, @object
-data_02027478:
+	.global gTextScreenFont
+	.type gTextScreenFont, @object
+gTextScreenFont:
 	.incbin "extract/usa/arm9/arm9.bin", 0x27478, 0xb40
-	.size data_02027478, 2880
+	.size gTextScreenFont, 2880
 
 ; ---- Error screen (Thumb) ----
 ; The sub display shows text background 0: map at 0x06200000 (32 halfwords per row, tile = character - 32),
@@ -50,8 +50,8 @@ data_02027478:
 	.thumb
 
 ; func_02027fb8: unmaps VRAM banks H and I (writes 0 to both control bytes). Keeps every register.
-; Not compiled: loads .Lvramcnt_h and .Lzero from the pool after func_02028036, which func_02027fc2,
-; func_02028020 and func_02028036 share.
+; Not compiled: loads .Lvramcnt_h and .Lzero from the pool after PrintTextScreenRow, which OpenTextScreen,
+; ScrollTextScreen and PrintTextScreenRow share.
 	.global func_02027fb8
 	.type func_02027fb8, @function
 func_02027fb8:
@@ -62,15 +62,15 @@ func_02027fb8:
 	pop {r0, r1, r2, r3, r4, r5, r6, r7, pc}
 	.size func_02027fb8, .-func_02027fb8
 
-; func_02027fc2: sets up the error screen and prints the message in r0 on row 0. Sub display: brightness
+; OpenTextScreen: sets up the error screen and prints the message in r0 on row 0. Sub display: brightness
 ; 0, mode 0 with background 0 only, background 0 using tile base 1; bank H to the sub backgrounds; clears
 ; the 32 KB of map and tiles; palette colour 0 black, colour 1 white; copies the font to tile 1 onwards.
 ; Keeps every register.
-; Not compiled: starts at a halfword address, and loads 15 words of the pool after func_02028036 (shared
-; with func_02027fb8, func_02028020 and func_02028036).
-	.global func_02027fc2
-	.type func_02027fc2, @function
-func_02027fc2:
+; Not compiled: starts at a halfword address, and loads 15 words of the pool after PrintTextScreenRow (shared
+; with func_02027fb8, ScrollTextScreen and PrintTextScreenRow).
+	.global OpenTextScreen
+	.type OpenTextScreen, @function
+OpenTextScreen:
 	push {r0, r1, r2, r3, r4, r5, r6, r7, lr}
 	mov r7, r0			; message
 	ldr r0, .Lmaster_bright_sub
@@ -110,30 +110,30 @@ func_02027fc2:
 	bne .Lcopy_font
 	mov r0, r7
 	mov r1, #0
-	bl func_02028036
+	bl PrintTextScreenRow
 	pop {r0, r1, r2, r3, r4, r5, r6, r7, pc}
-	.size func_02027fc2, .-func_02027fc2
+	.size OpenTextScreen, .-OpenTextScreen
 
-; func_02028012: scrolls the error screen up one row and prints the message in r0 on the last row (23).
+; ScrollAndPrintTextScreen: scrolls the error screen up one row and prints the message in r0 on the last row (23).
 ; Keeps every register (both routines it calls keep theirs, r0 included).
-; Not compiled: starts at a halfword address, and passes its incoming r0 to func_02028036 after a call to
-; func_02028020 without saving it (r0 is not preserved across a call under the C calling convention).
-	.global func_02028012
-	.type func_02028012, @function
-func_02028012:
+; Not compiled: starts at a halfword address, and passes its incoming r0 to PrintTextScreenRow after a call to
+; ScrollTextScreen without saving it (r0 is not preserved across a call under the C calling convention).
+	.global ScrollAndPrintTextScreen
+	.type ScrollAndPrintTextScreen, @function
+ScrollAndPrintTextScreen:
 	push {r1, lr}
-	bl func_02028020
+	bl ScrollTextScreen
 	mov r1, #23
-	bl func_02028036
+	bl PrintTextScreenRow
 	pop {r1, pc}
-	.size func_02028012, .-func_02028012
+	.size ScrollAndPrintTextScreen, .-ScrollAndPrintTextScreen
 
-; func_02028020: scrolls rows 5-24 of the map up into rows 4-23. Keeps every register.
-; Not compiled: loads .Lmap_row4, .Lmap_row5 and .Lscroll_size from the pool after func_02028036, which
-; func_02027fb8, func_02027fc2 and func_02028036 share.
-	.global func_02028020
-	.type func_02028020, @function
-func_02028020:
+; ScrollTextScreen: scrolls rows 5-24 of the map up into rows 4-23. Keeps every register.
+; Not compiled: loads .Lmap_row4, .Lmap_row5 and .Lscroll_size from the pool after PrintTextScreenRow, which
+; func_02027fb8, OpenTextScreen and PrintTextScreenRow share.
+	.global ScrollTextScreen
+	.type ScrollTextScreen, @function
+ScrollTextScreen:
 	push {r0, r1, r2, r3, r4, r5, r6, r7, lr}
 	ldr r6, .Lmap_row4
 	ldr r7, .Lmap_row5
@@ -146,19 +146,19 @@ func_02028020:
 	sub r5, r5, #4
 	bne .Lscroll
 	pop {r0, r1, r2, r3, r4, r5, r6, r7, pc}
-	.size func_02028020, .-func_02028020
+	.size ScrollTextScreen, .-ScrollTextScreen
 
-; func_02028036: prints the message in r0 on row r1, if the error screen is set up (sub display control
-; as func_02027fc2 leaves it). A row takes up to 32 characters; character 0 or '\n' blanks the rest of the
+; PrintTextScreenRow: prints the message in r0 on row r1, if the error screen is set up (sub display control
+; as OpenTextScreen leaves it). A row takes up to 32 characters; character 0 or '\n' blanks the rest of the
 ; row, character 2 stops the program here (endless loop). After the row a '\n' is skipped; at the end of the
 ; message the routine returns. Otherwise, with the row past the last one (24) the screen scrolls and the row
 ; moves back up; the routine then goes back to the end-of-row check, not to the printing loop, so it only
 ; returns once the message ends. Keeps every register.
 ; Not compiled: starts at a halfword address, and its literal pool is also loaded by func_02027fb8,
-; func_02027fc2 and func_02028020.
-	.global func_02028036
-	.type func_02028036, @function
-func_02028036:
+; OpenTextScreen and ScrollTextScreen.
+	.global PrintTextScreenRow
+	.type PrintTextScreenRow, @function
+PrintTextScreenRow:
 	push {r0, r1, r2, r3, r4, r5, r6, r7, lr}
 	ldr r7, .Ldispcnt_sub
 	ldr r7, [r7, #0]
@@ -204,7 +204,7 @@ func_02028036:
 	ldr r0, .Lmap_row24
 	cmp r0, r6
 	bne .Lnext_row
-	bl func_02028020
+	bl ScrollTextScreen
 	sub r6, #64
 .Lnext_row:
 	b .Lend_of_row
@@ -239,7 +239,7 @@ func_02028036:
 .Lfont_tiles:
 	.word 0x06204020		; tile 1
 .Lfont:
-	.word data_02027478
+	.word gTextScreenFont
 .Lfont_size:
 	.word 0xb40
 .Lmap_row4:
@@ -250,7 +250,7 @@ func_02028036:
 	.word 0x500			; 20 rows
 .Lmap_row24:
 	.word 0x06200600
-	.size func_02028036, .-func_02028036
+	.size PrintTextScreenRow, .-PrintTextScreenRow
 
 ; ---- Run-length format ----
 ; Each control byte c is followed by its data: c & 0x80: c & 0x7f literal bytes; else c & 0x40:
@@ -258,13 +258,13 @@ func_02028036:
 
 	.arm
 
-; func_020280dc: unpacks r2 bytes of run-length data at r0 to r1 (a control byte of 0x40 is skipped).
+; UnpackRle: unpacks r2 bytes of run-length data at r0 to r1 (a control byte of 0x40 is skipped).
 ; Returns the number of bytes written. Keeps r1-r6.
 ; Not compiled (save rule): saves and restores r1 and r2, yet writes r0 (mov r0, r1) without saving it;
 ; the result is also computed from the r1 the ldmfd restores.
-	.global func_020280dc
-	.type func_020280dc, @function
-func_020280dc:
+	.global UnpackRle
+	.type UnpackRle, @function
+UnpackRle:
 	stmfd sp!, {r1, r2, r3, r4, r5, r6}
 	add r2, r0, r2			; end of the input
 	mov r3, #0
@@ -300,17 +300,17 @@ func_020280dc:
 	ldmfd sp!, {r1, r2, r3, r4, r5, r6}
 	sub r0, r0, r1
 	bx lr
-	.size func_020280dc, .-func_020280dc
+	.size UnpackRle, .-UnpackRle
 
-; func_02028150: unpacks run-length data at r0: skips the first r2 bytes of the output, then writes r3 bytes
+; UnpackRlePart: unpacks run-length data at r0: skips the first r2 bytes of the output, then writes r3 bytes
 ; to r1. A run that crosses the start is cut there. Fills of more than 12 bytes are stored by halfwords and
 ; words once r1 is aligned; the last word may write up to three bytes past the run, which the next run
 ; overwrites (r1 moves back to the run's end). Keeps r1-r6.
 ; Not compiled (save rule): saves and restores r1-r3, yet writes r0 (add r0, ...; sub r0, ...) without
 ; saving it.
-	.global func_02028150
-	.type func_02028150, @function
-func_02028150:
+	.global UnpackRlePart
+	.type UnpackRlePart, @function
+UnpackRlePart:
 	stmfd sp!, {r1, r2, r3, r4, r5, r6}
 	movs r4, r2			; bytes to skip
 	beq .Lrlep_next
@@ -385,16 +385,16 @@ func_02028150:
 .Lrlep_done:
 	ldmfd sp!, {r1, r2, r3, r4, r5, r6}
 	bx lr
-	.size func_02028150, .-func_02028150
+	.size UnpackRlePart, .-UnpackRlePart
 
-; func_02028250: returns the number of leading zero bits of r0 (32 for 0).
+; LeadingZeroCount: returns the number of leading zero bits of r0 (32 for 0).
 ; Not compiled: clz has no C form in this compiler.
-	.global func_02028250
-	.type func_02028250, @function
-func_02028250:
+	.global LeadingZeroCount
+	.type LeadingZeroCount, @function
+LeadingZeroCount:
 	clz r0, r0
 	bx lr
-	.size func_02028250, .-func_02028250
+	.size LeadingZeroCount, .-LeadingZeroCount
 
 ; func_02028258: stores the instruction at .Lpatch_add ("add r0, r0, #1") over the instruction right after
 ; the store, then runs that slot: returns 0 if the instruction already fetched ran, 1 if the stored one did.
@@ -430,13 +430,13 @@ data_0202829c:
 ; ---- Packed formats with a tag ----
 ; Header: +0 tag "EZ00", "EZ01" or "EZ10", +4 unpacked size.
 
-; func_020282a0: returns the unpacked size of the packed block at r0, or 0 if it has none of the three
+; GetEzUnpackedSize: returns the unpacked size of the packed block at r0, or 0 if it has none of the three
 ; tags. Uses r2; keeps r1.
-; Not compiled: its pool words (the three tags) are loaded pc-relative by func_020282ec, so both share one
+; Not compiled: its pool words (the three tags) are loaded pc-relative by UnpackEz, so both share one
 ; section; also saves only r1 (save rule) while writing r0 and r2.
-	.global func_020282a0
-	.type func_020282a0, @function
-func_020282a0:
+	.global GetEzUnpackedSize
+	.type GetEzUnpackedSize, @function
+GetEzUnpackedSize:
 	stmfd sp!, {r1}
 	ldr r1, [r0]
 	ldr r2, .Ltag_ez00
@@ -461,10 +461,10 @@ func_020282a0:
 	.word 0x31305a45		; "EZ01"
 .Ltag_ez10:
 	.word 0x30315a45		; "EZ10"
-	.size func_020282a0, .-func_020282a0
+	.size GetEzUnpackedSize, .-GetEzUnpackedSize
 
-; func_020282ec: unpacks the packed block at r0 to r1 by its tag: "EZ00" here, "EZ01" in func_02028578
-; (a branch; it returns for this routine), "EZ10" in the body of func_0202875c. Returns 0 for an unknown
+; UnpackEz: unpacks the packed block at r0 to r1 by its tag: "EZ00" here, "EZ01" in func_02028578
+; (a branch; it returns for this routine), "EZ10" in the body of UnpackEz10. Returns 0 for an unknown
 ; tag, the end of the byte area for "EZ00". Keeps r1-r12.
 ; "EZ00": +8 offset of the byte area from +16, +12 number of sections (byte), +16 a stream of 16-bit words
 ; read from bit 0 up (func_02028558), then the bytes. The stream starts with 2 unused bits. Each section
@@ -473,12 +473,12 @@ func_020282a0:
 ; length of bytes from the byte area; a match copies length + 2 bytes from distance + 1 bytes back.
 ; Bit reader (here and in func_02028408, func_02028480, func_02028558): r10 = bit buffer, r9 = number of
 ; valid bits - 16, r12 = current input halfword, r6 = all ones.
-; Not compiled: loads func_020282a0's pool words pc-relative (backwards); branches (not calls) into
-; func_02028578 and into func_0202875c after its two stmfd instructions; passes the bit reader to
+; Not compiled: loads GetEzUnpackedSize's pool words pc-relative (backwards); branches (not calls) into
+; func_02028578 and into UnpackEz10 after its two stmfd instructions; passes the bit reader to
 ; func_02028408, func_02028480 and func_02028558 in r6, r9, r10, r12 and the table pointer in r8.
-	.global func_020282ec
-	.type func_020282ec, @function
-func_020282ec:
+	.global UnpackEz
+	.type UnpackEz, @function
+UnpackEz:
 	stmfd sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12}
 	stmfd sp!, {lr}
 	mov r12, r0
@@ -557,11 +557,11 @@ func_020282ec:
 	ldmfd sp!, {lr}
 	ldmfd sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12}
 	bx lr
-	.size func_020282ec, .-func_020282ec
+	.size UnpackEz, .-UnpackEz
 
 ; func_02028408: reads one value with the code table at r8 (built by func_02028480). Finds the entry whose
 ; code matches the next bits, takes the code's bits, then for symbol 0 or 1 returns it; for symbol s >= 2
-; reads s - 1 more bits x and returns (1 << (s - 1)) | x. Takes the bit reader of func_020282ec; uses
+; reads s - 1 more bits x and returns (1 << (s - 1)) | x. Takes the bit reader of UnpackEz; uses
 ; r1, r2 and r8.
 ; Not compiled: takes its inputs in r8 (table) and r6, r9, r10, r12 (bit reader) and returns r8, r9, r10
 ; and r12 updated; no C caller sets or reads callee-saved registers as arguments or results.
@@ -610,7 +610,7 @@ func_02028408:
 ; then n 4-bit code lengths, one per symbol 0..n-1 (0: no code). Codes are given out in canonical order
 ; (by length, then by symbol) and stored bit-reversed, since the stream is read from bit 0. Entry k:
 ; +4k mask (halfword), +4k+2 code, +4k+64 symbol (byte), +4k+65 length. Takes the bit reader of
-; func_020282ec; advances r8, uses r0-r4.
+; UnpackEz; advances r8, uses r0-r4.
 ; Not compiled: takes r8 and the bit reader in r6, r9, r10, r12 as inputs; moves sp inside its loops
 ; (stmfd/ldmfd) and reaches its locals relative to the moved sp ([sp, #20]).
 	.global func_02028480
@@ -678,7 +678,7 @@ func_02028480:
 	bx lr
 	.size func_02028480, .-func_02028480
 
-; func_02028558: returns the next r1 bits of the bit reader of func_020282ec in r0. Uses r1.
+; func_02028558: returns the next r1 bits of the bit reader of UnpackEz in r0. Uses r1.
 ; Not compiled: the bit reader is in r6, r9, r10, r12 (inputs, and r9, r10, r12 updated on return).
 	.global func_02028558
 	.type func_02028558, @function
@@ -693,7 +693,7 @@ func_02028558:
 	bx lr
 	.size func_02028558, .-func_02028558
 
-; func_02028578: unpacks an "EZ01" block for func_020282ec (reached by a branch with r12 = block + 4,
+; func_02028578: unpacks an "EZ01" block for UnpackEz (reached by a branch with r12 = block + 4,
 ; r11 = output, and returns for it). +8 offset of the byte area from the block, +12 the flag words.
 ; Flags are read from bit 31 down (r0 holds a marker bit below the flags left; func_02028738 refills it);
 ; the first two bits of the first word are skipped. Flag 0: the next byte of the byte area. Flag 1: a match:
@@ -704,8 +704,8 @@ func_02028558:
 ; A match's distance is (h << 8 | next byte) + 1; h (0..15) comes from a few flags read before the byte
 ; (none after 1 1 0).
 ; r2 = flag words, r3 = byte area, r4 = h, r5 = length.
-; Not compiled: entered by a branch from func_020282ec (no call), works on the r11/r12 set there and returns
-; by popping the registers func_020282ec saved.
+; Not compiled: entered by a branch from UnpackEz (no call), works on the r11/r12 set there and returns
+; by popping the registers UnpackEz saved.
 	.global func_02028578
 	.type func_02028578, @function
 func_02028578:
@@ -848,7 +848,7 @@ func_02028738:
 	bx lr
 	.size func_02028738, .-func_02028738
 
-; func_02028744: refills the byte word of func_0202875c: r9 = next word at r0, r8 = 3 bytes left after the
+; func_02028744: refills the byte word of UnpackEz10: r9 = next word at r0, r8 = 3 bytes left after the
 ; first.
 ; Not compiled: returns its results in r8 and r9 (callee-saved registers) and advances r0.
 	.global func_02028744
@@ -859,7 +859,7 @@ func_02028744:
 	bx lr
 	.size func_02028744, .-func_02028744
 
-; func_02028750: refills the flag word of func_0202875c (r10) from r0 and returns its first flag in the
+; func_02028750: refills the flag word of UnpackEz10 (r10) from r0 and returns its first flag in the
 ; carry.
 ; Not compiled: returns its result in r10 and the carry flag, and advances r0.
 	.global func_02028750
@@ -870,7 +870,7 @@ func_02028750:
 	bx lr
 	.size func_02028750, .-func_02028750
 
-; func_0202875c: unpacks the "EZ10" block at r0 to r1. Data from +16: words, each used either as 32 flags
+; UnpackEz10: unpacks the "EZ10" block at r0 to r1. Data from +16: words, each used either as 32 flags
 ; (bit 31 first, in r10 with a marker bit) or as 4 bytes (lowest first, in r9), as the unpacker needs them.
 ; Unpacks until r1 reaches the output start + the unpacked size. Codes (flags, then values):
 ;   1 0 0          one literal byte;
@@ -880,11 +880,11 @@ func_02028750:
 ; After a length: 1 = a match with a 12-bit distance (a byte, then 4 bits); 0 1 = a match with a byte
 ; distance; 0 0 = that many literal bytes. (Length 2 skips the first flag.) Keeps r1-r12;
 ; returns the end of the data used.
-; Not compiled: func_020282ec branches into it after its two stmfd instructions; it keeps its state in r8,
+; Not compiled: UnpackEz branches into it after its two stmfd instructions; it keeps its state in r8,
 ; r9, r10 and calls func_02028744 and func_02028750, which return in r8, r9, r10 and the carry flag.
-	.global func_0202875c
-	.type func_0202875c, @function
-func_0202875c:
+	.global UnpackEz10
+	.type UnpackEz10, @function
+UnpackEz10:
 	stmfd sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12}
 	stmfd sp!, {lr}
 .Lez10_body:
@@ -1011,16 +1011,16 @@ func_0202875c:
 	ldmfd sp!, {lr}
 	ldmfd sp!, {r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12}
 	bx lr
-	.size func_0202875c, .-func_0202875c
+	.size UnpackEz10, .-UnpackEz10
 
-; func_02028928: for each of the r2 halfwords at r0 (two pixel bytes, palette row << 4 | colour), gives
+; RemapPaletteRows: for each of the r2 halfwords at r0 (two pixel bytes, palette row << 4 | colour), gives
 ; every byte with a colour other than 0 the palette row the table at r1 holds for its row; bytes with colour
 ; 0 become 0. Halfwords with both colours 0 stay as they are. Keeps every register.
 ; Not compiled (save rule): saves r8, which it never writes (and r1, which it only reads); no rule puts an
 ; unwritten r8 in the list.
-	.global func_02028928
-	.type func_02028928, @function
-func_02028928:
+	.global RemapPaletteRows
+	.type RemapPaletteRows, @function
+RemapPaletteRows:
 	stmfd sp!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, lr}
 	ldr r7, .Lcolour_mask
 .Lremap_next:
@@ -1047,7 +1047,7 @@ func_02028928:
 	bx lr
 .Lcolour_mask:
 	.word 0x0f0f
-	.size func_02028928, .-func_02028928
+	.size RemapPaletteRows, .-RemapPaletteRows
 
 ; ---- JPEG ----
 ; Bit reader (func_02028980 and its helpers): r4 = bit buffer (next bit in bit 31), r5 = bits in it, r6 = next

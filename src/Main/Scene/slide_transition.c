@@ -1,4 +1,5 @@
 #include <Main/Save/save_blocks.h>
+#include <Main/System/save_data.h>
 #include <Main/Input/mic_input.h>
 #include <Main/System/random_angle.h>
 #include <Main/System/screen_fade.h>
@@ -22,7 +23,7 @@
 #include <nitro/os.h>
 #include <stdio.h>
 
-// The record buffer func_0201ffbc returns.
+// The record buffer AllocSaveRecord returns.
 typedef struct Unk_RecordBuf {
     u8 mUnk_00[0x10];
     s32 mUnk_10;
@@ -384,12 +385,12 @@ void func_0200e3ec(void) {
     func_0202f2e8(&data_020ae464);
     data_020ae458.mUnk_00 = data_020b1084.mUnk_04;
     data_020ae458.mUnk_04 = data_020b1084.mUnk_08;
-    func_02020ff4(0x400, data_020b1084.mUnk_04);
-    func_02021074(0x82e, 0);
+    InitMic(0x400, data_020b1084.mUnk_04);
+    StartMicSampling(0x82e, 0);
 }
 
 void func_0200e424(int a) {
-    func_02021458();
+    ReleaseMic();
     if (a != 0) {
         if (data_020ae458.mUnk_04 != data_020b1084.mUnk_08 || data_020ae458.mUnk_00 != data_020b1084.mUnk_04) {
             data_020b1084.mUnk_04 = data_020ae458.mUnk_00;
@@ -431,18 +432,18 @@ void func_0200e4c4(void) {
     s->mUnk_38 = -1;
     data_020b6ee0.mUnk_a91a = 0;
     data_020b6ee0.mUnk_a91b = 0;
-    func_020104c0(0, 0x80);
+    RequestTrack(0, 0x80);
     func_0202f290(&data_020ae464, "BAK_strm_Title.raw", 0x5654);
     for (i = 0; i < 3; i++) {
-        Unk_RecordBuf *buf = func_0201ffbc();
-        func_02020140(i, buf, 0xfba);
+        Unk_RecordBuf *buf = AllocSaveRecord();
+        ReadSaveBlock(i, buf, SAVE_BLOCK_ID);
         s->mUnk_00[i].mUnk_00 = buf->mUnk_10;
         if (s->mUnk_00[i].mUnk_00 == 1) {
             s->mUnk_30 = 1;
             s->mUnk_00[i].mUnk_04 = buf->mUnk_14;
             s->mUnk_00[i].mUnk_08 = buf->mUnk_18;
         }
-        func_0201ffcc(&buf);
+        FreeSaveRecord(&buf);
     }
 }
 
@@ -477,14 +478,14 @@ void func_0200e5b0(void) {
     const Unk_0204e1f8 *range;
 
     if (s->mUnk_34 == 0) {
-        func_0201f880(3);
+        SetFaded(3);
         func_02022370();
         func_0202c1c4();
-        func_0201dde0(0xdaa, 1);
+        LoadImage(0xdaa, 1);
         func_0202f410(&data_020ae464);
         func_0200dd5c("BAK_Intro.mods", 2);
         s->mUnk_34 = 0x4b0;
-        func_0201f450(1, 0, 0x100, 0x100);
+        SetupImageLayer(1, 0, 0x100, 0x100);
         func_0200e484();
         func_0202f470(&data_020ae464);
         return;
@@ -493,7 +494,7 @@ void func_0200e5b0(void) {
         func_0202f31c(&data_020ae464);
     }
     if (s->mUnk_24 == 1 && s->mUnk_28 < 0) {
-        if (data_020c18bc.mUnk_10 != 0 || data_020c18bc.mUnk_2ac_1) {
+        if (gSystemState.mKeysDown != 0 || gSystemState.mTouchDown) {
             s->mUnk_34 = 0x4b0;
         } else {
             s->mUnk_34--;
@@ -521,12 +522,12 @@ void func_0200e5b0(void) {
         } else {
             int sign;
             s32 d;
-            sign = (func_0201fd68() & 1) ? -1 : 1;
-            d = func_0201fd84(0, 2);
+            sign = (NextRandom() & 1) ? -1 : 1;
+            d = RandomRange(0, 2);
             d *= sign;
             data_020ae450 = d;
-            sign = (func_0201fd68() & 1) ? -1 : 1;
-            d = func_0201fd84(0, 2);
+            sign = (NextRandom() & 1) ? -1 : 1;
+            d = RandomRange(0, 2);
             d *= sign;
             data_020ae44c = d;
             func_0202cf08(0xdfa, data_020ae450 + 0x59, d + 0x35, 0x96, 2);
@@ -548,16 +549,16 @@ void func_0200e5b0(void) {
     flag = data_020ae504.mUnk_1b8 == 1 ? 1 : 0;
     switch (s->mUnk_24) {
         case 1:
-            func_0200bc50((data_020ae504.mUnk_1bc[0] >> 8) + 0x80, 0x3e, 0, 0, 0x8c, 0x701, 0xdda, func_0200f9f0(0xc4),
+            func_0200bc50((data_020ae504.mUnk_1bc[0] >> 8) + 0x80, 0x3e, 0, 0, 0x8c, 0x701, 0xdda, GetText(0xc4),
                           data_0201a61c, 2, 0, 0x167, flag, 0, 0, 0);
             if (s->mUnk_30 != 0) {
-                func_0200bc50((data_020ae504.mUnk_1bc[1] >> 8) + 0x80, 0x66, 0, 0, 0x8c, 0x700, 0xdda,
-                              func_0200f9f0(0xc5), data_0201a61c, 2, 0, 0x167, flag, 0, 0, 0);
+                func_0200bc50((data_020ae504.mUnk_1bc[1] >> 8) + 0x80, 0x66, 0, 0, 0x8c, 0x700, 0xdda, GetText(0xc5),
+                              data_0201a61c, 2, 0, 0x167, flag, 0, 0, 0);
             } else {
-                func_0200bc50((data_020ae504.mUnk_1bc[1] >> 8) + 0x80, 0x66, 0, 0, 0x8c, 0x700, 0xddc,
-                              func_0200f9f0(0xc5), data_0201a626, 2, 0, 0x167, 0, 0, 0, 0);
+                func_0200bc50((data_020ae504.mUnk_1bc[1] >> 8) + 0x80, 0x66, 0, 0, 0x8c, 0x700, 0xddc, GetText(0xc5),
+                              data_0201a626, 2, 0, 0x167, 0, 0, 0, 0);
             }
-            func_0200bc50((data_020ae504.mUnk_1bc[2] >> 8) + 0x80, 0x8e, 0, 0, 0x8c, 0x706, 0xdda, func_0200f9f0(0xc6),
+            func_0200bc50((data_020ae504.mUnk_1bc[2] >> 8) + 0x80, 0x8e, 0, 0, 0x8c, 0x706, 0xdda, GetText(0xc6),
                           data_0201a61c, 2, 0, 0x167, flag, 0, 0, 0);
             if (func_0200bd80(0x20000000, 0x700)) {
                 func_0200e3d0(2, -1);
@@ -575,22 +576,22 @@ void func_0200e5b0(void) {
         case 2:
             func_0202cf08(0xe22, 0x2f, (data_020ae504.mUnk_1bc[3] >> 8) + 0x11, 0x8c, 1);
             if (s->mUnk_2c == 0) {
-                func_020215fc(0x2f, (data_020ae504.mUnk_1bc[3] >> 8) + 0x11, data_0201a61c, func_0200f9f0(0xc4), 0, 200,
-                              16, 1);
+                func_020215fc(0x2f, (data_020ae504.mUnk_1bc[3] >> 8) + 0x11, data_0201a61c, GetText(0xc4), 0, 200, 16,
+                              1);
             } else {
-                func_020215fc(0x2f, (data_020ae504.mUnk_1bc[3] >> 8) + 0x11, data_0201a61c, func_0200f9f0(0xc5), 0, 200,
-                              16, 1);
+                func_020215fc(0x2f, (data_020ae504.mUnk_1bc[3] >> 8) + 0x11, data_0201a61c, GetText(0xc5), 0, 200, 16,
+                              1);
             }
             for (i = 0; i < 3; i++) {
                 if (s->mUnk_00[i].mUnk_00 == 1) {
                     pct = s->mUnk_00[i].mUnk_08 != 0 ? 100 : s->mUnk_00[i].mUnk_04 * 100 / 25;
                     func_0200bc50((data_020ae504.mUnk_1bc[i] >> 8) + 0x39, i * 0x2c + 0x36, 0, 0, 0x8c, 0x704 + i,
                                   0xdf6, 0, 0, 2, 0, 0x167, flag, 0, 0, 0);
-                    sprintf(text, "%s %d", func_0200f9f0(0xcd), i + 1);
+                    sprintf(text, "%s %d", GetText(0xcd), i + 1);
                     func_020215fc((data_020ae504.mUnk_1bc[i] >> 8) + 0x39, i * 0x2c + 0x36, data_0201a61c, text, 0,
                                   0xf0, 0x10, 1);
                     if (pct != 0) {
-                        u8 n = func_0201fbe4(pct, 0, 100, 0, 0x18);
+                        u8 n = MapRange(pct, 0, 100, 0, 0x18);
                         func_0202cf08(0xddd + n, (data_020ae504.mUnk_1bc[i] >> 8) + 0xa0, i * 0x2c + 0x36, 0x82, 1);
                     }
                     sprintf(text, "%d%", pct);
@@ -600,7 +601,7 @@ void func_0200e5b0(void) {
                     func_0200bc50((data_020ae504.mUnk_1bc[i] >> 8) + 0x39, i * 0x2c + 0x36, 0, 0, 0x8c, 0x704 + i,
                                   0xdf8, 0, 0, 2, 0, 0, flag, 0, 0, 0);
                     func_020215fc((data_020ae504.mUnk_1bc[i] >> 8) + 0x39, i * 0x2c + 0x36, data_0201a61c,
-                                  func_0200f9f0(0xcc), 0, 0xf0, 0x10, 1);
+                                  GetText(0xcc), 0, 0xf0, 0x10, 1);
                 }
             }
             func_0200bb14(0, (data_020ae504.mUnk_1bc[4] >> 8) + 0xa1, 0x102, 0xe, 0, 0, 0x5a, flag);
@@ -611,13 +612,13 @@ void func_0200e5b0(void) {
                         func_0200e3d0(3, -1);
                     } else {
                         func_020143f4();
-                        func_0200fa80(10);
-                        func_0200fab0();
+                        PushState(10);
+                        PopState();
                     }
                 } else {
                     func_0201440c();
-                    func_0200fa80(10);
-                    func_0200fab0();
+                    PushState(10);
+                    PopState();
                 }
             }
             if (func_0200bd80(0x20000000, 0x102)) {
@@ -627,15 +628,14 @@ void func_0200e5b0(void) {
             break;
         case 3:
             func_0202cf08(0xe21, (data_020ae504.mUnk_1bc[0] >> 8) + 0x7f, 0x50, 0x8c, 1);
-            func_020215fc((data_020ae504.mUnk_1bc[0] >> 8) + 0x7f, 0x50, data_0201a61c, func_0200f9f0(0xcf), 2, 0xc0,
-                          0xc, 1);
+            func_020215fc((data_020ae504.mUnk_1bc[0] >> 8) + 0x7f, 0x50, data_0201a61c, GetText(0xcf), 2, 0xc0, 0xc, 1);
             func_0200bb14(0xff, (data_020ae504.mUnk_1bc[4] >> 8) + 0xa1, 0x101, 0x15, 0, 0, 0x17d, flag);
             func_0200bb14(0, (data_020ae504.mUnk_1bc[4] >> 8) + 0xa1, 0x102, 0xe, 0, 0, 0x5a, flag);
             if (func_0200bd80(0x20000000, 0x101)) {
                 func_020143f4();
                 func_02014430(0);
-                func_0200fa80(10);
-                func_0200fab0();
+                PushState(10);
+                PopState();
             }
             if (func_0200bd80(0x20000000, 0x102)) {
                 func_0200e3d0(2, 1);
@@ -645,11 +645,10 @@ void func_0200e5b0(void) {
             break;
         case 5:
             func_0202cf08(0xe22, 0x2f, (data_020ae504.mUnk_1bc[3] >> 8) + 0x11, 0x8c, 1);
-            func_020215fc(0x2f, (data_020ae504.mUnk_1bc[3] >> 8) + 0x11, data_0201a61c, func_0200f9f0(0xc6), 0, 200, 16,
-                          1);
-            func_0200bc50((data_020ae504.mUnk_1bc[1] >> 8) + 0x80, 0x48, 0, 0, 0x8c, 0x703, 0xdda, func_0200f9f0(0xc8),
+            func_020215fc(0x2f, (data_020ae504.mUnk_1bc[3] >> 8) + 0x11, data_0201a61c, GetText(0xc6), 0, 200, 16, 1);
+            func_0200bc50((data_020ae504.mUnk_1bc[1] >> 8) + 0x80, 0x48, 0, 0, 0x8c, 0x703, 0xdda, GetText(0xc8),
                           data_0201a61c, 2, 0, 0x167, flag, 0, 0, 0);
-            func_0200bc50((data_020ae504.mUnk_1bc[2] >> 8) + 0x80, 0x70, 0, 0, 0x8c, 0x708, 0xdda, func_0200f9f0(0xc9),
+            func_0200bc50((data_020ae504.mUnk_1bc[2] >> 8) + 0x80, 0x70, 0, 0, 0x8c, 0x708, 0xdda, GetText(0xc9),
                           data_0201a61c, 2, 0, 0x167, flag, 0, 0, 0);
             func_0200bb14(0, (data_020ae504.mUnk_1bc[4] >> 8) + 0xa1, 0x102, 0xe, 0, 0, 0x5a, flag);
             if (func_0200bd80(0x20000000, 0x702)) {
@@ -658,8 +657,8 @@ void func_0200e5b0(void) {
             }
             if (func_0200bd80(0x20000000, 0x703)) {
                 s->mUnk_38 = s->mUnk_24;
-                func_0200fa80(0x18);
-                func_0200fab0();
+                PushState(0x18);
+                PopState();
             }
             if (func_0200bd80(0x20000000, 0x708)) {
                 func_0200e3d0(6, -1);
@@ -672,8 +671,7 @@ void func_0200e5b0(void) {
             break;
         case 4:
             func_0202cf08(0xe22, 0x2f, (data_020ae504.mUnk_1bc[0] >> 8) + 0x11, 0x8c, 1);
-            func_020215fc(0x2f, (data_020ae504.mUnk_1bc[0] >> 8) + 0x11, data_0201a61c, func_0200f9f0(0xc7), 0, 200, 16,
-                          1);
+            func_020215fc(0x2f, (data_020ae504.mUnk_1bc[0] >> 8) + 0x11, data_0201a61c, GetText(0xc7), 0, 200, 16, 1);
             pos = data_0204e1f0;
             id = data_0204e1ec;
             for (i = 0; i < 1; i++) {
@@ -709,39 +707,37 @@ void func_0200e5b0(void) {
             break;
         case 6:
             func_0202cf08(0xe22, 0x2f, (data_020ae504.mUnk_1bc[3] >> 8) + 0x11, 0x8c, 1);
-            func_020215fc(0x2f, (data_020ae504.mUnk_1bc[3] >> 8) + 0x11, data_0201a61c, func_0200f9f0(0xc9), 0, 200, 16,
-                          1);
+            func_020215fc(0x2f, (data_020ae504.mUnk_1bc[3] >> 8) + 0x11, data_0201a61c, GetText(0xc9), 0, 200, 16, 1);
             func_0202cf08(0xe21, (data_020ae504.mUnk_1bc[0] >> 8) + 0x7f, 0x28, 0x8c, 1);
             func_0202cf08(0xe00, (data_020ae504.mUnk_1bc[1] >> 8) + 0x7f, 0x8f, 0x8c, 1);
-            func_020215fc((data_020ae504.mUnk_1bc[1] >> 8) + 0x7f, 0x9e, data_0201a61c, func_0200f9f0(0xd2), 2, 0xc0,
-                          0xc, 1);
+            func_020215fc((data_020ae504.mUnk_1bc[1] >> 8) + 0x7f, 0x9e, data_0201a61c, GetText(0xd2), 2, 0xc0, 0xc, 1);
             level = &data_020ae458.mUnk_04;
             range = &data_0204e1f8[1];
             sprintf(num, "%d", *level + 1);
             func_020215fc((data_020ae504.mUnk_1bc[1] >> 8) + 0x82, 0xb4, data_0201a676, num, 0, 0xf0, 1, 1);
             if (*level > range->mUnk_00) {
                 func_0200bb14((data_020ae504.mUnk_1bc[1] >> 8) + 0x50, 0x85, 0x70b, 0xdfc, 0, 0, 0x17d,
-                              data_020c18bc.mUnk_492 == 0 ? 1 : 0);
+                              gSystemState.mUnk_492 == 0 ? 1 : 0);
             }
             if (*level < range->mUnk_04) {
                 func_0200bb14((data_020ae504.mUnk_1bc[1] >> 8) + 0xaf, 0x85, 0x70c, 0xdfe, 0, 0, 0x17d,
-                              data_020c18bc.mUnk_492 == 0 ? 1 : 0);
+                              gSystemState.mUnk_492 == 0 ? 1 : 0);
             }
-            if (data_020c18bc.mUnk_492 == 0) {
-                func_020215fc((data_020ae504.mUnk_1bc[0] >> 8) + 0x7f, 0x28, data_0201a61c, func_0200f9f0(0xd1), 2,
-                              0xc0, 0xc, 1);
+            if (gSystemState.mUnk_492 == 0) {
+                func_020215fc((data_020ae504.mUnk_1bc[0] >> 8) + 0x7f, 0x28, data_0201a61c, GetText(0xd1), 2, 0xc0, 0xc,
+                              1);
                 if (s->mUnk_28 < 0) {
-                    if (!(data_020c18bc.mUnk_46c & 0x800)) {
+                    if (!(gSystemState.mFlags & 0x800)) {
                         OS_Terminate();
                     }
-                    v = func_0201fb74(func_020213e8((data_0204e1f8[1].mUnk_04 - data_020ae458.mUnk_04 + 1) * 25), 7, 0,
-                                      0x1f);
+                    v = MapRangeFromZero(func_020213e8((data_0204e1f8[1].mUnk_04 - data_020ae458.mUnk_04 + 1) * 25), 7,
+                                         0, 0x1f);
                 } else {
                     v = 0;
                 }
             } else {
-                func_020215fc((data_020ae504.mUnk_1bc[0] >> 8) + 0x7f, 0x28, data_0201a61c, func_0200f9f0(0xd3), 2,
-                              0xc0, 0xc, 1);
+                func_020215fc((data_020ae504.mUnk_1bc[0] >> 8) + 0x7f, 0x28, data_0201a61c, GetText(0xd3), 2, 0xc0, 0xc,
+                              1);
                 data_020ae458.mUnk_08 = 0;
                 v = 0;
             }

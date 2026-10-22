@@ -15,12 +15,12 @@ Unk_MovieAudio data_020c661c;
 #pragma thumb off
 
 void *func_0202f500(u32 size) {
-    return func_0201c430(size);
+    return Alloc(size);
 }
 
 void func_0202f50c(void *p) {
     void *q = p;
-    func_0201c4f0(&q);
+    Free(&q);
 }
 
 void func_0202f520(void *arg) {
@@ -55,16 +55,16 @@ void func_0202f638(const char *path, int b) {
     u32 x;
     u32 y;
     u32 z;
-    if (data_020c18bc.mUnk_46c & 0x20) {
+    if (gSystemState.mFlags & 0x20) {
         func_0202fb4c();
     }
     data_020c661c.mUnk_b6 = b;
     data_020c661c.mUnk_ac = 0;
     data_020c661c.mUnk_b4 = 0;
     data_020c661c.mUnk_b5 = 0;
-    data_020c18bc.mUnk_46c |= 0x20;
-    if (func_0201db58(b) != 0x8000 || func_0201dbd4(b) != 0x200) {
-        func_0201f450(b, 1, 0x100, 0xc0);
+    gSystemState.mFlags |= 0x20;
+    if (func_0201db58(b) != 0x8000 || GetLayerRowSize(b) != 0x200) {
+        SetupImageLayer(b, 1, 0x100, 0xc0);
     }
     lo = (u32) OS_GetArenaLo(3);
     a = (u32) OS_GetArenaHi(3) - lo;
@@ -95,7 +95,7 @@ void func_0202f638(const char *path, int b) {
         z = data_020c661c.mUnk_9c;
         data_020c661c.mUnk_a0 = (u32) (((u64) x << 24) / ((u64) z * y)) + 1;
         data_020c661c.mUnk_3c = data_020c661c.mUnk_a0 * (data_020c661c.mUnk_98 + 1);
-        data_020c661c.mUnk_34 = func_0201c430(data_020c661c.mUnk_3c * data_020c661c.mUnk_9c * 2);
+        data_020c661c.mUnk_34 = Alloc(data_020c661c.mUnk_3c * data_020c661c.mUnk_9c * 2);
         data_020c661c.mUnk_2c = 0;
         data_020c661c.mUnk_38 = 0;
         data_020c661c.mUnk_30 = 0;
@@ -169,17 +169,17 @@ void func_0202fb08(void) {
 
 // Ends the movie: stops audio and the alarm, frees the ring and the player, closes the file, restores the screen.
 void func_0202fb4c(void) {
-    if (!(data_020c18bc.mUnk_46c & 0x20)) {
+    if (!(gSystemState.mFlags & 0x20)) {
         return;
     }
     func_0202fb08();
     OS_CancelAlarm(&data_020c661c.mAlarm);
-    func_0201c4f0(&data_020c661c.mUnk_34);
+    Free(&data_020c661c.mUnk_34);
     func_02039ef0(data_020c661c.mPlayer);
     func_020424d8(&data_020c661c.mFile);
-    func_0201eb74(data_020c661c.mUnk_b6 == 1 ? 2 : 6);
+    FreeVramBanks(data_020c661c.mUnk_b6 == 1 ? 2 : 6);
     func_0202fc5c();
-    data_020c18bc.mUnk_46c &= ~0x20;
+    gSystemState.mFlags &= ~0x20;
 }
 
 // Turns the screens off and on again with that bit (bit 15 of the shared key state).

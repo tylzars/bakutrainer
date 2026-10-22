@@ -38,7 +38,7 @@ void func_0200a384(void) {
     data_02099770.mIn.mUnk_20 = -1;
     data_02099770.mIn.mUnk_24 = 0;
     func_0200f848(data_02099770.mIn.mUnk_00 ? 11 : 0, 0);
-    func_020104c0(sel->mUnk_00 ? 8 : 7, 102);
+    RequestTrack(sel->mUnk_00 ? 8 : 7, 102);
 }
 
 void func_0200a3f4(void) {
@@ -95,12 +95,12 @@ void func_0200a3fc(void) {
             break;
     }
     if (done == 0) {
-        if (func_0201f794(3, 3) == 1) {
+        if (IsFadeState(3, FADE_STATE_CLEAR) == 1) {
             u32 i;
             sel->mUnk_10++;
             for (i = 0; i < 3; i++) {
                 if (sel->mUnk_18[i] != 0x4000) {
-                    func_0201fb5c(&sel->mUnk_18[i], 0x400);
+                    AddLevel(&sel->mUnk_18[i], 0x400);
                     break;
                 }
             }
@@ -118,12 +118,12 @@ void func_0200a3fc(void) {
                     func_0201033c(r, 10);
                 }
             } else {
-                func_0200fa80(10);
-                func_0200fab0();
+                PushState(10);
+                PopState();
             }
         } else {
-            func_0200fa80(10);
-            func_0200fab0();
+            PushState(10);
+            PopState();
         }
         data_020b6ee0.mUnk_a14c = 1;
     }
@@ -152,7 +152,7 @@ void func_0200a5f0(void) {
             sel->mUnk_08 = 0;
             return;
         case 1: {
-            func_020215fc(127, 37, data_0201a64e, func_0200f9f0(51), 2, 256, 16, 2);
+            func_020215fc(127, 37, data_0201a64e, GetText(51), 2, 256, 16, 2);
             for (i = 0; i <= sel->mUnk_14 && i < 3; i++) {
                 u32 t[3];
                 u32 k;
@@ -187,17 +187,17 @@ void func_0200a5f0(void) {
                 } else if (i == 2) {
                     x += 76;
                 }
-                y = func_0201fb74(t[0], 0x4000, -32, 106);
-                func_0202cf08(rec->mInfo.mUnk_13 + 0x1089, x, y, data_020c18bc.mUnk_308 - 4, 2);
-                func_0202cf08(0x1088, x, 106, data_020c18bc.mUnk_308 - 2, 2);
+                y = MapRangeFromZero(t[0], 0x4000, -32, 106);
+                func_0202cf08(rec->mInfo.mUnk_13 + 0x1089, x, y, gSystemState.mUnk_308 - 4, 2);
+                func_0202cf08(0x1088, x, 106, gSystemState.mUnk_308 - 2, 2);
                 if (i == 0) {
-                    xx = func_0201fb74(t[1], 0x4000, -128, x);
+                    xx = MapRangeFromZero(t[1], 0x4000, -128, x);
                     yy = 121;
                 } else if (i == 1) {
                     xx = x;
-                    yy = func_0201fb74(t[1], 0x4000, 208, 121);
+                    yy = MapRangeFromZero(t[1], 0x4000, 208, 121);
                 } else {
-                    xx = func_0201fb74(t[1], 0x4000, 384, x);
+                    xx = MapRangeFromZero(t[1], 0x4000, 384, x);
                     yy = 121;
                 }
                 if (!(data_020b6ee0.mUnk_a8f3[i] & 2)) {
@@ -209,21 +209,21 @@ void func_0200a5f0(void) {
                 } else {
                     id = 0xfd6;
                 }
-                func_0202cf08(id, xx, yy, data_020c18bc.mUnk_308 - 4, 2);
+                func_0202cf08(id, xx, yy, gSystemState.mUnk_308 - 4, 2);
                 if (data_020b6ee0.mUnk_a8f3[i] & 1) {
                     data_020b6ee0.mUnk_c6c[i] = -1;
                     if (i == 0) {
-                        x = func_0201fb74(t[2], 0x4000, -128, x);
+                        x = MapRangeFromZero(t[2], 0x4000, -128, x);
                         y = 48;
                     } else if (i == 1) {
-                        y = func_0201fb74(t[2], 0x4000, -128, 48);
+                        y = MapRangeFromZero(t[2], 0x4000, -128, 48);
                     } else {
-                        x = func_0201fb74(t[2], 0x4000, 384, x);
+                        x = MapRangeFromZero(t[2], 0x4000, 384, x);
                         y = 48;
                     }
-                    func_0202cf08(0xfca, x, y, data_020c18bc.mUnk_308 - 8, 2);
-                    func_0202cf08(data_020c18bc.mUnk_45c / 4 % 9 + 0x11ad, x + 14, y + 24, data_020c18bc.mUnk_308 - 6,
-                                  2);
+                    func_0202cf08(0xfca, x, y, gSystemState.mUnk_308 - 8, 2);
+                    func_0202cf08(gSystemState.mElapsedFrames / 4 % 9 + 0x11ad, x + 14, y + 24,
+                                  gSystemState.mUnk_308 - 6, 2);
                 }
             }
             if (sel->mUnk_14 == 3) {
@@ -238,12 +238,12 @@ void func_0200a5f0(void) {
                 OS_Terminate();
             }
             rec = &data_020b1990[id];
-            func_020215fc(127, 37, data_0201a64e, func_0200f9f0(50), 2, 256, 16, 2);
-            func_0202cf08(rec->mInfo.mUnk_13 + 0x1089, 127, func_0201fb74(sel->mUnk_18[0], 0x4000, -32, 106),
-                          data_020c18bc.mUnk_308 - 4, 2);
-            func_0202cf08(0x1088, 127, 106, data_020c18bc.mUnk_308 - 2, 2);
-            func_020215fc(127, func_0201fb74(sel->mUnk_18[0], 0x4000, 208, 135), data_0201a61c,
-                          func_0200f9f0(rec->mInfo.mUnk_13 + 98), 2, 256, 16, 2);
+            func_020215fc(127, 37, data_0201a64e, GetText(50), 2, 256, 16, 2);
+            func_0202cf08(rec->mInfo.mUnk_13 + 0x1089, 127, MapRangeFromZero(sel->mUnk_18[0], 0x4000, -32, 106),
+                          gSystemState.mUnk_308 - 4, 2);
+            func_0202cf08(0x1088, 127, 106, gSystemState.mUnk_308 - 2, 2);
+            func_020215fc(127, MapRangeFromZero(sel->mUnk_18[0], 0x4000, 208, 135), data_0201a61c,
+                          GetText(rec->mInfo.mUnk_13 + 98), 2, 256, 16, 2);
             if (sel->mUnk_18[0] == 0x4000) {
                 sel->mUnk_08 = 1;
             }
@@ -303,7 +303,7 @@ void func_0200aa68(u16 id, u32 a, u32 b, u32 c, s32 d, u16 e, u8 f, s32 g) {
 int func_0200aa9c(void) {
     u8 i;
     u8 sum = 0;
-    u8 r = func_0201fd84(1, 100);
+    u8 r = RandomRange(1, 100);
     for (i = 0; i < 5; i++) {
         u32 w = data_020997a4.mWeights[0][i];
         sum += w;
@@ -362,9 +362,9 @@ int func_0200aadc(Particle *src, int kind) {
                             n++;
                         }
                     }
-                    pick = list[func_0201fd84(0, 2)];
-                    p->mPos.x = func_0201fd84(0, 64) + 32;
-                    p->mPos.y = func_0201fd84(0, 32) + 32;
+                    pick = list[RandomRange(0, 2)];
+                    p->mPos.x = RandomRange(0, 64) + 32;
+                    p->mPos.y = RandomRange(0, 32) + 32;
                     if (pick & 1) {
                         p->mPos.x += 128;
                     }
@@ -383,24 +383,24 @@ int func_0200aadc(Particle *src, int kind) {
                 int dx;
                 int dy;
                 int dist;
-                p->mPos.x = func_0201fd84(0, 0x13f) - 32;
-                p->mPos.y = func_0201fd84(0, 255) - 32;
-                if (!(func_0201fd68() & 1)) {
-                    p->mPos.y = (func_0201fd68() & 1) == 0 ? -32 : 223;
+                p->mPos.x = RandomRange(0, 0x13f) - 32;
+                p->mPos.y = RandomRange(0, 255) - 32;
+                if (!(NextRandom() & 1)) {
+                    p->mPos.y = (NextRandom() & 1) == 0 ? -32 : 223;
                 } else {
-                    p->mPos.x = (func_0201fd68() & 1) == 0 ? -32 : 287;
+                    p->mPos.x = (NextRandom() & 1) == 0 ? -32 : 287;
                 }
                 p->mPos.x <<= 8;
                 p->mPos.y <<= 8;
                 dx = (data_020997a4.mUnk_01ac - p->mPos.x) >> 8;
                 dy = (data_020997a4.mUnk_01b0 - p->mPos.y) >> 8;
-                dist = func_0201fccc(dx * dx + dy * dy);
+                dist = SqrtU32(dx * dx + dy * dy);
                 p->mVel.x =
-                    ((int) func_0201fd84(data_020997a4.mWeights[1][p->mUnk_00], data_020997a4.mWeights[2][p->mUnk_00]) *
+                    ((int) RandomRange(data_020997a4.mWeights[1][p->mUnk_00], data_020997a4.mWeights[2][p->mUnk_00]) *
                      dx / (dist + 1))
                     << 8;
                 p->mVel.y =
-                    ((int) func_0201fd84(data_020997a4.mWeights[1][p->mUnk_00], data_020997a4.mWeights[2][p->mUnk_00]) *
+                    ((int) RandomRange(data_020997a4.mWeights[1][p->mUnk_00], data_020997a4.mWeights[2][p->mUnk_00]) *
                      dy / (dist + 1))
                     << 8;
             }
@@ -413,11 +413,11 @@ int func_0200aadc(Particle *src, int kind) {
 }
 
 void func_0200acfc(Particle *p, int angle) {
-    int len = func_0201fccc(p->mVel.x * p->mVel.x + p->mVel.y * p->mVel.y);
+    int len = SqrtU32(p->mVel.x * p->mVel.x + p->mVel.y * p->mVel.y);
     int len2;
     p->mVel.x = -FX_SinCosTable_[(angle >> 4) * 2];
     p->mVel.y = -FX_SinCosTable_[(angle >> 4) * 2 + 1];
-    len2 = func_0201fccc(p->mVel.x * p->mVel.x + p->mVel.y * p->mVel.y);
+    len2 = SqrtU32(p->mVel.x * p->mVel.x + p->mVel.y * p->mVel.y);
     p->mVel.x = p->mVel.x * (len + 1) / (len2 + 1);
     p->mVel.y = p->mVel.y * (len + 1) / (len2 + 1);
 }
@@ -476,7 +476,7 @@ void func_0200af28(Particle *p, int angle) {
             func_0200adc0(p);
             return;
         case 1:
-            base = func_0201fe8c((u16) angle, data_020997a4.mUnk_0230);
+            base = AngleHalfway((u16) angle, data_020997a4.mUnk_0230);
             q = *p;
             q.mUnk_00 = 0;
             q.mUnk_16 = 16;
@@ -567,9 +567,9 @@ void func_0200b0e0(void) {
             flag = 0;
             if (p->mUnk_16 == 0) {
                 if (dist2 <= 576) {
-                    u16 angle = 0xffff - func_0201feb0((old.x - data_020997a4.mUnk_01ac) >> 8,
+                    u16 angle = 0xffff - AngleOfVector((old.x - data_020997a4.mUnk_01ac) >> 8,
                                                        (old.y - data_020997a4.mUnk_01b0) >> 8);
-                    if (func_0201fe14(data_020997a4.mUnk_0230, angle) <= 16000) {
+                    if (AngleDistance(data_020997a4.mUnk_0230, angle) <= 16000) {
                         flag = 1;
                         func_0200af28(p, angle);
                     }
@@ -588,7 +588,7 @@ void func_0200b244(void) {
     if (data_020997a4.mCount < data_020997a4.mUnk_11fec) {
         if (data_020997a4.mUnk_11fc0 == 0) {
             func_0200aadc(0, -1);
-            data_020997a4.mUnk_11fc0 = func_0201fd84(data_020997a4.mUnk_11ff8, data_020997a4.mUnk_11ffc);
+            data_020997a4.mUnk_11fc0 = RandomRange(data_020997a4.mUnk_11ff8, data_020997a4.mUnk_11ffc);
         } else {
             data_020997a4.mUnk_11fc0--;
         }
@@ -614,7 +614,7 @@ void func_0200b278(void) {
     }
     func_0200c5d8(0, 0, data_020997a4.mInfo.mUnk_13 + 0xdb3, 0x100, 16, 1, 130);
     func_02024208();
-    func_020104c0(2, 0x4c);
+    RequestTrack(2, 0x4c);
     data_020997a4.mUnk_0230 = 0;
     data_020997a4.mUnk_01ac = 0x8000;
     data_020997a4.mUnk_01b0 = 0x6000;
@@ -740,23 +740,23 @@ void func_0200b610(void) {
         }
         data_020997a4.mUnk_01b0 = v;
     }
-    if (data_020c18bc.mUnk_10 & 0x10) {
+    if (gSystemState.mKeysDown & 0x10) {
         data_020997a4.mUnk_023c += 0x1000;
-    } else if (data_020c18bc.mUnk_10 & 0x20) {
+    } else if (gSystemState.mKeysDown & 0x20) {
         data_020997a4.mUnk_023c -= 0x1000;
     } else {
         func_0200b9cc(&data_020997a4.mUnk_023c, 0x300);
     }
-    if (data_020c18bc.mUnk_10 & 0x80) {
+    if (gSystemState.mKeysDown & 0x80) {
         data_020997a4.mUnk_0240 += 0x1000;
-    } else if (data_020c18bc.mUnk_10 & 0x40) {
+    } else if (gSystemState.mKeysDown & 0x40) {
         data_020997a4.mUnk_0240 -= 0x1000;
     } else {
         func_0200b9cc(&data_020997a4.mUnk_0240, 0x300);
     }
-    if (data_020c18bc.mUnk_2ac_1) {
-        u16 target = 0xffff - func_0201feb0(data_020c18bc.mUnk_2ae - (data_020997a4.mUnk_01ac >> 8),
-                                            data_020c18bc.mUnk_2af - (data_020997a4.mUnk_01b0 >> 8));
+    if (gSystemState.mTouchDown) {
+        u16 target = 0xffff - AngleOfVector(gSystemState.mTouchX - (data_020997a4.mUnk_01ac >> 8),
+                                            gSystemState.mTouchY - (data_020997a4.mUnk_01b0 >> 8));
         s32 angle = data_020997a4.mUnk_0230;
         func_0200b994(&angle, target, 2);
         data_020997a4.mUnk_0230 = angle;
@@ -764,7 +764,7 @@ void func_0200b610(void) {
         u16 current = data_020997a4.mUnk_0230;
         s32 target = current;
         s32 angle;
-        u16 keys = data_020c18bc.mUnk_10;
+        u16 keys = gSystemState.mKeysDown;
         if ((keys & 1) && (keys & 2)) {
             target = 0xa000;
         } else if ((keys & 0x800) && (keys & 0x400)) {

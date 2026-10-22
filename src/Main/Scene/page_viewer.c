@@ -12,16 +12,16 @@
 PageViewState data_02098d74;
 
 void func_02006fc0(void) {
-    func_0201bb30();
-    func_0201f880(3);
-    func_0201c41c();
-    func_0201eb20();
+    UpdateSystemAndWait();
+    SetFaded(3);
+    ResetKeys();
+    ResetVramBanks();
     func_0202c1c4();
-    func_02020854(1);
-    func_0201dde0(0xdaa, 3);
+    SetLcdSwap(1);
+    LoadImage(0xdaa, 3);
     func_0202bdd8(0x10cb, 0x10ca, 0x10cc, 2, 1);
     func_0202bdd8(0x10cb, 0x10ca, 0x10cc, 2, 2);
-    func_020104c0(1, 0x80);
+    RequestTrack(1, 0x80);
     data_02098d74.mUnk_04 = 0;
     func_02007168(1);
     if (data_020b6ee0.mUnk_a14c == 1) {
@@ -59,11 +59,11 @@ void func_020070c4(void) {
             if (func_0200bd80(0x20000000, 0x600) != 0) {
                 if (data_020b6ee0.mUnk_a91b != 0) {
                     data_020b6ee0.mUnk_a91b = 0;
-                    func_0200fa80(10);
-                    func_0200fab0();
+                    PushState(10);
+                    PopState();
                 } else {
-                    func_0200fa80(1);
-                    func_0200fab0();
+                    PushState(1);
+                    PopState();
                 }
             }
             if (p->mUnk_08 == 0) {
@@ -83,12 +83,12 @@ void func_020070c4(void) {
 
 void func_02007168(int state) {
     PageViewState *p = &data_02098d74;
-    func_0201f880(3);
+    SetFaded(3);
     switch (state) {
         case 0:
             break;
         case 1:
-            func_0201ddec(p->mUnk_04 + 0x1e9, 3, 0, 2);
+            LoadImageEx(p->mUnk_04 + 0x1e9, 3, 0, 2);
             p->mUnk_08 = 120;
             break;
     }
@@ -96,5 +96,5 @@ void func_02007168(int state) {
 }
 
 void func_0200719c(void) {
-    func_0201f880(3);
+    SetFaded(3);
 }

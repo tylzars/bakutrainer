@@ -130,7 +130,7 @@ int func_02030830(fx32 x, fx32 z, fx32 y, int a, u32 mask, u8 *out, VecFx32 *vec
                         int oz = pz;
                         px = region->mUnk_00 + rec->mUnk_02[n].mUnk_00;
                         pz = region->mUnk_04 + rec->mUnk_02[n].mUnk_02;
-                        if (func_0201febc(ox, oz, px, pz, cx, cz) > 0) {
+                        if (Cross2d(ox, oz, px, pz, cx, cz) > 0) {
                             break;
                         }
                     }
@@ -238,7 +238,7 @@ int func_02030830(fx32 x, fx32 z, fx32 y, int a, u32 mask, u8 *out, VecFx32 *vec
                             ny >>= 1;
                             nz >>= 1;
                         }
-                        len = func_0201fccc(nx * nx + ny * ny + nz * nz);
+                        len = SqrtU32(nx * nx + ny * ny + nz * nz);
                         if (len == 0) {
                             normp->x = 0;
                             normp->y = 0x1000;
@@ -346,6 +346,6 @@ int func_02031270(fx32 x, fx32 z, fx32 y, int a, u32 mask, u8 *out) {
 #pragma thumb on
 
 u32 func_0203129c(void) {
-    return func_0201feb0(data_020c3e44.mUnk_2024.mUnk_14.x - data_020c3e44.mUnk_2024.mUnk_20.x,
+    return AngleOfVector(data_020c3e44.mUnk_2024.mUnk_14.x - data_020c3e44.mUnk_2024.mUnk_20.x,
                          data_020c3e44.mUnk_2024.mUnk_14.z - data_020c3e44.mUnk_2024.mUnk_20.z);
 }

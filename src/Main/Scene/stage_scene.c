@@ -72,23 +72,23 @@ void func_0200c7a4(void) {
     Unk_020c5f04 *cam = &data_020c3e44.mUnk_2024.mUnk_9c;
     VecFx32 a;
     VecFx32 b;
-    a.x = func_0201fbe4(data_02063940->mUnk_618, 0, data_02063940->mUnk_614, data_02063940->mUnk_5cc.x >> 8,
-                        data_02063940->mUnk_5b4.x >> 8)
+    a.x = MapRange(data_02063940->mUnk_618, 0, data_02063940->mUnk_614, data_02063940->mUnk_5cc.x >> 8,
+                   data_02063940->mUnk_5b4.x >> 8)
           << 8;
-    a.y = func_0201fbe4(data_02063940->mUnk_618, 0, data_02063940->mUnk_614, data_02063940->mUnk_5cc.y >> 8,
-                        data_02063940->mUnk_5b4.y >> 8)
+    a.y = MapRange(data_02063940->mUnk_618, 0, data_02063940->mUnk_614, data_02063940->mUnk_5cc.y >> 8,
+                   data_02063940->mUnk_5b4.y >> 8)
           << 8;
-    a.z = func_0201fbe4(data_02063940->mUnk_618, 0, data_02063940->mUnk_614, data_02063940->mUnk_5cc.z >> 8,
-                        data_02063940->mUnk_5b4.z >> 8)
+    a.z = MapRange(data_02063940->mUnk_618, 0, data_02063940->mUnk_614, data_02063940->mUnk_5cc.z >> 8,
+                   data_02063940->mUnk_5b4.z >> 8)
           << 8;
-    b.x = func_0201fbe4(data_02063940->mUnk_618, 0, data_02063940->mUnk_614, data_02063940->mUnk_5d8.x >> 8,
-                        data_02063940->mUnk_5c0.x >> 8)
+    b.x = MapRange(data_02063940->mUnk_618, 0, data_02063940->mUnk_614, data_02063940->mUnk_5d8.x >> 8,
+                   data_02063940->mUnk_5c0.x >> 8)
           << 8;
-    b.y = func_0201fbe4(data_02063940->mUnk_618, 0, data_02063940->mUnk_614, data_02063940->mUnk_5d8.y >> 8,
-                        data_02063940->mUnk_5c0.y >> 8)
+    b.y = MapRange(data_02063940->mUnk_618, 0, data_02063940->mUnk_614, data_02063940->mUnk_5d8.y >> 8,
+                   data_02063940->mUnk_5c0.y >> 8)
           << 8;
-    b.z = func_0201fbe4(data_02063940->mUnk_618, 0, data_02063940->mUnk_614, data_02063940->mUnk_5d8.z >> 8,
-                        data_02063940->mUnk_5c0.z >> 8)
+    b.z = MapRange(data_02063940->mUnk_618, 0, data_02063940->mUnk_614, data_02063940->mUnk_5d8.z >> 8,
+                   data_02063940->mUnk_5c0.z >> 8)
           << 8;
     func_0200b960(&cam->mUnk_204, a, 4);
     func_0200b960(&cam->mUnk_228, b, 4);
@@ -96,9 +96,9 @@ void func_0200c7a4(void) {
         data_02063940->mUnk_60c--;
         data_02063940->mUnk_608 = (data_02063940->mUnk_608 + 1) % 3;
         if (data_02063940->mUnk_608 == 0) {
-            data_02063940->mUnk_5e4.x = ((func_0201fd68() & 7) - 5) << 12;
-            data_02063940->mUnk_5e4.y = ((func_0201fd68() & 7) - 5) << 12;
-            data_02063940->mUnk_5e4.z = ((func_0201fd68() & 7) - 5) << 12;
+            data_02063940->mUnk_5e4.x = ((NextRandom() & 7) - 5) << 12;
+            data_02063940->mUnk_5e4.y = ((NextRandom() & 7) - 5) << 12;
+            data_02063940->mUnk_5e4.z = ((NextRandom() & 7) - 5) << 12;
             data_02063940->mUnk_5fc.x = (data_02063940->mUnk_5e4.x - data_02063940->mUnk_5f0.x) / 2;
             data_02063940->mUnk_5fc.y = (data_02063940->mUnk_5e4.y - data_02063940->mUnk_5f0.y) / 2;
             data_02063940->mUnk_5fc.z = (data_02063940->mUnk_5e4.z - data_02063940->mUnk_5f0.z) / 2;
@@ -132,10 +132,10 @@ void func_0200ca14(void) {
     }
     func_0200c5d8(0, 0, data_02063940->mStage.mUnk_13 + 0xdb3, 0x180, 16, 0, 2);
     func_02024208();
-    func_020104c0(4, 0x4c);
+    RequestTrack(4, 0x4c);
     func_0200dc08(data_0204e1c0[data_02063940->mStage.mUnk_10], &area[4], &area[3], &area[2], &area[1], &area[0], 0);
     func_020325b0(area[4], area[2], area[3], 0, area[1], area[0]);
-    func_0201bb30();
+    UpdateSystemAndWait();
     func_0200c6ac();
     G3X_SetClearColor(0, 8, 0x7fff, 0, 0);
     memset(&data_02063940->mUnk_3a8, 0, sizeof(DrawParams));
@@ -204,7 +204,7 @@ void func_0200cbe8(void) {
 }
 
 void func_0200cd1c(void) {
-    func_0201f880(3);
+    SetFaded(3);
     func_02022370();
 }
 
@@ -213,7 +213,7 @@ void func_0200cd2c(void) {
     func_0200cdc4();
     func_02033614(data_020c3e44.mUnk_2024.mUnk_9c.mUnk_228.x, data_020c3e44.mUnk_2024.mUnk_9c.mUnk_228.z);
     func_0202733c(&data_02063940->mUnk_230, &data_02063940->mUnk_3a8, 0xb0000002);
-    func_020105f4(&data_02063940->mUnk_230);
+    PlayObjectSe(&data_02063940->mUnk_230);
     func_02024368(&data_02063940->mUnk_3ec, 255, 0, 0x1000, 0, 0);
     if (data_020b10fc.mUnk_00 < 3) {
         func_0200d638();
@@ -291,7 +291,7 @@ void func_0200ceac(void) {
             if (mask == -1) {
                 break;
             }
-            roll = func_0201fd84(0, total - 1);
+            roll = RandomRange(0, total - 1);
             k = 0;
             while (cum[k] < roll) {
                 k++;
@@ -385,10 +385,10 @@ void func_0200d098(void) {
         }
         if (redraw == 1) {
             func_020242e8(e->mUnk_00 + 0xd0b, x, y, 0x1000, 0x1000, 0, 0xff, 0);
-            func_02020978(i + 0x100, x, y, 0, 0, 0xe83);
+            AddTouchButton(i + 0x100, x, y, 0, 0, 0xe83);
         }
     }
-    if (data_020b10fc.mUnk_00 < 2 && data_020c18bc.mUnk_2ac_0) {
+    if (data_020b10fc.mUnk_00 < 2 && gSystemState.mTouchPressed) {
         if (func_0200bdac(0x80000000, 0x100, 0x108)) {
             func_0200d2a4(&data_02063940->mSlots[(u16) data_020c1d60.mUnk_800.mUnk_100.mUnk_04 - 0x100]);
         }
@@ -483,9 +483,9 @@ void func_0200d638(void) {
 
     if (p->mUnk_7d4 < 0x4000 && p->mUnk_7d0 != 0) {
         x = p->mPos.x;
-        func_0201fb24(&p->mUnk_7d4, 12);
+        EaseLevel(&p->mUnk_7d4, 12);
         p = data_02063940;
-        y = p->mPos.y - func_0201fbe4(p->mUnk_7d4, 0, 0x4000, 0, 30);
+        y = p->mPos.y - MapRange(p->mUnk_7d4, 0, 0x4000, 0, 30);
         if (y <= 20) {
             y = 20;
         }

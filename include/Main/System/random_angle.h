@@ -7,21 +7,21 @@
 extern "C" {
 #endif
 
-u32 func_0201fd68(void);
-u32 func_0201fd84(u32 lo, u32 hi);
-void func_0201fda4(void);
-u32 func_0201fdbc(const void *data, u32 lo, u32 hi);
-u32 func_0201fe14(u32 a, u32 b);
-int func_0201fe34(u32 a, u32 b);
-int func_0201fe6c(u16 a, u16 b);
-u32 func_0201fe8c(u16 a, u16 b);
-u32 func_0201feb0(s32 x, s32 y);
-int func_0201febc(int ax, int ay, int bx, int by, int cx, int cy);
+u32 NextRandom(void);
+u32 RandomRange(u32 lo, u32 hi);
+void MixRandomSeed(void);
+u32 ReadBits(const void *data, u32 lo, u32 hi);
+u32 AngleDistance(u32 a, u32 b);
+int AngleDelta(u32 a, u32 b);
+int IsAngleIncreasing(u16 to, u16 from);
+u32 AngleHalfway(u16 a, u16 b);
+u32 AngleOfVector(s32 x, s32 y);
+int Cross2d(int ax, int ay, int bx, int by, int cx, int cy);
 void func_0201fed4(int a);
-int func_0201ff80(u32 id);
-int func_0201ffa0(void);
-void *func_0201ffbc(void);
-void func_0201ffcc(void *p);
+int GetSaveBlockSize(u32 id);
+int GetSaveFieldCount(void);
+void *AllocSaveRecord(void);
+void FreeSaveRecord(void *p);
 
 #ifdef __cplusplus
 }

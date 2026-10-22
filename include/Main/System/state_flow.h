@@ -11,8 +11,9 @@
 extern "C" {
 #endif
 
-// Main loop state: frame counter, current/previous/requested state numbers, the queue of requested states and a
-// table of per-state handler words.
+// Main loop state: frame counter, current/previous/requested state numbers, the queue of requested states (PushState
+// terminates at 25 entries) and a table of values the states pass on through SetFlowValue and GetFlowValue (a prompt
+// number, a selection, a state to push); none of them is called.
 #define QUEUE_SIZE 0x1c
 #define HANDLER_COUNT 24
 typedef struct GameFlow {
@@ -20,23 +21,25 @@ typedef struct GameFlow {
     u32 mState;
     u32 mPrevState;
     u32 mNextState;
-    s32 mUnk_10;
+    // 1 makes the main loop leave and enter the state again even when it does not change. Only PopStateEx writes it
+    // from a parameter, and its only caller passes 0, so it is never 1 in this build.
+    s32 mReenterRequested;
     u32 mQueueCount;
     u8 mQueue[QUEUE_SIZE];
     u32 mHandlers[HANDLER_COUNT];
-    s32 mUnk_94;
+    s32 mStateFlag;
 } GameFlow;
 
 #define STATE_COUNT 25
 
 typedef void (*StateFunc)(void);
 
-extern GameFlow data_020b1194;
+extern GameFlow gGameFlow;
 
-extern const u8 data_0204e824[STATE_COUNT];
-extern const StateFunc data_0204e840[STATE_COUNT];
-extern const StateFunc data_0204e8a4[STATE_COUNT];
-extern const StateFunc data_0204e908[STATE_COUNT];
+extern const u8 gStatePromptScreenEnabled[STATE_COUNT];
+extern const StateFunc gStateEnterFuncs[STATE_COUNT];
+extern const StateFunc gStateUpdateFuncs[STATE_COUNT];
+extern const StateFunc gStateLeaveFuncs[STATE_COUNT];
 
 typedef struct Unk_020b10fc {
     s32 mUnk_00;
@@ -247,21 +250,21 @@ typedef struct Unk_020b6ee0 {
 } Unk_020b6ee0;
 extern Unk_020b6ee0 data_020b6ee0;
 
-u16 func_0200f9c8(int index);
-const char *func_0200f9f0(int id);
-const char *func_0200fa10(int id, int index);
-void func_0200fa24(void);
-void func_0200fa3c(void);
-void func_0200fa50(void);
-void func_0200fa80(int state);
-void func_0200fab0(void);
-void func_0200fabc(u32 flag);
-u32 func_0200fb00(void);
-u32 func_0200fb0c(void);
-void func_0200fb18(u32 index, u32 value);
-u32 func_0200fb34(u32 index);
-void func_0200fb50(s32 value);
-s32 func_0200fb5c(void);
+u16 LookupLanguageFileId(int index);
+const char *GetText(int id);
+const char *GetLanguageText(int id, int index);
+void InitGameFlow(void);
+void ClearStateQueueAndFlag(void);
+void ReenterState(void);
+void PushState(int state);
+void PopState(void);
+void PopStateEx(u32 flag);
+u32 GetState(void);
+u32 GetNextState(void);
+void SetFlowValue(u32 index, u32 value);
+u32 GetFlowValue(u32 index);
+void SetStateFlag(s32 value);
+s32 GetStateFlag(void);
 
 #ifdef __cplusplus
 }

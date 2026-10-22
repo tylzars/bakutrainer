@@ -27,34 +27,34 @@ void func_020145bc(void) {
         case 0:
             break;
         case 1:
-            if (func_0200fb00() == 10 && data_020b6ee0.mUnk_a146 <= 1) {
+            if (GetState() == 10 && data_020b6ee0.mUnk_a146 <= 1) {
                 data_020b6ee0.mUnk_a564 = 2;
                 func_0201033c(1, 10);
                 func_02011bcc(0x4c, 2, 0x1e0);
             }
             break;
         case 2:
-            if (func_0200fb00() == 10 && data_020b6ee0.mUnk_a8e4 == 0) {
+            if (GetState() == 10 && data_020b6ee0.mUnk_a8e4 == 0) {
                 data_020b6ee0.mUnk_a564 = 3;
                 func_02011bcc(0x54, 1, 0x1e0);
                 rec->mUnk_22e = 1;
             }
             break;
         case 3:
-            if (func_0200fb00() == 10 && data_020b6ee0.mUnk_a570 != 0) {
+            if (GetState() == 10 && data_020b6ee0.mUnk_a570 != 0) {
                 data_020b6ee0.mUnk_a564 = 4;
                 func_02011bcc(0x55, 1, 0x1e0);
             }
             break;
         case 4:
-            if (func_0200fb00() == 10 && data_020b1990[0].mUnk_226 == data_020b1990[0].mInfo.mUnk_10) {
+            if (GetState() == 10 && data_020b1990[0].mUnk_226 == data_020b1990[0].mInfo.mUnk_10) {
                 data_020b6ee0.mUnk_a564 = 5;
                 data_020b6ee0.mUnk_a56c = 2;
                 func_02011bcc(0x4d, 1, 0x1e0);
             }
             break;
         case 5:
-            if (func_0200fb00() == 10) {
+            if (GetState() == 10) {
                 u8 v = data_020b6ee0.mUnk_a146;
                 if (v == 6 || v == 7 || v == 8 || v == 3) {
                     data_020b6ee0.mUnk_a56c = 1;
@@ -63,13 +63,13 @@ void func_020145bc(void) {
             }
             break;
         case 6:
-            if (func_0200fb00() == 10 && data_020b6ee0.mUnk_a146 <= 1) {
+            if (GetState() == 10 && data_020b6ee0.mUnk_a146 <= 1) {
                 data_020b6ee0.mUnk_a564 = 7;
                 func_02011bcc(0x56, 1, 0x1e0);
             }
             break;
         case 7:
-            if (func_0200fb00() == 10 && data_020b6ee0.mUnk_a146 <= 2 && data_020b1990[0].mInfo.mUnk_12 == 100 &&
+            if (GetState() == 10 && data_020b6ee0.mUnk_a146 <= 2 && data_020b1990[0].mInfo.mUnk_12 == 100 &&
                 data_020b6ee0.mUnk_a128 == -1) {
                 data_020b6ee0.mUnk_a564 = 8;
                 data_020b6ee0.mUnk_a56d = 2;
@@ -79,19 +79,19 @@ void func_020145bc(void) {
             }
             break;
         case 8:
-            if (func_0200fb00() == 13) {
+            if (GetState() == 13) {
                 data_020b6ee0.mUnk_a564 = 9;
                 func_0201033c(0x27, 13);
             }
             break;
         case 9:
-            if (func_0200fb00() == 4) {
+            if (GetState() == 4) {
                 data_020b6ee0.mUnk_a564 = 10;
                 data_020b6ee0.mUnk_a56d = 1;
             }
             break;
         case 10:
-            if (func_0200fb00() == 10) {
+            if (GetState() == 10) {
                 data_020b6ee0.mUnk_a564 = 11;
                 data_020b6ee0.mUnk_a56e = 2;
                 func_0201033c(2, 10);
@@ -99,13 +99,13 @@ void func_020145bc(void) {
             }
             break;
         case 11:
-            if (func_0200fb00() == 6) {
+            if (GetState() == 6) {
                 data_020b6ee0.mUnk_a564 = 12;
                 func_0201033c(4, 6);
             }
             break;
         case 12:
-            if (func_0200fb00() == 10 && data_020b6ee0.mUnk_a146 <= 1 && data_020b6ee0.mUnk_a530 == 1) {
+            if (GetState() == 10 && data_020b6ee0.mUnk_a146 <= 1 && data_020b6ee0.mUnk_a530 == 1) {
                 data_020b6ee0.mUnk_a564 = 13;
                 data_020b6ee0.mUnk_a56e = 0;
                 func_02011bcc(0x57, 1, 0x1e0);
@@ -116,7 +116,7 @@ void func_020145bc(void) {
             if (idx == -1) {
                 OS_Terminate();
             }
-            if (func_0200fb00() == 10 && data_020b1990[idx].mUnk_226 == data_020b1990[idx].mInfo.mUnk_10) {
+            if (GetState() == 10 && data_020b1990[idx].mUnk_226 == data_020b1990[idx].mInfo.mUnk_10) {
                 data_020b6ee0.mUnk_a564 = 14;
                 func_02011bcc(0x56, 1, 0x1e0);
             }
@@ -126,7 +126,7 @@ void func_020145bc(void) {
             if (idx == -1) {
                 OS_Terminate();
             }
-            if (func_0200fb00() == 10 && data_020b6ee0.mUnk_a146 <= 2 && data_020b1990[idx].mInfo.mUnk_12 == 100 &&
+            if (GetState() == 10 && data_020b6ee0.mUnk_a146 <= 2 && data_020b1990[idx].mInfo.mUnk_12 == 100 &&
                 data_020b6ee0.mUnk_a128 == -1) {
                 data_020b6ee0.mUnk_a564 = 15;
                 data_020b6ee0.mUnk_a56d = 2;
@@ -140,7 +140,7 @@ void func_020145bc(void) {
             if (idx == -1) {
                 OS_Terminate();
             }
-            if ((func_0200fb00() == 4 || func_0200fb00() == 15) && data_020b6ee0.mUnk_a8e4 == idx) {
+            if ((GetState() == 4 || GetState() == 15) && data_020b6ee0.mUnk_a8e4 == idx) {
                 data_020b6ee0.mUnk_a564 = 16;
                 data_020b6ee0.mUnk_a56d = 1;
                 data_020b6ee0.mUnk_a56e = 2;
@@ -148,7 +148,7 @@ void func_020145bc(void) {
             }
             break;
         case 16:
-            if (func_0200fb00() == 10 && data_020b6ee0.mUnk_a146 <= 1 && data_020b6ee0.mUnk_a530 == 2) {
+            if (GetState() == 10 && data_020b6ee0.mUnk_a146 <= 1 && data_020b6ee0.mUnk_a530 == 2) {
                 data_020b6ee0.mUnk_a564 = 17;
                 data_020b6ee0.mUnk_a56e = 0;
                 data_020b6ee0.mUnk_a56f = 2;
@@ -156,7 +156,7 @@ void func_020145bc(void) {
             }
             break;
         case 17:
-            if (func_0200fb00() == 9) {
+            if (GetState() == 9) {
                 data_020b6ee0.mUnk_a564 = 99;
                 data_020b6ee0.mUnk_a56c = 1;
                 data_020b6ee0.mUnk_a56d = 1;
@@ -194,7 +194,7 @@ void func_020149e0(void) {
         case 0:
             break;
         case 1:
-            if (func_0200fb5c() == 1) {
+            if (GetStateFlag() == 1) {
                 if (func_020149b0() == 1) {
                     int sel;
                     data_020b6ee0.mUnk_a538 = 2;
@@ -211,27 +211,27 @@ void func_020149e0(void) {
             }
             break;
         case 2:
-            if (func_0200fb5c() == 1) {
+            if (GetStateFlag() == 1) {
                 if (func_020149b0() == 1) {
                     data_020b6ee0.mUnk_a538 = 0;
                     if (func_02007758() == 0) {
                         func_02014bf0();
                         func_02014afc(data_020b6ee0.mUnk_a534, 3);
-                        func_0200fa80(0x14);
-                        func_0200fab0();
+                        PushState(0x14);
+                        PopState();
                     } else {
                         func_02014bf0();
                         func_02014afc(data_020b6ee0.mUnk_a534, 1);
-                        func_0200fa80(0x14);
-                        func_0200fab0();
+                        PushState(0x14);
+                        PopState();
                     }
                 } else {
                     data_020b6ee0.mUnk_a538 = 0;
                     func_02007758();
                     func_02014bf0();
                     func_02014afc(data_020b6ee0.mUnk_a534, 1);
-                    func_0200fa80(0x14);
-                    func_0200fab0();
+                    PushState(0x14);
+                    PopState();
                 }
             }
             break;
@@ -326,11 +326,11 @@ void func_02014c38(StageInfo *info) {
 }
 
 void func_02014ccc(StageInfo *info) {
-    info->mUnk_1a = func_0201fd68() & 3;
+    info->mUnk_1a = NextRandom() & 3;
 }
 
 void func_02014cdc(StageInfo *info) {
-    u32 r = func_0201fd68() % 3;
+    u32 r = NextRandom() % 3;
     info->mUnk_1a = (info->mUnk_1a + 1 + r) & 3;
 }
 
@@ -360,7 +360,7 @@ int func_02014d2c(StageInfo *info) {
         OS_Terminate();
     }
     row = info->mUnk_11 + 9;
-    roll = func_0201fd68() % 10000;
+    roll = NextRandom() % 10000;
     i = 0;
     off = 0;
     do {

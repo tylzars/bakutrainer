@@ -57,7 +57,7 @@ void func_0202eb64(int id, int volume, int repeat, int pan, u32 mask, WaveLoop *
 }
 
 void func_0202eb84(u32 id, int x, int volume, int repeat, int pan, u32 mask, WaveLoop *loop) {
-    func_0202ebb8(0, func_0202ded8((u16) id), id, x, volume, repeat, pan, mask, loop);
+    func_0202ebb8(0, FindOrLoadCachedFile((u16) id), id, x, volume, repeat, pan, mask, loop);
 }
 
 void func_0202ebb8(const WaveInfo *info, const void *data, u32 id, int x, u32 volume, int repeat, int pan, u32 mask,
@@ -75,7 +75,7 @@ void func_0202ebb8(const WaveInfo *info, const void *data, u32 id, int x, u32 vo
     if ((u16) id == 0xffff) {
         OS_Terminate();
     }
-    if (data_020c18bc.mUnk_494 == 0) {
+    if (gSystemState.mUnk_494 == 0) {
         return;
     }
     key = id & 0x4000ffff;
@@ -234,11 +234,11 @@ void func_0202ef24(void) {
             func_0202ee68(ch->mId, v);
         }
         if (ch->mActive == 1) {
-            if ((ch->mUnk_0d_2 == 0 || data_020c18bc.mUnk_494 == 0) && (busy & (1 << i)) == 0 &&
+            if ((ch->mUnk_0d_2 == 0 || gSystemState.mUnk_494 == 0) && (busy & (1 << i)) == 0 &&
                 SND_IsFinishedCommandTag(ch->mUnk_00) == 1) {
                 mask |= 1 << i;
             } else if ((ch->mId & 0x40000000) == 0) {
-                if (func_0202ded8(ch->mId) != ch->mWave) {
+                if (FindOrLoadCachedFile(ch->mId) != ch->mWave) {
                     mask |= 1 << i;
                 }
             }
@@ -267,12 +267,12 @@ void func_0202efe4(u32 index) {
 void func_0202f00c(void) {
     u32 i;
     func_0202f05c();
-    if ((data_020c18bc.mUnk_46c & 0x1000000) == 0) {
+    if ((gSystemState.mFlags & 0x1000000) == 0) {
         data_020c648c.mUnk_180 = 0x10;
     } else {
         data_020c648c.mUnk_180 = data_020c648c.mUnk_181;
     }
-    data_020c18bc.mUnk_46c |= 0x2000;
+    gSystemState.mFlags |= 0x2000;
     func_020402f0();
     for (i = 0; i < data_020c648c.mUnk_180; i++) {
         func_0202efe4(i);
@@ -280,9 +280,9 @@ void func_0202f00c(void) {
 }
 
 void func_0202f05c(void) {
-    if (data_020c18bc.mUnk_46c & 0x2000) {
+    if (gSystemState.mFlags & 0x2000) {
         func_0202eeec();
-        data_020c18bc.mUnk_46c &= ~0x2000;
+        gSystemState.mFlags &= ~0x2000;
     }
 }
 
@@ -291,11 +291,11 @@ void func_0202f084(void) {
     u32 cur;
     u32 want;
     u32 mask;
-    if ((data_020c18bc.mUnk_46c & 0x2000) == 0) {
+    if ((gSystemState.mFlags & 0x2000) == 0) {
         func_0202f00c();
         return;
     }
-    if ((data_020c18bc.mUnk_46c & 0x1000000) == 0) {
+    if ((gSystemState.mFlags & 0x1000000) == 0) {
         data_020c648c.mUnk_181 = 0x10;
         for (i = data_020c648c.mUnk_180; i < data_020c648c.mUnk_181; i++) {
             func_0202efe4(i);
@@ -403,7 +403,7 @@ void func_0202f290(WaveStream *stream, const char *name, u32 rate) {
     strcpy(stream->mName, name);
     stream->mRate = rate;
     stream->mChunk = stream->mRate * 2;
-    stream->mBuffer = func_0201c430(stream->mChunk * 4);
+    stream->mBuffer = Alloc(stream->mChunk * 4);
     stream->mCurrent = -1;
     stream->mPause = 0;
     stream->mFrame = 0;
@@ -415,7 +415,7 @@ void func_0202f2e8(WaveStream *stream) {
     }
     func_0202edd0(WAVE_STREAM_KEY);
     func_020424d8(&stream->mFile);
-    func_0201c4f0(&stream->mBuffer);
+    Free(&stream->mBuffer);
     data_020c648c.mUnk_184 = 0;
 }
 

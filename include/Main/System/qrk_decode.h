@@ -6,9 +6,9 @@
 extern "C" {
 #endif
 
-void func_02030700(const u8 *src, u8 *dst, void *work);
-u32 func_02030744(const u8 *src);
-u32 func_02030760(void);
+void UnpackQrk(const u8 *src, u8 *dst, void *work);
+u32 GetQrkUnpackedSize(const u8 *src);
+u32 GetQrkWorkSize(void);
 
 #ifdef __cplusplus
 }

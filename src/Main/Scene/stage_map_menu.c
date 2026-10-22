@@ -50,7 +50,7 @@ void func_02019fa0(void) {
             func_0200ba68(0xde6, i + MAP_NODE_POS_ID, 0, 0, 0x1000, 0);
         } else if (i == data_020b6ee0.mUnk_a530) {
             func_02031fc4(i + MAP_NODE_POS_ID, &dp.mPos);
-            func_02023f58(&dp, dp.mPos.x, dp.mPos.y, dp.mPos.z, 0x1000, 0, 0, data_020c18bc.mUnk_45c % 400, 0x100);
+            func_02023f58(&dp, dp.mPos.x, dp.mPos.y, dp.mPos.z, 0x1000, 0, 0, gSystemState.mElapsedFrames % 400, 0x100);
             func_0202733c(&p->mUnk_50, &dp, 0);
         } else {
             func_0200ba68(0xde3, i + MAP_NODE_POS_ID, 0, 0, 0x1000, 0);
@@ -90,7 +90,7 @@ void func_02019fa0(void) {
             } else {
                 func_0202cf08(a + 0xed6, 0, 7, 0xfa, 2);
                 func_0202cf08(b + 0xedc, 0, 7, 0xfa, 2);
-                func_020215fc(0x72, 0x1c, data_0201a630, func_0200f9f0(0x46), 2, 0xf0, 0x10, 2);
+                func_020215fc(0x72, 0x1c, data_0201a630, GetText(0x46), 2, 0xf0, 0x10, 2);
                 sprintf(buf, "%d", data_020b6ee0.mUnk_a534 + 1);
                 func_020215fc(0x72, 0x3b, data_0201a6b2, buf, 2, 0xf0, 0x10, 2);
             }
@@ -112,11 +112,11 @@ void func_02019fa0(void) {
             func_0200bb14(q->mUnk_38 + 0xff, 0xa1, 0x101, 0x15, 0, 0, 0x17d, 1);
             func_0200bb14(-q->mUnk_38, 0xa1, 0x102, 0xe, 0, 0, 0x5a, 1);
         } else {
-            func_020215fc(0x5a, 0x5a, data_0201a64e, func_0200f9f0(0x47), 2, 0xc8, 0x10, 2);
+            func_020215fc(0x5a, 0x5a, data_0201a64e, GetText(0x47), 2, 0xc8, 0x10, 2);
         }
     } else {
         p->mUnk_3dc = 0;
-        func_020215fc(0x5a, 0x5a, data_0201a64e, func_0200f9f0(0x47), 2, 0xc8, 0x10, 2);
+        func_020215fc(0x5a, 0x5a, data_0201a64e, GetText(0x47), 2, 0xc8, 0x10, 2);
     }
     if (p->mUnk_3dd == 1) {
         func_0200b928(&q->mUnk_38, 0, 4);
@@ -127,7 +127,7 @@ void func_02019fa0(void) {
 
 void func_0201a3d4(void) {
     func_020102f8();
-    func_0201eb20();
+    ResetVramBanks();
 }
 
 void func_0201a3e0(void) {
@@ -137,7 +137,7 @@ void func_0201a3e0(void) {
         p->mUnk_3dd = 1;
         p->mUnk_3d4 = 0x200;
         data_020b6ee0.mUnk_a538 = 1;
-        func_0200fb50(1);
+        SetStateFlag(1);
     }
     if (func_0200bd80(0x20000000, 0x102)) {
         if (p->mUnk_3dd == 0) {
@@ -145,32 +145,32 @@ void func_0201a3e0(void) {
             p->mUnk_3d4 = 0x200;
             q->mUnk_38 = 0x28;
         } else {
-            func_0200fa80(10);
-            func_0200fab0();
+            PushState(10);
+            PopState();
         }
     }
-    if (data_020c18bc.mUnk_2ac_0 == 1) {
+    if (gSystemState.mTouchPressed == 1) {
         if (func_0200bd80(0x80000000, 0x101) == 0 && func_0200bd80(0x80000000, 0x102) == 0) {
             data_020b6ee0.mUnk_a574.mUnk_34 = 0x10;
             data_020b6ee0.mUnk_a5d0 = 0;
             p->mUnk_3d8 = 0;
         }
     }
-    if (data_020c18bc.mUnk_2ac_1 == 0 && data_020c18bc.mUnk_2ac_2 == 0) {
+    if (gSystemState.mTouchDown == 0 && gSystemState.mTouchReleased == 0) {
         data_020b6ee0.mUnk_a5d0 = 1;
     }
 }
 
 void func_0201a4b0(void) {
-    func_0201f880(3);
-    func_0201bb30();
-    func_0201c41c();
-    func_0201eb20();
+    SetFaded(3);
+    UpdateSystemAndWait();
+    ResetKeys();
+    ResetVramBanks();
     func_0202c1c4();
-    func_02020854(0);
+    SetLcdSwap(0);
     func_0202bdd8(0x10cb, 0x10ca, 0x10cc, 0x82, 1);
     func_0202bdd8(0x10cb, 0x10ca, 0x10cc, 0x82, 2);
-    func_0201dde0(0x237, 3);
+    LoadImage(0x237, 3);
     data_020c17fc = -8;
 }
 
@@ -180,7 +180,7 @@ void func_0201a50c(void) {
     func_020215fc(0x7f, 0x3a, data_0201a61c, "Recap", 2, 0xf0, 0x10, 1);
     sel = func_02014538(data_020b6ee0.mUnk_a530, 0xf);
     if (sel != -1) {
-        data_020c17fc += data_020c18bc.mUnk_45c % 3 / 2;
+        data_020c17fc += gSystemState.mElapsedFrames % 3 / 2;
         if (data_020c17fc >= 0) {
             if (data_020c17fc <= 8) {
                 func_0202cf08(0xfa7 - data_020c17fc, 0x7f, 0x62, 0x64, 1);
@@ -194,7 +194,7 @@ void func_0201a50c(void) {
     }
     func_0200bb14(0xff, 0xa1, 0x101, 0x15, 0, 0, 0x17d, 1);
     if (func_0200bd80(0x20000000, 0x101)) {
-        func_0200fb50(1);
+        SetStateFlag(1);
     }
 }
 

@@ -44,44 +44,44 @@ void func_0202ad50(void) {}
 void func_0202ad54(void) {}
 
 u16 func_0202ad58(void) {
-    return data_020c267c.mUnk_b24;
+    return gTextureBlocks.mPaletteFile;
 }
 
 u16 func_0202ad68(void) {
-    return data_020c267c.mUnk_b26;
+    return gTextureBlocks.mBlockFile;
 }
 
 // Mode byte (mUnk_577) of the half for layer 1 (layer 2 selects the other half).
 u8 func_0202ad78(int layer) {
-    return data_020c267c.mUnk_018[layer != 1].mUnk_577;
+    return gTextureBlocks.mLayers[layer != 1].mUnk_577;
 }
 
 int func_0202ad9c(void) {
-    return data_020c267c.mUnk_b28;
+    return gTextureBlocks.mUnk_b28;
 }
 
 s8 func_0202adac(void) {
-    return data_020c267c.mUnk_b2c;
+    return gTextureBlocks.mUnk_b2c;
 }
 
 // Header of block `index` in the packed file's block table: the table holds each block's offset from its start.
 u32 *func_0202adc0(u32 index) {
-    u8 *table = (u8 *) data_020c267c.mUnk_b20;
+    u8 *table = (u8 *) gTextureBlocks.mBlockTable;
     return (u32 *) (table + *(u32 *) (table + ((u16) index << 2) + 0x10));
 }
 
 u16 func_0202ade0(void) {
-    return data_020c267c.mUnk_b2a;
+    return gTextureBlocks.mBlockCount;
 }
 
 // Number of OAM entries to clear for a layer: 128, or fewer on the screen that func_02039a64 reports when
 // the flag byte or bit 9 of the system flags is set.
 u32 func_0202adf0(int layer) {
     if (layer == func_02039a64()) {
-        if (data_020c18bc.mUnk_250.mUnk_28[0] != 0) {
+        if (gSystemState.mUnk_250.mUnk_28[0] != 0) {
             return 0x7e;
         }
-        if (data_020c18bc.mUnk_46c & 0x200) {
+        if (gSystemState.mFlags & 0x200) {
             return 0x7f;
         }
     }
@@ -94,7 +94,7 @@ void func_0202ae34(int layer) {
     u32 oam = sub ? 0x7000000 : 0x7000400;
 
     MIi_CpuClear32(0x200, (void *) oam, func_0202adf0(layer) * 8);
-    data_020c267c.mUnk_018[sub == 0].mUnk_57a = 0;
+    gTextureBlocks.mLayers[sub == 0].mUnk_57a = 0;
 }
 
 // Fills `out` from texture `sub` of block `index`; an empty block gives a zeroed record with mUnk_12 = -1.
@@ -134,7 +134,7 @@ void func_0202ae84(u32 index, TexInfo *out, u32 sub) {
 // Frees the block at `index` of a layer's block heap: merges it with a free neighbour on each side and
 // links it into the free list, which is ordered by size.
 u16 func_0202afb0(u32 index, int layer) {
-    Unk_020c2694 *half = &data_020c267c.mUnk_018[layer == 2];
+    Unk_020c2694 *half = &gTextureBlocks.mLayers[layer == 2];
     Unk_PoolRange *n = half->mUnk_00c;
     u32 next;
     u32 prev;
@@ -188,9 +188,9 @@ u16 func_0202afb0(u32 index, int layer) {
 // entry that has no path left and was marked removed (-2) becomes free again (-1). The key's own entry becomes
 // free if no path goes through it, removed otherwise.
 void func_0202b19c(int layer, u32 key) {
-    Unk_020c2694 *half = &data_020c267c.mUnk_018[layer == 2];
+    Unk_020c2694 *half = &gTextureBlocks.mLayers[layer == 2];
     unsigned long idx = key & 0x3ff;
-    u32 step = data_02050378[(key >> 10) & 0x7f];
+    u32 step = gHashSteps[(key >> 10) & 0x7f];
     Unk_HashEntry *e;
 
     for (;;) {
@@ -219,7 +219,7 @@ void func_0202b19c(int layer, u32 key) {
 // moves the entry to the head of the free chain after the list's sentinel (entry 1). Returns the size
 // func_0202afb0 reports.
 u16 func_0202b26c(u32 index, int layer) {
-    Unk_020c2694 *half = &data_020c267c.mUnk_018[layer == 2];
+    Unk_020c2694 *half = &gTextureBlocks.mLayers[layer == 2];
     s32 key = half->mUnk_008[half->mUnk_004[index].mUnk_0].mUnk_8;
     u16 size;
 
@@ -257,7 +257,7 @@ u16 func_0202b35c(u32 code, u32 key, u32 sub, u32 mode, u32 count, int layer) {
     unsigned long entry;
     s32 stored;
     u32 val;
-    Unk_020c2694 *half = &data_020c267c.mUnk_018[layer == 2];
+    Unk_020c2694 *half = &gTextureBlocks.mLayers[layer == 2];
     u32 step;
     u32 n;
     int home;
@@ -277,18 +277,18 @@ u16 func_0202b35c(u32 code, u32 key, u32 sub, u32 mode, u32 count, int layer) {
     s32 freePos = -1;
     u32 k;
 
-    if (data_020c267c.mUnk_000 != 0 && data_020c267c.mUnk_017 == 1) {
-        if (data_020c267c.mUnk_00c == ((key << 2) | (sub << 25))) {
-            data_020c267c.mUnk_017 = 0;
+    if (gTextureBlocks.mUnk_000 != 0 && gTextureBlocks.mUnk_017 == 1) {
+        if (gTextureBlocks.mUnk_00c == ((key << 2) | (sub << 25))) {
+            gTextureBlocks.mUnk_017 = 0;
             loaded = 1;
         }
     }
-    if (data_020c267c.mUnk_b2e == 2) {
+    if (gTextureBlocks.mBlockFileKind == 2) {
         key = sub | (key << 7);
     } else {
         key <<= 5;
     }
-    step = data_02050378[(key >> 10) & 0x7f];
+    step = gHashSteps[(key >> 10) & 0x7f];
     home = key & 0x3ff;
     pos = home;
     for (;;) {
@@ -315,12 +315,12 @@ u16 func_0202b35c(u32 code, u32 key, u32 sub, u32 mode, u32 count, int layer) {
             }
             entry = half->mUnk_008[pos].mUnk_c;
             half->mUnk_004[entry].mUnk_0 = pos;
-            func_0201fa5c((IndexNode *) half->mUnk_004, entry);
+            MoveIndexNodeToEnd((IndexNode *) half->mUnk_004, entry);
             if (loaded == 1) {
                 u32 addr = (layer == 1 ? 0x6400000 : 0x6600000) +
                            ((half->mUnk_004[entry].mUnk_6 * (1 << half->mUnk_577)) << 5);
 
-                MIi_CpuCopy32(data_020c267c.mUnk_004, (void *) addr, func_0202b32c(code, mode));
+                MIi_CpuCopy32(gTextureBlocks.mUnk_004, (void *) addr, func_0202b32c(code, mode));
                 half->mUnk_008[pos].mUnk_0[0] = 0x76543210;
                 half->mUnk_008[pos].mUnk_0[1] = 0xfedcba98;
             }
@@ -349,7 +349,7 @@ u16 func_0202b35c(u32 code, u32 key, u32 sub, u32 mode, u32 count, int layer) {
                             buf[(words[w] >> sh) & 0xf] = *cur;
                             words[w] = (words[w] & ~(0xf << sh)) | (*cur++ << sh);
                         }
-                        func_02028928((u16 *) addr, buf, size / 2);
+                        RemapPaletteRows((u16 *) addr, buf, size / 2);
                         break;
                     }
                 }
@@ -423,11 +423,11 @@ u16 func_0202b35c(u32 code, u32 key, u32 sub, u32 mode, u32 count, int layer) {
         rest -= n;
         if (mode == 0) {
             half->mUnk_014[half->mUnk_114] = half->mUnk_516 - count;
-            func_0201c580(data_020c267c.mUnk_b26, key,
-                          (layer == 1 ? 0x6400000 : 0x6600000) + ((blk * (1 << half->mUnk_577)) << 5),
-                          (n * (1 << half->mUnk_577)) << 5, 0, 0, (half->mUnk_114++ << 1) | (layer == 2));
+            QueueTransferEx(gTextureBlocks.mBlockFile, key,
+                            (layer == 1 ? 0x6400000 : 0x6600000) + ((blk * (1 << half->mUnk_577)) << 5),
+                            (n * (1 << half->mUnk_577)) << 5, 0, 0, (half->mUnk_114++ << 1) | (layer == 2));
         } else {
-            func_0201c6b0(data_020c267c.mUnk_b26, key,
+            QueueTransfer(gTextureBlocks.mBlockFile, key,
                           (layer == 1 ? 0x6400000 : 0x6600000) + ((blk * (1 << half->mUnk_577)) << 5),
                           (n * (1 << half->mUnk_577)) << 5);
         }
@@ -458,7 +458,7 @@ u16 func_0202b35c(u32 code, u32 key, u32 sub, u32 mode, u32 count, int layer) {
 // table (all keys unused), the block heap nodes (one free block between two sentinels), the slot pairs and, when
 // the layer has a chain table (mUnk_57b == 1), that table's links.
 void func_0202bb30(int layer) {
-    Unk_020c2694 *half = &data_020c267c.mUnk_018[layer == 2];
+    Unk_020c2694 *half = &gTextureBlocks.mLayers[layer == 2];
     int i;
     Unk_PoolRange *n;
     u32 m;
@@ -480,10 +480,10 @@ void func_0202bb30(int layer) {
         half->mUnk_008[i].mUnk_8 = -1;
         half->mUnk_008[i].mUnk_e = 0;
     }
-    if (data_020c18bc.mUnk_46c & layer) {
-        func_0201c4f0(&half->mUnk_00c);
+    if (gSystemState.mFlags & layer) {
+        Free(&half->mUnk_00c);
     }
-    half->mUnk_00c = func_0201c430((half->mUnk_578 + 2) << 3);
+    half->mUnk_00c = Alloc((half->mUnk_578 + 2) << 3);
     m = half->mUnk_578;
     n = half->mUnk_00c;
     n[0].mUnk_0 = m;
@@ -502,7 +502,7 @@ void func_0202bb30(int layer) {
     }
     half->mUnk_114 = 1;
     half->mUnk_516 = 1;
-    data_020c18bc.mUnk_250.mUnk_28[0] = 0;
+    gSystemState.mUnk_250.mUnk_28[0] = 0;
     half->mUnk_57c = 0;
     if (half->mUnk_57b == 1) {
         for (i = 0; i < 0x100; i++) {
@@ -526,7 +526,7 @@ void func_0202bb30(int layer) {
 // ("PACK" files keep their table in memory, "EZ01" files are read on demand), then resets the layer.
 void func_0202bdd8(int a, int b, int c, u32 d, int e) {
     u32 sub = d >> 7;
-    Unk_020c2694 *half = &data_020c267c.mUnk_018[e == 2];
+    Unk_020c2694 *half = &gTextureBlocks.mLayers[e == 2];
     u32 mask = e == 1 ? 1 : 2;
     vu32 *reg = e == 1 ? (vu32 *) 0x4000000 : (vu32 *) 0x4001000;
     int size;
@@ -543,7 +543,7 @@ void func_0202bdd8(int a, int b, int c, u32 d, int e) {
     if (!(e == 1 || e == 2)) {
         OS_Terminate();
     }
-    data_020c18bc.mUnk_46c &= ~0xc0000;
+    gSystemState.mFlags &= ~0xc0000;
     half->mUnk_578 = (e == 2 && d == 0) ? 0x200 : 0x400;
     if (e & 1) {
         v = *(vu32 *) 0x4000000;
@@ -557,68 +557,68 @@ void func_0202bdd8(int a, int b, int c, u32 d, int e) {
         *(vu32 *) 0x4001000 = v;
         half->mUnk_57b = sub;
     }
-    if (!(data_020c18bc.mUnk_46c & mask)) {
+    if (!(gSystemState.mFlags & mask)) {
         half->mUnk_577 = d;
         size = 0x20 << d;
         v = *reg;
         v = (v & ~0x300000) | (d << 20);
         *reg = v;
         if (sub == 1) {
-            func_0201ebf4(e == 1 ? 5 : 9, 0x10, -1);
+            ReallocVramBanks(e == 1 ? 5 : 9, 0x10, -1);
         }
         if (half->mUnk_578 < 0x400) {
             size >>= 1;
         }
-        func_0201ebf4(e == 1 ? 3 : 7, size, -1);
-        func_0201c4f0(half);
-        func_0201c4f0(&half->mUnk_530);
-        func_0201c4f0(&half->mUnk_010);
-        func_0201c4f0(&half->mUnk_008);
-        func_0201c4f0(&half->mUnk_004);
-        half->mUnk_000 = func_0201c430(0x400);
-        half->mUnk_530 = func_0201c430(0x80);
+        ReallocVramBanks(e == 1 ? 3 : 7, size, -1);
+        Free(half);
+        Free(&half->mUnk_530);
+        Free(&half->mUnk_010);
+        Free(&half->mUnk_008);
+        Free(&half->mUnk_004);
+        half->mUnk_000 = Alloc(0x400);
+        half->mUnk_530 = Alloc(0x80);
         half->mUnk_57a = 0;
-        half->mUnk_010 = func_0201c430(0x100);
+        half->mUnk_010 = Alloc(0x100);
         half->mUnk_576 = 0;
-        half->mUnk_008 = func_0201c430(0x4000);
-        half->mUnk_004 = func_0201c430(0x1810);
+        half->mUnk_008 = Alloc(0x4000);
+        half->mUnk_004 = Alloc(0x1810);
     }
-    if (!(data_020c267c.mUnk_b26 == b && data_020c267c.mUnk_b24 == c && data_020c267c.mUnk_b20 != 0)) {
-        if (!(data_020c267c.mUnk_b26 == b && data_020c267c.mUnk_b24 == c)) {
-            data_020c267c.mUnk_014 = func_0202e760(c) >> 5;
-            if (data_020c267c.mUnk_000 != 0) {
-                func_0201c4f0(&data_020c267c.mUnk_004);
-                data_020c267c.mUnk_000 = 0;
+    if (!(gTextureBlocks.mBlockFile == b && gTextureBlocks.mPaletteFile == c && gTextureBlocks.mBlockTable != 0)) {
+        if (!(gTextureBlocks.mBlockFile == b && gTextureBlocks.mPaletteFile == c)) {
+            gTextureBlocks.mPaletteCount = GetStoredFileSize(c) >> 5;
+            if (gTextureBlocks.mUnk_000 != 0) {
+                Free(&gTextureBlocks.mUnk_004);
+                gTextureBlocks.mUnk_000 = 0;
             }
-            data_020c267c.mUnk_016 = 0;
-            data_020c267c.mUnk_012 = data_020c267c.mUnk_014;
+            gTextureBlocks.mUnk_016 = 0;
+            gTextureBlocks.mUnk_012 = gTextureBlocks.mPaletteCount;
         }
-        func_0202e4fc(b, hdr, 8, 0);
+        ReadFileBytes(b, hdr, 8, 0);
         if (hdr[0] == 0x4b434150) {
-            data_020c267c.mUnk_b2e = 1;
-            data_020c267c.mUnk_b1c = func_0201c430(hdr[1] - 4);
-            func_0202e4fc(b, data_020c267c.mUnk_b1c, hdr[1] - 4, 4);
+            gTextureBlocks.mBlockFileKind = 1;
+            gTextureBlocks.mPackOffsets = Alloc(hdr[1] - 4);
+            ReadFileBytes(b, gTextureBlocks.mPackOffsets, hdr[1] - 4, 4);
         } else if (hdr[0] == 0x30315a45) {
-            data_020c267c.mUnk_b2e = 2;
-            data_020c267c.mUnk_b1c = 0;
+            gTextureBlocks.mBlockFileKind = 2;
+            gTextureBlocks.mPackOffsets = 0;
         } else {
-            data_020c267c.mUnk_b2e = 0;
-            data_020c267c.mUnk_b1c = 0;
+            gTextureBlocks.mBlockFileKind = 0;
+            gTextureBlocks.mPackOffsets = 0;
         }
-        func_0201c4f0(&data_020c267c.mUnk_b20);
-        data_020c267c.mUnk_b20 = (u32 *) func_0202e86c(a);
-        data_020c267c.mUnk_b24 = c;
-        data_020c267c.mUnk_b26 = b;
-        data_020c267c.mUnk_b2a = (data_020c267c.mUnk_b20[4] - 0x10) >> 2;
+        Free(&gTextureBlocks.mBlockTable);
+        gTextureBlocks.mBlockTable = (u32 *) LoadFile(a);
+        gTextureBlocks.mPaletteFile = c;
+        gTextureBlocks.mBlockFile = b;
+        gTextureBlocks.mBlockCount = (gTextureBlocks.mBlockTable[4] - 0x10) >> 2;
     }
-    func_0201c4f0(&half->mUnk_52c);
-    func_0201c4f0(&half->mUnk_518);
+    Free(&half->mUnk_52c);
+    Free(&half->mUnk_518);
     if (sub == 1) {
-        half->mUnk_518 = func_0201c430(0x800);
-        half->mUnk_52c = func_0201c430(data_020c267c.mUnk_014 + 0x200);
-        memset(half->mUnk_52c, 0xff, data_020c267c.mUnk_014 + 0x200);
+        half->mUnk_518 = Alloc(0x800);
+        half->mUnk_52c = Alloc(gTextureBlocks.mPaletteCount + 0x200);
+        memset(half->mUnk_52c, 0xff, gTextureBlocks.mPaletteCount + 0x200);
     }
-    data_020c18bc.mUnk_46c |= mask;
+    gSystemState.mFlags |= mask;
     func_0202bb30(e);
 }
 
@@ -631,26 +631,26 @@ void func_0202c1c4(void) {
 void func_0202c1d4(int a) {
     u32 i;
 
-    if (!(data_020c18bc.mUnk_46c & 3)) {
+    if (!(gSystemState.mFlags & 3)) {
         return;
     }
     for (i = 0; i < 2; i++) {
-        if (data_020c18bc.mUnk_46c & (i == 0 ? 1 : 2)) {
-            func_0201c4f0(&data_020c267c.mUnk_b1c);
-            func_0201c4f0(&data_020c267c.mUnk_018[i].mUnk_000);
-            func_0201c4f0(&data_020c267c.mUnk_018[i].mUnk_530);
-            func_0201c4f0(&data_020c267c.mUnk_018[i].mUnk_008);
-            func_0201c4f0(&data_020c267c.mUnk_018[i].mUnk_004);
-            func_0201c4f0(&data_020c267c.mUnk_018[i].mUnk_00c);
-            func_0201c4f0(&data_020c267c.mUnk_018[i].mUnk_010);
-            func_0201c4f0(&data_020c267c.mUnk_018[i].mUnk_518);
-            func_0201eb74(i == 0 ? 3 : 7);
+        if (gSystemState.mFlags & (i == 0 ? 1 : 2)) {
+            Free(&gTextureBlocks.mPackOffsets);
+            Free(&gTextureBlocks.mLayers[i].mUnk_000);
+            Free(&gTextureBlocks.mLayers[i].mUnk_530);
+            Free(&gTextureBlocks.mLayers[i].mUnk_008);
+            Free(&gTextureBlocks.mLayers[i].mUnk_004);
+            Free(&gTextureBlocks.mLayers[i].mUnk_00c);
+            Free(&gTextureBlocks.mLayers[i].mUnk_010);
+            Free(&gTextureBlocks.mLayers[i].mUnk_518);
+            FreeVramBanks(i == 0 ? 3 : 7);
         }
     }
     if (a == 1) {
-        func_0201c4f0(&data_020c267c.mUnk_b20);
+        Free(&gTextureBlocks.mBlockTable);
     }
-    data_020c18bc.mUnk_46c &= ~3;
+    gSystemState.mFlags &= ~3;
 }
 
 // Rearranges `w` x `h` tiles from sequential order into rows of a bitmap `w` tiles wide: for each tile, `mode` 1
@@ -691,14 +691,14 @@ void func_0202c2f0(void *dst, const void *src, u32 w, u32 h, BOOL mode) {
 
 // Expands the tiles of `src` (`w` tiles wide, 4 or 8 bits per pixel by the entry's byte 13) into 16-bit colours
 // at the entry's destination: every non-zero pixel is looked up in the palette memory of the engine the
-// destination belongs to and written with bit 15 set; the rows of the destination are func_0201db94(engine)
+// destination belongs to and written with bit 15 set; the rows of the destination are GetLayerWidth(engine)
 // halfwords apart. Sets the entry's palette byte to 0xff. In the 8-bit branch the test uses the low four bits of
 // the pixel but the palette index is the whole byte.
 void func_0202c3e0(Unk_LoadEntry *entry, const void *src, u32 w) {
     u32 dst = entry->mUnk_04;
     u32 size = entry->mUnk_08;
     int engine = (dst >> 20) == 0x60 ? 1 : 2;
-    int stride = func_0201db94(engine);
+    int stride = GetLayerWidth(engine);
     const u32 *s = src;
     u32 j;
     int k;
@@ -775,7 +775,7 @@ u32 func_0202c5c0(u32 key, u32 val, Unk_020c2694 *half) {
 
 // Takes the oldest entry of slot `val` from the list (func_0202c548), loads block `key` into the 32 bytes that
 // entry names (from the file when `key` is below the file's block count, otherwise from the preloaded block at
-// data_020c267c.mUnk_008 + index * 32), chains the entry at the end of key `key`'s chain and returns its number.
+// gTextureBlocks.mUnk_008 + index * 32), chains the entry at the end of key `key`'s chain and returns its number.
 u32 func_0202c5fc(u32 index, u32 key, u32 val, Unk_020c2694 *half) {
     u32 n = half->mUnk_518[255].mUnk_5;
     u32 sel;
@@ -788,11 +788,11 @@ u32 func_0202c5fc(u32 index, u32 key, u32 val, Unk_020c2694 *half) {
     }
     half->mUnk_51c[val]--;
     func_0202c548(n, half);
-    sel = (&data_020c267c.mUnk_018[1] == half) ? 9 : 5;
-    if (key < data_020c267c.mUnk_014) {
-        func_0201c6b0(data_020c267c.mUnk_b24, key << 5, (half->mUnk_518[n].mUnk_6 << 5) + (sel << 28), 0x20);
+    sel = (&gTextureBlocks.mLayers[1] == half) ? 9 : 5;
+    if (key < gTextureBlocks.mPaletteCount) {
+        QueueTransfer(gTextureBlocks.mPaletteFile, key << 5, (half->mUnk_518[n].mUnk_6 << 5) + (sel << 28), 0x20);
     } else {
-        func_0201c6b0(0, (u32) (data_020c267c.mUnk_008 + (index << 5)), (half->mUnk_518[n].mUnk_6 << 5) + (sel << 28),
+        QueueTransfer(0, (u32) (gTextureBlocks.mUnk_008 + (index << 5)), (half->mUnk_518[n].mUnk_6 << 5) + (sel << 28),
                       0x20);
     }
     prev = half->mUnk_52c[key];
@@ -821,7 +821,7 @@ u32 func_0202c5fc(u32 index, u32 key, u32 val, Unk_020c2694 *half) {
 // looked up or loaded (func_0202c5c0, func_0202c5fc) and its entry's low nibble appended to the half's index list
 // (mUnk_115, count in mUnk_516). Returns the slot. `a` is not used.
 s32 func_0202c778(u16 *keys, int a, u32 n, int engine) {
-    Unk_020c2694 *half = &data_020c267c.mUnk_018[engine == 2];
+    Unk_020c2694 *half = &gTextureBlocks.mLayers[engine == 2];
     u32 node2;
     u8 count[16];
     int min;
@@ -835,7 +835,7 @@ s32 func_0202c778(u16 *keys, int a, u32 n, int engine) {
     u32 avail;
     u32 key;
 
-    if (keys[0] < data_020c267c.mUnk_014) {
+    if (keys[0] < gTextureBlocks.mPaletteCount) {
         memcpy(list, keys, n * 2);
     } else {
         for (j = 0; j < n; j++) {
@@ -853,7 +853,7 @@ s32 func_0202c778(u16 *keys, int a, u32 n, int engine) {
         mask &= avail;
     }
     if (mask != 0) {
-        slot = 31 - func_02028250(mask);
+        slot = 31 - LeadingZeroCount(mask);
     } else {
         MI_CpuClear32(count, 16);
         for (i = 0; i < n; i++) {
@@ -928,7 +928,7 @@ typedef struct Mat4 {
 // position and is read from the block data) it finds or loads each palette and returns the last slot. With flag
 // 0 the slots are also appended to the half's record, and a record that repeats the run before it is removed again.
 s32 func_0202ca80(u16 *ids, int flag, u32 count, int mode) {
-    Unk_020c2694 *half = &data_020c267c.mUnk_018[mode == 2];
+    Unk_020c2694 *half = &gTextureBlocks.mLayers[mode == 2];
     int base = half->mUnk_516;
     int s;
     u32 i;
@@ -942,7 +942,7 @@ s32 func_0202ca80(u16 *ids, int flag, u32 count, int mode) {
             u32 miss;
 
             key = *ids;
-            if (key < data_020c267c.mUnk_014) {
+            if (key < gTextureBlocks.mPaletteCount) {
                 ids++;
             } else {
                 key = (u16) (key + i);
@@ -975,11 +975,11 @@ s32 func_0202ca80(u16 *ids, int flag, u32 count, int mode) {
             half->mUnk_534[s].mUnk_0 = key;
             if (miss == 1) {
                 u32 pal = (mode == 2) ? 0x400 : 0;
-                if (key < data_020c267c.mUnk_014) {
-                    func_0201c6b0(data_020c267c.mUnk_b24, key * 32, VRAM_PLTT_BG + pal + half->mUnk_534[s].mUnk_2 * 32,
-                                  0x20);
+                if (key < gTextureBlocks.mPaletteCount) {
+                    QueueTransfer(gTextureBlocks.mPaletteFile, key * 32,
+                                  VRAM_PLTT_BG + pal + half->mUnk_534[s].mUnk_2 * 32, 0x20);
                 } else {
-                    func_0201c6b0(0, (u32) data_020c267c.mUnk_008 + i * 32,
+                    QueueTransfer(0, (u32) gTextureBlocks.mUnk_008 + i * 32,
                                   VRAM_PLTT_BG + pal + half->mUnk_534[s].mUnk_2 * 32, 0x20);
                 }
             }
@@ -1030,13 +1030,13 @@ u8 func_0202cdac(int layer) {
     if (layer == 3) {
         OS_Terminate();
     }
-    return data_020c267c.mUnk_018[(layer & 1) == 0].mUnk_576;
+    return gTextureBlocks.mLayers[(layer & 1) == 0].mUnk_576;
 }
 
 // Finds or appends the matrix for an angle and two scales (16.12 fixed point, as four halfwords) in the half's
 // matrix list and returns its index.
 u32 func_0202cde4(int angle, int sx, int sy, u32 flags) {
-    Unk_020c2694 *half = &data_020c267c.mUnk_018[(flags & 2) != 0];
+    Unk_020c2694 *half = &gTextureBlocks.mLayers[(flags & 2) != 0];
     int ix = 0x10000 / sx;
     int iy = ix;
     s32 idx;
@@ -1101,14 +1101,14 @@ void func_0202cf38(int id, int x, int y, int w, int angle, int sx, int sy, int m
     key = id;
     flags = id & 0xffff0000;
     bit = mode == 1 ? 1 : 2;
-    half = &data_020c267c.mUnk_018[mode == 2];
+    half = &gTextureBlocks.mLayers[mode == 2];
     aff = -1;
-    (void) ((data_020c18bc.mUnk_46c & bit) || (id & 0x800000) || (OS_Terminate(), 0));
+    (void) ((gSystemState.mFlags & bit) || (id & 0x800000) || (OS_Terminate(), 0));
     if (id == -1 || key == 0xffff) {
         return;
     }
-    data_020c267c.mUnk_b28 = -1;
-    data_020c267c.mUnk_b2c = -1;
+    gTextureBlocks.mUnk_b28 = -1;
+    gTextureBlocks.mUnk_b2c = -1;
     if (id & 0x800000) {
         u32 alpha = (u32) id >> 27;
 
@@ -1128,8 +1128,8 @@ void func_0202cf38(int id, int x, int y, int w, int angle, int sx, int sy, int m
     (void) (b1 != 0 || (OS_Terminate(), 0));
     p += b0 + 1 + b1 * 2 + b2 / 2;
     ids = (u16 *) (p - b2 / 2);
-    if (data_020c267c.mUnk_000 == 1 && data_020c267c.mUnk_010 == key) {
-        ids = &data_020c267c.mUnk_012;
+    if (gTextureBlocks.mUnk_000 == 1 && gTextureBlocks.mUnk_010 == key) {
+        ids = &gTextureBlocks.mUnk_012;
     }
     if (sx != 0x100 || sy != 0x100 || angle != 0) {
         int sxv;
@@ -1214,11 +1214,11 @@ void func_0202cf38(int id, int x, int y, int w, int angle, int sx, int sy, int m
             (void) ((flags & 0x30000) == 0 || (OS_Terminate(), 0));
             (void) (aff == -1 || (OS_Terminate(), 0));
             base = mode == 1 ? 0x6000000 : 0x6200000;
-            dst = base + (py * func_0201db94(mode) + px) * 2;
-            if (data_020c267c.mUnk_b2e == 2) {
+            dst = base + (py * GetLayerWidth(mode) + px) * 2;
+            if (gTextureBlocks.mBlockFileKind == 2) {
                 src = c + (off << 7);
             } else {
-                (void) (data_020c267c.mUnk_b2e == 1 || (OS_Terminate(), 0));
+                (void) (gTextureBlocks.mBlockFileKind == 1 || (OS_Terminate(), 0));
                 src = off << 5;
             }
             // shift = log2 of the width: 32 minus the leading zeros of the bits below its lowest set bit. An asm
@@ -1233,13 +1233,13 @@ void func_0202cf38(int id, int x, int y, int w, int angle, int sx, int sy, int m
             } else {
                 fl = ((half->mUnk_516 - cnt) << 1) | (mode == 2);
             }
-            func_0201c580(data_020c267c.mUnk_b26, src, dst, sz, 0, shift + (pal << 4), fl);
+            QueueTransferEx(gTextureBlocks.mBlockFile, src, dst, sz, 0, shift + (pal << 4), fl);
             continue;
         }
         tile = func_0202b35c(size, off, c, shape, cnt, mode);
         if (flags & 0x200000) {
-            data_020c267c.mUnk_b28 = tile;
-            data_020c267c.mUnk_b2c = pal;
+            gTextureBlocks.mUnk_b28 = tile;
+            gTextureBlocks.mUnk_b2c = pal;
             return;
         }
         if (aff == -1) {
@@ -1325,14 +1325,14 @@ void func_0202d908(int layer) {
     int sub = (layer == 2);
     u32 bit = (layer == 1) ? 1 : 2;
     u32 other = (layer == 1) ? 0x40000 : 0x80000;
-    Unk_020c2694 *half = &data_020c267c.mUnk_018[sub];
+    Unk_020c2694 *half = &gTextureBlocks.mLayers[sub];
     Oam *oam;
     u16 *affine;
     int n;
     int i;
     u8 hist[256];
 
-    if (bit != (data_020c18bc.mUnk_46c & (bit | other))) {
+    if (bit != (gSystemState.mFlags & (bit | other))) {
         return;
     }
     n = 0;

@@ -7,11 +7,11 @@
 extern "C" {
 #endif
 
-void func_02010d64(void);
-void func_02010dc8(void);
+void SetupStateMenu(void);
+void UpdateStateMenu(void);
 void func_0201133c(void);
-void func_02011348(void);
-void func_020113a8(void);
+void SetupSphereModel(void);
+void UpdateSphereModel(void);
 void func_02011510(void);
 
 #ifdef __cplusplus

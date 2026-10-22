@@ -92,7 +92,7 @@ int func_0200c174(MoveObj *o, const Vec2i *pos) {
             if (o->mModel.mUnk_172_9 == 0) {
                 keep = 0;
             }
-            func_020105f4(&o->mModel);
+            PlayObjectSe(&o->mModel);
         }
         if (pos != 0) {
             o->mX = pos->x << 8;
@@ -106,7 +106,7 @@ int func_0200c174(MoveObj *o, const Vec2i *pos) {
             oldY = o->mY;
             dx = (o->mTargetX - o->mStartX) >> 8;
             dy = (o->mTargetY - o->mStartY) >> 8;
-            dist = func_0201faf0(dx, dy);
+            dist = Length2d(dx, dy);
             o->mX = o->mStartX + (o->mProgress * dx) / (dist + 1);
             o->mY = o->mStartY + (o->mProgress * dy) / (dist + 1);
             o->mProgress += o->mSpeed;
@@ -163,7 +163,7 @@ int func_0200c174(MoveObj *o, const Vec2i *pos) {
 }
 
 void func_0200c3d8(MoveObj *o, int *outX, int *outY, int *state) {
-    int flag = func_02020878();
+    int flag = IsLcdSwapped();
     *outX = o->mX >> 8;
     *outY = o->mY >> 8;
     if (*state == 1) {
@@ -220,22 +220,22 @@ void func_0200c470(MoveObj *o) {
 }
 
 void func_0200c5d8(int a, int b, int c, int d, int e, int f, int g) {
-    func_0201bb30();
-    func_0201f880(3);
-    func_0201c41c();
+    UpdateSystemAndWait();
+    SetFaded(3);
+    ResetKeys();
     func_0202c1c4();
     func_02022370();
-    func_0201eb20();
-    func_02020e18(0, 0);
-    func_02020854(a);
+    ResetVramBanks();
+    ResetTouchButtons(0, 0);
+    SetLcdSwap(a);
     func_0202bdd8(0x10cb, 0x10ca, 0x10cc, f, 1);
     func_0202bdd8(0x10cb, 0x10ca, 0x10cc, g, 2);
     func_02021fb0(0x1c7, 0x1c6, d, e);
     if (b != 0) {
-        func_0201dde0(b, 1);
+        LoadImage(b, 1);
     }
     if (c != 0) {
-        func_0201dde0(c, 2);
+        LoadImage(c, 2);
     }
     func_02024208();
 }

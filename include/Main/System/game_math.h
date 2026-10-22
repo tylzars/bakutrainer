@@ -7,21 +7,21 @@
 extern "C" {
 #endif
 
-int func_0201fab0(int a, int b, int c, int t);
-u32 func_0201fae4(int x, int y);
-u32 func_0201faf0(int x, int y);
-s64 func_0201fafc(int x, int y);
-void func_0201fb24(u16 *value, int speed);
-void func_0201fb5c(u16 *p, int add);
-int func_0201fb74(int a, int b, int c, int d);
-int func_0201fbe4(int v, int a, int b, int c, int d);
-char *func_0201fc08(int value, char *buf);
-char *func_0201fc14(int value, char *buf, char separator);
-int func_0201fca8(int a, int b);
-u32 func_0201fccc(u32 value);
-u32 func_0201fcec(u64 value);
-u32 func_0201fd10(u32 numerator, u32 denominator, u32 *remainder);
-s32 func_0201fd40(s32 numerator, s32 denominator);
+int InterpolateQuadratic(int a, int b, int c, int t);
+u32 LengthSquared2d(int x, int y);
+u32 Length2d(int x, int y);
+s64 LengthSquared2d64(int x, int y);
+void EaseLevel(u16 *value, int speed);
+void AddLevel(u16 *p, int add);
+int MapRangeFromZero(int a, int b, int c, int d);
+int MapRange(int v, int a, int b, int c, int d);
+char *FormatDecimal(int value, char *buf);
+char *FormatDecimalGrouped(int value, char *buf, char separator);
+int DivideRounded(int a, int b);
+u32 SqrtU32(u32 value);
+u32 SqrtU64(u64 value);
+u32 DivideWithRemainder(u32 numerator, u32 denominator, u32 *remainder);
+s32 Divide(s32 numerator, s32 denominator);
 
 #ifdef __cplusplus
 }

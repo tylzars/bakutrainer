@@ -6,49 +6,62 @@
 extern "C" {
 #endif
 
-// Volume and track control: mode 1 fades down, 2 fades up, 3 fades down to a target volume.
+// Volume fade of SoundCtl mVolumeFadeState (set by StartVolumeFade, stepped by UpdateSoundCtl one step per call): none,
+// down to 0, up to the target volume, down to the target volume (0x40). No caller passes VOLUME_FADE_DOWN_TO_TARGET in
+// this build.
+#define VOLUME_FADE_NONE 0
+#define VOLUME_FADE_DOWN 1
+#define VOLUME_FADE_UP 2
+#define VOLUME_FADE_DOWN_TO_TARGET 3
+
+// Volume and track control.
 typedef struct SoundCtl {
-    u32 mUnk_00;
-    u32 mUnk_04;
-    u32 mUnk_08;
-    u32 mUnk_0c;
-    u32 mUnk_10;
-    u32 mUnk_14;
-    u32 mUnk_18;
-    u32 mUnk_1c;
+    u32 mVolumeFadeState;
+    u32 mDelayedVolume;
+    u32 mNextVolume;
+    // The volume the fades stop at. Also the volume UpdateSoundCtl uses while the tracker player is stopped, and the
+    // start volume of a new track.
+    u32 mTargetVolume;
+    u32 mDelayedTrack;
+    u32 mNextTrack;
+    // 0 = none. Set back to 0 while the tracker player is stopped, so UpdateSoundCtl then starts mNextTrack again.
+    u32 mTrack;
+    // Counts down once per UpdateSoundCtl call; reaching 0 requests mDelayedTrack at mDelayedVolume.
+    u32 mDelayTimer;
 } SoundCtl;
 
-// Sound effect definitions, 0x24 bytes each; mUnk_18 holds six alternative sound ids.
+// Sound effect definitions, 0x24 bytes each; one of the first mIdCount entries of mIds is picked at random.
 typedef struct SeEntry {
-    u16 mUnk_00;
-    u16 mUnk_02;
-    u8 mUnk_04;
+    u16 mIdCount;
+    u16 mVolume;
+    u8 mPan;
+    // 1 sends PlayObjectSe to func_0202f110 instead of PlaySe; 0 in every entry of gSeEntries.
     u8 mUnk_05;
     u8 mUnk_06[2];
-    u32 mUnk_08;
-    u32 mUnk_0c;
-    u32 mUnk_10;
-    u32 mUnk_14;
-    u16 mUnk_18[6];
+    u32 mGap;
+    u32 mGapRandom;
+    u32 mCurrentGap;
+    u32 mCallsSincePlay;
+    u16 mIds[6];
 } SeEntry;
 
-// Object whose member 0x12 is a sound effect index.
 typedef struct SeOwner {
     u8 mUnk_00[0x12];
-    u16 mUnk_12;
+    // 0 = none; PlayObjectSe clears it after it plays.
+    u16 mSeIndex;
 } SeOwner;
 
-extern SoundCtl data_020b10b4;
-extern const SeEntry data_0204edfc[];
+extern SoundCtl gSoundCtl;
+extern const SeEntry gSeEntries[];
 
-void func_02010388(u32 a, s32 b);
-void func_020103c0(void);
-void func_020104c0(u32 a, int b);
-void func_020104e0(u32 a, int b, int c);
-void func_02010500(u32 a);
-void func_02010520(u32 index, u16 volume, int b, int c, u32 d);
-void func_020105c0(u32 index);
-void func_020105f4(void *obj);
+void InitSoundCtl(u32 track, s32 volume);
+void UpdateSoundCtl(void);
+void RequestTrack(u32 track, int volume);
+void RequestTrackDelayed(u32 track, int volume, int delay);
+void StartVolumeFade(u32 fade);
+void PlaySeEx(u32 index, u16 volume, int b, int c, u32 d);
+void PlaySe(u32 index);
+void PlayObjectSe(void *obj);
 
 #ifdef __cplusplus
 }

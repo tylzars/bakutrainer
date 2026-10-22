@@ -89,7 +89,7 @@ u32 func_0202283c(Unk_PoolRange *n, u32 size, u32 slot) {
 
     size = (size >> 9) + ((size & 0x1ff) != 0);
     for (;;) {
-        q = n[(data_020c18bc.mUnk_070.mUnk_2c << 14) / 512].mUnk_4;
+        q = n[(gSystemState.mTexVramGroup.mSize16Kb << 14) / 512].mUnk_4;
         found = -1;
         while (size <= n[q].mUnk_0) {
             found = q;
@@ -138,14 +138,14 @@ u32 func_020229b4(u32 kind, u32 key, u32 size, u32 srcSize) {
     u32 off;
     TexInfo info;
 
-    step = data_02050378[(key >> 10) & 0x7f];
+    step = gHashSteps[(key >> 10) & 0x7f];
     idx = key & 0x3ff;
     data_020c31dc.mUnk_4c++;
     for (;;) {
         data_020c31dc.mUnk_50++;
         if (key == data_020c31dc.mUnk_04[idx].mUnk_00) {
             slot = data_020c31dc.mUnk_04[idx].mUnk_04;
-            func_0201fa08((IndexNode16 *) data_020c31dc.mUnk_00, slot);
+            MoveIndexNode16ToEnd((IndexNode16 *) data_020c31dc.mUnk_00, slot);
             return data_020c31dc.mUnk_00[slot].mUnk_00;
         }
         if (data_020c31dc.mUnk_04[idx].mUnk_00 == -2 && first == -1) {
@@ -182,25 +182,25 @@ u32 func_020229b4(u32 kind, u32 key, u32 size, u32 srcSize) {
                 off = key - func_0201c538();
                 func_0202ae84(off >> 6, &info, off & 0x3f);
                 flag = (info.mUnk_12 != 1 && info.mUnk_12 != 4) ? 0xff : 0;
-                if (data_020c267c.mUnk_b2e == 2) {
+                if (gTextureBlocks.mBlockFileKind == 2) {
                     kind = (info.mUnk_00 << 7) + info.mUnk_13;
                 } else {
                     kind = info.mUnk_00 << 5;
                 }
                 bits = info.mUnk_0c;
                 shift = 32 - CountLeadingZeros(~bits & (bits - 1));
-                func_0201c580(func_0202ad68(), kind, data_020c31dc.mUnk_00[slot].mUnk_00 | 0xa0000000, size, 0, shift,
-                              flag);
+                QueueTransferEx(func_0202ad68(), kind, data_020c31dc.mUnk_00[slot].mUnk_00 | 0xa0000000, size, 0, shift,
+                                flag);
             } else if (kind == 2) {
                 off = key - func_0201c550();
-                func_0201c580(data_020c18bc.mUnk_42c, off, data_020c31dc.mUnk_00[slot].mUnk_00 | 0xa0000000, srcSize,
-                              size, 0, 0);
+                QueueTransferEx(gSystemState.mUnk_42c, off, data_020c31dc.mUnk_00[slot].mUnk_00 | 0xa0000000, srcSize,
+                                size, 0, 0);
             } else {
-                func_0201c580(data_020c31dc.mUnk_54, kind, data_020c31dc.mUnk_00[slot].mUnk_00 | 0xa0000000, srcSize,
-                              size, 0, 0);
+                QueueTransferEx(data_020c31dc.mUnk_54, kind, data_020c31dc.mUnk_00[slot].mUnk_00 | 0xa0000000, srcSize,
+                                size, 0, 0);
             }
-            data_020c18bc.mUnk_2bc += size;
-            data_020c18bc.mUnk_2b8 += size;
+            gSystemState.mUnk_2bc += size;
+            gSystemState.mUnk_2b8 += size;
             return data_020c31dc.mUnk_00[slot].mUnk_00;
         }
         idx = (idx + step) & 0x3ff;
@@ -284,7 +284,7 @@ u32 func_02022f40(Unk_PoolRange *n, u32 size, u32 slot) {
 
     size = (size >> 5) + ((size & 0x1f) != 0);
     for (;;) {
-        q = n[(data_020c18bc.mUnk_040.mUnk_2c << 14) / 32].mUnk_4;
+        q = n[(gSystemState.mPlttVramGroup.mSize16Kb << 14) / 32].mUnk_4;
         found = -1;
         while (size <= n[q].mUnk_0) {
             found = q;
@@ -327,13 +327,13 @@ u32 func_02022f40(Unk_PoolRange *n, u32 size, u32 slot) {
 u32 func_020230b0(u32 kind, u32 key, u32 size) {
     u32 idx = key & 0xff;
     int first = -1;
-    u32 step = data_02050378[(key >> 8) & 0x7f];
+    u32 step = gHashSteps[(key >> 8) & 0x7f];
     u32 slot;
 
     for (;;) {
         if (key == data_020c31dc.mUnk_10[idx].mUnk_00) {
             slot = data_020c31dc.mUnk_10[idx].mUnk_04;
-            func_0201fa08((IndexNode16 *) data_020c31dc.mUnk_0c, slot);
+            MoveIndexNode16ToEnd((IndexNode16 *) data_020c31dc.mUnk_0c, slot);
             return data_020c31dc.mUnk_0c[slot].mUnk_00;
         }
         if (data_020c31dc.mUnk_10[idx].mUnk_00 == -2 && first == -1) {
@@ -358,15 +358,15 @@ u32 func_020230b0(u32 kind, u32 key, u32 size) {
             data_020c31dc.mUnk_0c[slot].mUnk_00 = func_02022f40(data_020c31dc.mUnk_14, size, slot);
             data_020c31dc.mUnk_0c[slot].mUnk_04 = size;
             if (key < func_0201c544()) {
-                func_0201c6b0(data_020c31dc.mUnk_56, kind, data_020c31dc.mUnk_0c[slot].mUnk_00 | 0xb0000000, size);
+                QueueTransfer(data_020c31dc.mUnk_56, kind, data_020c31dc.mUnk_0c[slot].mUnk_00 | 0xb0000000, size);
             } else if (key < func_0201c564()) {
-                func_0201c6b0(func_0202ad58(), kind << 5, data_020c31dc.mUnk_0c[slot].mUnk_00 | 0xb0000000, size);
+                QueueTransfer(func_0202ad58(), kind << 5, data_020c31dc.mUnk_0c[slot].mUnk_00 | 0xb0000000, size);
             } else {
-                func_0201c6b0(0, data_020c18bc.mUnk_390[key - func_0201c564()] + 4,
+                QueueTransfer(0, gSystemState.mUnk_390[key - func_0201c564()] + 4,
                               data_020c31dc.mUnk_0c[slot].mUnk_00 | 0xb0000000, size);
             }
-            data_020c18bc.mUnk_2c4 += size;
-            data_020c18bc.mUnk_2c0 += size;
+            gSystemState.mUnk_2c4 += size;
+            gSystemState.mUnk_2c0 += size;
             return data_020c31dc.mUnk_0c[slot].mUnk_00;
         }
         idx = (idx + step) & 0x3ff;
@@ -391,13 +391,13 @@ void func_020232f0(u32 map, u16 *out, s32 *pos, s32 *vec, u32 d, int *done, cons
     func_0202350c(r, p, v, d, map);
     kind = data_020c31dc.mUnk_18[map].mUnk_0d & 3;
     if (kind == 1) {
-        out[0] += func_0201fe34((u16) (node->mUnk_5 << 8), r[0]);
-        out[1] += func_0201fe34((u16) (node->mUnk_6 << 8), r[1]);
-        out[2] += func_0201fe34((u16) (node->mUnk_7 << 8), r[2]);
+        out[0] += AngleDelta((u16) (node->mUnk_5 << 8), r[0]);
+        out[1] += AngleDelta((u16) (node->mUnk_6 << 8), r[1]);
+        out[2] += AngleDelta((u16) (node->mUnk_7 << 8), r[2]);
     } else if (kind == 2) {
-        if (func_0201fe14((u16) (node->mUnk_5 << 8), r[0]) > 0x100 ||
-            func_0201fe14((u16) (node->mUnk_6 << 8), r[1]) > 0x100 ||
-            func_0201fe14((u16) (node->mUnk_7 << 8), r[2]) > 0x100) {
+        if (AngleDistance((u16) (node->mUnk_5 << 8), r[0]) > 0x100 ||
+            AngleDistance((u16) (node->mUnk_6 << 8), r[1]) > 0x100 ||
+            AngleDistance((u16) (node->mUnk_7 << 8), r[2]) > 0x100) {
             out[0] = r[0];
             out[1] = r[1];
             out[2] = r[2];
@@ -411,7 +411,7 @@ void func_02023478(u16 a, u16 *rot, VecFx32 *pos, VecFx32 *vec, int e, int f, in
     data_020c31dc.mUnk_18[0].mUnk_0c = g;
     data_020c31dc.mUnk_18[0].mUnk_08 = f;
     data_020c31dc.mUnk_18[0].mUnk_04 = e;
-    data_020c31dc.mUnk_18[0].mUnk_00 = func_0202ded8(a);
+    data_020c31dc.mUnk_18[0].mUnk_00 = FindOrLoadCachedFile(a);
     func_0202350c(rot, (s32 *) pos, (s32 *) vec, h, 0);
     if (pos != NULL) {
         pos->x >>= 3;

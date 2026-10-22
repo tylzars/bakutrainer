@@ -68,8 +68,8 @@ int func_0202db1c(void *obj) {
             o->mUnk_dc += 1;
         } else {
             int step = 167;
-            if (data_020c18bc.mUnk_46c & 0x40) {
-                s8 sp = data_020c18bc.mUnk_48c;
+            if (gSystemState.mFlags & 0x40) {
+                s8 sp = gSystemState.mUnk_48c;
                 if (sp > 0) {
                     step += sp * step;
                 }

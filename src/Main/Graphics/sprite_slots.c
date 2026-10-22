@@ -172,20 +172,20 @@ void func_0200d8bc(void) {
                 if (s->mKind == OBJ_KIND_TEXT_PLUS) {
                     char *end;
                     buf[0] = '+';
-                    end = func_0201fc08(s->mUnk_40, &buf[1]);
+                    end = FormatDecimal(s->mUnk_40, &buf[1]);
                     *end = 0;
                 } else {
                     strcpy(buf, s->mText);
                 }
-                saved = data_020c18bc.mUnk_308;
-                data_020c18bc.mUnk_308 = s->mUnk_158;
+                saved = gSystemState.mUnk_308;
+                gSystemState.mUnk_308 = s->mUnk_158;
                 if (s->mUnk_140 != 0) {
                     func_02025db4(&s->mUnk_134, pt);
                     func_020215fc(pt[0] + sx, pt[1] + sy, s->mUnk_30, buf, textObj, 0x100, 0x18, s->mUnk_15c);
                 } else {
                     func_020215fc(sx, sy, s->mUnk_30, buf, textObj, 0x100, 0x18, s->mUnk_15c);
                 }
-                data_020c18bc.mUnk_308 = saved;
+                gSystemState.mUnk_308 = saved;
             } else {
                 s->mKind = 0;
             }
@@ -233,10 +233,10 @@ void func_0200daf8(void) {
 }
 
 void func_0200dbac(void) {
-    func_0201f980(0x24a, 0x78, 0x78, 0, 3);
-    func_0201f980(0x247, 0x78, 0x78, 0, 3);
+    RunImage(0x24a, 0x78, 0x78, 0, 3);
+    RunImage(0x247, 0x78, 0x78, 0, 3);
     func_0201f6d0(0x10cc, 0x10cb, 0x10ca, 0x248, 0xda3);
-    func_0201f980(0x249, 0x3c, 0x3c, 0, 3);
+    RunImage(0x249, 0x3c, 0x3c, 0, 3);
 }
 
 void func_0200dc08(int id, u16 *outId, u16 *outVal, u16 *outOpt1, u16 *outZ1, u16 *outZ2, u16 *outOpt2) {
@@ -304,7 +304,7 @@ void func_0200dc08(int id, u16 *outId, u16 *outVal, u16 *outOpt1, u16 *outZ1, u1
             *outZ2 = zero;
             break;
         default:
-            func_02027fc2("Map inconnue\002");
+            OpenTextScreen("Map inconnue\002");
             break;
     }
     *outId = id;
@@ -318,8 +318,8 @@ void func_0200dc08(int id, u16 *outId, u16 *outVal, u16 *outOpt1, u16 *outZ1, u1
 
 void func_0200dd5c(const char *path, int b) {
     func_0202f638(path, b);
-    while (func_0202f8d0() == 1 && data_020c18bc.mUnk_12 == 0 && !data_020c18bc.mUnk_2ac_0) {
-        func_0201bb30();
+    while (func_0202f8d0() == 1 && gSystemState.mKeysPressed == 0 && !gSystemState.mTouchPressed) {
+        UpdateSystemAndWait();
     }
     func_0202fb4c();
 }

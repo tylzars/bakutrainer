@@ -242,7 +242,7 @@ const s16 *data_02063c9c[8] = {data_02050ac0, data_02050a40, data_020509c0, data
 
 #pragma thumb off
 
-// Loads song a (a file id) and starts it with volume c (at most 0x80; 0 while data_020c18bc.mUnk_493 is 0). The song
+// Loads song a (a file id) and starts it with volume c (at most 0x80; 0 while gSystemState.mUnk_493 is 0). The song
 // already loaded with nothing pending only takes the new volume. b is the number added to each sample name's number to
 // get the sample's file id (0 keeps the last one); d goes to func_02035c7c. With e == 1 while a song plays the request
 // is stored for func_020360f4 to replay. A new song's file gives the header bytes, the order table, the patterns (a
@@ -264,7 +264,7 @@ void func_02035108(u16 a, u16 b, u8 c, u16 d, int e, int f) {
     if (c > 0x80) {
         OS_Terminate();
     }
-    if (data_020c18bc.mUnk_493 == 0) {
+    if (gSystemState.mUnk_493 == 0) {
         c = 0;
     }
     if (a == data_020c6b14.mUnk_172e && data_020c6b14.mUnk_1748 == 0 && f == 0) {
@@ -273,7 +273,7 @@ void func_02035108(u16 a, u16 b, u8 c, u16 d, int e, int f) {
     }
     data_020c6b14.mUnk_1745 = 1;
     if (b == 0) {
-        if (!(data_020c18bc.mUnk_46c & 0x1000000)) {
+        if (!(gSystemState.mFlags & 0x1000000)) {
             OS_Terminate();
         }
         b = data_020c6b14.mUnk_172c;
@@ -306,7 +306,7 @@ void func_02035108(u16 a, u16 b, u8 c, u16 d, int e, int f) {
             OS_Terminate();
         }
         data_020c6b14.mUnk_172e = a;
-        src = func_0202ded8(data_020c6b14.mUnk_172e);
+        src = FindOrLoadCachedFile(data_020c6b14.mUnk_172e);
         if (src == NULL) {
             OS_Terminate();
         }
@@ -323,7 +323,7 @@ void func_02035108(u16 a, u16 b, u8 c, u16 d, int e, int f) {
             data_020c6b14.mUnk_1752[i] = *src++;
         }
 
-        patterns = func_0201c430(data_020c6b14.mUnk_174d * sizeof(TrackerPattern));
+        patterns = Alloc(data_020c6b14.mUnk_174d * sizeof(TrackerPattern));
         data_020c6b14.mUnk_04 = (TrackerPattern *) patterns;
         if (patterns == NULL) {
             OS_Terminate();
@@ -339,8 +339,7 @@ void func_02035108(u16 a, u16 b, u8 c, u16 d, int e, int f) {
             size = (src[8] << 8) | src[7];
             src += 9;
             next = src;
-            data_020c6b14.mUnk_10[i]->mUnk_04 =
-                func_0201c430(data_020c6b14.mUnk_174c * data_020c6b14.mUnk_10[i]->mUnk_01 * 5);
+            data_020c6b14.mUnk_10[i]->mUnk_04 = Alloc(data_020c6b14.mUnk_174c * data_020c6b14.mUnk_10[i]->mUnk_01 * 5);
             if (data_020c6b14.mUnk_10[i]->mUnk_04 == NULL) {
                 OS_Terminate();
             }
@@ -389,13 +388,13 @@ void func_02035108(u16 a, u16 b, u8 c, u16 d, int e, int f) {
             src = next + size;
         }
 
-        instruments = func_0201c430(data_020c6b14.mUnk_174e * sizeof(TrackerInstrument));
+        instruments = Alloc(data_020c6b14.mUnk_174e * sizeof(TrackerInstrument));
         data_020c6b14.mUnk_08 = instruments;
         if (instruments == NULL) {
             OS_Terminate();
         }
         left = data_020c6b14.mUnk_174e * 2;
-        samples = func_0201c430(left * sizeof(TrackerSample));
+        samples = Alloc(left * sizeof(TrackerSample));
         data_020c6b14.mUnk_0c = samples;
         if (samples == NULL) {
             OS_Terminate();
@@ -464,7 +463,7 @@ void func_02035108(u16 a, u16 b, u8 c, u16 d, int e, int f) {
                         name[0x16] = 0;
                         data_020c6b14.mUnk_410[i]->mUnk_000[j]->mUnk_10 = func_02035bcc(name, b);
                         data_020c6b14.mUnk_410[i]->mUnk_000[j]->mUnk_0c =
-                            func_0202e86c(data_020c6b14.mUnk_410[i]->mUnk_000[j]->mUnk_10);
+                            LoadFile(data_020c6b14.mUnk_410[i]->mUnk_000[j]->mUnk_10);
                     }
                     src += 0x28;
                 }
@@ -475,7 +474,7 @@ void func_02035108(u16 a, u16 b, u8 c, u16 d, int e, int f) {
     }
     data_020c6b14.mUnk_1744 = 16 - data_020c6b14.mUnk_174c;
     data_020c6b14.mUnk_1718 = 0;
-    data_020c18bc.mUnk_46c |= 0x1000000;
+    gSystemState.mFlags |= 0x1000000;
     data_020c648c.mUnk_181 = data_020c6b14.mUnk_1744;
     func_0202f084();
     func_02035c7c(c, (s16) d);
@@ -505,7 +504,7 @@ void func_020359d0(int a) {
         if (data_020c6b14.mUnk_410[i] != 0) {
             for (j = 0; j < data_020c6b14.mUnk_410[i]->mUnk_26c; j++) {
                 if (data_020c6b14.mUnk_410[i]->mUnk_000[j]->mUnk_0c != 0) {
-                    func_0201c4f0(&data_020c6b14.mUnk_410[i]->mUnk_000[j]->mUnk_0c);
+                    Free(&data_020c6b14.mUnk_410[i]->mUnk_000[j]->mUnk_0c);
                 }
                 data_020c6b14.mUnk_410[i]->mUnk_000[j] = 0;
             }
@@ -513,19 +512,19 @@ void func_020359d0(int a) {
         }
     }
     if (data_020c6b14.mUnk_0c != 0) {
-        func_0201c4f0(&data_020c6b14.mUnk_0c);
+        Free(&data_020c6b14.mUnk_0c);
     }
     if (data_020c6b14.mUnk_08 != 0) {
-        func_0201c4f0(&data_020c6b14.mUnk_08);
+        Free(&data_020c6b14.mUnk_08);
     }
     for (i = 0; i < TRACKER_PATTERN_COUNT; i++) {
         if (data_020c6b14.mUnk_10[i] != 0) {
-            func_0201c4f0(&data_020c6b14.mUnk_10[i]->mUnk_04);
+            Free(&data_020c6b14.mUnk_10[i]->mUnk_04);
             data_020c6b14.mUnk_10[i] = 0;
         }
     }
     if (data_020c6b14.mUnk_04 != 0) {
-        func_0201c4f0(&data_020c6b14.mUnk_04);
+        Free(&data_020c6b14.mUnk_04);
     }
     data_020c6b14.mUnk_1748 = 0;
     data_020c6b14.mUnk_172e = 0;
@@ -544,7 +543,7 @@ void func_020359d0(int a) {
         data_020c6b14.mUnk_1752[i] = 0;
     }
     data_020c6b14.mUnk_1718 = 0;
-    data_020c18bc.mUnk_46c &= ~0x1000000;
+    gSystemState.mFlags &= ~0x1000000;
     data_020c6b14.mUnk_1746 = 0;
 }
 
@@ -760,7 +759,7 @@ void func_02036194(void) {}
 // advances: on the first tick of a row the row's cells are read (note, instrument, volume column, effect, parameter;
 // the volume column is applied as a second effect), the samples of new notes are started and the first-tick effects
 // applied; on the other ticks the running effects and envelopes update period, volume and pan. The changes go to the
-// sound driver as channel commands. With flag 0x400 of data_020c18bc.mUnk_2c8 each channel's effect parameter is
+// sound driver as channel commands. With flag 0x400 of gSystemState.mUnk_2c8 each channel's effect parameter is
 // formatted for display.
 void func_02036198(void) {
     s8 globalVol;
@@ -1425,14 +1424,14 @@ void func_02036198(void) {
                                 func_02040220(1 << (data_020c6b14.mUnk_1744 + i),
                                               func_02038524(c->mUnk_26, c->mUnk_38.mUnk_04) >> 1);
                             }
-                            if (data_020c18bc.mUnk_2c8 & 0x400) {
+                            if (gSystemState.mUnk_2c8 & 0x400) {
                                 // The debug display flag is tested here, but nothing in this branch formats the
                                 // parameter: the statement only keeps the test, as in the original.
                                 param = (u16) param;
                             }
                         }
                     } else {
-                        if (data_020c18bc.mUnk_2c8 & 0x400) {
+                        if (gSystemState.mUnk_2c8 & 0x400) {
                             effect = TRACKER_FX_NONE;
                             param = 0;
                         }
@@ -1454,7 +1453,7 @@ void func_02036198(void) {
                     }
                 }
             next:
-                if (data_020c18bc.mUnk_2c8 & 0x400) {
+                if (gSystemState.mUnk_2c8 & 0x400) {
                     if (effect != TRACKER_FX_NONE) {
                         sprintf(text, "%02x", param);
                     } else {
@@ -1957,7 +1956,7 @@ void func_02038578(u8 volume, int mode) {
     u32 mask;
     u32 i;
 
-    if (data_020c18bc.mUnk_493 == 0) {
+    if (gSystemState.mUnk_493 == 0) {
         volume = 0;
     }
     if (volume > 128) {

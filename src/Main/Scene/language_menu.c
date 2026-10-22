@@ -81,7 +81,7 @@ LangMenu data_020ae870;
 
 void func_0200f374(void) {
     s32 *p = &data_020ae6ec.mUnk_00;
-    u32 idx = func_0200fb34(0x14);
+    u32 idx = GetFlowValue(0x14);
     u32 v;
     func_02010294(0x180, 1, 1);
     if (data_0204e374[idx].mUnk_04 >= 0) {
@@ -90,19 +90,19 @@ void func_0200f374(void) {
     } else {
         data_020c61ac.mUnk_280.mUnk_40 = 0;
     }
-    func_0201dde0(0x237, 2);
+    LoadImage(0x237, 2);
     func_02024208();
-    func_020104c0(5, 0x66);
+    RequestTrack(5, 0x66);
     *p = -1;
-    func_02028f0c(0xfbc, func_0200f9c8(data_020b1084.mLanguage), 0x244, 0x246, 2, 0, 0, 0, 0);
+    func_02028f0c(0xfbc, LookupLanguageFileId(data_020b1084.mLanguage), 0x244, 0x246, 2, 0, 0, 0, 0);
     data_020c61ac.mUnk_20 = 0;
     func_0200f5a4("LANGUAGE", data_020b1084.mLanguage);
-    v = func_0200f9c8(data_020b1084.mLanguage);
-    func_02028f0c(0xfbc, v, 0x244, 0x246, func_0200fb34(0x17), 0, 0, func_0200f588, 0);
-    v = func_0200fb34(0x16);
+    v = LookupLanguageFileId(data_020b1084.mLanguage);
+    func_02028f0c(0xfbc, v, 0x244, 0x246, GetFlowValue(0x17), 0, 0, func_0200f588, 0);
+    v = GetFlowValue(0x16);
     if (v != 0) {
-        func_0200fa80(v);
-        func_0200fb18(0x16, 0);
+        PushState(v);
+        SetFlowValue(0x16, 0);
     }
 }
 
@@ -111,8 +111,8 @@ int func_0200f468(void) {
     if (data_020ae6ec.mUnk_00 != -1) {
         int i = state->mUnk_00;
         const Unk_0204e218 *e = &data_0204e218[i];
-        func_0201fb24(&state->mUnk_04, 8);
-        data_020c61ac.mUnk_2a = func_0201fb74(state->mUnk_04, 0x4000, e->mUnk_08, 0);
+        EaseLevel(&state->mUnk_04, 8);
+        data_020c61ac.mUnk_2a = MapRangeFromZero(state->mUnk_04, 0x4000, e->mUnk_08, 0);
         func_0202a1cc();
         func_0202cf08(e->mUnk_0c + 0x800000, data_0204e218[i].mUnk_00, e->mUnk_04 + data_020c61ac.mUnk_2a, 0x80, 1);
         return 0x7e;
@@ -128,7 +128,7 @@ void func_0200f4d4(void) {
     } else {
         id = 0xf8e;
     }
-    idx = func_0200fb34(0x14);
+    idx = GetFlowValue(0x14);
     if (data_0204e374[idx].mUnk_04 >= 0) {
         func_0200f898();
     }
@@ -137,13 +137,13 @@ void func_0200f4d4(void) {
     if (data_020c61ac.mUnk_1a & 4) {
         if (data_0204e374[idx].mUnk_0c >= 0) {
             func_0201033c(data_0204e374[idx].mUnk_0c, 0);
-            func_0200fa50();
+            ReenterState();
         } else {
-            func_0200fab0();
+            PopState();
         }
     }
     if (func_0202a188() != 3) {
-        func_02020944(0x400, 0x80, 0x60, 0, 0, id, 0, 0x168);
+        AddTouchButtonWithSounds(0x400, 0x80, 0x60, 0, 0, id, 0, 0x168);
         func_0202cf08(id, 0x80, 0x60, 0, 2);
     }
 }
@@ -156,7 +156,7 @@ u8 func_0200f588(void) {
     u8 buf[0x20];
     u8 i;
     buf[0] = 0;
-    i = data_020c18bc.mUnk_316++;
+    i = gSystemState.mUnk_316++;
     return buf[i];
 }
 
@@ -196,9 +196,9 @@ void func_0200f660(void) {
     int i;
     char buf[0x20];
     func_02010294(0x100, 1, 0);
-    func_0201dde0(0xdaa, 3);
+    LoadImage(0xdaa, 3);
     func_02024208();
-    func_020104c0(0, 0x80);
+    RequestTrack(0, 0x80);
     i = 2;
     data_020ae870.mCount = 0;
     for (;; i++) {
@@ -219,7 +219,7 @@ void func_0200f660(void) {
             }
         }
     }
-    menu->mSelected = func_0200fb34(0x15);
+    menu->mSelected = GetFlowValue(0x15);
     if (menu->mCount <= 1) {
         OS_Terminate();
     }
@@ -235,21 +235,21 @@ void func_0200f750(void) {
 void func_0200f758(void) {
     LangMenu *menu = &data_020ae870;
     func_0200b920(0x10, "CS (U/D): %i", data_020ae870.mSelected - 1);
-    func_0200b920(0x20, "Language (LB/RB): %s", func_0200fa10(data_020b1084.mLanguage + 2, data_020b1084.mLanguage));
-    if ((data_020c18bc.mUnk_12 & 0x80) && menu->mSelected > 1) {
+    func_0200b920(0x20, "Language (LB/RB): %s", GetLanguageText(data_020b1084.mLanguage + 2, data_020b1084.mLanguage));
+    if ((gSystemState.mKeysPressed & 0x80) && menu->mSelected > 1) {
         menu->mSelected--;
-    } else if (data_020c18bc.mUnk_12 & 0x40) {
+    } else if (gSystemState.mKeysPressed & 0x40) {
         if (menu->mSelected < menu->mCount - 1) {
             menu->mSelected++;
         }
     }
-    if ((data_020c18bc.mUnk_12 & 0x200) && data_020b1084.mLanguage != 0) {
+    if ((gSystemState.mKeysPressed & 0x200) && data_020b1084.mLanguage != 0) {
         data_020b1084.mLanguage--;
     }
     func_020215fc(0x80, 0x60, data_0201a6c6, menu->mEntries[menu->mSelected].mText, 2, 0xe0, 0x10, 1);
-    if (data_020c18bc.mUnk_12 & 1) {
-        func_0200fb18(0x14, menu->mEntries[menu->mSelected].mIndex);
-        func_0200fb18(0x15, menu->mSelected);
+    if (gSystemState.mKeysPressed & 1) {
+        SetFlowValue(0x14, menu->mEntries[menu->mSelected].mIndex);
+        SetFlowValue(0x15, menu->mSelected);
         func_02010364(menu->mEntries[menu->mSelected].mTextId, 0xc);
     }
 }
@@ -279,7 +279,7 @@ void func_0200f898(void) {
         y = func_02021e44(0x235, idx * 4 + 5);
         z = func_02021e44(0x235, idx * 4 + 3);
         if (data_020ae6f4.mUnk_04.mUnk_14c.mUnk_2 < a + 4) {
-            x = func_0201fbe4(data_020ae6f4.mUnk_04.mUnk_14c.mUnk_2, a, a + 4, x - 0x78, x);
+            x = MapRange(data_020ae6f4.mUnk_04.mUnk_14c.mUnk_2, a, a + 4, x - 0x78, x);
         }
         func_0202cf08(z * 6 + 0xee, x, y, 0x64, 1);
     }

@@ -42,7 +42,7 @@ int func_02015340(u8 *boards, ShapeRec *recs) {
     }
     placed = 0;
     do {
-        r = func_0201fd84(0, SHAPE_COUNT - 1);
+        r = RandomRange(0, SHAPE_COUNT - 1);
         t = data_020500f8[r];
         for (y = 0; y < 4; y++) {
             for (x = 0; x < 3; x++) {
@@ -272,7 +272,7 @@ void func_020159ac(void) {
     }
     if (s->mUnk_03 == GRID_COLS * GRID_ROWS) {
         func_020215fc(10, 20, data_0201a6d0, "touche screen to continue", 0, 240, 16, 2);
-        if (data_020c18bc.mUnk_2ac_0 != 1) {
+        if (gSystemState.mTouchPressed != 1) {
             return;
         }
         func_02015960();
@@ -284,9 +284,9 @@ void func_020159ac(void) {
                 func_02015850(s->mUnk_0e, s->mUnk_40, CELL_COMPUTER, 0);
             } else {
                 func_020215fc(10, 20, data_0201a6d0, "Humain", 0, 240, 16, 2);
-                if (data_020c18bc.mUnk_2ac_0 == 1) {
-                    x = data_020c18bc.mUnk_2ae - 0x54;
-                    y = data_020c18bc.mUnk_2af - 0x20;
+                if (gSystemState.mTouchPressed == 1) {
+                    x = gSystemState.mTouchX - 0x54;
+                    y = gSystemState.mTouchY - 0x20;
                     cell = x / 32 + y / 32 * 4;
                     if (x >= 0 && x < 0x60 && y >= 0 && y < 0x80 && (s->mUnk_40[cell] & 0xf) == CELL_FREE) {
                         s->mUnk_01 = cell;
@@ -352,11 +352,11 @@ void func_020159ac(void) {
 void func_02015cd4(void) {
     func_0202c1c4();
     func_0202bdd8(0x10cb, 0x10ca, 0x10cc, 0, 2);
-    func_02020854(1);
-    func_0201dde0(0xde8, 1);
-    func_0201dde0(0xde7, 2);
-    func_0201f830(2);
-    data_020b13d4.mUnk_40 = func_0201c430(GRID_PIECES * GRID_BYTES);
+    SetLcdSwap(1);
+    LoadImage(0xde8, 1);
+    LoadImage(0xde7, 2);
+    FadeClearAndWait(2);
+    data_020b13d4.mUnk_40 = Alloc(GRID_PIECES * GRID_BYTES);
     data_020b13d4.mUnk_48 = 0;
     func_02015960();
 }
@@ -366,7 +366,7 @@ void func_02015d2c(void) {
 }
 
 void func_02015d34(void) {
-    func_0201c4f0(&data_020b13d4.mUnk_40);
+    Free(&data_020b13d4.mUnk_40);
     func_020102f8();
 }
 

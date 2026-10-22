@@ -13,9 +13,9 @@ void func_020223e8(u32 t, u32 shift, u16 *cur, const u16 *target) {
     int b;
     int c;
 
-    d[0] = func_0201fe34(cur[0], target[0]);
-    d[1] = func_0201fe34(cur[1], target[1]);
-    d[2] = func_0201fe34(cur[2], target[2]);
+    d[0] = AngleDelta(cur[0], target[0]);
+    d[1] = AngleDelta(cur[1], target[1]);
+    d[2] = AngleDelta(cur[2], target[2]);
     b = d[1];
     a = d[0];
     c = d[2];
@@ -35,9 +35,9 @@ void func_020223e8(u32 t, u32 shift, u16 *cur, const u16 *target) {
         alt[0] = cur[0] + 0x8000;
         alt[1] = 0x8000 - cur[1];
         alt[2] = cur[2] + 0x8000;
-        e[0] = func_0201fe34(alt[0], target[0]);
-        e[1] = func_0201fe34(alt[1], target[1]);
-        e[2] = func_0201fe34(alt[2], target[2]);
+        e[0] = AngleDelta(alt[0], target[0]);
+        e[1] = AngleDelta(alt[1], target[1]);
+        e[2] = AngleDelta(alt[2], target[2]);
         if ((e[0] < 0 ? -e[0] : e[0]) + (e[1] < 0 ? -e[1] : e[1]) + (e[2] < 0 ? -e[2] : e[2]) < a + b + c) {
             for (i = 0; i < 3; i++) {
                 s16 q;

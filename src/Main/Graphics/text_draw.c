@@ -16,7 +16,7 @@ u16 func_02021498(const u8 **text) {
     const u8 *p;
     u16 acc;
     count = 0;
-    if (data_020c18bc.mUnk_318 == 1 && **text == '$') {
+    if (gSystemState.mUnk_318 == 1 && **text == '$') {
         p = *text;
         num = 0;
         for (;;) {
@@ -26,7 +26,7 @@ u16 func_02021498(const u8 **text) {
             }
             num = *p + num * 10 - '0';
         }
-        first = data_020c18bc.mUnk_304(num);
+        first = gSystemState.mUnk_304(num);
         if (first == 0) {
             *text = p;
         } else if ((first & 0x80) == 0) {
@@ -38,7 +38,7 @@ u16 func_02021498(const u8 **text) {
                 do {
                     acc2 <<= 6;
                     count++;
-                    value = data_020c18bc.mUnk_304(num);
+                    value = gSystemState.mUnk_304(num);
                     if (value == 0) {
                         break;
                     }
@@ -48,7 +48,7 @@ u16 func_02021498(const u8 **text) {
             return acc2 + ((first & (0x3f >> count)) << (6 * count));
         }
     }
-    data_020c18bc.mUnk_316 = acc = 0;
+    gSystemState.mUnk_316 = acc = 0;
     lead = **text;
     if ((lead & 0x80) == 0) {
         return *(*text)++;
@@ -144,7 +144,7 @@ int func_02021624(int x, int y, const FontRange *const *fonts, u8 fontIndex, con
 
     ok = 1;
     if (flags & TEXT_ROTATE) {
-        if ((data_020c18bc.mUnk_46c & 0x80) == 0) {
+        if ((gSystemState.mFlags & 0x80) == 0) {
             ok = 0;
         }
     }
@@ -158,10 +158,10 @@ int func_02021624(int x, int y, const FontRange *const *fonts, u8 fontIndex, con
         OS_Terminate();
     }
     if (flags & TEXT_BOUNDS) {
-        data_020c18bc.mUnk_2fe = 0x7fff;
-        data_020c18bc.mUnk_302 = -0x7fff;
-        data_020c18bc.mUnk_2fc = 0x7fff;
-        data_020c18bc.mUnk_300 = -0x7fff;
+        gSystemState.mUnk_2fe = 0x7fff;
+        gSystemState.mUnk_302 = -0x7fff;
+        gSystemState.mUnk_2fc = 0x7fff;
+        gSystemState.mUnk_300 = -0x7fff;
     }
     if ((flags & (TEXT_VERTICAL | TEXT_VERTICAL_FLIP)) == (TEXT_VERTICAL | TEXT_VERTICAL_FLIP)) {
         OS_Terminate();
@@ -183,13 +183,13 @@ int func_02021624(int x, int y, const FontRange *const *fonts, u8 fontIndex, con
             y = t;
         }
     }
-    data_020c18bc.mUnk_318 = (flags & TEXT_ESCAPES) ? 1 : 0;
+    gSystemState.mUnk_318 = (flags & TEXT_ESCAPES) ? 1 : 0;
 
     k = 0;
     do {
         chars[k++] = func_02021498(&text);
     } while (chars[k - 1] != 0);
-    data_020c18bc.mUnk_317_0 = 0;
+    gSystemState.mUnk_317_0 = 0;
 
     font = fonts[fontIndex];
     func_0202d828(font->mGlyph, 0, rect);
@@ -202,7 +202,7 @@ int func_02021624(int x, int y, const FontRange *const *fonts, u8 fontIndex, con
         if (*q == 0) {
             break;
         }
-        if (data_020c18bc.mUnk_311[0] == *q) {
+        if (gSystemState.mUnk_311[0] == *q) {
             if (q[1] >= '0' && q[1] <= '9') {
                 k = 1;
             }
@@ -240,11 +240,11 @@ int func_02021624(int x, int y, const FontRange *const *fonts, u8 fontIndex, con
                     break;
                 }
                 if (fr->mLast == 0 || fr->mFirst > c) {
-                    if (data_020c18bc.mUnk_30e == 0x20) {
+                    if (gSystemState.mUnk_30e == 0x20) {
                         chars[n] = 0x20;
                         glyphs[n] = fr->mGlyph + (chars[n] - fr->mFirst);
                     } else {
-                        *q = data_020c18bc.mUnk_30e;
+                        *q = gSystemState.mUnk_30e;
                         n--;
                     }
                     break;
@@ -273,7 +273,7 @@ int func_02021624(int x, int y, const FontRange *const *fonts, u8 fontIndex, con
             spaces++;
             widths[k] = spaceW;
         }
-        if (!(flags & TEXT_LIMIT) || k < data_020c18bc.mUnk_30c + spaces) {
+        if (!(flags & TEXT_LIMIT) || k < gSystemState.mUnk_30c + spaces) {
             result += widths[k];
         }
         k++;
@@ -295,7 +295,7 @@ int func_02021624(int x, int y, const FontRange *const *fonts, u8 fontIndex, con
             maxW = 0;
             lineW = maxW;
             breakW = maxW;
-            nl = data_020c18bc.mUnk_310;
+            nl = gSystemState.mUnk_310;
             while ((c = chars[i + maxW]) > 1 && lineW < width) {
                 brk = 0;
                 if (c == 0x20) {
@@ -344,9 +344,9 @@ int func_02021624(int x, int y, const FontRange *const *fonts, u8 fontIndex, con
                 if (chars[i] == 0) {
                     break;
                 }
-                if (func_020215f0(chars[i]) != 0x20 && data_020c18bc.mUnk_310 != chars[i] && !nodraw) {
-                    if (!(window && (lineNo < data_020c18bc.mUnk_313 ||
-                                     lineNo >= data_020c18bc.mUnk_313 + data_020c18bc.mUnk_314))) {
+                if (func_020215f0(chars[i]) != 0x20 && gSystemState.mUnk_310 != chars[i] && !nodraw) {
+                    if (!(window && (lineNo < gSystemState.mUnk_313 ||
+                                     lineNo >= gSystemState.mUnk_313 + gSystemState.mUnk_314))) {
                         if (dirMode != 0) {
                             if (dirMode == 1) {
                                 px = y;
@@ -359,21 +359,21 @@ int func_02021624(int x, int y, const FontRange *const *fonts, u8 fontIndex, con
                             px = lineX;
                             py = y;
                         }
-                        pal = data_020c18bc.mUnk_308;
+                        pal = gSystemState.mUnk_308;
                         odd = i & 1;
-                        if (!((flags & TEXT_LIMIT) && i >= data_020c18bc.mUnk_30c + spaces)) {
+                        if (!((flags & TEXT_LIMIT) && i >= gSystemState.mUnk_30c + spaces)) {
                             if (flags & TEXT_ROTATE) {
                                 int dx = px - x;
                                 int dy = py - y;
                                 int cs = *cosp;
                                 int ns = -*sinp;
-                                attr = data_020c18bc.mUnk_30a[1];
+                                attr = gSystemState.mUnk_30a[1];
                                 px = x + ((dx * cs - dy * ns) >> 12);
                                 py = y + ((dx * ns + dy * cs) >> 12);
                                 if (hilite) {
                                     attr = 0x1f;
                                 }
-                                func_020243c0(glyphHigh + glyphs[i], px, py, -data_020c18bc.mUnk_30a[0] << 6, angle,
+                                func_020243c0(glyphHigh + glyphs[i], px, py, -gSystemState.mUnk_30a[0] << 6, angle,
                                               0x1000, 0x1000, attr);
                             } else if (alt) {
                                 if (dirMode != 0) {
@@ -386,21 +386,21 @@ int func_02021624(int x, int y, const FontRange *const *fonts, u8 fontIndex, con
                             }
                             if (flags & TEXT_BOUNDS) {
                                 func_0202d828(glyphHigh + glyphs[i], 0, rect);
-                                if (px + rect[0] < data_020c18bc.mUnk_2fc) {
-                                    data_020c18bc.mUnk_2fc = px + rect[0];
+                                if (px + rect[0] < gSystemState.mUnk_2fc) {
+                                    gSystemState.mUnk_2fc = px + rect[0];
                                 }
-                                if (px + rect[2] > data_020c18bc.mUnk_300) {
-                                    data_020c18bc.mUnk_300 = px + rect[2];
+                                if (px + rect[2] > gSystemState.mUnk_300) {
+                                    gSystemState.mUnk_300 = px + rect[2];
                                 }
-                                if (py + rect[1] < data_020c18bc.mUnk_2fe) {
-                                    data_020c18bc.mUnk_2fe = py + rect[1];
+                                if (py + rect[1] < gSystemState.mUnk_2fe) {
+                                    gSystemState.mUnk_2fe = py + rect[1];
                                 }
-                                if (py + rect[3] > data_020c18bc.mUnk_302) {
-                                    data_020c18bc.mUnk_302 = py + rect[3];
+                                if (py + rect[3] > gSystemState.mUnk_302) {
+                                    gSystemState.mUnk_302 = py + rect[3];
                                 }
                             }
                         } else {
-                            data_020c18bc.mUnk_317_0 = 1;
+                            gSystemState.mUnk_317_0 = 1;
                         }
                     }
                 } else {
@@ -410,12 +410,12 @@ int func_02021624(int x, int y, const FontRange *const *fonts, u8 fontIndex, con
                 lineW += widths[i];
                 i++;
             }
-            while (func_020215f0(chars[i]) == 0x20 || chars[i] == 1 || chars[i] == data_020c18bc.mUnk_310) {
+            while (func_020215f0(chars[i]) == 0x20 || chars[i] == 1 || chars[i] == gSystemState.mUnk_310) {
                 i++;
                 spaces++;
             }
             if (!window ||
-                (lineNo >= data_020c18bc.mUnk_313 && lineNo < data_020c18bc.mUnk_313 + data_020c18bc.mUnk_314)) {
+                (lineNo >= gSystemState.mUnk_313 && lineNo < gSystemState.mUnk_313 + gSystemState.mUnk_314)) {
                 if (dirMode != 0) {
                     if (dirMode == 1) {
                         y -= height;
@@ -429,7 +429,7 @@ int func_02021624(int x, int y, const FontRange *const *fonts, u8 fontIndex, con
             lineNo++;
         } while (!(flags & TEXT_SINGLE_LINE) && chars[i] != 0);
     }
-    data_020c18bc.mUnk_315 = lineNo;
+    gSystemState.mUnk_315 = lineNo;
     if (flags & TEXT_RETURN_HEIGHT) {
         return y - height - startY;
     }
@@ -437,7 +437,7 @@ int func_02021624(int x, int y, const FontRange *const *fonts, u8 fontIndex, con
 }
 
 const u8 *func_02021dd8(u16 block, int id) {
-    const u8 *table = (const u8 *) func_0202ded8(block);
+    const u8 *table = (const u8 *) FindOrLoadCachedFile(block);
     if ((u32) id < 2) {
         OS_Terminate();
     }
@@ -445,7 +445,7 @@ const u8 *func_02021dd8(u16 block, int id) {
 }
 
 const u8 *func_02021df4(u32 base, const u8 *entry) {
-    return (const u8 *) func_0202ded8(base + entry[1]) + *(const u16 *) (entry + 2);
+    return (const u8 *) FindOrLoadCachedFile(base + entry[1]) + *(const u16 *) (entry + 2);
 }
 
 int func_02021e08(u16 id, int index) {
@@ -488,12 +488,12 @@ int func_02021e44(u16 id, int index) {
 void func_02021e94(int block, int id, u8 *dst, int flags, ...) {
     const u8 *src = func_02021e18(block, id);
     if (flags & 1) {
-        u8 saved = data_020c18bc.mUnk_318;
-        data_020c18bc.mUnk_318 = 1;
+        u8 saved = gSystemState.mUnk_318;
+        gSystemState.mUnk_318 = 1;
         while (*src != 0) {
             func_0202158c(&dst, func_02021498(&src));
         }
-        data_020c18bc.mUnk_318 = saved;
+        gSystemState.mUnk_318 = saved;
     } else {
         while (*src != 0) {
             *dst++ = *src++;

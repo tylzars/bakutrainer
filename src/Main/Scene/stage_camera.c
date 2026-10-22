@@ -49,7 +49,7 @@ void func_02015d58(int stage) {
     data_020c3e44.mUnk_2024.mUnk_8c.y = rec->mUnk_158.y;
     data_020c3e44.mUnk_2024.mUnk_80.x = rec->mUnk_1a0.x - 400 * FX_SinCosTable_[(rec->mUnk_224 >> 4) * 2];
     data_020c3e44.mUnk_2024.mUnk_80.z = rec->mUnk_1a0.z + 400 * FX_SinCosTable_[(rec->mUnk_224 >> 4) * 2 + 1];
-    dist = rec->mUnk_1a0.y + func_0201fb74(angle, 0xc00, 0x320000, 0x4b0000);
+    dist = rec->mUnk_1a0.y + MapRangeFromZero(angle, 0xc00, 0x320000, 0x4b0000);
     data_020c3e44.mUnk_2024.mUnk_80.y = dist;
     if (dist > 0x5dc000) {
         data_020c3e44.mUnk_2024.mUnk_80.y = 0x5dc000;
@@ -138,7 +138,7 @@ void func_02016008(int stage) {
         dx = f->mUnk_178 - px;
         dz = f->mUnk_17c - pz;
         if (f->mUnk_182 == 0x19) {
-            d = func_0201faf0(dx, dz);
+            d = Length2d(dx, dz);
             if (d < 400) {
                 break;
             }
@@ -180,7 +180,7 @@ void func_02016008(int stage) {
                 az *= q;
                 rec->mUnk_1a0.x = ax + (f->mUnk_178 << 9);
                 rec->mUnk_1a0.z = az + (f->mUnk_17c << 9);
-                rec->mUnk_1d8 = func_0201feb0(rec->mUnk_1a0.x / 512 - f->mUnk_178, rec->mUnk_1a0.z / 512 - f->mUnk_17c);
+                rec->mUnk_1d8 = AngleOfVector(rec->mUnk_1a0.x / 512 - f->mUnk_178, rec->mUnk_1a0.z / 512 - f->mUnk_17c);
                 rec->mUnk_220 += 0x4000;
                 func_0202f110(0x28, 0x64, 0, 0x40, 0xffff, 0);
                 break;
@@ -197,7 +197,7 @@ void func_02016008(int stage) {
                     Unk_020b7ef4 *p = data_020b6ee0.mUnk_1014;
                     int j;
 
-                    func_0201f880(moved);
+                    SetFaded(moved);
                     func_0202f110(0x59, 0x64, 0, 0x40, 0xffff, 0);
                     rec->mUnk_220 = 0;
                     for (j = 0; j < data_020b6ee0.mUnk_5a54; j++, p++) {
@@ -338,13 +338,13 @@ void func_02016624(void) {
             data_020b6ee0.mUnk_1014[n7].mUnk_182 = type;
             data_020b6ee0.mUnk_1014[n7].mUnk_178 = pos.x / 512;
             data_020b6ee0.mUnk_1014[n7].mUnk_17c = pos.z / 512;
-            data_020b6ee0.mUnk_1014[n7].mUnk_183 = func_0201fdbc(q + 2, 0, 3);
+            data_020b6ee0.mUnk_1014[n7].mUnk_183 = ReadBits(q + 2, 0, 3);
             n7++;
         } else if (type == 0x14) {
             data_020b6ee0.mUnk_1014[n7].mUnk_182 = type;
             data_020b6ee0.mUnk_1014[n7].mUnk_178 = pos.x / 512;
             data_020b6ee0.mUnk_1014[n7].mUnk_17c = pos.z / 512;
-            data_020b6ee0.mUnk_1014[n7].mUnk_187 = func_0201fdbc(q + 2, 0, 1);
+            data_020b6ee0.mUnk_1014[n7].mUnk_187 = ReadBits(q + 2, 0, 1);
             data_020b6ee0.mUnk_1014[n7].mUnk_188 = 0;
             data_020b6ee0.mUnk_1014[n7].mUnk_184 = (u32) flags >> 6;
             func_020271ec(&data_020b6ee0.mUnk_1014[n7].mModel, 0, 0, 0, data_0201aba0[6]);
@@ -360,8 +360,8 @@ void func_02016624(void) {
             data_020b6ee0.mUnk_5a58[n30].mUnk_00 = pos.x / 512;
             data_020b6ee0.mUnk_5a58[n30].mUnk_04 = pos.z / 512;
             data_020b6ee0.mUnk_5a58[n30].mUnk_183 = 1;
-            data_020b6ee0.mUnk_5a58[n30].mUnk_181[1] = func_0201fdbc(q + 2, 0, 0);
-            data_020b6ee0.mUnk_5a58[n30].mUnk_181[0] = func_0201fdbc(q + 2, 1, 7);
+            data_020b6ee0.mUnk_5a58[n30].mUnk_181[1] = ReadBits(q + 2, 0, 0);
+            data_020b6ee0.mUnk_5a58[n30].mUnk_181[0] = ReadBits(q + 2, 1, 7);
             if (data_020b6ee0.mUnk_5a58[n30].mUnk_181[1] == 0) {
                 func_020271ec(&data_020b6ee0.mUnk_5a58[n30].mModel, 0xc89, 0xc88, 2, 0);
                 data_020b6ee0.mUnk_8ad9++;
@@ -379,13 +379,13 @@ void func_02016624(void) {
             data_020b6ee0.mUnk_1014[n7].mUnk_182 = type;
             data_020b6ee0.mUnk_1014[n7].mUnk_178 = pos.x / 512;
             data_020b6ee0.mUnk_1014[n7].mUnk_17c = pos.z / 512;
-            data_020b6ee0.mUnk_1014[n7].mUnk_185 = func_0201fdbc(q + 2, 0, 3);
-            data_020b6ee0.mUnk_1014[n7].mUnk_186 = func_0201fdbc(q + 2, 4, 7);
+            data_020b6ee0.mUnk_1014[n7].mUnk_185 = ReadBits(q + 2, 0, 3);
+            data_020b6ee0.mUnk_1014[n7].mUnk_186 = ReadBits(q + 2, 4, 7);
             func_020271ec(&data_020b6ee0.mUnk_1014[n7].mModel, 0xc8e, 0xc8d, 2, 0);
             n7++;
         } else if (type == 5) {
             data_020b6ee0.mUnk_8adc[n5].mUnk_00 = pos;
-            data_020b6ee0.mUnk_8adc[n5].mUnk_18 = func_0201fdbc(q + 2, 0, 0);
+            data_020b6ee0.mUnk_8adc[n5].mUnk_18 = ReadBits(q + 2, 0, 0);
             data_020b6ee0.mUnk_8adc[n5].mUnk_1a = 1;
             n5++;
         } else if (type == 0xa || type == 0x2d) {
@@ -394,10 +394,10 @@ void func_02016624(void) {
             data_020b6ee0.mUnk_0008[n34].mUnk_185 = flags;
             data_020b6ee0.mUnk_0008[n34].mUnk_184 = type;
             if (type == 0xa) {
-                data_020b6ee0.mUnk_0008[n34].mUnk_186 = func_0201fdbc(q + 2, 0, 2);
+                data_020b6ee0.mUnk_0008[n34].mUnk_186 = ReadBits(q + 2, 0, 2);
                 func_020271ec(&data_020b6ee0.mUnk_0008[n34].mModel, 0, 0, 0, data_0201aba0[1]);
             } else if (type == 0x2d) {
-                data_020b6ee0.mUnk_0008[n34].mUnk_187 = func_0201fdbc(q + 2, 0, 2);
+                data_020b6ee0.mUnk_0008[n34].mUnk_187 = ReadBits(q + 2, 0, 2);
                 data_020b6ee0.mUnk_0008[n34].mUnk_186 = 0x20;
                 func_020271ec(&data_020b6ee0.mUnk_0008[n34].mModel, 0, 0, 0, data_0201aba0[2]);
             }
@@ -542,9 +542,9 @@ void func_02016db4(Unk_020b1598 *followers, int index, u16 angle) {
             }
             {
                 u32 cam = func_0203129c();
-                int cross = func_0201febc(data_020c3e44.mUnk_2024.mUnk_14.x, data_020c3e44.mUnk_2024.mUnk_14.z,
-                                          data_020c3e44.mUnk_2024.mUnk_20.x, data_020c3e44.mUnk_2024.mUnk_20.z,
-                                          f->mUnk_00.x, f->mUnk_00.z);
+                int cross = Cross2d(data_020c3e44.mUnk_2024.mUnk_14.x, data_020c3e44.mUnk_2024.mUnk_14.z,
+                                    data_020c3e44.mUnk_2024.mUnk_20.x, data_020c3e44.mUnk_2024.mUnk_20.z, f->mUnk_00.x,
+                                    f->mUnk_00.z);
                 f->mUnk_00 = f->mUnk_0c;
                 f->mUnk_24 = cam + (((cross != 0) ? ((cross >> 31) | 1) : 0) << 14);
                 f->mUnk_22 = f->mUnk_24;
@@ -562,20 +562,20 @@ void func_02016db4(Unk_020b1598 *followers, int index, u16 angle) {
             if (j != index) {
                 dx = o->mUnk_00.x - f->mUnk_00.x;
                 dz = o->mUnk_00.z - f->mUnk_00.z;
-                dist = func_0201faf0(dx, dz);
+                dist = Length2d(dx, dz);
                 if (dist < followers->mUnk_3f4) {
-                    u32 ang = func_0201feb0(dx, dz);
+                    u32 ang = AngleOfVector(dx, dz);
                     const s16 *s1 = &FX_SinCosTable_[((u16) (ang - 0x4000) >> 4) * 2];
                     int ax = f->mUnk_00.x + (float) (f->mUnk_20 * s1[0] / 2 / 0x1000);
                     int az = f->mUnk_00.z - (float) (f->mUnk_20 * s1[1] / 2 / 0x1000);
                     const s16 *s2 = &FX_SinCosTable_[((u16) (ang + 0x4000) >> 4) * 2];
                     int bx = o->mUnk_00.x + (float) (o->mUnk_20 * s2[0] / 2 / 0x1000);
                     int bz = o->mUnk_00.z - (float) (o->mUnk_20 * s2[1] / 2 / 0x1000);
-                    u32 span = func_0201fe14(ang, func_0201feb0(bx - ax, bz - az));
+                    u32 span = AngleDistance(ang, AngleOfVector(bx - ax, bz - az));
                     u16 cur = ang - (u16) span;
                     u32 end = ang + span;
 
-                    while (func_0201fe6c(end, cur) == 1) {
+                    while (IsAngleIncreasing(end, cur) == 1) {
                         u16 sector = ((cur + 0x1000) / 0x2000) & 7;
                         if (f->mUnk_26[sector] > dist) {
                             f->mUnk_26[sector] = dist;
@@ -597,7 +597,7 @@ void func_02016db4(Unk_020b1598 *followers, int index, u16 angle) {
         int limit = followers->mUnk_3f2 + avg;
 
         bestDist = (bestDist >= limit) ? limit : bestDist;
-        f->mUnk_18 = f->mUnk_1c * (float) func_0201fbe4(bestDist, avg, limit, 0, 0x400) / 1024.0f;
+        f->mUnk_18 = f->mUnk_1c * (float) MapRange(bestDist, avg, limit, 0, 0x400) / 1024.0f;
         f->mUnk_37 = 1;
         if (f->mUnk_18 < 0.1) {
             if (data_020b6ee0.mUnk_8adc[f->mUnk_36].mUnk_18 == 1 && bestIdx == followers->mUnk_3f0 &&
@@ -649,7 +649,7 @@ void func_02017298(Unk_020b1598 *followers) {
         pz = fb + f->mUnk_00.z;
         px = fc + px;
         pz = fd + pz;
-        diff = func_0201fe34(f->mUnk_24, (u16) func_0201feb0(px - f->mUnk_00.x, pz - f->mUnk_00.z));
+        diff = AngleDelta(f->mUnk_24, (u16) AngleOfVector(px - f->mUnk_00.x, pz - f->mUnk_00.z));
         if (abs(diff) > 0x100) {
             f->mUnk_24 += diff / 8;
         }
@@ -659,7 +659,7 @@ void func_02017298(Unk_020b1598 *followers) {
         f->mUnk_0c = f->mUnk_00;
         f->mUnk_00.x = f->mUnk_00.x + f->mUnk_18 * (float) FX_SinCosTable_[(f->mUnk_24 >> 4) * 2] / 4096.0f;
         f->mUnk_00.z = f->mUnk_00.z - f->mUnk_18 * (float) FX_SinCosTable_[(f->mUnk_24 >> 4) * 2 + 1] / 4096.0f;
-        ang = func_0201feb0(target->mUnk_00.x - f->mUnk_00.x, target->mUnk_00.z - f->mUnk_00.z);
+        ang = AngleOfVector(target->mUnk_00.x - f->mUnk_00.x, target->mUnk_00.z - f->mUnk_00.z);
         if (f->mUnk_37 == 1 && 2.0f * f->mUnk_18 < f->mUnk_1c) {
             best = 0;
             sec = ang >> 13;
@@ -676,7 +676,7 @@ void func_02017298(Unk_020b1598 *followers) {
                 ang = (u16) ((bi << 13) + 0x1000);
             }
         }
-        diff = func_0201fe34(f->mUnk_22, ang);
+        diff = AngleDelta(f->mUnk_22, ang);
         if (abs(diff) > 0x100) {
             f->mUnk_22 = f->mUnk_22 + diff / 8;
         } else {
@@ -689,11 +689,10 @@ void func_02017298(Unk_020b1598 *followers) {
 int func_0201750c(int stage, int *out) {
     StageRec *rec = &data_020b1990[stage];
 
-    if (data_020c18bc.mUnk_2ac_2 && rec->mUnk_22f == 1) {
-        if ((int) func_0201faf0(data_020c18bc.mUnk_2ae - rec->mUnk_1f0, data_020c18bc.mUnk_2af - rec->mUnk_1f4) <
-            0x10) {
-            if ((int) func_0201faf0(data_020c18bc.mUnk_2ae - data_020b6ee0.mUnk_a574.mUnk_24,
-                                    data_020c18bc.mUnk_2af - data_020b6ee0.mUnk_a574.mUnk_28) < 6) {
+    if (gSystemState.mTouchReleased && rec->mUnk_22f == 1) {
+        if ((int) Length2d(gSystemState.mTouchX - rec->mUnk_1f0, gSystemState.mTouchY - rec->mUnk_1f4) < 0x10) {
+            if ((int) Length2d(gSystemState.mTouchX - data_020b6ee0.mUnk_a574.mUnk_24,
+                               gSystemState.mTouchY - data_020b6ee0.mUnk_a574.mUnk_28) < 6) {
                 *out = stage;
                 func_0202f110(0x167, 0x64, 0, 0x40, 0xffff, 0);
                 return 1;
@@ -738,21 +737,21 @@ void func_020175e8(int index, int *sel, int flags) {
     rec->mUnk_220 = (rec->mUnk_220 < 0x20000 ? rec->mUnk_220 : 0x20000) < -0x20000
                         ? -0x20000
                         : (rec->mUnk_220 < 0x20000 ? rec->mUnk_220 : 0x20000);
-    if (data_020c18bc.mUnk_2ac_0) {
-        data_020b6ee0.mUnk_a574.mUnk_24 = data_020c18bc.mUnk_2ae;
-        data_020b6ee0.mUnk_a574.mUnk_28 = data_020c18bc.mUnk_2af;
+    if (gSystemState.mTouchPressed) {
+        data_020b6ee0.mUnk_a574.mUnk_24 = gSystemState.mTouchX;
+        data_020b6ee0.mUnk_a574.mUnk_28 = gSystemState.mTouchY;
     }
     if (rec->mUnk_142 != 1 || data_020b6ee0.mUnk_a146 == 3 || data_020b6ee0.mUnk_a146 == 4 ||
         data_020b6ee0.mUnk_a146 == 6 || data_020b6ee0.mUnk_a146 == 7 || data_020b6ee0.mUnk_a146 == 8) {
         if (index == *sel) {
             if (!(flags & 1) && (data_020b6ee0.mUnk_a146 == 3 || data_020b6ee0.mUnk_a146 == 4)) {
-                if (data_020c18bc.mUnk_2ac_0) {
-                    data_020b6ee0.mUnk_0c5c = data_020c18bc.mUnk_2ae;
-                    data_020b6ee0.mUnk_0c5d = data_020c18bc.mUnk_2af;
+                if (gSystemState.mTouchPressed) {
+                    data_020b6ee0.mUnk_0c5c = gSystemState.mTouchX;
+                    data_020b6ee0.mUnk_0c5d = gSystemState.mTouchY;
                     data_020b6ee0.mUnk_a8e8 = 0;
-                } else if (data_020c18bc.mUnk_2ac_1) {
-                    data_020b6ee0.mUnk_a8e8 += (data_020c18bc.mUnk_2ae - data_020b6ee0.mUnk_0c5c) << 7;
-                    data_020b6ee0.mUnk_0c5c = data_020c18bc.mUnk_2ae;
+                } else if (gSystemState.mTouchDown) {
+                    data_020b6ee0.mUnk_a8e8 += (gSystemState.mTouchX - data_020b6ee0.mUnk_0c5c) << 7;
+                    data_020b6ee0.mUnk_0c5c = gSystemState.mTouchX;
                 }
             }
             rec->mUnk_1d8 -= data_020b6ee0.mUnk_a8e8;
@@ -770,32 +769,32 @@ void func_020175e8(int index, int *sel, int flags) {
     }
     if (!(flags & 1)) {
         if (index == *sel) {
-            if (data_020c18bc.mUnk_2ac_2) {
+            if (gSystemState.mTouchReleased) {
                 int n = data_020c1d60.mUnk_800.mUnk_100.mUnk_10 - 1;
                 if (n < 30 && n > 1) {
                     s32 dx =
                         (data_020c1d60.mUnk_800.mUnk_000[n].mUnk_0 - data_020c1d60.mUnk_800.mUnk_000[0].mUnk_0) / 4;
                     s32 dy =
                         (data_020c1d60.mUnk_800.mUnk_000[n].mUnk_1 - data_020c1d60.mUnk_800.mUnk_000[0].mUnk_1) / 4;
-                    int len = func_0201faf0(dx, dy);
+                    int len = Length2d(dx, dy);
                     if (len > 8) {
                         dx = (dx << 3) / len;
                         dy = (dy << 3) / len;
-                        func_0201faf0(dx, dy);
+                        Length2d(dx, dy);
                     }
                     dx = (dx << 12) + rec->mUnk_220 * sinIdx(rec->mUnk_1d8) / 4096;
                     dy = (dy << 12) + rec->mUnk_220 * -cosIdx(rec->mUnk_1d8) / 4096;
-                    rec->mUnk_1d8 = func_0201feb0(dx, dy);
-                    len = func_0201faf0(dx, dy);
+                    rec->mUnk_1d8 = AngleOfVector(dx, dy);
+                    len = Length2d(dx, dy);
                     rec->mUnk_220 = len < 0x14000 ? len : 0x14000;
                 }
-            } else if (data_020c18bc.mUnk_2ac_1) {
+            } else if (gSystemState.mTouchDown) {
                 int n = data_020c1d60.mUnk_800.mUnk_100.mUnk_10 - 1;
                 if (n > 4) {
-                    if ((int) func_0201faf0(data_020c1d60.mUnk_800.mUnk_000[n].mUnk_0 -
-                                                (data_020c1d60.mUnk_800.mUnk_000 + n - 4)->mUnk_0,
-                                            data_020c1d60.mUnk_800.mUnk_000[n].mUnk_1 -
-                                                (data_020c1d60.mUnk_800.mUnk_000 + n - 4)->mUnk_1) < 4) {
+                    if ((int) Length2d(data_020c1d60.mUnk_800.mUnk_000[n].mUnk_0 -
+                                           (data_020c1d60.mUnk_800.mUnk_000 + n - 4)->mUnk_0,
+                                       data_020c1d60.mUnk_800.mUnk_000[n].mUnk_1 -
+                                           (data_020c1d60.mUnk_800.mUnk_000 + n - 4)->mUnk_1) < 4) {
                         rec->mUnk_220 -= 3276.8;
                     }
                 }
@@ -822,7 +821,7 @@ void func_020175e8(int index, int *sel, int flags) {
         ground = func_02030830(rec->mUnk_1a0.x, rec->mUnk_1a0.z, rec->mUnk_1a0.y + 0xc800, 0, 0, NULL, &push) + 0x32000;
     }
     if (rec->mUnk_220 != 0) {
-        func_0202f110(0x1c4, func_0201fb74(abs(rec->mUnk_220 >> 12), 0x20, 0, 0x4b), 1, 0x40, 0xffff, 0);
+        func_0202f110(0x1c4, MapRangeFromZero(abs(rec->mUnk_220 >> 12), 0x20, 0, 0x4b), 1, 0x40, 0xffff, 0);
     }
     if (push.y != 0x1000) {
         rec->mUnk_1a0.x += push.x;
@@ -853,11 +852,11 @@ void func_020175e8(int index, int *sel, int flags) {
             other = &data_020b1990[i];
             ex = (other->mUnk_1a0.x - rec->mUnk_1a0.x) / 512;
             ez = (other->mUnk_1a0.z - rec->mUnk_1a0.z) / 512;
-            if (func_0201fafc(ex, ez) >= 0x60e64) {
+            if (LengthSquared2d64(ex, ez) >= 0x60e64) {
                 continue;
             }
-            dir = func_0201feb0(ex, ez);
-            diff = func_0201fe34(rec->mUnk_1d8, dir);
+            dir = AngleOfVector(ex, ez);
+            diff = AngleDelta(rec->mUnk_1d8, dir);
             if (abs(diff) >= 0x3000) {
                 continue;
             }
@@ -868,8 +867,8 @@ void func_020175e8(int index, int *sel, int flags) {
             x += across * sinIdx((u16) (rec->mUnk_1d8 - diff)) / 4096;
             z += across * -cosIdx((u16) (rec->mUnk_1d8 - diff)) / 4096;
             if (c[2] < 3 && data_020b6ee0.mUnk_a146 != 2) {
-                other->mUnk_1d8 = func_0201feb0(-x, -z);
-                other->mUnk_220 = func_0201faf0(x, z) >> 1;
+                other->mUnk_1d8 = AngleOfVector(-x, -z);
+                other->mUnk_220 = Length2d(x, z) >> 1;
                 if (other->mUnk_142 != 1) {
                     other->mUnk_220 = 0;
                 }
@@ -883,18 +882,18 @@ void func_020175e8(int index, int *sel, int flags) {
         }
     }
     if (hit == 1) {
-        rec->mUnk_1d8 = func_0201feb0(x, z);
-        rec->mUnk_220 = func_0201faf0(x, z);
+        rec->mUnk_1d8 = AngleOfVector(x, z);
+        rec->mUnk_220 = Length2d(x, z);
     }
     {
         int mask = 1;
         if (func_02031824(&rec->mUnk_1a0, 400, 200, 0, 0x400, 0)) {
             s32 oz = old.z / 512;
             s32 ox = old.x / 512;
-            if (func_0201febc(data_020c3e44.mUnk_2024.mUnk_14.x, data_020c3e44.mUnk_2024.mUnk_14.z,
-                              data_020c3e44.mUnk_2024.mUnk_20.x, data_020c3e44.mUnk_2024.mUnk_20.z, ox, oz) > 0) {
-                if (func_0201fe14(
-                        func_0201feb0(data_020c3e44.mUnk_2024.mUnk_2c.x - ox, data_020c3e44.mUnk_2024.mUnk_2c.z - oz),
+            if (Cross2d(data_020c3e44.mUnk_2024.mUnk_14.x, data_020c3e44.mUnk_2024.mUnk_14.z,
+                        data_020c3e44.mUnk_2024.mUnk_20.x, data_020c3e44.mUnk_2024.mUnk_20.z, ox, oz) > 0) {
+                if (AngleDistance(
+                        AngleOfVector(data_020c3e44.mUnk_2024.mUnk_2c.x - ox, data_020c3e44.mUnk_2024.mUnk_2c.z - oz),
                         rec->mUnk_1d8) < 0x4000) {
                     mask |= 0x400;
                 }
@@ -907,13 +906,12 @@ void func_020175e8(int index, int *sel, int flags) {
     }
     base = func_0203129c();
     func_0202f110(0x30, 100, 0, 0x40, 0xffff, 0);
-    turn =
-        func_0201febc(data_020c3e44.mUnk_2024.mUnk_14.x, data_020c3e44.mUnk_2024.mUnk_14.z,
-                      data_020c3e44.mUnk_2024.mUnk_20.x, data_020c3e44.mUnk_2024.mUnk_20.z, old.x / 512, old.z / 512);
+    turn = Cross2d(data_020c3e44.mUnk_2024.mUnk_14.x, data_020c3e44.mUnk_2024.mUnk_14.z,
+                   data_020c3e44.mUnk_2024.mUnk_20.x, data_020c3e44.mUnk_2024.mUnk_20.z, old.x / 512, old.z / 512);
     turn = turn != 0 ? (turn >> 31) | 1 : 0;
     turn = -(turn * 0x4000);
     if (!(res & 0x10000000)) {
-        angle = base - turn + func_0201fe34(rec->mUnk_1d8, (u16) (base + turn));
+        angle = base - turn + AngleDelta(rec->mUnk_1d8, (u16) (base + turn));
     } else {
         angle = base - turn;
     }
@@ -966,7 +964,7 @@ void func_020175e8(int index, int *sel, int flags) {
             data_020b6ee0.mUnk_0008[near].mUnk_180 = key;
             i = near;
         }
-        dmg = abs(rec->mUnk_220 * cosIdx((u16) func_0201fe14(angle, rec->mUnk_1d8)) / 4096 >> 12);
+        dmg = abs(rec->mUnk_220 * cosIdx((u16) AngleDistance(angle, rec->mUnk_1d8)) / 4096 >> 12);
         data_020b6ee0.mUnk_0008[i].mUnk_186 -= dmg;
         if (data_020b6ee0.mUnk_0008[i].mUnk_186 < 0) {
             func_02031c98(data_020c3e44.mUnk_2024.mUnk_10, 0, 0);
@@ -1041,18 +1039,18 @@ void func_020182cc(void) {
             OS_Terminate();
         }
     }
-    func_0201eb20();
+    ResetVramBanks();
     func_0202c1c4();
-    func_0201dde0(rec->mInfo.mUnk_13 + 0xdb3, 2);
+    LoadImage(rec->mInfo.mUnk_13 + 0xdb3, 2);
     func_0202bdd8(0x10cb, 0x10ca, 0x10cc, 0, 1);
     func_0202bdd8(0x10cb, 0x10ca, 0x10cc, 0, 2);
-    func_02020854(0);
+    SetLcdSwap(0);
     func_02021fb0(0x1c7, 0x1c6, 0x180, 0x10);
     func_020325b0(data_020501c4[data_020b6ee0.mUnk_a8f2], 0, data_02050194[data_020b6ee0.mUnk_a8f2], 0, 0, 0);
     data_020c3e44.mUnk_2024.mUnk_04 = func_02015d48;
     data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_54 = 0x640;
     data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_44 = 0x186a000;
-    func_020104c0(3, 0x4c);
+    RequestTrack(3, 0x4c);
     MI_CpuFill8(&rec->mDraw, 0, 0x44);
     func_02031fc4(0, &rec->mUnk_1a0);
     rec->mDraw.mUnk_43 = 2;
@@ -1095,7 +1093,7 @@ void func_02018558(void) {
     rec->mUnk_158 = rec->mUnk_1a0;
     func_0200ba94(&rec->mUnk_1a0, 0x70800, 0x800);
     func_0202733c(rec, &rec->mUnk_1a0, 0);
-    func_020105f4(rec);
+    PlayObjectSe(rec);
     func_02025db4(&rec->mUnk_1a0, &rec->mUnk_1f0);
     func_020262a0(&data_020b6ee0.mUnk_8e60.mModel);
     if (data_020b6ee0.mUnk_8e60.mModel.mUnk_142 != 1) {
@@ -1108,7 +1106,7 @@ void func_02018558(void) {
     pos.x = data_020c3e44.mUnk_2024.mUnk_74.x;
     pos.z = data_020c3e44.mUnk_2024.mUnk_74.z;
     pos.y = -0x19000;
-    func_0200ba08(data_020b6ee0.mUnk_a8f2 + 0xfbe, &pos, (data_020c18bc.mUnk_45c >> 1) % 100, 0, 0x3000, 0);
+    func_0200ba08(data_020b6ee0.mUnk_a8f2 + 0xfbe, &pos, (gSystemState.mElapsedFrames >> 1) % 100, 0, 0x3000, 0);
     func_02033614(data_020c3e44.mUnk_2024.mUnk_74.x, data_020c3e44.mUnk_2024.mUnk_74.z);
     func_02016ae8(stage);
     func_02015f34();
@@ -1128,8 +1126,8 @@ void func_02018558(void) {
 
 void func_020186cc(void) {
     func_020102f8();
-    func_0202dec4(data_020501c4[data_020b6ee0.mUnk_a8f2]);
-    func_0201eb20();
+    RemoveCachedFile(data_020501c4[data_020b6ee0.mUnk_a8f2]);
+    ResetVramBanks();
 }
 
 int func_020186f0(u8 stage) {
@@ -1226,17 +1224,17 @@ void func_0201896c(void) {
     int dx;
     int dz;
 
-    func_0201eb20();
+    ResetVramBanks();
     MI_CpuFill8(&params, 0, 0x44);
     func_0202c1c4();
     func_0202bdd8(0x10cb, 0x10ca, 0x10cc, 0, 1);
     func_0202bdd8(0x10cb, 0x10ca, 0x10cc, 2, 2);
-    func_02020854(0);
+    SetLcdSwap(0);
     func_02021fb0(0x1c7, 0x1c6, 0x180, 0x10);
     func_020325b0(0x1db, 0, 0x1dc, 0, 0, 0);
     data_020c3e44.mUnk_2024.mUnk_04 = func_02015d48;
     data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_54 = 0x640;
-    func_020104e0(6, 0x4c, 3);
+    RequestTrackDelayed(6, 0x4c, 3);
     data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_44 = 0x186a000;
     func_02031fc4(0, &offset);
     func_02033df4(0x18);
@@ -1257,7 +1255,7 @@ void func_0201896c(void) {
         rec = &data_020b1990[i];
         func_020271ec(rec, 0, 0, 0, data_0201ab04[rec->mInfo.mUnk_13]);
         rec->mDraw = params;
-        rec->mUnk_1d8 = func_0201fd68();
+        rec->mUnk_1d8 = NextRandom();
         rec->mUnk_220 = 0;
         rec->mUnk_224 = 0;
         if (rec->mUnk_1e8 == -1) {
@@ -1403,7 +1401,7 @@ void func_02018cd4(void) {
                     func_02025ff4((Model *) rec, data_020b6ee0.mUnk_a10c);
                 }
                 func_0202733c(rec, &params, 0x10);
-                func_020105f4(rec);
+                PlayObjectSe(rec);
             } else {
                 func_02024b5c(rec->mUnk_170, &params, rec, 0x10);
             }
@@ -1422,7 +1420,7 @@ void func_02018cd4(void) {
             }
             if (data_020b6ee0.mUnk_a146 <= 1) {
                 if (idx == data_020b6ee0.mUnk_a8e4) {
-                    func_0200ba08(0x10c8, &marker, 0, data_020c18bc.mUnk_45c << 10, 0x100000, 0);
+                    func_0200ba08(0x10c8, &marker, 0, gSystemState.mElapsedFrames << 10, 0x100000, 0);
                     func_02019800(rec);
                 }
                 if (rec->mUnk_22d == 1 && (u32) data_020b6ee0.mUnk_a564 >= 0x11) {
@@ -1469,21 +1467,19 @@ void func_02018cd4(void) {
         data_020b6ee0.mUnk_a14b = 0;
     }
     if (data_020b6ee0.mUnk_a146 == 0 && data_020b6ee0.mUnk_a5d0 == 0) {
-        if (data_020c18bc.mUnk_2ac_0) {
+        if (gSystemState.mTouchPressed) {
             data_020b6ee0.mUnk_a574.mUnk_34 = 4;
-            data_020b6ee0.mUnk_a574.mUnk_24 = data_020c18bc.mUnk_2ae;
-            data_020b6ee0.mUnk_a574.mUnk_28 = data_020c18bc.mUnk_2af;
+            data_020b6ee0.mUnk_a574.mUnk_24 = gSystemState.mTouchX;
+            data_020b6ee0.mUnk_a574.mUnk_28 = gSystemState.mTouchY;
             data_020b6ee0.mUnk_a574.mUnk_18 = data_020b6ee0.mUnk_a574.mUnk_0c;
         }
-        if (data_020c18bc.mUnk_2ac_1) {
-            data_020b6ee0.mUnk_a574.mUnk_0c.x =
-                data_020b6ee0.mUnk_a574.mUnk_18.x +
-                (data_020b6ee0.mUnk_a574.mUnk_24 - data_020c18bc.mUnk_2ae) * (0xe << 10);
-            data_020b6ee0.mUnk_a574.mUnk_0c.z =
-                data_020b6ee0.mUnk_a574.mUnk_18.z +
-                (data_020b6ee0.mUnk_a574.mUnk_28 - data_020c18bc.mUnk_2af) * (0xe << 10);
-            dist = func_0201faf0((data_020b6ee0.mUnk_a574.mUnk_0c.x - camPos.x) / 512,
-                                 (data_020b6ee0.mUnk_a574.mUnk_0c.z - camPos.z) / 512);
+        if (gSystemState.mTouchDown) {
+            data_020b6ee0.mUnk_a574.mUnk_0c.x = data_020b6ee0.mUnk_a574.mUnk_18.x +
+                                                (data_020b6ee0.mUnk_a574.mUnk_24 - gSystemState.mTouchX) * (0xe << 10);
+            data_020b6ee0.mUnk_a574.mUnk_0c.z = data_020b6ee0.mUnk_a574.mUnk_18.z +
+                                                (data_020b6ee0.mUnk_a574.mUnk_28 - gSystemState.mTouchY) * (0xe << 10);
+            dist = Length2d((data_020b6ee0.mUnk_a574.mUnk_0c.x - camPos.x) / 512,
+                            (data_020b6ee0.mUnk_a574.mUnk_0c.z - camPos.z) / 512);
             if (dist > 0x3200) {
                 s32 scale = (0x3200 << 9) / dist;
                 s32 dx = (data_020b6ee0.mUnk_a574.mUnk_0c.x - camPos.x) / 512;
@@ -1500,7 +1496,7 @@ void func_02018cd4(void) {
 }
 
 void func_020192d4(void) {
-    u16 keys = data_020c18bc.mUnk_12;
+    u16 keys = gSystemState.mKeysPressed;
 
     if (keys & 0x10) {
         if (data_020b6ee0.mUnk_a146 <= 1) {
@@ -1526,7 +1522,7 @@ void func_020192d4(void) {
     }
     if (data_020b6ee0.mUnk_a146 == 0 || data_020b6ee0.mUnk_a146 == 1 || data_020b6ee0.mUnk_a146 == 2 ||
         (u8) (data_020b6ee0.mUnk_a146 + 250) <= 2) {
-        if (data_020c18bc.mUnk_2ac_0 == 1) {
+        if (gSystemState.mTouchPressed == 1) {
             if (!func_0200bd80(0x80000000, 0x5a) && !func_0200bd80(0x80000000, 0xa) &&
                 !func_0200bd80(0x80000000, 0xb) && !func_0200bd80(0x80000000, 0xc) && !func_0200bd80(0x80000000, 0xd) &&
                 !func_0200bd80(0x80000000, 0xe) && !func_0200bd80(0x80000000, 0xf) &&
@@ -1536,7 +1532,7 @@ void func_020192d4(void) {
                 data_020b6ee0.mUnk_a5d0 = 0;
             }
         }
-        if (!data_020c18bc.mUnk_2ac_1 && !data_020c18bc.mUnk_2ac_2) {
+        if (!gSystemState.mTouchDown && !gSystemState.mTouchReleased) {
             data_020b6ee0.mUnk_a5d0 = 1;
         }
     } else {
@@ -1545,14 +1541,14 @@ void func_020192d4(void) {
 }
 
 void func_02019438(void) {
-    func_0200fb0c();
+    GetNextState();
     func_0201944c();
     func_020102f8();
-    func_0201eb20();
+    ResetVramBanks();
 }
 
 void func_0201944c(void) {
-    if (func_0200fb00() == 10) {
+    if (GetState() == 10) {
         VecFx32 pos;
         StageRec *rec;
         int i;
@@ -1597,25 +1593,25 @@ void func_02019504(void) {
     if (data_020b6ee0.mUnk_a146 > 2) {
         return;
     }
-    idx = func_0201fd84(0, data_020b6ee0.mUnk_a8ee - 1);
+    idx = RandomRange(0, data_020b6ee0.mUnk_a8ee - 1);
     if (!((idx >= 0) & (idx < data_020b6ee0.mUnk_a8ee))) {
         OS_Terminate();
     }
     rec = &data_020b1990[idx];
-    if (data_020b6ee0.mUnk_a149 < 4 && !(func_0201fd68() & 0x1ff)) {
+    if (data_020b6ee0.mUnk_a149 < 4 && !(NextRandom() & 0x1ff)) {
         func_020198f0();
     }
     if (idx != data_020b6ee0.mUnk_a8e4 && rec->mUnk_220 == 0 && rec->mUnk_22f != 0 && data_020b6ee0.mUnk_a146 != 2) {
-        switch ((u8) func_0201fd68()) {
+        switch ((u8) NextRandom()) {
             case 0:
                 if (c[1] == 0) {
-                    rec->mUnk_1d8 = func_0201fd68();
+                    rec->mUnk_1d8 = NextRandom();
                     rec->mUnk_134 |= 4;
                 }
                 break;
             case 1:
                 if (c[1] == 0) {
-                    rec->mUnk_1d8 = func_0201fd68();
+                    rec->mUnk_1d8 = NextRandom();
                     rec->mUnk_220 = 0x4000;
                 }
                 break;
@@ -1632,7 +1628,7 @@ void func_02019504(void) {
         }
     }
     interval = 0x40 / data_020b6ee0.mUnk_a8ee + 8;
-    if (func_0201fd68() % interval != 0) {
+    if (NextRandom() % interval != 0) {
         return;
     }
     func_020194ac(idx);
@@ -1746,8 +1742,8 @@ void func_020198f0(void) {
     int j;
 
     func_02031fc4(0, &v);
-    v.x += (0x40 - (func_0201fd68() & 0x7f)) * 0xc800;
-    v.z += (0x40 - (func_0201fd68() & 0x7f)) * 0xc800;
+    v.x += (0x40 - (NextRandom() & 0x7f)) * 0xc800;
+    v.z += (0x40 - (NextRandom() & 0x7f)) * 0xc800;
     v.y += 0x19000;
     if (func_02019874(&v) == -1) {
         j = func_020196e0(1);
@@ -1784,7 +1780,7 @@ void func_02019974(StageRec *rec, int index, int sprite, int mulX, int mulY, int
         if (index == 1 && rec->mUnk_22e == 0) {
             sprite = 0;
         }
-        if (index == 1 && !((data_020c18bc.mUnk_45c >> 5) & 1)) {
+        if (index == 1 && !((gSystemState.mElapsedFrames >> 5) & 1)) {
             sprite = 0;
         }
         mulX = mulX * scale;
@@ -1879,14 +1875,14 @@ void func_02019b3c(VecFx32 *a, VecFx32 *b) {
     } else {
         p->mUnk_3d8--;
     }
-    if (data_020c18bc.mUnk_2ac_1 == 1 && func_0200bd80(0x40000000, 0x101) == 0 &&
+    if (gSystemState.mTouchDown == 1 && func_0200bd80(0x40000000, 0x101) == 0 &&
         func_0200bd80(0x40000000, 0x102) == 0 && data_020b6ee0.mUnk_a5d0 == 0 && p->mUnk_3dd == 1) {
         s32 dx;
         s32 dy;
 
         func_02025db4(p, out0);
-        dy = data_020c18bc.mUnk_2af - out0[1];
-        dx = data_020c18bc.mUnk_2ae - out0[0];
+        dy = gSystemState.mTouchY - out0[1];
+        dx = gSystemState.mTouchX - out0[0];
         p->mUnk_44 = (dx << 9) / 16;
         p->mUnk_4c = (dy << 9) / 16;
     }
@@ -1897,7 +1893,7 @@ void func_02019b3c(VecFx32 *a, VecFx32 *b) {
         p->mUnk_00.mPos.z += p->mUnk_4c;
         p->mUnk_00.mPos.y =
             func_02031270(p->mUnk_00.mPos.x, p->mUnk_00.mPos.z, p->mUnk_00.mPos.y + 0x32000, 0, 0, 0) + 0x1900;
-        d = func_0201faf0((p->mUnk_00.mPos.x - v.x) / 512, (p->mUnk_00.mPos.z - v.z) / 512);
+        d = Length2d((p->mUnk_00.mPos.x - v.x) / 512, (p->mUnk_00.mPos.z - v.z) / 512);
         if (d > 0x320) {
             s32 r = 0x64000 / d;
             s32 dx = (p->mUnk_00.mPos.x - v.x) / 512;
@@ -1929,12 +1925,12 @@ void func_02019b3c(VecFx32 *a, VecFx32 *b) {
 void func_02019df8(void) {
     Unk_020c1030 *p = &data_020b6ee0.mUnk_a150;
 
-    func_0201eb20();
+    ResetVramBanks();
     func_0202c1c4();
     func_0202bdd8(0x10cb, 0x10ca, 0x10cc, 0x82, 2);
     func_0202bdd8(0x10cb, 0x10ca, 0x10cc, 0, 1);
-    func_0201dde0(0xda3, 2);
-    func_02020854(0);
+    LoadImage(0xda3, 2);
+    SetLcdSwap(0);
     func_0200bdcc(2, 0x10);
     func_02021fb0(0x1c7, 0x1c6, 0x100, 0x10);
     func_020325b0(0xdda, 0, 0xddb, 0, 0, 0);

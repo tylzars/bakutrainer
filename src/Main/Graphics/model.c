@@ -275,7 +275,7 @@ void func_0202397c(int from, int node) {
         v = (VecFx32 *) &data_020c31ac;
         for (i = 0; i < 3; i += step) {
             s32 x = v->x, y = v->y, z = v->z;
-            u32 len = func_0201fcec((s64) x * x + (s64) y * y + (s64) z * z);
+            u32 len = SqrtU64((s64) x * x + (s64) y * y + (s64) z * z);
             v->z = 0;
             v->y = 0;
             v->x = 0;
@@ -441,7 +441,7 @@ void func_020243c0(int id, fx32 x, fx32 y, fx32 z, u16 angle, fx32 sx, fx32 sy, 
     int a, b, c, n;
     int col;
 
-    if (!(data_020c18bc.mUnk_46c & 0x80)) {
+    if (!(gSystemState.mFlags & 0x80)) {
         OS_Terminate();
     }
     if (alpha > 31) {
@@ -522,8 +522,8 @@ void func_020243c0(int id, fx32 x, fx32 y, fx32 z, u16 angle, fx32 sx, fx32 sy, 
         }
         tex = func_020229b4(1, slot + base, size, 0);
         pltt = func_020230b0(col, key, info.mUnk_15 << 5);
-        s = data_02050898[0x1c - func_02028250(info.mUnk_0c)];
-        t = data_02050898[0x1c - func_02028250(info.mUnk_0e)];
+        s = data_02050898[0x1c - LeadingZeroCount(info.mUnk_0c)];
+        t = data_02050898[0x1c - LeadingZeroCount(info.mUnk_0e)];
         reg_G3X_TEXIMAGE_PARAM = (tex >> 3) | (fmt << 26) | 0x40000000 | (s << 20) | (t << 23) | ((opaque == 0) << 29);
         reg_G3X_PLTT_BASE = pltt >> (4 - (fmt == 2));
         if (opaque != 0) {
@@ -558,12 +558,12 @@ void func_020248fc(void) {
 }
 
 ModelPart *func_02024910(int id, int a) {
-    u32 *data = func_0202ded8(id);
+    u32 *data = FindOrLoadCachedFile(id);
     u8 *p = (u8 *) (data + ((u16) data[0] * 4 + 1));
     p += p[0] * 4 + 2;
     p += p[0] * 2 + 2;
     p += p[0] * 2 + 2;
-    return func_0203492c(p + 1);
+    return AlignPtrUp4(p + 1);
 }
 
 u16 func_02024968(const AnimKey *key, const u8 *table, int t) {
@@ -581,7 +581,7 @@ u16 func_02024968(const AnimKey *key, const u8 *table, int t) {
             table += (t >> 1) + off;
             v = table[4] << 8;
             if ((r = t & 1) != 0) {
-                int d = func_0201fe34(v, (u16) (table[5] << 8));
+                int d = AngleDelta(v, (u16) (table[5] << 8));
                 v += d * r / 2;
             }
             break;
@@ -589,7 +589,7 @@ u16 func_02024968(const AnimKey *key, const u8 *table, int t) {
             table += (t >> 2) + off;
             v = table[4] << 8;
             if ((r = t & 3) != 0) {
-                int d = func_0201fe34(v, (u16) (table[5] << 8));
+                int d = AngleDelta(v, (u16) (table[5] << 8));
                 v += d * r / 4;
             }
             break;
@@ -625,7 +625,7 @@ int func_02024a64(const AnimKey16 *key, const u8 *table, int t) {
 
 u32 func_02024b14(const DrawParams *p) {
     if (p->mUnk_3e == 0xff) {
-        return data_020c18bc.mUnk_45c;
+        return gSystemState.mElapsedFrames;
     }
     return p->mUnk_3e;
 }
@@ -703,10 +703,10 @@ void func_02024b5c(u32 id, void *params, void *obj, int flags) {
 
     angOfs = 0;
     lightOfs = 0;
-    if (!(data_020c18bc.mUnk_46c & 0x80)) {
+    if (!(gSystemState.mFlags & 0x80)) {
         OS_Terminate();
     }
-    res = func_0202ded8(id);
+    res = FindOrLoadCachedFile(id);
     data_020c31dc.mUnk_38 = (Unk_PoseNode *) (res + 1);
     data_020c31dc.mUnk_42 = 0xff;
     data_020c31dc.mUnk_4a = 0;
@@ -846,14 +846,14 @@ void func_02024b5c(u32 id, void *params, void *obj, int flags) {
     matAnim = (ModelTracks *) ((u8 *) srtAnim + (srtAnim->mCount * 2 + 2));
     p4 = (u8 *) matAnim + (matAnim->mCount * 2 + 2);
     count = p4[0];
-    cur = func_0203492c(p4 + 1);
+    cur = AlignPtrUp4(p4 + 1);
     if (model != NULL && model->mUnk_172_4 == 1) {
         count = 0;
     }
     part = 0;
     while (count-- != 0) {
         mesh = (ModelPart *) cur;
-        if ((p->mUnk_24 & (1 << part)) && (data_020c18bc.mUnk_46c & 0x8000)) {
+        if ((p->mUnk_24 & (1 << part)) && (gSystemState.mFlags & 0x8000)) {
             src = func_02024910(p->mUnk_0c[p->mUnk_1c[part]], 0);
         } else {
             src = mesh;
@@ -885,7 +885,7 @@ void func_02024b5c(u32 id, void *params, void *obj, int flags) {
             texMask = p->mUnk_2c & mesh->mUnk_04;
             srtMask = p->mUnk_30 & mesh->mUnk_08;
             if (texMask != 0 && (model == NULL || model->mUnk_172_12 == 0)) {
-                sc = 31 - func_02028250(texMask);
+                sc = 31 - LeadingZeroCount(texMask);
                 anim = (const ModelFrameAnim *) ((u32) texAnim + 2 + texAnim->mEntries[sc].mOffset * 2);
                 if (flags & 0x20) {
                     frame = (u32) flags >> 26;
@@ -921,7 +921,7 @@ void func_02024b5c(u32 id, void *params, void *obj, int flags) {
             reg_G3X_MTX_MODE = 3;
             reg_G3X_MTX_IDENTITY = 0;
             if (srtMask != 0 && (model == NULL || model->mUnk_172_12 == 0)) {
-                k = 31 - func_02028250(srtMask);
+                k = 31 - LeadingZeroCount(srtMask);
                 track = (const ModelKeyTrack *) ((u32) srtAnim + 2 + srtAnim->mOffsets[k] * 2);
                 kp = (const u16 *) ((const u8 *) track + track->mKeyOffset + 4);
                 if (srtAnim->mCount <= k) {
@@ -979,7 +979,7 @@ void func_02024b5c(u32 id, void *params, void *obj, int flags) {
             reg_G3X_TEXIMAGE_PARAM = 0;
         }
         if (visMask != 0 && (model == NULL || model->mUnk_172_12 == 0)) {
-            k = 31 - func_02028250(visMask);
+            k = 31 - LeadingZeroCount(visMask);
             track = (const ModelKeyTrack *) ((u32) matAnim + 2 + matAnim->mOffsets[k] * 2);
             kp = (const u16 *) ((const u8 *) track + track->mKeyOffset + 4);
             if (matAnim->mCount <= k) {
@@ -1101,7 +1101,7 @@ int func_02025f58(int log2w, int log2h, int format) {
 #pragma thumb on
 
 int func_02025fc0(u16 id) {
-    u16 *p = func_0202ded8(id);
+    u16 *p = FindOrLoadCachedFile(id);
     if (p[2] == 1) {
         return p[1];
     }
@@ -1125,7 +1125,7 @@ int func_02026004(Model *m) {
 
 void func_0202601c(u16 id, u16 *frame, u32 count, int step, s32 *whole, s32 *next, s32 *rest, int loop) {
     u16 saved = *frame;
-    *whole = func_0201fd10(*frame, count, (u32 *) rest);
+    *whole = DivideWithRemainder(*frame, count, (u32 *) rest);
     *next = *whole + 1;
     *rest = (*rest << 8) / count;
     if (step != 0) {
@@ -1141,7 +1141,7 @@ void func_0202601c(u16 id, u16 *frame, u32 count, int step, s32 *whole, s32 *nex
 }
 
 int func_02026080(Model *m) {
-    u16 *q = func_0202ded8(m->mUnk_170);
+    u16 *q = FindOrLoadCachedFile(m->mUnk_170);
     u16 *r;
     int scale, limit, count;
     q = (u16 *) ((u8 *) q + ((*(u32 *) q & 0xffff) * 4 + 1) * 4);
@@ -1167,13 +1167,13 @@ int func_020260f4(Model *m, u32 track) {
     u32 pos;
     u32 rest;
     if (a->mUnk_0 != 0) {
-        t->mUnk_00 = func_0202ded8(a->mUnk_0);
+        t->mUnk_00 = FindOrLoadCachedFile(a->mUnk_0);
         t->mUnk_0d = a->mUnk_5;
         if (a->mUnk_4 == 2) {
             t->mUnk_04 = (u32) a->mUnk_2 >> 1;
             t->mUnk_0c = (a->mUnk_2 & 1) << 7;
         } else {
-            t->mUnk_04 = func_0201fd10(a->mUnk_2, a->mUnk_4, &rest);
+            t->mUnk_04 = DivideWithRemainder(a->mUnk_2, a->mUnk_4, &rest);
             t->mUnk_0c = (rest << 8) / a->mUnk_4;
         }
         data_020c31dc.mUnk_49++;
@@ -1191,7 +1191,7 @@ int func_020260f4(Model *m, u32 track) {
             t->mUnk_08 = pos + 1;
         }
         if (track < 1) {
-            if (!(a->mUnk_5 & 0x20) && !(data_020c18bc.mUnk_46c & 0x80000000) && !m->mUnk_172_12) {
+            if (!(a->mUnk_5 & 0x20) && !(gSystemState.mFlags & 0x80000000) && !m->mUnk_172_12) {
                 a->mUnk_2++;
             }
             if (m->mUnk_174 == 0) {
@@ -1223,7 +1223,7 @@ int func_020260f4(Model *m, u32 track) {
 
 int func_02026268(Model *m, u32 track) {
     int r = func_020260f4(m, track);
-    if (r == 0 && data_020c18bc.mUnk_48c > 0 && (data_020c18bc.mUnk_46c & 0x40)) {
+    if (r == 0 && gSystemState.mUnk_48c > 0 && (gSystemState.mFlags & 0x40)) {
         r |= func_020260f4(m, track);
     }
     return r;
@@ -1273,7 +1273,7 @@ void func_02026384(Model *m, s32 *slot, int id, int count, int flags, int mode) 
         func_020271c8();
         func_020271e0(m);
         if (m->mUnk_172_1 == 1) {
-            u16 *hdr = func_0202ded8(id);
+            u16 *hdr = FindOrLoadCachedFile(id);
             VecFx32 target;
             func_02031fc4(data_020c31dc.mUnk_3e, &target);
             m->mUnk_164.x = (target.x - m->mUnk_158.x) / (hdr[1] * count);
@@ -1313,7 +1313,7 @@ int func_020264d4(Model *m, u16 id) {
     id &= 0x1f;
     if (id > 0xf) {
         if (id == 0x1f) {
-            return func_0201fd68();
+            return NextRandom();
         }
         if (id == 0x1e) {
             return m->mUnk_142;
@@ -1340,7 +1340,7 @@ int func_020264d4(Model *m, u16 id) {
             return (m->mUnk_172_4 << 4) + (((m->mUnk_024 & 3) << 2) + (m->mUnk_172_5 + (m->mUnk_172_7 << 1)));
         }
         if (id == 0x16) {
-            return data_020c18bc.mUnk_496;
+            return gSystemState.mUnk_496;
         }
         if (id > 0xf) {
             OS_Terminate();
@@ -1396,7 +1396,7 @@ void func_02026598(Model *m, u16 id, u32 value) {
             return;
         }
         if (id == 0x16) {
-            data_020c18bc.mUnk_496 = value;
+            gSystemState.mUnk_496 = value;
             return;
         }
         if (id > 0xf) {

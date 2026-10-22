@@ -32,142 +32,140 @@
 #define FILE_HEADER_MAX 0x1f7
 
 // The cache of unpacked files: a hash table of slots keyed by file id and a list of nodes that hold the data.
-FileCache data_020c6470;
+FileCache gFileCache;
 
-void func_0202de94(void) {
-    func_0202df14(&data_020c6470, func_0202e3b4, FILE_CACHE_LIMIT, FILE_CACHE_HASH_BITS, FILE_CACHE_NODE_COUNT);
+void InitFileCache(void) {
+    InitCache(&gFileCache, LoadCacheEntry, FILE_CACHE_LIMIT, FILE_CACHE_HASH_BITS, FILE_CACHE_NODE_COUNT);
 }
 
-// Drops the entry with key `id` from the file cache.
-void func_0202dec4(int id) {
-    func_0202e0a4(id, &data_020c6470);
+void RemoveCachedFile(int id) {
+    RemoveCacheEntry(id, &gFileCache);
 }
 
-// Returns the data of file `id`: the cache entry for it, loaded through the cache's callback when missing.
-void *func_0202ded8(int id) {
-    return func_0202e19c(id, id, func_0202e794(id), func_0202e760(id), &data_020c6470);
+void *FindOrLoadCachedFile(int id) {
+    return FindOrLoadCacheEntry(id, id, GetFileOffset(id), GetStoredFileSize(id), &gFileCache);
 }
 
 // Sets a cache up: 1 << bits hash slots (all unused), `count` nodes chained in order from node 0 to the last one,
 // the load callback and the byte limit.
-void func_0202df14(FileCache *cache, FileCacheLoad load, u32 limit, u32 bits, u32 count) {
+void InitCache(FileCache *cache, FileCacheLoad load, u32 limit, u32 bits, u32 count) {
     int n = 1 << bits;
     FileCacheSlot *slots;
     int i;
     u32 j;
     FileCacheNode *nodes;
 
-    cache->mUnk_00 = func_0201c430(n * 8);
-    cache->mUnk_04 = func_0201c430(count * 16);
-    slots = cache->mUnk_00;
-    nodes = cache->mUnk_04;
+    cache->mSlots = Alloc(n * 8);
+    cache->mNodes = Alloc(count * 16);
+    slots = cache->mSlots;
+    nodes = cache->mNodes;
     for (i = 0; i < n; i++) {
-        slots[i].mUnk_0 = -1;
-        slots[i].mUnk_6 = 0;
+        slots[i].mKey = -1;
+        slots[i].mPathCount = 0;
     }
     for (j = 0; j < count; j++) {
-        nodes[j].mUnk_8 = j - 1;
-        nodes[j].mUnk_a = j + 1;
-        nodes[j].mUnk_0 = 0;
-        nodes[j].mUnk_4 = 0;
-        nodes[j].mUnk_c = 0;
+        nodes[j].mPrev = j - 1;
+        nodes[j].mNext = j + 1;
+        nodes[j].mData = 0;
+        nodes[j].mSize = 0;
+        nodes[j].mSlotIndex = 0;
         nodes[j].mUnk_e = 0;
     }
-    nodes[0].mUnk_8 = count - 1;
-    (nodes + count)[-1].mUnk_a = 0xffff;
-    cache->mUnk_14 = 0;
-    cache->mUnk_0c = 0;
-    cache->mUnk_08 = load;
-    cache->mUnk_18 = bits;
-    cache->mUnk_10 = limit;
-    cache->mUnk_16 = count - 3;
+    nodes[0].mPrev = count - 1;
+    (nodes + count)[-1].mNext = 0xffff;
+    cache->mEntryCount = 0;
+    cache->mByteCount = 0;
+    cache->mLoad = load;
+    cache->mHashBits = bits;
+    cache->mByteLimit = limit;
+    cache->mEntryLimit = count - 3;
 }
 
 // Moves node `index` to the front of the list, after the head node.
-void func_0202dff8(FileCacheNode *nodes, u32 index) {
+void MoveCacheNodeToFront(FileCacheNode *nodes, u32 index) {
     FileCacheNode *e = &nodes[index];
 
-    nodes[e->mUnk_8].mUnk_a = e->mUnk_a;
-    nodes[e->mUnk_a].mUnk_8 = e->mUnk_8;
-    e->mUnk_8 = 0;
-    e->mUnk_a = nodes[0].mUnk_a;
-    nodes[0].mUnk_a = (u16) index;
-    nodes[e->mUnk_a].mUnk_8 = (u16) index;
+    nodes[e->mPrev].mNext = e->mNext;
+    nodes[e->mNext].mPrev = e->mPrev;
+    e->mPrev = 0;
+    e->mNext = nodes[0].mNext;
+    nodes[0].mNext = (u16) index;
+    nodes[e->mNext].mPrev = (u16) index;
 }
 
 // Moves node `index` in front of the last node of the list.
-void func_0202e04c(FileCacheNode *nodes, u32 index) {
-    u32 tail = nodes[0].mUnk_8;
+void MoveCacheNodeBeforeLast(FileCacheNode *nodes, u32 index) {
+    u32 tail = nodes[0].mPrev;
     FileCacheNode *e = &nodes[index];
 
-    nodes[e->mUnk_8].mUnk_a = e->mUnk_a;
-    nodes[e->mUnk_a].mUnk_8 = e->mUnk_8;
-    e->mUnk_8 = nodes[tail].mUnk_8;
-    e->mUnk_a = tail;
-    nodes[tail].mUnk_8 = (u16) index;
-    nodes[e->mUnk_8].mUnk_a = (u16) index;
+    nodes[e->mPrev].mNext = e->mNext;
+    nodes[e->mNext].mPrev = e->mPrev;
+    e->mPrev = nodes[tail].mPrev;
+    e->mNext = tail;
+    nodes[tail].mPrev = (u16) index;
+    nodes[e->mPrev].mNext = (u16) index;
 }
 
 // Removes `key` from a cache's hash table and frees its data. The search starts at the key's low bits and steps by an
-// entry of data_02050378 (1, then odd primes) chosen by the next 7 bits; every slot passed on the way loses one from
+// entry of gHashSteps (1, then odd primes) chosen by the next 7 bits; every slot passed on the way loses one from
 // its path count, and a slot that has no path left and was marked removed (-2) becomes free again (-1). The key's own
-// slot becomes free if no path goes through it, removed otherwise. Its node moves to the end of the list.
-void func_0202e0a4(u32 key, FileCache *cache) {
+// slot becomes free if no path goes through it, removed otherwise. Its node moves in front of the last node.
+void RemoveCacheEntry(u32 key, FileCache *cache) {
     u32 n;
     u32 idx;
     FileCacheSlot *slots;
     FileCacheNode *nodes;
 
-    n = cache->mUnk_18;
+    n = cache->mHashBits;
     idx = (key << (32 - n)) >> (32 - n);
-    n = data_02050378[(key >> n) & 0x7f];
-    slots = cache->mUnk_00;
-    nodes = cache->mUnk_04;
+    n = gHashSteps[(key >> n) & 0x7f];
+    slots = cache->mSlots;
+    nodes = cache->mNodes;
     for (;;) {
-        if (key == slots[idx].mUnk_0) {
-            u32 node = slots[idx].mUnk_4;
+        if (key == slots[idx].mKey) {
+            u32 node = slots[idx].mNodeIndex;
 
-            slots[idx].mUnk_0 = slots[idx].mUnk_6 == 0 ? -1 : -2;
-            cache->mUnk_14--;
-            cache->mUnk_0c -= nodes[node].mUnk_4;
-            func_0201c4f0(&nodes[node]);
-            func_0202e04c(nodes, node);
+            slots[idx].mKey = slots[idx].mPathCount == 0 ? -1 : -2;
+            cache->mEntryCount--;
+            cache->mByteCount -= nodes[node].mSize;
+            Free(&nodes[node]);
+            MoveCacheNodeBeforeLast(nodes, node);
             return;
         }
-        if (slots[idx].mUnk_0 == -1) {
+        if (slots[idx].mKey == -1) {
             return;
         }
-        if (slots[idx].mUnk_6 == 0) {
+        if (slots[idx].mPathCount == 0) {
             OS_Terminate();
         }
-        slots[idx].mUnk_6--;
-        if (slots[idx].mUnk_6 == 0 && slots[idx].mUnk_0 == -2) {
-            slots[idx].mUnk_0 = -1;
+        slots[idx].mPathCount--;
+        if (slots[idx].mPathCount == 0 && slots[idx].mKey == -2) {
+            slots[idx].mKey = -1;
         }
         idx += n;
-        idx = (idx << (32 - cache->mUnk_18)) >> (32 - cache->mUnk_18);
+        idx = (idx << (32 - cache->mHashBits)) >> (32 - cache->mHashBits);
     }
 }
 
-// Looks `key` up in the hash table. The search starts at the key's low bits and steps by an entry of data_02050378
+// Looks `key` up in the hash table. The search starts at the key's low bits and steps by an entry of gHashSteps
 // (1, then odd primes) chosen by the next 7 bits. A hit that was found past a removed slot moves into that slot (the
 // path counts of the slots passed in between drop by one), and its node moves to the front of the list. A miss takes
 // the first removed slot seen, or the free slot that ended the search, claims the least recently used node, raises
 // the path counts along the way and calls the cache's load callback with `id`, the node, `size` and `offset`; a miss
 // with id, offset and size all -1 only reports -1 and loads nothing.
-void *func_0202e19c(u32 key, u32 id, u32 offset, u32 size, FileCache *cache) {
-    u32 bits = cache->mUnk_18;
-    FileCacheSlot *slots = cache->mUnk_00;
-    FileCacheNode *nodes = cache->mUnk_04;
+void *FindOrLoadCacheEntry(u32 key, u32 id, u32 offset, u32 size, FileCache *cache) {
+    u32 bits = cache->mHashBits;
+    FileCacheSlot *slots = cache->mSlots;
+    FileCacheNode *nodes = cache->mNodes;
     u32 step, home, idx;
     u32 firstFree = -1;
 
     home = (key << (32 - bits)) >> (32 - bits);
-    step = data_02050378[(key >> bits) & 0x7f];
+    step = gHashSteps[(key >> bits) & 0x7f];
     idx = home;
 
     for (;;) {
-        s32 k = slots[idx].mUnk_0;
+        s32 k = slots[idx].mKey;
 
         if (key == k) {
             if (firstFree != -1) {
@@ -175,24 +173,24 @@ void *func_0202e19c(u32 key, u32 id, u32 offset, u32 size, FileCache *cache) {
 
                 if (idx != firstFree) {
                     do {
-                        p = ((p - step) << (32 - cache->mUnk_18)) >> (32 - cache->mUnk_18);
-                        slots[p].mUnk_6--;
-                        if (slots[p].mUnk_6 == 0 && slots[p].mUnk_0 == -2) {
-                            slots[p].mUnk_0 = -1;
+                        p = ((p - step) << (32 - cache->mHashBits)) >> (32 - cache->mHashBits);
+                        slots[p].mPathCount--;
+                        if (slots[p].mPathCount == 0 && slots[p].mKey == -2) {
+                            slots[p].mKey = -1;
                         }
                     } while (p != firstFree);
                 }
-                nodes[slots[idx].mUnk_4].mUnk_c = firstFree;
-                slots[firstFree].mUnk_0 = slots[idx].mUnk_0;
-                slots[firstFree].mUnk_4 = slots[idx].mUnk_4;
-                slots[idx].mUnk_0 = slots[idx].mUnk_6 == 0 ? -1 : -2;
+                nodes[slots[idx].mNodeIndex].mSlotIndex = firstFree;
+                slots[firstFree].mKey = slots[idx].mKey;
+                slots[firstFree].mNodeIndex = slots[idx].mNodeIndex;
+                slots[idx].mKey = slots[idx].mPathCount == 0 ? -1 : -2;
                 idx = firstFree;
             }
-            if (nodes[slots[idx].mUnk_4].mUnk_e == 0) {
-                func_0202dff8(nodes, slots[idx].mUnk_4);
+            if (nodes[slots[idx].mNodeIndex].mUnk_e == 0) {
+                MoveCacheNodeToFront(nodes, slots[idx].mNodeIndex);
             }
-            data_020c18bc.mUnk_33c = idx;
-            return nodes[slots[idx].mUnk_4].mUnk_0;
+            gSystemState.mCacheHitSlotIndex = idx;
+            return nodes[slots[idx].mNodeIndex].mData;
         }
         if (k == -1) {
             u32 n;
@@ -203,73 +201,73 @@ void *func_0202e19c(u32 key, u32 id, u32 offset, u32 size, FileCache *cache) {
             if (firstFree != -1) {
                 idx = firstFree;
             }
-            slots[idx].mUnk_0 = key;
-            func_0202dff8(nodes, nodes[nodes[0].mUnk_8].mUnk_8);
-            n = nodes[0].mUnk_a;
-            slots[idx].mUnk_4 = n;
-            nodes[n].mUnk_c = idx;
+            slots[idx].mKey = key;
+            MoveCacheNodeToFront(nodes, nodes[nodes[0].mPrev].mPrev);
+            n = nodes[0].mNext;
+            slots[idx].mNodeIndex = n;
+            nodes[n].mSlotIndex = idx;
             while (idx != home) {
-                idx = ((idx - step) << (32 - cache->mUnk_18)) >> (32 - cache->mUnk_18);
-                slots[idx].mUnk_6++;
+                idx = ((idx - step) << (32 - cache->mHashBits)) >> (32 - cache->mHashBits);
+                slots[idx].mPathCount++;
             }
-            cache->mUnk_08(id, &nodes[n], size, offset);
-            return nodes[n].mUnk_0;
+            cache->mLoad(id, &nodes[n], size, offset);
+            return nodes[n].mData;
         }
         if (k == -2 && firstFree == -1) {
             firstFree = idx;
         }
-        idx = ((idx + step) << (32 - cache->mUnk_18)) >> (32 - cache->mUnk_18);
+        idx = ((idx + step) << (32 - cache->mHashBits)) >> (32 - cache->mHashBits);
     }
 }
 
-void func_0202e3b4(u32 id, FileCacheNode *node, u32 size, u32 offset) {
-    FileCacheSlot *slots = data_020c6470.mUnk_00;
-    FileCacheNode *nodes = data_020c6470.mUnk_04;
+void LoadCacheEntry(u32 id, FileCacheNode *node, u32 size, u32 offset) {
+    FileCacheSlot *slots = gFileCache.mSlots;
+    FileCacheNode *nodes = gFileCache.mNodes;
     u32 i;
 
-    node->mUnk_0 = func_0201c43c(size, 3);
-    node->mUnk_0 = func_0202e56c(id, node->mUnk_0, size, 0);
-    data_020c6470.mUnk_14++;
-    data_020c6470.mUnk_0c += data_020c18bc.mUnk_338;
-    node->mUnk_4 = data_020c18bc.mUnk_338;
-    i = nodes[nodes[0].mUnk_8].mUnk_8;
-    while (data_020c6470.mUnk_0c > data_020c6470.mUnk_10 || data_020c6470.mUnk_14 > data_020c6470.mUnk_16) {
+    node->mData = AllocWithFlags(size, 3);
+    node->mData = ReadAndUnpackFile(id, node->mData, size, 0);
+    gFileCache.mEntryCount++;
+    gFileCache.mByteCount += gSystemState.mLoadedFileSize;
+    node->mSize = gSystemState.mLoadedFileSize;
+    i = nodes[nodes[0].mPrev].mPrev;
+    while (gFileCache.mByteCount > gFileCache.mByteLimit || gFileCache.mEntryCount > gFileCache.mEntryLimit) {
         FileCacheNode *n;
 
-        while (nodes[i].mUnk_0 == 0) {
-            i = nodes[i].mUnk_8;
+        while (nodes[i].mData == 0) {
+            i = nodes[i].mPrev;
         }
         n = &nodes[i];
-        i = n->mUnk_8;
-        func_0202e0a4(slots[n->mUnk_c].mUnk_0, &data_020c6470);
+        i = n->mPrev;
+        RemoveCacheEntry(slots[n->mSlotIndex].mKey, &gFileCache);
     }
 }
 
-void func_0202e494(void) {
-    FileCacheSlot *slots = data_020c6470.mUnk_00;
-    FileCacheNode *nodes = data_020c6470.mUnk_04;
+void RemoveLeastRecentCacheEntry(void) {
+    FileCacheSlot *slots = gFileCache.mSlots;
+    FileCacheNode *nodes = gFileCache.mNodes;
     u32 i;
 
-    if (data_020c6470.mUnk_14 == 0) {
+    if (gFileCache.mEntryCount == 0) {
         OS_Terminate();
     }
-    i = nodes[nodes[0].mUnk_8].mUnk_8;
-    while (nodes[i].mUnk_0 == 0) {
-        i = nodes[i].mUnk_8;
+    i = nodes[nodes[0].mPrev].mPrev;
+    while (nodes[i].mData == 0) {
+        i = nodes[i].mPrev;
     }
-    func_0202e0a4(slots[nodes[i].mUnk_c].mUnk_0, &data_020c6470);
+    RemoveCacheEntry(slots[nodes[i].mSlotIndex].mKey, &gFileCache);
 }
 
-void func_0202e4fc(u32 file, void *dst, u32 size, u32 offset) {
-    u8 *data = func_0202e19c(file, -1, -1, -1, &data_020c6470);
+void ReadFileBytes(u32 file, void *dst, u32 size, u32 offset) {
+    u8 *data = FindOrLoadCacheEntry(file, -1, -1, -1, &gFileCache);
 
     if (data != (u8 *) -1) {
         MI_CpuCopy8(data + offset, dst, size);
     } else {
-        u32 pos = func_0202e794(file);
+        u32 pos = GetFileOffset(file);
 
-        func_0201d9a8(pos + offset);
-        func_0201d9d4(dst, size);
+        SeekBank(pos + offset);
+        ReadBank(dst, size);
     }
 }
 
@@ -277,7 +275,7 @@ void func_0202e4fc(u32 file, void *dst, u32 size, u32 offset) {
 // that leaves room for the unpacked size (the buffer is at least as large as the margin word of the header asks for)
 // and then unpacked to the start of it. "EZ00" and "EZ01" data and "QRK" data are read into `dst` and unpacked into a
 // new buffer; `dst` is freed. Any other data stays in `dst`.
-void *func_0202e56c(u32 file, void *dst, u32 size, u32 offset) {
+void *ReadAndUnpackFile(u32 file, void *dst, u32 size, u32 offset) {
     u32 hdr[FILE_HEADER_MAX];
     void *work;
     u32 n;
@@ -285,78 +283,78 @@ void *func_0202e56c(u32 file, void *dst, u32 size, u32 offset) {
     u32 pos;
     u8 *tmp;
 
-    if (size < ((data_020c18bc.mUnk_46c & SYSTEM_FLAG_NO_BANK) != 0 ? FILE_HEADER_MAX : FILE_HEADER_MIN)) {
+    if (size < ((gSystemState.mFlags & SYSTEM_FLAG_NO_BANK) != 0 ? FILE_HEADER_MAX : FILE_HEADER_MIN)) {
         n = size;
     } else {
-        n = (data_020c18bc.mUnk_46c & SYSTEM_FLAG_NO_BANK) != 0 ? FILE_HEADER_MAX : FILE_HEADER_MIN;
+        n = (gSystemState.mFlags & SYSTEM_FLAG_NO_BANK) != 0 ? FILE_HEADER_MAX : FILE_HEADER_MIN;
     }
-    pos = func_0202e794(file);
-    func_0201d9a8(pos + offset);
-    func_0201d9d4(hdr, n);
+    pos = GetFileOffset(file);
+    SeekBank(pos + offset);
+    ReadBank(hdr, n);
     if (hdr[0] == EZ10_MAGIC) {
         u32 need = hdr[1] - size;
 
-        func_0201c4f0(&dst);
+        Free(&dst);
         if (-hdr[2] > need) {
             need = -hdr[2];
         }
-        pad = (u32) func_0203492c((void *) need);
-        dst = func_0201c43c(pad + size, 3);
+        pad = (u32) AlignPtrUp4((void *) need);
+        dst = AllocWithFlags(pad + size, 3);
         tmp = (u8 *) dst + pad;
         MI_CpuCopy8(hdr, tmp, n);
         if (size > n) {
-            func_0201d9d4(tmp + n, size - n);
+            ReadBank(tmp + n, size - n);
         }
-        func_0202875c(tmp, dst);
+        UnpackEz10(tmp, dst);
         pad += size;
         size = pad;
     } else {
         MI_CpuCopy8(hdr, dst, n);
         if (size > n) {
-            func_0201d9d4((u8 *) dst + n, size - n);
+            ReadBank((u8 *) dst + n, size - n);
         }
         if (hdr[0] == EZ00_MAGIC || hdr[0] == EZ00_MAGIC + 0x01000000) {
             void *out;
 
             size = hdr[1];
-            out = func_0201c43c(size, 3);
-            func_020282ec(dst, out);
-            func_0201c4f0(&dst);
+            out = AllocWithFlags(size, 3);
+            UnpackEz(dst, out);
+            Free(&dst);
             dst = out;
         } else if ((hdr[0] & 0xffffff) == QRK_MAGIC) {
             void *out;
 
-            size = func_02030744(dst);
-            out = func_0201c43c(size, 3);
-            work = func_0201c43c(func_02030760(), 3);
-            func_02030700(dst, out, work);
-            func_0201c4f0(&dst);
-            func_0201c4f0(&work);
+            size = GetQrkUnpackedSize(dst);
+            out = AllocWithFlags(size, 3);
+            work = AllocWithFlags(GetQrkWorkSize(), 3);
+            UnpackQrk(dst, out, work);
+            Free(&dst);
+            Free(&work);
             dst = out;
         }
     }
-    data_020c18bc.mUnk_338 = size;
-    func_0202e924(dst, size);
+    gSystemState.mLoadedFileSize = size;
+    DecodeDiff(dst, size);
     return dst;
 }
 
-u32 func_0202e760(u32 index) {
-    if (data_020c18bc.mUnk_000 == NULL) {
-        func_0202e7c4();
+u32 GetStoredFileSize(u32 index) {
+    if (gSystemState.mFileTable == NULL) {
+        LoadFileTable();
     }
-    return ((Unk_FileEntry *) data_020c18bc.mUnk_000)[index].mUnk_4;
+    return ((FileEntry *) gSystemState.mFileTable)[index].mStoredSize;
 }
 
-u32 func_0202e794(u32 index) {
-    if (data_020c18bc.mUnk_000 == NULL) {
-        func_0202e7c4();
+u32 GetFileOffset(u32 index) {
+    if (gSystemState.mFileTable == NULL) {
+        LoadFileTable();
     }
-    return ((Unk_FileEntry *) data_020c18bc.mUnk_000)[index].mUnk_0;
+    return ((FileEntry *) gSystemState.mFileTable)[index].mOffset;
 }
 
 // Sends a request packet (tag 0x50) until a reply arrives with tag 0x52, the expected sequence byte and the value 1;
 // the reply carries the table's size, the table is then read from the start of the file system.
-void func_0202e7c4(void) {
+void LoadFileTable(void) {
     u8 *reply = data_020c68e0;
     u8 *cmd = data_020c67e0;
 
@@ -364,7 +362,7 @@ void func_0202e7c4(void) {
         cmd[0] = 0x50;
         cmd[2] = 0;
         *(u16 *) (cmd + 4) = 1;
-        func_0201bb30();
+        UpdateSystemAndWait();
         if (data_020c66e0[0] == 0) {
             continue;
         }
@@ -376,38 +374,38 @@ void func_0202e7c4(void) {
         }
         break;
     }
-    data_020c18bc.mUnk_334 = func_02034cf0(reply + 14);
-    data_020c18bc.mUnk_000 = func_0201c43c(data_020c18bc.mUnk_334, 3);
-    func_0201d9a8(0);
-    func_0201d9d4(data_020c18bc.mUnk_000, data_020c18bc.mUnk_334);
+    gSystemState.mFileTableSize = func_02034cf0(reply + 14);
+    gSystemState.mFileTable = AllocWithFlags(gSystemState.mFileTableSize, 3);
+    SeekBank(0);
+    ReadBank(gSystemState.mFileTable, gSystemState.mFileTableSize);
 }
 
-u8 *func_0202e86c(int id) {
-    int size = func_0202e9d4(id);
+u8 *LoadFile(int id) {
+    int size = FindCachedFileSize(id);
     u8 *buf;
 
-    data_020c18bc.mUnk_338 = size >= 0 ? size : -size;
-    buf = func_0201c43c(size >= 0 ? size : -size, 3);
+    gSystemState.mLoadedFileSize = size >= 0 ? size : -size;
+    buf = AllocWithFlags(size >= 0 ? size : -size, 3);
     if (size > 0) {
-        MI_CpuCopy8((void *) func_0202e988(id), buf, size);
+        MI_CpuCopy8((void *) FindCachedFile(id), buf, size);
     } else {
-        buf = func_0202e56c(id, buf, -size, 0);
+        buf = ReadAndUnpackFile(id, buf, -size, 0);
     }
     return buf;
 }
 
 void func_0202e8e4(void) {
-    FileCacheNode *nodes = data_020c6470.mUnk_04;
+    FileCacheNode *nodes = gFileCache.mNodes;
     u32 i;
 
-    (void) data_020c18bc.mUnk_45c;
-    i = nodes[0].mUnk_a;
-    while (nodes[i].mUnk_0 != 0) {
-        i = nodes[i].mUnk_a;
+    (void) gSystemState.mElapsedFrames;
+    i = nodes[0].mNext;
+    while (nodes[i].mData != 0) {
+        i = nodes[i].mNext;
     }
 }
 
-void func_0202e924(u8 *data, u32 size) {
+void DecodeDiff(u8 *data, u32 size) {
     if (*(u32 *) data != DIFF_MAGIC) {
         return;
     }
@@ -428,22 +426,22 @@ void func_0202e924(u8 *data, u32 size) {
     }
 }
 
-int func_0202e988(int id) {
-    void *data = func_0202e19c(id, -1, -1, -1, &data_020c6470);
+int FindCachedFile(int id) {
+    void *data = FindOrLoadCacheEntry(id, -1, -1, -1, &gFileCache);
 
     if (data != (void *) -1) {
         return (int) data;
     }
-    return -func_0202e794(id);
+    return -GetFileOffset(id);
 }
 
-int func_0202e9d4(int id) {
-    void *data = func_0202e19c(id, -1, -1, -1, &data_020c6470);
+int FindCachedFileSize(int id) {
+    void *data = FindOrLoadCacheEntry(id, -1, -1, -1, &gFileCache);
 
     if (data == (void *) -1) {
-        return -func_0202e760(id);
+        return -GetStoredFileSize(id);
     }
-    return data_020c6470.mUnk_04[data_020c6470.mUnk_00[data_020c18bc.mUnk_33c].mUnk_4].mUnk_4;
+    return gFileCache.mNodes[gFileCache.mSlots[gSystemState.mCacheHitSlotIndex].mNodeIndex].mSize;
 }
 
 #pragma thumb on

@@ -3,7 +3,7 @@
 #pragma thumb off
 
 // Work area of the "QRK" unpacker: 11-bit bit probabilities (0x400 = even) for its range decoder, filled with
-// 0x04000400 words before each file. 0x1588 bytes (func_02030760).
+// 0x04000400 words before each file. 0x1588 bytes (GetQrkWorkSize).
 typedef struct QrkProbs {
     /* 000 */ u16 mUnk_000[8][32];   // 5-bit trees: distance slot, by match length
     /* 200 */ u16 mUnk_200[64];      // 6-bit tree: low distance bits
@@ -29,20 +29,21 @@ typedef struct QrkProbs {
 #define QRK_MOVE_BITS 4
 #define QRK_RANGE_TOP 0x1000000
 
-static s32 func_0203076c(const u8 *src);
-static u32 func_02030794(const u8 **src);
+static s32 GetQrkVersion(const u8 *src);
+static u32 ReadQrkHeader(const u8 **src);
 
-// Direct (equiprobable) bits after each distance slot, and the slot's base distance.
-static u8 data_02063ab8[32] = {
+// Direct (equiprobable) bits after each distance slot, and the slot's base distance before the low six bits are
+// appended.
+static u8 sQrkSlotDirectBits[32] = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 12,
 };
-static u16 data_02063ad8[32] = {
+static u16 sQrkSlotBase[32] = {
     0x0000, 0x0001, 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0007, 0x0008, 0x0009, 0x000b,
     0x000f, 0x0017, 0x0027, 0x0047, 0x0087, 0x0107, 0x0207, 0x0407, 0x0807, 0x1007, 0x1807,
     0x2007, 0x2807, 0x3007, 0x3807, 0x4007, 0x4807, 0x5007, 0x5807, 0x6007, 0x6807,
 };
 // The low six distance bits come out of their tree reversed; this puts them back in order.
-static u8 data_02063b18[64] = {
+static u8 sQrkLowBitOrder[64] = {
     0x00, 0x20, 0x10, 0x30, 0x08, 0x28, 0x18, 0x38, 0x04, 0x24, 0x14, 0x34, 0x0c, 0x2c, 0x1c, 0x3c,
     0x02, 0x22, 0x12, 0x32, 0x0a, 0x2a, 0x1a, 0x3a, 0x06, 0x26, 0x16, 0x36, 0x0e, 0x2e, 0x1e, 0x3e,
     0x01, 0x21, 0x11, 0x31, 0x09, 0x29, 0x19, 0x39, 0x05, 0x25, 0x15, 0x35, 0x0d, 0x2d, 0x1d, 0x3d,
@@ -50,7 +51,7 @@ static u8 data_02063b18[64] = {
 };
 
 // Unpacks `size` bytes of range-coded LZ data from `src` to `dst`; `p` is the probability work area.
-static void func_0202fcc4(QrkProbs *p, u8 *dst, const u8 *src, u32 size) {
+static void UnpackQrkData(QrkProbs *p, u8 *dst, const u8 *src, u32 size) {
     u8 *end;
     u32 matchByte;
     u32 lenState;
@@ -386,9 +387,9 @@ static void func_0202fcc4(QrkProbs *p, u8 *dst, const u8 *src, u32 size) {
                         range <<= 8;
                     }
                 }
-                nbits = data_02063ab8[sym & 0x1f];
+                nbits = sQrkSlotDirectBits[sym & 0x1f];
                 slot = sym & 0x1f;
-                dist = data_02063ad8[slot];
+                dist = sQrkSlotBase[slot];
                 if (nbits != 0) {
                     direct = 0;
                     do {
@@ -426,7 +427,7 @@ static void func_0202fcc4(QrkProbs *p, u8 *dst, const u8 *src, u32 size) {
                     }
                 }
                 dist <<= 6;
-                dist += data_02063b18[sym - 64];
+                dist += sQrkLowBitOrder[sym - 64];
             }
             dist++;
             for (k = 3; k > 0; k--) {
@@ -527,26 +528,26 @@ static void func_0202fcc4(QrkProbs *p, u8 *dst, const u8 *src, u32 size) {
     } while (dst < end);
 }
 
-// Unpacks the "QRK" data at `src` to `dst` with the work area `work` (func_02030760() bytes).
-void func_02030700(const u8 *src, u8 *dst, void *work) {
-    u32 size = func_02030794(&src);
+// Unpacks the "QRK" data at `src` to `dst` with the work area `work` (GetQrkWorkSize() bytes).
+void UnpackQrk(const u8 *src, u8 *dst, void *work) {
+    u32 size = ReadQrkHeader(&src);
     if (size == 0) {
         return;
     }
-    func_0202fcc4(work, dst, src, size);
+    UnpackQrkData(work, dst, src, size);
 }
 
 // Returns the unpacked size of the "QRK" data at `src` (0 if it isn't QRK_VERSION data).
-u32 func_02030744(const u8 *src) {
-    return func_02030794(&src);
+u32 GetQrkUnpackedSize(const u8 *src) {
+    return ReadQrkHeader(&src);
 }
 
-u32 func_02030760(void) {
+u32 GetQrkWorkSize(void) {
     return sizeof(QrkProbs);
 }
 
 // Returns the format version of the "QRK" data at `src`, or -1 when the tag is missing.
-static s32 func_0203076c(const u8 *src) {
+static s32 GetQrkVersion(const u8 *src) {
     if (src[0] != 'Q' || src[1] != 'R' || src[2] != 'K') {
         return -1;
     }
@@ -555,14 +556,14 @@ static s32 func_0203076c(const u8 *src) {
 
 // Reads the header at `*src`: returns the unpacked size (0 for other data) and moves `*src` to the packed data.
 // The size has as many extra bytes as the first byte has leading 1 bits; each extra byte also adds 1 << (7 * n).
-static u32 func_02030794(const u8 **src) {
+static u32 ReadQrkHeader(const u8 **src) {
     u32 value = 0;
     u32 extra = 0;
     s32 n = 1;
     u32 mask = 0x80;
     u32 b;
     u32 c;
-    if (func_0203076c(*src) != QRK_VERSION) {
+    if (GetQrkVersion(*src) != QRK_VERSION) {
         return 0;
     }
     *src += 4;

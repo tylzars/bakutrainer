@@ -74,7 +74,7 @@ void func_020055a8(void) {
     char text[32];
     StageRec *rec = &data_020b1990[data_020b6ee0.mUnk_a8e4];
     func_02011890(data_020b6ee0.mUnk_a8e4, 2);
-    func_020215fc(48, 17, data_0201a61c, func_0200f9f0(26), 0, 200, 16, 1);
+    func_020215fc(48, 17, data_0201a61c, GetText(26), 0, 200, 16, 1);
     func_0200bb14(255, 161, 161 + 96, 21, 0, 0, 0x17d, 1);
     func_0200bb14(0, 161, 161 + 97, 14, 0, 0, 90, 1);
     func_0200bb58(67, 61, 0, 0, 140, 0x303, data_0204e124[data_020b10fc.mUnk_04], 0x11dc, 0, 0, 140 + 219, 1, 0, 0, 0);
@@ -94,23 +94,23 @@ void func_020055a8(void) {
         func_0200bb58(67, 152, 0, 0, 140, 0x304, data_0204e124[data_020b10fc.mUnk_04], 0x11d6, 0, 0, 140 + 219, 1, 0, 0,
                       0);
     }
-    func_020215fc(99, 108, data_0201a64e, func_0200f9f0(data_020b10fc.mUnk_04 + 31), 0, 200, 16, 1);
-    func_020215fc(106, 129, data_0201a61c, func_0200f9f0(28), 0, 200, 16, 1);
+    func_020215fc(99, 108, data_0201a64e, GetText(data_020b10fc.mUnk_04 + 31), 0, 200, 16, 1);
+    func_020215fc(106, 129, data_0201a61c, GetText(28), 0, 200, 16, 1);
     sprintf(text, "%d", data_0206d448.mUnk_00);
     func_020215fc(215, 129, data_0201a61c, text, 0, 200, 16, 1);
-    func_020215fc(106, 144, data_0201a61c, func_0200f9f0(29), 0, 200, 16, 1);
+    func_020215fc(106, 144, data_0201a61c, GetText(29), 0, 200, 16, 1);
     sprintf(text, "%d", data_0206d448.mUnk_04);
     func_020215fc(215, 144, data_0201a61c, text, 0, 200, 16, 1);
     func_0200bb14(153, 181, 50 << 4, 0x11de, 0, 0, 0x167, 1);
-    func_020215fc(153, 181, data_0201a61c, func_0200f9f0(30), 2, 200, 16, 1);
+    func_020215fc(153, 181, data_0201a61c, GetText(30), 2, 200, 16, 1);
 }
 
 // Handles the touch regions of the mode selection screen.
 void func_02005898(void) {
     int idx;
     if (func_0200bd80(0x20000000, 0x102)) {
-        func_0200fa80(10);
-        func_0200fab0();
+        PushState(10);
+        PopState();
     }
     if (func_0200bd80(0x20000000, 0x300)) {
         func_020054a4(1);
@@ -128,8 +128,8 @@ void func_02005898(void) {
         if (data_020b10fc.mUnk_14[idx] == 0) {
             func_0201033c(data_0204e110[idx], data_0204e0fc[idx]);
         } else {
-            func_0200fa80(data_0204e0fc[idx]);
-            func_0200fab0();
+            PushState(data_0204e0fc[idx]);
+            PopState();
         }
     }
     if (func_0200bd80(0x20000000, 0x320)) {
@@ -146,8 +146,8 @@ void func_020059ac(void) {
 void func_020059b4(int a, u32 b) {
     data_020b10fc.mUnk_0c = a;
     data_020b10fc.mUnk_10 = b;
-    func_0200fa80(18);
-    func_0200fab0();
+    PushState(18);
+    PopState();
 }
 
 void func_020059cc(u32 value) {}
@@ -173,7 +173,7 @@ int func_02005a00(u32 value) {
         func_0202f110(361, 100, 0, 64, 0xffff, 0);
     }
     data_0206391c = value;
-    if (value <= 600 && value != 0 && (data_020c18bc.mUnk_45c & 0x1f) <= 8) {
+    if (value <= 600 && value != 0 && (gSystemState.mElapsedFrames & 0x1f) <= 8) {
         return 1;
     }
     return 0;
@@ -186,9 +186,9 @@ void func_02005a8c(int a, int b) {
     data_0206d448.mUnk_14 = b;
     if (a == 0) {
         if (b == 1) {
-            func_0202f110(data_020b1084.mLanguage + data_0204e0f0[func_0201fd68() % 3], 100, 0, 64, 0xffff, 0);
+            func_0202f110(data_020b1084.mLanguage + data_0204e0f0[NextRandom() % 3], 100, 0, 64, 0xffff, 0);
         } else if (b == 0) {
-            func_0202f110(data_020b1084.mLanguage + data_0204e0e8[func_0201fd68() & 1], 100, 0, 64, 0xffff, 0);
+            func_0202f110(data_020b1084.mLanguage + data_0204e0e8[NextRandom() & 1], 100, 0, 64, 0xffff, 0);
         }
     }
 }

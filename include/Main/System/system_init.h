@@ -39,57 +39,72 @@ typedef struct Unk_LoadEntry {
 
 // VRAM banks mapped for one use: each bank's control register, its size in KB, its LCDC address and the control
 // value to restore, then the number of banks.
-typedef struct Unk_VramGroup {
-    vu8 *mUnk_00[4];
-    u16 mUnk_10[4];
-    u32 mUnk_18[4];
-    u8 mUnk_28[4];
-    u16 mUnk_2c;
-    u8 mUnk_2e;
+typedef struct VramGroup {
+    vu8 *mCtrl[4];
+    // Set only for mTexVramGroup.
+    u16 mSizeKb[4];
+    u32 mAddr[4];
+    u8 mCtrlValue[4];
+    // Total size of the group's banks, in 16 KB units.
+    u16 mSize16Kb;
+    u8 mBankCount;
     u8 mUnk_2f;
-} Unk_VramGroup;
+} VramGroup;
 
 // One VRAM bank: its control register, its LCDC address and the control value to restore.
-typedef struct Unk_VramBank {
-    vu8 *mUnk_0;
-    u32 mUnk_4;
-    u8 mUnk_8;
+typedef struct VramBank {
+    vu8 *mCtrl;
+    u32 mAddr;
+    u8 mCtrlValue;
     u8 mUnk_9[3];
-} Unk_VramBank;
+} VramBank;
 
 typedef struct SystemState {
-    void *mUnk_000;
-    u8 mUnk_004[0xc];
-    u16 mUnk_10;
-    u16 mUnk_12;
-    u16 mUnk_014;
-    u16 mUnk_016;
-    u16 mUnk_018;
-    u16 mUnk_01a;
-    u16 mUnk_01c;
-    u8 mUnk_01e[16];
-    u8 mUnk_02e;
+    void *mFileTable;
+    // Per key: 0x10 while held, then counting down after the release. A press while it is still counting (the same
+    // key pressed again within 16 calls of its release; not auto-repeat) starts a repeat. Only 12 entries, but key bit
+    // 13 is in the key mask: while it is held the loop also uses entries 12 and 13, which are the two bytes of
+    // mKeysDown.
+    u8 mKeyRepeatTimers[0xc];
+    u16 mKeysDown;
+    u16 mKeysPressed;
+    u16 mKeysReleased;
+    // A key counts only once it has read up since ResetKeys.
+    u16 mKeysEnabled;
+    // Keys held since a repeat press; only UpdateKeys reads mKeysRepeatDown, and nothing reads mKeysRepeatPressed or
+    // mKeysRepeatReleased.
+    u16 mKeysRepeatDown;
+    u16 mKeysRepeatPressed;
+    u16 mKeysRepeatReleased;
+    // Bits 8-11 of each new press, a ring with mKeyHistoryIndex at the newest entry; nothing reads it.
+    u8 mKeyHistory[16];
+    u8 mKeyHistoryIndex;
     u8 mUnk_02f;
-    u8 *mUnk_030;
-    s32 mUnk_034;
-    s32 mUnk_038;
-    Unk_LoadEntry *mUnk_03c;
-    Unk_VramGroup mUnk_040;
-    Unk_VramGroup mUnk_070;
-    Unk_VramBank mUnk_0a0;
-    Unk_VramBank mUnk_0ac;
-    u8 mUnk_0b8[9];
-    u8 mUnk_0c1;
+    u8 *mHeapBoundary;
+    s32 mLowHeap;
+    s32 mHighHeap;
+    Unk_LoadEntry *mTransfers;
+    VramGroup mPlttVramGroup;
+    VramGroup mTexVramGroup;
+    VramBank mUnk_0a0;
+    VramBank mUnk_0ac;
+    // Per bank, its gVramBankRecords index; 0xff = not mapped.
+    u8 mVramBankRecordIndex[9];
+    u8 mVramBanksChanged;
     u8 mUnk_0c2[2];
-    void *mUnk_0c4;
-    u8 *mUnk_0c8;
-    u16 mUnk_0cc;
+    // The allocation (mMicBufferSize + 0x1f bytes); mMicParam.buffer is its 32-byte aligned address.
+    void *mMicBuffer;
+    u8 *mMicSamples;
+    // Bytes of the capture ring, not of the mMicBuffer allocation.
+    u16 mMicBufferSize;
     u8 mUnk_0ce[2];
-    MICAutoParam mUnk_0d0;
-    u16 mUnk_0ec[16][8];
-    u32 mUnk_1ec[8];
-    u32 mUnk_20c[8];
-    u8 mUnk_22c;
+    MICAutoParam mMicParam;
+    u16 mMicBandHistory[16][8];
+    // The last SumMicBands call's sums, also stored in mMicBandHistory.
+    u32 mMicBandSums[8];
+    u32 mMicBandHistoryTotals[8];
+    // log2 of the number of samples transformed.
+    u8 mMicSpectrumShift;
     u8 mUnk_22d[3];
     void (*mUnk_230)(u16);
     s32 mUnk_234;
@@ -121,48 +136,60 @@ typedef struct SystemState {
     u8 mUnk_2a6_2 : 6;
     u8 mUnk_2a7;
     s32 mUnk_2a8;
-    u8 mUnk_2ac_0 : 1;
-    u8 mUnk_2ac_1 : 1;
-    u8 mUnk_2ac_2 : 1;
+    u8 mTouchPressed : 1;
+    u8 mTouchDown : 1;
+    u8 mTouchReleased : 1;
     u8 mUnk_2ac_3 : 1;
-    u8 mUnk_2ac_4 : 1;
-    u8 mUnk_2ac_5 : 1;
+    // Set once the screen reads up; the touch counts only while it is 1.
+    u8 mTouchEnabled : 1;
+    // Always 1 in this build (start-up, OpenPromptScreen and ClosePromptScreen's restore of the saved copy), so the
+    // touch is never read while mTouchReleaseTimer runs.
+    u8 mUseTouchReleaseTimer : 1;
     u8 mUnk_2ac_6 : 2;
-    u8 mUnk_2ad;
-    u8 mUnk_2ae;
-    u8 mUnk_2af;
-    u8 mUnk_2b0;
-    u8 mUnk_2b1;
-    u8 mUnk_2b2;
-    u8 mUnk_2b3;
-    u8 mUnk_2b4;
+    // This frame's touch, 0 or 1, after the release timer and mTouchEnabled.
+    u8 mTouchSample;
+    // mTouchX and mTouchY: the last valid position, kept after the release.
+    u8 mTouchX;
+    u8 mTouchY;
+    // Set to 8 on the release; the touch reads as up while it runs. It counts down only on passes where the panel
+    // reports no touch or a sample with validity 0.
+    u8 mTouchReleaseTimer;
+    u8 mTouchMaxX;
+    u8 mTouchMaxY;
+    u8 mTouchMinX;
+    u8 mTouchMinY;
     u8 mUnk_2b5[0x2b8 - 0x2b5];
     s32 mUnk_2b8;
     s32 mUnk_2bc;
     s32 mUnk_2c0;
     s32 mUnk_2c4;
     s32 mUnk_2c8;
-    u16 mUnk_2cc;
-    u16 mUnk_2ce;
+    // Written by LoadImageData; nothing reads mImageWidth or mImageHeight.
+    u16 mImageWidth;
+    u16 mImageHeight;
     u16 mUnk_2d0;
     u8 mUnk_2d2[2];
-    s32 mUnk_2d4;
-    s32 mUnk_2d8;
-    s32 mUnk_2dc;
-    s32 mUnk_2e0;
-    u16 mUnk_2e4;
-    u16 mUnk_2e6;
-    u16 mUnk_2e8;
-    u16 mUnk_2ea;
-    u16 mUnk_2ec;
-    u16 mUnk_2ee;
-    u8 mUnk_2f0;
+    s32 mBg3X;
+    s32 mBg3Y;
+    s32 mSubBg3X;
+    s32 mSubBg3Y;
+    u16 mBg3Pa;
+    u16 mBg3Pd;
+    // Copied to the window registers by HandleFrameIrq. Nothing writes mWin0H to mWin1V or mSubWin0H to mSubWin1V,
+    // so they are 0 in this build.
+    u16 mWin0H;
+    u16 mWin0V;
+    u16 mWin1H;
+    u16 mWin1V;
+    // Only the prompt screen writes mWindowBits and mSubWindowBits (0 while it is open, then the saved value), so they
+    // are 0 in this build.
+    u8 mWindowBits;
     u8 mUnk_2f1;
-    u16 mUnk_2f2;
-    u16 mUnk_2f4;
-    u16 mUnk_2f6;
-    u16 mUnk_2f8;
-    u8 mUnk_2fa;
+    u16 mSubWin0H;
+    u16 mSubWin0V;
+    u16 mSubWin1H;
+    u16 mSubWin1V;
+    u8 mSubWindowBits;
     u8 mUnk_2fb;
     s16 mUnk_2fc;
     s16 mUnk_2fe;
@@ -183,19 +210,23 @@ typedef struct SystemState {
     u8 mUnk_317_1 : 7;
     u8 mUnk_318;
     u8 mUnk_319[3];
-    void (*mUnk_31c)(u32);
+    void (*mSaveCallback)(u32);
     u8 *mUnk_320;
     s32 mUnk_324;
-    u16 mUnk_328;
-    u16 mUnk_32a;
-    u16 mUnk_32c;
+    // The whole store (0x200 or 0x2000 bytes), split evenly into the set's blocks.
+    u16 mSaveStoreSize;
+    // Entry of the first field in the set's data file; each field's entry holds its largest value.
+    u16 mSaveFirstField;
+    // Entry of the last field. The entries after it hold the block count (+1), the tag table (+2) and the status
+    // messages (+4 to +10, plus language * 10).
+    u16 mSaveLastField;
     u8 mUnk_32e;
     u8 mUnk_32f;
-    u16 mUnk_330;
+    u16 mBackupLockId;
     u8 mUnk_332[2];
-    s32 mUnk_334;
-    u32 mUnk_338;
-    u16 mUnk_33c;
+    s32 mFileTableSize;
+    u32 mLoadedFileSize;
+    u16 mCacheHitSlotIndex;
     u8 mUnk_33e[2];
     u16 mUnk_340[4];
     u8 mUnk_348[4];
@@ -208,54 +239,62 @@ typedef struct SystemState {
     u8 mUnk_430[0x450 - 0x430];
     u32 mUnk_450;
     u16 mUnk_454;
-    u8 mUnk_456;
+    // UpdateSystem's lid-closed handling is held off while it is not 0.
+    u8 mBackupTimer;
     u8 mUnk_457;
-    u8 mUnk_458[4];
-    vu32 mUnk_45c;
+    // Bit per block WriteZeroSaveBlock wrote; only entry 0 is used and nothing reads it.
+    u8 mClearedSaveBlocks[4];
+    // Counted up by HandleFrameIrq, not by UpdateSystem.
+    vu32 mElapsedFrames;
     u32 mUnk_460;
     void (*mUnk_464)(void *data, u32 size);
-    void (*mUnk_468)(void);
-    u32 mUnk_46c;
+    // Called by HandleFrameIrq when set; only ever set to 0 in this build.
+    void (*mFrameIrqCallback)(void);
+    u32 mFlags;
     s32 mUnk_470;
     u8 mUnk_474[4];
-    u32 mUnk_478;
-    u16 mUnk_47c;
-    u16 mUnk_47e;
-    u16 mUnk_480;
+    u32 mRandomSeed;
+    // QueueTransferEx runs the queue first once it holds this many KB, or when the new entry would take it 0x40 KB
+    // past that.
+    u16 mTransferSizeLimitKb;
+    // Maximum number of queued transfers.
+    u16 mTransferLimit;
+    u16 mTransferCount;
     u8 mUnk_482[2];
-    s32 mUnk_484;
-    u16 mUnk_488;
-    u16 mUnk_48a;
+    // Unpacked bytes queued since the last ClearTransferQueue; dropping entries does not lower it.
+    s32 mTransferSize;
+    u16 mFrameStartLine;
+    u16 mTransferBytesPerLine;
     s8 mUnk_48c;
     s8 mUnk_48d;
     u8 mUnk_48e;
     u8 mUnk_48f;
-    u8 mUnk_490[2];
+    u8 mFadeState[2];
     u8 mUnk_492;
     u8 mUnk_493;
     u8 mUnk_494;
     u8 mUnk_495;
     s16 mUnk_496;
     s32 mUnk_498;
-    u16 mUnk_49c[2];
+    u16 mImageIds[2];
     s32 mUnk_4a0;
 } SystemState;
 
-extern SystemState data_020c18bc;
+extern SystemState gSystemState;
 // A file of the start-up code; comm_link.c also reads through it.
-extern FSFile data_020c1874;
+extern FSFile gBankFile;
 
-void func_0201b7e0(u32 a);
-void func_0201b7ec(u32 a, int b, int c);
-void func_0201bb30(void);
-void func_0201bb40(int flags);
+void InitSystem(u32 a);
+void InitSystemEx(u32 a, int b, int c);
+void UpdateSystemAndWait(void);
+void UpdateSystem(int flags);
 void func_0201c1d0(void *arg);
-void func_0201c1e0(void);
-void func_0201c32c(void);
-void func_0201c41c(void);
-void *func_0201c430(u32 size);
-void *func_0201c43c(u32 size, u32 flags);
-int func_0201c4f0(void *p);
+void HandleFrameIrq(void);
+void UpdateKeys(void);
+void ResetKeys(void);
+void *Alloc(u32 size);
+void *AllocWithFlags(u32 size, u32 flags);
+int Free(void *p);
 u16 func_0201c538(void);
 u16 func_0201c544(void);
 u32 func_0201c550(void);
@@ -296,7 +335,7 @@ typedef struct Unk_ChainEntry {
     u8 mUnk_7;
 } Unk_ChainEntry;
 
-// The two halves of the file cache block (0x580 bytes each): tables for one display engine's cached blocks.
+// The two halves of the texture blocks (0x580 bytes each): tables for one display engine's cached blocks.
 typedef struct Unk_020c2694 {
     void *mUnk_000;
     Unk_PoolRange *mUnk_004;
@@ -322,56 +361,60 @@ typedef struct Unk_020c2694 {
     u8 mUnk_57d[3];
 } Unk_020c2694;
 
-// File cache block: a preloaded file block (valid flag, its address and its offset), the two halves, the block
-// offset table of the packed file, that file's number and its mode.
-typedef struct Unk_020c267c {
+// Texture blocks: a preloaded block (valid flag, its address and its offset), the palette count (the palette file's
+// size in 32-byte palettes), the tables of each layer (mLayers[layer - 1]), the file offsets of a PACK block file, the
+// block table (loaded from a file of its own, not from mBlockFile), the palette file, the block file, the block count
+// (the first block is taken to follow the table's offset list) and the kind of the block file (1 PACK, 2 EZ10,
+// 0 other).
+typedef struct TextureBlocks {
     u32 mUnk_000;
     void *mUnk_004;
     u8 *mUnk_008;
     u32 mUnk_00c;
     u16 mUnk_010;
     u16 mUnk_012;
-    u16 mUnk_014;
+    u16 mPaletteCount;
     u8 mUnk_016;
     u8 mUnk_017;
-    Unk_020c2694 mUnk_018[2];
+    Unk_020c2694 mLayers[2];
     u8 mUnk_b18[4];
-    u32 *mUnk_b1c;
-    u32 *mUnk_b20;
-    u16 mUnk_b24;
-    u16 mUnk_b26;
+    u32 *mPackOffsets;
+    u32 *mBlockTable;
+    u16 mPaletteFile;
+    u16 mBlockFile;
     s16 mUnk_b28;
-    u16 mUnk_b2a;
+    u16 mBlockCount;
     s8 mUnk_b2c;
     u8 mUnk_b2d;
-    u8 mUnk_b2e;
-} Unk_020c267c;
-extern Unk_020c267c data_020c267c;
+    u8 mBlockFileKind;
+} TextureBlocks;
+extern TextureBlocks gTextureBlocks;
 
 extern u16 data_020c9e04;
 extern void *data_020c9e10;
 extern u16 *data_020c9e14;
 extern u8 *data_020c9e1c;
 extern WMDataSharing data_020c9e60;
-void func_0201c580(u32 file, u32 src, u32 dst, u32 size, u32 unpackedSize, u8 mode, u8 flag);
-void func_0201c6b0(u16 file, u32 src, u32 dst, u32 size);
-void func_0201c6d4(void);
-u32 func_0201c704(u32 size);
+void QueueTransferEx(u32 file, u32 src, u32 dst, u32 size, u32 unpackedSize, u8 mode, u8 flag);
+void QueueTransfer(u16 file, u32 src, u32 dst, u32 size);
+void ClearTransferQueue(void);
+u32 LimitTransferSize(u32 size);
 void func_0201c78c(void);
-void func_0201c7b8(int a);
+void ProcessTransfers(int a);
 
 // Bank configuration records (12 bytes each): the bank, its size in KB, the use it is mapped for (0 = the bank's
-// LCDC record, which leads each bank's run), its address, then the MST and OFS values of the control register.
-typedef struct Unk_02050478 {
-    u8 mUnk_0;
-    u8 mUnk_1;
-    u8 mUnk_2;
+// LCDC record, which leads each bank's run), its address, then the MST and OFS values of the control register. For
+// uses 5, 9, 10, 11 and 12 the address is an offset from 0, not a VRAM address. A size of 0 ends the table.
+typedef struct VramBankRecord {
+    u8 mBank;
+    u8 mSizeKb;
+    u8 mUse;
     u8 mUnk_3;
-    u32 mUnk_4;
+    u32 mAddr;
     u8 mUnk_8;
     u8 mUnk_9;
     u8 mUnk_a[2];
-} Unk_02050478;
+} VramBankRecord;
 
 // Load statistics: bytes read and blocks unpacked by the transfer code.
 typedef struct Unk_020c1834 {
@@ -464,13 +507,13 @@ typedef struct Unk_020c31dc {
 
 extern Unk_020c1834 data_020c1834;
 
-// VRAM control register of each bank (word address and bit offset of its byte).
-extern const u32 data_02050220[9];
-extern const u8 data_020502ac[9];
-extern const Unk_02050478 data_02050478[];
+// Word addresses of the bank control registers, each shared by up to four banks.
+extern const u32 gVramCtrlAddrs[9];
+extern const u8 gVramCtrlBitOffsets[9];
+extern const VramBankRecord gVramBankRecords[];
 
 // Hash steps of the graphics pools and the file cache: 1 and the odd primes up to 719.
-extern const u16 data_02050378[128];
+extern const u16 gHashSteps[128];
 #ifdef __cplusplus
 }
 #endif

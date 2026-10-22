@@ -6,36 +6,48 @@
 extern "C" {
 #endif
 
-// State of the two-button prompt screen: the saved display setup restored when the prompt closes, and the
-// position of the buttons and the prompt text while they slide in and out.
-typedef struct Unk_020b1124 {
-    u16 mUnk_00[2];
+// State of the prompt screen (PromptScreen mState): the buttons and text slide in, stay in place, slide out. The
+// buttons are touch buttons only in PROMPT_SCREEN_STATE_IN_PLACE.
+#define PROMPT_SCREEN_STATE_SLIDE_IN 0
+#define PROMPT_SCREEN_STATE_IN_PLACE 1
+#define PROMPT_SCREEN_STATE_SLIDE_OUT 2
+// Ids of the prompt screen's two buttons (drawn by DrawPromptScreen, tested with func_0200bd80).
+#define PROMPT_SCREEN_BUTTON_FIRST 0x400
+#define PROMPT_SCREEN_BUTTON_SECOND 0x401
+
+// State of the two-button prompt screen: the saved display setup restored when it closes (mUnk_6c and mUnk_6e hold
+// the sub screen's 0x04001050 and 0x04001052 registers, zeroed while it is open), and the position of the buttons and
+// the text while they slide in and out.
+typedef struct PromptScreen {
+    // func_020101d0 also reads entry 1.
+    u16 mSavedImageIds[2];
     u8 mUnk_04[0x0c - 0x04];
-    s32 mUnk_0c;
-    s32 mUnk_10;
-    s32 mUnk_14;
-    s32 mUnk_18;
-    s32 mUnk_1c;
-    s32 mUnk_20;
-    u16 mUnk_24;
-    u16 mUnk_26;
-    s32 mUnk_28;
-    s32 mUnk_2c;
-    s32 mUnk_30;
-    s32 mUnk_34;
-    s32 mUnk_38;
-    s32 mUnk_3c;
-    s32 mUnk_40;
-    s32 mUnk_44;
-    s32 mUnk_48;
-    s32 mUnk_4c;
+    s32 mSavedWindowBits;
+    s32 mSavedSubWindowBits;
+    s32 mSavedBg3X;
+    s32 mSavedBg3Y;
+    s32 mSavedSubBg3X;
+    s32 mSavedSubBg3Y;
+    u16 mSavedSubColor0;
+    u16 mSavedSubColor1;
+    s32 mTouchSamplingWasOn;
+    s32 mSavedTouchEnabled;
+    s32 mSavedTouchDown;
+    s32 mSavedTouchReleased;
+    s32 mSavedTouchPressed;
+    s32 mSavedTouchReleaseTimer;
+    s32 mSavedUseTouchReleaseTimer;
+    // The buttons' x offsets from 128 and the text's y offset from 17, in 1/256 pixel.
+    s32 mFirstButtonX;
+    s32 mSecondButtonX;
+    s32 mTextY;
     u8 mUnk_50[0x64 - 0x50];
-    s32 mUnk_64;
-    s32 mUnk_68;
+    s32 mState;
+    s32 mReleasedButtonId;
     u16 mUnk_6c;
     u16 mUnk_6e;
-} Unk_020b1124;
-extern Unk_020b1124 data_020b1124;
+} PromptScreen;
+extern PromptScreen gPromptScreen;
 
 // A prompt (0x49 of them, indexed by the prompt number, state variable 0x14): the message shown, an id passed with
 // the word after it to func_0200f848 when it is not negative, and the prompt that follows (-1: none).
@@ -47,10 +59,10 @@ typedef struct Unk_0204e96c {
     /* 0c */ s32 mUnk_0c;
 } Unk_0204e96c;
 
-int func_0200fb68(int *a, int *b);
-void func_0200fd90(void);
-void func_0200feb8(void);
-void func_0201004c(void);
+int OpenPromptScreen(int *a, int *b);
+void ClosePromptScreen(void);
+void DrawPromptScreen(void);
+void RunPromptScreen(void);
 void func_020101d0(void);
 void func_02010294(int a, int b, int c);
 void func_020102f8(void);

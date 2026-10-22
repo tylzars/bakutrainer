@@ -39,10 +39,10 @@
 
 // JPEG reader state and the start-up code's arena start (defined below, with the JPEG tables).
 extern u8 data_020c1818;
-extern void *data_020c181c;
+extern void *gArenaLo;
 extern u8 *data_020c1820;
 extern u32 data_020c1824;
-extern PMCallbackInfo data_020c1828;
+extern PMCallbackInfo gPmCallbackInfo;
 
 #define EZ10_MAGIC 0x30315a45
 #define HW_DISPCNT 0x04000000
@@ -68,26 +68,25 @@ extern PMCallbackInfo data_020c1828;
 #define POWCNT1_SWAP_LCDS 0x8000
 #define MATH_BUSY 0x8000
 
-// Upper end of the range func_0201fb24 and func_0201fb5c move a value in.
+// Upper end of the range EaseLevel and AddLevel move a value in.
 #define LEVEL_FULL 0x4000
 
 // Half and full turn of an angle.
 #define ANGLE_HALF 0x8000
 #define ANGLE_FULL 0x10000
 
-// Store kinds accepted by func_0202002c: blocks of 0x200 bytes and blocks of 0x2000 bytes.
-#define SAVE_STORE_SMALL 0x901
-#define SAVE_STORE_LARGE 0xd01
+// Size of the whole store for SAVE_STORE_SMALL and SAVE_STORE_LARGE; GetSaveBlockSize divides it by the set's block
+// count.
 #define SMALL_BLOCK_SIZE 0x200
 #define LARGE_BLOCK_SIZE 0x2000
 #define CRC_POLY 0xa001
 
-// Results of func_02020140.
+// Results of ReadSaveBlock.
 #define BLOCK_CRC_OK 1
 #define BLOCK_ID_OK 2
 #define BLOCK_INTACT 3
 
-// Marks of a field in the ordering list built by func_02020354.
+// Marks of a field in the ordering list built by SortIndicesByKey.
 #define ORDER_END (-1)
 #define ORDER_USED (-2)
 
@@ -111,11 +110,11 @@ extern PMCallbackInfo data_020c1828;
 #define POWER_SHIFT 22
 #define MAX_SHIFT 9
 
-void func_0201b7e0(u32 a) {
-    func_0201b7ec(a, 0, 0);
+void InitSystem(u32 a) {
+    InitSystemEx(a, 0, 0);
 }
 
-void func_0201b7ec(u32 a, int b, int c) {
+void InitSystemEx(u32 a, int b, int c) {
     u32 size;
     TPCalibrateParam tp;
     int heapEnd;
@@ -124,81 +123,81 @@ void func_0201b7ec(u32 a, int b, int c) {
 
     (void) REG_IME;
     REG_IME = 1;
-    data_020c18bc.mUnk_2c8 = 0;
-    data_020c18bc.mUnk_470 = 0;
+    gSystemState.mUnk_2c8 = 0;
+    gSystemState.mUnk_470 = 0;
     data_020c3e44.mUnk_2024.mUnk_50 = 0;
-    data_020c18bc.mUnk_47e = a;
-    data_020c18bc.mUnk_30e = 0x20;
-    data_020c18bc.mUnk_310 = 10;
-    data_020c18bc.mUnk_311[0] = 9;
-    data_020c18bc.mUnk_311[1] = 12;
-    data_020c18bc.mUnk_308 = 0x80;
-    data_020c18bc.mUnk_30a[0] = 0;
-    data_020c18bc.mUnk_30a[1] = 0x1f;
-    data_020c18bc.mUnk_468 = 0;
+    gSystemState.mTransferLimit = a;
+    gSystemState.mUnk_30e = 0x20;
+    gSystemState.mUnk_310 = 10;
+    gSystemState.mUnk_311[0] = 9;
+    gSystemState.mUnk_311[1] = 12;
+    gSystemState.mUnk_308 = 0x80;
+    gSystemState.mUnk_30a[0] = 0;
+    gSystemState.mUnk_30a[1] = 0x1f;
+    gSystemState.mFrameIrqCallback = 0;
     OS_Init();
     OS_InitTick();
     RTC_Init();
     OS_InitAlarm();
-    data_020c181c = OS_GetArenaLo(0);
-    OS_SetArenaLo(0, OS_InitAlloc(0, data_020c181c, OS_GetArenaHi(0), 2));
+    gArenaLo = OS_GetArenaLo(0);
+    OS_SetArenaLo(0, OS_InitAlloc(0, gArenaLo, OS_GetArenaHi(0), 2));
     if (func_0202ad40() == 1) {
         heapEnd = 0x100000;
     } else {
         heapEnd = 0x96000;
     }
-    data_020c18bc.mUnk_030 = (u8 *) OS_GetArenaHi(0) - heapEnd;
-    data_020c18bc.mUnk_034 = OS_CreateHeap(0, OS_GetArenaLo(0), data_020c18bc.mUnk_030);
-    data_020c18bc.mUnk_038 = OS_CreateHeap(0, data_020c18bc.mUnk_030 + 1, OS_GetArenaHi(0));
-    OS_SetCurrentHeap(0, data_020c18bc.mUnk_034);
-    if ((data_020c18bc.mUnk_46c & 0x200) == 0) {
+    gSystemState.mHeapBoundary = (u8 *) OS_GetArenaHi(0) - heapEnd;
+    gSystemState.mLowHeap = OS_CreateHeap(0, OS_GetArenaLo(0), gSystemState.mHeapBoundary);
+    gSystemState.mHighHeap = OS_CreateHeap(0, gSystemState.mHeapBoundary + 1, OS_GetArenaHi(0));
+    OS_SetCurrentHeap(0, gSystemState.mLowHeap);
+    if ((gSystemState.mFlags & 0x200) == 0) {
         func_020421d0(-1);
-        func_020421f8(&data_020c1874);
-        func_02042490(&data_020c1874, "bank.bin");
-        func_0201d9a8(4);
-        func_0201d9d4(&size, 4);
-        func_0201d9a8(0);
-        data_020c18bc.mUnk_334 = size;
-        buf = func_0201c430(size);
-        data_020c18bc.mUnk_000 = buf;
-        func_0201d9d4(buf, size);
+        func_020421f8(&gBankFile);
+        func_02042490(&gBankFile, "bank.bin");
+        SeekBank(4);
+        ReadBank(&size, 4);
+        SeekBank(0);
+        gSystemState.mFileTableSize = size;
+        buf = Alloc(size);
+        gSystemState.mFileTable = buf;
+        ReadBank(buf, size);
     }
-    func_0202de94();
-    data_020c18bc.mUnk_03c = func_0201c430(20 * data_020c18bc.mUnk_47e);
-    data_020c18bc.mUnk_480 = 0;
-    data_020c18bc.mUnk_484 = 0;
-    data_020c18bc.mUnk_47c = 200;
-    data_020c18bc.mUnk_464 = 0;
+    InitFileCache();
+    gSystemState.mTransfers = Alloc(20 * gSystemState.mTransferLimit);
+    gSystemState.mTransferCount = 0;
+    gSystemState.mTransferSize = 0;
+    gSystemState.mTransferSizeLimitKb = 200;
+    gSystemState.mUnk_464 = 0;
     MIi_CpuClearFast(0xc0, (void *) 0x07000000, 0x400);
     MIi_CpuClearFast(0, (void *) 0x05000000, 0x400);
     MIi_CpuClearFast(0xc0, (void *) 0x07000400, 0x400);
     MIi_CpuClearFast(0, (void *) 0x05000400, 0x400);
-    data_020c267c.mUnk_018[0].mUnk_577 = 0;
-    data_020c267c.mUnk_018[1].mUnk_577 = 0;
-    data_020c18bc.mUnk_45c = 0;
-    data_020c18bc.mUnk_490[0] = data_020c18bc.mUnk_490[1] = 3;
+    gTextureBlocks.mLayers[0].mUnk_577 = 0;
+    gTextureBlocks.mLayers[1].mUnk_577 = 0;
+    gSystemState.mElapsedFrames = 0;
+    gSystemState.mFadeState[0] = gSystemState.mFadeState[1] = FADE_STATE_CLEAR;
     *(vu16 *) 0x0400106c = *(vu16 *) 0x0400006c = 0;
-    func_0201c41c();
+    ResetKeys();
     (void) REG_IME;
     REG_IME = 0;
     func_0203d338();
-    OS_SetIrqFunction(1, func_0201c1e0);
+    OS_SetIrqFunction(1, HandleFrameIrq);
     OS_EnableIrqMask(1);
     OS_EnableIrqMask(0x40000);
     (void) REG_IME;
     REG_IME = 1;
     GX_VBlankIntr(1);
-    func_0201eb20();
+    ResetVramBanks();
     TP_Init();
     if (TP_GetUserInfo(&tp) == 1) {
         TP_SetCalibrateParam(&tp);
     }
-    data_020c18bc.mUnk_2ac_4 = data_020c18bc.mUnk_2ac_1 = data_020c18bc.mUnk_2ac_2 = data_020c18bc.mUnk_2ac_0 = 0;
-    data_020c18bc.mUnk_2b0 = 0;
-    data_020c18bc.mUnk_2ac_5 = 1;
-    data_020c18bc.mUnk_4a0 = 1;
-    data_020c18bc.mUnk_46c |= 0x400000;
-    func_02020e18(0, 0);
+    gSystemState.mTouchEnabled = gSystemState.mTouchDown = gSystemState.mTouchReleased = gSystemState.mTouchPressed = 0;
+    gSystemState.mTouchReleaseTimer = 0;
+    gSystemState.mUseTouchReleaseTimer = 1;
+    gSystemState.mUnk_4a0 = 1;
+    gSystemState.mFlags |= 0x400000;
+    ResetTouchButtons(0, 0);
     if (c != 0) {
         func_0202ad48(c);
     }
@@ -207,197 +206,200 @@ void func_0201b7ec(u32 a, int b, int c) {
     } else {
         mode = 0xb00;
     }
-    data_020c18bc.mUnk_48a = mode;
-    data_020c18bc.mUnk_42c = -1;
-    data_020c18bc.mUnk_340[2] = 0x1800;
-    data_020c18bc.mUnk_340[0] = 0x100;
-    data_020c18bc.mUnk_340[1] = 0x19;
-    data_020c18bc.mUnk_340[3] = 0x1800;
+    gSystemState.mTransferBytesPerLine = mode;
+    gSystemState.mUnk_42c = -1;
+    gSystemState.mUnk_340[2] = 0x1800;
+    gSystemState.mUnk_340[0] = 0x100;
+    gSystemState.mUnk_340[1] = 0x19;
+    gSystemState.mUnk_340[3] = 0x1800;
     func_02043828();
     func_020443ac(1);
-    data_020c1828.func = func_0201c1d0;
-    data_020c1828.arg = 0;
-    func_0204445c(&data_020c1828);
+    gPmCallbackInfo.func = func_0201c1d0;
+    gPmCallbackInfo.arg = 0;
+    func_0204445c(&gPmCallbackInfo);
     func_020402f0();
     *(vu16 *) 0x04000304 &= ~0xc;
-    data_020c18bc.mUnk_24c = func_02034a60;
-    data_020c18bc.mUnk_280 = 0;
-    data_020c18bc.mUnk_2a4[0] = 0;
-    data_020c18bc.mUnk_240 = 0;
-    data_020c18bc.mUnk_230 = 0;
-    data_020c18bc.mUnk_234 = 0;
-    data_020c18bc.mUnk_238 = 0;
-    data_020c18bc.mUnk_23c = 0;
-    data_020c18bc.mUnk_244 = 0;
-    data_020c18bc.mUnk_248 = 0;
-    data_020c18bc.mUnk_2a3 = 0;
-    data_020c18bc.mUnk_450 = 0;
-    data_020c18bc.mUnk_458[0] = 0;
-    data_020c18bc.mUnk_454 = 0xffff;
-    data_020c18bc.mUnk_498 = 0x7f;
+    gSystemState.mUnk_24c = func_02034a60;
+    gSystemState.mUnk_280 = 0;
+    gSystemState.mUnk_2a4[0] = 0;
+    gSystemState.mUnk_240 = 0;
+    gSystemState.mUnk_230 = 0;
+    gSystemState.mUnk_234 = 0;
+    gSystemState.mUnk_238 = 0;
+    gSystemState.mUnk_23c = 0;
+    gSystemState.mUnk_244 = 0;
+    gSystemState.mUnk_248 = 0;
+    gSystemState.mUnk_2a3 = 0;
+    gSystemState.mUnk_450 = 0;
+    gSystemState.mClearedSaveBlocks[0] = 0;
+    gSystemState.mUnk_454 = 0xffff;
+    gSystemState.mUnk_498 = 0x7f;
 }
 
-void func_0201bb30(void) {
-    func_0201bb40(0);
+// One frame of the system step, including the wait for the next frame; in the link error state (-2) it never returns.
+void UpdateSystemAndWait(void) {
+    UpdateSystem(0);
     func_02034be4();
 }
 
-void func_0201bb40(int flags) {
-    u32 frame = data_020c18bc.mUnk_45c;
+void UpdateSystem(int flags) {
+    u32 frame = gSystemState.mElapsedFrames;
     TPData tp2;
     TPData tp;
     u16 wmStatus[0x3e8];
     int engine;
     int i;
     int single;
-    if (data_020c18bc.mUnk_2c8 & 0x400000) {
+    if (gSystemState.mUnk_2c8 & 0x400000) {
         if (func_02035058() == 0) {
             func_0202e8e4();
         }
     }
-    data_020c18bc.mUnk_488 = *(vu16 *) HW_VCOUNT;
-    data_020c18bc.mUnk_48c = data_020c18bc.mUnk_48d;
-    data_020c18bc.mUnk_48d = -1;
-    data_020c18bc.mUnk_48f += data_020c18bc.mUnk_48c;
-    if (data_020c18bc.mUnk_45c >= data_020c18bc.mUnk_460 + 0x3c) {
-        data_020c18bc.mUnk_48e = 0x3c - data_020c18bc.mUnk_48f;
-        data_020c18bc.mUnk_48f = 0;
-        data_020c18bc.mUnk_460 = data_020c18bc.mUnk_45c;
+    gSystemState.mFrameStartLine = *(vu16 *) HW_VCOUNT;
+    gSystemState.mUnk_48c = gSystemState.mUnk_48d;
+    gSystemState.mUnk_48d = -1;
+    gSystemState.mUnk_48f += gSystemState.mUnk_48c;
+    if (gSystemState.mElapsedFrames >= gSystemState.mUnk_460 + 0x3c) {
+        gSystemState.mUnk_48e = 0x3c - gSystemState.mUnk_48f;
+        gSystemState.mUnk_48f = 0;
+        gSystemState.mUnk_460 = gSystemState.mElapsedFrames;
     }
-    if (data_020c18bc.mUnk_46c & 0x20000000) {
+    if (gSystemState.mFlags & 0x20000000) {
         u16 line;
         *(vu32 *) HW_DISPCNT |= DISPCNT_FORCED_BLANK;
-        line = data_020c18bc.mUnk_488;
+        line = gSystemState.mFrameStartLine;
         while (*(vu16 *) HW_VCOUNT == line) {
         }
         *(vu32 *) HW_DISPCNT &= ~DISPCNT_FORCED_BLANK;
     }
     data_020c3e44.mUnk_2024.mUnk_48 = 0;
-    func_0201fda4();
+    MixRandomSeed();
     single = flags & 1;
-    if (single == 0 && (data_020c18bc.mUnk_46c & 0x20000)) {
-        if (data_020c18bc.mUnk_490[0] != 2 && data_020c18bc.mUnk_490[1] != 2) {
-            func_0201f7f8(3);
+    if (single == 0 && (gSystemState.mFlags & 0x20000)) {
+        if (gSystemState.mFadeState[0] != FADE_STATE_TO_FADED && gSystemState.mFadeState[1] != FADE_STATE_TO_FADED) {
+            StartFadeClear(3);
         }
     }
-    if ((data_020c18bc.mUnk_46c & 0x10000080) == 0x10000080) {
+    if ((gSystemState.mFlags & 0x10000080) == 0x10000080) {
         if (func_02035058() == 0) {
             func_020248fc();
-            if (data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_4a == 0 && !(data_020c18bc.mUnk_46c & 0x10000)) {
+            if (data_020c3e44.mUnk_2024.mUnk_2dc.mUnk_4a == 0 && !(gSystemState.mFlags & 0x10000)) {
                 *(vu32 *) HW_SWAP_BUFFERS = 3;
             } else {
                 *(vu32 *) HW_SWAP_BUFFERS = 1;
             }
         }
     }
-    if (single == 0 && (data_020c18bc.mUnk_46c & 0x2000)) {
+    if (single == 0 && (gSystemState.mFlags & 0x2000)) {
         func_0202ef24();
     }
     func_0202ad4c();
-    func_0201c7b8(1);
-    func_0201c7b8(2);
-    func_0201c6d4();
+    ProcessTransfers(1);
+    ProcessTransfers(2);
+    ClearTransferQueue();
     if (((*(vu16 *) HW_SHARED_BUTTONS & LID_CLOSED) >> 15) == 1) {
         if (func_0202fcb4() == 1) {
-            func_02020ba0();
+            ClearTouchButtons();
             flags |= 2;
         }
     }
     if ((flags & 1) == 0) {
-        while (data_020c18bc.mUnk_45c == frame) {
+        while (gSystemState.mElapsedFrames == frame) {
             OS_Halt();
         }
     }
     for (engine = 0; engine < 2; engine++) {
-        if (data_020c267c.mUnk_018[engine].mUnk_57c != 0) {
-            data_020c267c.mUnk_018[engine].mUnk_57c = 0;
+        if (gTextureBlocks.mLayers[engine].mUnk_57c != 0) {
+            gTextureBlocks.mLayers[engine].mUnk_57c = 0;
             func_0202bb30(engine == 0 ? 1 : 2);
         }
     }
-    if (data_020c18bc.mUnk_4a0 == 1) {
+    if (gSystemState.mUnk_4a0 == 1) {
         func_02042dc8();
         func_02042ea8(&tp2);
         if (tp2.touch == 0) {
-            data_020c18bc.mUnk_4a0 = 0;
+            gSystemState.mUnk_4a0 = 0;
         }
-        func_02020ba0();
-    } else if ((flags & 3) == 0 && (data_020c18bc.mUnk_46c & 0x400000)) {
+        ClearTouchButtons();
+    } else if ((flags & 3) == 0 && (gSystemState.mFlags & 0x400000)) {
         func_02042dc8();
         func_02042ea8(&tp);
         if (tp.touch == 0 || tp.validity == 0) {
-            if (data_020c18bc.mUnk_2b0 == 0 || !data_020c18bc.mUnk_2ac_5) {
-                data_020c18bc.mUnk_2ad = tp.touch;
+            if (gSystemState.mTouchReleaseTimer == 0 || !gSystemState.mUseTouchReleaseTimer) {
+                gSystemState.mTouchSample = tp.touch;
             } else {
-                data_020c18bc.mUnk_2b0--;
-                data_020c18bc.mUnk_2ad = 0;
+                gSystemState.mTouchReleaseTimer--;
+                gSystemState.mTouchSample = 0;
             }
-            data_020c18bc.mUnk_2ac_4 |= data_020c18bc.mUnk_2ad ^ 1;
-            data_020c18bc.mUnk_2ad = data_020c18bc.mUnk_2ad & data_020c18bc.mUnk_2ac_4;
-            data_020c18bc.mUnk_2ac_0 = (data_020c18bc.mUnk_2ac_1 ^ data_020c18bc.mUnk_2ad) & data_020c18bc.mUnk_2ad;
-            data_020c18bc.mUnk_2ac_2 = data_020c18bc.mUnk_2ac_1 & (data_020c18bc.mUnk_2ac_1 ^ data_020c18bc.mUnk_2ad);
-            data_020c18bc.mUnk_2ac_1 = data_020c18bc.mUnk_2ad;
-            if (data_020c18bc.mUnk_2ac_2 == 1) {
-                data_020c18bc.mUnk_2b0 = 8;
+            gSystemState.mTouchEnabled |= gSystemState.mTouchSample ^ 1;
+            gSystemState.mTouchSample = gSystemState.mTouchSample & gSystemState.mTouchEnabled;
+            gSystemState.mTouchPressed =
+                (gSystemState.mTouchDown ^ gSystemState.mTouchSample) & gSystemState.mTouchSample;
+            gSystemState.mTouchReleased =
+                gSystemState.mTouchDown & (gSystemState.mTouchDown ^ gSystemState.mTouchSample);
+            gSystemState.mTouchDown = gSystemState.mTouchSample;
+            if (gSystemState.mTouchReleased == 1) {
+                gSystemState.mTouchReleaseTimer = 8;
                 if (data_020c1d60.mUnk_800.mUnk_100.mUnk_10 < 10) {
-                    if (func_0201fae4(data_020c18bc.mUnk_2b1 - data_020c18bc.mUnk_2b3,
-                                      data_020c18bc.mUnk_2b2 - data_020c18bc.mUnk_2b4) < 0x19) {
-                        data_020c18bc.mUnk_2ac_3 = 1;
+                    if (LengthSquared2d(gSystemState.mTouchMaxX - gSystemState.mTouchMinX,
+                                        gSystemState.mTouchMaxY - gSystemState.mTouchMinY) < 0x19) {
+                        gSystemState.mUnk_2ac_3 = 1;
                     }
                 }
             }
-            if (data_020c18bc.mUnk_2ac_0 == 1) {
-                data_020c18bc.mUnk_2b1 = data_020c18bc.mUnk_2b2 = 0;
-                data_020c18bc.mUnk_2b3 = data_020c18bc.mUnk_2b4 = 0xff;
+            if (gSystemState.mTouchPressed == 1) {
+                gSystemState.mTouchMaxX = gSystemState.mTouchMaxY = 0;
+                gSystemState.mTouchMinX = gSystemState.mTouchMinY = 0xff;
             }
             if (tp.touch == 1) {
                 switch (tp.validity) {
                     case 0:
-                        data_020c18bc.mUnk_2ae = tp.x;
-                        data_020c18bc.mUnk_2af = tp.y;
+                        gSystemState.mTouchX = tp.x;
+                        gSystemState.mTouchY = tp.y;
                         break;
                     case 1:
-                        data_020c18bc.mUnk_2af = tp.y;
+                        gSystemState.mTouchY = tp.y;
                         break;
                     case 2:
-                        data_020c18bc.mUnk_2ae = tp.x;
+                        gSystemState.mTouchX = tp.x;
                         break;
                     case 3:
                         break;
                 }
-                data_020c18bc.mUnk_2ac_3 = 0;
-                if (data_020c18bc.mUnk_2ae > data_020c18bc.mUnk_2b1) {
-                    data_020c18bc.mUnk_2b1 = data_020c18bc.mUnk_2ae;
+                gSystemState.mUnk_2ac_3 = 0;
+                if (gSystemState.mTouchX > gSystemState.mTouchMaxX) {
+                    gSystemState.mTouchMaxX = gSystemState.mTouchX;
                 }
-                if (data_020c18bc.mUnk_2ae < data_020c18bc.mUnk_2b3) {
-                    data_020c18bc.mUnk_2b3 = data_020c18bc.mUnk_2ae;
+                if (gSystemState.mTouchX < gSystemState.mTouchMinX) {
+                    gSystemState.mTouchMinX = gSystemState.mTouchX;
                 }
-                if (data_020c18bc.mUnk_2af > data_020c18bc.mUnk_2b2) {
-                    data_020c18bc.mUnk_2b2 = data_020c18bc.mUnk_2af;
+                if (gSystemState.mTouchY > gSystemState.mTouchMaxY) {
+                    gSystemState.mTouchMaxY = gSystemState.mTouchY;
                 }
-                if (data_020c18bc.mUnk_2af < data_020c18bc.mUnk_2b4) {
-                    data_020c18bc.mUnk_2b4 = data_020c18bc.mUnk_2af;
+                if (gSystemState.mTouchY < gSystemState.mTouchMinY) {
+                    gSystemState.mTouchMinY = gSystemState.mTouchY;
                 }
             }
         }
-        if (data_020c18bc.mUnk_46c & 0x800000) {
-            data_020c1d60.mUnk_800.mUnk_100.mUnk_04 = func_02020bac(0xffff);
+        if (gSystemState.mFlags & 0x800000) {
+            data_020c1d60.mUnk_800.mUnk_100.mUnk_04 = UpdateTouchButtons(0xffff);
         }
-        func_02020ba0();
+        ClearTouchButtons();
     }
-    if (data_020c18bc.mUnk_2a3 == 0) {
-        if (data_020c18bc.mUnk_46c & 0x100) {
-            data_020c18bc.mUnk_46c &= ~0x100;
-            if ((data_020c18bc.mUnk_46c & 0x600) || data_020c18bc.mUnk_2a4[1] > 1) {
-                if (data_020c18bc.mUnk_46c & 0x200) {
+    if (gSystemState.mUnk_2a3 == 0) {
+        if (gSystemState.mFlags & 0x100) {
+            gSystemState.mFlags &= ~0x100;
+            if ((gSystemState.mFlags & 0x600) || gSystemState.mUnk_2a4[1] > 1) {
+                if (gSystemState.mFlags & 0x200) {
                     func_02039ba8();
                     func_02034a44();
-                    data_020c18bc.mUnk_2a4[1] = -2;
+                    gSystemState.mUnk_2a4[1] = -2;
                 } else {
                     func_02039ba8();
                 }
             }
         }
-        if (data_020c18bc.mUnk_2a4[1] > 0) {
+        if (gSystemState.mUnk_2a4[1] > 0) {
             if (func_020465b0(wmStatus) == 0) {
                 u16 state = wmStatus[0];
                 if (state != 7 && state != 9 && state != 10 && state != 5) {
@@ -405,17 +407,17 @@ void func_0201bb40(int flags) {
                 }
             }
         }
-        data_020c18bc.mUnk_456 -= (data_020c18bc.mUnk_456 != 0) ? 1 : 0;
-        if (data_020c18bc.mUnk_46c & 0x20) {
+        gSystemState.mBackupTimer -= (gSystemState.mBackupTimer != 0) ? 1 : 0;
+        if (gSystemState.mFlags & 0x20) {
             func_0202fbc8();
         } else if ((flags & 4) == 0 && ((*(vu16 *) HW_SHARED_BUTTONS & LID_CLOSED) >> 15) == 1 &&
-                   data_020c18bc.mUnk_456 == 0) {
-            if (data_020c18bc.mUnk_46c & 0x200) {
-                data_020c18bc.mUnk_46c |= 0x100;
-            } else if (data_020c18bc.mUnk_2a6_1) {
+                   gSystemState.mBackupTimer == 0) {
+            if (gSystemState.mFlags & 0x200) {
+                gSystemState.mFlags |= 0x100;
+            } else if (gSystemState.mUnk_2a6_1) {
                 func_02039b70();
                 func_02001120();
-            } else if (data_020c18bc.mUnk_2a6_0) {
+            } else if (gSystemState.mUnk_2a6_0) {
                 func_02039b70();
                 func_02039ba8();
             }
@@ -423,8 +425,8 @@ void func_0201bb40(int flags) {
             while (SND_RecvCommandReply(0) != 0) {
             }
             SND_FlushCommand(2);
-            if ((data_020c18bc.mUnk_46c & 0x200) == 0 || data_020c18bc.mUnk_2a4[1] == -2) {
-                u32 save = data_020c18bc.mUnk_470 & 4;
+            if ((gSystemState.mFlags & 0x200) == 0 || gSystemState.mUnk_2a4[1] == -2) {
+                u32 save = gSystemState.mUnk_470 & 4;
                 int found = 0;
                 func_0202ad34();
                 func_0202ad54();
@@ -442,61 +444,61 @@ void func_0201bb40(int flags) {
                 }
             }
         }
-        if (data_020c18bc.mUnk_46c & 0x200) {
+        if (gSystemState.mFlags & 0x200) {
             data_020c9e04 &= ~0x800;
             func_02034c38();
             func_02039d24();
-        } else if (data_020c18bc.mUnk_46c & 0x400) {
+        } else if (gSystemState.mFlags & 0x400) {
             data_020c9e04 &= ~0x800;
             func_02039d24();
             func_02001170();
-        } else if (data_020c18bc.mUnk_2a4[1] > 1) {
+        } else if (gSystemState.mUnk_2a4[1] > 1) {
             int offset;
             func_02039d24();
-            data_020c18bc.mUnk_2a8 = func_02047264(&data_020c9e60, data_020c9e10, data_020c9e14);
+            gSystemState.mUnk_2a8 = func_02047264(&data_020c9e60, data_020c9e10, data_020c9e14);
             data_020c9e04 &= ~0x800;
-            data_020c18bc.mUnk_288 = 0;
+            gSystemState.mUnk_288 = 0;
             i = 0;
             offset = 0;
             for (; i < 2; i++) {
                 u8 *entry = func_02047ac4(&data_020c9e60, data_020c9e14, (u16) i);
                 if (entry != 0) {
                     MIi_CpuCopy16(entry, data_020c9e1c + offset, 0x54);
-                    data_020c18bc.mUnk_288 |= 1 << i;
+                    gSystemState.mUnk_288 |= 1 << i;
                 }
                 offset += 0x54;
             }
             func_02034a08();
         }
     } else {
-        data_020c18bc.mUnk_2a3--;
+        gSystemState.mUnk_2a3--;
     }
     single = flags & 1;
     if (single == 0) {
         func_02039a94();
     }
     if (single == 0) {
-        func_0201f648();
+        UpdateFade();
         func_0202d908(1);
         func_0202d908(2);
         if (func_02035058() == 0 && (flags & 2) == 0) {
-            func_0201c32c();
+            UpdateKeys();
         }
-        if (data_020c18bc.mUnk_46c & 0x2000) {
+        if (gSystemState.mFlags & 0x2000) {
             func_0202efd4();
         }
-        if (data_020c18bc.mUnk_46c & 0x1000000) {
+        if (gSystemState.mFlags & 0x1000000) {
             func_020360f4();
             func_02036194();
         }
         func_0202ad3c();
-        if (data_020c18bc.mUnk_492 != 0) {
-            data_020c18bc.mUnk_492--;
-            if (data_020c18bc.mUnk_495 == 0) {
-                u32 length = (0xb4 - data_020c18bc.mUnk_492) * 2;
+        if (gSystemState.mUnk_492 != 0) {
+            gSystemState.mUnk_492--;
+            if (gSystemState.mUnk_495 == 0) {
+                u32 length = (0xb4 - gSystemState.mUnk_492) * 2;
                 u32 tries;
-                if (length >= data_020c18bc.mUnk_498) {
-                    length = data_020c18bc.mUnk_498;
+                if (length >= gSystemState.mUnk_498) {
+                    length = gSystemState.mUnk_498;
                 }
                 func_0204028c(length);
                 tries = 0;
@@ -505,26 +507,26 @@ void func_0201bb40(int flags) {
                 SND_FlushCommand(2);
                 return;
             }
-            if (data_020c18bc.mUnk_492 == 0) {
-                data_020c18bc.mUnk_495 = 0;
+            if (gSystemState.mUnk_492 == 0) {
+                gSystemState.mUnk_495 = 0;
             }
         }
     }
 }
 
 void func_0201c1d0(void *arg) {
-    data_020c18bc.mUnk_492 = 0xb4;
-    data_020c18bc.mUnk_495 = 0;
+    gSystemState.mUnk_492 = 0xb4;
+    gSystemState.mUnk_495 = 0;
 }
 
-void func_0201c1e0(void) {
-    if (data_020c18bc.mUnk_468 != 0) {
-        data_020c18bc.mUnk_468();
+void HandleFrameIrq(void) {
+    if (gSystemState.mFrameIrqCallback != 0) {
+        gSystemState.mFrameIrqCallback();
     }
-    if ((data_020c18bc.mUnk_450 & 2) && data_020c18bc.mUnk_454 != 0xffff) {
-        int angle = (data_020c18bc.mUnk_45c & 0xff) << 8;
-        if (data_020c18bc.mUnk_450 & 4) {
-            data_020c18bc.mUnk_450 &= ~6;
+    if ((gSystemState.mUnk_450 & 2) && gSystemState.mUnk_454 != 0xffff) {
+        int angle = (gSystemState.mElapsedFrames & 0xff) << 8;
+        if (gSystemState.mUnk_450 & 4) {
+            gSystemState.mUnk_450 &= ~6;
         } else {
             int index = (angle >> 4) * 2;
             vu16 *oam = (vu16 *) HW_SUB_OAM;
@@ -534,109 +536,111 @@ void func_0201c1e0(void) {
             oam[11] = -oam[7];
         }
     }
-    if (!(data_020c18bc.mUnk_46c & 0x100000)) {
-        *(vu32 *) HW_BG3X = data_020c18bc.mUnk_2d4;
-        *(vu32 *) HW_BG3Y = data_020c18bc.mUnk_2d8;
-        *(vu32 *) (HW_BG3X + HW_SUB) = data_020c18bc.mUnk_2dc;
-        *(vu32 *) (HW_BG3Y + HW_SUB) = data_020c18bc.mUnk_2e0;
+    if (!(gSystemState.mFlags & 0x100000)) {
+        *(vu32 *) HW_BG3X = gSystemState.mBg3X;
+        *(vu32 *) HW_BG3Y = gSystemState.mBg3Y;
+        *(vu32 *) (HW_BG3X + HW_SUB) = gSystemState.mSubBg3X;
+        *(vu32 *) (HW_BG3Y + HW_SUB) = gSystemState.mSubBg3Y;
     }
-    if (!(data_020c18bc.mUnk_46c & 0x40000000)) {
-        *(vu16 *) HW_BG3PA = data_020c18bc.mUnk_2e4;
-        *(vu16 *) HW_BG3PD = data_020c18bc.mUnk_2e6;
+    if (!(gSystemState.mFlags & 0x40000000)) {
+        *(vu16 *) HW_BG3PA = gSystemState.mBg3Pa;
+        *(vu16 *) HW_BG3PD = gSystemState.mBg3Pd;
     }
-    if (!(data_020c18bc.mUnk_46c & 0x200000)) {
-        *(vu16 *) HW_WIN0H = data_020c18bc.mUnk_2e8;
-        *(vu16 *) HW_WIN0V = data_020c18bc.mUnk_2ea;
-        *(vu16 *) HW_WIN1H = data_020c18bc.mUnk_2ec;
-        *(vu16 *) HW_WIN1V = data_020c18bc.mUnk_2ee;
-        *(vu16 *) HW_DISPCNT = (*(vu16 *) HW_DISPCNT & ~DISPCNT_WINDOWS) | (data_020c18bc.mUnk_2f0 << 13);
-        *(vu16 *) (HW_WIN0H + HW_SUB) = data_020c18bc.mUnk_2f2;
-        *(vu16 *) (HW_WIN0V + HW_SUB) = data_020c18bc.mUnk_2f4;
-        *(vu16 *) (HW_WIN1H + HW_SUB) = data_020c18bc.mUnk_2f6;
-        *(vu16 *) (HW_WIN1V + HW_SUB) = data_020c18bc.mUnk_2f8;
+    if (!(gSystemState.mFlags & 0x200000)) {
+        *(vu16 *) HW_WIN0H = gSystemState.mWin0H;
+        *(vu16 *) HW_WIN0V = gSystemState.mWin0V;
+        *(vu16 *) HW_WIN1H = gSystemState.mWin1H;
+        *(vu16 *) HW_WIN1V = gSystemState.mWin1V;
+        *(vu16 *) HW_DISPCNT = (*(vu16 *) HW_DISPCNT & ~DISPCNT_WINDOWS) | (gSystemState.mWindowBits << 13);
+        *(vu16 *) (HW_WIN0H + HW_SUB) = gSystemState.mSubWin0H;
+        *(vu16 *) (HW_WIN0V + HW_SUB) = gSystemState.mSubWin0V;
+        *(vu16 *) (HW_WIN1H + HW_SUB) = gSystemState.mSubWin1H;
+        *(vu16 *) (HW_WIN1V + HW_SUB) = gSystemState.mSubWin1V;
         *(vu16 *) (HW_DISPCNT + HW_SUB) =
-            (*(vu16 *) (HW_DISPCNT + HW_SUB) & ~DISPCNT_WINDOWS) | (data_020c18bc.mUnk_2fa << 13);
+            (*(vu16 *) (HW_DISPCNT + HW_SUB) & ~DISPCNT_WINDOWS) | (gSystemState.mSubWindowBits << 13);
     }
-    data_020c18bc.mUnk_45c++;
-    data_020c18bc.mUnk_48d++;
+    gSystemState.mElapsedFrames++;
+    gSystemState.mUnk_48d++;
     {
         vu32 *shared = (vu32 *) HW_MAIN_RAM_END;
         shared[0xffe] |= 1;
     }
 }
 
-void func_0201c32c(void) {
+void UpdateKeys(void) {
     u16 keys = (((*(vu16 *) HW_KEYINPUT) | (*(vu16 *) HW_SHARED_BUTTONS)) ^ 0x2fff) & 0x2fff;
     u16 held;
     int i = 0;
     u16 repeat = 0;
 
     held = keys;
-    data_020c18bc.mUnk_016 |= 0xffff ^ keys;
-    held &= data_020c18bc.mUnk_016;
-    data_020c18bc.mUnk_12 = held & (held ^ data_020c18bc.mUnk_10);
-    data_020c18bc.mUnk_014 = data_020c18bc.mUnk_10 & (held ^ data_020c18bc.mUnk_10);
-    data_020c18bc.mUnk_10 = held;
+    gSystemState.mKeysEnabled |= 0xffff ^ keys;
+    held &= gSystemState.mKeysEnabled;
+    gSystemState.mKeysPressed = held & (held ^ gSystemState.mKeysDown);
+    gSystemState.mKeysReleased = gSystemState.mKeysDown & (held ^ gSystemState.mKeysDown);
+    gSystemState.mKeysDown = held;
     for (; held != 0; held >>= 1) {
         if (held & 1) {
-            if (data_020c18bc.mUnk_004[i] != 0) {
-                if (data_020c18bc.mUnk_004[i] < 0x10 || (data_020c18bc.mUnk_018 & (1 << i))) {
+            if (gSystemState.mKeyRepeatTimers[i] != 0) {
+                if (gSystemState.mKeyRepeatTimers[i] < 0x10 || (gSystemState.mKeysRepeatDown & (1 << i))) {
                     repeat = repeat | 1 << i;
                 }
             }
-            data_020c18bc.mUnk_004[i] = 0x10;
-        } else if (data_020c18bc.mUnk_004[i] != 0) {
-            data_020c18bc.mUnk_004[i]--;
+            gSystemState.mKeyRepeatTimers[i] = 0x10;
+        } else if (gSystemState.mKeyRepeatTimers[i] != 0) {
+            gSystemState.mKeyRepeatTimers[i]--;
         }
         ++i;
     }
     for (; i < 12; i++) {
-        if (data_020c18bc.mUnk_004[i] != 0) {
-            data_020c18bc.mUnk_004[i]--;
+        if (gSystemState.mKeyRepeatTimers[i] != 0) {
+            gSystemState.mKeyRepeatTimers[i]--;
         }
     }
-    data_020c18bc.mUnk_01a = repeat & (repeat ^ data_020c18bc.mUnk_018);
-    data_020c18bc.mUnk_01c = data_020c18bc.mUnk_018 & (repeat ^ data_020c18bc.mUnk_018);
-    data_020c18bc.mUnk_018 = repeat;
-    if (data_020c18bc.mUnk_12 & 0xf00) {
-        data_020c18bc.mUnk_02e = (1 + data_020c18bc.mUnk_02e) & 0xf;
-        data_020c18bc.mUnk_01e[data_020c18bc.mUnk_02e] = (data_020c18bc.mUnk_12 >> 8) & 0xf;
+    gSystemState.mKeysRepeatPressed = repeat & (repeat ^ gSystemState.mKeysRepeatDown);
+    gSystemState.mKeysRepeatReleased = gSystemState.mKeysRepeatDown & (repeat ^ gSystemState.mKeysRepeatDown);
+    gSystemState.mKeysRepeatDown = repeat;
+    if (gSystemState.mKeysPressed & 0xf00) {
+        gSystemState.mKeyHistoryIndex = (1 + gSystemState.mKeyHistoryIndex) & 0xf;
+        gSystemState.mKeyHistory[gSystemState.mKeyHistoryIndex] = (gSystemState.mKeysPressed >> 8) & 0xf;
     }
 }
 
-void func_0201c41c(void) {
-    data_020c18bc.mUnk_016 = 0;
-    data_020c18bc.mUnk_014 = 0;
-    data_020c18bc.mUnk_12 = data_020c18bc.mUnk_10 = data_020c18bc.mUnk_014;
+void ResetKeys(void) {
+    gSystemState.mKeysEnabled = 0;
+    gSystemState.mKeysReleased = 0;
+    gSystemState.mKeysPressed = gSystemState.mKeysDown = gSystemState.mKeysReleased;
 }
 
-void *func_0201c430(u32 size) {
-    return func_0201c43c(size, 0);
+void *Alloc(u32 size) {
+    return AllocWithFlags(size, 0);
 }
 
-void *func_0201c43c(u32 size, u32 flags) {
+// Flags: 1 leaves the block uncleared, 2 forces the low heap, 4 takes the high heap at any size (no caller passes 4
+// in this build). While the block does not fit, least recently used file cache entries are dropped.
+void *AllocWithFlags(u32 size, u32 flags) {
     int first = 1;
-    int big;
+    int useHigh;
     void *p;
     size = ((((size >> 1) | size) & 1) + (size >> 2)) << 2;
-    if ((flags & 2) == 0 && ((flags & 4) != 0 || size < 0x8000) && func_0203ed14(0, data_020c18bc.mUnk_038) >= size) {
-        OS_SetCurrentHeap(0, data_020c18bc.mUnk_038);
-        big = 1;
+    if ((flags & 2) == 0 && ((flags & 4) != 0 || size < 0x8000) && func_0203ed14(0, gSystemState.mHighHeap) >= size) {
+        OS_SetCurrentHeap(0, gSystemState.mHighHeap);
+        useHigh = 1;
     } else {
-        OS_SetCurrentHeap(0, data_020c18bc.mUnk_034);
-        big = 0;
+        OS_SetCurrentHeap(0, gSystemState.mLowHeap);
+        useHigh = 0;
     }
     if (size != 0) {
         p = OS_AllocFromHeap(0, -1, size);
         while (p == 0) {
-            if (big == 1) {
-                OS_SetCurrentHeap(0, data_020c18bc.mUnk_034);
-                big = 0;
+            if (useHigh == 1) {
+                OS_SetCurrentHeap(0, gSystemState.mLowHeap);
+                useHigh = 0;
             } else {
                 if (first == 1) {
                     first = 0;
                 }
-                func_0202e494();
+                RemoveLeastRecentCacheEntry();
             }
             p = OS_AllocFromHeap(0, -1, size);
         }
@@ -652,14 +656,14 @@ void *func_0201c43c(u32 size, u32 flags) {
     return p;
 }
 
-int func_0201c4f0(void *handle) {
+int Free(void *handle) {
     void **pp = handle;
     u32 *block;
     if (pp != 0 && (block = *pp) != 0) {
-        if ((u8 *) block > data_020c18bc.mUnk_030) {
-            OS_SetCurrentHeap(0, data_020c18bc.mUnk_038);
+        if ((u8 *) block > gSystemState.mHeapBoundary) {
+            OS_SetCurrentHeap(0, gSystemState.mHighHeap);
         } else {
-            OS_SetCurrentHeap(0, data_020c18bc.mUnk_034);
+            OS_SetCurrentHeap(0, gSystemState.mLowHeap);
         }
         OS_FreeToHeap(0, -1, block);
         *block = 0x43495245;
@@ -682,27 +686,28 @@ u32 func_0201c550(void) {
 }
 
 u32 func_0201c564(void) {
-    return func_0201c544() + ((func_0202e760(data_020c267c.mUnk_b24) >> 5) << 2);
+    return func_0201c544() + ((GetStoredFileSize(gTextureBlocks.mPaletteFile) >> 5) << 2);
 }
 
 #pragma thumb off
-// Queues a transfer for func_0201c7b8: grows the queue's byte count, waits for the queue to drain when it is full
+// Queues a transfer for ProcessTransfers: grows the queue's byte count, waits for the queue to drain when it is full
 // (terminating when it stays full), and appends the entry.
-void func_0201c580(u32 file, u32 src, u32 dst, u32 size, u32 unpackedSize, u8 mode, u8 flag) {
+void QueueTransferEx(u32 file, u32 src, u32 dst, u32 size, u32 unpackedSize, u8 mode, u8 flag) {
     Unk_LoadEntry entry;
     int limit;
     if (unpackedSize == 0) {
         unpackedSize = size;
     }
     if (func_02035058() == 0) {
-        limit = data_020c18bc.mUnk_47e;
+        limit = gSystemState.mTransferLimit;
     } else {
-        limit = (u32) data_020c18bc.mUnk_47e >> 1;
+        limit = (u32) gSystemState.mTransferLimit >> 1;
     }
-    if (!(data_020c18bc.mUnk_480 < limit && (u32) data_020c18bc.mUnk_484 < (u32) data_020c18bc.mUnk_47c << 10 &&
-          data_020c18bc.mUnk_484 + unpackedSize < (u32) (data_020c18bc.mUnk_47c + 0x40) << 10)) {
-        func_0201bb40(3);
-        if (data_020c18bc.mUnk_480 >= data_020c18bc.mUnk_47e) {
+    if (!(gSystemState.mTransferCount < limit &&
+          (u32) gSystemState.mTransferSize < (u32) gSystemState.mTransferSizeLimitKb << 10 &&
+          gSystemState.mTransferSize + unpackedSize < (u32) (gSystemState.mTransferSizeLimitKb + 0x40) << 10)) {
+        UpdateSystem(3);
+        if (gSystemState.mTransferCount >= gSystemState.mTransferLimit) {
             OS_Terminate();
         }
     }
@@ -713,38 +718,38 @@ void func_0201c580(u32 file, u32 src, u32 dst, u32 size, u32 unpackedSize, u8 mo
     entry.mUnk_08 = size;
     entry.mUnk_0c = unpackedSize;
     entry.mUnk_04 = dst;
-    if (data_020c18bc.mUnk_480 != 0) {
-        memcmp(&entry, &data_020c18bc.mUnk_03c[data_020c18bc.mUnk_480 - 1], sizeof(Unk_LoadEntry));
+    if (gSystemState.mTransferCount != 0) {
+        memcmp(&entry, &gSystemState.mTransfers[gSystemState.mTransferCount - 1], sizeof(Unk_LoadEntry));
     }
-    data_020c18bc.mUnk_03c[data_020c18bc.mUnk_480++] = entry;
-    data_020c18bc.mUnk_484 += unpackedSize;
+    gSystemState.mTransfers[gSystemState.mTransferCount++] = entry;
+    gSystemState.mTransferSize += unpackedSize;
 }
 
 // Queues a transfer whose unpacked size equals its stored size.
-void func_0201c6b0(u16 file, u32 src, u32 dst, u32 size) {
-    func_0201c580(file, src, dst, size, 0, 0, 0);
+void QueueTransfer(u16 file, u32 src, u32 dst, u32 size) {
+    QueueTransferEx(file, src, dst, size, 0, 0, 0);
 }
 
 // Empties the transfer queue when the system is not busy.
-void func_0201c6d4(void) {
+void ClearTransferQueue(void) {
     if (func_02035058() == 0) {
-        data_020c18bc.mUnk_480 = 0;
-        data_020c18bc.mUnk_484 = 0;
+        gSystemState.mTransferCount = 0;
+        gSystemState.mTransferSize = 0;
     }
 }
 
-// Limits a transfer size to what fits before the next scanline window (lines 0xbf-0xd6), waiting out the other
-// lines when the display mode is 3.
-u32 func_0201c704(u32 size) {
+// While screen 1's fade state is FADE_STATE_CLEAR, limits a transfer size to what fits before the end of the scanline
+// window (lines 0xbf-0xd6), first waiting out the other lines; otherwise the size is returned as it is.
+u32 LimitTransferSize(u32 size) {
     u32 result = size;
-    if (data_020c18bc.mUnk_490[0] == 3) {
+    if (gSystemState.mFadeState[0] == FADE_STATE_CLEAR) {
         int line = *(vu16 *) HW_VCOUNT;
         if (!(line >= 0xbf && line < 0xd6)) {
-            result = data_020c18bc.mUnk_48a * 0x16;
+            result = gSystemState.mTransferBytesPerLine * 0x16;
             while (*(vu16 *) HW_VCOUNT >= 0xd6 || *(vu16 *) HW_VCOUNT < 0xbf) {
             }
         } else {
-            result = (0xd6 - line) * data_020c18bc.mUnk_48a;
+            result = (0xd6 - line) * gSystemState.mTransferBytesPerLine;
         }
     }
     if (result >= size) {
@@ -753,9 +758,9 @@ u32 func_0201c704(u32 size) {
     return result;
 }
 
-// In display mode 3, waits until the display reaches line 0xc0.
+// While screen 1's fade state is FADE_STATE_CLEAR, waits until the display reaches line 0xc0.
 void func_0201c78c(void) {
-    if (data_020c18bc.mUnk_490[0] == 3) {
+    if (gSystemState.mFadeState[0] == FADE_STATE_CLEAR) {
         while (*(vu16 *) HW_VCOUNT < 0xc0) {
         }
     }
@@ -766,11 +771,11 @@ void func_0201c78c(void) {
 // Runs the queued transfers: maps the VRAM banks to LCDC when the bank layout changed, picks the queued entries for
 // VRAM (flags & 2) or other memory (flags & 1), sorts them by file and offset, reads and unpacks them into one
 // buffer (packed block files, EZ10 blocks, plain file reads, memory copies), converts textures and palettes, then
-// copies each entry to its destination with the banks mapped. When the system is busy, finished entries are
-// removed from the queue instead.
+// copies each entry to its destination with the banks mapped. The removal of finished entries at the end, for a busy
+// system, never runs: while busy no entry is picked and the function returns before it.
 // The block-run search and the plain file read take the list pointer through its address and the file id through
 // a cast of the entry pointer.
-void func_0201c7b8(int flags) {
+void ProcessTransfers(int flags) {
     int i;
     Unk_LoadEntry **list;
     Unk_LoadEntry *e;
@@ -795,103 +800,103 @@ void func_0201c7b8(int flags) {
     u32 n;
 
     busy = func_02035058();
-    if (data_020c18bc.mUnk_480 == 0) {
+    if (gSystemState.mTransferCount == 0) {
         return;
     }
-    if (busy && (data_020c18bc.mUnk_46c & 3) == 0) {
+    if (busy && (gSystemState.mFlags & 3) == 0) {
         return;
     }
-    list = func_0201c430(data_020c18bc.mUnk_47e << 2);
+    list = Alloc(gSystemState.mTransferLimit << 2);
     bits = 0;
     cachedFile = 0;
     tmp = 0;
     tex = 0;
-    if (data_020c18bc.mUnk_0c1 == 1) {
-        data_020c18bc.mUnk_070.mUnk_2e = 0;
-        data_020c18bc.mUnk_040.mUnk_2e = 0;
+    if (gSystemState.mVramBanksChanged == 1) {
+        gSystemState.mTexVramGroup.mBankCount = 0;
+        gSystemState.mPlttVramGroup.mBankCount = 0;
         for (i = 0; i < 9; i++) {
-            u32 idx = data_020c18bc.mUnk_0b8[i];
+            u32 idx = gSystemState.mVramBankRecordIndex[i];
             u32 use;
-            const Unk_02050478 *head;
-            const Unk_02050478 *rec;
+            const VramBankRecord *head;
+            const VramBankRecord *rec;
             if (idx == 0xff) {
                 continue;
             }
-            use = data_02050478[idx].mUnk_2;
+            use = gVramBankRecords[idx].mUse;
             if (use != 11 && use != 10 && use != 5 && use != 9) {
                 continue;
             }
-            for (j = idx - 1; data_02050478[j].mUnk_2 != 0; j--) {
+            for (j = idx - 1; gVramBankRecords[j].mUse != 0; j--) {
             }
-            head = &data_02050478[j];
-            rec = &data_02050478[idx];
+            head = &gVramBankRecords[j];
+            rec = &gVramBankRecords[idx];
             switch (use) {
                 case 11:
-                    data_020c18bc.mUnk_040.mUnk_00[data_020c18bc.mUnk_040.mUnk_2e] =
-                        (vu8 *) (data_02050220[head->mUnk_0] + (data_020502ac[head->mUnk_0] / 8));
-                    data_020c18bc.mUnk_040.mUnk_28[data_020c18bc.mUnk_040.mUnk_2e] =
+                    gSystemState.mPlttVramGroup.mCtrl[gSystemState.mPlttVramGroup.mBankCount] =
+                        (vu8 *) (gVramCtrlAddrs[head->mBank] + (gVramCtrlBitOffsets[head->mBank] / 8));
+                    gSystemState.mPlttVramGroup.mCtrlValue[gSystemState.mPlttVramGroup.mBankCount] =
                         (rec->mUnk_9 << 3) + 0x80 + rec->mUnk_8;
-                    data_020c18bc.mUnk_040.mUnk_18[data_020c18bc.mUnk_040.mUnk_2e] = head->mUnk_4;
-                    data_020c18bc.mUnk_040.mUnk_2e++;
+                    gSystemState.mPlttVramGroup.mAddr[gSystemState.mPlttVramGroup.mBankCount] = head->mAddr;
+                    gSystemState.mPlttVramGroup.mBankCount++;
                     break;
                 case 10:
-                    data_020c18bc.mUnk_070.mUnk_00[data_020c18bc.mUnk_070.mUnk_2e] =
-                        (vu8 *) (data_02050220[head->mUnk_0] + (data_020502ac[head->mUnk_0] / 8));
-                    data_020c18bc.mUnk_070.mUnk_28[data_020c18bc.mUnk_070.mUnk_2e] =
+                    gSystemState.mTexVramGroup.mCtrl[gSystemState.mTexVramGroup.mBankCount] =
+                        (vu8 *) (gVramCtrlAddrs[head->mBank] + (gVramCtrlBitOffsets[head->mBank] / 8));
+                    gSystemState.mTexVramGroup.mCtrlValue[gSystemState.mTexVramGroup.mBankCount] =
                         (rec->mUnk_9 << 3) + 0x80 + rec->mUnk_8;
-                    data_020c18bc.mUnk_070.mUnk_10[data_020c18bc.mUnk_070.mUnk_2e] = head->mUnk_1;
-                    data_020c18bc.mUnk_070.mUnk_18[data_020c18bc.mUnk_070.mUnk_2e] = head->mUnk_4;
-                    data_020c18bc.mUnk_070.mUnk_2e++;
+                    gSystemState.mTexVramGroup.mSizeKb[gSystemState.mTexVramGroup.mBankCount] = head->mSizeKb;
+                    gSystemState.mTexVramGroup.mAddr[gSystemState.mTexVramGroup.mBankCount] = head->mAddr;
+                    gSystemState.mTexVramGroup.mBankCount++;
                     break;
                 case 5:
-                    data_020c18bc.mUnk_0a0.mUnk_0 =
-                        (vu8 *) (data_02050220[head->mUnk_0] + (data_020502ac[head->mUnk_0] / 8));
-                    data_020c18bc.mUnk_0a0.mUnk_8 = (rec->mUnk_9 << 3) + 0x80 + rec->mUnk_8;
-                    data_020c18bc.mUnk_0a0.mUnk_4 = head->mUnk_4;
+                    gSystemState.mUnk_0a0.mCtrl =
+                        (vu8 *) (gVramCtrlAddrs[head->mBank] + (gVramCtrlBitOffsets[head->mBank] / 8));
+                    gSystemState.mUnk_0a0.mCtrlValue = (rec->mUnk_9 << 3) + 0x80 + rec->mUnk_8;
+                    gSystemState.mUnk_0a0.mAddr = head->mAddr;
                     break;
                 case 9:
-                    data_020c18bc.mUnk_0ac.mUnk_0 =
-                        (vu8 *) (data_02050220[head->mUnk_0] + (data_020502ac[head->mUnk_0] / 8));
-                    data_020c18bc.mUnk_0ac.mUnk_8 = (rec->mUnk_9 << 3) + 0x80 + rec->mUnk_8;
-                    data_020c18bc.mUnk_0ac.mUnk_4 = head->mUnk_4;
+                    gSystemState.mUnk_0ac.mCtrl =
+                        (vu8 *) (gVramCtrlAddrs[head->mBank] + (gVramCtrlBitOffsets[head->mBank] / 8));
+                    gSystemState.mUnk_0ac.mCtrlValue = (rec->mUnk_9 << 3) + 0x80 + rec->mUnk_8;
+                    gSystemState.mUnk_0ac.mAddr = head->mAddr;
                     break;
             }
         }
-        for (i = 1; i < data_020c18bc.mUnk_070.mUnk_2e; i++) {
-            if (data_020c18bc.mUnk_070.mUnk_18[i] !=
-                data_020c18bc.mUnk_070.mUnk_18[i - 1] + (data_020c18bc.mUnk_070.mUnk_10[i - 1] << 10)) {
+        for (i = 1; i < gSystemState.mTexVramGroup.mBankCount; i++) {
+            if (gSystemState.mTexVramGroup.mAddr[i] !=
+                gSystemState.mTexVramGroup.mAddr[i - 1] + (gSystemState.mTexVramGroup.mSizeKb[i - 1] << 10)) {
                 OS_Terminate();
             }
         }
-        data_020c18bc.mUnk_0c1 = 0;
+        gSystemState.mVramBanksChanged = 0;
     }
 
     count = 0;
-    for (i = 0; i < data_020c18bc.mUnk_480; i++) {
+    for (i = 0; i < gSystemState.mTransferCount; i++) {
         u32 addr;
-        if (data_020c18bc.mUnk_03c[i].mUnk_08 == 0) {
+        if (gSystemState.mTransfers[i].mUnk_08 == 0) {
             continue;
         }
-        addr = data_020c18bc.mUnk_03c[i].mUnk_04;
+        addr = gSystemState.mTransfers[i].mUnk_04;
         if ((addr >> 28) == 11 || (addr >> 28) == 10 || (addr >= 0x06000000 && addr < 0x06400000)) {
             if ((flags & 2) && !busy) {
-                list[count] = &data_020c18bc.mUnk_03c[i];
+                list[count] = &gSystemState.mTransfers[i];
                 count++;
             }
         } else {
             if ((flags & 1) && !busy) {
-                list[count] = &data_020c18bc.mUnk_03c[i];
+                list[count] = &gSystemState.mTransfers[i];
                 count++;
             }
         }
     }
     if (count == 0) {
-        func_0201c4f0(&list);
+        Free(&list);
         return;
     }
 
     if (count > 1) {
-        int gap = (1 << (32 - func_02028250(count))) - 1;
+        int gap = (1 << (32 - LeadingZeroCount(count))) - 1;
         while (gap > 0) {
             for (i = 0; i < (int) (count - gap); i++) {
                 j = i;
@@ -914,16 +919,16 @@ void func_0201c7b8(int flags) {
     for (i = 0; i < count; i++) {
         total += list[i]->mUnk_0c;
     }
-    buf = func_0201c43c(total + 0x80, 1);
+    buf = AllocWithFlags(total + 0x80, 1);
     dst = buf;
     cachedOff = 0;
     cachedSize = 0;
     for (i = 0; i < count; i++) {
         e = list[i];
-        if (data_020c267c.mUnk_b26 == e->mUnk_10 && data_020c267c.mUnk_b2e == 1) {
-            if (data_020c267c.mUnk_000 != 0 && e->mUnk_00 == data_020c267c.mUnk_00c << 3) {
-                MIi_CpuCopy32(data_020c267c.mUnk_004, dst, e->mUnk_0c);
-                data_020c267c.mUnk_017 = 0;
+        if (gTextureBlocks.mBlockFile == e->mUnk_10 && gTextureBlocks.mBlockFileKind == 1) {
+            if (gTextureBlocks.mUnk_000 != 0 && e->mUnk_00 == gTextureBlocks.mUnk_00c << 3) {
+                MIi_CpuCopy32(gTextureBlocks.mUnk_004, dst, e->mUnk_0c);
+                gTextureBlocks.mUnk_017 = 0;
             } else {
                 int size;
                 unsigned long first;
@@ -935,40 +940,40 @@ void func_0201c7b8(int flags) {
                 last = (e->mUnk_00 + e->mUnk_08) >> 11;
                 for (k = i + 1, p = *(Unk_LoadEntry ***) &list;
                      k < count && (next = (p[k]->mUnk_00 + p[k]->mUnk_08) >> 11) <= last + 1 &&
-                     data_020c267c.mUnk_b1c[next + 1] - data_020c267c.mUnk_b1c[first] <= 0x8000;
+                     gTextureBlocks.mPackOffsets[next + 1] - gTextureBlocks.mPackOffsets[first] <= 0x8000;
                      k++) {
                     if (next > last) {
                         last = next;
                     }
                 }
-                size = data_020c267c.mUnk_b1c[last + 1] - data_020c267c.mUnk_b1c[first];
+                size = gTextureBlocks.mPackOffsets[last + 1] - gTextureBlocks.mPackOffsets[first];
                 if (tmp == 0) {
-                    tmp = func_0201c43c(0x8000, 1);
+                    tmp = AllocWithFlags(0x8000, 1);
                 }
-                if ((int) data_020c267c.mUnk_b1c[first] + size > cachedOff + cachedSize || k == 0 ||
+                if ((int) gTextureBlocks.mPackOffsets[first] + size > cachedOff + cachedSize || k == 0 ||
                     list[i]->mUnk_10 != cachedFile) {
-                    func_0202e4fc(list[i]->mUnk_10, tmp, size, data_020c267c.mUnk_b1c[first]);
+                    ReadFileBytes(list[i]->mUnk_10, tmp, size, gTextureBlocks.mPackOffsets[first]);
                     cachedSize = size;
-                    cachedOff = data_020c267c.mUnk_b1c[first];
+                    cachedOff = gTextureBlocks.mPackOffsets[first];
                 }
-                func_02028150(tmp + (data_020c267c.mUnk_b1c[first] - cachedOff), dst, list[i]->mUnk_00 & 0x7ff,
+                UnpackRlePart(tmp + (gTextureBlocks.mPackOffsets[first] - cachedOff), dst, list[i]->mUnk_00 & 0x7ff,
                               list[i]->mUnk_08);
             }
-        } else if (data_020c267c.mUnk_b26 == e->mUnk_10 && data_020c267c.mUnk_b2e == 2) {
+        } else if (gTextureBlocks.mBlockFile == e->mUnk_10 && gTextureBlocks.mBlockFileKind == 2) {
             u32 sub = (e->mUnk_00 << 25) >> 20;
             u32 off;
             e->mUnk_00 = (e->mUnk_00 >> 7) << 2;
             e = list[i];
             off = e->mUnk_00;
-            if (data_020c267c.mUnk_000 != 0 && data_020c267c.mUnk_00c == off + (sub << 20)) {
-                MIi_CpuCopy32(data_020c267c.mUnk_004, dst, e->mUnk_0c);
-                data_020c267c.mUnk_017 = 0;
+            if (gTextureBlocks.mUnk_000 != 0 && gTextureBlocks.mUnk_00c == off + (sub << 20)) {
+                MIi_CpuCopy32(gTextureBlocks.mUnk_004, dst, e->mUnk_0c);
+                gTextureBlocks.mUnk_017 = 0;
             } else if (cachedOff != off || cachedFile != e->mUnk_10) {
-                func_0202e4fc(e->mUnk_10, hdr, 0x10, off);
+                ReadFileBytes(e->mUnk_10, hdr, 0x10, off);
                 if (hdr[0] == EZ10_MAGIC) {
                     u8 *packed;
                     if (tmp == 0) {
-                        tmp = func_0201c43c(0x8000, 1);
+                        tmp = AllocWithFlags(0x8000, 1);
                     }
                     if (hdr[1] > 0x8000) {
                         OS_Terminate();
@@ -978,32 +983,32 @@ void func_0201c7b8(int flags) {
                     }
                     packed = (u8 *) (((u32) tmp + 0x8000 - hdr[3]) & ~3);
                     memcpy(packed, hdr, 0x10);
-                    func_0202e4fc(list[i]->mUnk_10, packed + 0x10, hdr[3] - 0x10, off + 0x10);
-                    func_0202875c(packed, tmp);
+                    ReadFileBytes(list[i]->mUnk_10, packed + 0x10, hdr[3] - 0x10, off + 0x10);
+                    UnpackEz10(packed, tmp);
                     MIi_CpuCopy32(tmp + sub, dst, list[i]->mUnk_0c);
                     cachedOff = off;
                     cachedFile = list[i]->mUnk_10;
                 } else {
-                    func_0202e4fc(list[i]->mUnk_10, dst, list[i]->mUnk_0c, off + sub);
+                    ReadFileBytes(list[i]->mUnk_10, dst, list[i]->mUnk_0c, off + sub);
                 }
             } else {
                 MIi_CpuCopy32(tmp + sub, dst, e->mUnk_0c);
             }
-        } else if (data_020c18bc.mUnk_42c == e->mUnk_10) {
+        } else if (gSystemState.mUnk_42c == e->mUnk_10) {
             u32 sub = (e->mUnk_00 << 26) >> 20;
             u32 off = (e->mUnk_00 >> 6) << 2;
-            if (data_020c18bc.mUnk_350 != off || data_020c18bc.mUnk_354 != e->mUnk_10) {
+            if (gSystemState.mUnk_350 != off || gSystemState.mUnk_354 != e->mUnk_10) {
                 u32 *packed;
-                if (data_020c18bc.mUnk_34c == 0) {
-                    data_020c18bc.mUnk_34c = func_0201c430(0x1200);
+                if (gSystemState.mUnk_34c == 0) {
+                    gSystemState.mUnk_34c = Alloc(0x1200);
                 }
-                packed = (u32 *) (((u32) data_020c18bc.mUnk_34c + 0x1000 - list[i]->mUnk_08) & ~3);
-                func_0202e4fc(list[i]->mUnk_10, packed, list[i]->mUnk_08, off);
+                packed = (u32 *) (((u32) gSystemState.mUnk_34c + 0x1000 - list[i]->mUnk_08) & ~3);
+                ReadFileBytes(list[i]->mUnk_10, packed, list[i]->mUnk_08, off);
                 if (packed[0] != EZ10_MAGIC) {
-                    data_020c18bc.mUnk_350 = off;
-                    data_020c18bc.mUnk_354 = list[i]->mUnk_10;
-                    MIi_CpuCopyFast(packed, data_020c18bc.mUnk_34c, list[i]->mUnk_08);
-                    MIi_CpuCopyFast(data_020c18bc.mUnk_34c + sub, dst, list[i]->mUnk_0c);
+                    gSystemState.mUnk_350 = off;
+                    gSystemState.mUnk_354 = list[i]->mUnk_10;
+                    MIi_CpuCopyFast(packed, gSystemState.mUnk_34c, list[i]->mUnk_08);
+                    MIi_CpuCopyFast(gSystemState.mUnk_34c + sub, dst, list[i]->mUnk_0c);
                     list[i]->mUnk_08 = list[i]->mUnk_0c;
                 } else {
                     if (packed[0] != EZ10_MAGIC) {
@@ -1015,20 +1020,20 @@ void func_0201c7b8(int flags) {
                     if (packed[3] != list[i]->mUnk_08) {
                         OS_Terminate();
                     }
-                    func_0202875c(packed, data_020c18bc.mUnk_34c);
-                    MIi_CpuCopyFast(data_020c18bc.mUnk_34c + sub, dst, list[i]->mUnk_0c);
-                    data_020c18bc.mUnk_350 = off;
-                    data_020c18bc.mUnk_354 = list[i]->mUnk_10;
+                    UnpackEz10(packed, gSystemState.mUnk_34c);
+                    MIi_CpuCopyFast(gSystemState.mUnk_34c + sub, dst, list[i]->mUnk_0c);
+                    gSystemState.mUnk_350 = off;
+                    gSystemState.mUnk_354 = list[i]->mUnk_10;
                     list[i]->mUnk_08 = list[i]->mUnk_0c;
                 }
             } else {
-                MIi_CpuCopyFast(data_020c18bc.mUnk_34c + sub, dst, e->mUnk_0c);
+                MIi_CpuCopyFast(gSystemState.mUnk_34c + sub, dst, e->mUnk_0c);
                 list[i]->mUnk_08 = list[i]->mUnk_0c;
             }
         } else if (data_020c31dc.mUnk_54 == e->mUnk_10 && e->mUnk_08 < e->mUnk_0c) {
             u32 size = e->mUnk_08;
             u32 *packed = (u32 *) (((u32) dst + e->mUnk_0c + 0x80 - size) & ~3);
-            func_0202e4fc(e->mUnk_10, packed, size, e->mUnk_00);
+            ReadFileBytes(e->mUnk_10, packed, size, e->mUnk_00);
             data_020c1834.mUnk_08 += size;
             data_020c1834.mUnk_0c++;
             if (packed[0] != EZ10_MAGIC) {
@@ -1040,7 +1045,7 @@ void func_0201c7b8(int flags) {
             if (-packed[2] >= list[i]->mUnk_0c + 0x80 - size) {
                 OS_Terminate();
             }
-            func_0202875c(packed, dst);
+            UnpackEz10(packed, dst);
             list[i]->mUnk_08 = list[i]->mUnk_0c;
         } else if (e->mUnk_10 != 0) {
             u32 size = e->mUnk_08;
@@ -1052,10 +1057,10 @@ void func_0201c7b8(int flags) {
                 cachedOff = e->mUnk_00;
                 lastDst = (*(Unk_LoadEntry ***) &list)[j - 1]->mUnk_04;
                 cachedSize = size;
-                func_0202e4fc(cachedFile, dst, size, cachedOff);
-                if (data_020c18bc.mUnk_464 != 0 && (list[i]->mUnk_04 >> 28) == 11) {
+                ReadFileBytes(cachedFile, dst, size, cachedOff);
+                if (gSystemState.mUnk_464 != 0 && (list[i]->mUnk_04 >> 28) == 11) {
                     DC_FlushRange(dst, size);
-                    data_020c18bc.mUnk_464(dst, size);
+                    gSystemState.mUnk_464(dst, size);
                 }
             }
         } else {
@@ -1066,22 +1071,22 @@ void func_0201c7b8(int flags) {
         }
 
         e = list[i];
-        if (data_020c267c.mUnk_b26 == e->mUnk_10) {
+        if (gTextureBlocks.mBlockFile == e->mUnk_10) {
             BOOL bg = 0;
             u32 area = e->mUnk_04 >> 20;
             if (area < 0x64 && area >= 0x60) {
                 bg = 1;
             }
             if (e->mUnk_13 != 0 && e->mUnk_13 != 0xff) {
-                Unk_020c2694 *half = &data_020c267c.mUnk_018[e->mUnk_13 & 1];
-                func_02028928((u16 *) dst, &half->mUnk_115[half->mUnk_014[e->mUnk_13 >> 1]], e->mUnk_08 >> 1);
+                Unk_020c2694 *half = &gTextureBlocks.mLayers[e->mUnk_13 & 1];
+                RemapPaletteRows((u16 *) dst, &half->mUnk_115[half->mUnk_014[e->mUnk_13 >> 1]], e->mUnk_08 >> 1);
             }
             e = list[i];
             if ((e->mUnk_04 >> 28) == 10 || bg == 1) {
                 u32 w = (u32) ((1 << (e->mUnk_12 & 0xf)) / 8);
                 u32 h = e->mUnk_08 / (e->mUnk_13 == 0 ? 0x20 : 0x40) / w;
                 if (tex == 0) {
-                    tex = func_0201c43c(0x4000, 1);
+                    tex = AllocWithFlags(0x4000, 1);
                 }
                 func_0202c2f0(tex, dst, w, h, list[i]->mUnk_13 == 0);
                 e = list[i];
@@ -1122,43 +1127,43 @@ void func_0201c7b8(int flags) {
             type = addr >> 28;
             if (type == 5) {
                 bits |= 0x20;
-                e->mUnk_04 = data_020c18bc.mUnk_0a0.mUnk_4 + (addr & 0x1fff);
+                e->mUnk_04 = gSystemState.mUnk_0a0.mAddr + (addr & 0x1fff);
                 func_0201c78c();
-                *data_020c18bc.mUnk_0a0.mUnk_0 = 0x80;
+                *gSystemState.mUnk_0a0.mCtrl = 0x80;
             } else if (type == 9) {
                 bits |= 0x200;
-                e->mUnk_04 = data_020c18bc.mUnk_0ac.mUnk_4 + (addr & 0x1fff);
+                e->mUnk_04 = gSystemState.mUnk_0ac.mAddr + (addr & 0x1fff);
                 func_0201c78c();
-                *data_020c18bc.mUnk_0ac.mUnk_0 = 0x80;
+                *gSystemState.mUnk_0ac.mCtrl = 0x80;
             } else if (type == 11) {
-                if (data_020c18bc.mUnk_040.mUnk_2e != 0) {
+                if (gSystemState.mPlttVramGroup.mBankCount != 0) {
                     saved = addr;
-                    e->mUnk_04 = data_020c18bc.mUnk_040.mUnk_18[0] + (addr & 0x7fffff);
+                    e->mUnk_04 = gSystemState.mPlttVramGroup.mAddr[0] + (addr & 0x7fffff);
                     bits |= 0x800;
-                    part = func_0201c704(list[i]->mUnk_08);
+                    part = LimitTransferSize(list[i]->mUnk_08);
                     e = list[i];
                     rest = e->mUnk_08 - part;
                     e->mUnk_08 = part;
-                    *data_020c18bc.mUnk_040.mUnk_00[0] = 0x80;
+                    *gSystemState.mPlttVramGroup.mCtrl[0] = 0x80;
                 } else {
                     rest = 0;
                     goto next;
                 }
             } else if (type == 10) {
-                Unk_VramGroup *group = &data_020c18bc.mUnk_070;
-                if (data_020c18bc.mUnk_070.mUnk_2e != 0) {
+                VramGroup *group = &gSystemState.mTexVramGroup;
+                if (gSystemState.mTexVramGroup.mBankCount != 0) {
                     saved = addr;
-                    e->mUnk_04 = group->mUnk_18[0] + (addr & 0x7fffff);
+                    e->mUnk_04 = group->mAddr[0] + (addr & 0x7fffff);
                     bits |= 0x400;
-                    part = func_0201c704(list[i]->mUnk_08);
+                    part = LimitTransferSize(list[i]->mUnk_08);
                     e = list[i];
                     rest = e->mUnk_08 - part;
                     e->mUnk_08 = part;
-                    for (n = 0; n < group->mUnk_2e; n++) {
+                    for (n = 0; n < group->mBankCount; n++) {
                         Unk_LoadEntry *f = list[i];
-                        if (group->mUnk_18[n] <= f->mUnk_04 + f->mUnk_08 &&
-                            group->mUnk_18[n] + (group->mUnk_10[n] << 10) >= f->mUnk_04) {
-                            *data_020c18bc.mUnk_070.mUnk_00[n] = 0x80;
+                        if (group->mAddr[n] <= f->mUnk_04 + f->mUnk_08 &&
+                            group->mAddr[n] + (group->mSizeKb[n] << 10) >= f->mUnk_04) {
+                            *gSystemState.mTexVramGroup.mCtrl[n] = 0x80;
                         }
                     }
                 } else {
@@ -1175,18 +1180,18 @@ void func_0201c7b8(int flags) {
             if (bits & 0x400) {
                 u32 k;
 
-                for (k = 0; k < data_020c18bc.mUnk_070.mUnk_2e; k++) {
-                    *data_020c18bc.mUnk_070.mUnk_00[k] = data_020c18bc.mUnk_070.mUnk_28[k];
+                for (k = 0; k < gSystemState.mTexVramGroup.mBankCount; k++) {
+                    *gSystemState.mTexVramGroup.mCtrl[k] = gSystemState.mTexVramGroup.mCtrlValue[k];
                 }
                 bits &= ~0x400;
             } else if (bits & 0x800) {
-                *data_020c18bc.mUnk_040.mUnk_00[0] = data_020c18bc.mUnk_040.mUnk_28[0];
+                *gSystemState.mPlttVramGroup.mCtrl[0] = gSystemState.mPlttVramGroup.mCtrlValue[0];
                 bits &= ~0x800;
             } else if (bits & 0x20) {
-                *data_020c18bc.mUnk_0a0.mUnk_0 = data_020c18bc.mUnk_0a0.mUnk_8;
+                *gSystemState.mUnk_0a0.mCtrl = gSystemState.mUnk_0a0.mCtrlValue;
                 bits &= ~0x20;
             } else if (bits & 0x200) {
-                *data_020c18bc.mUnk_0ac.mUnk_0 = data_020c18bc.mUnk_0ac.mUnk_8;
+                *gSystemState.mUnk_0ac.mCtrl = gSystemState.mUnk_0ac.mCtrlValue;
                 bits &= ~0x200;
             }
         next:
@@ -1202,22 +1207,22 @@ void func_0201c7b8(int flags) {
         }
     }
 
-    func_0201c4f0(&tmp);
-    func_0201c4f0(&tex);
-    func_0201c4f0(&buf);
-    func_0201c4f0(&list);
+    Free(&tmp);
+    Free(&tex);
+    Free(&buf);
+    Free(&list);
     if (busy == 1) {
         i = 0;
         while (1) {
-            if (i == data_020c18bc.mUnk_480) {
+            if (i == gSystemState.mTransferCount) {
                 return;
             }
-            e = &data_020c18bc.mUnk_03c[i];
-            if (e->mUnk_08 == 0 || e->mUnk_12 == 0xff || data_020c267c.mUnk_b26 == e->mUnk_10) {
-                if (i != data_020c18bc.mUnk_480 - 1) {
-                    memcpy(e, &data_020c18bc.mUnk_03c[data_020c18bc.mUnk_480 - 1], sizeof(Unk_LoadEntry));
+            e = &gSystemState.mTransfers[i];
+            if (e->mUnk_08 == 0 || e->mUnk_12 == 0xff || gTextureBlocks.mBlockFile == e->mUnk_10) {
+                if (i != gSystemState.mTransferCount - 1) {
+                    memcpy(e, &gSystemState.mTransfers[gSystemState.mTransferCount - 1], sizeof(Unk_LoadEntry));
                 }
-                data_020c18bc.mUnk_480--;
+                gSystemState.mTransferCount--;
             } else {
                 i++;
             }
@@ -1226,15 +1231,15 @@ void func_0201c7b8(int flags) {
 }
 #pragma thumb on
 
-void func_0201d9a8(int offset) {
-    if ((data_020c18bc.mUnk_46c & 0x200) == 0) {
-        func_020425f4(&data_020c1874, offset, 0);
+void SeekBank(int offset) {
+    if ((gSystemState.mFlags & 0x200) == 0) {
+        func_020425f4(&gBankFile, offset, 0);
     } else {
-        data_020c18bc.mUnk_250.mUnk_00 = offset;
+        gSystemState.mUnk_250.mUnk_00 = offset;
     }
 }
 
-void func_0201d9d4(void *dst, u32 size) {
+void ReadBank(void *dst, u32 size) {
     int remaining;
     int state;
     int i;
@@ -1243,8 +1248,8 @@ void func_0201d9d4(void *dst, u32 size) {
     u32 sum;
     u8 *cmd = data_020c67e0;
 
-    if ((data_020c18bc.mUnk_46c & 0x200) == 0) {
-        func_020425e4(&data_020c1874, dst, size);
+    if ((gSystemState.mFlags & 0x200) == 0) {
+        func_020425e4(&gBankFile, dst, size);
         return;
     }
 restart:
@@ -1253,49 +1258,49 @@ restart:
     remaining = size;
     (void) (size <= 0xfb800 || (OS_Terminate(), 0));
     for (; remaining > 0; remaining -= 0x1f7) {
-        data_020c18bc.mUnk_250.mUnk_24[i >> 3] &= ~(1 << (i & 7));
+        gSystemState.mUnk_250.mUnk_24[i >> 3] &= ~(1 << (i & 7));
         i++;
     }
-    data_020c18bc.mUnk_250.mUnk_24[i >> 3] |= 1 << (i & 7);
-    data_020c18bc.mUnk_250.mUnk_08 = size;
-    data_020c18bc.mUnk_250.mUnk_04 = size;
-    data_020c18bc.mUnk_250.mUnk_0c = dst;
-    data_020c18bc.mUnk_46c |= 3 << 18;
+    gSystemState.mUnk_250.mUnk_24[i >> 3] |= 1 << (i & 7);
+    gSystemState.mUnk_250.mUnk_08 = size;
+    gSystemState.mUnk_250.mUnk_04 = size;
+    gSystemState.mUnk_250.mUnk_0c = dst;
+    gSystemState.mFlags |= 3 << 18;
     remaining = size;
-    while (data_020c18bc.mUnk_250.mUnk_08 != 0 && (s8) data_020c18bc.mUnk_2a4[1] >= 0) {
-        if (data_020c18bc.mUnk_250.mUnk_08 == remaining) {
+    while (gSystemState.mUnk_250.mUnk_08 != 0 && (s8) gSystemState.mUnk_2a4[1] >= 0) {
+        if (gSystemState.mUnk_250.mUnk_08 == remaining) {
             if (state-- == 0) {
                 i = 0;
-                while (data_020c18bc.mUnk_250.mUnk_24[i >> 3] & (1 << (i & 7))) {
+                while (gSystemState.mUnk_250.mUnk_24[i >> 3] & (1 << (i & 7))) {
                     i++;
                 }
                 j = i;
                 sum = 0;
-                while (!(data_020c18bc.mUnk_250.mUnk_24[j >> 3] & (1 << (j & 7)))) {
+                while (!(gSystemState.mUnk_250.mUnk_24[j >> 3] & (1 << (j & 7)))) {
                     j++;
                     sum += 0x1f7;
                 }
                 len = (j - i) * 0x1f7;
-                if (len >= data_020c18bc.mUnk_250.mUnk_04) {
-                    len = data_020c18bc.mUnk_250.mUnk_04;
+                if (len >= gSystemState.mUnk_250.mUnk_04) {
+                    len = gSystemState.mUnk_250.mUnk_04;
                 }
                 cmd[0] = 0x51;
-                func_02034ce0(data_020c18bc.mUnk_250.mUnk_00 + 0x1f7 * i, cmd + 6);
+                func_02034ce0(gSystemState.mUnk_250.mUnk_00 + 0x1f7 * i, cmd + 6);
                 func_02034ce0(len, cmd + 2);
                 state = 5;
-                if (func_02034cf0(cmd + 6) <= data_020c18bc.mUnk_250.mUnk_00 + data_020c18bc.mUnk_250.mUnk_04) {
+                if (func_02034cf0(cmd + 6) <= gSystemState.mUnk_250.mUnk_00 + gSystemState.mUnk_250.mUnk_04) {
                 } else {
                     goto restart;
                 }
             }
         } else {
-            remaining = data_020c18bc.mUnk_250.mUnk_08;
+            remaining = gSystemState.mUnk_250.mUnk_08;
             state = 5;
         }
-        func_0201bb30();
+        UpdateSystemAndWait();
     }
-    data_020c18bc.mUnk_250.mUnk_00 += size;
-    data_020c18bc.mUnk_46c &= 0xfff3ffff;
+    gSystemState.mUnk_250.mUnk_00 += size;
+    gSystemState.mFlags &= 0xfff3ffff;
 }
 
 u32 func_0201db58(int layer) {
@@ -1316,21 +1321,21 @@ u32 func_0201db58(int layer) {
 }
 
 // Width and height of a bitmap background for each screen size (control register bits 14-15).
-const u16 data_02050200[4] = {0x80, 0x100, 0x200, 0x200};
-const u16 data_02050208[4] = {0x80, 0x100, 0x100, 0x200};
+const u16 gLayerWidths[4] = {0x80, 0x100, 0x200, 0x200};
+const u16 gLayerHeights[4] = {0x80, 0x100, 0x100, 0x200};
 
-int func_0201db94(int layer) {
+int GetLayerWidth(int layer) {
     if (layer != 1 && layer != 2) {
         OS_Terminate();
     }
     if (layer & 1) {
-        return data_02050200[*(vu16 *) 0x0400000e >> 14];
+        return gLayerWidths[*(vu16 *) 0x0400000e >> 14];
     }
-    return data_02050200[*(vu16 *) 0x0400100e >> 14];
+    return gLayerWidths[*(vu16 *) 0x0400100e >> 14];
 }
 
-int func_0201dbd4(int layer) {
-    int n = func_0201db94(layer);
+int GetLayerRowSize(int layer) {
+    int n = GetLayerWidth(layer);
 
     if (func_0201db58(layer) == 0x8000) {
         n <<= 1;
@@ -1339,7 +1344,7 @@ int func_0201dbd4(int layer) {
 }
 
 #pragma thumb off
-void func_0201dbf4(u16 *src, u32 dst, u32 width, u32 stride, u8 *lut) {
+void CopyStripRows(u16 *src, u32 dst, u32 width, u32 stride, u8 *lut) {
     u32 row = 16;
     int i;
     u16 *out;
@@ -1366,33 +1371,33 @@ void func_0201dbf4(u16 *src, u32 dst, u32 width, u32 stride, u8 *lut) {
 }
 #pragma thumb on
 
-void func_0201dcc0(u16 *src, u32 layers, u32 row, u32 width, u32 total, u8 *lut) {
+void CopyStripToLayers(u16 *src, u32 layers, u32 row, u32 width, u32 total, u8 *lut) {
     u32 half;
     int n;
 
     switch (layers & 3) {
         case 1:
-            n = func_0201db94(layers);
-            func_0201dbf4(src, 0x06000000 + row * n * 2, width, n, lut);
+            n = GetLayerWidth(layers);
+            CopyStripRows(src, 0x06000000 + row * n * 2, width, n, lut);
             break;
         case 2:
-            n = func_0201db94(layers);
-            func_0201dbf4(src, 0x06200000 + row * n * 2, width, n, lut);
+            n = GetLayerWidth(layers);
+            CopyStripRows(src, 0x06200000 + row * n * 2, width, n, lut);
             break;
         case 3:
             half = total >> 1;
             if (row < half) {
-                n = func_0201db94(1);
-                func_0201dbf4(src, 0x06000000 + row * n * 2, width, n, lut);
+                n = GetLayerWidth(1);
+                CopyStripRows(src, 0x06000000 + row * n * 2, width, n, lut);
             } else {
-                n = func_0201db94(2);
-                func_0201dbf4(src, 0x06200000 + (row - half) * n * 2, width, n, lut);
+                n = GetLayerWidth(2);
+                CopyStripRows(src, 0x06200000 + (row - half) * n * 2, width, n, lut);
             }
             break;
     }
 }
 
-void func_0201dd74(u8 *src, u32 dst, u32 width, u32 rows) {
+void CopyImageToLayer(u8 *src, u32 dst, u32 width, u32 rows) {
     int layer;
     int step;
 
@@ -1408,7 +1413,7 @@ void func_0201dd74(u8 *src, u32 dst, u32 width, u32 rows) {
         MIi_CpuCopy16(src, (void *) dst, width * rows);
         return;
     }
-    step = func_0201dbd4(layer);
+    step = GetLayerRowSize(layer);
     while (rows != 0) {
         MIi_CpuCopy16(src, (void *) dst, width);
         src += width;
@@ -1417,33 +1422,33 @@ void func_0201dd74(u8 *src, u32 dst, u32 width, u32 rows) {
     }
 }
 
-void func_0201dde0(int id, int target) {
-    func_0201ddec(id, target, 0, 0);
+void LoadImage(int id, int target) {
+    LoadImageEx(id, target, 0, 0);
 }
 
-void func_0201ddec(int id, int target, int x, u16 flags) {
+void LoadImageEx(int id, int target, int x, u16 flags) {
     int found;
     void *buf;
 
-    found = func_0202e988(id);
+    found = FindCachedFile(id);
     if (found > 0) {
-        func_0201de48((u8 *) found, target, x, flags);
+        LoadImageData((u8 *) found, target, x, flags);
     } else {
-        buf = (void *) func_0202e86c(id);
-        func_0201de48(buf, target, x, flags);
-        func_0201c4f0(&buf);
+        buf = (void *) LoadFile(id);
+        LoadImageData(buf, target, x, flags);
+        Free(&buf);
     }
     if (target == 3) {
-        data_020c18bc.mUnk_49c[1] = id;
-        data_020c18bc.mUnk_49c[0] = data_020c18bc.mUnk_49c[1];
+        gSystemState.mImageIds[1] = id;
+        gSystemState.mImageIds[0] = gSystemState.mImageIds[1];
     } else if (target == 1) {
-        data_020c18bc.mUnk_49c[0] = id;
+        gSystemState.mImageIds[0] = id;
     } else if (target == 2) {
-        data_020c18bc.mUnk_49c[1] = id;
+        gSystemState.mImageIds[1] = id;
     }
 }
 
-void func_0201de48(u8 *data, int target, int x, u16 flags) {
+void LoadImageData(u8 *data, int target, int x, u16 flags) {
     void *tmp = NULL;
     void *rgb = NULL;
     u32 w;
@@ -1470,22 +1475,22 @@ void func_0201de48(u8 *data, int target, int x, u16 flags) {
         u32 height;
 
         func_0201e518(data, &w, &h);
-        data_020c18bc.mUnk_2cc = w;
-        data_020c18bc.mUnk_2ce = h;
-        data_020c18bc.mUnk_2d0 = 0x8000;
+        gSystemState.mImageWidth = w;
+        gSystemState.mImageHeight = h;
+        gSystemState.mUnk_2d0 = 0x8000;
         height = h;
         if ((target & 3) == 3 && h >= 0x180) {
             height >>= 1;
         }
         if (x == 0) {
             if (!(flags & 2)) {
-                func_0201f450(target, 1, w, height);
+                SetupImageLayer(target, 1, w, height);
             }
         } else {
             if (!(flags & 2)) {
-                func_0201f450(target, 0, w, height);
+                SetupImageLayer(target, 0, w, height);
             }
-            tmp = func_0201eee4(x, target);
+            tmp = CreateNearestColorTable(x, target);
         }
         if (target & 1) {
             func_0201e56c(data, target, tmp);
@@ -1493,7 +1498,7 @@ void func_0201de48(u8 *data, int target, int x, u16 flags) {
         if (target & 2) {
             func_0201e56c(data, 2, tmp);
         }
-        func_0201c4f0(&tmp);
+        Free(&tmp);
     } else {
         if (magic == 0x6177686d) {
             w = (data[8] << 8) + data[9];
@@ -1510,31 +1515,31 @@ void func_0201de48(u8 *data, int target, int x, u16 flags) {
             count = 0;
             indexed = 1;
         }
-        data_020c18bc.mUnk_2cc = w;
-        data_020c18bc.mUnk_2ce = h;
+        gSystemState.mImageWidth = w;
+        gSystemState.mImageHeight = h;
         mode = target & 3;
         if (mode == 3 && h >= 0x180) {
             h2 = h >> 1;
         }
         if (count != 0) {
             if (!(flags & 1)) {
-                data_020c18bc.mUnk_2d0 = 0x100;
+                gSystemState.mUnk_2d0 = 0x100;
                 if (!(flags & 2)) {
-                    func_0201f450(target, 0, w, h2);
+                    SetupImageLayer(target, 0, w, h2);
                 }
-                pix = func_0201f5bc(data + 0x20, count, 0, target);
+                pix = UploadPalette(data + 0x20, count, 0, target);
                 DC_StoreRange(pix, w * h + 0x320);
                 size = w * h2;
             } else {
                 pal = data + 0x20;
                 src = pal + count * 3;
-                data_020c18bc.mUnk_2d0 = 0x8000;
+                gSystemState.mUnk_2d0 = 0x8000;
                 if (!(flags & 2)) {
-                    func_0201f450(target, 1, w, h2);
+                    SetupImageLayer(target, 1, w, h2);
                 }
                 DC_StoreRange(data, w * h + 0x320);
                 size = w * h2 * 2;
-                rgb = func_0201c430(w * h * 2);
+                rgb = Alloc(w * h * 2);
                 out = rgb;
                 for (n = w * h; n != 0; n--) {
                     u8 *c;
@@ -1549,9 +1554,9 @@ void func_0201de48(u8 *data, int target, int x, u16 flags) {
         } else {
             top = (u16 *) (data + 0x12);
             pal = data + 0x20;
-            data_020c18bc.mUnk_2d0 = 0x8000;
+            gSystemState.mUnk_2d0 = 0x8000;
             if (!(flags & 2)) {
-                func_0201f450(target, 1, w, h2);
+                SetupImageLayer(target, 1, w, h2);
             }
             DC_StoreRange(data, w * h * 3 + 0x20);
             pix = pal;
@@ -1580,39 +1585,39 @@ void func_0201de48(u8 *data, int target, int x, u16 flags) {
         }
         switch (mode) {
             case 1:
-                func_0201dd74(pix, 0x06000000, w, h);
+                CopyImageToLayer(pix, 0x06000000, w, h);
                 break;
             case 2:
-                func_0201dd74(pix, 0x06200000, w, h);
+                CopyImageToLayer(pix, 0x06200000, w, h);
                 break;
             case 3:
-                func_0201dd74(pix, 0x06000000, w, h2);
+                CopyImageToLayer(pix, 0x06000000, w, h2);
                 if (h < 0x180) {
                     size = 0;
                 }
-                func_0201dd74(pix + size, 0x06200000, w, h2);
+                CopyImageToLayer(pix + size, 0x06200000, w, h2);
                 break;
         }
     }
-    func_0201c4f0(&rgb);
+    Free(&rgb);
 }
 
 // JPEG reader state (the asm block decoder func_02028980 uses it too): the count of buffered bits, the read
-// pointer (just past the marker of the current segment) and the bit buffer; data_020c181c is the arena start and
-// data_020c1828 the sleep callback node the start-up code keeps.
+// pointer (just past the marker of the current segment) and the bit buffer; gArenaLo is the arena start and
+// gPmCallbackInfo the sleep callback node the start-up code keeps.
 u8 data_020c1818;
-void *data_020c181c;
+void *gArenaLo;
 u8 *data_020c1820;
 u32 data_020c1824;
-PMCallbackInfo data_020c1828;
+PMCallbackInfo gPmCallbackInfo;
 
-// VRAM control register of each bank (word address; data_020502ac holds the bit offset of the bank's byte).
-const u32 data_02050220[9] = {
+// Word address of each bank's control register, shared by up to four banks.
+const u32 gVramCtrlAddrs[9] = {
     0x04000240, 0x04000240, 0x04000240, 0x04000240, 0x04000244, 0x04000244, 0x04000244, 0x04000248, 0x04000248,
 };
 
 // VRAM address of each use, taken when the caller passes -1.
-const u32 data_02050270[13] = {
+const u32 gVramUseAddrs[13] = {
     0x06800000, 0x00000000, 0x06000000, 0x06400000, 0x00000000, 0x00000000, 0x06200000,
     0x06600000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 };
@@ -1624,10 +1629,10 @@ const u8 data_020502a8[4] = {0, 1, 1, 0};
 
 // Low and high bound of each of the four microphone bands. Defined here, after data_020502a8: the compiler sorts
 // the file's constant objects by size and orders equal sizes by the definition list, and this place gives the
-// original .rodata layout (with the microphone code or in address order, data_02050200 or data_020502a4 move).
-const u16 data_02050210[8] = {90, 150, 150, 200, 200, 300, 300, 400};
+// original .rodata layout (with the microphone code or in address order, gLayerWidths or data_020502a4 move).
+const u16 gMicBandRanges[8] = {90, 150, 150, 200, 200, 300, 300, 400};
 
-const u8 data_020502ac[9] = {0, 8, 16, 24, 0, 8, 16, 0, 8};
+const u8 gVramCtrlBitOffsets[9] = {0, 8, 16, 24, 0, 8, 16, 0, 8};
 
 // Zigzag order of the 64 coefficients of a block.
 const u8 data_020502b8[64] = {
@@ -1646,7 +1651,7 @@ const u16 data_020502f8[64] = {
 };
 
 // Hash steps of the graphics pools and the file cache: 1 and the odd primes up to 719.
-const u16 data_02050378[128] = {
+const u16 gHashSteps[128] = {
     1,   3,   5,   7,   11,  13,  17,  19,  23,  29,  31,  37,  41,  43,  47,  53,  59,  61,  67,  71,  73,  79,
     83,  89,  97,  101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193,
     197, 199, 211, 223, 227, 229, 233, 239, 241, 251, 257, 263, 269, 271, 277, 281, 283, 293, 307, 311, 313, 317,
@@ -1656,7 +1661,7 @@ const u16 data_02050378[128] = {
 };
 
 // VRAM bank records, each bank's LCDC record first; a record with size 0 ends the table.
-const Unk_02050478 data_02050478[] = {
+const VramBankRecord gVramBankRecords[] = {
     {0, 128, 0, 0, 0x06800000, 0, 0},  {0, 128, 2, 0, 0x06000000, 1, 0},  {0, 128, 2, 0, 0x06020000, 1, 1},
     {0, 128, 2, 0, 0x06040000, 1, 2},  {0, 128, 2, 0, 0x06060000, 1, 3},  {0, 128, 3, 0, 0x06400000, 2, 0},
     {0, 128, 3, 0, 0x06420000, 2, 1},  {0, 128, 10, 0, 0x00000000, 3, 0}, {0, 128, 10, 0, 0x00020000, 3, 1},
@@ -1837,10 +1842,10 @@ void func_0201e56c(u8 *data, int target, void *lut) {
     height = 0;
     width = 0;
     data_020c1820 = data + 4;
-    huffsize = func_0201c430(0x300);
+    huffsize = Alloc(0x300);
     buf = huffsize;
     huffcode = (u16 *) (buf + 0x100);
-    block = func_0201c430(0x80);
+    block = Alloc(0x80);
     while (data_020c1820[-1] != 0xda) {
         switch (data_020c1820[-1]) {
             case 0xdb:
@@ -1919,7 +1924,7 @@ void func_0201e56c(u8 *data, int target, void *lut) {
         }
         data_020c1820 = func_0201e178();
     }
-    out = func_0201c430(0x4000);
+    out = Alloc(0x4000);
     if (width > 0x200) {
         OS_Terminate();
     }
@@ -1928,7 +1933,7 @@ void func_0201e56c(u8 *data, int target, void *lut) {
             quant[t][k] = (quant[t][k] * data_020502f8[k]) >> 12;
         }
     }
-    mcu = func_0201c430(0x1c0);
+    mcu = Alloc(0x1c0);
     for (i = 0; i < 0x100; i++) {
         buf[i] = 0;
         buf[i + 0x100] = i;
@@ -1952,57 +1957,58 @@ void func_0201e56c(u8 *data, int target, void *lut) {
             func_02028b8c(mcu, out + x, buf + 0x100);
         }
         func_0203e4a4();
-        func_0201dcc0(out, target, y, width, height, lut);
+        CopyStripToLayers(out, target, y, width, height, lut);
     }
 end:
-    func_0201c4f0(&out);
-    func_0201c4f0(&mcu);
-    func_0201c4f0(&buf);
-    func_0201c4f0(&block);
+    Free(&out);
+    Free(&mcu);
+    Free(&buf);
+    Free(&block);
 }
 #pragma thumb on
 
-void func_0201eb20(void) {
+void ResetVramBanks(void) {
     u32 i;
 
     for (i = 0; i < 9; i++) {
-        data_020c18bc.mUnk_0b8[i] = 0xff;
-        *(vu8 *) (data_02050220[i] + (data_020502ac[i] / 8)) = 0;
+        gSystemState.mVramBankRecordIndex[i] = 0xff;
+        *(vu8 *) (gVramCtrlAddrs[i] + (gVramCtrlBitOffsets[i] / 8)) = 0;
     }
-    data_020c18bc.mUnk_0c1 = 1;
-    data_020c18bc.mUnk_49c[0] = data_020c18bc.mUnk_49c[1] = 0xffff;
+    gSystemState.mVramBanksChanged = 1;
+    gSystemState.mImageIds[0] = gSystemState.mImageIds[1] = 0xffff;
 }
 
-void func_0201eb74(int type) {
+void FreeVramBanks(int type) {
     u32 i;
 
     if (type == 2) {
-        data_020c18bc.mUnk_49c[0] = 0xffff;
+        gSystemState.mImageIds[0] = 0xffff;
     } else if (type == 6) {
-        data_020c18bc.mUnk_49c[1] = 0xffff;
+        gSystemState.mImageIds[1] = 0xffff;
     }
     for (i = 0; i < 9; i++) {
-        if (data_020c18bc.mUnk_0b8[i] != 0xff && type == data_02050478[data_020c18bc.mUnk_0b8[i]].mUnk_2) {
-            *(vu8 *) (data_02050220[i] + (data_020502ac[i] / 8)) = 0;
-            data_020c18bc.mUnk_0b8[i] = 0xff;
+        if (gSystemState.mVramBankRecordIndex[i] != 0xff &&
+            type == gVramBankRecords[gSystemState.mVramBankRecordIndex[i]].mUse) {
+            *(vu8 *) (gVramCtrlAddrs[i] + (gVramCtrlBitOffsets[i] / 8)) = 0;
+            gSystemState.mVramBankRecordIndex[i] = 0xff;
         }
     }
-    data_020c18bc.mUnk_0c1 = 1;
+    gSystemState.mVramBanksChanged = 1;
 }
 
-void func_0201ebf4(int type, int size, int addr) {
+void ReallocVramBanks(int type, int size, int addr) {
     if (type == 10) {
-        data_020c18bc.mUnk_070.mUnk_2c = 0;
+        gSystemState.mTexVramGroup.mSize16Kb = 0;
     } else if (type == 11) {
-        data_020c18bc.mUnk_040.mUnk_2c = 0;
+        gSystemState.mPlttVramGroup.mSize16Kb = 0;
     }
-    func_0201eb74(type);
-    func_0201ec2c(type, size, addr);
+    FreeVramBanks(type);
+    AllocVramBanks(type, size, addr);
 }
 
-void func_0201ec2c(int type, u32 size, u32 addr) {
+void AllocVramBanks(int type, u32 size, u32 addr) {
     int i;
-    const Unk_02050478 *rec;
+    const VramBankRecord *rec;
     u32 bank;
     u32 n;
     s32 used = 0;
@@ -2023,24 +2029,24 @@ void func_0201ec2c(int type, u32 size, u32 addr) {
     u32 addrs[5];
 
     if (addr == -1) {
-        addr = data_02050270[type];
+        addr = gVramUseAddrs[type];
     }
     for (i = 0; i < 9; i++) {
-        if (data_020c18bc.mUnk_0b8[i] != 0xff) {
+        if (gSystemState.mVramBankRecordIndex[i] != 0xff) {
             used |= 1 << i;
         }
     }
     i = 0;
     best = -1;
-    for (; data_02050478[i].mUnk_1 != 0; i++) {
-        if (type == data_02050478[i].mUnk_2 && !((1 << data_02050478[i].mUnk_0) & used) &&
-            addr == data_02050478[i].mUnk_4 && data_02050478[i].mUnk_1 >= size) {
-            if (best == -1 || data_02050478[i].mUnk_1 < data_02050478[best].mUnk_1) {
+    for (; gVramBankRecords[i].mSizeKb != 0; i++) {
+        if (type == gVramBankRecords[i].mUse && !((1 << gVramBankRecords[i].mBank) & used) &&
+            addr == gVramBankRecords[i].mAddr && gVramBankRecords[i].mSizeKb >= size) {
+            if (best == -1 || gVramBankRecords[i].mSizeKb < gVramBankRecords[best].mSizeKb) {
                 best = i;
             }
         }
     }
-    if (best != -1 && size == data_02050478[best].mUnk_1) {
+    if (best != -1 && size == gVramBankRecords[best].mSizeKb) {
         n = 1;
         list[1] = best;
     } else {
@@ -2052,14 +2058,14 @@ void func_0201ec2c(int type, u32 size, u32 addr) {
         bestRem = 0x7fffffff;
         bestN = 0;
         for (;;) {
-            for (; rec = &data_02050478[k], data_02050478[k].mUnk_1 != 0; k++) {
-                if (type == rec->mUnk_2) {
-                    u32 bit = 1 << rec->mUnk_0;
+            for (; rec = &gVramBankRecords[k], gVramBankRecords[k].mSizeKb != 0; k++) {
+                if (type == rec->mUse) {
+                    u32 bit = 1 << rec->mBank;
 
-                    if (!(used & bit) && rec->mUnk_4 == addrs[n]) {
+                    if (!(used & bit) && rec->mAddr == addrs[n]) {
                         cur = rem[n];
-                        rem[n + 1] = cur - rec->mUnk_1;
-                        addrs[n + 1] = rec->mUnk_4 + (rec->mUnk_1 << 10);
+                        rem[n + 1] = cur - rec->mSizeKb;
+                        addrs[n + 1] = rec->mAddr + (rec->mSizeKb << 10);
                         list[n + 1] = k;
                         n++;
                         used |= bit;
@@ -2089,7 +2095,7 @@ void func_0201ec2c(int type, u32 size, u32 addr) {
                 break;
             }
             k = list[n--];
-            used &= ~(1 << data_02050478[k].mUnk_0);
+            used &= ~(1 << gVramBankRecords[k].mBank);
             k++;
         }
     }
@@ -2106,26 +2112,26 @@ void func_0201ec2c(int type, u32 size, u32 addr) {
     }
     while (n != 0) {
         k = list[n--];
-        for (h = k; data_02050478[h].mUnk_2 != 0; h--) {
+        for (h = k; gVramBankRecords[h].mUse != 0; h--) {
         }
-        bank = data_02050478[k].mUnk_0;
-        *(vu8 *) (data_02050220[bank] + data_020502ac[bank] / 8) = 0x80;
-        kb = data_02050478[h].mUnk_1;
-        MI_DmaFill32(3, (void *) data_02050478[h].mUnk_4, 0, kb << 10);
-        *(vu8 *) (data_02050220[bank] + data_020502ac[bank] / 8) =
-            (data_02050478[k].mUnk_9 << 3) + 0x80 + data_02050478[k].mUnk_8;
-        data_020c18bc.mUnk_0b8[bank] = k;
+        bank = gVramBankRecords[k].mBank;
+        *(vu8 *) (gVramCtrlAddrs[bank] + gVramCtrlBitOffsets[bank] / 8) = 0x80;
+        kb = gVramBankRecords[h].mSizeKb;
+        MI_DmaFill32(3, (void *) gVramBankRecords[h].mAddr, 0, kb << 10);
+        *(vu8 *) (gVramCtrlAddrs[bank] + gVramCtrlBitOffsets[bank] / 8) =
+            (gVramBankRecords[k].mUnk_9 << 3) + 0x80 + gVramBankRecords[k].mUnk_8;
+        gSystemState.mVramBankRecordIndex[bank] = k;
         if (type == 10) {
-            data_020c18bc.mUnk_070.mUnk_2c += kb >> 4;
+            gSystemState.mTexVramGroup.mSize16Kb += kb >> 4;
         } else if (type == 11) {
-            data_020c18bc.mUnk_040.mUnk_2c += kb >> 4;
+            gSystemState.mPlttVramGroup.mSize16Kb += kb >> 4;
         }
     }
-    data_020c18bc.mUnk_0c1 = 1;
+    gSystemState.mVramBanksChanged = 1;
 }
 
 #pragma thumb off
-u16 func_0201eea4(u8 (*pal)[3], int c0, int c1, int c2, int index) {
+u16 ColorDistanceSquared(u8 (*pal)[3], int c0, int c1, int c2, int index) {
     int d2 = pal[index][2] - c2;
     int d1 = pal[index][1] - c1;
     int d0 = pal[index][0] - c0;
@@ -2133,7 +2139,7 @@ u16 func_0201eea4(u8 (*pal)[3], int c0, int c1, int c2, int index) {
     return d2 * d2 + d1 * d1 + d0 * d0;
 }
 
-void *func_0201eee4(int id, int target) {
+void *CreateNearestColorTable(int id, int target) {
     u8 *cube;
     u32 r;
     u32 g;
@@ -2156,14 +2162,14 @@ void *func_0201eee4(int id, int target) {
     u16 *dist;
     Unk_ColorQueue *queue;
 
-    src = func_0202ded8(id);
-    pal = func_0201c430(0x300);
-    cube = func_0201c430(0x8000);
-    dist = func_0201c430(0x10000);
-    queue = func_0201c430(0x8000);
+    src = FindOrLoadCachedFile(id);
+    pal = Alloc(0x300);
+    cube = Alloc(0x8000);
+    dist = Alloc(0x10000);
+    queue = Alloc(0x8000);
     tail = 0;
     head = 0;
-    func_0201f5bc(src, 0x100, 0, target);
+    UploadPalette(src, 0x100, 0, target);
     MIi_CpuClear16(0xffff, dist, 0x10000);
     for (i = 0; i < 0x100; i++) {
         p = pal[i];
@@ -2190,7 +2196,7 @@ void *func_0201eee4(int id, int target) {
         if (r != 0) {
             n1 = cube + cell - 1;
             if (idx != *n1) {
-                d = func_0201eea4(pal, r - 1, g, b, idx);
+                d = ColorDistanceSquared(pal, r - 1, g, b, idx);
                 if (dist[cell - 1] > d) {
                     *n1 = idx;
                     dist[cell - 1] = d;
@@ -2205,7 +2211,7 @@ void *func_0201eee4(int id, int target) {
         if (r < 31) {
             n2 = cube + cell;
             if (idx != n2[1]) {
-                d = func_0201eea4(pal, r + 1, g, b, idx);
+                d = ColorDistanceSquared(pal, r + 1, g, b, idx);
                 if (dist[cell + 1] > d) {
                     n2[1] = idx;
                     dist[cell + 1] = d;
@@ -2220,7 +2226,7 @@ void *func_0201eee4(int id, int target) {
         if (g != 0) {
             n3 = cube + cell - 32;
             if (idx != *n3) {
-                d = func_0201eea4(pal, r, g - 1, b, idx);
+                d = ColorDistanceSquared(pal, r, g - 1, b, idx);
                 if (dist[cell - 32] > d) {
                     *n3 = idx;
                     dist[cell - 32] = d;
@@ -2235,7 +2241,7 @@ void *func_0201eee4(int id, int target) {
         if (g < 31) {
             n4 = cube + cell;
             if (idx != n4[32]) {
-                d = func_0201eea4(pal, r, g + 1, b, idx);
+                d = ColorDistanceSquared(pal, r, g + 1, b, idx);
                 if (dist[cell + 32] > d) {
                     n4[32] = idx;
                     dist[cell + 32] = d;
@@ -2250,7 +2256,7 @@ void *func_0201eee4(int id, int target) {
         if (b != 0) {
             n5 = cube + cell - 0x400;
             if (idx != *n5) {
-                d = func_0201eea4(pal, r, g, b - 1, idx);
+                d = ColorDistanceSquared(pal, r, g, b - 1, idx);
                 if (dist[cell - 0x400] > d) {
                     *n5 = idx;
                     dist[cell - 0x400] = d;
@@ -2265,7 +2271,7 @@ void *func_0201eee4(int id, int target) {
         if (b < 31) {
             n6 = cube + cell;
             if (idx != n6[0x400]) {
-                d = func_0201eea4(pal, r, g, b + 1, idx);
+                d = ColorDistanceSquared(pal, r, g, b + 1, idx);
                 if (dist[cell + 0x400] > d) {
                     n6[0x400] = idx;
                     dist[cell + 0x400] = d;
@@ -2278,24 +2284,24 @@ void *func_0201eee4(int id, int target) {
             }
         }
     }
-    func_0201c4f0(&pal);
-    func_0201c4f0(&dist);
-    func_0201c4f0(&queue);
+    Free(&pal);
+    Free(&dist);
+    Free(&queue);
     return cube;
 }
 #pragma thumb on
 
-void func_0201f450(int a, int b, u32 c, u32 d) {
+void SetupImageLayer(int a, int b, u32 c, u32 d) {
     u32 cls = 0;
-    u32 size = data_02050200[0];
+    u32 size = gLayerWidths[0];
     u32 rows;
-    if (c > data_02050200[0] || d > data_02050208[0]) {
+    if (c > gLayerWidths[0] || d > gLayerHeights[0]) {
         cls = 1;
-        size = data_02050200[1];
-        if (c > data_02050200[1] || d > data_02050208[1]) {
+        size = gLayerWidths[1];
+        if (c > gLayerWidths[1] || d > gLayerHeights[1]) {
             cls = 2;
-            size = data_02050200[2];
-            if (c > data_02050200[2] || d > data_02050208[2]) {
+            size = gLayerWidths[2];
+            if (c > gLayerWidths[2] || d > gLayerHeights[2]) {
                 cls = 3;
             }
         }
@@ -2303,12 +2309,12 @@ void func_0201f450(int a, int b, u32 c, u32 d) {
     rows = (size * d) >> 10;
     if (a & 1) {
         *(vu32 *) 0x04000000 =
-            (data_020c267c.mUnk_018[0].mUnk_57b << 31) + (data_020c267c.mUnk_018[0].mUnk_577 << 20) + 0x11833;
-        data_020c18bc.mUnk_474[0] &= ~4;
-        data_020c18bc.mUnk_2d4 = 0;
-        data_020c18bc.mUnk_2d8 = 0;
-        data_020c18bc.mUnk_2e4 = 0x100;
-        data_020c18bc.mUnk_2e6 = 0x100;
+            (gTextureBlocks.mLayers[0].mUnk_57b << 31) + (gTextureBlocks.mLayers[0].mUnk_577 << 20) + 0x11833;
+        gSystemState.mUnk_474[0] &= ~4;
+        gSystemState.mBg3X = 0;
+        gSystemState.mBg3Y = 0;
+        gSystemState.mBg3Pa = 0x100;
+        gSystemState.mBg3Pd = 0x100;
         *(vu16 *) 0x04000030 = 0x100;
         *(vu16 *) 0x04000036 = 0x100;
         *(vu16 *) 0x04000032 = 0;
@@ -2317,11 +2323,11 @@ void func_0201f450(int a, int b, u32 c, u32 d) {
         *(vu32 *) 0x0400003c = 0;
         switch (b) {
             case 0:
-                func_0201ebf4(2, rows, -1);
+                ReallocVramBanks(2, rows, -1);
                 *(vu16 *) 0x0400000e = (cls << 14) + 0x80;
                 break;
             case 1:
-                func_0201ebf4(2, rows * 2, -1);
+                ReallocVramBanks(2, rows * 2, -1);
                 *(vu16 *) 0x0400000e = (cls << 14) + 0x84;
                 break;
             default:
@@ -2332,10 +2338,10 @@ void func_0201f450(int a, int b, u32 c, u32 d) {
     }
     if (a & 2) {
         *(vu32 *) 0x04001000 =
-            (data_020c267c.mUnk_018[1].mUnk_57b << 31) + (data_020c267c.mUnk_018[1].mUnk_577 << 20) + 0x11813;
-        data_020c18bc.mUnk_474[0] &= ~8;
-        data_020c18bc.mUnk_2dc = 0;
-        data_020c18bc.mUnk_2e0 = 0;
+            (gTextureBlocks.mLayers[1].mUnk_57b << 31) + (gTextureBlocks.mLayers[1].mUnk_577 << 20) + 0x11813;
+        gSystemState.mUnk_474[0] &= ~8;
+        gSystemState.mSubBg3X = 0;
+        gSystemState.mSubBg3Y = 0;
         *(vu16 *) 0x04001030 = 0x100;
         *(vu16 *) 0x04001036 = 0x100;
         *(vu16 *) 0x04001032 = 0;
@@ -2344,11 +2350,11 @@ void func_0201f450(int a, int b, u32 c, u32 d) {
         *(vu32 *) 0x0400103c = 0;
         switch (b) {
             case 0:
-                func_0201ebf4(6, rows, -1);
+                ReallocVramBanks(6, rows, -1);
                 *(vu16 *) 0x0400100e = (cls << 14) + 0x80;
                 break;
             case 1:
-                func_0201ebf4(6, rows * 2, -1);
+                ReallocVramBanks(6, rows * 2, -1);
                 *(vu16 *) 0x0400100e = (cls << 14) + 0x84;
                 break;
         }
@@ -2356,7 +2362,7 @@ void func_0201f450(int a, int b, u32 c, u32 d) {
     }
 }
 
-u8 *func_0201f5bc(u8 *palette, u32 count, int a, int target) {
+u8 *UploadPalette(u8 *palette, u32 count, int a, int target) {
     u8 *start = palette;
     u32 i;
     u16 *dst;
@@ -2391,27 +2397,27 @@ u8 *func_0201f5bc(u8 *palette, u32 count, int a, int target) {
 }
 
 // The unused array's initializer is what sits in .rodata just before the register table (01 01 00 00).
-void func_0201f648(void) {
+void UpdateFade(void) {
     u8 unused[2] = {1, 1};
     vu16 *regs[2] = {(vu16 *) 0x0400006c, (vu16 *) 0x0400106c};
     int i;
 
     for (i = 0; i < 2; i++) {
-        if (data_020c18bc.mUnk_490[i] == 1) {
+        if (gSystemState.mFadeState[i] == FADE_STATE_TO_CLEAR) {
             u32 level = *regs[i] & 0x1f;
             if (level != 0) {
                 *regs[i] = 0x8000 | (level - 1);
             } else {
                 *regs[i] = 0;
-                data_020c18bc.mUnk_490[i] = 3;
+                gSystemState.mFadeState[i] = FADE_STATE_CLEAR;
             }
-        } else if (data_020c18bc.mUnk_490[i] == 2) {
+        } else if (gSystemState.mFadeState[i] == FADE_STATE_TO_FADED) {
             u32 level = *regs[i] & 0x1f;
             if (level < 0x10) {
                 *regs[i] = 0x8000 | (level + 1);
             } else {
                 *regs[i] = 0x8011;
-                data_020c18bc.mUnk_490[i] = 0;
+                gSystemState.mFadeState[i] = FADE_STATE_FADED;
             }
         }
     }
@@ -2423,14 +2429,14 @@ void func_0201f6d0(int a, int b, int c, u16 d, u16 e) {
     u32 frames = 0;
     u32 step = 0;
 
-    func_0201f880(3);
-    func_0201dde0(d, 3);
+    SetFaded(3);
+    LoadImage(d, 3);
     func_0202c1c4();
     func_0202bdd8(b, c, a, 0, 1);
-    func_02020854(1);
+    SetLcdSwap(1);
     while (func_0201f910(&frames, &touched, 0x3c, 0x78, 3) == 0) {
         if (phase == 0) {
-            if ((data_020c18bc.mUnk_45c & 3) == 0) {
+            if ((gSystemState.mElapsedFrames & 3) == 0) {
                 step++;
                 if (step == 10) {
                     phase = 1;
@@ -2442,135 +2448,138 @@ void func_0201f6d0(int a, int b, int c, u16 d, u16 e) {
                 step = 10;
             }
         }
-        func_0201bb30();
+        UpdateSystemAndWait();
         func_0202cf08(e + step, 0x2c, 0x5d, 0, 1);
     }
-    data_020c18bc.mUnk_46c |= 0x40000;
-    func_0201f858(3);
-    data_020c18bc.mUnk_46c &= ~0x40000;
+    gSystemState.mFlags |= 0x40000;
+    FadeAndWait(3);
+    gSystemState.mFlags &= ~0x40000;
 }
 
-int func_0201f794(int a, int b) {
-    if ((a & 1) && data_020c18bc.mUnk_490[0] != b) {
+int IsFadeState(int screens, int state) {
+    if ((screens & 1) && gSystemState.mFadeState[0] != state) {
         return 0;
     }
-    if ((a & 2) && data_020c18bc.mUnk_490[1] != b) {
+    if ((screens & 2) && gSystemState.mFadeState[1] != state) {
         return 0;
     }
     return 1;
 }
 
-int func_0201f7c0(int a, int b) {
+int TestBits(int a, int b) {
     if (a & b) {
         return 1;
     }
     return 0;
 }
 
-void func_0201f7cc(int a) {
-    if (func_0201f7c0(a, 1) == 1) {
-        data_020c18bc.mUnk_490[0] = 2;
+void StartFade(int a) {
+    if (TestBits(a, 1) == 1) {
+        gSystemState.mFadeState[0] = FADE_STATE_TO_FADED;
     }
-    if (func_0201f7c0(a, 2) == 1) {
-        data_020c18bc.mUnk_490[1] = 2;
+    if (TestBits(a, 2) == 1) {
+        gSystemState.mFadeState[1] = FADE_STATE_TO_FADED;
     }
 }
 
-void func_0201f7f8(int a) {
-    if (func_0201f7c0(a, 1) == 1) {
-        if (data_020c18bc.mUnk_490[0] != 3) {
-            data_020c18bc.mUnk_490[0] = 1;
+void StartFadeClear(int a) {
+    if (TestBits(a, 1) == 1) {
+        if (gSystemState.mFadeState[0] != FADE_STATE_CLEAR) {
+            gSystemState.mFadeState[0] = FADE_STATE_TO_CLEAR;
         }
     }
-    if (func_0201f7c0(a, 2) == 1) {
-        if (data_020c18bc.mUnk_490[1] != 3) {
-            data_020c18bc.mUnk_490[1] = 1;
+    if (TestBits(a, 2) == 1) {
+        if (gSystemState.mFadeState[1] != FADE_STATE_CLEAR) {
+            gSystemState.mFadeState[1] = FADE_STATE_TO_CLEAR;
         }
     }
 }
 
-void func_0201f830(int a) {
-    func_0201f7f8(a);
-    while (func_0201f794(a, 3) != 1) {
-        func_0201bb30();
+void FadeClearAndWait(int a) {
+    StartFadeClear(a);
+    while (IsFadeState(a, FADE_STATE_CLEAR) != 1) {
+        UpdateSystemAndWait();
     }
 }
 
-void func_0201f858(int a) {
-    while (func_0201f794(a, 0) != 1) {
-        func_0201f7cc(a);
-        func_0201bb30();
+void FadeAndWait(int a) {
+    while (IsFadeState(a, FADE_STATE_FADED) != 1) {
+        StartFade(a);
+        UpdateSystemAndWait();
     }
 }
 
-void func_0201f880(int a) {
-    if (func_0201f7c0(a, 1) == 1) {
-        data_020c18bc.mUnk_490[0] = 0;
+void SetFaded(int a) {
+    if (TestBits(a, 1) == 1) {
+        gSystemState.mFadeState[0] = FADE_STATE_FADED;
         *(vu16 *) 0x0400006c = 0x8011;
         func_0202ae34(1);
     }
-    if (func_0201f7c0(a, 2) == 1) {
-        data_020c18bc.mUnk_490[1] = 0;
+    if (TestBits(a, 2) == 1) {
+        gSystemState.mFadeState[1] = FADE_STATE_FADED;
         *(vu16 *) 0x0400106c = 0x8011;
         func_0202ae34(2);
     }
 }
 
-void func_0201f8d0(int a) {
-    if (func_0201f7c0(a, 1) == 1) {
-        data_020c18bc.mUnk_490[0] = 3;
+void SetFadeClear(int a) {
+    if (TestBits(a, 1) == 1) {
+        gSystemState.mFadeState[0] = FADE_STATE_CLEAR;
         *(vu16 *) 0x0400006c = 0;
     }
-    if (func_0201f7c0(a, 2) == 1) {
-        data_020c18bc.mUnk_490[1] = 3;
+    if (TestBits(a, 2) == 1) {
+        gSystemState.mFadeState[1] = FADE_STATE_CLEAR;
         *(vu16 *) 0x0400106c = 0;
     }
 }
 
 int func_0201f910(u32 *frames, int *touched, u32 minFrames, u32 maxFrames, int layers) {
-    if ((data_020c18bc.mUnk_10 & 9) || func_02020e3c(0, 0) == 1) {
+    if ((gSystemState.mKeysDown & 9) || ReadTouchAndAppendTrail(0, 0) == 1) {
         *touched = 1;
     }
-    if (!(data_020c18bc.mUnk_10 & 9) && func_02020e3c(0, 0) == 0 && *frames > minFrames && *touched == 1) {
+    if (!(gSystemState.mKeysDown & 9) && ReadTouchAndAppendTrail(0, 0) == 0 && *frames > minFrames && *touched == 1) {
         return 1;
     }
     if (*frames >= maxFrames) {
         return 1;
     }
-    if (func_0201f794(layers, 3) == 1) {
+    if (IsFadeState(layers, FADE_STATE_CLEAR) == 1) {
         (*frames)++;
     }
     return 0;
 }
 
-void func_0201f980(int a, int b, int c, int d, int e) {
+// Shows image `a` on the screens in mask e: waits for FADE_STATE_FADED, loads the image and starts the fade to clear,
+// then waits until a key (bits 0 or 3) or the touch is released after more than b frames, or until c frames have
+// passed (frames count while the screens are clear). Then d == 0 sets the screens faded, d == 2 fades them and waits,
+// d == 1 leaves them; the VRAM banks of uses 2 and 6 are freed for screens 1 and 2.
+void RunImage(int a, int b, int c, int d, int e) {
     u32 frames = 0;
     int touched = 0;
 
-    func_0201f858(e);
-    func_0201dde0(a, e);
-    func_0201f7f8(e);
+    FadeAndWait(e);
+    LoadImage(a, e);
+    StartFadeClear(e);
     while (func_0201f910(&frames, &touched, b, c, e) == 0) {
-        func_0201bb30();
+        UpdateSystemAndWait();
     }
     if (d != 0) {
         if (d == 2) {
-            func_0201f858(e);
+            FadeAndWait(e);
         }
     } else {
-        func_0201f880(e);
+        SetFaded(e);
     }
     if (e & 1) {
-        func_0201eb74(2);
+        FreeVramBanks(2);
     }
     if (e & 2) {
-        func_0201eb74(6);
+        FreeVramBanks(6);
     }
 }
 
 #pragma thumb off
-// Moves an entry to the end of the list.
-void func_0201fa08(IndexNode16 *list, u32 index) {
+void MoveIndexNode16ToEnd(IndexNode16 *list, u32 index) {
     IndexNode16 *node = &list[index];
     list[node->mNext].mPrev = node->mPrev;
     list[node->mPrev].mNext = node->mNext;
@@ -2582,8 +2591,7 @@ void func_0201fa08(IndexNode16 *list, u32 index) {
 #pragma thumb on
 
 #pragma thumb off
-// Moves an entry to the end of the list.
-void func_0201fa5c(IndexNode *list, u32 index) {
+void MoveIndexNodeToEnd(IndexNode *list, u32 index) {
     IndexNode *node = &list[index];
     list[node->mNext].mPrev = node->mPrev;
     list[node->mPrev].mNext = node->mNext;
@@ -2595,28 +2603,28 @@ void func_0201fa5c(IndexNode *list, u32 index) {
 #pragma thumb on
 
 // Quadratic Bezier with the weights in 1/1024 steps: a at t = 0, b at t = 1024, c as the control point.
-int func_0201fab0(int a, int b, int c, int t) {
+int InterpolateQuadratic(int a, int b, int c, int t) {
     int u = 1024 - t;
     int x = a * u + c * 2 * t;
     int y = u * x + b * t * t;
     return y / 1024 / 1024;
 }
 
-u32 func_0201fae4(int x, int y) {
+u32 LengthSquared2d(int x, int y) {
     return x * x + y * y;
 }
 
-u32 func_0201faf0(int x, int y) {
-    return func_0201fccc(func_0201fae4(x, y));
+u32 Length2d(int x, int y) {
+    return SqrtU32(LengthSquared2d(x, y));
 }
 
-s64 func_0201fafc(int x, int y) {
+s64 LengthSquared2d64(int x, int y) {
     return (s64) x * x + (s64) y * y;
 }
 
 // Moves *value toward 0 (speed < 0) or LEVEL_FULL (speed > 0) by 1/|speed| of the distance when it is farther than
 // 2 * |speed| away; otherwise it lands on the step directly.
-void func_0201fb24(u16 *value, int speed) {
+void EaseLevel(u16 *value, int speed) {
     int target;
     int diff;
     if (speed > 0) {
@@ -2632,7 +2640,7 @@ void func_0201fb24(u16 *value, int speed) {
     *value += diff;
 }
 
-void func_0201fb5c(u16 *p, int add) {
+void AddLevel(u16 *p, int add) {
     if (*p < LEVEL_FULL) {
         int sum = *p + add;
         if (sum < LEVEL_FULL) {
@@ -2644,7 +2652,7 @@ void func_0201fb5c(u16 *p, int add) {
 }
 
 // Linear map of a from [0, b] to [c, d].
-int func_0201fb74(int a, int b, int c, int d) {
+int MapRangeFromZero(int a, int b, int c, int d) {
     int r;
     int bitsRange;
     int bitsA;
@@ -2654,30 +2662,30 @@ int func_0201fb74(int a, int b, int c, int d) {
     if (a == b) {
         return d;
     }
-    bitsRange = 32 - func_02028250(abs(d - c));
-    bitsA = 32 - func_02028250(a);
+    bitsRange = 32 - LeadingZeroCount(abs(d - c));
+    bitsA = 32 - LeadingZeroCount(a);
     if (bitsRange + bitsA > 30) {
         r = (s64) a * ((s64) d - c) / b;
     } else {
-        r = func_0201fca8((d - c) * a, b);
+        r = DivideRounded((d - c) * a, b);
     }
     return c + r;
 }
 
 // Linear map of v from [a, b] to [c, d].
-int func_0201fbe4(int v, int a, int b, int c, int d) {
+int MapRange(int v, int a, int b, int c, int d) {
     if (a == b) {
         OS_Terminate();
     }
-    return c + func_0201fca8((v - a) * (d - c), b - a);
+    return c + DivideRounded((v - a) * (d - c), b - a);
 }
 
-char *func_0201fc08(int value, char *buf) {
-    return func_0201fc14(value, buf, 0);
+char *FormatDecimal(int value, char *buf) {
+    return FormatDecimalGrouped(value, buf, 0);
 }
 
 // Writes value in decimal to buf, with separator after the digit of each thousands place unless it is 0.
-char *func_0201fc14(int value, char *buf, char separator) {
+char *FormatDecimalGrouped(int value, char *buf, char separator) {
     int pow10[11] = {1000000000, 100000000, 10000000, 1000000, 100000, 10000, 1000, 100, 10, 1, 0};
     char *start = buf;
     int *p = pow10;
@@ -2709,16 +2717,16 @@ char *func_0201fc14(int value, char *buf, char separator) {
 }
 
 // a / b rounded to nearest, saturated to 0x0fffffff (negated when a < 0) when b is 0.
-int func_0201fca8(int a, int b) {
+int DivideRounded(int a, int b) {
     int r;
     if (b == 0) {
         return 0x0fffffff ^ (a >> 31);
     }
-    r = func_0201fd40(a * 2, b);
+    r = Divide(a * 2, b);
     return (r + (r >> 31) + 1) >> 1;
 }
 
-u32 func_0201fccc(u32 value) {
+u32 SqrtU32(u32 value) {
     *(volatile u16 *) 0x040002b0 = 0;
     *(volatile u32 *) 0x040002b8 = value;
     while (*(volatile u16 *) 0x040002b0 & MATH_BUSY) {
@@ -2726,7 +2734,7 @@ u32 func_0201fccc(u32 value) {
     return *(volatile u32 *) 0x040002b4;
 }
 
-u32 func_0201fcec(u64 value) {
+u32 SqrtU64(u64 value) {
     *(volatile u16 *) 0x040002b0 = 1;
     *(volatile u64 *) 0x040002b8 = value;
     while (*(volatile u16 *) 0x040002b0 & MATH_BUSY) {
@@ -2734,7 +2742,7 @@ u32 func_0201fcec(u64 value) {
     return *(volatile u32 *) 0x040002b4;
 }
 
-u32 func_0201fd10(u32 numerator, u32 denominator, u32 *remainder) {
+u32 DivideWithRemainder(u32 numerator, u32 denominator, u32 *remainder) {
     *(volatile u16 *) 0x04000280 = 0;
     *(volatile u32 *) 0x04000290 = numerator;
     *(volatile u64 *) 0x04000298 = denominator;
@@ -2744,7 +2752,7 @@ u32 func_0201fd10(u32 numerator, u32 denominator, u32 *remainder) {
     return *(volatile u32 *) 0x040002a0;
 }
 
-s32 func_0201fd40(s32 numerator, s32 denominator) {
+s32 Divide(s32 numerator, s32 denominator) {
     *(volatile u16 *) 0x04000280 = 0;
     *(volatile u32 *) 0x04000290 = numerator;
     *(volatile u64 *) 0x04000298 = (u32) denominator;
@@ -2754,28 +2762,28 @@ s32 func_0201fd40(s32 numerator, s32 denominator) {
 }
 
 // Advances the generator state: add a constant, rotate right by 3.
-u32 func_0201fd68(void) {
-    u32 s = data_020c18bc.mUnk_478 + 0x5cfae23d;
+u32 NextRandom(void) {
+    u32 s = gSystemState.mRandomSeed + 0x5cfae23d;
     s = (s >> 3) + (s << 29);
-    data_020c18bc.mUnk_478 = s;
+    gSystemState.mRandomSeed = s;
     return s;
 }
 
 // Random value between lo and hi. When lo == hi nothing is computed and lo is still in r0; adding `return lo;`
 // changes the code.
-u32 func_0201fd84(u32 lo, u32 hi) {
+u32 RandomRange(u32 lo, u32 hi) {
     if (lo != hi) {
-        return func_0201fb74((u16) func_0201fd68(), ANGLE_FULL, lo, hi);
+        return MapRangeFromZero((u16) NextRandom(), ANGLE_FULL, lo, hi);
     }
 }
 
 // Mixes the current scanline into the generator state.
-void func_0201fda4(void) {
-    data_020c18bc.mUnk_478 += *(vu16 *) 0x04000006;
+void MixRandomSeed(void) {
+    gSystemState.mRandomSeed += *(vu16 *) 0x04000006;
 }
 
 // Reads the bits lo..hi (inclusive, bit 0 = lowest bit of the first byte) of a byte array.
-u32 func_0201fdbc(const void *data, u32 lo, u32 hi) {
+u32 ReadBits(const void *data, u32 lo, u32 hi) {
     const u8 *base = (const u8 *) data;
     u32 result = 0;
     u32 shift = 0;
@@ -2797,7 +2805,7 @@ u32 func_0201fdbc(const void *data, u32 lo, u32 hi) {
 }
 
 // Shortest distance between two angles.
-u32 func_0201fe14(u32 a, u32 b) {
+u32 AngleDistance(u32 a, u32 b) {
     int d;
     if (a < b) {
         u32 t = a;
@@ -2812,8 +2820,8 @@ u32 func_0201fe14(u32 a, u32 b) {
     return d;
 }
 
-// Shortest signed distance from b to a.
-int func_0201fe34(u32 a, u32 b) {
+// Shortest signed distance from a to b (b - a, taken the short way round).
+int AngleDelta(u32 a, u32 b) {
     int d;
     int sign;
     if (a < b) {
@@ -2836,15 +2844,15 @@ int func_0201fe34(u32 a, u32 b) {
     return -d;
 }
 
-// 1 when the short way from b to a runs upward.
-int func_0201fe6c(u16 a, u16 b) {
+// 1 when the short way from `from` to `to` runs upward.
+int IsAngleIncreasing(u16 to, u16 from) {
     u32 d;
     int up;
-    if (b < a) {
-        d = a - b;
+    if (from < to) {
+        d = to - from;
         up = 1;
     } else {
-        d = b - a;
+        d = from - to;
         up = 0;
     }
     if (d > ANGLE_FULL - d) {
@@ -2854,18 +2862,18 @@ int func_0201fe6c(u16 a, u16 b) {
 }
 
 // Moves b toward a by half the shortest distance.
-u32 func_0201fe8c(u16 a, u16 b) {
-    u32 d = func_0201fe14(a, b);
-    int up = func_0201fe6c(a, b);
+u32 AngleHalfway(u16 a, u16 b) {
+    u32 d = AngleDistance(a, b);
+    int up = IsAngleIncreasing(a, b);
     return (u16) (b + (up * 2 - 1) * (d >> 1));
 }
 
-u32 func_0201feb0(s32 x, s32 y) {
+u32 AngleOfVector(s32 x, s32 y) {
     return FX_Atan2Idx(x, -y);
 }
 
 // Cross product of the vectors b->a and b->c.
-int func_0201febc(int ax, int ay, int bx, int by, int cx, int cy) {
+int Cross2d(int ax, int ay, int bx, int by, int cx, int cy) {
     return (ax - bx) * (cy - by) - (cx - bx) * (ay - by);
 }
 
@@ -2873,172 +2881,174 @@ void func_0201fed4(int a) {
     u32 elapsed;
     u32 flag;
     u32 limit;
-    if (data_020c18bc.mUnk_32e == 0) {
+    if (gSystemState.mUnk_32e == 0) {
         return;
     }
-    if (data_020c18bc.mUnk_32e == 4 && (a & 1) == 0) {
+    if (gSystemState.mUnk_32e == 4 && (a & 1) == 0) {
         return;
     }
-    elapsed = data_020c18bc.mUnk_45c - data_020c18bc.mUnk_324;
+    elapsed = gSystemState.mElapsedFrames - gSystemState.mUnk_324;
     flag = 0;
-    limit = data_020c18bc.mUnk_457;
+    limit = gSystemState.mUnk_457;
     if (limit == 0) {
         limit = 180;
     }
     while (func_0201f910(&elapsed, &flag, 60, limit, 3) == 0) {
-        func_0201bb30();
+        UpdateSystemAndWait();
     }
-    data_020c18bc.mUnk_450 |= 4;
-    while (data_020c18bc.mUnk_32e == 3 || data_020c18bc.mUnk_32e == 10 || data_020c18bc.mUnk_32e == 4) {
-        func_0201bb30();
+    gSystemState.mUnk_450 |= 4;
+    while (gSystemState.mUnk_32e == 3 || gSystemState.mUnk_32e == 10 || gSystemState.mUnk_32e == 4) {
+        UpdateSystemAndWait();
     }
-    data_020c18bc.mUnk_32f = data_020c18bc.mUnk_32e;
-    data_020c18bc.mUnk_32e = 0;
-    data_020c18bc.mUnk_46c &= 0xfff7ffff;
+    gSystemState.mUnk_32f = gSystemState.mUnk_32e;
+    gSystemState.mUnk_32e = 0;
+    gSystemState.mFlags &= 0xfff7ffff;
 }
 
-int func_0201ff80(u32 id) {
-    return data_020c18bc.mUnk_328 / func_02021e44(id, data_020c18bc.mUnk_32c + 1);
+int GetSaveBlockSize(u32 id) {
+    return gSystemState.mSaveStoreSize / func_02021e44(id, gSystemState.mSaveLastField + 1);
 }
 
-int func_0201ffa0(void) {
-    int d = data_020c18bc.mUnk_32c - data_020c18bc.mUnk_32a;
-    if (!(data_020c18bc.mUnk_32a < data_020c18bc.mUnk_32c)) {
+int GetSaveFieldCount(void) {
+    int d = gSystemState.mSaveLastField - gSystemState.mSaveFirstField;
+    if (!(gSystemState.mSaveFirstField < gSystemState.mSaveLastField)) {
         OS_Terminate();
     }
     return d + 1;
 }
 
-void *func_0201ffbc(void) {
-    return func_0201c430(func_0201ffa0() * 4);
+void *AllocSaveRecord(void) {
+    return Alloc(GetSaveFieldCount() * 4);
 }
 
-void func_0201ffcc(void *p) {
-    func_0201c4f0(p);
+void FreeSaveRecord(void *p) {
+    Free(p);
 }
 
 // Returns the 16-bit tag of a block: the table bytes at 2 * index and 2 * index + 1, each taken modulo the table's
 // length.
-u16 func_0201ffd4(int id, u32 index) {
-    const u8 *table = func_02021e18(id, data_020c18bc.mUnk_32c + 2);
-    u32 count = func_02021f0c(id, data_020c18bc.mUnk_32c + 2, 0);
+u16 GetSaveBlockTag(int id, u32 index) {
+    const u8 *table = func_02021e18(id, gSystemState.mSaveLastField + 2);
+    u32 count = func_02021f0c(id, gSystemState.mSaveLastField + 2, 0);
     if (count < 2) {
         OS_Terminate();
     }
     return (table[(index * 2) % count] << 8) + table[(index * 2 + 1) % count];
 }
 
-// Sets up the block store for set a: kind, first and last field, status callback and the value for mUnk_454
-// (-1 leaves it). Reads every block and rewrites the ones that do not read back intact, then waits for the store.
-void func_0202002c(u32 a, int b, u16 c, int d, void (*fn)(u32), int e) {
+// Sets up the block store for set a: kind, first and last field, status callback and the value for mUnk_454 (-1
+// leaves it; otherwise the callback is also called with 4). Reads every block, writes a zero record
+// (WriteZeroSaveBlock) over each one that does not read back intact, then waits for the store.
+void InitSaveStore(u32 a, int b, u16 c, int d, void (*fn)(u32), int e) {
     u32 count = func_02021e44(a, d + 1);
     u32 r;
     u32 i;
     if (b != SAVE_STORE_SMALL && b != SAVE_STORE_LARGE) {
         OS_Terminate();
     }
-    data_020c18bc.mUnk_31c = fn;
-    data_020c18bc.mUnk_32e = 0;
-    data_020c18bc.mUnk_32f = data_020c18bc.mUnk_32e;
-    data_020c18bc.mUnk_32a = c;
-    data_020c18bc.mUnk_32c = d;
-    data_020c18bc.mUnk_324 = 0;
+    gSystemState.mSaveCallback = fn;
+    gSystemState.mUnk_32e = 0;
+    gSystemState.mUnk_32f = gSystemState.mUnk_32e;
+    gSystemState.mSaveFirstField = c;
+    gSystemState.mSaveLastField = d;
+    gSystemState.mUnk_324 = 0;
     if (e != -1) {
-        data_020c18bc.mUnk_454 = e;
+        gSystemState.mUnk_454 = e;
         fn(4);
     }
-    func_02020ee0(b);
+    InitBackup(b);
     if (b == SAVE_STORE_SMALL) {
-        data_020c18bc.mUnk_328 = SMALL_BLOCK_SIZE;
+        gSystemState.mSaveStoreSize = SMALL_BLOCK_SIZE;
     } else {
-        data_020c18bc.mUnk_328 = LARGE_BLOCK_SIZE;
+        gSystemState.mSaveStoreSize = LARGE_BLOCK_SIZE;
     }
     // Volatile read of the frame counter; the value is not used.
-    data_020c18bc.mUnk_45c;
+    gSystemState.mElapsedFrames;
     for (i = 0; i < count; i++) {
-        r = func_02020140(i, 0, a);
+        r = ReadSaveBlock(i, 0, a);
         if (r == BLOCK_ID_OK) {
-            data_020c18bc.mUnk_31c(1);
+            gSystemState.mSaveCallback(1);
         }
         if (r != BLOCK_INTACT) {
-            if (data_020c18bc.mUnk_328 > SMALL_BLOCK_SIZE && r != BLOCK_ID_OK) {
-                data_020c18bc.mUnk_31c(6);
+            if (gSystemState.mSaveStoreSize > SMALL_BLOCK_SIZE && r != BLOCK_ID_OK) {
+                gSystemState.mSaveCallback(6);
             }
-            func_02020224(i, a);
+            WriteZeroSaveBlock(i, a);
         }
     }
     func_0201fed4(1);
-    if (data_020c18bc.mUnk_32f == 1) {
-        data_020c18bc.mUnk_31c(2);
+    if (gSystemState.mUnk_32f == 1) {
+        gSystemState.mSaveCallback(2);
         while (func_02020890() == 0) {
-            func_0201bb30();
+            UpdateSystemAndWait();
         }
-        data_020c18bc.mUnk_46c &= ~0xc0000;
+        gSystemState.mFlags &= ~0xc0000;
     }
-    data_020c18bc.mUnk_450 |= 4;
+    gSystemState.mUnk_450 |= 4;
 }
 
 // Reads block index of set c. Bit 0 of the result: the checksum matches (the record is then unpacked into buf when
 // buf is not null); bit 1: the stored tag matches the block's tag.
-u32 func_02020140(u32 index, void *buf, int c) {
+u32 ReadSaveBlock(u32 index, void *buf, int c) {
     u16 table[256];
     u16 crc;
-    int size = func_0201ff80(c);
-    u8 *data = func_0201c430(size);
+    int size = GetSaveBlockSize(c);
+    u8 *data = Alloc(size);
     u32 result = 0;
-    int check = func_0201ffd4(c, index);
-    if (index >= func_02021e44(c, data_020c18bc.mUnk_32c + 1)) {
+    int check = GetSaveBlockTag(c, index);
+    if (index >= func_02021e44(c, gSystemState.mSaveLastField + 1)) {
         OS_Terminate();
     }
-    if (func_02020f9c(data, index * size, size) == 0) {
-        if (data_020c18bc.mUnk_320 != 0) {
-            memcpy(data, data_020c18bc.mUnk_320 + index * size, size);
+    if (ReadBackup(data, index * size, size) == 0) {
+        if (gSystemState.mUnk_320 != 0) {
+            memcpy(data, gSystemState.mUnk_320 + index * size, size);
         } else {
-            data_020c18bc.mUnk_31c(10);
+            gSystemState.mSaveCallback(10);
         }
     }
     func_02048780(table, CRC_POLY);
     crc = func_02048804(table, data + 4, size - 4);
     if (crc == data[0] + (data[1] << 8)) {
         if (buf != 0) {
-            func_0202062c(buf, (u32 *) (data + 4), c);
+            UnpackSaveFields(buf, (u32 *) (data + 4), c);
         }
         result |= BLOCK_CRC_OK;
     }
     if (data[2] == (check & 0xff) && data[3] == (check >> 8)) {
         result |= BLOCK_ID_OK;
     }
-    if (data_020c18bc.mUnk_32e != 1) {
+    if (gSystemState.mUnk_32e != 1) {
         func_0201fed4(0);
     }
-    func_0201c4f0(&data);
+    Free(&data);
     return result;
 }
 
-// Writes a freshly allocated record to block index of set c and sets the block's bit in mUnk_458.
-void func_02020224(u32 index, int c) {
-    void *buf = func_0201c430(func_0201ffa0() * 4);
-    func_02020258(index, buf, c);
-    func_0201c4f0(&buf);
-    data_020c18bc.mUnk_458[0] |= 1 << index;
+// Writes a zero-filled record (Alloc clears it) to block index of set c and sets the block's bit in
+// mClearedSaveBlocks.
+void WriteZeroSaveBlock(u32 index, int c) {
+    void *buf = Alloc(GetSaveFieldCount() * 4);
+    WriteSaveBlock(index, buf, c);
+    Free(&buf);
+    gSystemState.mClearedSaveBlocks[0] |= 1 << index;
 }
 
 // Packs the record in buf into block index of set c with its checksum and tag and writes the block.
-void func_02020258(u32 index, void *buf, int c) {
+void WriteSaveBlock(u32 index, void *buf, int c) {
     u16 table[256];
     u16 crc;
-    int size = func_0201ff80(c);
-    u8 *data = func_0201c430(size);
+    int size = GetSaveBlockSize(c);
+    u8 *data = Alloc(size);
     int payloadWritten = 1;
-    int check = func_0201ffd4(c, index);
+    int check = GetSaveBlockTag(c, index);
     int payload;
     u32 offset;
     int headWritten;
-    if (index >= func_02021e44(c, data_020c18bc.mUnk_32c + 1)) {
+    if (index >= func_02021e44(c, gSystemState.mSaveLastField + 1)) {
         OS_Terminate();
     }
     memset(data, 0, size);
-    func_0202043c(buf, (u32 *) (data + 4), c);
+    PackSaveFields(buf, (u32 *) (data + 4), c);
     func_02048780(table, CRC_POLY);
     payload = size - 4;
     crc = func_02048804(table, data + 4, payload);
@@ -3046,31 +3056,30 @@ void func_02020258(u32 index, void *buf, int c) {
     data[2] = check;
     data[3] = check >> 8;
     if (size > 4) {
-        payloadWritten = func_02020f38(data + 4, index * size + 4, payload);
+        payloadWritten = WriteBackup(data + 4, index * size + 4, payload);
     }
     offset = index * size;
-    headWritten = func_02020f38(data, offset, 4);
+    headWritten = WriteBackup(data, offset, 4);
     if (payloadWritten == 0 || headWritten == 0) {
-        if (data_020c18bc.mUnk_320 != 0) {
-            memcpy(data_020c18bc.mUnk_320 + offset, data, size);
+        if (gSystemState.mUnk_320 != 0) {
+            memcpy(gSystemState.mUnk_320 + offset, data, size);
         } else {
-            data_020c18bc.mUnk_31c(4);
+            gSystemState.mSaveCallback(4);
         }
     }
-    if (data_020c18bc.mUnk_32e != 1) {
+    if (gSystemState.mUnk_32e != 1) {
         func_0201fed4(1);
     }
-    func_0201c4f0(&data);
+    Free(&data);
 }
 
-// Clears mUnk_456.
-void func_02020348(void) {
-    data_020c18bc.mUnk_456 = 0;
+void ClearBackupTimer(void) {
+    gSystemState.mBackupTimer = 0;
 }
 
 #pragma thumb off
 // Fills order with 0..count-1, ends it with ORDER_END and sorts it by descending key (shell sort).
-void func_02020354(u32 *order, const u32 *key, int count) {
+void SortIndicesByKey(u32 *order, const u32 *key, int count) {
     int gap;
     u32 t;
     int j;
@@ -3081,7 +3090,7 @@ void func_02020354(u32 *order, const u32 *key, int count) {
         order[i] = i;
     }
     order[i] = ORDER_END;
-    gap = (1 << (32 - func_02028250(count))) - 1;
+    gap = (1 << (32 - LeadingZeroCount(count))) - 1;
     for (; gap > 0; gap = (gap - 1) / 2) {
         span = count - gap;
         for (a = 0; a < span; a++) {
@@ -3100,7 +3109,7 @@ void func_02020354(u32 *order, const u32 *key, int count) {
 
 // Packs the field values into 32-bit words, mixed radix: each field's radix is its largest value plus one. Returns
 // the number of bytes written to out.
-int func_0202043c(const u32 *values, u32 *out, u32 id) {
+int PackSaveFields(const u32 *values, u32 *out, u32 id) {
     int fields;
     u32 *radix;
     u32 *order;
@@ -3109,13 +3118,13 @@ int func_0202043c(const u32 *values, u32 *out, u32 id) {
     u64 prod;
     u64 old;
     u32 acc;
-    fields = func_0201ffa0();
-    radix = func_0201c430(fields * 4);
-    order = func_0201c430((fields + 1) * 4);
+    fields = GetSaveFieldCount();
+    radix = Alloc(fields * 4);
+    order = Alloc((fields + 1) * 4);
     for (i = 0; i < fields; i++) {
-        radix[i] = func_02021e44(id, data_020c18bc.mUnk_32a + i) + 1;
+        radix[i] = func_02021e44(id, gSystemState.mSaveFirstField + i) + 1;
     }
-    func_02020354(order, radix, fields);
+    SortIndicesByKey(order, radix, fields);
     outCount = 0;
     while (1) {
         i = 0;
@@ -3148,25 +3157,25 @@ int func_0202043c(const u32 *values, u32 *out, u32 id) {
         out[outCount] = acc;
         outCount++;
     }
-    func_0201c4f0(&radix);
-    func_0201c4f0(&order);
+    Free(&radix);
+    Free(&order);
     return outCount * 4;
 }
 
-// Unpacks the words written by func_0202043c back into the field values.
-void func_0202062c(u32 *out, u32 *packed, u32 id) {
-    int fields = func_0201ffa0();
-    u32 *radix = func_0201c430(fields * 4);
-    u32 *order = func_0201c430((fields + 1) * 4);
+// Unpacks the words written by PackSaveFields back into the field values; the packed words are divided in place.
+void UnpackSaveFields(u32 *out, u32 *packed, u32 id) {
+    int fields = GetSaveFieldCount();
+    u32 *radix = Alloc(fields * 4);
+    u32 *order = Alloc((fields + 1) * 4);
     u32 list[32];
     int i;
     int w;
     int n;
     u64 prod;
     for (i = 0; i < fields; i++) {
-        radix[i] = func_02021e44(id, data_020c18bc.mUnk_32a + i) + 1;
+        radix[i] = func_02021e44(id, gSystemState.mSaveFirstField + i) + 1;
     }
-    func_02020354(order, radix, fields);
+    SortIndicesByKey(order, radix, fields);
     for (w = 0;; w++) {
         i = 0;
         n = 0;
@@ -3201,13 +3210,13 @@ void func_0202062c(u32 *out, u32 *packed, u32 id) {
             packed[w] = packed[w] / radix[f];
         }
     }
-    func_0201c4f0(&radix);
-    func_0201c4f0(&order);
+    Free(&radix);
+    Free(&order);
 }
 #pragma thumb on
 
 // Sets (a == 1) or clears the LCD swap bit of the power control register.
-void func_02020854(int a) {
+void SetLcdSwap(int a) {
     if (a == 1) {
         *(vu16 *) 0x04000304 |= POWCNT1_SWAP_LCDS;
     } else {
@@ -3215,8 +3224,7 @@ void func_02020854(int a) {
     }
 }
 
-// Whether the display-swap bit of the power control register is set.
-int func_02020878(void) {
+int IsLcdSwapped(void) {
     if (*(vu16 *) 0x04000304 & POWCNT1_SWAP_LCDS) {
         return 1;
     }
@@ -3224,17 +3232,17 @@ int func_02020878(void) {
 }
 
 int func_02020890(void) {
-    if (data_020c18bc.mUnk_490[0] == 3 && data_020c18bc.mUnk_490[1] == 3 &&
-        ((data_020c18bc.mUnk_12 & 1) || data_020c18bc.mUnk_2ac_0 == 1)) {
-        data_020c18bc.mUnk_12 &= ~1;
-        data_020c18bc.mUnk_2ac_0 = 0;
+    if (gSystemState.mFadeState[0] == FADE_STATE_CLEAR && gSystemState.mFadeState[1] == FADE_STATE_CLEAR &&
+        ((gSystemState.mKeysPressed & 1) || gSystemState.mTouchPressed == 1)) {
+        gSystemState.mKeysPressed &= ~1;
+        gSystemState.mTouchPressed = 0;
         return 1;
     }
     return 0;
 }
 
 // Sets the sound ids and key mask of the newest button (or of the first one when ids are inserted in front).
-void func_020208dc(int flags, u16 a, u16 b, u16 c) {
+void SetTouchButtonSoundsAndKeys(int flags, u16 a, u16 b, u16 c) {
     int index;
     if ((flags & TOUCH_ADD_FRONT) == 0) {
         index = data_020c1d60.mUnk_800.mUnk_100.mUnk_08 - 1;
@@ -3246,19 +3254,21 @@ void func_020208dc(int flags, u16 a, u16 b, u16 c) {
     data_020c1d60.mUnk_000[index].mUnk_e = c;
 }
 
-void func_02020914(int a, int b, int c, int d, int e, int f, u16 g, u16 h, u16 i) {
-    func_02020944(a, b, c, d, e, f, g, h);
-    func_020208dc(a, g, h, i);
+// Under SYSTEM_TOUCH_LOCK no button is added, but the sounds and key mask are still written to the newest button
+// in the list.
+void AddTouchButtonEx(int a, int b, int c, int d, int e, int f, u16 g, u16 h, u16 i) {
+    AddTouchButtonWithSounds(a, b, c, d, e, f, g, h);
+    SetTouchButtonSoundsAndKeys(a, g, h, i);
 }
 
-void func_02020944(int a, int b, int c, int d, int e, int f, u16 g, u16 h) {
-    if (!(data_020c18bc.mUnk_46c & SYSTEM_TOUCH_LOCK)) {
-        func_02020978(a, b, c, d, e, f);
-        func_020208dc(a, g, h, 0);
+void AddTouchButtonWithSounds(int a, int b, int c, int d, int e, int f, u16 g, u16 h) {
+    if (!(gSystemState.mFlags & SYSTEM_TOUCH_LOCK)) {
+        AddTouchButton(a, b, c, d, e, f);
+        SetTouchButtonSoundsAndKeys(a, g, h, 0);
     }
 }
 
-void func_02020978(int id, int x, int y, int a, int b, int c) {
+void AddTouchButton(int id, int x, int y, int a, int b, int c) {
     s32 rect[4];
     int index;
     int shifting;
@@ -3266,7 +3276,7 @@ void func_02020978(int id, int x, int y, int a, int b, int c) {
     if (data_020c1d60.mUnk_800.mUnk_100.mUnk_08 >= TOUCH_BUTTON_COUNT) {
         OS_Terminate();
     }
-    if (data_020c18bc.mUnk_46c & SYSTEM_TOUCH_LOCK) {
+    if (gSystemState.mFlags & SYSTEM_TOUCH_LOCK) {
         return;
     }
     shifting = id & TOUCH_ADD_FRONT;
@@ -3302,7 +3312,7 @@ void func_02020978(int id, int x, int y, int a, int b, int c) {
         button->mUnk_6 = c;
     }
     if (data_020c1d60.mUnk_800.mUnk_100.mUnk_16 != 0) {
-        int mode = func_02020878() == 1 ? 2 : 1;
+        int mode = IsLcdSwapped() == 1 ? 2 : 1;
         func_0202cf08(data_020c1d60.mUnk_800.mUnk_100.mUnk_16, button->mUnk_0, button->mUnk_2, 0, mode);
         func_0202cf08(data_020c1d60.mUnk_800.mUnk_100.mUnk_16, button->mUnk_4, button->mUnk_6, 0, mode);
     }
@@ -3312,9 +3322,9 @@ void func_02020978(int id, int x, int y, int a, int b, int c) {
     }
 }
 
-int func_02020a90(int x, int y, int shape) {
-    if (data_020c18bc.mUnk_2ac_1) {
-        return func_02020ab8(x, y, shape, data_020c18bc.mUnk_2ae, data_020c18bc.mUnk_2af);
+int IsTouchInShape(int x, int y, int shape) {
+    if (gSystemState.mTouchDown) {
+        return IsPointInShape(x, y, shape, gSystemState.mTouchX, gSystemState.mTouchY);
     }
     return 0;
 }
@@ -3324,8 +3334,8 @@ typedef struct TouchPoint {
     s32 y;
 } TouchPoint;
 
-// Tests whether the point (px, py) lies inside the polygon the shape table describes, placed at (x, y).
-int func_02020ab8(int x, int y, int shape, int px, int py) {
+// Tests whether the point (px, py) lies inside any of the polygons the shape table describes, placed at (x, y).
+int IsPointInShape(int x, int y, int shape, int px, int py) {
     int found = 1;
     int next = 0;
     int inside;
@@ -3355,7 +3365,7 @@ int func_02020ab8(int x, int y, int shape, int px, int py) {
             points[count] = points[0];
             p = points;
             for (i = 0; i < count; i++) {
-                inside = inside * 2 + ((func_0201febc(p[0].x, p[0].y, p[1].x, p[1].y, px, py) >> 31) & 1);
+                inside = inside * 2 + ((Cross2d(p[0].x, p[0].y, p[1].x, p[1].y, px, py) >> 31) & 1);
                 p++;
             }
             if (inside == (1 << count) - 1) {
@@ -3366,13 +3376,13 @@ int func_02020ab8(int x, int y, int shape, int px, int py) {
     return 0;
 }
 
-void func_02020ba0(void) {
+void ClearTouchButtons(void) {
     data_020c1d60.mUnk_800.mUnk_100.mUnk_08 = 0;
 }
 
 // Polls the touch screen and the keys and returns the button state: the button id in the low half and the
-// TOUCH_* flags above it.
-u32 func_02020bac(u32 mask) {
+// TOUCH_* flags above it. It then empties the button list and plays the hit button's sound on a press or release.
+u32 UpdateTouchButtons(u32 mask) {
     u32 result = data_020c1d60.mUnk_800.mUnk_100.mUnk_12;
     u32 wanted = result;
     int hit = -1;
@@ -3381,7 +3391,7 @@ u32 func_02020bac(u32 mask) {
     if (mask != TOUCH_NONE && mask != result) {
         wanted = mask;
     }
-    if (func_02020e3c(&pos[1], &pos[0]) == 1) {
+    if (ReadTouchAndAppendTrail(&pos[1], &pos[0]) == 1) {
         for (i = 0; i < data_020c1d60.mUnk_800.mUnk_100.mUnk_08; i++) {
             Unk_TouchButton *button = &data_020c1d60.mUnk_000[i];
             if (!(button->mUnk_8 & TOUCH_SHAPE)) {
@@ -3391,7 +3401,7 @@ u32 func_02020bac(u32 mask) {
                     data_020c1d60.mUnk_800.mUnk_100.mUnk_12 = data_020c1d60.mUnk_000[i].mUnk_8 & 0x7fff;
                     break;
                 }
-            } else if (func_02020a90(button->mUnk_0, button->mUnk_2, button->mUnk_6)) {
+            } else if (IsTouchInShape(button->mUnk_0, button->mUnk_2, button->mUnk_6)) {
                 hit = i;
                 data_020c1d60.mUnk_800.mUnk_100.mUnk_12 = data_020c1d60.mUnk_000[i].mUnk_8 & 0x7fff;
                 break;
@@ -3402,16 +3412,16 @@ u32 func_02020bac(u32 mask) {
         }
         result = data_020c1d60.mUnk_800.mUnk_100.mUnk_12 | TOUCH_DOWN;
         if (data_020c1d60.mUnk_800.mUnk_100.mUnk_14 == 0 ||
-            (wanted != data_020c1d60.mUnk_800.mUnk_100.mUnk_12 && !(data_020c18bc.mUnk_46c & SYSTEM_TOUCH_QUIET))) {
+            (wanted != data_020c1d60.mUnk_800.mUnk_100.mUnk_12 && !(gSystemState.mFlags & SYSTEM_TOUCH_QUIET))) {
             result |= TOUCH_PRESSED;
             if (wanted == data_020c1d60.mUnk_800.mUnk_100.mUnk_12) {
                 result |= TOUCH_REPEAT;
-                if (data_020c18bc.mUnk_45c - data_020c1d60.mUnk_800.mUnk_100.mUnk_0c < TOUCH_QUICK_FRAMES) {
+                if (gSystemState.mElapsedFrames - data_020c1d60.mUnk_800.mUnk_100.mUnk_0c < TOUCH_QUICK_FRAMES) {
                     result |= TOUCH_QUICK;
                 }
             }
             if (data_020c1d60.mUnk_800.mUnk_100.mUnk_14 == 0) {
-                data_020c1d60.mUnk_800.mUnk_100.mUnk_0c = data_020c18bc.mUnk_45c;
+                data_020c1d60.mUnk_800.mUnk_100.mUnk_0c = gSystemState.mElapsedFrames;
             }
         }
         data_020c1d60.mUnk_800.mUnk_100.mUnk_14 = 1;
@@ -3428,17 +3438,17 @@ u32 func_02020bac(u32 mask) {
         data_020c1d60.mUnk_800.mUnk_100.mUnk_14 = 0;
     }
     if ((result & (TOUCH_DOWN | TOUCH_PRESSED | TOUCH_RELEASED)) == 0) {
-        if ((u16) (data_020c18bc.mUnk_10 | data_020c18bc.mUnk_12 | data_020c18bc.mUnk_014) != 0) {
+        if ((u16) (gSystemState.mKeysDown | gSystemState.mKeysPressed | gSystemState.mKeysReleased) != 0) {
             for (i = 0; i < data_020c1d60.mUnk_800.mUnk_100.mUnk_08; i++) {
                 u16 keys = data_020c1d60.mUnk_000[i].mUnk_e;
                 if (keys != 0) {
-                    if (data_020c18bc.mUnk_10 & keys) {
+                    if (gSystemState.mKeysDown & keys) {
                         result = (result & 0xffff0000) | data_020c1d60.mUnk_000[i].mUnk_8 | TOUCH_DOWN;
                     }
-                    if (data_020c18bc.mUnk_12 & keys) {
+                    if (gSystemState.mKeysPressed & keys) {
                         result = (result & 0xffff0000) | data_020c1d60.mUnk_000[i].mUnk_8 | TOUCH_PRESSED;
                     }
-                    if (keys & data_020c18bc.mUnk_014) {
+                    if (keys & gSystemState.mKeysReleased) {
                         result = (result & 0xffff0000) | data_020c1d60.mUnk_000[i].mUnk_8 | TOUCH_RELEASED;
                     }
                 }
@@ -3463,24 +3473,24 @@ u32 func_02020bac(u32 mask) {
     return result;
 }
 
-void func_02020df4(void) {
+void ResetTouchTrail(void) {
     data_020c1d60.mUnk_800.mUnk_100.mUnk_18 = 0;
     data_020c1d60.mUnk_800.mUnk_100.mUnk_10 = 0;
     MIi_CpuClear16(0xffff, data_020c1d60.mUnk_800.mUnk_000, sizeof(data_020c1d60.mUnk_800.mUnk_000));
 }
 
-void func_02020e18(u16 a, int b) {
+void ResetTouchButtons(u16 a, int b) {
     data_020c1d60.mUnk_800.mUnk_100.mUnk_12 = TOUCH_NONE;
     data_020c1d60.mUnk_800.mUnk_100.mUnk_08 = 0;
     data_020c1d60.mUnk_800.mUnk_100.mUnk_14 = 0;
     data_020c1d60.mUnk_800.mUnk_100.mUnk_0c = 0;
     data_020c1d60.mUnk_800.mUnk_100.mUnk_16 = a;
     data_020c1d60.mUnk_800.mUnk_100.mUnk_04 = TOUCH_NONE;
-    func_02020df4();
+    ResetTouchTrail();
 }
 
-int func_02020e3c(u8 *x, u8 *y) {
-    if (data_020c18bc.mUnk_2ac_1 == 0) {
+int ReadTouchAndAppendTrail(u8 *x, u8 *y) {
+    if (gSystemState.mTouchDown == 0) {
         if (x != 0) {
             *x = 0xff;
         }
@@ -3488,8 +3498,8 @@ int func_02020e3c(u8 *x, u8 *y) {
             *y = 0xff;
         }
         if (data_020c1d60.mUnk_800.mUnk_100.mUnk_18 == 1) {
-            data_020c1d60.mUnk_800.mUnk_100.mUnk_00[2] = data_020c18bc.mUnk_2ae;
-            data_020c1d60.mUnk_800.mUnk_100.mUnk_00[3] = data_020c18bc.mUnk_2af;
+            data_020c1d60.mUnk_800.mUnk_100.mUnk_00[2] = gSystemState.mTouchX;
+            data_020c1d60.mUnk_800.mUnk_100.mUnk_00[3] = gSystemState.mTouchY;
             data_020c1d60.mUnk_800.mUnk_100.mUnk_18 = 2;
         } else if (data_020c1d60.mUnk_800.mUnk_100.mUnk_18 == 2) {
             data_020c1d60.mUnk_800.mUnk_100.mUnk_18 = 3;
@@ -3497,162 +3507,162 @@ int func_02020e3c(u8 *x, u8 *y) {
         return 0;
     }
     if (data_020c1d60.mUnk_800.mUnk_100.mUnk_18 != 1) {
-        func_02020df4();
-        data_020c1d60.mUnk_800.mUnk_100.mUnk_00[0] = data_020c18bc.mUnk_2ae;
-        data_020c1d60.mUnk_800.mUnk_100.mUnk_00[1] = data_020c18bc.mUnk_2af;
+        ResetTouchTrail();
+        data_020c1d60.mUnk_800.mUnk_100.mUnk_00[0] = gSystemState.mTouchX;
+        data_020c1d60.mUnk_800.mUnk_100.mUnk_00[1] = gSystemState.mTouchY;
         data_020c1d60.mUnk_800.mUnk_100.mUnk_18 = 1;
     }
     {
-        u8 px = data_020c18bc.mUnk_2ae;
+        u8 px = gSystemState.mTouchX;
         u32 n = data_020c1d60.mUnk_800.mUnk_100.mUnk_10;
         data_020c1d60.mUnk_800.mUnk_000[n].mUnk_0 = px;
-        data_020c1d60.mUnk_800.mUnk_000[n].mUnk_1 = data_020c18bc.mUnk_2af;
+        data_020c1d60.mUnk_800.mUnk_000[n].mUnk_1 = gSystemState.mTouchY;
         data_020c1d60.mUnk_800.mUnk_100.mUnk_10 = (data_020c1d60.mUnk_800.mUnk_100.mUnk_10 + 1) & 0x7f;
         if (x != 0) {
             *x = px;
         }
     }
     if (y != 0) {
-        *y = data_020c18bc.mUnk_2af;
+        *y = gSystemState.mTouchY;
     }
     return 1;
 }
 
 // Marks the backup memory as ready after taking the card lock id and checking the backup type.
-void func_02020ee0(u32 a) {
+void InitBackup(u32 a) {
     int ok;
-    if (!(data_020c18bc.mUnk_46c & SYSTEM_BACKUP_READY)) {
-        data_020c18bc.mUnk_456 = 0xb4;
+    if (!(gSystemState.mFlags & SYSTEM_BACKUP_READY)) {
+        gSystemState.mBackupTimer = 0xb4;
         func_02045dc4();
-        data_020c18bc.mUnk_330 = OS_GetLockID();
-        func_02044f54(data_020c18bc.mUnk_330);
+        gSystemState.mBackupLockId = OS_GetLockID();
+        func_02044f54(gSystemState.mBackupLockId);
         ok = func_020455fc(a);
-        func_02044f64(data_020c18bc.mUnk_330);
+        func_02044f64(gSystemState.mBackupLockId);
         if (ok != 0) {
-            data_020c18bc.mUnk_46c |= SYSTEM_BACKUP_READY;
+            gSystemState.mFlags |= SYSTEM_BACKUP_READY;
         }
     }
 }
 
 // Writes size bytes from buf to the backup memory at address; returns 0 when the backup memory is not ready.
-int func_02020f38(const void *buf, u32 address, u32 size) {
+int WriteBackup(const void *buf, u32 address, u32 size) {
     int result;
-    if (!(data_020c18bc.mUnk_46c & SYSTEM_BACKUP_READY)) {
+    if (!(gSystemState.mFlags & SYSTEM_BACKUP_READY)) {
         return 0;
     }
-    data_020c18bc.mUnk_456 = 0xf0;
-    func_02044f54(data_020c18bc.mUnk_330);
+    gSystemState.mBackupTimer = 0xf0;
+    func_02044f54(gSystemState.mBackupLockId);
     result = func_02045500((u32) buf, (void *) address, size, 0, 0, 0, 8, 10, 2);
-    func_02044f64(data_020c18bc.mUnk_330);
+    func_02044f64(gSystemState.mBackupLockId);
     return result;
 }
 
-int func_02020f9c(void *buf, u32 address, u32 size) {
+int ReadBackup(void *buf, u32 address, u32 size) {
     int result;
-    if ((data_020c18bc.mUnk_46c & SYSTEM_BACKUP_READY) == 0) {
+    if ((gSystemState.mFlags & SYSTEM_BACKUP_READY) == 0) {
         return 0;
     }
-    func_02044f54(data_020c18bc.mUnk_330);
+    func_02044f54(gSystemState.mBackupLockId);
     result = func_02045500(address, buf, size, 0, 0, 0, 6, 1, 0);
-    func_02044f64(data_020c18bc.mUnk_330);
+    func_02044f64(gSystemState.mBackupLockId);
     return result;
 }
 
-void func_02020ff4(int size, int b) {
-    if (data_020c18bc.mUnk_46c & MIC_FLAG_ACTIVE) {
-        func_02021458();
+void InitMic(int size, int b) {
+    if (gSystemState.mFlags & MIC_FLAG_ACTIVE) {
+        ReleaseMic();
     }
-    data_020c18bc.mUnk_0cc = size;
-    data_020c18bc.mUnk_0c4 = func_0201c430(size + 0x1f);
-    data_020c18bc.mUnk_0c8 = func_0201c430(size);
+    gSystemState.mMicBufferSize = size;
+    gSystemState.mMicBuffer = Alloc(size + 0x1f);
+    gSystemState.mMicSamples = Alloc(size);
     MIC_Init();
     func_02043d98(1);
     func_02043de0(b);
-    data_020c18bc.mUnk_46c |= MIC_FLAG_ACTIVE;
-    func_02021194();
+    gSystemState.mFlags |= MIC_FLAG_ACTIVE;
+    ClearMicBands();
 }
 
 void func_02021054(int a) {
-    if ((data_020c18bc.mUnk_46c & MIC_FLAG_ACTIVE) == 0) {
+    if ((gSystemState.mFlags & MIC_FLAG_ACTIVE) == 0) {
         OS_Terminate();
     }
     func_02043de0(a);
 }
 
-void func_02021074(int rate, int type) {
-    data_020c18bc.mUnk_0d0.buffer = (void *) func_02034918((u32) data_020c18bc.mUnk_0c4);
-    data_020c18bc.mUnk_0d0.size = data_020c18bc.mUnk_0cc;
-    data_020c18bc.mUnk_0d0.type = type;
-    data_020c18bc.mUnk_0d0.rate = rate;
-    data_020c18bc.mUnk_0d0.loop = 1;
-    data_020c18bc.mUnk_0d0.full = 0;
-    data_020c18bc.mUnk_492 = 0xb4;
-    data_020c18bc.mUnk_495 = 1;
-    if (MIC_StartAutoSampling(&data_020c18bc.mUnk_0d0) != 0) {
+void StartMicSampling(int rate, int type) {
+    gSystemState.mMicParam.buffer = (void *) AlignUp32((u32) gSystemState.mMicBuffer);
+    gSystemState.mMicParam.size = gSystemState.mMicBufferSize;
+    gSystemState.mMicParam.type = type;
+    gSystemState.mMicParam.rate = rate;
+    gSystemState.mMicParam.loop = 1;
+    gSystemState.mMicParam.full = 0;
+    gSystemState.mUnk_492 = 0xb4;
+    gSystemState.mUnk_495 = 1;
+    if (MIC_StartAutoSampling(&gSystemState.mMicParam) != 0) {
         OS_Terminate();
     }
-    func_02021194();
+    ClearMicBands();
 }
 
-void func_020210c4(void) {
+void StopMicSampling(void) {
     MIC_StopAutoSampling();
 }
 
-u32 func_020210cc(void) {
+u32 GetMicSampleAddr(void) {
     u32 pos = func_02043454();
-    if (pos >= func_02034918((u32) data_020c18bc.mUnk_0c4) &&
-        pos < func_02034918((u32) data_020c18bc.mUnk_0c4) + data_020c18bc.mUnk_0cc && data_020c18bc.mUnk_492 == 0) {
+    if (pos >= AlignUp32((u32) gSystemState.mMicBuffer) &&
+        pos < AlignUp32((u32) gSystemState.mMicBuffer) + gSystemState.mMicBufferSize && gSystemState.mUnk_492 == 0) {
         DC_InvalidateRange((void *) (pos & ~0x1f), 0x20);
         return pos;
     }
     return 0;
 }
 
-void func_0202111c(u32 count) {
+void CopyMicSamples(u32 count) {
     u32 i;
     u32 pos;
     u32 start;
-    if ((data_020c18bc.mUnk_46c & MIC_FLAG_ACTIVE) == 0) {
+    if ((gSystemState.mFlags & MIC_FLAG_ACTIVE) == 0) {
         OS_Terminate();
     }
-    pos = func_020210cc();
+    pos = GetMicSampleAddr();
     if (pos != 0) {
         pos -= count;
-        start = func_02034918((u32) data_020c18bc.mUnk_0c4);
+        start = AlignUp32((u32) gSystemState.mMicBuffer);
         if (start == 0) {
             OS_Terminate();
         }
         if (pos < start) {
-            pos += data_020c18bc.mUnk_0cc;
+            pos += gSystemState.mMicBufferSize;
         }
         for (i = 0; i < count; i++) {
             if ((pos & 0x1f) == 0) {
                 DC_InvalidateRange((void *) pos, 0x20);
-                if (pos >= start + data_020c18bc.mUnk_0cc) {
+                if (pos >= start + gSystemState.mMicBufferSize) {
                     pos = start;
                 }
             }
-            data_020c18bc.mUnk_0c8[i] = *(u8 *) pos;
+            gSystemState.mMicSamples[i] = *(u8 *) pos;
             pos++;
         }
     }
 }
 
-void func_02021194(void) {
+void ClearMicBands(void) {
     int j;
     int i;
     for (i = 0; i < MIC_HISTORY; i++) {
         for (j = 0; j < MIC_MAX_BANDS; j++) {
-            data_020c18bc.mUnk_0ec[i][j] = 0;
+            gSystemState.mMicBandHistory[i][j] = 0;
         }
     }
-    MI_CpuClearFast(data_020c18bc.mUnk_20c, 0x20);
-    MI_CpuClearFast(data_020c18bc.mUnk_1ec, 0x20);
+    MI_CpuClearFast(gSystemState.mMicBandHistoryTotals, 0x20);
+    MI_CpuClearFast(gSystemState.mMicBandSums, 0x20);
 }
 
 // Sums the spectrum over each band's range, stores the sums in the current history slot and totals each band over
 // the history.
-void func_020211d8(const u8 *spectrum, const u16 *ranges, u32 count, u32 *totals, u32 *sums) {
+void SumMicBands(const u8 *spectrum, const u16 *ranges, u32 count, u32 *totals, u32 *sums) {
     int i;
     u32 j;
     u32 lo;
@@ -3660,7 +3670,7 @@ void func_020211d8(const u8 *spectrum, const u16 *ranges, u32 count, u32 *totals
     if (count >= MIC_MAX_BANDS) {
         OS_Terminate();
     }
-    if (data_020c18bc.mUnk_0d0.buffer == 0) {
+    if (gSystemState.mMicParam.buffer == 0) {
         OS_Terminate();
     }
     for (i = 0; i < count; i++) {
@@ -3672,14 +3682,14 @@ void func_020211d8(const u8 *spectrum, const u16 *ranges, u32 count, u32 *totals
         }
         ranges += 2;
     }
-    j = data_020c18bc.mUnk_45c & 0xf;
+    j = gSystemState.mElapsedFrames & 0xf;
     for (i = 0; i < count; i++) {
-        data_020c18bc.mUnk_0ec[j][i] = sums[i];
+        gSystemState.mMicBandHistory[j][i] = sums[i];
     }
     for (j = 0; j < count; j++) {
         totals[j] = 0;
         for (i = 0; i < MIC_HISTORY; i++) {
-            totals[j] += data_020c18bc.mUnk_0ec[i][j];
+            totals[j] += gSystemState.mMicBandHistory[i][j];
         }
     }
 }
@@ -3689,7 +3699,7 @@ typedef struct Unk_Complex {
     fx32 im;
 } Unk_Complex;
 
-void func_020212b4(u8 *out, u32 nShift) {
+void ComputeMicSpectrum(u8 *out, u32 nShift) {
     u32 count = 1 << nShift;
     fx16 sinTable[(3 << MAX_SHIFT) / 4];
     Unk_Complex buf[1 << MAX_SHIFT];
@@ -3697,10 +3707,10 @@ void func_020212b4(u8 *out, u32 nShift) {
     if (nShift > MAX_SHIFT) {
         OS_Terminate();
     }
-    data_020c18bc.mUnk_22c = nShift;
-    func_0202111c(count);
+    gSystemState.mMicSpectrumShift = nShift;
+    CopyMicSamples(count);
     for (i = 0; i < count; i++) {
-        buf[i].re = data_020c18bc.mUnk_0c8[i] << SAMPLE_SHIFT;
+        buf[i].re = gSystemState.mMicSamples[i] << SAMPLE_SHIFT;
         buf[i].im = 0;
     }
     func_0204882c(sinTable, nShift);
@@ -3711,21 +3721,21 @@ void func_020212b4(u8 *out, u32 nShift) {
 }
 
 u32 func_02021364(u32 x) {
-    return (x << data_020c18bc.mUnk_22c) / data_020c18bc.mUnk_0d0.rate;
+    return (x << gSystemState.mMicSpectrumShift) / gSystemState.mMicParam.rate;
 }
 
-u32 func_02021380(u32 index) {
-    return data_020c18bc.mUnk_20c[index] >> 4;
+u32 GetMicBandAverage(u32 index) {
+    return gSystemState.mMicBandHistoryTotals[index] >> 4;
 }
 
-void func_02021390(void) {
+void UpdateMicBands(void) {
     u8 spectrum[0x400];
-    if ((data_020c18bc.mUnk_46c & MIC_FLAG_ACTIVE) == 0) {
-        func_02020ff4(0x400, 1);
-        func_02021074(0x82e, 0);
+    if ((gSystemState.mFlags & MIC_FLAG_ACTIVE) == 0) {
+        InitMic(0x400, 1);
+        StartMicSampling(0x82e, 0);
     }
-    func_020212b4(spectrum, 8);
-    func_020211d8(spectrum, data_02050210, 4, data_020c18bc.mUnk_20c, data_020c18bc.mUnk_1ec);
+    ComputeMicSpectrum(spectrum, 8);
+    SumMicBands(spectrum, gMicBandRanges, 4, gSystemState.mMicBandHistoryTotals, gSystemState.mMicBandSums);
 }
 
 int func_020213e8(u32 a) {
@@ -3734,27 +3744,27 @@ int func_020213e8(u32 a) {
     int v2;
     int v3;
     u32 limit;
-    func_02021390();
-    v0 = func_02021380(0);
-    v1 = func_02021380(1);
-    v2 = func_02021380(2);
-    v3 = func_02021380(3);
+    UpdateMicBands();
+    v0 = GetMicBandAverage(0);
+    v1 = GetMicBandAverage(1);
+    v2 = GetMicBandAverage(2);
+    v3 = GetMicBandAverage(3);
     if (v0 > a && 40 * v3 > v0 && v3 < v0 && v1 < v0 && abs(v1 - v2) < v1 / 2 && v0 > 2 * v3) {
         limit = a * 6;
         if (v0 >= limit) {
             v0 = limit;
         }
-        return func_0201fb74(v0, limit, 1, 7);
+        return MapRangeFromZero(v0, limit, 1, 7);
     }
     return 0;
 }
 
-void func_02021458(void) {
-    if (data_020c18bc.mUnk_46c & MIC_FLAG_ACTIVE) {
-        func_020210c4();
+void ReleaseMic(void) {
+    if (gSystemState.mFlags & MIC_FLAG_ACTIVE) {
+        StopMicSampling();
         func_02043d98(0);
-        func_0201c4f0(&data_020c18bc.mUnk_0c4);
-        func_0201c4f0(&data_020c18bc.mUnk_0c8);
-        data_020c18bc.mUnk_46c &= ~MIC_FLAG_ACTIVE;
+        Free(&gSystemState.mMicBuffer);
+        Free(&gSystemState.mMicSamples);
+        gSystemState.mFlags &= ~MIC_FLAG_ACTIVE;
     }
 }
