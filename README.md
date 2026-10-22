@@ -20,9 +20,11 @@ progress below counts what is decompiled and what links from source.
 | Measure | Progress |
 |---|---|
 | Matched code | 96.50% (300,570 / 311,460 bytes) |
-| Linked code (complete units) | 99.32% (309,342 bytes) |
+| Linked code (complete units) | 100.00% (311,460 bytes) |
 | Overall accuracy (fuzzy) | 97.29% |
 | Matched functions | 1,620 / 1,795 |
+
+All code is linked from this repository's source and the ROM matches byte for byte. See [docs/decompiling.md](docs/decompiling.md) for functions objdiff scores below 100% with identical code.
 
 The code size went from 389,724 to 311,460 bytes in two steps: the `.text`/`.rodata` boundary moved to where the original's code ends (0x0204df14; the game's constant tables and the Mobiclip decoder after them are in the original's `.rodata`), and the zero fill the linker lays down before 0x02001000 and 0x02003000 is no longer counted as code. The steps in the graph are these changes, not new matching.
 

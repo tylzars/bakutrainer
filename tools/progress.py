@@ -79,12 +79,40 @@ def linker_fill() -> int:
     return fill
 
 
+def complete_code() -> int:
+    """Bytes of the code sections' ranges held by complete units (delinks.txt). objdiff's complete_code only counts
+    bytes a function symbol covers, so the bytes no symbol covers inside linked units (the secure area outside its
+    entry points, alignment between functions) would keep linked code short of the fixed size for good."""
+    total = 0
+    for module in modules():
+        delinks = module_paths(module)[0] / "delinks.txt"
+        if not delinks.is_file():
+            continue
+        kinds, unit, complete = {}, None, False
+        for line in delinks.read_text().splitlines():
+            if not line.strip() or line.startswith("//"):
+                continue
+            if not line[0].isspace():
+                unit, complete = line, False
+                continue
+            words = line.split()
+            f = dict(w.split(":", 1) for w in words[1:] if ":" in w)
+            if unit is None:
+                kinds[words[0]] = f.get("kind")
+            elif words[0] == "complete":
+                complete = True
+            elif complete and kinds.get(words[0]) == "code":
+                total += int(f["end"], 16) - int(f["start"], 16)
+    return total
+
+
 def read_report(ver: str) -> dict:
     path = ROOT / "build" / ver / "report.json"
     if not path.is_file():
         sys.exit(f"{path} missing; run `ninja report` first")
     m = json.loads(path.read_text())["measures"]
     row = {k: int(m.get(k, 0)) for k in FIELDS[1:-2]}
+    row["complete_code"] = complete_code()
     row["fuzzy_match_percent"] = round(float(m.get("fuzzy_match_percent", 0)), 3)
     row["image_code"] = IMAGE_CODE
     return row
