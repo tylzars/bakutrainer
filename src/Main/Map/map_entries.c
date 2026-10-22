@@ -275,7 +275,7 @@ u32 func_02031824(VecFx32 *pos, int radius, int top, int bottom, u16 any, u16 no
     u8 hits;
     u8 tie;
     u32 result;
-    int atEnd;
+    u8 atEnd;
     u32 best;
     s16 y;
     int k;
@@ -283,9 +283,9 @@ u32 func_02031824(VecFx32 *pos, int radius, int top, int bottom, u16 any, u16 no
     hits = 0;
     limit = radius * radius / 4;
     tie = hits;
-    atEnd = hits;
     result = hits;
     best = hits - 1;
+    atEnd = hits;
     counts[0] = 0;
     func_020312b8(pos, pts, counts, keys, rings, 9);
     i = 0;
@@ -303,7 +303,7 @@ u32 func_02031824(VecFx32 *pos, int radius, int top, int bottom, u16 any, u16 no
                 MapRingPoint *next;
                 MapRingPoint *cur;
                 int len2;
-                int end;
+                u8 end;
                 s32 ax;
                 s32 az;
                 s16 dh;

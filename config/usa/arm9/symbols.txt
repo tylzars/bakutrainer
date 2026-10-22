@@ -1034,11 +1034,11 @@ func_02030794 kind:function(arm,size=0x9c) addr:0x02030794
 func_02030830 kind:function(arm,size=0xa40) addr:0x02030830
 func_02031270 kind:function(arm,size=0x2c) addr:0x02031270
 func_0203129c kind:function(thumb,size=0x1c) addr:0x0203129c
-func_020312b8 kind:function(arm,size=0x56c) addr:0x020312b8
+func_020312b8 kind:function(arm,size=0x56c) addr:0x020312b8 local
 func_02031824 kind:function(arm,size=0x44c) addr:0x02031824
 func_02031c70 kind:function(thumb,size=0x28) addr:0x02031c70
 func_02031c98 kind:function(thumb,size=0x30) addr:0x02031c98
-func_02031cc8 kind:function(thumb,size=0x44) addr:0x02031cc8
+func_02031cc8 kind:function(thumb,size=0x44) addr:0x02031cc8 local
 func_02031d0c kind:function(thumb,size=0xb8) addr:0x02031d0c
 func_02031dc4 kind:function(thumb,size=0xf4) addr:0x02031dc4
 func_02031eb8 kind:function(arm,size=0xe0) addr:0x02031eb8
@@ -1047,12 +1047,12 @@ func_02031fa4 kind:function(thumb,size=0xa) addr:0x02031fa4
 func_02031fb0 kind:function(thumb,size=0xa) addr:0x02031fb0
 func_02031fbc kind:function(thumb,size=0x8) addr:0x02031fbc
 func_02031fc4 kind:function(thumb,size=0x28) addr:0x02031fc4
-func_02031fec kind:function(thumb,size=0x2c) addr:0x02031fec
+func_02031fec kind:function(thumb,size=0x2c) addr:0x02031fec local
 func_02032018 kind:function(thumb,size=0x32) addr:0x02032018
 func_0203204c kind:function(thumb,size=0x28) addr:0x0203204c
-func_02032074 kind:function(thumb,size=0x4c) addr:0x02032074
+func_02032074 kind:function(thumb,size=0x4c) addr:0x02032074 local
 func_020320c0 kind:function(thumb,size=0xda) addr:0x020320c0
-func_0203219c kind:function(thumb,size=0x10) addr:0x0203219c
+func_0203219c kind:function(thumb,size=0x10) addr:0x0203219c local
 func_020321ac kind:function(thumb,size=0x98) addr:0x020321ac
 func_02032244 kind:function(thumb,size=0x74) addr:0x02032244
 func_020322b8 kind:function(thumb,size=0x3c) addr:0x020322b8
@@ -1892,7 +1892,7 @@ data_020508dc kind:data(byte[4]) addr:0x020508dc local
 data_020508e0 kind:data(byte[150]) addr:0x020508e0 local
 data_02050978 kind:data(short[16]) addr:0x02050978
 data_02050998 kind:data(byte[32]) addr:0x02050998
-data_020509b8 kind:data(byte[5]) addr:0x020509b8
+sMapDirs kind:data(byte[5]) addr:0x020509b8 local
 data_020509c0 kind:data(short[64]) addr:0x020509c0
 data_02050a40 kind:data(short[64]) addr:0x02050a40
 data_02050ac0 kind:data(short[64]) addr:0x02050ac0

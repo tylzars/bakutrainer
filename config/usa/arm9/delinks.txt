@@ -725,6 +725,7 @@ src/Main/Map/map_floor.c:
 // projection, blends and modes (data_020c3e44, which holds the camera object); it starts with the ring quadtree of
 // chunk 0x5540, whose rings func_02031c70 walks (func_0203129c before it also reads what func_02031824 writes)
 src/Main/Map/map_entries.c:
+    complete
     .text       start:0x020312b8 end:0x02034918
     .rodata     start:0x020509b8 end:0x020509c0
 
