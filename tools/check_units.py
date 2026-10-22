@@ -4,7 +4,8 @@
 For each unit: the range starts at a function and is 4-byte aligned at both ends, no function runs past its end,
 bytes after the last function are zero padding, units don't overlap, and the compiled object defines exactly the
 original functions in the range (labels excepted; a stub unit named by an lcf_edits.txt `place` edit is checked
-against the object of the unit it places). Every module with a delinks.txt (main, ITCM, DTCM, overlays). Run
+against the object of the unit it places). A function the source defines that the link strips (absent from the
+linked build/<ver>/arm9.o) is not a problem: it is listed as a note (layout placeholders). Every module with a delinks.txt (main, ITCM, DTCM, overlays). Run
 `ninja report` first so the objects exist. Exit status 1 on any problem.
 
   check_units.py
@@ -23,7 +24,16 @@ XTOR = re.compile(r"([CD])[0-2](E)")
 SYM = re.compile(r"(\S+) kind:function\(\w+,size=(0x[0-9a-f]+)[^)]*\) addr:(0x[0-9a-f]+)")
 
 
-def check_module(module):
+def linked_names():
+    """Symbol names of the linked image, or None before the first link."""
+    linked = BUILD / "arm9.o"
+    if not linked.exists():
+        return None
+    with open(linked, "rb") as f:
+        return {sym.name for sym in ELFFile(f).get_section_by_name(".symtab").iter_symbols()}
+
+
+def check_module(module, linked):
     """Prints one line per unit of the module; returns the number of units with problems."""
     cfg, extracted, _ = module_paths(module)
     if not (cfg / "delinks.txt").is_file():
@@ -51,6 +61,7 @@ def check_module(module):
     failed = 0
     for i, (start, end, src, done) in enumerate(units):
         probs = []
+        stripped = []
         orig = [f for f in funcs if start <= f[0] < end]
         data_only = not orig and start in data_starts  # a unit of data only (an assembled table)
         # An assembler unit may open with padding or a table and carry pools and tables after its last routine.
@@ -88,18 +99,24 @@ def check_module(module):
             if missing := sorted(names - defined - labels):
                 probs.append("in the range but not in the source: " + ", ".join(missing))
             variants = {XTOR.sub(r"\1?\2", n) for n in names}
-            if extra := sorted(n for n in defined - names if XTOR.sub(r"\1?\2", n) not in variants):
+            extra = sorted(n for n in defined - names if XTOR.sub(r"\1?\2", n) not in variants)
+            if done and linked is not None:
+                stripped = [n for n in extra if n not in linked]
+                extra = [n for n in extra if n in linked]
+            if extra:
                 probs.append("in the source but not in the range: " + ", ".join(extra))
         else:
             probs.append("no object (run ninja report)")
         failed += bool(probs)
         state = "linked " if done else "pending"
-        print(f"{module:5} {state} {src:44} {start:#x}-{end:#x} " + ("; ".join(probs) or "OK"))
+        note = f" (stripped by the link: {', '.join(stripped)})" if stripped else ""
+        print(f"{module:5} {state} {src:44} {start:#x}-{end:#x} " + ("; ".join(probs) or "OK") + note)
     return failed
 
 
 def main():
-    failed = sum(check_module(m) for m in modules())
+    linked = linked_names()
+    failed = sum(check_module(m, linked) for m in modules())
     sys.exit(1 if failed else 0)
 
 
