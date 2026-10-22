@@ -463,7 +463,6 @@ typedef struct Unk_020c31dc {
 } Unk_020c31dc;
 
 extern Unk_020c1834 data_020c1834;
-extern Unk_020c31dc data_020c31dc;
 
 // VRAM control register of each bank (word address and bit offset of its byte).
 extern const u32 data_02050220[9];

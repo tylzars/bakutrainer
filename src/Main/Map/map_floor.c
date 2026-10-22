@@ -1,6 +1,7 @@
 #include <nitro/os.h>
 #include <Main/Map/map_floor.h>
 #include <Main/Map/map_entries.h>
+#include <Main/Graphics/model.h>
 #include <Main/System/random_angle.h>
 #include <Main/System/game_math.h>
 

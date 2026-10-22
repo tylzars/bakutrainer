@@ -18,10 +18,10 @@
 #include <Main/Map/map_entries.h>
 #include <Main/System/align_util.h>
 
-// This file's .bss (ascending sizes as one file's): the working matrix, data_020c31dc, the map state and the matrix
-// of each pose node. Objects without an initialiser join the compiler's size order of this
-// file's data after the others, in reverse definition order; this order (with data_02050898 defined below, before
-// its users) puts the vector initialisers of func_02023ff0 and func_020240ec in the game's .rodata order.
+// This file's .bss (ascending sizes as one file's): the working matrix, data_020c31dc, the map state and the matrix of
+// each pose node. Objects without an initialiser join the compiler's size order of this file's data after the others,
+// in reverse definition order; this order (with data_02050898 defined below, before its users) puts the vector
+// initialisers of func_02023ff0 and func_020240ec in the game's .rodata order.
 MtxFx43 data_020c31ac;
 Unk_020c31dc data_020c31dc;
 MapState data_020c3e44;

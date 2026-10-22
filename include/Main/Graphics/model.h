@@ -4,6 +4,8 @@
 #include <nitro/fx.h>
 #include <Main/Unknown/game_util.h>
 #include <Main/Unknown/move_object.h>
+#include <Main/System/system_init.h>
+#include <Main/Map/map_entries.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -102,6 +104,13 @@ typedef struct ModelPart {
     u16 mUnk_34;
     u8 mUnk_36[2];
 } ModelPart;
+
+// This file's .bss: the working matrix, the graphics pools and model animation state, the map state and the matrix of
+// each pose node.
+extern MtxFx43 data_020c31ac;
+extern Unk_020c31dc data_020c31dc;
+extern MapState data_020c3e44;
+extern MtxFx43 data_020c3244[64];
 
 void func_0202350c(u16 *rot, s32 *pos, s32 *vec, u32 frame, u32 map);
 void func_0202397c(int from, int node);

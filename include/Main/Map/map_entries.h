@@ -262,8 +262,6 @@ typedef struct MapState {
     CameraState mUnk_2024;
 } MapState;
 
-extern MapState data_020c3e44;
-
 // The chunk of the stage data file whose key is id; 0 when the file has no such chunk.
 u16 *func_02031eb8(u32 id);
 

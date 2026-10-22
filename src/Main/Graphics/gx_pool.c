@@ -4,6 +4,7 @@
 #include <Main/Map/map_entries.h>
 #include <Main/System/file_loader.h>
 #include <Main/Graphics/gx_pool.h>
+#include <Main/Graphics/model.h>
 #include <nitro/gx.h>
 #include <nitro/mi.h>
 #include <nitro/os.h>
