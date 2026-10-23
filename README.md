@@ -1,7 +1,7 @@
 # Bakugan: Battle Brawlers - Battle Trainer (DS) decompilation
 
 A matching decompilation of *Bakugan: Battle Brawlers - Battle Trainer* for the Nintendo DS. The C in this repository
-is written by hand so that, built with the original compiler, it reproduces the game's code byte for byte.
+is written by the hands of AI so that, built with the original compiler, it reproduces the game's code byte for byte.
 
 **No game content is included.** The repository holds no ROM, no assets and no disassembly. To build, you need your
 own dump of the game; see [INSTALL.md](INSTALL.md).
