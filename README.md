@@ -1,17 +1,14 @@
-# Bakugan: Battle Brawlers - Battle Trainer
+# Bakugan: Battle Brawlers - Battle Trainer (DS) decompilation
 
-A matching decompilation of *Bakugan: Battle Brawlers - Battle Trainer* (Nintendo DS, USA, `BBKE`): C written by
-hand so that, built with the original compiler (Metrowerks CodeWarrior for DS), it reproduces the game's code byte
-for byte. Nothing from the game is stored here: building needs your own dump of the cartridge.
+A matching decompilation of *Bakugan: Battle Brawlers - Battle Trainer* for the Nintendo DS. The C in this repository
+is written by hand so that, built with the original compiler, it reproduces the game's code byte for byte.
 
-- [INSTALL.md](INSTALL.md): requirements and building.
-- [CONTRIBUTING.md](CONTRIBUTING.md): layout, naming, rules, what to check before committing.
-- [docs/compiler.md](docs/compiler.md): which compilers and flags the game and its libraries were built with, and the
-  evidence.
-- [docs/decompiling.md](docs/decompiling.md): workflow and the source patterns that matter.
+**No game content is included.** The repository holds no ROM, no assets and no disassembly. To build, you need your
+own dump of the game; see [INSTALL.md](INSTALL.md).
 
-The rebuilt ROM matches the original. Code is split from the original binary until it is decompiled; the
-progress below counts what is decompiled and what links from source.
+| Version | Game code | SHA-1 |
+| --- | --- | --- |
+| USA | `BBKE` | `1a228628834d7925186c3f42aa6a018922d11295` |
 
 ## Progress
 <!-- progress:start -->
@@ -26,7 +23,14 @@ progress below counts what is decompiled and what links from source.
 
 All code is linked from this repository's source and the ROM matches byte for byte. See [docs/decompiling.md](docs/decompiling.md) for functions objdiff scores below 100% with identical code.
 
-The code size went from 389,724 to 311,460 bytes in two steps: the `.text`/`.rodata` boundary moved to where the original's code ends (0x0204df14; the game's constant tables and the Mobiclip decoder after them are in the original's `.rodata`), and the zero fill the linker lays down before 0x02001000 and 0x02003000 is no longer counted as code. The steps in the graph are these changes, not new matching.
-
 _Last updated 2026-10-22. Full history: [`progress/history.csv`](progress/history.csv)._
 <!-- progress:end -->
+
+## Documentation
+- [INSTALL.md](INSTALL.md): setting up and building
+- [CONTRIBUTING.md](CONTRIBUTING.md): repository layout, naming and workflow
+- [docs/compiler.md](docs/compiler.md): how the compiler and flags were identified
+- [docs/decompiling.md](docs/decompiling.md): source patterns that matter for matching
+
+Built with [ds-decomp](https://github.com/AetiasHax/ds-decomp), Metrowerks CodeWarrior for DS run through
+[wibo](https://github.com/decompals/wibo), and [objdiff](https://github.com/encounter/objdiff).

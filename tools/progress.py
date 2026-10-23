@@ -281,11 +281,6 @@ def readme_section(rows: list[dict]) -> str:
         *([("All code is linked from this repository's source and the ROM matches byte for byte. See "
             "[docs/decompiling.md](docs/decompiling.md) for functions objdiff scores below 100% with identical "
             "code."), ""] if r["complete_code"] == IMAGE_CODE else []),
-        *([f"The code size went from {FIRST_IMAGE_CODE:,} to {IMAGE_CODE:,} bytes in two steps: the `.text`/`.rodata` "
-            "boundary moved to where the original's code ends (0x0204df14; the game's constant tables and the "
-            "Mobiclip decoder after them are in the original's `.rodata`), and the zero fill the linker lays down "
-            "before 0x02001000 and 0x02003000 is no longer counted as code. The steps in the graph are these changes, "
-            "not new matching.", ""] if IMAGE_CODE != FIRST_IMAGE_CODE else []),
         f"_Last updated {r['date'][:10]}. Full history: [`progress/history.csv`](progress/history.csv)._",
         END,
     ])
