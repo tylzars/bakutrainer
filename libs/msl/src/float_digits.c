@@ -264,7 +264,6 @@ void func_0204b8e8(DecDigits *d, int n) {
 }
 
 // Converts a double to its exact DecDigits digits; zero, infinity and NaN are marked with text 0, 'I' and 'N'.
-// Converts a double to digits as asked by the format: rounded to form->ndigits, then as ASCII characters.
 void func_0204bc6c(DecDigits *d, double x) {
     char sign = func_0204bf28(x) != 0;
     DecDigits iv, p2;

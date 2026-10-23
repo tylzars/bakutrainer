@@ -4,8 +4,8 @@
 // With this value in the mode halfword the archive gets no tables and refuses every command.
 #define FS_MODE_NO_TABLES 2
 
-// Address of the mode halfword; the table positions and sizes follow at offset 0x200. An enum constant stands in for
-// whatever construct keeps this address in a register across the calls.
+// Address of the mode halfword; the table positions and sizes follow at offset 0x200. Written as an enum
+// constant, the compiler keeps it in one register across the calls.
 typedef enum { FS_MODE_ADDR = 0x027ffc40 } FSModeAddr;
 
 typedef struct {
