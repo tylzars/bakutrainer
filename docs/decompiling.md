@@ -5,7 +5,7 @@ version `usa`.
 
 ## Workflow
 
-1. `ninja dis` writes disassembly to read from into `build/usa/asm/`.
+1. `ninja dis` writes the original's disassembly into `build/usa/asm/`.
 2. Write the function in a scratch file with a `// PROBE: <symbol> <module> <address>` line and compare it:
    `python3 tools/probe_compilers.py <file> --unit <the source path it will live at> --show`. This compiles it with
    the compiler and flags the build uses for that path and prints a side-by-side diff (`*` marks a difference).
@@ -39,7 +39,8 @@ version `usa`.
    destructors of the Mobiclip glue code). Mark them `weak` in `symbols.txt`. The build demotes the compiled copies to
    weak (`tools/demote_multidef.py`), so the original's copy wins once a file is linked.
 7. Run `python3 tools/check_calls.py`, `tools/check_callees.py` and `tools/check_strings.py`: matching masks
-   relocated words, so a function can match while calling the wrong function or loading the wrong string.
+   relocated words, so a function can match while calling the wrong function, loading the wrong string or pointing at
+   the wrong field (`&banks[9]` vs `&banks[6]`). Probes mask the same way; linking catches the rest.
 8. A function that doesn't match yet stays in its file with a `// non-matching:` comment saying exactly what differs.
    `tools/unmatched.py` lists every function below 100% in the report, and `tools/clean_notes.py` removes the notes
    once the functions match. A file can be committed like that, unlinked.
@@ -65,30 +66,25 @@ Problems that come up when `tools/configure.py` first generates the `dsd` config
 
 - `dsd init` stops with "Local function call from X to Y leads to no function" when its analysis misses a target (a
   one-instruction `bx lr` function, code reached only through a table). Set
-  `DSD_INIT_FLAGS = ["--allow-unknown-function-calls"]` in `tools/project.py` (this game needs it) and run
-  `configure.py` again. The `func_<addr>_unk` symbols this creates have size 0, and dsd then maps everything up to
-  the next known function as ARM code. Pointer words to Thumb functions in that stretch become ARM-to-Thumb
-  references, the linker adds a 12-byte veneer for each (`ldr ip, [pc]; bx ip; .word`) at the end of `.text`, and
-  the ROM doesn't match. Read the disassembly at each `_unk` (`arm-none-eabi-objdump -D -b binary -marm
-  --adjust-vma=0x02000000 --start-address=<addr> extract/usa/arm9/arm9.bin`), give it its real size up to and
-  including its literal pool, and rename it to `func_<addr>`; dsd then maps what follows as data.
-- If the build ends with a SHA-1 mismatch, `python3 tools/diff_rom.py` shows the size change, which pointers shifted
-  and the first other difference. Thumb function pointers that now point at veneers mean a stretch is mapped as code
-  when it isn't: look for a function before it with a wrong or zero size.
-- Hand-written routines inside `.rodata` (a codec's code mixed with its tables) can keep function symbols, but dsd
-  emits no `$d` mapping symbol for data symbols there, so after a function the linker reads everything up to the
-  next mapping symbol as ARM code. Thumb code in the same delinked object that takes the address of data in that
-  stretch then gets a 12-byte Thumb-to-ARM veneer (`bx pc; nop; ldr pc, [pc, #-4]`) and the ROM grows. Code in
-  another object is not affected, so the problem goes away once units split the gap. Until then, keep such a routine
-  at the end of `.text` rather than at the start of `.rodata`.
+  `DSD_INIT_FLAGS = ["--allow-unknown-function-calls"]` in `tools/project.py` (this game needs it). The
+  `func_<addr>_unk` symbols this creates have size 0, so dsd maps everything up to the next known function as ARM
+  code, and the linker adds a 12-byte veneer (`ldr ip, [pc]; bx ip; .word`) for each pointer to a Thumb function in
+  that stretch: the ROM doesn't match. Give each `_unk` its real size, literal pool included, and rename it
+  `func_<addr>`. To read it: `arm-none-eabi-objdump -D -b binary -marm --adjust-vma=0x02000000
+  --start-address=<addr> extract/usa/arm9/arm9.bin`.
+- On a SHA-1 mismatch, `python3 tools/diff_rom.py` shows the size change, the shifted pointers and the first other
+  difference. Thumb function pointers that now point at veneers mean a stretch is mapped as code when it isn't: look
+  for a function before it with a wrong or zero size.
+- dsd emits no `$d` mapping symbol for data symbols inside `.rodata`, so after a hand-written routine there (a codec's
+  code mixed with its tables) the linker reads everything up to the next mapping symbol as ARM code. Thumb code in the
+  same delinked object that takes the address of data in that stretch gets a 12-byte veneer
+  (`bx pc; nop; ldr pc, [pc, #-4]`). Until units split the gap, keep such a routine at the end of `.text`.
 - "Call goes to middle of function" warnings from `dsd init` usually mean merged functions. Some are real second
   entries (fast paths of the division routines, long-branch `bl` inside large Thumb functions) and stay labels.
 - `ninja dis` stops with "Inline tables must have a known size" when a data symbol of unknown size sits inside a
   function (dsd folds a literal pool placed before a function into it): give it a size, e.g. `kind:data(word[4])`.
 - With no overlays, the tools use the end of the main module's `.bss` where the overlays would start.
-- Thumb game code: give `src/` (or the Thumb folders) `-thumb` through `PATH_ADD_FLAGS`. An ARM function in a Thumb
-  file sits between `#pragma thumb off` and `#pragma thumb on`. `ninja objdiff` gives each unit its own compiler and
-  flags.
+- Thumb game code gets `-thumb` through `PATH_ADD_FLAGS` ([Thumb code](#thumb-code)).
 
 ## Watching the compiler's backend
 
@@ -108,16 +104,12 @@ under sp2p2. Each trace is its own gdb process, so several can run at once.
 
 ## Codegen rules
 
-Each rule reads "the ROM shows X: write Y (because Z)". Tags say where a rule was seen:
-
-- [sp2p3]: on 2.0 sp2p3, the game code's build. [sp2p2]: on 2.0 sp2p2, the build `tools/mwcc_trace.py` traces.
-  "traced" means read from the backend with the tracer (sp2p3 code through `--sp2p2-stand-in`), "tested" checked
-  with small test files.
-- [2.0-all]: also on the 2.0 sp1p5 library code. [SP-diff]: differs between 2.0 service packs.
-- [host]: depends on the computer running the compiler.
-- [mwld], [dsd], [objdiff], [mwasm]: how that tool behaves.
-
-Untagged rules were seen on 2.0 builds and probably hold on all of them.
+Each rule reads "the ROM shows X: write Y (because Z)". Tags say where a rule was seen: [sp2p3] on 2.0 sp2p3 (the
+game code's build), [sp2p2] on 2.0 sp2p2 (the build `tools/mwcc_trace.py` traces), [2.0-all] also on the sp1p5
+library code, [SP-diff] differs between 2.0 service packs, [host] depends on the computer running the compiler, and
+[mwld], [dsd], [objdiff], [mwasm] are that tool's behaviour. "traced" means read from the backend with the tracer
+(sp2p3 code through `--sp2p2-stand-in`), "tested" checked with small test files. Untagged rules were seen on 2.0
+builds and probably hold on all of them.
 
 ### Rules of thumb
 
@@ -128,33 +120,27 @@ Untagged rules were seen on 2.0 builds and probably hold on all of them.
 - Which variables exist, where they are defined and what type they have move registers and scheduling far more often
   than how an expression is spelled. Macro or inline, ternary or if/else, and index spellings usually compile the
   same. Change the variables first.
-- Matching masks relocated words, so a 100% function can still call the wrong function, load the wrong string or
-  point at the wrong field (`&banks[9]` vs `&banks[6]`); probes mask the same way. Run the call, callee and string
-  checkers; linking catches the rest.
 - A one-word literal-pool difference is often a wrong constant (a wrong divisor: `/ 24`, 182 vs 240), not a layout
   problem. A wrong constant can also look like a scheduling difference when the original builds a value from a
   neighbouring constant (`mov r7,#34; sub r7,r7,#47` gives -13 where the source said 3).
 - Before fighting a caller's registers, check the callee's real signature: parameter widths, return type (void or a
-  value), ignored parameters. Wrong callee prototypes were the only cause of several caller misses that looked
-  unfixable.
+  value), ignored parameters. A wrong callee prototype often looks like an unfixable caller.
 - Source that is dead only by the program's logic still reaches the backend and can move the scheduler or the
   colourer, though it leaves no instructions: a store every reachable case overwrites, an unread zero initialiser of a
   variable that is read later, a product whose result is overwritten, an extra live value.
-- What the front end removes outright never matters, so don't bother with it: locals that are never read, discarded
-  expressions, empty inlines, self-assignments, `if (0)`, `do {} while (0)`, empty `asm` blocks. [sp2p2, traced]
-  Identity arithmetic (`x << 0`, `x >> 0`, `x | 0`, `x ^ 0`, `x - 0`, `x * 1`, `x / 1`, `x & -1`) and a repeated test
-  with an empty body (`if (a || a) {}`: no join block survives, unlike the form with a body in
-  [Copies and constants](#copies-and-constants)) are removed just as completely: in DrawModelFileEx and
-  ComputePoseMatrices they gave the same objects as the plain form. [sp2p3, tested]
+- What the front end removes outright never matters: locals that are never read, discarded expressions, empty
+  inlines, self-assignments, `if (0)`, `do {} while (0)`, empty `asm` blocks [sp2p2, traced]; identity arithmetic
+  (`x << 0`, `x | 0`, `x * 1`, `x & -1`, ...) and a repeated test with an empty body (`if (a || a) {}`, unlike the
+  form with a body in [Copies and constants](#copies-and-constants)) [sp2p3, tested].
 - To see whether a register difference comes from scheduling or from allocation, compile with `-proc generic` instead
   of `-proc arm946e` (other flags unchanged). It skips the ARM9 scheduler that runs before register allocation, and
   also shows the order of stack-parameter copies at entry.
 - Don't change a shared helper (bit-test or flag setters) to fix one caller: other matches depend on it. Change the
   caller instead.
 - `#pragma scheduling` does not exist in this compiler; setting it changes nothing. [sp2p2]
-- A function that really uses an object declared `__attribute__((aligned(N)))` skips the whole IR optimiser (one pass
-  instead of about 100): no loop rotation, no strength reduction, globals reloaded from the pool. A dead reference
-  doesn't trigger it. Useful as a diagnostic, and a hint when the original looks unoptimised.
+- A function that really uses an object declared `__attribute__((aligned(N)))` skips the whole IR optimiser: no loop
+  rotation, no strength reduction, globals reloaded from the pool (a dead reference doesn't count). A hint when the
+  original looks unoptimised.
 
 ### Register allocation
 
@@ -169,22 +155,21 @@ Numbering (traced with gdb on the stock compiler):
   ([Copies and constants](#copies-and-constants)), so the colourer sees the expression temporary, numbered in IR
   statement order, and the local's declaration position changes nothing (ComputePoseMatrices' sin/cos locals). A
   value used in a join block keeps its variable's number: the declared one for the variable's first assignment, the
-  web group (below the IR temporaries) for a later assignment that starts a new web. So a value held in a dead
-  earlier local is numbered low (DrawModelFileEx's material colours in the dead locals `y` and `x`; func_0201e56c's
-  counter and pointer in reused locals). [sp2p3, traced]
+  web group (below the IR temporaries) for a later assignment that starts a new web. So a value held in a dead or
+  reused earlier local is numbered low (DrawModelFileEx, func_0201e56c). [sp2p3, traced]
 
 Colouring (traced with `--simplify`):
-- Scans visit the virtual registers in increasing number and remove and push each node with fewer conflicts than
-  there are registers, until the graph is empty (a stuck graph removes the node with the lowest spill-cost/conflict
-  ratio). Colours are handed out popping the stack: the last one pushed picks first and takes the lowest free
-  register. So of two nodes pushed in one scan, the lower-numbered is coloured later. Values that rotate through
-  callee-saved registers left the graph in different scans: count their conflicts at the scan where each is visited.
+- Scans visit the virtual registers in increasing number and push each node with fewer conflicts than there are
+  registers, until the graph is empty. Colours are handed out popping the stack: the last one pushed picks first and
+  takes the lowest free register, so of two nodes pushed in one scan, the lower-numbered is coloured later. Values
+  that rotate through callee-saved registers left the graph in different scans: count their conflicts at the scan
+  where each is visited.
 - A popped node takes the lowest free of r0-r3; else a callee-saved register already handed out; else r12, then r14;
   else a new callee-saved register.
 - A stuck graph spills the value with the lowest cost/conflicts. Cost = 2 x (weighted use groups) + (weighted
   definitions), where a use starts a new group only when another value dies between it and the value's previous
-  definition or use. So of two similar values, the one with no death among its uses goes to the stack (this decided
-  which of DrawModelFileEx's two rotation half-sizes is spilled). [sp2p3, traced]
+  definition or use. So of two similar values, the one with no death among its uses goes to the stack
+  (DrawModelFileEx's rotation half-sizes). [sp2p3, traced]
 
 For int-sized values that live across calls:
 - Named locals loaded from memory (or assigned later) get registers in declaration order, the first declared the
@@ -197,8 +182,8 @@ For int-sized values that live across calls:
   pair where declaration order can't.
 - Declaration order sets registers, assignment order sets load order: declare `a, b, c, d` and assign `b, a, d, c` if
   the ROM shows that.
-- Types and order interact, so search them together (one large update function matched only with `u32 id = (u8) x`
-  and one particular declaration order). `permute.py` supports `//PERM T=u8|u32|int`.
+- Types and order interact, so search them together (`u32 id = (u8) x` matched only with one declaration order).
+  `permute.py` supports `//PERM T=u8|u32|int`.
 - `s16` locals get registers differently from `s32` ones in otherwise identical code (one cause: the `s16` table
   loads in [IR optimiser](#ir-optimiser)). Declaration order does not affect `double` locals.
 
@@ -260,9 +245,8 @@ Coalescing [sp2p2, traced]:
   lower-numbered register and deleted ("keep vA drop vB").
 - A conversion temporary (a narrow value passed to a wider parameter, also an inline function's) can coalesce with
   the local, which then takes the temporary's register whatever its declaration order. Fix the callee's parameter
-  type: `u16` parameters made a `u16` local a named local again, and an `s16` third parameter let two callers match
-  by declaration order alone. A `u8` passed to an inline function with a 64-bit temporary merges into it, so its
-  declaration position doesn't matter.
+  type so the local is a named local again. A `u8` passed to an inline function with a 64-bit temporary merges into
+  it, so its declaration position doesn't matter.
 
 ### Copies and constants
 
@@ -282,8 +266,7 @@ Coalescing [sp2p2, traced]:
   recomputed. A local assigned twice (`s32 left = c; left += b;`) is not substituted and is computed where written
   (e.g. in an inner loop's preheader).
 - A value whose only consumer is one later call is substituted into that call; a compound assignment or a later read
-  keeps it in place. Reusing one variable for two arguments pins the first one's evaluation point (a game function
-  matched only with a local reused for its third and fourth arguments).
+  keeps it in place. Reusing one variable for two arguments pins the first one's evaluation point.
 - `T *p = o->a; p += o->b;` pins the computation where written. A pointer built by `p = base; p += idx;` is not
   substituted, so identical `base[idx]` accesses elsewhere share only `idx*size` and add the base again at each use
   (`ldrh r0,[r6,r7]`); `&e[idx]` or `e + idx` shares the whole address.
@@ -294,8 +277,8 @@ Coalescing [sp2p2, traced]:
   a call (`k = 31 - f(x)`) and used as `t[k]` in two expressions gets such a copy, numbered in that pass's group;
   `k = 31 - m` got none. Plain reads (`x + k`, `f(k)`, `n <= k`) are not index conversions, and a larger shared
   subtree hides the index inside it. An index declared `long` (or `unsigned long`) needs no conversion, so the
-  variable itself is used, which moves its register or spill slot (DrawModelFileEx's texture key index takes the
-  original's spill slot as a `long`). [sp2p3, traced]
+  variable itself is used, which moves its register or spill slot (DrawModelFileEx's texture key index).
+  [sp2p3, traced]
 - A repeated field read is shared only when no real call sits between the uses; a named local copy instead moves
   register pairs. Reads of a const table are merged even across calls, so reading it at each use can give the
   original order where a named local takes a register too early.
@@ -315,15 +298,14 @@ Coalescing [sp2p2, traced]:
 - A leftover `mov rX, rX` means a store followed by a read-back of the same field (`g.mode = m; ...; if (g.mode<=1)`).
 - `if (field)` right after `field = var;` compiles to `tst #255`: store first and test the field (`f = g; if (f)`)
   rather than `if (g & 0xff)`.
-- `u8 now = ++field;` gave `add; and; strb` with no reload where `field++; now = field;` reloaded (in a function that
-  tests the value, then passes it to an inline that writes hardware registers). In a small test both compiled the
-  same, so try both.
+- `u8 now = ++field;` gave `add; and; strb` with no reload where `field++; now = field;` reloaded; in a small test
+  both compiled the same, so try both.
 - ARM store-to-load forwarding (the backend CSE just before scheduling): a just-stored byte read back becomes
   `and rD, rS, #255`, a word a plain copy; halfwords are not forwarded. A later peephole turns that `and #255` (or a
   shift pair that re-extends a value) into a copy only when it knows the source already has that width: a value from
   `ldrb/ldrh/ldrsb/ldrsh`, `mov #0..255`, `and #0xff` or `and` with a mask below 0x80, `and/orr` of known values, or
-  a copy of one. `(x & 0xff0000) >> 16` is not known, so reading such a stored byte back keeps the `and` (+4 bytes in
-  DrawModelFileEx's shift count). [sp2p3, traced]
+  a copy of one. `(x & 0xff0000) >> 16` is not known, so reading such a stored byte back keeps the `and`.
+  [sp2p3, traced]
 - A constant stored to a member and read back stays a run-time computation (`o->mUnk_38 = 0x20;
   o->mUnk_38 = (0x6c - o->mUnk_38)/2 + 0x1e;`); from a local it folds. Likewise `n = 8; f(n*12);` through memory keeps
   `mov #8; mov #12; smulbb`.
@@ -355,15 +337,13 @@ Constants in registers:
   wins unless a later one is strictly better by, in turn: latest start time arrived; more successors made ready;
   height; an instruction-kind rank. Ties go to source order, so moving a statement within its block (or adding a call
   before it) can flip them. "Made ready" counts the successors whose only unscheduled predecessor it is, so a
-  successor still waiting on a second predecessor counts 0 (DrawModelFileEx: while `sh0` is pending, the `16` of
-  `16 << sh0` loses to a product and the `.bss` address load and lands in r8). [sp2p3, traced]
+  successor still waiting on a second predecessor counts 0 (DrawModelFileEx's `16 << sh0`). [sp2p3, traced]
 - Under register pressure the scheduler before colouring picks by a pressure score (start 16; each last use subtracts
   1 + max(1, live - limit); each new value adds max(1, live - limit)), keeping source order on ties. [sp2p2, traced]
   The mode is decided again at every pick (live count >= the limit of 14), and the lowest score wins. The live count
   holds every value that is live out or still has unscheduled uses; a definition adds one only when its value is
   still needed and is not also read by the same instruction. So one more live value can switch every pick it is live
-  across to pressure mode, and a statement's list position decides its pressure ties (DrawModelFileEx: the `sh0`
-  statement written after the six table loads). [sp2p3, traced]
+  across to pressure mode, and a statement's list position decides its pressure ties. [sp2p3, traced]
 - One more value live across a loop changes the loop body's schedule even if it leaves no code
   (`const u8 *mode = &g;` reloaded from the pool).
 - Memory-dependence edges come from alias classes set by what defines the base register. An integer-constant base
@@ -375,10 +355,8 @@ Constants in registers:
   offset + size runs past the declared type's size (incomplete arrays `T x[]` excepted), and a worst-case store is
   ordered against every later load and store. Within bounds, all members of one object alias each other and
   different objects never do. So when a store seems to pin a later load, check the declared size: an object declared
-  too small pins its stores past the end, and its real size frees them (the pool word alone can't tell a member of a
-  big object from a store past a smaller object's end). Exact form: a Thumb access re-anchored to obj+A
-  (A = offset & ~imm range) is checked as A + offset + 1 > declared size, so in a big object every access far enough
-  in is already worst-case, and the declared size only decides accesses below about half of it. Of the
+  too small pins its stores past the end. A Thumb access re-anchored to obj+A (A = offset & ~imm range) is checked as
+  A + offset + 1 > declared size, so in a big object every access far enough in is already worst-case. Of the
   out-of-bounds spellings only `obj.arr[k]` / `&obj.arr[k]` with k past the end folds into the pool word and anchors
   like a member; casts compute the address at run time.
 - A store through any pointer makes the compiler re-read a global declared with a complete type (`extern T g;`,
@@ -397,24 +375,21 @@ Constants in registers:
   order another way. [2.0 sp2p3 Thumb, tested] In ARM code an `add sp` was seen scheduled before global stores at a
   return.
 - Volatile: a field or parameter reloaded where the compiler would reuse or hoist it is volatile in the original
-  (tick counter, file flags). A store followed by a reload of the same field is not a sign on its own. In small C and
-  C++ tests with nothing between store and load (2.0 sp1p5, sp2p2, sp2p3), Thumb code reloaded every byte
-  (`strb; ldrb`) and halfword and reused words; ARM code reused bytes (`strb` then `and #0xff`) whether the value was
-  a parameter, a computed value or a call result, reused words, and reloaded a halfword parameter. So in ARM code,
-  look for what sits between (a call, an aliasing store) before calling a field volatile. A volatile field can pin a
-  load where it is written (a text offset field made volatile pinned its load right after the file pointer and fixed
-  the register allocation of a whole argument setup).
+  (tick counter, file flags). A store followed by a reload of the same field is not a sign on its own: in small tests
+  with nothing between store and load (2.0 sp1p5, sp2p2, sp2p3), Thumb code reloaded every byte and halfword and
+  reused words; ARM code reused bytes (`strb` then `and #0xff`) and words and reloaded a halfword parameter. So in ARM
+  code, look for
+  what sits between (a call, an aliasing store) before calling a field volatile. A volatile field also pins a load
+  where it is written.
 - Arguments with side effects (a volatile read, `x++`) are evaluated before the stack-argument stores and the other
   arguments. Side-effect-free arguments are folded into the call and loaded after the stores, because the scheduler
   never lifts a load through the object pointer above a `[sp]` store. An enum-typed copy plus a named reference can
   give the same effect.
 - A `u16`/`s16` local or stack parameter is spilled to a full 32-bit slot. Its spill stores and reloads use the
   worst-case alias set, so they are ordered against each other and the clean-up after allocation won't reuse a
-  register value across them. Parameter and local widths move both scheduling and copies (`u16` and `s16` parameters
-  of a text printing function; a `u16` value and `u8` flag that also needed the callee's parameters to be `u8`). A
-  `u8` parameter's store to its home carries a broad alias set that holds a `u16` parameter's entry copy but not the
-  int-sized ones, so only with the `u16` declaration is the store ordered after that copy (DrawTextEx's `angle`).
-  [sp2p3, traced]
+  register value across them, so parameter and local widths move both scheduling and copies. A `u8` parameter's
+  store to its home carries a broad alias set that holds a `u16` parameter's entry copy but not the int-sized ones, so
+  only with the `u16` declaration is the store ordered after that copy (DrawTextEx's `angle`). [sp2p3, traced]
 - Narrowing changes scheduling, not just instructions: `-(u8)(m/4)` and `-((u32)m >> 2)` emit the same operations,
   but the `u8` form schedules `rsb` before the next pool load.
 - Equivalent arithmetic inside a long sum (`y%8 << 3` vs `y%8 * 8`, `(y/64)*8*512` vs `(y/64)*4096`) schedules
@@ -439,16 +414,14 @@ Constants in registers:
   stores.
 - Create the first operand early and add the second late (`u16 rx = p->mRotX; ...; rx += r[0];`) to get registers in
   reverse creation order.
-- `x*3 + y` vs `x + x + x + y`: only the spelled-out sum matched a set of animation blends (`(s64) x + x + x + y` for
-  32-bit).
+- `x*3 + y` vs `x + x + x + y`: the original may have the spelled-out sum (`(s64) x + x + x + y` for 32-bit).
 - `a*b + c*d` evaluates the right-hand product first; reverse the terms to swap them. [2.0-all]
 - Chained assignments `a = b = c = k` store right to left and change which register holds the constant; in a
   constructor, `a = b = 0;` gives the reload-and-truncate sequences (`ldrb` / `and #0xff`).
 - `s += *w++ * p[x];` keeps each address add next to its load; `w[2*k]` with `w += 16` after it groups the adds.
 - An identical first instruction in both arms of an if/else (same registers) is hoisted above the branch after
   register allocation. That is not source-level CSE, so source forms can't stop it; the original avoids it only with
-  different registers per arm. Register copies and `rsb` are never hoisted (DrawModelFileEx's sign flips).
-  [sp2p3, tested]
+  different registers per arm. Register copies and `rsb` are never hoisted. [sp2p3, tested]
 - `mov rX, rY` just before a load through rX, with rY live, can be a second identical load turned into a copy by the
   clean-up after allocation; reading through a `const T *` (an inline helper with a const parameter) keeps that second
   load apart.
@@ -486,13 +459,12 @@ Constants in registers:
   gets an extra copy at its first use. Single-use locals are substituted into their use; arithmetic statements used
   more than once, and statements reading address-taken locals or through a pointer, stay where written. With
   `int`/`s32` locals nothing moves and no copy is made (IR order = source order), and the multiply is still `smulbb`
-  (the backend knows the `ldrsh` width). ComputePoseMatrices matched only with `s32` sin/cos locals written per axis.
+  (the backend knows the `ldrsh` width). ComputePoseMatrices needs `s32` sin/cos locals, written per axis.
   [sp2p3, traced]
 - Basic blocks are cut by size: when the IR is turned into instructions, a statement starts a new block once the
   current one holds 101 or more instructions (copies, per-use address loads and stores count; comma-joined statements
   are cut separately). A statement pushed into the next block loses its scheduling height there, so a few extra copies
-  early in a long straight-line block move later code across the cut (ComputePoseMatrices' matrix block, cut right
-  after `m._[6]`). [sp2p3, traced]
+  early in a long straight-line block move later code across the cut (ComputePoseMatrices). [sp2p3, traced]
 
 ### Loops
 
@@ -504,12 +476,12 @@ Constants in registers:
   loop counts down. Per-loop counters get registers differently and no declaration order fixes it. A shared counter
   is coloured above a hoisted address, per-loop counters below. When two counters step together, the order of
   `j++; i++;` matters.
-- `u32 k = 0; ... k = (u8)(k + 1);` fixes counter/coordinate swaps where `u8 k` fails in every order. A counter
-  passed to an inline with a 64-bit temporary also matched as `u32 n` with `n = (u8)(n + 1)`.
-- An `unsigned long` loop counter differs from `unsigned int` to the compiler. It mattered once in game code, so it
-  is rare there; it depends on the variable's own type, and casts change nothing. In C middleware `long` locals and
-  parameters matter much more (`long i` turned `mul` into `smulbb` and fixed a stack frame and temporaries): try
-  `long` early in such libraries. It only matters where it creates a mixed-type expression. [2.0-all]
+- `u32 k = 0; ... k = (u8)(k + 1);` fixes counter/coordinate swaps where `u8 k` fails in every order, also for a
+  counter passed to an inline with a 64-bit temporary.
+- An `unsigned long` loop counter differs from `unsigned int` to the compiler, but only where it creates a mixed-type
+  expression; it depends on the variable's own type, and casts change nothing. Rare in game code; in C middleware
+  `long` locals and parameters matter much more (`long i` turned `mul` into `smulbb`): try `long` early there.
+  [2.0-all]
 - `(n + 1) * x; ...; n++;` keeps the unmasked `n + 1` in the multiply.
 - A pointer declared before a loop and assigned inside it (`e = &Items(list)[i];`) fixed a base/element swap.
 - A struct copy declared inside a loop block stays an `ldm/stm` copy re-read from the stack; at function scope it is
@@ -538,12 +510,12 @@ Constants in registers:
 - If-conversion runs after register colouring, before the second scheduler. An arm is predicated only when it has at
   most 3 instructions counting its closing branch (a then-arm at most 2 real instructions, an else-arm 3). Each arm is
   decided on its own, so one arm can be predicated while a branch is kept around the other. Predicated arms are placed
-  before the branch, then-arm first, and the second scheduler mixes them with the block's other code
-  (DrawModelFileEx's sign flips). [sp2p3, tested]
+  before the branch, then-arm first, and the second scheduler mixes them with the block's other code.
+  [sp2p3, tested]
 - Identical trailing statements in both arms are merged into the join, and identical setter calls in both arms after
   the join; duplicated call tails are not merged. Write statements in both arms when the original keeps them there.
   The comparison is on the IR: `sz = sx + 0` or `sz = (s32) sx` counts as `sz = sx`, but an arm with `sy = sz = sx;`
-  doesn't match one with `sy = sx; sz = sx;` (DrawModelFileEx). [sp2p3, tested]
+  doesn't match one with `sy = sx; sz = sx;`. [sp2p3, tested]
 - A helper called with a different constant per arm is compiled per arm and merged into `moveq/movne` only after the
   first scheduling pass, so a later call's argument setup isn't moved up.
 - A select between exactly 0 and 1 always puts the 1 first: `x ? 1 : 0`, `x != 0`, `!!x`, an if/else assigning 0/1
@@ -588,7 +560,7 @@ Constants in registers:
 - A cast on the address swapped address and value registers in a read-modify-write of a global in game code: direct
   access coloured the address first; the cast form gave the value the lower register and its own pool word. In a
   small test, a cast written at each use compiled exactly like direct access, while a pointer local initialised with a
-  cast (`T *p = (T *) &g;`) did change the addressing (see "Named pointer locals" in
+  cast (`T *p = (T *) &g;`) changed the addressing ("Operand and pointer shapes" in
   [Register allocation](#register-allocation)). Try both.
 
 ### Types and casts
@@ -598,10 +570,9 @@ Constants in registers:
   reverse; a BOOL stored into a `u8` field gives `ands rX, r0, #0xff` before the store; a `u8` return removes the
   caller's `and #0xff`. In a function returning `u8`, `u8 r = c >= x; return r;` has no final `and`; a BOOL local
   does.
-- A callee declared void that really returns a value changes its callers' allocation and scheduling (ties): declaring
-  the true type fixed runs of callers (a function returning offset + size, another returning BOOL). The other way
-  round, a tail-call function whose callers all ignore the result may need to be void to keep another caller matching
-  (a judgement call: mark it as a placeholder).
+- A callee declared void that really returns a value changes its callers' allocation and scheduling (ties):
+  declaring the true type can fix many callers at once. The other way round, a tail-call function whose callers all
+  ignore the result may need to be void to keep another caller matching (a judgement call: mark it as a placeholder).
 - If callers load a register the callee never reads (e.g. the object pointer into r0), the callee still takes that
   parameter; removing it makes the callers 8 bytes short.
 - Parameter width shows in the caller: passing a `u8` to a `u32` parameter makes a conversion temporary that shifts
@@ -616,8 +587,8 @@ Constants in registers:
   This helps only when every consumer has the same narrow type (a mismatch adds a conversion temporary and 8 bytes of
   frame). A `u8` stack parameter is loaded first in the prologue; BOOL puts it later.
 - A stack parameter the callee reads with a narrow load while all callers store a full word: declaring it narrow
-  breaks the callers (they add an `and`). If the callee reads `*(s16*)&param`, it really is `s16` (declaring it so made
-  the callers narrow late, and matched); otherwise `*(u8*)&param` is a placeholder.
+  breaks the callers (they add an `and`). A callee reading `*(s16*)&param` really takes an `s16`: declared so, the
+  callers narrow late and match. Otherwise `*(u8*)&param` is a placeholder.
 - A signed compare (`bgt`) on an `ldrh` value means `int v = field; if (v > K)`; comparing the field gives `bhi`.
   Unsigned bitfield compares are unsigned (`bcc`); `(s32) bf >= 2` gives `blt`.
 - An index the original masks with `and #0xff` at each use was not a `u8` local: write the expression at each use.
@@ -639,12 +610,10 @@ Constants in registers:
 - Spill slots: spilled parameters take the lowest stack slots, in parameter order; spilled named locals go above them
   in reverse declaration order (first declared = highest slot); a spilled compiler temporary (e.g. a merged repeated
   global read) sits just above the parameters. Function-scope stack locals get slots in descending declaration order.
-  In the functions matched here, the spilled locals were the ones declared first. A local that won't take its slot
-  may need to be a repeated expression. How: each colouring round hands out spill slots walking the virtual registers
-  in increasing number, from a running offset, so within a round a higher number gets a higher slot (numbering:
-  [Register allocation](#register-allocation)), and a later round's spills sit above. To swap two spilled values'
-  slots, change which number each value reaches the colourer with (DrawModelFileEx: its texture key index and
-  frame-record pointer). [sp2p3, read from the compiler, consistent with the listings]
+  A local that won't take its slot may need to be a repeated expression. Each colouring round hands out spill slots
+  walking the virtual registers in increasing number, so within a round a higher number gets a higher slot
+  (numbering: [Register allocation](#register-allocation)), and a later round's spills sit above. To swap two spilled
+  values' slots, change which number each value reaches the colourer with. [sp2p3, read from the compiler]
 - Declared before, computed after: declaring `b/bLevel` before `a/aLevel` but computing the `a` chain first changes
   which value is spilled, independently of either order alone.
 - Stack-parameter copies are emitted at entry in parameter order; the arm946e scheduler moves a copy early only when
@@ -653,7 +622,7 @@ Constants in registers:
 - `stm` where the original has two `str`s for stack arguments: declare the flag without an initialiser and assign it
   only in the arm that needs it, passing literals in the other.
 - A parameter copied into r1-r3 at entry and kept until a later call is usually that call's argument in that position
-  (a missing `%d` argument looked like a register problem).
+  (a missing `%d` argument can look like a register problem).
 - By-value struct parameters: modify fields in place (`spec.prec -= 2`), don't copy them to locals (that changes the
   spill slots). A `double` parameter copied to a local puts its argument loads at entry, above an early return.
 - `T a[2] = {0,0};` and `VecFx32 v = {0,0,0};` store through an `add rN, sp, #off` base; separate element stores,
@@ -701,10 +670,10 @@ The game's own code is C. The Mobiclip glue code (`libs/mobiclip/`) and `rt_glob
 - `-RTTI off`: vtables have a zero typeinfo slot.
 - Inline destructors are emitted as weak copies in every file that uses them; the original link kept one.
 - One class compiled under two names in different files shows as an undefined vtable only once the other links.
-- An inline identity (`template <class T> inline T Id(T x) { return x; }`) around an operand changes the code: around
-  a field read it moved the value to another register and split an `ldm`; around an argument it moved the argument's
-  load ahead of an earlier call (2 of 5 test functions changed; sp2p2 and sp2p3, ARM and Thumb). `permuter.py` tries
-  it in C++ files. It is a placeholder unless a real inline helper of the same shape exists.
+- An inline identity (`template <class T> inline T Id(T x) { return x; }`) around an operand can change the code:
+  around a field read it moved the value to another register and split an `ldm`; around an argument it moved the
+  argument's load ahead of an earlier call. `permuter.py` tries it in C++ files. It is a placeholder unless a real
+  inline helper of the same shape exists.
 
 ### Data layout and link order
 
@@ -738,9 +707,9 @@ So:
   applies a static order, `tools/data_order.py` works out a declaration order for one section, and
   `tools/fix_layout.py` tries C++ header orders. `.clang-format` keeps include order (`SortIncludes: Never`).
 - Define every table in the range: `.rodata` tables take part in the same sort as `.data` ones.
-- Merging tables into one struct changes what the sort can reach (a 60-byte struct of position and order tables; a
-  struct of two tables to put a 10-byte table before an 8-byte one). Byte tables indexed by a variable stay separate
-  (inside a struct the index becomes an immediate offset).
+- Merging tables into one struct changes what the sort can reach (a struct of two tables puts a 10-byte table before
+  an 8-byte one). Byte tables indexed by a variable stay separate (inside a struct the index becomes an immediate
+  offset).
 - The order of identical string literals in a table initialiser follows from the whole list (`-str noreuse` keeps
   them as separate copies).
 
@@ -793,8 +762,8 @@ Link order and linking:
 - [dsd] dsd reads any word that looks like an address as a pointer: a word of a data blob (a font bitmap) recorded as
   a relocation becomes 0 when the target is renamed away. Delete such lines from `relocs.txt`, and check relocations
   into a newly linked range when the ROM differs by one word.
-- [dsd] The `.text`/`.rodata` boundary may be set too late (70 KB of tables counted as code). Fixing it lets units own
-  their tables and corrects the progress numbers; hand-written routines inside data then live in `.rodata`.
+- [dsd] The `.text`/`.rodata` boundary may be set too late (tables counted as code). Fixing it lets units own their
+  tables and corrects the progress numbers; hand-written routines inside data then live in `.rodata`.
 - [dsd] dsd delink refuses a relocation from one unit to a local symbol of another: never make a symbol local while
   an outside relocation targets it.
 
@@ -848,14 +817,14 @@ Identical code that objdiff still scores below 100%:
   `dsd init`, but the compiler resolves it without one, so the delinked original has a relocation the compiled object
   never has (99.99%). Remove such relocations (source and target inside one function) from `relocs.txt`.
 
-Also:
-- objdiff scratches: `tools/objdiff_place.py` gives each unit its own decomp.me compiler and flags.
+`ninja objdiff` runs `tools/objdiff_place.py`, which gives each unit's decomp.me scratch its own compiler and flags.
 
 ### Thumb code
 
-- `#pragma thumb off` ... `#pragma thumb on` around a function in a file compiled with `-thumb` gives exactly the code
-  of compiling it in an ARM file (checked on every 1.2, 2.0 and DSi build), so an ARM function can sit in a Thumb
-  file. The ROM can't show whether the original set the mode per file or per function.
+- Thumb game code gets `-thumb` through `PATH_ADD_FLAGS` in `tools/project.py`. `#pragma thumb off` ...
+  `#pragma thumb on` around a function in such a file gives exactly the code of compiling it in an ARM file (checked
+  on every 1.2, 2.0 and DSi build), so an ARM function can sit in a Thumb file. The ROM can't show whether the
+  original set the mode per file or per function.
 - A Thumb `bl` is two halfwords (one 4-byte instruction) and can straddle a word boundary: mask relocations per byte.
   objdump prints it as one line.
 - Thumb functions end on a halfword, but a unit's range ends after the padding, on a 4-byte boundary (the linker
@@ -869,31 +838,25 @@ Also:
 Forms that give the original's bytes but are probably not its source. Use one only when the bytes match and the code
 still behaves the same, mark it in place with a comment saying what it stands in for, and replace it when a real
 form matches. Kinds that have worked:
-- Layout stand-ins: a dummy static of the right size taking part in the data size sort (a missing participant changes
-  the order of equal-sized objects); named copies of identical initialisers to set their order; a 2-D shape that keeps
-  a byte table in the shared `.rodata`; a stub unit that holds the slot of a unit's code placed apart from its data
-  (moved with an `lcf_edits.txt` line).
-- Index and register stand-ins: a pointer local for a hardware register read (keeps the address numbered among the
-  variables); a second extern name for part of a table (keeps a loop base a hoisted temporary); unread zero
-  initialisers (register and stack-slot order); volatile reads that keep two reloads apart; an enum-typed index; a
-  narrow read of a stack parameter (`*(u8 *)&param`) when callers store a full word; a repeated test `a || a` (a join
-  block that keeps a call result in its local); `(s16)(int)(y - 8)` (stops narrowing being shared between calls); a
-  two-arm value whose arms read the same thing (`idx = c ? list->x : g.list->x;`), which keeps a value as its own
-  statement past expression propagation and then merges to nothing.
-- Expression stand-ins: `- -v`, a cast through a byte pointer, a zero base, a constant stored through
-  `*(s16 *)&field`. They steer folding, sign or temporary creation; the type or variable structure that does the same
-  is the real form.
-- Judgement calls: a tail-call function declared `void` because every caller ignores the result and `void` keeps
-  another caller matching.
+- Layout: a dummy static of the right size in the data size sort (a missing object changes the order of equal-sized
+  ones); named copies of identical initialisers to set their order; a 2-D shape that keeps a byte table in the shared
+  `.rodata`; a stub unit holding the slot of code placed apart from its data.
+- Registers and order: a pointer local for a hardware register read (numbers the address among the variables); a
+  second extern name for part of a table (keeps a loop base a hoisted temporary); unread zero initialisers; volatile
+  reads that keep two reloads apart; an enum-typed index; `*(u8 *)&param`; a repeated test `a || a`;
+  `(s16)(int)(y - 8)`; a two-arm value whose arms read the same thing (`idx = c ? list->x : g.list->x;`), which keeps
+  a value as its own statement past expression propagation and then merges to nothing.
+- Expressions: `- -v`, a cast through a byte pointer, a zero base, a constant stored through `*(s16 *)&field`. The
+  type or variable structure that does the same is the real form.
+- A tail-call function declared `void` to keep another caller matching.
 
-These looked like they needed placeholders but have real forms: two loads before two compares (enum-typed copies of
-the field reads); scheduling "cycles" and enum-zero workarounds (a BOOL-returning callee declared void); literal-order
-problems (wrong strings behind masked addresses).
+Before reaching for one, check the real forms above: two loads before two compares (enum-typed copies), scheduling
+"cycles" and enum-zero workarounds (a BOOL-returning callee declared void), literal-order problems (wrong strings
+behind masked addresses).
 
 ## objdiff below 100% with identical code
 
-The causes are in [objdiff and dsd quirks](#objdiff-and-dsd-quirks). The ROM check is the proof; each such function
-is listed here with its cause.
+The causes are in [objdiff and dsd quirks](#objdiff-and-dsd-quirks); the ROM check is the proof.
 
 | Function | Score | Cause |
 |---|---|---|
@@ -901,4 +864,4 @@ is listed here with its cause.
 | `_fdiv` (rt_soft_float_b.s) | 83.87% | its 256-byte reciprocal table sits inside the routine; the assembled object marks it as data (`$d`), the delinked original decodes it as instructions. `dsd delink -M` would emit `$d` there but lowers other units, so it is not used |
 | `data_02027398`, `data_02027410`, `gTextScreenFont` (engine_asm.s) | 20% | data objects in `.text` (`.incbin` blocks), as for BuildInfo |
 | `data_02028270`, `data_0202829c` (engine_asm.s) | 40% | data objects in `.text`, as for BuildInfo |
-| the 166 `data_0201a608`..`data_0201b7d2` objects (script_data.s) | 0-40% | data objects in `.text`, as for BuildInfo; the assembled object matches the ROM byte for byte, relocations included |
+| 90 of the 166 objects `data_0201a608`..`data_0201b7d2` (script_data.s) | 15-40% | data objects in `.text`, as for BuildInfo; the assembled object matches the ROM byte for byte, relocations included |
