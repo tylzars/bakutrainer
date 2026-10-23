@@ -167,7 +167,8 @@ BOOL SND_FlushCommand(u32 flags) {
             OS_RestoreInterrupts(e);
             return FALSE;
         }
-        while (cmdPendingCount >= SND_COMMAND_MAX_IN_FLIGHT || PXI_SendWordByFifo(SND_FIFO_TAG, (u32) cmdPendingHead, FALSE) < 0) {
+        while (cmdPendingCount >= SND_COMMAND_MAX_IN_FLIGHT ||
+               PXI_SendWordByFifo(SND_FIFO_TAG, (u32) cmdPendingHead, FALSE) < 0) {
             OS_RestoreInterrupts(e);
             SND_RecvCommandReply(0);
             e = OS_DisableInterrupts();

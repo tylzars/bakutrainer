@@ -17,8 +17,8 @@ void func_01ff81e4(u32 n, u32 src, u32 dst, u32 cnt) {
     OS_RestoreInterrupts(old);
 }
 
-// As func_01ff81e4, then (for channel 0) reads the DMA 0 source register twice and re-arms the
-// channel with a zero source and destination and control word 0x81400001.
+// As func_01ff81e4, then reads the DMA 0 source register twice and, for channel 0, re-arms the channel with a zero
+// source and destination and control word 0x81400001.
 void func_01ff8224(u32 n, u32 src, u32 dst, u32 cnt) {
     u32 old = OS_DisableInterrupts();
     vu32 *d = (vu32 *) (DMA_BASE + n * 12);
@@ -43,8 +43,8 @@ void func_01ff8294(u32 n, u32 src, u32 dst, u32 cnt) {
     d[2] = cnt;
 }
 
-// As func_01ff8294, then the channel 0 read and re-arm sequence of func_01ff8224, with two more
-// reads of the DMA 0 source register afterwards.
+// As func_01ff8294, then the read and channel 0 re-arm sequence of func_01ff8224, with two more reads of the DMA 0
+// source register afterwards.
 void func_01ff82b8(u32 n, u32 src, u32 dst, u32 cnt) {
     vu32 *d = (vu32 *) (DMA_BASE + n * 12);
     d[0] = src;
@@ -61,8 +61,8 @@ void func_01ff82b8(u32 n, u32 src, u32 dst, u32 cnt) {
     (void) DMA0_SRC;
 }
 
-// Sends commandLength bytes at src to the geometry FIFO through DMA channel dmaNo, at most 0x1d8
-// bytes per transfer, and waits for the channel to finish.
+// Sends commandLength bytes at src to the geometry FIFO through DMA channel dmaNo, at most 0x1d8 bytes per
+// transfer, and waits for the channel to finish.
 void func_01ff831c(int dmaNo, const void *src, u32 commandLength) {
     vu32 *cnt;
     u32 chunk;

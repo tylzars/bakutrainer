@@ -2,8 +2,7 @@
 
 #include <nitro/os.h>
 
-// OS_EnableInterrupts: clears the IRQ-disable bit (0x80) in CPSR; returns the
-// previous value of that bit.
+// Clears the IRQ-disable bit (0x80) in CPSR and returns its previous value.
 // Not compiled: reads and writes CPSR with mrs/msr, which C has no expression for.
 // clang-format off
 asm OSIntrMode OS_EnableInterrupts(void) {
@@ -15,7 +14,7 @@ asm OSIntrMode OS_EnableInterrupts(void) {
 }
 // clang-format on
 
-// OS_DisableInterrupts: sets the IRQ-disable bit; returns its previous value.
+// Sets the IRQ-disable bit and returns its previous value.
 // Not compiled: reads and writes CPSR with mrs/msr, which C has no expression for.
 // clang-format off
 asm OSIntrMode OS_DisableInterrupts(void) {
@@ -27,8 +26,7 @@ asm OSIntrMode OS_DisableInterrupts(void) {
 }
 // clang-format on
 
-// OS_RestoreInterrupts(old): sets the IRQ-disable bit to 'old' (0 or 0x80);
-// returns the bit's previous value.
+// Sets the IRQ-disable bit to old (0 or 0x80) and returns its previous value.
 // Not compiled: reads and writes CPSR with mrs/msr, which C has no expression for.
 // clang-format off
 asm OSIntrMode OS_RestoreInterrupts(OSIntrMode old) {
@@ -41,8 +39,7 @@ asm OSIntrMode OS_RestoreInterrupts(OSIntrMode old) {
 }
 // clang-format on
 
-// OS_DisableInterrupts_IrqAndFiq: sets both disable bits (0xc0); returns their
-// previous value.
+// Sets both disable bits (0xc0) and returns their previous value.
 // Not compiled: reads and writes CPSR with mrs/msr, which C has no expression for.
 // clang-format off
 asm OSIntrMode OS_DisableInterrupts_IrqAndFiq(void) {
@@ -54,8 +51,7 @@ asm OSIntrMode OS_DisableInterrupts_IrqAndFiq(void) {
 }
 // clang-format on
 
-// OS_RestoreInterrupts_IrqAndFiq(old): sets both bits (0xc0 field) to 'old';
-// returns the previous value.
+// Sets both disable bits (the 0xc0 field) to old and returns their previous value.
 // Not compiled: reads and writes CPSR with mrs/msr, which C has no expression for.
 // clang-format off
 asm OSIntrMode OS_RestoreInterrupts_IrqAndFiq(OSIntrMode old) {
@@ -68,7 +64,7 @@ asm OSIntrMode OS_RestoreInterrupts_IrqAndFiq(OSIntrMode old) {
 }
 // clang-format on
 
-// OS_GetCpsrIrqBits: returns CPSR & 0x80.
+// Returns CPSR & 0x80.
 // Not compiled: reads CPSR with mrs, which C has no expression for.
 // clang-format off
 asm u32 OS_GetCpsrIrqBits(void) {
@@ -78,7 +74,7 @@ asm u32 OS_GetCpsrIrqBits(void) {
 }
 // clang-format on
 
-// OS_GetProcMode: returns the mode field of CPSR (CPSR & 0x1f).
+// Returns the mode field of CPSR (CPSR & 0x1f).
 // Not compiled: reads CPSR with mrs, which C has no expression for.
 // clang-format off
 asm u32 OS_GetProcMode(void) {
@@ -88,13 +84,11 @@ asm u32 OS_GetProcMode(void) {
 }
 // clang-format on
 
-// OS_SpinWait(n): busy loop; subtracts 4 from n until the subtraction borrows
-// (about n/4 iterations).
-// Not compiled: the loop is `subs r0, r0, #4; bhs L1`, a branch on the subtract's carry.
-// The compiler makes a flag-setting subtract only by folding a following `cmp rd, #0` into it, which leaves
-// the branch testing eq, ne, mi or pl (ge and lt become pl and mi, hs becomes always; lo, gt and le are not
-// folded), or inside 64-bit subtract, compare and shift sequences, where the next sbc, sbcs or conditional orr
-// reads the flags.
+// Busy loop: subtracts 4 from n until the subtraction borrows (about n/4 iterations).
+// Not compiled: the loop is `subs r0, r0, #4; bhs L1`, a branch on the subtract's carry. The compiler makes a
+// flag-setting subtract only by folding a following `cmp rd, #0` into it, which leaves the branch testing eq, ne,
+// mi or pl (ge and lt become pl and mi, hs becomes always; lo, gt and le are not folded), or inside 64-bit
+// subtract, compare and shift sequences, where the next sbc, sbcs or conditional orr reads the flags.
 // clang-format off
 asm void OS_SpinWait(u32 n) {
 L1:

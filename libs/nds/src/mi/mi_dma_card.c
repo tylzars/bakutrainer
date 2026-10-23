@@ -7,8 +7,8 @@
 #define MI_DMA_SRC_FIXED 0x01000000
 #define MI_DMA_AUTO_MODES_ALL 0xffffffff
 
-// Card-slot DMA: starts channel dmaNo with a one-word, repeating, source-fixed transfer that
-// is paced by the cartridge slot. size only feeds the channel 0 source-address check.
+// Card-slot DMA: starts channel dmaNo with a one-word, repeating, source-fixed transfer paced by the cartridge
+// slot. size only feeds the channel 0 source-address check.
 void func_02040040(u32 dmaNo, const void *src, void *dest, u32 size) {
     vu32 *dmaCntp;
     MIi_CheckAnotherAutoDMA(dmaNo, MI_DMA_AUTO_MODES_ALL);

@@ -7,14 +7,16 @@
 
 #define IRQ_STACK_SIZE 0x800
 
-// Startup entry. Masks interrupts, waits for scanline 0, sets up the memory protection/cache,
-// sets the supervisor, IRQ and system-mode stacks inside the data TCM (at +0x3fc0, +0x3f7c and
-// +0x377c), switches to system mode, clears the 16 KB data TCM and 1 KB of palette memory, fills
-// 1 KB of OAM with the word 0x200, unpacks the compressed block described by the build table,
-// copies and zero-fills the autoload areas, clears the BSS range and flushes both caches over it,
-// zeroes a word in shared main memory, stores the IRQ handler address at data TCM + 0x3ffc, calls
-// func_0204ded0 (empty), func_02000b98 (empty) and func_0204dee8 (runs the static-initializer
-// table), and finally jumps to main with lr = 0xffff0000 and sp lowered to an 8-byte boundary.
+// Start-up entry, in order:
+// - masks interrupts, waits for scanline 0 and sets up the memory protection and caches;
+// - sets the supervisor, IRQ and system-mode stacks inside the data TCM (at +0x3fc0, +0x3f7c and +0x377c) and
+//   switches to system mode;
+// - clears the 16 KB data TCM and 1 KB of palette memory, and fills 1 KB of OAM with the word 0x200;
+// - unpacks the compressed block described by the build table and copies and zero-fills the autoload areas;
+// - clears the BSS range and flushes both caches over it, and zeroes a word in shared main memory;
+// - stores the IRQ handler address at data TCM + 0x3ffc;
+// - calls func_0204ded0 (empty), func_02000b98 (empty) and func_0204dee8 (runs the static-initializer table);
+// - jumps to main with lr = 0xffff0000 and sp lowered to an 8-byte boundary.
 // Not compiled: sets the processor modes with msr and keeps the caches coherent with CP15 mcr instructions,
 // which C has no expression for.
 // clang-format off
@@ -127,12 +129,11 @@ L_nx:
 }
 // clang-format on
 
-// Expands a backwards-packed stream. r0 points just past the packed data; the word pair before
-// it holds the packed length/header-size (top byte = header bytes) and the growth in size. Reads
-// bytes downward, each flag byte (MSB first) selects a literal byte or a copy from earlier output
-// (12-bit distance, length from the high nibble + 3); output is written downward. Stops when the
-// source cursor reaches the lower bound. Does nothing if r0 is null. Afterwards, for each 32-byte
-// line from the packed data's lower bound up to the output end, drains the write buffer,
+// Expands a backwards-packed stream; does nothing if r0 is null. r0 points just past the packed data. The word pair
+// before it holds the packed length with the header size in its top byte, and the growth in size. Bytes are read
+// and written downward: each bit of a flag byte (MSB first) selects a literal byte or a copy from earlier output
+// (12-bit distance, length = high nibble + 3). Stops when the source cursor reaches the lower bound. Afterwards,
+// for each 32-byte line from the packed data's lower bound up to the output end, drains the write buffer,
 // invalidates the instruction line and cleans and invalidates the data line.
 // Not compiled: the cache maintenance is CP15 mcr instructions, which C has no expression for.
 // clang-format off
@@ -191,10 +192,10 @@ L_ret:
 }
 // clang-format on
 
-// Walks the table at BuildInfo (start, end, source pointer). Each entry is (dest, copy length,
-// zero length): copies the words from the source stream to dest, zero-fills the following
-// words, then for every 32-byte line of the whole area drains the write buffer, invalidates the
-// instruction line and cleans and invalidates the data line. Ends by jumping to AutoloadCallback.
+// Walks the table at BuildInfo (start, end, source pointer). Each entry is (dest, copy length, zero length): copies
+// the words from the source stream to dest, zero-fills the following words, then for every 32-byte line of the
+// whole area drains the write buffer, invalidates the instruction line and cleans and invalidates the data line.
+// Ends by jumping to AutoloadCallback.
 // Not compiled: the cache maintenance is CP15 mcr instructions, which C has no expression for.
 // clang-format off
 asm void func_02000a1c(void) {
@@ -247,14 +248,13 @@ L_fin:
 }
 // clang-format on
 
-// Empty hook: returns immediately.
+// Empty hook.
 void AutoloadCallback(void) {}
 
-// Cache and protection setup: clears control-register bits 0xf9005 (among them MPU, caches, TCMs),
-// invalidates both caches and drains the write buffer, programs the eight protection regions, the
-// data/instruction TCM windows, the cacheability / bufferability / access-permission registers,
-// then sets control-register bits 0x5707d (MPU, caches, write buffer, both TCMs, high exception
-// vectors, round-robin replacement).
+// Cache and protection set-up: clears control-register bits 0xf9005 (among them MPU, caches, TCMs), invalidates
+// both caches and drains the write buffer, programs the eight protection regions, the data and instruction TCM
+// windows and the cacheability, bufferability and access-permission registers, then sets control-register bits
+// 0x5707d (MPU, caches, write buffer, both TCMs, high exception vectors, round-robin replacement).
 // Not compiled: CP15 mrc/mcr instructions, which C has no expression for.
 // clang-format off
 asm void func_02000ab0(void) {
@@ -307,8 +307,8 @@ asm void func_02000ab0(void) {
 }
 // clang-format on
 
-// Empty hook: returns immediately.
+// Empty hook.
 void func_02000b98(void) {}
 
-// Empty hook, called with the address of a library tag string: returns immediately.
+// Empty hook, called with the address of a library tag string.
 void func_02000b9c(const void *tag) {}

@@ -121,9 +121,9 @@ void OS_CancelAlarm(OSAlarm *alarm) {
 }
 
 // Timer interrupt entry: calls OSi_AlarmHandler with r0 kept.
-// Not compiled: saves r0 beside lr and returns with `ldmfd sp!, {r0, lr}; bx lr`. A compiled function
-// saves r0 only as an interrupt function, which saves every register among r0-r7 it writes (the call
-// writes r1-r3 too), and a compiled function that saved lr returns by loading it into pc.
+// Not compiled: saves r0 beside lr and returns with `ldmfd sp!, {r0, lr}; bx lr`. A compiled function saves r0
+// only as an interrupt function, which saves every register among r0-r7 it writes (the call writes r1-r3 too), and
+// a compiled function that saved lr returns by loading it into pc.
 // clang-format off
 asm void AlarmTimerEntry(void *arg) {
     stmfd sp!, {r0, lr}

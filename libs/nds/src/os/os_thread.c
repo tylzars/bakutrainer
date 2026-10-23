@@ -1,6 +1,5 @@
-// Thread bookkeeping. The thread-info block holds the scheduler state, the
-// current-thread pointer, the thread list, the idle and main threads and the
-// idle thread's stack.
+// Thread bookkeeping. The thread-info block holds the scheduler state, the current-thread pointer, the thread
+// list, the idle and main threads and the idle thread's stack.
 #include <nitro/os.h>
 #include <nitro/cp.h>
 #include <nitro/mi.h>
@@ -422,20 +421,21 @@ void OS_SetThreadDestructor(OSThread *thread, void (*destructor)(void *)) {
     thread->destructor = destructor;
 }
 
-// Fills a context record for a fresh start: +0x40 = newpc + 4 (the resume
-// address OS_LoadContext uses), +0x44 = newsp, +0x38 (sp slot) = newsp - 0x40,
-// lowered by 4 more if that leaves bit 2 set; +0 (CPSR) = 0x3f if newpc has
-// bit 0 set, else 0x1f; zeroes r0-r12 (+4..+0x34) and lr (+0x3c).
-// Not compiled: at chk, `beq arm` tests the flags of the `ands` before the split: chk sets no flags itself and is
+// Fills a context record for a fresh start: +0x40 = newpc + 4 (OS_LoadContext resumes 4 below it), +0x44 = newsp,
+// the sp slot +0x38 = newsp - 0x40, lowered by 4 more if that leaves bit 2 set; the CPSR slot +0 = 0x3f if newpc
+// has bit 0 set, else 0x1f; r0-r12 (+4..+0x34) and lr (+0x3c) are zeroed.
+// Not compiled: at chk, `beq arm` uses the flags of the `ands` before the split, yet chk sets no flags and is
 // reached two ways (`b chk`, and the fall-through after `mov r1, #0x3f`). The compiler leaves a branch with no
-// flag-setting instruction in its own block only when it deletes that instruction as a repeat of the one ending
-// the block's single predecessor (branch merge pass), after which that block never gains a predecessor, or right
-// after a call to a float or double compare helper.
+// flag-setting instruction in its block only right after a call to a float or double compare helper, or when the
+// branch merge pass deletes that instruction as a repeat of the one ending the block's single predecessor; such a
+// block never gains a predecessor afterwards.
 // clang-format off
 asm void OS_InitContext(OSContext *context, u32 newpc, u32 newsp) {
+    // resume address and stack top
     add r1, r1, #4
     str r1, [r0, #0x40]
     str r2, [r0, #0x44]
+    // sp slot: newsp - 0x40, lowered by 4 if bit 2 is set
     sub r2, r2, #0x40
     tst r2, #4
     bne sp_adj
@@ -444,6 +444,7 @@ sp_adj:
     sub r2, r2, #4
 sp_done:
     str r2, [r0, #0x38]
+    // CPSR slot: 0x3f for an odd newpc, 0x1f for an even one
     ands r1, r1, #1
     bne thumb
     b chk
@@ -456,6 +457,7 @@ arm:
     mov r1, #0x1f
 store:
     str r1, [r0, #0]
+    // zero r0-r12 and lr
     mov r1, #0
     str r1, [r0, #4]
     str r1, [r0, #8]
@@ -475,59 +477,64 @@ store:
 }
 // clang-format on
 
-// r0 points at a context record. First saves the divider and square-root
-// registers into the tail of the record (+0x48), then stores CPSR at +0, the
-// supervisor-mode stack pointer at +0x44, and r0..lr at +4..+0x3c (the r0 slot
-// holds 1, the r1 slot ctx+4 and the r2 slot the CPSR value), plus at +0x40
-// the address 4 bytes past the final 'bx lr'. Returns 0 on the direct path;
-// OS_LoadContext resumes at that address minus 4, i.e. at the 'bx lr', with
-// r0 = 1, so the caller sees a second return of 1.
+// Saves the caller's state in the context record at r0: the divider and square-root registers at +0x48, CPSR at
+// +0, the supervisor-mode sp at +0x44, r0-lr at +4..+0x3c (the r0 slot holds 1, the r1 slot ctx + 4 and the r2
+// slot the CPSR value) and, at +0x40, the address 4 bytes past the final `bx lr`. Returns 0. OS_LoadContext
+// resumes at that address minus 4, the `bx lr`, with r0 = 1, so the caller sees a second return of 1.
 // Not compiled: reads CPSR with mrs and changes mode with msr, which C has no expression for.
 // clang-format off
 asm u32 OS_SaveContext(OSContext *context) {
+    // divider and square-root registers to +0x48
     stmfd sp!, {r0, lr}
     add r0, r0, #0x48
     ldr r1, =func_02042898
     blx r1
     ldmfd sp!, {r0, lr}
+    // CPSR to +0; r1 = record + 4
     add r1, r0, #0
     mrs r2, cpsr
     str r2, [r1], #4
+    // supervisor-mode sp to +0x44
     mov r0, #0xd3
     msr cpsr_c, r0
     str sp, [r1, #0x40]
     msr cpsr_c, r2
+    // r0-lr to +4..+0x3c with r0 = 1, the resume address to +0x40
     mov r0, #1
     stmia r1, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, ip, sp, lr}
     add r0, pc, #8
     str r0, [r1, #0x3c]
+    // direct return: 0
     mov r0, #0
     bx lr
 }
 // clang-format on
 
-// r0 points at a context record produced by OS_SaveContext. Restores the
-// divider and square-root registers from +0x48, enters supervisor mode with
-// IRQ/FIQ masked, loads SPSR from the saved CPSR (+0), the supervisor sp from
-// +0x44 and lr from +0x40, then loads r0-r12 and the user/system-bank sp and
-// lr from +4..+0x3c, and returns to lr - 4 with CPSR restored from SPSR.
+// Resumes the context record at r0 (made by OS_SaveContext): restores the divider and square-root registers from
+// +0x48, enters supervisor mode with IRQ and FIQ masked, loads SPSR from the saved CPSR (+0), the supervisor sp
+// from +0x44 and lr from +0x40, then r0-r12 and the user/system-bank sp and lr from +4..+0x3c, and returns to
+// lr - 4 with CPSR restored from SPSR.
 // Not compiled: writes CPSR and SPSR with msr, which C has no expression for, and returns with
 // `subs pc, lr, #4`.
 // clang-format off
 asm void OS_LoadContext(OSContext *context) {
+    // divider and square-root registers from +0x48
     stmfd sp!, {r0, lr}
     add r0, r0, #0x48
     ldr r1, =func_020428d8
     blx r1
     ldmfd sp!, {r0, lr}
+    // supervisor mode, IRQ and FIQ masked
     mrs r1, cpsr
     bic r1, r1, #0x1f
     orr r1, r1, #0xd3
     msr cpsr_c, r1
+    // SPSR = saved CPSR; supervisor sp and lr (the resume address + 4) from the record
     ldr r1, [r0], #4
     msr spsr_fsxc, r1
     ldr sp, [r0, #0x40]
     ldr lr, [r0, #0x3c]
+    // user/system-bank r0-lr, then return to lr - 4 with CPSR = SPSR
     ldmia r0, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, ip, sp, lr}^
     mov r0, r0
     subs pc, lr, #4

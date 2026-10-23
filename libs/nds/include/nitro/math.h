@@ -6,7 +6,7 @@
 extern "C" {
 #endif
 
-// An asm statement: clz has no C expression. clz exists only in ARM code, so the function is defined as ARM code
+// An asm statement, because clz has no C expression. clz exists only in ARM code, so the function is ARM code
 // whatever mode the including file compiles in; ARM functions of Thumb files (#pragma thumb off) can use it too.
 #pragma push
 #pragma thumb off

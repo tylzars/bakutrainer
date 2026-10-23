@@ -2,7 +2,7 @@
 
 extern "C" void (*ARM9_CTOR_START)(void);
 
-// Empty routine: returns immediately.
+// Does nothing.
 extern "C" void func_0204ded0(void) {
 }
 

@@ -147,15 +147,14 @@ u16 OS_ReadOwnerOfLockWord(OSLockWord *lockp) {
     return lockp->ownerID;
 }
 
-// Allocates a lock id from the pair of free-bit words in shared memory (the
-// first covers ids 0x40-0x5f, the second 0x60-0x7f). Takes the highest set bit
-// of the first word, or failing that of the second; the id is the base plus
-// the leading-zero count, and that bit is cleared. Returns -3 when both words
-// are empty. The compares feed two consecutive conditional branches, reusing
-// their flags.
+// Allocates a lock id from the two free-bit words in shared memory (the first covers ids 0x40-0x5f, the second
+// 0x60-0x7f). Takes the highest set bit of the first word, or else of the second; the id is the base plus the
+// leading-zero count, and that bit is cleared. Returns -3 when both words are empty. Each compare feeds two
+// conditional branches in a row.
 // Not compiled: clz has no C expression.
 // clang-format off
 asm int OS_GetLockID(void) {
+    // first word: a set bit gives base 0x40
     ldr r3, =0x27fffb0
     ldr r1, [r3, #0]
     clz r2, r1
@@ -166,6 +165,7 @@ Lm1:
     mov r0, #0x40
 Lm2:
     bne Ltake
+    // second word: a set bit gives base 0x60, none returns -3
     add r3, r3, #4
     ldr r1, [r3, #0]
     clz r2, r1
@@ -177,6 +177,7 @@ Lnone:
     bx lr
 Lsecond:
     mov r0, #0x60
+    // id = base + leading zeros; clear that bit
 Ltake:
     add r0, r0, r2
     mov r1, #0x80000000

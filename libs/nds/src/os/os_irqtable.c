@@ -10,7 +10,6 @@ typedef struct {
 // DMA slots 0-3 followed by timer slots 4-7.
 IrqSlot data_020ca6a8[8];
 
-// The timer slots start after the four DMA slots.
 #define TIMER_SLOTS (&data_020ca6a8[4])
 
 // Interrupt bit number of each slot.
@@ -18,8 +17,8 @@ u16 data_020644a8[8] = {8, 9, 10, 11, 3, 4, 5, 6};
 
 #define IRQ_CHECK (*(vu32 *) (HW_DTCM + 0x3ff8))
 
-// Optionally clears irqFlags in the interrupt-check word, then sleeps on a
-// thread queue until any of those bits is set there.
+// Optionally clears irqFlags in the interrupt-check word, then sleeps on a thread queue until any of those bits is
+// set there.
 void OS_WaitIrq(BOOL clear, OSIrqMask irqFlags) {
     OSIntrMode e = OS_DisableInterrupts();
     if (clear) {
@@ -34,10 +33,8 @@ void OS_WaitIrq(BOOL clear, OSIrqMask irqFlags) {
 void func_0203d22c(void) {
 }
 
-// Common interrupt entry for slot n. Takes the slot's callback and clears
-// it, marks the slot's interrupt bit in the check word, calls the callback
-// with its argument, and masks the interrupt again unless the slot is flagged
-// to stay enabled.
+// Common interrupt entry for slot n: takes the slot's callback and clears it, calls it with its argument, marks the
+// slot's interrupt bit in the check word, and masks the interrupt again unless the slot is flagged to stay enabled.
 void func_0203d230(int n) {
     u32 bit = 1 << data_020644a8[n];
     void (*fn)(void *) = data_020ca6a8[n].fn;
@@ -66,9 +63,8 @@ void func_0203d338(void) {
     data_027e0060.head = 0;
 }
 
-// For each interrupt bit set in mask (0..21), installs fn: bits 3-6 and 8-11
-// go to the callback slots (with keep=1, arg=0), every other bit goes into
-// the handler table at the start of fast data memory.
+// For each interrupt bit set in mask (0..21), installs function: bits 3-6 and 8-11 go to the callback slots (with
+// keep = 1, arg = 0), every other bit into the handler table at the start of fast data memory.
 void OS_SetIrqFunction(OSIrqMask mask, void (*function)(void)) {
     int i;
     IrqSlot *s;
@@ -91,8 +87,7 @@ void OS_SetIrqFunction(OSIrqMask mask, void (*function)(void)) {
     }
 }
 
-// Fills DMA slot dmaNo, enables the DMA interrupt, and records in keep
-// whether it was already enabled.
+// Fills DMA slot dmaNo, enables the DMA interrupt, and records in keep whether it was already enabled.
 void OSi_EnterDmaCallback(int dmaNo, void (*callback)(void *), void *arg) {
     u32 bit = 1 << (dmaNo + 8);
     data_020ca6a8[dmaNo].fn = callback;
@@ -100,8 +95,7 @@ void OSi_EnterDmaCallback(int dmaNo, void (*callback)(void *), void *arg) {
     data_020ca6a8[dmaNo].keep = OS_EnableIrqMask(bit) & bit;
 }
 
-// Fills timer slot timerNo, enables the timer interrupt, and marks the slot
-// to stay enabled.
+// Fills timer slot timerNo, enables the timer interrupt, and marks the slot to stay enabled.
 void OSi_EnterTimerCallback(int timerNo, void (*callback)(void *), void *arg) {
     TIMER_SLOTS[timerNo].fn = callback;
     TIMER_SLOTS[timerNo].arg = arg;

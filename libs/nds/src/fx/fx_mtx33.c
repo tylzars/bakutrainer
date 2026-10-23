@@ -3,10 +3,9 @@
 #define MUL33(a, b) ((fx32) (((fx64) (a) * (b)) >> FX32_SHIFT))
 
 // Writes the transpose of a 3x3 matrix.
-// Not compiled: stores with `stmia r1!, {r2, r5, r8}` (base written back).
-// The compiler writes back an ldm/stm base only in push/pop on sp and in struct copies and fills, whose
-// registers are always r0-r3 (r0-r1 for a two-word fill); the pass that merges loads or stores into one ldm/stm
-// never adds writeback.
+// Not compiled: stores with `stmia r1!, {r2, r5, r8}` (base written back). The compiler writes back an ldm/stm base
+// only in push/pop on sp and in struct copies and fills, whose registers are always r0-r3 (r0-r1 for a two-word
+// fill); the pass that merges loads or stores into one ldm/stm never adds writeback.
 // With `*d++ =` stores in C: nine single ldr loads, one stm without writeback and offset str stores.
 // clang-format off
 asm void func_0203b8bc(const MtxFx33 *src, MtxFx33 *dst) {
@@ -35,18 +34,21 @@ void func_0203b8d8(const MtxFx33 *src, MtxFx33 *dst, fx32 x, fx32 y, fx32 z) {
 
 #pragma thumb on
 // Writes the rotation matrix about the Z axis for the given sine and cosine.
-// Not compiled: stores with `stmia r0!, {r1, r3}` (Thumb, two registers, r0 not among them).
-// In Thumb code the compiler makes a stmia from a store plus a base increment (one register), in struct copies and
-// fills (always a run of consecutive registers), and by merging a following store into an existing stmia; in Thumb
-// code that merge is refused unless the merged list contains r0. None of these gives {r1, r3}.
+// Not compiled: stores with `stmia r0!, {r1, r3}` (Thumb, two registers, r0 not among them). In Thumb code the
+// compiler makes a stmia from a store plus a base increment (one register), in struct copies and fills (always a
+// run of consecutive registers), and by merging a following store into an existing stmia, which it refuses unless
+// the merged list contains r0. None of these gives {r1, r3}.
 // With `*p++ =` stores in C, every increment folds into an offset (`str r2, [r0, #0]` ... `str r1, [r0, #32]`).
 // clang-format off
 asm void func_0203b998(MtxFx33 *m, fx32 sin, fx32 cos) {
+    // cos, sin, 0
     stmia r0!, {r2}
     mov r3, #0
     stmia r0!, {r1, r3}
+    // -sin, cos
     neg r1, r1
     stmia r0!, {r1, r2}
+    // 0, 0, 0, 1.0 (0x1000)
     mov r1, #1
     lsl r1, r1, #12
     str r3, [r0, #0]

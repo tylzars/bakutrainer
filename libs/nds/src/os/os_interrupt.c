@@ -1,5 +1,5 @@
-// Each function turns the interrupt master enable off around the register
-// update and returns the previous register value.
+// Each function turns the interrupt master enable off around the register update and returns the previous register
+// value.
 
 #include <nitro/os.h>
 
@@ -47,8 +47,7 @@ OSIrqMask OS_ResetRequestIrqMask(OSIrqMask mask) {
     return old;
 }
 
-// Writes the stack-overflow marker words: one just below the interrupt stack's
-// top, one at its bottom.
+// Writes the stack-overflow marker words: one just below the interrupt stack's top, one at its bottom.
 void func_0203d520(void) {
     u32 top = HW_DTCM + 0x3f80;
     *(u32 *) (HW_DTCM + 0x3f7c) = 0xfddb597d;
