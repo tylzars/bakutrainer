@@ -25,18 +25,15 @@ and the exception index. Each line says what shows it; anything not yet checked 
 | 0x020011dc-0x02003000 | Zero filler | |
 | 0x02003000-0x02039dd8 | Game code, from `main` | Thumb for the most part with ARM runs; calls between the modes in both directions |
 | 0x02039dd8-0x0203b8bc | Mobiclip glue code (ARM, C++) | the only code that references the Mobiclip decoder (docs/compiler.md); starts with the routine that passes the decoder's identification string to the start-up hook |
-| 0x0203b8bc-0x02048b3c | NitroSDK (FX, GX, OS, MI, SND, PXI, FS, CP, TP, MIC, PM, RTC, CARD, WM, CTRDG, MATH) | functions identical to NitroSDK code of the same SDK version |
-| 0x02048b3c-0x0204df14 | C runtime: strings, printf, math, decimal conversion, soft float and division, the constructor walk | as above; the last function, `func_0204dee8`, walks the `.ctor` table |
-| 0x02052468-0x0205eeac | Mobiclip decoder: hand-written ARM routines mixed with their tables | referenced only from itself and the glue code |
+| 0x0203b8bc-0x02048b3c | NitroSDK (FX, GX, OS, MI, SND, PXI, FS, CP, TP, MIC, PM, RTC, CARD, WM, CTRDG, MATH) | the SDK's public API; the build-info block gives the SDK version |
+| 0x02048b3c-0x0204df14 | C runtime: strings, printf, math, decimal conversion, soft float and division, the constructor walk | the runtime's public names; the last function, `func_0204dee8`, walks the `.ctor` table |
+| 0x02052468-0x0205f33c | Mobiclip decoder: hand-written ARM routines mixed with their tables | referenced only from itself and the glue code |
 
-The decoder is hand-written code inside the original's read-only data: after the game's tables and before the
-library's, so the linker placed it with `.rodata`. Its assembler files put their code in a code-type section named
-`.rodata` (`.section .rodata,.text`), and objdiff does not count it as code.
-
-Two 4-byte routines in that range are compiled C left to the gaps, since a compiled function can't be placed in
-`.rodata`: func_02052468 (`int func_02052468(Chan *ch) { return func_02052c78(ch); }`) and func_02052e28
-(`void func_02052e28(Chan *ch) { func_02053834(ch); }`), each built with `#pragma interworking off`, which turns the
-call into a plain `b` to the decoder routine after it.
+The decoder sits inside the ROM's read-only data, after the game's tables and before the library's. It is not in
+the source: the build links it from your ROM, as it does every range no unit covers. Two 4-byte routines in that
+range are compiled C (`func_02052468` and `func_02052e28`, each a plain `b` to the decoder routine after it, as
+`#pragma interworking off` produces); they link from the ROM with it, since a compiled function can't be placed in
+`.rodata`.
 
 ## Read-only data after the code
 
@@ -44,7 +41,7 @@ call into a plain `b` to the decoder routine after it.
 |---|---|---|
 | 0x0204df1c-0x0204e054 | Exception index: 26 entries {function, size, info} for C runtime functions | the entries point at function starts and give their sizes; four functions dsd had missed or cut short were fixed from it |
 | 0x0204e054-0x02052468 | Tables, among them the script command keywords (`LET`, `SPR`, `GOTO`, `IF`, `MUSIC`, `FADE`, ...) | relocations from game code (pool words in the decompiled units) |
-| 0x0205eeac-0x020638fc | Data referenced from game, glue and library code | relocations |
+| 0x0205f33c-0x020638fc | Data referenced from game, glue and library code | relocations |
 
 ## Open
 

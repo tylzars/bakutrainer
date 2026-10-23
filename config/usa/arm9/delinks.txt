@@ -448,6 +448,9 @@ libs/msl/src/rt_global_ctors.cpp:
     .text       start:0x0204ded0 end:0x0204df14
     .exceptix   start:0x0204e03c end:0x0204e054
 
+// 0x02052458-0x0205f33c (.rodata): the Mobiclip decoder, hand-written assembly and its tables, links from the
+// ROM and is not in the source
+
 // provisional: starts with func_020461e4 (stores a command callback in the WM work area; called only from the
 // WM code after it) where card_pullout.c ends; the wm_command/wm_api split is inferred; .bss 0x020cd128-0x020cdba0
 // is an object no code uses
