@@ -83,8 +83,9 @@ The full steps and tools are in [docs/decompiling.md](docs/decompiling.md), "Wor
 - Write code and comments yourself; don't copy them from other projects. Library headers are written from the
   public API and what the code does.
 - Data the code uses is written as typed source (structs and arrays with their values), not as raw byte dumps.
-  Bytes with no meaning as data are read from your ROM at build time (`.incbin`, expanded by `tools/expand_incbin.py`).
-- Comments say what the code or the compiler does. They never say where code came from ("original source",
-  "copied", "transcribed", "as the SDK does"). Hand-written routines written as `asm` bodies are commented.
+  Bytes with no meaning as data are read from your ROM at build time (`.incbin`, expanded by `tools/expand_incbin.py`),
+  and ranges no unit covers link from your ROM.
+- Comments say what the code or the compiler does, not where code came from. A routine written as assembly has a
+  comment above it saying why the compiler can't produce it, and its instructions are commented.
 - Third-party code the game links keeps its own copyright and permission notice.
 - Format C/C++ with the repository's `.clang-format`.

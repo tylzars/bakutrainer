@@ -146,7 +146,7 @@ array it matches with `-char signed` and misses with `-char unsigned` (2 words);
 ### NitroSDK and C runtime
 
 365 of this ROM's library functions (313 NitroSDK, 52 C runtime; SDK version word 67269945 in the build-info block)
-written as C give these exact matches with every 2.0 build:
+are written as C in `libs/`. Exact matches when compiled with every 2.0 build:
 
 | Set | base | sp1 ... sp2p2 | sp2p3, sp2p4 |
 |---|---|---|---|
@@ -163,7 +163,7 @@ written as C give these exact matches with every 2.0 build:
   it; no NitroSDK function depends on it.
 - `-inline on,noauto` changes none of them; the build drops it for `libs/` (the libraries' default inlining, not
   separated from the game's setting).
-- `_ull_mod` (0x0204da84) doesn't come out of C on any build or set.
+- `_ull_mod` (0x0204da84) doesn't come out of C on any build or set; it is an assembly routine in `rt_soft_float_b.s`.
 - `-Cpp_exceptions on` for the C runtime: the exception index at 0x0204df1c lists exactly its non-leaf functions.
   Compiled with the flag, the code is byte-identical and each `.exceptix` entry equals the ROM's entry word for word
   (e.g. `qsort` size+1 0x165, info 0x70ff00; `memset` 0x15, 0x100100); leaf functions get none, as in the ROM.
@@ -182,5 +182,4 @@ variants above.
 - `-O4,p` vs `-O3,p`, `-enum int` vs `min`, and `-inline on,noauto` vs the default are not separated by any probe.
 - `-ipa file` for game code holds for C; written as C++ the deciding probes match without it too.
 - `-char signed` is shown for the C runtime and the Mobiclip glue code, not for the game's own code.
-- `-str reuse` is shown for game code; for the libraries it is not checked yet (no library source in the repo).
-- `_ull_mod` is not reproduced.
+- `-str reuse` is shown for game code; for the libraries it is not checked.
