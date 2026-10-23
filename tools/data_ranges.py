@@ -8,7 +8,7 @@ Data sections found this way are scanned too (vtables, tables of string pointers
 they point to. The result lists each compiled data section with its original address, checks that sections of
 one kind are laid out in object order without overlaps, and prints the delinks lines.
 
-  data_ranges.py src/Main/Some/Unit.cpp [--write]
+  data_ranges.py src/Main/Scene/battle_screen.c [--write]
 
 --write replaces the unit's data ranges in delinks.txt (only when every section was placed consistently).
 """

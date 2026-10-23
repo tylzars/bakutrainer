@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Renames symbols in config/<ver>/arm9/**/symbols.txt to the names used by compiled source.
 
-Source refers to other code by its real (often mangled C++) name, but symbols.txt starts out with
+Source refers to other code by its real name (mangled for C++), but symbols.txt starts out with
 address-based names. Once a function matches, every relocation in its compiled object sits exactly where
 the original has a branch or literal, so the referenced address can be read from the ROM. This tool:
 
@@ -12,7 +12,7 @@ the original has a branch or literal, so the referenced address can be read from
 
 Existing non-address names are never overwritten; conflicts are reported. Dry run unless --write.
 
-  sync_symbols.py build/<ver>/src/Main/Some/Unit.o ov001 [--write]
+  sync_symbols.py build/usa/src/Main/Scene/battle_screen.o main [--write]
 """
 import argparse
 import re

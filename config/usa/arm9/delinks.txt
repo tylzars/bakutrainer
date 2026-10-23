@@ -41,8 +41,8 @@ libs/nds/src/fx/fx_vec.c:
     complete
     .text       start:0x0203c5e0 end:0x0203c7b8
 
-// provisional: the sine/cosine table's own file; it lies before fx_trig.c's arctangent table, which a size-sorted
-// single file would place first, so it belongs to some file before fx_trig.c (this one has no code)
+// provisional: the sine/cosine table's own file (no code). One file would sort it after fx_trig.c's arctangent
+// table, so it belongs to some file before fx_trig.c
 libs/nds/src/fx/fx_sincos.c:
     complete
     .rodata     start:0x0205f400 end:0x02063400
@@ -62,19 +62,19 @@ libs/nds/src/gx/g3c.c:
     complete
     .text       start:0x0203ca80 end:0x0203cad4
 
-// provisional: .data 0x020644a4 (the GX DMA channel) is read only here; defined in gx.c it would sit at the same
-// address
+// provisional: which file defines .data 0x020644a4 (the GX DMA channel): only this file reads it, but defined in
+// gx.c it would sit at the same address
 libs/nds/src/gx/g3x.c:
     complete
     .text       start:0x0203cad4 end:0x0203d030
     .data       start:0x020644a4 end:0x020644a8
 
-// provisional: file name and its end
+// provisional: the file name and where it ends
 libs/nds/src/gx/g3_util.c:
     complete
     .text       start:0x0203d030 end:0x0203d178
 
-// provisional: own file or the end of the previous one
+// provisional: a file of its own or the end of the previous one
 libs/nds/src/gx/gx_fifo.c:
     complete
     .text       start:0x0203d178 end:0x0203d1b8
@@ -109,12 +109,12 @@ libs/nds/src/os/os_cache.c:
     complete
     .text       start:0x0203e4a4 end:0x0203e594
 
-// provisional: split from os_arena.c
+// provisional: where it splits from os_arena.c
 libs/nds/src/os/os_init.c:
     complete
     .text       start:0x0203e594 end:0x0203e5fc
 
-// provisional: split from os_init.c
+// provisional: where it splits from os_init.c
 libs/nds/src/os/os_arena.c:
     complete
     .text       start:0x0203e5fc end:0x0203e948
@@ -169,7 +169,7 @@ libs/nds/src/os/os_owner.c:
     complete
     .text       start:0x0203f748 end:0x0203f7e8
 
-// provisional: file name
+// provisional: the file name
 libs/nds/src/os/os_irqowner.c:
     complete
     .text       start:0x0203f7e8 end:0x0203f81c
@@ -199,7 +199,7 @@ libs/nds/src/mi/mi_dma_card.c:
     complete
     .text       start:0x02040040 end:0x020400b4
 
-// provisional: file name
+// provisional: the file name
 libs/nds/src/mi/mi_init.c:
     complete
     .text       start:0x020400b4 end:0x020400cc
@@ -218,13 +218,13 @@ libs/nds/src/snd/snd_command.c:
     .text       start:0x02040328 end:0x020409cc
     .bss        start:0x020caae0 end:0x020cc5c0
 
-// provisional: split from snd_work.c
+// provisional: where it splits from snd_work.c
 libs/nds/src/snd/snd_alarm.c:
     complete
     .text       start:0x020409cc end:0x02040a90
     .bss        start:0x020cc5c0 end:0x020cc620
 
-// provisional: split from snd_alarm.c
+// provisional: where it splits from snd_alarm.c
 libs/nds/src/snd/snd_work.c:
     complete
     .text       start:0x02040a90 end:0x02040b60
@@ -268,8 +268,8 @@ libs/nds/src/rtc/rtc.c:
     .text       start:0x02044500 end:0x02044c20
     .bss        start:0x020cc7b8 end:0x020cc800
 
-// provisional: .bss 0x020cdbec-0x020cdc00 is an object no code uses; a file's unused objects follow its used ones,
-// which puts it here rather than at the start of ctrdg.c
+// provisional: .bss 0x020cdbec-0x020cdc00 is an object no code uses. A file's unused objects follow its used ones,
+// so it goes here rather than at the start of ctrdg.c
 libs/nds/src/ctrdg/ctrdg_init.c:
     complete
     .text       start:0x02047f3c end:0x02048254
@@ -303,14 +303,14 @@ libs/nds/src/card/card_request.c:
     complete
     .text       start:0x02045e40 end:0x02046018
 
-// provisional: .bss 0x020cd0e8-0x020cd100 is an object no code uses; a file's unused objects follow its used ones,
-// and the wireless command objects after it sort by size, which rules out wm_command.c
+// provisional: .bss 0x020cd0e8-0x020cd100 is an object no code uses. A file's unused objects follow its used ones,
+// and the wireless command objects after it are sorted by size, which rules out wm_command.c
 libs/nds/src/card/card_pullout.c:
     complete
     .text       start:0x02046018 end:0x020461e4
     .bss        start:0x020cd0e0 end:0x020cd100
 
-// provisional: the split from fs_archive.c at 0x02041a78 is inferred from the handler table's end
+// provisional: the split from fs_archive.c at 0x02041a78, inferred from where the handler table ends
 libs/nds/src/fs/fs_command.c:
     complete
     .text       start:0x02040eec end:0x02041a78
@@ -333,7 +333,8 @@ libs/nds/src/fs/fs_rom.c:
     .data       start:0x020644c0 end:0x020644c4
     .bss        start:0x020cc6bc end:0x020cc730
 
-// provisional: the C runtime's file splits follow function contiguity; the ROM shows no object edges inside it
+// provisional: the C runtime's files are split by which functions sit together; the ROM shows no object edges
+// inside it
 libs/nds/src/math/math_util.c:
     complete
     .text       start:0x0204873c end:0x02048780
@@ -360,8 +361,8 @@ libs/msl/src/mbstring.c:
     .text       start:0x02048b5c end:0x02048c3c
     .exceptix   start:0x0204df28 end:0x0204df40
 
-// the locale record and its parts: one file's .data (literals and used objects sorted by size, the record itself
-// unused within the file); the collation table after it cannot be in the same file
+// the locale record and its parts: one file's .data (literals and used objects sorted by size; the record itself
+// is unused in the file). The collation table after it can't be in the same file
 libs/msl/src/locale.c:
     complete
     .data       start:0x020644cc end:0x02064628
@@ -448,12 +449,11 @@ libs/msl/src/rt_global_ctors.cpp:
     .text       start:0x0204ded0 end:0x0204df14
     .exceptix   start:0x0204e03c end:0x0204e054
 
-// 0x02052458-0x0205f33c (.rodata): the Mobiclip decoder, hand-written assembly and its tables, links from the
-// ROM and is not in the source
+// 0x02052458-0x0205f33c (.rodata): the Mobiclip decoder (hand-written assembly and its tables) links from the ROM
+// and is not in the source
 
-// provisional: starts with func_020461e4 (stores a command callback in the WM work area; called only from the
-// WM code after it) where card_pullout.c ends; the wm_command/wm_api split is inferred; .bss 0x020cd128-0x020cdba0
-// is an object no code uses
+// provisional: starts where card_pullout.c ends, with func_020461e4 (stores a command callback in the WM work area;
+// only later WM code calls it); the split from wm_api.c is inferred. .bss 0x020cd128-0x020cdba0 is unused
 libs/nds/src/wm/wm_command.c:
     complete
     .text       start:0x020461e4 end:0x02046478
@@ -491,7 +491,7 @@ libs/mobiclip/src/mobiclip_convert.cpp:
     .rodata     start:0x0205f33c end:0x0205f400
     .bss        start:0x020ca680 end:0x020ca6a4
 
-// provisional: no evidence yet for where these files begin and end
+// provisional: nothing shows where these files begin and end
 src/Main/Link/arm_system_slot.c:
     complete
     .text       start:0x02001000 end:0x020011dc
@@ -539,11 +539,11 @@ src/Main/Graphics/sprite_slots.c:
     .data       start:0x02063944 end:0x02063954
     .bss        start:0x020abfc0 end:0x020ae44c
 
-// .bss sWavePlayed..gBattleSlotStages (ascending sizes: one file); the 0x34-byte data_02099770 after the 0x690-byte
-// gBattleSlotStages starts the next file
-// one file: SetupBattleScreen, UpdateBattleCompare, UpdateBattleEntryPick and UpdateBattleKindValues reach the .rodata
-// blob through one section base, and SetCameraFromModel's table is the blob's last object. The .rodata order of its
-// equal-size local initializers needs two objects the link strips (layout placeholders in the source)
+// one file: its .bss sWavePlayed..gBattleSlotStages ascends by size, and the 0x34-byte data_02099770 after the
+// 0x690-byte gBattleSlotStages starts the next file. SetupBattleScreen, UpdateBattleCompare, UpdateBattleEntryPick
+// and UpdateBattleKindValues reach the .rodata block through one section base, and SetCameraFromModel's table is
+// its last object. Its equal-size local initializers need two objects the link strips to come out in this order
+// (layout placeholders in the source)
 src/Main/Scene/battle_screen.c:
     complete
     .text       start:0x020071a8 end:0x0200a384
@@ -558,7 +558,7 @@ src/Main/Minigame/stage_minigame.c:
     .data       start:0x02063930 end:0x02063940
     .bss        start:0x02099770 end:0x020ab7e0
 
-// provisional: the start; nothing before 0x0200b898 calls the helpers, EaseAngleToward calls EaseToward
+// provisional: the start; nothing before 0x0200b898 calls these helpers (EaseAngleToward calls EaseToward)
 src/Main/System/game_util.c:
     complete
     .text       start:0x0200b898 end:0x0200c034
@@ -590,8 +590,8 @@ src/Main/Scene/language_menu.c:
     .bss        start:0x020ae6ec end:0x020b1078
 
 // one file: UpdateBattleModelViewer's local initializer (0x0204fedc) and the panel tables after it share one .rodata
-// section; its strings 0x02063a2c-0x02063a5c follow in creation order and its .bss is the stage selection state. The
-// end is provisional (the lookup helpers FindTableEntryIndex..GetSelectedNodeStageId show no file break)
+// section; its strings 0x02063a2c-0x02063a5c follow in creation order; its .bss is the stage selection state.
+// provisional: the end (no file break shows in the lookup helpers FindTableEntryIndex..GetSelectedNodeStageId)
 src/Main/Scene/stage_info_panel.c:
     complete
     .text       start:0x02011518 end:0x020145bc
@@ -599,15 +599,15 @@ src/Main/Scene/stage_info_panel.c:
     .data       start:0x02063a2c end:0x02063a5c
     .bss        start:0x020b13b0 end:0x020b13c8
 
-// provisional: a new unit starts by SetupNodeStageInfos (its table at 0x020500d4 breaks the size order of the
-// .rodata before it); the end is provisional
+// provisional: the start and the end. A new file begins no later than SetupNodeStageInfos: its table at 0x020500d4
+// breaks the size order of the .rodata before it
 src/Main/Scene/stage_progress.c:
     complete
     .text       start:0x020145bc end:0x02015340
     .rodata     start:0x020500d4 end:0x020500d8
 
-// one file: the .bss 0x020b1078-0x020b13b0 follows this compiler's size order for a single file, and its anchor
-// pool words (data_020b1084 reached as 0x020b1078+0xc, ...) only come out with all users in one file
+// one file: the .bss 0x020b1078-0x020b13b0 is in this compiler's size order for one file, and its anchor pool words
+// (data_020b1084 reached as 0x020b1078+0xc, ...) only come out with all users in one file
 src/Main/System/game_system.c:
     complete
     .text       start:0x0200f9c8 end:0x02011518
@@ -615,7 +615,7 @@ src/Main/System/game_system.c:
     .data       start:0x020639ec end:0x02063a2c
     .bss        start:0x020b1078 end:0x020b13b0
 
-// provisional: the start (ClearPanelState may belong to the file before); the end is where the next file's "%d"
+// provisional: the start (ClearPanelState may belong to the file before). The end is where the next file's "%d"
 // (0x02063aa0, UpdateMapMenu) starts
 src/Main/Scene/stage_camera.c:
     complete
@@ -623,8 +623,8 @@ src/Main/Scene/stage_camera.c:
     .rodata     start:0x02050164 end:0x020501f4
     .data       start:0x02063a90 end:0x02063a9c
 
-// .rodata 0x020500d8-0x02050164, strings 0x02063a5c-0x02063a90, .bss 0x020b13c8-0x020b1524 (defined here); the end
-// is provisional (func_02015d48 and ClearPanelState may meet in either file)
+// the .rodata, strings (.data) and .bss are defined here. provisional: the end (func_02015d48 and ClearPanelState
+// may meet in either file)
 src/Main/Minigame/three_in_row.c:
     complete
     .text       start:0x02015340 end:0x02015d4c
@@ -661,9 +661,8 @@ src/Main/Graphics/vram_cache.c:
     complete
     .text       start:0x020225dc end:0x0202350c
 
-// provisional: the .rodata 0x02050898-0x020508d8 of the ARM pose code, the ARM render code and GetTexByteSize ascends
-// by size as one file's, and the Thumb code after it follows with no gap and calls both ways. Its .bss starts at
-// 0x020c31ac, where the size order restarts (0x30 after the 0xb30-byte gTextureBlocks), and ascends to 0x020c61ac
+// provisional: one file for the ARM pose and render code, GetTexByteSize and the Thumb code after it (no gap, calls
+// both ways): its .rodata ascends by size as one file's, and its .bss starts where the size order restarts
 src/Main/Graphics/model.c:
     complete
     .text       start:0x0202350c end:0x02027398
@@ -684,8 +683,8 @@ src/Main/Script/script_records.c:
     .rodata     start:0x020508d8 end:0x02050978
     .bss        start:0x020c61ac end:0x020c6470
 
-// provisional: the ARM run 0x0202ad34-0x0202db1c (block heaps, texture blocks and sprites of gTextureBlocks), which
-// ends where Thumb code resumes; the empty routines at the start touch no object and are placed by address
+// provisional: the ARM run 0x0202ad34-0x0202db1c (block heaps, texture blocks and sprites of gTextureBlocks) up to
+// where Thumb code resumes; the empty routines at the start touch no object and are placed by address
 src/Main/Graphics/texture_blocks.c:
     complete
     .text       start:0x0202ad34 end:0x0202db1c
@@ -702,22 +701,22 @@ src/Main/System/file_loader.c:
     .text       start:0x0202de94 end:0x0202ea50
     .bss        start:0x020c6470 end:0x020c648c
 
-// provisional: the wave player on gWavePlayer (16 channels and the channel count at 0x180); ClaimWaveChannel (ARM)
-// claims its channels; the wave stream (from 0x0202f110) uses the same object; ARM code resumes at 0x0202f500
+// provisional: the wave player on gWavePlayer, with ClaimWaveChannel (ARM) and the wave stream from 0x0202f110,
+// which use the same object; it ends where ARM code resumes at 0x0202f500
 src/Main/Sound/wave_player.c:
     complete
     .text       start:0x0202ea50 end:0x0202f500
     .bss        start:0x020c648c end:0x020c661c
 
-// provisional: movie playback with its audio stream (ARM, on gVideoState); the allocator pair at the start
-// (only referenced from far away) is placed by address; UnpackQrkData after it uses other objects
+// provisional: movie playback with its audio stream (ARM, on gVideoState); the allocator pair at the start (used
+// only from far away) is placed by address; UnpackQrkData after it uses other objects
 src/Main/Video/stream_audio.c:
     complete
     .text       start:0x0202f500 end:0x0202fcc4
     .bss        start:0x020c661c end:0x020c66d4
 
-// provisional: the "QRK" unpacker (range-coded LZ, its three tables in .data); starts where the movie code ends
-// (UnpackQrkData touches none of its objects); the end is the last function reached only from inside the run
+// provisional: the "QRK" unpacker (range-coded LZ, three tables in .data). It starts where the movie code ends
+// (UnpackQrkData touches none of its objects) and ends with the last function called only from inside it
 src/Main/System/qrk_decode.c:
     complete
     .text       start:0x0202fcc4 end:0x02030830
@@ -729,10 +728,8 @@ src/Main/Map/map_floor.c:
     complete
     .text       start:0x02030830 end:0x020312b8
 
-// provisional: the stage data file's chunks and entries, the placed objects, the visible cells and the camera
-// projection, blends and modes (gMapState, which holds the camera object); it starts with the ring quadtree of
-// chunk 0x5540, whose rings GetFirstLinkedRing walks (GetNearestSegmentAngle before it also reads what
-// FindNearestRingSegment writes)
+// provisional: the stage data file's chunks and entries, placed objects, visible cells and camera (gMapState). It
+// starts with chunk 0x5540's ring quadtree; GetNearestSegmentAngle before it reads what FindNearestRingSegment writes
 src/Main/Map/map_entries.c:
     complete
     .text       start:0x020312b8 end:0x02034918
@@ -749,16 +746,16 @@ src/Main/Link/arm_system.c:
     complete
     .bss        start:0x020c66d4 end:0x020c6adc
 
-// provisional: the wireless link's per-frame step, record exchange and error screen (data_020c66d4..gCommRecords,
-// gSystemState.mUnk_250/mUnk_288) and the error screen's strings; PlayTrack after it is the tracker's
+// provisional: the wireless link's per-frame step, record exchange and error screen, with the error screen's
+// strings; PlayTrack after it belongs to the tracker
 src/Main/Link/comm_link.c:
     complete
     .text       start:0x02034954 end:0x02035108
     .data       start:0x02063b58 end:0x02063c9c
     .bss        start:0x020c6adc end:0x020c6b14
 
-// provisional: the music tracker player on gTrackerPlayer (defined here): from its song loader (the code before it
-// uses other objects) up to the wireless helpers at 0x020386a4, with the tick's wave table and strings in .data
+// provisional: the music tracker player on gTrackerPlayer (defined here), from its song loader (the code before it
+// uses other objects) up to the wireless helpers at 0x020386a4; its .data holds the tick's wave table and strings
 src/Main/Sound/tracker_player.c:
     complete
     .text       start:0x02035108 end:0x020386a4
@@ -766,9 +763,9 @@ src/Main/Sound/tracker_player.c:
     .data       start:0x02063c9c end:0x02063cc8
     .bss        start:0x020c6b14 end:0x020c8380
 
-// the link's work state gWirelessWork and the two name tables: no code; gWmApiIdNames (nothing references it)
-// and gWhSysStateNames come before the size-sorted strings of wireless_helper.c, and the 0x60-byte gWirelessWork
-// before its 0x30..0x820-byte buffers (one file sorts its objects by size)
+// no code: the link's work state gWirelessWork and two name tables. gWmApiIdNames (unused) and gWhSysStateNames come
+// before wireless_helper.c's size-sorted strings, and the 0x60-byte gWirelessWork before its 0x30..0x820-byte
+// buffers, so they are another file (one file sorts its objects by size)
 src/Main/Link/wireless_state.c:
     complete
     .data       start:0x02063cc8 end:0x02063d04
@@ -782,8 +779,8 @@ src/Main/Link/wireless_helper.c:
     .data       start:0x02063d04 end:0x02064448
     .bss        start:0x020c83e0 end:0x020c9e00
 
-// the link indicator and shutdown (Thumb) on gLinkBuffers, up to the SDK at 0x02039dd8: it reaches the block
-// through its base where wireless_helper.c names the members as objects
+// the link indicator and shutdown (Thumb) on gLinkBuffers, up to the SDK at 0x02039dd8. It reaches the block through
+// its base, where wireless_helper.c names the members as objects
 src/Main/Link/link_indicator.c:
     complete
     .text       start:0x0203982c end:0x02039dd8
@@ -791,19 +788,19 @@ src/Main/Link/link_indicator.c:
     .data       start:0x02064448 end:0x02064458
     .bss        start:0x020c9e00 end:0x020c9e20
 
-// the fonts, the model and sprite scripts and their pointer tables: data between the stage map menu and the
-// start-up code, in the order the scripts were written (assembler: the compiler cannot place const data in .text
-// or keep objects of different sizes in source order)
+// the fonts, the model and sprite scripts and their pointer tables, between the stage map menu and the start-up
+// code, in an order that is not by size. Assembler, because the compiler can't put const data in .text or keep
+// objects of different sizes in source order
 src/Main/Graphics/script_data.s:
     complete
     .text       start:0x0201a608 end:0x0201b7e0
 
-// one file: its own-section .bss ascend (0x020c1818.. -> FSFile -> SystemState) and the JPEG and start-up code reach
-// the same objects through one section base; the .rodata own sections ascend as one file's. It runs on through the
-// math, angle, save block, touch, backup and microphone code: the shared .rodata run 0x020501f4-0x02050270 holds
-// FormatDecimalGrouped's initializer and the microphone band table 0x02050210, which only UpdateMicBands reads (the
-// compiler gives an unreferenced constant a section of its own). The end is provisional (no microphone calls after
-// it); "bank.bin" is its only string
+// one file: its own-section .bss objects ascend (0x020c1818.. -> FSFile -> SystemState), and the JPEG and start-up
+// code reach them through one section base; its own-section .rodata ascends as one file's. It runs on through the
+// math, angle, save block, touch, backup and microphone code: the shared .rodata 0x020501f4-0x02050270 holds
+// FormatDecimalGrouped's initializer and the microphone band table 0x02050210, which only UpdateMicBands reads (an
+// unreferenced constant would get a section of its own). "bank.bin" is its only string.
+// provisional: the end (no microphone calls after it)
 src/Main/System/system_init.c:
     complete
     .text       start:0x0201b7e0 end:0x02021498

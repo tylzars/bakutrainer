@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 """Turns mwcc "multidef" definitions (binding 13) in a compiled object into mwld weak definitions (binding 14).
 
-Function-local statics of inline functions (singleton instances and their guards, `_ZZ...`/`_ZGVZ...`) are
-emitted by every file that uses them. The original link kept the copy in main. dsd writes that copy as weak
-(14), and mwld prefers a multidef copy over a weak one, so without this a decompiled overlay file would take
-over the singleton and every reference to it would move. As weak definitions, the first one in link order
-(main's) wins. The same goes for functions every user emits (virtual thunks, inline methods): against the
-original's copy, still delinked as a global, a multidef copy is a duplicate-definition error, while a weak one
-is dropped.
+Definitions every user of an inline function emits (its function-local statics, `_ZZ...`/`_ZGVZ...`, and the
+inline functions themselves, such as inline destructors and virtual thunks) appear in each compiled file that uses
+them, and the original link kept one copy. Where that copy is still delinked, dsd writes it as weak (14) or as a
+global. mwld prefers a multidef copy over a weak one, so without this a compiled copy would win and every reference
+to it would move; against a global it is a duplicate-definition error. As weak definitions, the first one in link
+order wins, and a weak function copy is dropped.
 
 Usage: demote_multidef.py <object.o>...
 """

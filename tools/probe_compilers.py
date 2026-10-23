@@ -4,7 +4,7 @@ ones reproduce the original bytes of the functions it defines.
 
 Each function to check is declared in the source with a marker comment:
     // PROBE: <symbol> <module> <address>
-e.g. // PROBE: _ZN9SomeClassC1Ev ov001 0x02200000
+e.g. // PROBE: EaseAngleToward main 0x0200b994
 
 Bytes covered by relocations in the compiled object are masked (branch targets,
 literal pool entries), so only instruction encoding and layout are compared. A Thumb

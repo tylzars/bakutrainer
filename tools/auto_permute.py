@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tries every order of each run of local declarations in a near-matching function.
+"""Tries every order of each run of local declarations in a function that doesn't match yet.
 
 For each function given (or every non-matching function of the unit), finds runs of 2-6 consecutive declaration
 lines in its body (`T name;` or `T name = ...;`, one per line), and probes every order of each run, keeping the
@@ -7,7 +7,7 @@ best, one run after another. Declarations are split onto their own lines first w
 (`int a; int b;`). Each candidate is compiled with the build's compiler and flags for the unit. A match is written to
 build/probe/<unit>.<function>.match<suffix>; nothing in src/ changes.
 
-  auto_permute.py src/Main/Some/Unit.cpp [function ...] [--jobs 8] [--max-run 6]
+  auto_permute.py src/Main/Scene/battle_screen.c [function ...] [--jobs 8] [--max-run 6]
 """
 import argparse
 import itertools

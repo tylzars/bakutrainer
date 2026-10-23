@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Works out the declaration order that gives a unit's .bss (or .data/.rodata) objects their original layout.
 
-How mwcc lays out a file's objects within one section (found by experiment, see docs/decompiling.md):
+How mwcc lays out a file's objects within one section (see docs/decompiling.md#data-layout-and-link-order):
   * Objects are collected in declaration order and the list is built by prepending, so it ends up reversed.
-  * Each *used* singleton accessor (`static T &Get() { static T instance; ... }`) contributes three objects at
-    the point where its inline function is parsed (i.e. where its header is included): the guard (4 bytes), the
-    destructor-chain node `@N` (12 bytes) and the instance. File-level statics contribute themselves.
+  * File-level statics contribute themselves. In C++, each *used* singleton accessor
+    (`static T &Get() { static T instance; ... }`) contributes three objects where its inline function is parsed
+    (where its header is included): the guard (4 bytes), the destructor-chain node `@N` (12 bytes) and the instance.
   * The list is heapsorted by size (max-heap, strict comparisons), giving ascending sizes with a scrambled order
     among equal sizes. Then the weak objects (guards, instances) move to their own sections; the rest is the
     layout.
@@ -14,7 +14,7 @@ The tool reads the compiled object, maps each `@N` node to its singleton, finds 
 unit's objects (from relocations in matching functions, as data_ranges.py does), and searches the orders of
 singletons (include order) and statics (definition order) for ones that reproduce it.
 
-  data_order.py src/Main/Some/Unit.cpp
+  data_order.py src/Main/Scene/battle_screen.c
 """
 import itertools
 import subprocess

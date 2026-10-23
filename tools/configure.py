@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
-"""Generates build.ninja for the decomp. Game-specific settings live in tools/project.py.
+"""Generates build.ninja. Game-specific settings live in tools/project.py.
 
-Pipeline:  baserom --dsd rom extract--> extract/<ver>/
-           dsd delink                -> build/<ver>/delinks/*.o   (asm-equivalent objects for not-yet-decompiled code)
-           mwccarm src/**.c(pp)      -> build/<ver>/src/**.o      (decompiled code, for TUs marked `complete`)
-           mwasmarm libs/**.s        -> build/<ver>/libs/**.o     (data-only or hand-placed regions)
-           dsd lcf + mwldarm         -> build/<ver>/arm9.o + module binaries
-           dsd rom config/build      -> build/<ver>/<game>_<ver>.nds, checked against <game>_<ver>.sha1
-
-For a game with several versions, pass the version here and set DECOMP_VERSION=<ver> for the other tools.
+Pipeline:  baserom --dsd rom extract--> extract/usa/
+           dsd delink                -> build/usa/delinks/*.o    (the original's bytes, for ranges no unit covers)
+           mwccarm **.c, **.cpp      -> build/usa/src|libs/**.o  (source, linked for units marked `complete`)
+           mwasmarm **.s             -> build/usa/src|libs/**.o  (hand-written code and data)
+           dsd lcf + mwldarm         -> build/usa/arm9.o + module binaries
+           dsd rom config/build      -> build/usa/bakutrainer_usa.nds, checked against bakutrainer_usa.sha1
 """
 import argparse
 import hashlib

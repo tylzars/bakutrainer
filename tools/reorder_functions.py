@@ -8,7 +8,7 @@ the slots they already occupy. Everything else (includes, declarations, data, co
 where it is; a comment block directly above a function moves with it. Free functions that end up used before
 their definition need a prototype; the tool adds one above the first function slot when compiling fails.
 
-  reorder_functions.py src/Main/Some/Unit.cpp [--write]
+  reorder_functions.py src/Main/Scene/battle_screen.c [--write]
   reorder_functions.py --fix-decls <files...>   (after --write, until each file compiles)
 
 Without --write it prints the old and new order. Functions emitted without a definition in this file (inline

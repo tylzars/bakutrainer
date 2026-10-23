@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Searches singleton include order and static definition order for the original data layout, offline.
+"""Searches static definition order (and C++ singleton include order) for the original data layout, offline.
 
 mwcc collects every object of a file into one list (.bss, .data and .rodata together), by prepending as they are
-declared, heapsorts it by size and emits it in that order (see docs/decompiling.md, "Data layout within a section").
+declared, heapsorts it by size and emits it in that order (see docs/decompiling.md#data-layout-and-link-order).
 The participants:
-  * each used singleton accessor, where its header is first parsed: guard (4), destructor-chain node @N (12, only
-    for classes with a destructor) and instance, as node, guard, instance or guard, node, instance;
+  * in C++, each used singleton accessor, where its header is first parsed: guard (4), destructor-chain node @N
+    (12, only for classes with a destructor) and instance, as node, guard, instance or guard, node, instance;
   * each file-level static, where it is defined, preceded by the string literals of its initializer;
   * the file's vtables, at the end.
 Literals used inside functions are emitted afterwards in creation order and don't take part.
@@ -15,7 +15,7 @@ order until the model reproduces the compiled order exactly (it stops if it can'
 orders and static orders for ones whose output puts the unit's objects in their original address order (taken from
 relocations in matching functions, as data_ranges.py does), and prints the closest few.
 
-  layout_search.py src/Main/Some/Unit.cpp [--max-statics 8] [--climb 300]
+  layout_search.py src/Main/Scene/battle_screen.c [--max-statics 8] [--climb 300]
 """
 import argparse
 import itertools

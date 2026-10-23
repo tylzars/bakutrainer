@@ -12,8 +12,9 @@ usage: tools/permute.py <probe source> <function substring> [--unit PATH] [--ite
 
 The source needs the usual `// PROBE:` lines (see tools/probe_compilers.py); PROBE_INCLUDE is honoured. It is compiled
 with the build's compiler and flags for --unit (default: the source's own path, so a scratch probe gets the game's
-settings; give a library probe its unit's path). The best order is written to <src>.best<suffix>. Only reorder lines whose order does not change the meaning of the code
-(declarations, independent statements); the score is a byte comparison and cannot tell the difference.
+settings; give a library probe its unit's path). The best order is written to <src>.best<suffix>. Only mark lines
+whose order does not change the meaning of the code (declarations, independent statements): the score is a byte
+comparison and cannot tell the difference.
 """
 import argparse
 import itertools

@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
-"""Random source-transformation search (simulated annealing) for one near-matching function.
+"""Random source-transformation search (simulated annealing) for one function that doesn't match yet.
 
-Stronger than mutate.py: it works on the whole function body, uses many more transformations (including the ones that
-cracked register-allocation and scheduling ties in this project: enum-typed copies, reassigned locals, temporaries
-through an inline identity, block vs function scope, operand order, casts, compound assignments, statement order),
+Stronger than mutate.py: it works on the whole function body and uses many more transformations (among them the ones
+that settle register-allocation and scheduling differences: enum-typed copies, reassigned locals, temporaries through
+an inline identity (C++ only), block vs function scope, operand order, casts, compound assignments, statement order),
 scores with a graded distance (a register-only difference costs less than a different instruction) and accepts worse
 variants with a temperature, restarting from the best one now and then.
 
 To keep compiles fast, every other function body in the file is replaced by its declaration; the tool first checks
 that this leaves the target's bytes unchanged (with `-ipa file` other bodies can matter: then use --full).
 
-  permuter.py <unit.cpp|.c> <function identifier> [--jobs 2] [--minutes 30] [--seed N] [--full]
+  permuter.py <unit.c|.cpp> <function identifier> [--jobs 2] [--minutes 30] [--seed N] [--full]
               [--unit PATH] [--compiler 2.0/spXpY] [--flags '-O4,p -ipa file -inline on,noauto'] [--out DIR]
 
 Compiler and flags default to the build's settings for --unit (default: the source's own path); -thumb is added
@@ -146,7 +146,7 @@ class Scorer:
         self.sym, self.mod, self.addr = probe
         base, blob = pc.module_bytes(self.mod)
         if getattr(a, "goal", None):
-            # lab mode: compare the lab function against an excerpt of the original (module:addr:len)
+            # --goal: compare the function against an excerpt of the original (module:addr:len)
             gm, ga, gl = a.goal.split(":")
             gbase, gblob = pc.module_bytes(gm)
             ga, gl = int(ga, 16), int(gl, 16)

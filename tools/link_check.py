@@ -2,8 +2,8 @@
 """Checks which decompiled units are ready to be linked (marked `complete` in delinks.txt).
 
 For each unit it compares the compiled object with the original layout:
-  - function order: mwcc emits functions in source order, the linker keeps it, so the definitions in the .cpp
-    must follow the original addresses (forward-declare callees defined later);
+  - function order: mwcc emits functions in source order and the linker keeps it, so the definitions in the source
+    file must follow the original addresses (declare callees that are defined later);
   - other sections: a compiled `.data`/`.rodata`/`.bss`/`.ctor`/`.init` with contents needs a matching range in
     the unit's delinks entry, or linking would duplicate the original copy still in the gap.
 

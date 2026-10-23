@@ -1,6 +1,6 @@
-"""Project settings shared by configure.py and the tools: edit this file when starting a new game.
+"""Project settings shared by configure.py and the tools.
 
-Everything game-specific lives here: the game's short name, its versions (ROM file, secure-area CRC), the compiler
+Everything game-specific lives here: the game's short name, its version (ROM file, secure-area CRC), the compiler
 for game code and for each library folder, and per-path flag differences (-thumb included). The tools read the
 memory layout (module base addresses) from the dsd extract, so nothing here needs addresses.
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Explains why the rebuilt ROM doesn't match: compares each rebuilt module (main, ITCM, DTCM, overlays) in
-build/<ver>/build/ with the extracted one.
+"""Explains why the rebuilt ROM doesn't match: compares each rebuilt module (main, ITCM, DTCM) in build/<ver>/build/
+with the extracted one.
 
 For each module that differs: the size difference, words that differ by a constant small amount grouped (pointers
 shifted because code or data moved), and the first difference that isn't such a shift, with the symbol it falls in.

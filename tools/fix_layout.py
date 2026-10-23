@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
-"""Searches include orders for one that gives a unit's data its original layout.
+"""Searches include orders for one that gives a C++ unit's data its original layout.
 
-A singleton accessor's objects (guard, destructor-chain node, instance) are numbered and placed where its
+A C++ singleton accessor's objects (guard, destructor-chain node, instance) are numbered and placed where its
 header is first parsed, and mwcc sorts a section's objects by size with an order among equal sizes that
-depends on the declaration order (see docs/decompiling.md). So which singleton header comes first changes the
-layout. This tool tries putting the headers of the singletons the unit uses at the top of the file (one, two,
-then three of them, in every order), recompiles, and asks data_ranges.py whether every data section now lands
-consistently. The first order that works is kept; with --dry-run nothing is kept.
+depends on the declaration order (see docs/decompiling.md#data-layout-and-link-order). So which singleton header
+comes first changes the layout. This tool tries putting the headers of the singletons the unit uses at the top of
+the file (one, two, then three of them, in every order), recompiles, and asks data_ranges.py whether every data
+section now lands consistently. The first order that works is kept; with --dry-run nothing is kept. A unit without
+singletons (every C file) has nothing to try.
 
-  fix_layout.py src/Main/Some/Unit.cpp [--max 3] [--dry-run]
+  fix_layout.py <unit.cpp> [--max 3] [--dry-run]
 """
 import argparse
 import itertools

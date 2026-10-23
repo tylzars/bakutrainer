@@ -17,10 +17,12 @@ Points (repeatable --at, default: coalesce,color,after-color):
   final        the final instruction list, after peephole and scheduling
 
 Usage:
-  tools/mwcc_trace.py src/Main/Some/Unit.cpp func_02012345 --merges > trace.txt
-  tools/mwcc_trace.py my_variant.cpp NAME --flags-from src/Main/Some/Unit.cpp
+  tools/mwcc_trace.py src/Main/Scene/battle_screen.c SetupBattleScreen --sp2p2-stand-in --merges > trace.txt
+  tools/mwcc_trace.py my_variant.c NAME --flags-from src/Main/Scene/battle_screen.c --sp2p2-stand-in
 Function names match by substring of the compiler's internal (mangled) name. Diagnostics only: the object file is
 discarded. Only 2.0/sp2p2 is supported (the addresses below belong to that build and are checked before running).
+The game code builds with 2.0/sp2p3, so tracing it needs --sp2p2-stand-in: check first that its probe shows the same
+difference under 2.0/sp2p2.
 """
 import argparse
 import os

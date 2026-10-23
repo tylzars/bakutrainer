@@ -1,16 +1,11 @@
 #!/usr/bin/env python3
 """Prepends a FORCE_ACTIVE block to the dsd-generated LCF.
 
-Main reaches every overlay through a call to the shared load address
-(the overlay base address), which dsd records as an ambiguous relocation and links against
-only the first overlay. With -dead, overlays whose entry nothing else
-references get stripped to nothing. Keeping each overlay's entry function
-active restores the original reachability.
+In a game with overlays it keeps each overlay's entry function (looked up by address in the overlay's symbols.txt):
+main reaches every overlay through one shared load address, which dsd links against the first overlay only, so
+-dead would strip the others. This game has no overlays.
 
-The entry symbol is looked up by address in each overlay's symbols.txt, so
-renaming it there is picked up automatically.
-
-It also keeps the data symbols listed in <config-dir>/force_active.txt (one per line, `#` comments): objects the
+It keeps the data symbols listed in <config-dir>/force_active.txt (one per line, `#` comments): objects the
 original link kept although nothing references them, which -dead would otherwise strip from a unit linked from
 source.
 

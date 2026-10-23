@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Random source mutation search for one near-matching function (register allocation and scheduling diffs).
+"""Random source mutation search for one function that differs only in registers or scheduling.
 
 Mark the region to mutate inside the function with lines `// MUTATE-BEGIN` and `// MUTATE-END`; put one statement
 or declaration per line there. The tool hill-climbs over random edits of that region, scoring each variant with

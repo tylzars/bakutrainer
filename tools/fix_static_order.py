@@ -7,9 +7,9 @@ section whose objects are out of the original order, this tool searches definiti
 rewrites the definitions (each moves as a whole, with the comment block above it) into the closest order that
 works, recompiles and asks data_ranges.py. The file is restored if that doesn't settle it.
 
-  fix_static_order.py src/Main/Some/Unit.cpp [--brute] [--dry-run]
+  fix_static_order.py src/Main/Scene/battle_screen.c [--brute] [--dry-run]
 
-Singleton objects aren't moved here (see fix_layout.py for include order).
+C++ singleton objects aren't moved here (see fix_layout.py for include order).
 """
 import itertools
 import re

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Adds or removes the `complete` line of units in delinks.txt.
 
-  mark_complete.py src/Main/Some/Unit.cpp ...        (mark)
-  mark_complete.py --undo src/Main/Some/Unit.cpp ... (unmark)
+  mark_complete.py src/Main/Scene/battle_screen.c ...        (mark)
+  mark_complete.py --undo src/Main/Scene/battle_screen.c ... (unmark)
 """
 import argparse
 from pathlib import Path

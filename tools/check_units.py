@@ -5,8 +5,8 @@ For each unit: the range starts at a function and is 4-byte aligned at both ends
 bytes after the last function are zero padding, units don't overlap, and the compiled object defines exactly the
 original functions in the range (labels excepted; a stub unit named by an lcf_edits.txt `place` edit is checked
 against the object of the unit it places). A function the source defines that the link strips (absent from the
-linked build/<ver>/arm9.o) is not a problem: it is listed as a note (layout placeholders). Every module with a delinks.txt (main, ITCM, DTCM, overlays). Run
-`ninja report` first so the objects exist. Exit status 1 on any problem.
+linked build/<ver>/arm9.o) is not a problem: it is listed as a note (layout placeholders). Checks every module with a
+delinks.txt (main, ITCM, DTCM). Run `ninja report` first so the objects exist. Exit status 1 on any problem.
 
   check_units.py
 """
