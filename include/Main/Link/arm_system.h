@@ -14,8 +14,8 @@ typedef struct StateC {
     // Buffer of the packet ServeCommFiles sends; never assigned in this build (only freed), so it stays NULL.
     u8 *mPacket;
 } StateC;
-// Declared without a size: ServeCommFiles loads mPacket ahead of a store to data_020c9e04, which the compiler only
-// allows when the declared object is not a complete type of 16 bytes or less.
+// Declared without a size. ServeCommFiles loads mPacket ahead of a store to data_020c9e04; the compiler only allows
+// that when the declared object is not a complete type of 16 bytes or less.
 extern StateC data_020c66d4[];
 extern u8 gCommSendData[] __attribute__((aligned(32)));
 extern u8 gCommRecords[] __attribute__((aligned(32)));

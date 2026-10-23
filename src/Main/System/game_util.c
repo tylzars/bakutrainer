@@ -159,12 +159,12 @@ void func_0200bbd0(int a, int b, int c, int d, int e, int f, int g, const char *
     }
 }
 
-// Draws button f for this frame at (a, b) on layer 2 while the LCDs are swapped, else layer 1. The sprite is g, or
-// g + 1 while button f is held (only with o == 0, p == 0 and data_020b6ee0.mButtonsEnabled set); it is drawn only
-// when n == 0, and with p == 1 only while button f is held. Text h, when given, is drawn at (a, b) with font i (or
-// data_0201a6c6), alignment j and width 200. With m == 1 it also adds touch button f for this frame (the rectangle
-// a - c..a + c, b - d..b + d when c is not 0, else the area AddTouchButton takes from sprite g at (a, b); key mask k)
-// and plays sound l when button f is released.
+// Draws button f for this frame at (a, b), on layer 2 while the LCDs are swapped, else layer 1.
+// The sprite is g, or g + 1 while button f is held (only with o == 0, p == 0 and data_020b6ee0.mButtonsEnabled set).
+// It is drawn only when n == 0, and with p == 1 only while button f is held.
+// Text h, if given, is drawn at (a, b) with font i (or data_0201a6c6), alignment j and width 200.
+// With m == 1 it also adds touch button f, with key mask k, and plays sound l when button f is released. The touch
+// area is the rectangle a - c..a + c, b - d..b + d when c is not 0, else the area AddTouchButton takes from sprite g.
 void DrawButtonEx(int a, int b, int c, int d, int e, int f, int g, const char *h, const void *i, int j, int k, int l,
                   int m, int n, int o, int p) {
     int layer = IsLcdSwapped() ? 2 : 1;
@@ -205,7 +205,7 @@ int TestButton(u32 mask, u32 id) {
     return 0;
 }
 
-// 1 when the button state has a flag of mask and its id is in lo..hi; unlike TestButton it does not check
+// 1 when the button state has a flag of mask and its id is in lo..hi. Unlike TestButton, it does not check
 // mButtonsEnabled.
 int TestButtonRange(u32 mask, u32 lo, u32 hi) {
     if ((mask & gTouchInput.mTrail.mTouchState.mButtonState) &&

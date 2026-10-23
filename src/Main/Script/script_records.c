@@ -49,20 +49,23 @@ ScriptWork gScriptWork;
 // What ReadNumber returns when the text holds no further number.
 #define SCRIPT_NO_NUMBER 0x55aa
 
-// Flags of a script sprite (the fifth value of SPR, SPRX and SHAPE, read by AddScriptSprite). SLIDE: the sprite slides
-// to its position from a start point before x 0 or past x 0x100, or before y 0 or past y 0xc0 (for a sprite, offset
-// from that edge by its rect; for a shape, at 0x100 or 0xc0 itself or a power-of-two size from its table entry before
-// 0); a moving sprite gets that point too but does not slide (see mStartX). SLIDE_X: the point is in x at the sprite's
-// y, otherwise in y at its x; 0x2 (left as a literal: its side differs between x and y) puts it before x 0 or past y
-// 0xc0, otherwise past x 0x100 or before y 0. LAYER_1: a sprite is drawn on layer 1, otherwise 2 (a shape always on 1).
-// ANIM_LOOP: the animation starts again after its last frame instead of stopping on it. MOVE_BOUNCE: a moving sprite
-// turns round at each end. FLIP_ON_RETURN: a moving sprite is drawn mirrored in x while its mMovePerFrame is negative
-// (heading for mStartX and mStartY); sprites only, a shape is drawn without the flip.
+// Flags of a script sprite: the fifth value of SPR, SPRX and SHAPE, read by AddScriptSprite.
+// The slide's start point is in x at the sprite's y, otherwise in y at its x. Flag 0x2 (left as a literal, since its
+// side differs between x and y) puts it before x 0 or past y 0xc0; without it the point is past x 0x100 or before y 0.
 #define SCRIPT_SPRITE_SLIDE_X 1
+// The sprite slides to its position from a start point before x 0 or past x 0x100, or before y 0 or past y 0xc0.
+// For a sprite the point is offset from that edge by its rect. For a shape it is at 0x100 or 0xc0 itself, or a
+// power-of-two size from its table entry before 0. A moving sprite gets that point too but does not slide (see
+// mStartX).
 #define SCRIPT_SPRITE_SLIDE 4
+// A sprite is drawn on layer 1, otherwise 2. A shape is always on layer 1.
 #define SCRIPT_SPRITE_LAYER_1 8
+// The animation starts again after its last frame instead of stopping on it.
 #define SCRIPT_SPRITE_ANIM_LOOP 0x10
+// A moving sprite turns round at each end.
 #define SCRIPT_SPRITE_MOVE_BOUNCE 0x20
+// A moving sprite is drawn mirrored in x while its mMovePerFrame is negative (heading for mStartX and mStartY).
+// Sprites only: a shape is drawn without the flip.
 #define SCRIPT_SPRITE_FLIP_ON_RETURN 0x40
 
 // Finds the entry of the line-name file (from entry 2 on) whose first word, upper-cased, equals name's and starts the
@@ -86,8 +89,8 @@ void StartScriptAtName(const char *name) {
     }
 }
 
-// Starts the script at line index: empties the event queue; clears the sprite and text counts, the Ls selection, the
-// state (SCRIPT_STATE_READ), the EOF flags, the pending images and the wait timer; sets every eye's timer to -1.
+// Starts the script at line index. Empties the event queue and clears the sprite and text counts, the Ls selection,
+// the state (to SCRIPT_STATE_READ), the EOF flags, the pending images and the wait timer. Sets every eye's timer to -1.
 void StartScript(int index) {
     u32 i;
     ClearScriptEvents();
@@ -110,8 +113,8 @@ void StartScript(int index) {
     }
 }
 
-// Sets up the script engine: stores the callbacks, releases the old buffers when the file ids change, on first use
-// stores the ids and allocates the buffers, then starts the script at line index `line` and runs its first frame
+// Sets up the script engine. Stores the callbacks and releases the old buffers when the file ids change. On first use
+// it stores the ids and allocates the buffers. Then starts the script at line index `line` and runs its first frame
 // (UpdateScript).
 void SetupScript(int scriptFileId, int textFileId, int textNameFileId, int lineNameFileId, int line, int charSoundId,
                  void (*spriteDrawFunc)(u32 id, int x, int y, int w, int mode), u8 (*textEscapeFunc)(void),
@@ -429,7 +432,7 @@ int ClearAndEvaluate(s16 *out, u8 *text, u32 size) {
     return Evaluate(out, text);
 }
 
-// Evaluates the text: names of records and numbers, joined by signs, added into out (subtracted after '-'); out is not
+// Evaluates the text: names of records and numbers, joined by signs, added into out (subtracted after '-'). out is not
 // cleared first (ClearAndEvaluate does that). Returns the number of values.
 int Evaluate(s16 *out, u8 *text) {
     s16 buf[0x10];
@@ -509,9 +512,8 @@ void AddScriptSprite(u8 *text, int mode) {
             sprite->mLayer = 2;
         }
         GetTexInfo(sprite->mDrawId, &info, 0);
-        // Both arms clear bit 4 of mUnk_21: one through the bit-field, one as a byte operation, because the
-        // compiler's output keeps the test and two separate stores (with one form in both arms the compiler merges
-        // the arms and drops the test).
+        // Both arms clear bit 4 of mUnk_21, one through the bit-field and one as a byte operation. With one form in
+        // both arms the compiler merges the arms and drops the test; the original keeps the test and two stores.
         if (info.mUnk_12 > 1) {
             sprite->mUnk_21_4 = 0;
         } else {
@@ -618,8 +620,7 @@ void AddScriptSprite(u8 *text, int mode) {
     sprite->mSlideProgress = 0;
 }
 
-// Reads a text from the script line and appends it to mTexts, or to mUnk_68 when its seventh value is non-zero
-// (nothing reads that list in this build).
+// Reads a text from the script line and appends it to mTexts, or to mUnk_68 when its seventh value is non-zero.
 void AddScriptText(u8 *text) {
     s16 buf[8];
     ScriptText *entry;
@@ -664,9 +665,8 @@ void ScriptCmdTxtSpd(u8 *text) {
     gScriptWork.mCharFrameCount = value[0];
 }
 
-// Sets the state to SCRIPT_STATE_END and plays the queued MUSIC track; then for each queued sound id (mapped through
-// mSoundIdFunc when set, never in this build) stops it in mode 2 or plays it otherwise unless mSkipToEnd is set, and
-// empties the sound list.
+// Sets the state to SCRIPT_STATE_END and plays the queued MUSIC track. Then each queued sound id (mapped through
+// mSoundIdFunc when set) is stopped in mode 2, else played unless mSkipToEnd is set. Empties the sound list.
 void PlayScriptTrackAndSounds(void) {
     u32 i;
     gScriptWork.mState = SCRIPT_STATE_END;
@@ -691,8 +691,8 @@ void PlayScriptTrackAndSounds(void) {
     gScriptWork.mSoundCount = 0;
 }
 
-// Reads the EOF command's own flags (mEofFlags, read by the wait and finish states) and the values that go with them:
-// flag 8 plays the queued track and sounds and sets the wait timer, flag 0x10 sets the number of lines shown at a time.
+// Reads the EOF command's own flags (mEofFlags, read by the wait and finish states) and the values that go with them.
+// Flag 8 plays the queued track and sounds and sets the wait timer; flag 0x10 sets the number of lines shown at a time.
 void ScriptCmdEof(u8 *text) {
     s16 buf[3];
     if (ClearAndEvaluate(buf, text, 6) > 3) {
@@ -711,7 +711,7 @@ void ScriptCmdEof(u8 *text) {
     }
 }
 
-// Reads up to 16 values from the text into the next entry of the event queue. There is no full check: a write can
+// Reads up to 16 values from the text into the next entry of the event queue. There is no full check, so a write can
 // overwrite an entry that was not read yet.
 void QueueScriptEvent(u8 *text) {
     int len = ClearAndEvaluate(&gScriptWork.mEvents[gScriptWork.mUnk_280.mEventWriteIndex].mKind, text, 0x20);
@@ -753,10 +753,9 @@ void ScriptCmdGoto(u8 *text) {
     gScriptWork.mNextTextId += v[1];
 }
 
-// The SPRSCR (flag 1) and SHPSCR (flag 0) commands: reads an index and up to two more values. Unless mUnk_280.mUnk_40
-// is set (SetupPrompt sets it for a prompt with a shared model), mScrDrawId becomes the sprite or shape table entry
-// with the marker bits described at mScrDrawId, and the two values become mScrX and mScrY; while it is set the call
-// stores nothing.
+// The SPRSCR (flag 1) and SHPSCR (flag 0) commands: reads an index and up to two more values. mScrDrawId becomes the
+// sprite or shape table entry, with the marker bits described at mScrDrawId, and the two values become mScrX and
+// mScrY. While mUnk_280.mUnk_40 is set (SetupPrompt sets it for a prompt with a shared model) nothing is stored.
 void SetScriptScrSprite(u8 *text, int flag) {
     s16 v[3];
     int n;
@@ -785,8 +784,8 @@ void SetScriptScrSprite(u8 *text, int flag) {
     }
 }
 
-// Reads a value and a mode; odd modes store the value in mPendingImageIndices[0] with the mode in
-// mPendingImageLayers[0], even modes store it in mPendingImageIndices[1] and set mPendingImageLayers[1] to 2.
+// Reads a value and a mode. Odd modes store the value in mPendingImageIndices[0] and the mode in
+// mPendingImageLayers[0]. Even modes store it in mPendingImageIndices[1] and set mPendingImageLayers[1] to 2.
 void ScriptCmdScreen(u8 *text) {
     s16 v[4];
     if (ClearAndEvaluate(v, text, 8) > 2) {
@@ -855,8 +854,8 @@ void ScriptCmdLt(u8 *text) {
     }
 }
 
-// Reads a track index and an optional volume (default 100) into mTrackFileId and mTrackVolume; the index goes
-// through the remap table when that is enabled, which it is not in this build (its first entry is 0).
+// Reads a track index and an optional volume (default 100) into mTrackFileId and mTrackVolume. The index goes through
+// the remap table when that is enabled, which it is not in this build (its first entry is 0).
 void ScriptCmdMusic(u8 *text) {
     s16 v[4] = {0, 0, 0, 0};
     int n = Evaluate(v, text);
@@ -975,9 +974,9 @@ void ScriptCmdSetEye(u8 *text) {
     }
 }
 
-// Looks up the eye in use whose sprite id equals spriteId, returns in id the id it shows (mId, or mAltId while the
-// alternate shows; -1 when no eye matches) and in dx, dy its offsets, and steps its countdown; when the countdown is -1
-// it draws a new delay from mDelayMin up to mDelayLimit - 1.
+// Looks up the eye in use whose sprite id equals spriteId and steps its countdown. Returns in id the id it shows (mId,
+// or mAltId while the alternate shows; -1 when no eye matches) and in dx, dy its offsets. When the countdown is -1 it
+// draws a new delay from mDelayMin up to mDelayLimit - 1.
 void UpdateScriptEye(int spriteId, int *id, int *dx, int *dy) {
     ScriptEye *slot;
     u32 i;
@@ -1115,8 +1114,8 @@ void SelectLsForSprite(int index, int id) {
     }
 }
 
-// Swaps the sprite's position with its slide start and restarts the slide, so it slides back; not when mNoReverse is
-// set (moving sprites, and a sprite its show timer already reversed).
+// Swaps the sprite's position with its slide start and restarts the slide, so it slides back. Does nothing while
+// mNoReverse is set.
 void ReverseScriptSprite(ScriptSprite *rec) {
     if (!rec->mNoReverse) {
         s16 a = rec->mX;
@@ -1137,7 +1136,7 @@ void ReverseScriptSprites(void) {
     }
 }
 
-// Ends the wait after an EOF line: sets the state to SCRIPT_STATE_FINISH, clears the texts unless EOF flag 2 is set
+// Ends the wait after an EOF line: sets the state to SCRIPT_STATE_FINISH, clears the texts unless EOF flag 2 is set,
 // and reverses the sprites unless EOF flag 1 is set.
 void StartEofFinish(void) {
     gScriptWork.mState = SCRIPT_STATE_FINISH;
@@ -1176,9 +1175,8 @@ void func_0202a1cc(void) {
     gMapState.mCamera.mUnk_2dc.mPolygonId &= 0x1f;
 }
 
-// Runs one frame of the script engine: applies queued screen changes, moves and draws the script sprites, builds
-// and draws the message text, then reads script commands until one waits; repeats while mSkipToEnd is set (never in
-// this build).
+// Runs one frame of the script engine: applies queued screen changes, moves and draws the script sprites, builds and
+// draws the message text, then reads script commands until one waits. Repeats while mSkipToEnd is set.
 void UpdateScript(int (*callback)(void)) {
     char text[0x200];
     u8 name[0x80];

@@ -33,7 +33,7 @@ void SetupPageViewer(void) {
     }
 }
 
-// The state 0 branch (button 0x600 at 0x80, 0x60) never runs in this build: every StartPageViewerState call passes 1.
+// The state 0 branch (button 0x600 at 0x80, 0x60) never runs (see StartPageViewerState).
 void DrawPageViewerButtons(void) {
     PageViewState *p = &gPageViewState;
     switch (gPageViewState.mState) {
@@ -50,7 +50,7 @@ void DrawPageViewerButtons(void) {
 }
 
 // Button 0x600 leaves for game state 10 when data_020b6ee0.mUnk_a91b is set (clearing it), else for the title screen
-// (state 1); 0x601 shows the next page. State 0 is never entered in this build.
+// (state 1). 0x601 shows the next page.
 void UpdatePageViewer(void) {
     PageViewState *p = &gPageViewState;
     DrawPageViewerButtons();
@@ -87,7 +87,8 @@ void UpdatePageViewer(void) {
     }
 }
 
-// Every call passes 1 (load the page's image and start the next-page countdown).
+// Every call passes 1 (load the page's image and start the next-page countdown), so state 0 is never entered in this
+// build.
 void StartPageViewerState(int state) {
     PageViewState *p = &gPageViewState;
     SetFaded(3);

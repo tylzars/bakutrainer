@@ -6,8 +6,8 @@
 extern "C" {
 #endif
 
-// Fade state of a screen (SystemState mFadeState, one per screen; IsFadeState compares it): the level register
-// at its top value (0x8011), stepping down to 0, stepping up to the top, and at 0.
+// Fade state of a screen (SystemState mFadeState, one per screen; IsFadeState compares it). The level register is at
+// its top value (0x8011), stepping down to 0, stepping up to the top, or at 0.
 #define FADE_STATE_FADED 0
 #define FADE_STATE_TO_CLEAR 1
 #define FADE_STATE_TO_FADED 2

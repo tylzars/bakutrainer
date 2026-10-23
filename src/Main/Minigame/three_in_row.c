@@ -24,7 +24,7 @@ const u8 gShapeMasks[SHAPE_COUNT][SHAPE_CELLS] = {
 };
 
 // Places random shapes, each at the first position where it fits, on a copy of the previous board (board n holds the
-// first n shapes), rejecting a placement that closes in an empty cell, until the last board is full; fills recs and
+// first n shapes), until the last board is full. A placement that closes in an empty cell is rejected. Fills recs and
 // returns the number of shapes placed.
 int PlaceRandomShapes(u8 *boards, ShapeRec *recs) {
     int i, j, x, y, k;
@@ -86,9 +86,9 @@ int PlaceRandomShapes(u8 *boards, ShapeRec *recs) {
     return placed;
 }
 
-// Returns 2 when player has three cells in a line (across, down or diagonal): every shape record is marked PIECE_GONE
-// and the board cleared. Otherwise returns 1 for the first shape whose cells are all taken, clearing its cells and
-// marking its record PIECE_GONE, or 0.
+// Returns 2 when player has three cells in a line (across, down or diagonal); every shape record is then marked
+// PIECE_GONE and the board cleared. Otherwise returns 1 for the first shape whose cells are all taken, clearing its
+// cells and marking its record PIECE_GONE; else 0.
 int CheckAndClearLineOrFilledShape(int count, ShapeRec *recs, u8 *board, int player) {
     int found = 0;
     int x, y, i, k;
@@ -205,9 +205,9 @@ int EvaluateMove(u8 *board, int player, ShapeRec *recs, int x, int y) {
     return 0;
 }
 
-// Tries each free cell for player: EvaluateMove's score, and below mSearchDepth and short of a win, minus the other
-// player's best reply after a 0 score or plus the same player's next move otherwise. Returns the best score (0 when no
-// cell is free); at depth 0 it also stores the best cell in mMoveCell.
+// Tries each free cell for player and scores it with EvaluateMove. Below mSearchDepth and short of a win, it then
+// subtracts the other player's best reply after a 0 score, or adds the same player's next move otherwise. Returns the
+// best score (0 when no cell is free). At depth 0 it also stores the best cell in mMoveCell.
 int FindBestMove(ShapeRec *recs, u8 *board, int player, u32 depth) {
     int x, y;
     int bestPos;

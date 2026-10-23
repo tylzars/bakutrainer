@@ -84,8 +84,8 @@ typedef struct ModelPart {
     u32 mTexAnimMask;
     u32 mUnk_08;
     u32 mMatAnimMask;
-    // FindOrLoadTex's `kind`: the data's offset in mTexFile (1 and 2 would select the block file and the file
-    // gSystemState.mUnk_42c).
+    // FindOrLoadTex's `kind`: the data's offset in mTexFile. (1 and 2 would select the block file and the file
+    // gSystemState.mUnk_42c.)
     u32 mTexSrc;
     // 0 = no palette; otherwise FindOrLoadPltt's `kind`.
     u32 mPlttSrc;
@@ -111,9 +111,8 @@ typedef struct ModelPart {
     u8 mUnk_36[2];
 } ModelPart;
 
-// This file's .bss: gCurrentMtx, the matrix DrawModelFileEx and ComputePoseMatrices build each node's matrix in (a
-// copy in RAM, not the geometry engine's current matrix), the VRAM caches and the pose walk state, the map state and
-// the matrix of each pose node.
+// This file's .bss. gCurrentMtx is the matrix DrawModelFileEx and ComputePoseMatrices build each node's matrix in: a
+// copy in RAM, not the geometry engine's current matrix.
 extern MtxFx43 gCurrentMtx;
 extern GxState gGxState;
 extern MapState gMapState;

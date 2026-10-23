@@ -15,11 +15,10 @@ typedef struct SaveSlotProgress {
     s32 mLastNodeDone;
 } SaveSlotProgress;
 
-// Values of TitleScreen.mSlideState (UpdateTitleSlide): the title state's sprites and buttons move in from their
-// offsets, stay in place (touch buttons added), move out.
-#define TITLE_SLIDE_STATE_IN 0
-#define TITLE_SLIDE_STATE_IN_PLACE 1
-#define TITLE_SLIDE_STATE_OUT 2
+// Values of TitleScreen.mSlideState (UpdateTitleSlide) for the title state's sprites and buttons.
+#define TITLE_SLIDE_STATE_IN 0       // moving in from their offsets
+#define TITLE_SLIDE_STATE_IN_PLACE 1 // in place, touch buttons added
+#define TITLE_SLIDE_STATE_OUT 2      // moving out
 
 // The title screen (game state 1).
 typedef struct TitleScreen {
@@ -34,8 +33,8 @@ typedef struct TitleScreen {
     s8 mReturnState;
     u8 mUnk_39[3];
     Model mModel;
-    // Copied from mLanguage when state 4 is requested and set by its language buttons. State 4 is never reached in this
-    // build: only state 5's button 0x702 requests it, and no button 0x702 is ever added.
+    // Copied from mLanguage when state 4 is requested, and set by its language buttons. State 4 is never reached in
+    // this build: only state 5's button 0x702 requests it, and no button 0x702 is ever added.
     u32 mSelectedLanguage;
     u8 mSlideState;
     u8 mUnk_1b9[3];
@@ -47,8 +46,8 @@ typedef struct TitleScreen {
     // Distance of the opening sprites 0xdfa / 0xdfb from x 0x59, in 1/256 pixel: 0x10000 at set-up (0 with a return
     // state), 0x1900 less each frame, -1 once the two meet and shake.
     s32 mSpritePairOffset;
-    // 0 while that opening and the shake after it run, 1 afterwards (at once when the state is entered with a return
-    // state); the slide and the buttons run only at 1.
+    // 0 while that opening and the shake after it run, then 1 (at once when the state is entered with a return state).
+    // The slide and the buttons run only at 1.
     s32 mSpritePairDone;
 } TitleScreen;
 

@@ -79,10 +79,10 @@ void func_020220c8(int a) {
     MIi_CpuCopy16(p + 2, (void *) 0x04000380, 0x40);
 }
 
-// Frees (once the pool is set up) and reallocates the texture cache's slots, nodes and block heap and empties them:
-// all slots unused, every node but the two list ends on the free chain, one free run over the whole heap of
-// 512-byte VRAM blocks, and the lookup counters zeroed. Also zeroes gSystemState.mUnk_2bc and mUnk_2b8, which
-// FindOrLoadTex raises by the bytes it queues.
+// Frees (once the pool is set up) and reallocates the texture cache's slots, nodes and block heap, and empties them:
+// all slots unused, every node but the two list ends on the free chain, one free run over the whole heap of 512-byte
+// VRAM blocks, lookup counters zeroed. Also zeroes gSystemState.mUnk_2bc and mUnk_2b8, which FindOrLoadTex raises by
+// the bytes it queues.
 void ResetTexCache(void) {
     int i;
     if (gSystemState.mFlags & POOL_FLAG) {
@@ -120,7 +120,7 @@ void ResetTexCache(void) {
     gGxState.mTexProbeCount = 0;
 }
 
-// The same for the palette cache (32-byte VRAM blocks, no lookup counters); zeroes gSystemState.mUnk_2c4 and
+// The same for the palette cache (32-byte VRAM blocks, no lookup counters). Zeroes gSystemState.mUnk_2c4 and
 // mUnk_2c0.
 void ResetPlttCache(void) {
     int i;
@@ -157,8 +157,8 @@ void ResetPlttCache(void) {
     gGxState.mPlttBlocks[gGxState.mPlttBlocks[0].mUnk_0 + 1].mPrev = 0;
 }
 
-// Undoes InitGxPool when it ran: clears POOL_FLAG, frees both caches' tables and the VRAM banks of uses 10 and 11,
-// sets the camera's mViewKind to VIEW_KIND_NONE and clears the bits InitGxPool set at 0x04000304 (not those at
+// Undoes InitGxPool, if it ran. Clears POOL_FLAG, frees both caches' tables and the VRAM banks of uses 10 and 11, sets
+// the camera's mViewKind to VIEW_KIND_NONE, and clears the bits InitGxPool set at 0x04000304 (not those at
 // 0x04000060).
 void ReleaseGxPool(void) {
     if (gSystemState.mFlags & POOL_FLAG) {

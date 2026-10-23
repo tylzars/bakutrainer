@@ -26,8 +26,8 @@
 #include <Main/Map/map_floor.h>
 #include <Main/Graphics/script_data.h>
 
-// gMapMenuLookAt is defined before gMapMenuCameraPos: the compiler's size sort then places gMapMenuCameraPos at the
-// lower address, as in the original.
+// Matching: gMapMenuLookAt is defined before gMapMenuCameraPos, so the compiler's size sort places gMapMenuCameraPos
+// at the lower address, as in the original.
 VecFx32 gMapMenuLookAt;
 VecFx32 gMapMenuCameraPos;
 s32 gRecapFrameIndex;

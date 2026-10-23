@@ -60,8 +60,8 @@ static const Prompt sPrompts[0x49] = {
 
 // Objects of this file: state menu, settings, sound control, prompt screen, main loop and model viewer state.
 // State of the state menu (game state 2): lists of entries by depth whose leaves push game states, beside the Save and
-// Load buttons. mDepth is the number of levels entered; mCardPage 1 shows the Card page instead, 0 the Save and Load
-// page (key bit 9 toggles it).
+// Load buttons. mDepth is the number of levels entered. mCardPage 1 shows the Card page instead, 0 the Save and Load
+// page; key bit 9 toggles it.
 typedef struct StateMenu {
     s32 mUnk_00;
     s32 mDepth;
@@ -176,8 +176,8 @@ const StateFunc gStateUpdateFuncs[STATE_COUNT] = {
 #define SE_COUNT 0x78
 
 // The play functions below keep each entry's gap counters (mCurrentGap, mCallsSincePlay) in the table itself. Every
-// entry has one non-zero id, no gap, no random gap and mUnk_05 0, so in this build the random pick always takes
-// mIds[0], every call plays (both counters stay 0) and PlayObjectSe never takes its PlayWaveKeepAlive path.
+// entry has one non-zero id, no gap, no random gap and mUnk_05 0. So in this build the random pick always takes
+// mIds[0], every call plays (both counters stay 0), and PlayObjectSe never takes its PlayWaveKeepAlive path.
 const SeEntry gSeEntries[SE_COUNT] = {
     {1, 0x64, 0x40, 0, {0, 0}, 0, 0, 0, 0, {0x167, 0, 0, 0, 0, 0}},
     {1, 0x64, 0x40, 0, {0, 0}, 0, 0, 0, 0, {0x2d, 0, 0, 0, 0, 0}},
@@ -542,8 +542,8 @@ void ClosePromptScreen(void) {
     }
 }
 
-// Draws the prompt screen: the backdrop tiles, the text and the two buttons. While mState is
-// PROMPT_SCREEN_STATE_IN_PLACE it also adds the two buttons to the frame's touch buttons.
+// Draws the prompt screen: the backdrop tiles, the text and the two buttons. In PROMPT_SCREEN_STATE_IN_PLACE the
+// buttons are also added to the frame's touch buttons.
 void DrawPromptScreen(void) {
     int i;
     int flag;
@@ -575,10 +575,10 @@ void DrawPromptScreen(void) {
                  GetText(38), data_0201a61c, 2, 0, 0, flag, 0, 0, 0);
 }
 
-// Runs the prompt screen: slides the buttons in, waits for a button, slides them out and restores the display; the
+// Runs the prompt screen: slides the buttons in, waits for a button, slides them out and restores the display. The
 // track volume fades down meanwhile and back up after. The second button also clears data_020b6ee0.mNodeState,
 // releases the microphone, runs RunSaveScreen(0) and requests state 1. Key bit 3 ends it without a button once both
-// screens' fade states are FADE_STATE_CLEAR (and the tracker's global fade is TRACKER_GLOBAL_FADE_NONE).
+// screens are FADE_STATE_CLEAR and the tracker's global fade is TRACKER_GLOBAL_FADE_NONE.
 void RunPromptScreen(void) {
     int result;
     int done = 0;
@@ -672,10 +672,10 @@ void RunPromptScreen(void) {
     }
 }
 
-// One frame of the save screen (RunSaveScreen): a 4 x 3 grid of sprites 64 pixels apart on layer 1 while
-// gSystemState.mImageIds[0] is 0xffff and on layer 2 while gPromptScreen.mSavedImageIds[1] is 0xffff, then entry
-// mSaveLastField + 10 + language * 10 of file SAVE_BLOCK_ID (a status message), centred at (128, 90) on layer 2 while
-// the LCDs are swapped, else layer 1.
+// One frame of the save screen (RunSaveScreen). Draws a 4 x 3 grid of sprites 64 pixels apart on layer 1 while
+// gSystemState.mImageIds[0] is 0xffff, and on layer 2 while gPromptScreen.mSavedImageIds[1] is 0xffff. Then draws a
+// status message, entry mSaveLastField + 10 + language * 10 of file SAVE_BLOCK_ID, centred at (128, 90): on layer 2
+// while the LCDs are swapped, else layer 1.
 void DrawSaveScreen(void) {
     int i;
     int layer;
@@ -1138,9 +1138,8 @@ void WriteSaveSlot(u32 slot) {
     FreeSaveRecord(&rec);
 }
 
-// Takes the language and mic settings from the first slot whose record holds them (mLanguageAndMic[0] == 1). When no
-// slot does, sets the defaults (ResetLanguageAndMic), calls gSystemState.mSaveCallback(6) and writes them to every
-// slot.
+// Takes the language and mic settings from the first slot whose record holds them (mLanguageAndMic[0] == 1). If no
+// slot does, sets the defaults, calls gSystemState.mSaveCallback(6) and writes them to every slot.
 void ReadLanguageAndMicOrWriteDefaults(void) {
     SaveRecord *buf = AllocSaveRecord();
     int i;
@@ -1194,9 +1193,8 @@ void StoreLanguageAndMic(SaveRecord *rec) {
 #define ENTRY_BLOCK 0x236
 #define ENTRY_STRIDE 0x25
 
-// The grade (data_020b10d4.mGrade, 0x6d bytes on from gStateMenu) is written through gStateMenu's address,
-// past that object's end: an out-of-bounds store is ordered after every earlier store, which gives the instruction
-// order here.
+// The grade (data_020b10d4.mGrade, 0x6d bytes past gStateMenu) is written through gStateMenu's address. The compiler
+// orders an out-of-bounds store after every earlier store, which gives the instruction order here.
 void SetupStateMenu(void) {
     ResetKeys();
     ResetVramBanks();
@@ -1212,11 +1210,11 @@ void SetupStateMenu(void) {
     gStateMenu.mCardPage = 0;
 }
 
-// Forms kept because the compiler's output needs them: in the search loops (pad bits 0x40 and 0x80) the depth is
-// read into the block-local idx through a pointer cast ahead of the step, so it is loaded again there; a plain
-// `gStateMenu.mDepth` reuses the value the loop condition loaded and the registers differ. The selection one level up
-// is read as `*(gStateMenuSelection + i - 1)` (and `+ gStateMenu.mDepth - 1`), which folds the -1 into the load
-// offset; indexing with `[i - 1]` subtracts first and adds an instruction.
+// Matching: in the search loops (pad bits 0x40 and 0x80) the depth is read into the block-local idx through a pointer
+// cast before the step, so it is loaded again there. A plain `gStateMenu.mDepth` reuses the value the loop condition
+// loaded, and the registers differ. The selection one level up is read as `*(gStateMenuSelection + i - 1)` (and
+// `+ gStateMenu.mDepth - 1`), which folds the -1 into the load offset; `[i - 1]` subtracts first and adds an
+// instruction.
 void UpdateStateMenu(void) {
     int start;
     int i;

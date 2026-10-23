@@ -38,9 +38,9 @@ typedef struct ColorQueueEntry {
 } ColorQueueEntry;
 
 // Nearest-palette lookup: CreateNearestColorTable uploads the 256 colours of file `id` to the palettes of the layers
-// in mask `layers` and returns a 0x8000-byte table indexed by a 15-bit colour (r + (g << 5) + (b << 10)) that holds
-// the nearest of those 256 entries. Only LoadImageData calls it, for a nonzero paletteFile; every LoadImageEx call
-// passes 0, so it never runs in this build.
+// in mask `layers`. It returns a 0x8000-byte table that maps a 15-bit colour (r + (g << 5) + (b << 10)) to the nearest
+// of those 256 entries. Only LoadImageData calls it, for a nonzero paletteFile. Every LoadImageEx call passes 0, so it
+// never runs in this build.
 u16 ColorDistanceSquared(u8 (*pal)[3], int c0, int c1, int c2, int index);
 void *CreateNearestColorTable(int id, int layers);
 

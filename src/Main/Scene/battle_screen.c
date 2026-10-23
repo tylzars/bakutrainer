@@ -31,8 +31,8 @@
 // Cursor step that confirms the stage choice in UpdateBattleStagePick (the other steps are -1, 0 and 1).
 #define SELECT_CONFIRM 0x55
 
-// Values of data_020b6ee0.mBattleState, the state UpdateBattleScreen switches on: the table of kind values (the first
-// state), the pick of one stage per side, the entry picks, and the compare of the two totals.
+// Values of data_020b6ee0.mBattleState, the state UpdateBattleScreen switches on. The first state is the table of kind
+// values.
 #define BATTLE_STATE_STAGE_PICK 0
 #define BATTLE_STATE_ENTRY_PICK 1
 #define BATTLE_STATE_COMPARE 10
@@ -41,9 +41,9 @@
 BattleView gBattleView;
 StageRec gBattleSlotStages[3];
 
-// Layout placeholders: no code reads these two tables and the link drops them. The compiler sorts this file's
-// constant data by size together with the local initialisers in the functions below; with these two taking part,
-// the initialisers land at the original's offsets.
+// Layout placeholders: no code reads these two tables and the link drops them.
+// Matching: the compiler sorts this file's constant data by size together with the local initialisers in the functions
+// below. With these two taking part, the initialisers land at the original's offsets.
 const u8 battle_unused0[8] = {0};
 const u8 battle_unused1[8] = {0};
 
@@ -73,7 +73,7 @@ void SetupStageModels(int a) {
 }
 
 // Draws data_020b6ee0's two models at mModelPos (mModel[1] only while it is set) and plays their sounds. When
-// mModel[0]'s mUnk_022 is not negative it starts gBattleView.mModel[1] with that value and clears it. It then runs
+// mModel[0]'s mUnk_022 is not negative, starts gBattleView.mModel[1] with that value and clears it. Then runs
 // UpdateBattleViewModel, which draws gBattleView.mModel[1] and ends it once its animation has ended.
 void DrawBattleModels(void) {
     int flags = 0;
@@ -243,7 +243,7 @@ int IsStageInfosOutClear(void) {
     return 0;
 }
 
-// Stores column kind + 3 of the battle's row of table 0x1e7 as each record's mKindValue, and restarts mKindValueLevel,
+// Stores column kind + 3 of the battle's row of table 0x1e7 as each record's mKindValue. Restarts mKindValueLevel,
 // with which the stage pick counts the new values into the shown numbers.
 void LoadKindValues(void) {
     int i;
@@ -381,9 +381,9 @@ void UpdateBattleViewModel(void) {
     }
 }
 
-// Estimate, for FindBestSide1Entry, of side's total minus the other side's after the table entry in row `row`; it
-// writes nothing. It differs from ApplyTableEntry: kinds 3 and 4 score a bonus while the other side's triple is
-// pending and fewer than 2 turns were taken, kind 12 scores no change, and kinds 15 and 16 ignore mTriplePending.
+// Estimate, for FindBestSide1Entry, of side's total minus the other side's after the table entry in row `row`. It
+// writes nothing. Unlike ApplyTableEntry, kinds 3 and 4 score a bonus while the other side's triple is pending and
+// fewer than 2 turns were taken, kind 12 scores no change, and kinds 15 and 16 ignore mTriplePending.
 int GetTableEntryTotalDiff(int side, int row) {
     StageInfo *mine = &gBattleView.mSide[side];
     StageInfo *other = &gBattleView.mSide[side ^ 1];
@@ -845,7 +845,7 @@ void UpdateBattleCompare(void) {
     }
 }
 
-// mode is the side: side 0 is done on key bit 1, side 1 once data_020b6ee0.mEntryFrames, which this counts up, passes
+// mode is the side. Side 0 is done on key bit 1; side 1 once data_020b6ee0.mEntryFrames, which this counts up, passes
 // 90. Either side is done when it skips (mSkipEntry) or on touch state 0x200000c8 (button 200).
 int IsEntryPickDone(StageInfo *info, int mode) {
     if (info->mSkipEntry == 1 || (mode == 0 && (gSystemState.mKeysPressed & 1)) ||
@@ -1234,8 +1234,8 @@ void UpdateBattleEntryPick(int side) {
     }
 }
 
-// One frame of the stage choice before a round: brings in both sides' three stage panels and their values, moves
-// the cursor (picked panel, keys, or ComparePickIndicesWithBestPair's choice after a delay) and starts the round once
+// One frame of the stage choice before a round. Brings in both sides' three stage panels and their values, and moves
+// the cursor (picked panel, keys, or ComparePickIndicesWithBestPair's choice after a delay). Starts the round once
 // both chosen stages are still in play and the choice is confirmed.
 void UpdateBattleStagePick(void) {
     u8 xs[6] = {118, 168, 218, 29, 79, 129};

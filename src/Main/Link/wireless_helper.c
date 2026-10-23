@@ -12,7 +12,7 @@
 #include <Main/Link/wireless_helper.h>
 #include <Main/Link/wireless_state.h>
 
-// Wireless helper. The link is started only by WhConnectAsParent and WhConnectAsChild, whose only callers
+// Wireless helper. The link is started only by WhConnectAsParent and WhConnectAsChild. Their only callers
 // (UpdateCommParent and ConnectCommAsChild) never run in this build, so none of the steps below runs either.
 
 // Names of the indication state codes, indexed by code.
@@ -47,8 +47,9 @@ const char *gWmStateCodeNames[27] = {
 };
 
 // The names the tables in wireless_state.c point at, defined in this order, and four layout placeholders
-// (wireless_unused0..3: nothing reads them and the link drops them). The compiler orders this file's data by size
-// together with the strings of gWmStateCodeNames; with these taking part, those strings come out in the game's order.
+// (wireless_unused0..3; nothing reads them and the link drops them).
+// Matching: the compiler orders this file's data by size together with the strings of gWmStateCodeNames. With these
+// taking part, those strings come out in the game's order.
 char gWhSysStateConnectFailName[] = "WH_SYSSTATE_CONNECT_FAIL";
 char gWhSysStateIdleName[] = "WH_SYSSTATE_IDLE";
 char gWmApiIdPortRecvName[] = "WM_APIID_PORT_RECV";
@@ -103,8 +104,8 @@ void WhSetError(int error) {
     }
 }
 
-// Enters WH_SYSSTATE_BUSY and hands the parent parameter block gWhParentParam to the wireless library (command 7,
-// with WhSetParentParamCallback as its callback); on a result other than 2 records the error and enters
+// Enters WH_SYSSTATE_BUSY and hands the parent parameter block gWhParentParam to the wireless library (command 7, with
+// WhSetParentParamCallback as its callback). On a result other than 2 it records the error and enters
 // WH_SYSSTATE_ERROR. Returns whether the command went out.
 BOOL WhSetParentParam(void) {
     int r;
@@ -119,9 +120,8 @@ BOOL WhSetParentParam(void) {
     return FALSE;
 }
 
-// Callback of WhSetParentParam: on an error records it and enters WH_SYSSTATE_ERROR; otherwise sets the parent's key
-// when mParentWepKeyFunc is set (never in this build), or else starts hosting (WhStartParent), entering
-// WH_SYSSTATE_ERROR when that step fails.
+// Callback of WhSetParentParam. On an error, records it and enters WH_SYSSTATE_ERROR. Otherwise sets the parent's key
+// when mParentWepKeyFunc is set, or else starts hosting (WhStartParent), entering WH_SYSSTATE_ERROR when that fails.
 void WhSetParentParamCallback(WirelessMsg *msg) {
     if (msg->mError != 0) {
         WhSetError(msg->mError);
@@ -139,8 +139,7 @@ void WhSetParentParamCallback(WirelessMsg *msg) {
     }
 }
 
-// Generates the parent's key through mParentWepKeyFunc and sets it. Never called in this build: the function pointer
-// is never set.
+// Generates the parent's key through mParentWepKeyFunc and sets it.
 BOOL WhSetParentWepKey(void) {
     int r;
 
@@ -386,16 +385,15 @@ void WhEndParentCallback(WirelessMsg *msg) {
     WhSetSysState(WH_SYSSTATE_IDLE);
 }
 
-// Layout placeholder: prints the two buffer sizes; nothing calls it and the link drops it. The compiler creates
-// the two strings where they are first used, and the game has them at this point of the file's string order, well
-// before their users WhConnectAsParent and WhConnectAsChild.
+// Layout placeholder: prints the two buffer sizes. Nothing calls it and the link drops it.
+// Matching: the compiler creates the two strings where they are first used, and the game has them at this point of
+// the file's string order, well before their users WhConnectAsParent and WhConnectAsChild.
 void func_unused_sizes(void) {
     gWirelessWork.mPrintFunc("recv buffer size = %d\n", gWirelessWork.mRecvBufferSize);
     gWirelessWork.mPrintFunc("send buffer size = %d\n", gWirelessWork.mSendBufferSize);
 }
 
-// Generates the child's key through mChildWepKeyFunc and sets it. Never called in this build: the function pointer
-// is never set.
+// Generates the child's key through mChildWepKeyFunc and sets it.
 BOOL WhSetChildWepKey(void) {
     int r;
 
@@ -675,8 +673,8 @@ BOOL WhStartShutDown(void) {
     return FALSE;
 }
 
-// Callback of WhStartShutDown. An error code is not recorded: the state is set to the error state first, in which
-// WhSetError does not store.
+// Callback of WhStartShutDown. An error code is not recorded: the state is set to the error state first, and in that
+// state WhSetError stores nothing.
 void WhShutDownCallback(WirelessMsg *msg) {
     if (msg->mError != 0) {
         WhSetSysState(WH_SYSSTATE_ERROR);
@@ -691,8 +689,8 @@ int WhGetSysState(void) {
 }
 
 // Sets up the host (b and c go into the parent parameter block) and starts the link in the given parent mode (the
-// even modes); returns whether it started, 0 for any other mode. Stops the system unless the link is idle; that
-// check is an expression rather than an `if` because the compiler's output needs it (it loads the 0 an `if` drops).
+// even modes). Returns whether it started; 0 for any other mode. Stops the system unless the link is idle.
+// Matching: that check is an expression, not an `if`; it loads the 0 that an `if` drops.
 int WhConnectAsParent(int mode, u16 b, u16 c) {
     (void) (gWirelessWork.mSysState == WH_SYSSTATE_IDLE || (OS_Terminate(), 0));
     gWirelessWork.mRecvBufferSize = 0x240;
@@ -726,8 +724,8 @@ int WhConnectAsParent(int mode, u16 b, u16 c) {
 }
 
 // Starts the link as a child in the given child mode (the odd modes), after copying the 0xc0 bytes at data into
-// gWhChildConnectData; returns whether it started, 0 for any other mode. Stops the system unless the link is idle (an
-// expression, as in WhConnectAsParent).
+// gWhChildConnectData. Returns whether it started; 0 for any other mode. Stops the system unless the link is idle
+// (an expression, as in WhConnectAsParent).
 int WhConnectAsChild(int mode, const void *data) {
     (void) (gWirelessWork.mSysState == WH_SYSSTATE_IDLE || (OS_Terminate(), 0));
     gWirelessWork.mRecvBufferSize = 0x480;
@@ -761,7 +759,7 @@ u8 *WhGetSharedData(u32 n) {
     return func_02047ac4(&gWhDataSharing, gWhDataSharingRecv, n);
 }
 
-// Runs one step of the data exchange, passing the data to send; returns whether this frame's exchange went through
+// Runs one step of the data exchange, passing the data to send. Returns whether this frame's exchange went through
 // (result 0 or 7), not whether the sharing is done. Other results are recorded with WhSetError.
 BOOL WhUpdateDataSharing(void *buf) {
     int r = func_02047264(&gWhDataSharing, buf, gWhDataSharingRecv);

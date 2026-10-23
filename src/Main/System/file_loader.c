@@ -46,8 +46,7 @@ void *FindOrLoadCachedFile(int id) {
     return FindOrLoadCacheEntry(id, id, GetFileOffset(id), GetStoredFileSize(id), &gFileCache);
 }
 
-// Sets a cache up: 1 << bits hash slots (all unused), `count` nodes chained in order from node 0 to the last one,
-// the load callback and the byte limit.
+// Nodes are chained in order from node 0 to the last one.
 void InitCache(FileCache *cache, FileCacheLoad load, u32 limit, u32 bits, u32 count) {
     int n = 1 << bits;
     FileCacheSlot *slots;
@@ -81,7 +80,6 @@ void InitCache(FileCache *cache, FileCacheLoad load, u32 limit, u32 bits, u32 co
     cache->mEntryLimit = count - 3;
 }
 
-// Moves node `index` to the front of the list, after the head node.
 void MoveCacheNodeToFront(FileCacheNode *nodes, u32 index) {
     FileCacheNode *e = &nodes[index];
 
@@ -93,7 +91,6 @@ void MoveCacheNodeToFront(FileCacheNode *nodes, u32 index) {
     nodes[e->mNext].mPrev = (u16) index;
 }
 
-// Moves node `index` in front of the last node of the list.
 void MoveCacheNodeBeforeLast(FileCacheNode *nodes, u32 index) {
     u32 tail = nodes[0].mPrev;
     FileCacheNode *e = &nodes[index];
@@ -106,10 +103,9 @@ void MoveCacheNodeBeforeLast(FileCacheNode *nodes, u32 index) {
     nodes[e->mPrev].mNext = (u16) index;
 }
 
-// Removes `key` from a cache's hash table and frees its data. The search starts at the key's low bits and steps by an
-// entry of gHashSteps (1, then odd primes) chosen by the next 7 bits; every slot passed on the way loses one from
-// its path count, and a slot that has no path left and was marked removed (-2) becomes free again (-1). The key's own
-// slot becomes free if no path goes through it, removed otherwise. Its node moves in front of the last node.
+// The search starts at the key's low bits and steps by gHashSteps[next 7 bits of the key]. Each slot passed loses
+// one path; a removed slot (-2) left with no path becomes free (-1). The key's own slot becomes free if no path goes
+// through it, removed otherwise. Its node moves in front of the last node.
 void RemoveCacheEntry(u32 key, FileCache *cache) {
     u32 n;
     u32 idx;
@@ -147,12 +143,11 @@ void RemoveCacheEntry(u32 key, FileCache *cache) {
     }
 }
 
-// Looks `key` up in the hash table. The search starts at the key's low bits and steps by an entry of gHashSteps
-// (1, then odd primes) chosen by the next 7 bits. A hit that was found past a removed slot moves into that slot (the
-// path counts of the slots passed in between drop by one), and its node moves to the front of the list. A miss takes
-// the first removed slot seen, or the free slot that ended the search, claims the least recently used node, raises
-// the path counts along the way and calls the cache's load callback with `id`, the node, `size` and `offset`; a miss
-// with id, offset and size all -1 only reports -1 and loads nothing.
+// The search is the one RemoveCacheEntry uses. A hit found past a removed slot moves into that slot, and the slots
+// in between lose one path. A hit's node moves to the front of the list.
+// A miss takes the first removed slot seen (else the free slot that ended the search) and the least recently used
+// node, adds one path to each slot passed, and calls the load callback. A miss with id, offset and size all -1
+// returns -1 and loads nothing.
 void *FindOrLoadCacheEntry(u32 key, u32 id, u32 offset, u32 size, FileCache *cache) {
     u32 bits = cache->mHashBits;
     FileCacheSlot *slots = cache->mSlots;
@@ -272,9 +267,9 @@ void ReadFileBytes(u32 file, void *dst, u32 size, u32 offset) {
 }
 
 // The first bytes are read to see the tag. "EZ10" data is unpacked in place: it is read to the end of a new buffer
-// that leaves room for the unpacked size (the buffer is at least as large as the margin word of the header asks for)
-// and then unpacked to the start of it. "EZ00" and "EZ01" data and "QRK" data are read into `dst` and unpacked into a
-// new buffer; `dst` is freed. Any other data stays in `dst`.
+// big enough for the unpacked size (and at least the margin word of the header) and unpacked to its start.
+// "EZ00", "EZ01" and "QRK" data are read into `dst`, unpacked into a new buffer, and `dst` is freed.
+// Any other data stays in `dst`.
 void *ReadAndUnpackFile(u32 file, void *dst, u32 size, u32 offset) {
     u32 hdr[FILE_HEADER_MAX];
     void *work;
@@ -352,8 +347,8 @@ u32 GetFileOffset(u32 index) {
     return ((FileEntry *) gSystemState.mFileTable)[index].mOffset;
 }
 
-// Sends a request packet (tag 0x50) until a reply arrives with tag 0x52, the expected sequence byte and the value 1;
-// the reply carries the table's size, the table is then read from the start of the file system.
+// Sends a request packet (tag 0x50) until a reply arrives with tag 0x52, the expected sequence byte and the value 1.
+// The reply carries the table's size; the table is then read from the start of the file system.
 void LoadFileTable(void) {
     u8 *reply = gCommRecords;
     u8 *cmd = gCommSendData;

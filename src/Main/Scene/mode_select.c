@@ -26,8 +26,8 @@ static const s32 sModeButtonIds[5] = {0x301, 0x300, 0x302, 0x304, 0x303};
 
 u32 gPrevTimeRemaining = 1800;
 
-// Selects mode 'mode' and stores its score threshold for the selected stage's grade (row grade - 1 of the mode's
-// table; 0 for a mode outside 0..4) and its best score.
+// Selects mode 'mode' and stores its best score and its score threshold for the selected stage's grade (row
+// grade - 1 of the mode's table; 0 for a mode outside 0..4).
 void SelectMode(int mode) {
     int stageIndex;
     u8 tableRow;
@@ -105,9 +105,11 @@ void DrawModeSelect(void) {
     DrawText(153, 181, data_0201a61c, GetText(30), 2, 200, 16, 1);
 }
 
-// Handles the screen's touch buttons, then draws it: 0x102 goes to game state 10, 0x300-0x304 select a mode, 0x101
-// enters the selected mode's game state (through its prompt while its best score is 0), and 0x320 shows the mode's
-// prompt with state 13 to follow, keeping the selected mode (gKeepSelectedMode).
+// Handles the screen's touch buttons, then draws it.
+//   0x102          goes to game state 10
+//   0x300-0x304    select a mode
+//   0x101          enters the selected mode's game state (through its prompt while its best score is 0)
+//   0x320          shows the mode's prompt with state 13 to follow, keeping the selected mode (gKeepSelectedMode)
 void UpdateModeSelect(void) {
     int idx;
     if (TestButton(0x20000000, 0x102)) {
@@ -165,8 +167,8 @@ void AddCappedAt5999(u32 *value, u32 add) {
     *value = *value < 5999 ? *value : 5999;
 }
 
-// Stores the new time value; plays the countdown sound when it falls below one of the thresholds and returns 1 while
-// the value is nonzero, at most 600 and the clock low bits are at most 8.
+// Stores the new time value and plays the countdown sound when it falls below one of the thresholds. Returns 1 while
+// the value is nonzero and at most 600, and the clock low bits are at most 8.
 int UpdateTimeRemaining(u32 value) {
     u32 prev = gPrevTimeRemaining;
     if ((prev >= 600 && value < 600) || (prev >= 300 && value < 300) || (prev >= 240 && value < 240) ||

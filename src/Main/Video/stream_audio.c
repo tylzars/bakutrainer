@@ -41,7 +41,7 @@ void StartVideoAudio(u32 a, u32 b) {
     SND_FlushCommand(1);
 }
 
-// The periodic alarm StartVideo sets: sets mUnk_40, which nothing reads.
+// The periodic alarm StartVideo sets.
 void VideoAlarmCallback(void *arg) {
     gVideoState.mUnk_40 = 1;
 }
@@ -187,11 +187,11 @@ void StopVideo(void) {
     gSystemState.mFlags &= ~0x20;
 }
 
-// Follows the lid while a movie plays. The test reads bit 15 of the shared key state at 0x027fffa8 (LID_CLOSED of
-// HW_SHARED_BUTTONS, written as literals here because those defines are local to system_init.c). With the lid closed
-// and mScreensOff 0 it switches the displays off (func_0203c994), clears bit 16 of 0x04001000 and sets mScreensOff
-// when func_020443ac(0) then returns 1; with the lid open and mScreensOff 1 it calls TurnScreensOn and then
-// func_0204028c(0x7f).
+// Follows the lid while a movie plays. The test reads bit 15 of the shared key state at 0x027fffa8: LID_CLOSED of
+// HW_SHARED_BUTTONS, written as literals here because those defines are local to system_init.c.
+// Lid closed and mScreensOff 0: switches the displays off (func_0203c994) and clears bit 16 of 0x04001000; sets
+// mScreensOff if func_020443ac(0) then returns 1.
+// Lid open and mScreensOff 1: calls TurnScreensOn, then func_0204028c(0x7f).
 void UpdateScreensForLid(void) {
     if (((s32) (*(vu16 *) 0x27fffa8 & 0x8000)) >> 15 == 1) {
         if (gVideoState.mScreensOff != 0) {
@@ -214,8 +214,8 @@ void UpdateScreensForLid(void) {
     }
 }
 
-// Only when mScreensOff is 1 and func_020443ac(1) returns 1: switches the displays on, sets bit 16 of 0x04001000
-// again and clears mScreensOff.
+// Only when mScreensOff is 1 and func_020443ac(1) returns 1: switches the displays on, sets bit 16 of 0x04001000 again
+// and clears mScreensOff.
 void TurnScreensOn(void) {
     if (gVideoState.mScreensOff != 1) {
         return;

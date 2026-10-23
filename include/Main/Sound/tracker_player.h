@@ -70,20 +70,23 @@ extern "C" {
 // Smallest period the slides leave on a channel.
 #define TRACKER_PERIOD_MIN 54
 
-// States of the global fade (TrackerPlayer.mGlobalFadeState), which lowers the global volume; a channel's fade-out
+// States of the global fade (TrackerPlayer.mGlobalFadeState), which lowers the global volume. A channel's fade-out
 // after a note-off is separate. In TO_PENDING and TO_RELEASE the timer interrupt lowers the global volume by 4 per
-// interrupt and the global-volume effects are ignored; at the end TO_PENDING becomes DONE (DONE is reached only from
-// TO_PENDING; the stored request plays on the next frame update) and TO_RELEASE releases the song. In any state but
-// NONE the frame update also releases the song when the interrupt has not run for more than 8 frames.
+// interrupt, and the global-volume effects are ignored. In any state but NONE the frame update also releases the song
+// when the interrupt has not run for more than 8 frames.
 #define TRACKER_GLOBAL_FADE_NONE 0
+// Becomes DONE at the end of the fade.
 #define TRACKER_GLOBAL_FADE_TO_PENDING 1
+// Releases the song at the end of the fade.
 #define TRACKER_GLOBAL_FADE_TO_RELEASE 2
+// Reached only from TO_PENDING; the stored request plays on the next frame update.
 #define TRACKER_GLOBAL_FADE_DONE 3
 
-// Timer flags of the tracker player (TrackerPlayer.mTimerFlags). TRACKER_TIMER_FINE: StartTrackerTimer starts timer 2
-// with count 654 and adds 0x147 per interrupt instead of 0xa3a and 0x51e (about a quarter of each).
-// TRACKER_TIMER_AUTO_FINE: each start sets TRACKER_TIMER_FINE unless the tick rate is 125.
+// Timer flags of the tracker player (TrackerPlayer.mTimerFlags).
+// StartTrackerTimer starts timer 2 with count 654 and adds 0x147 per interrupt, instead of 0xa3a and 0x51e (about a
+// quarter of each).
 #define TRACKER_TIMER_FINE 1
+// Each start sets TRACKER_TIMER_FINE unless the tick rate is 125.
 #define TRACKER_TIMER_AUTO_FINE 2
 
 // A pattern: its row count and its cells (five bytes per cell, one cell per channel and row).
@@ -193,7 +196,7 @@ typedef struct TrackerChannel {
 // The whole state of the module player.
 typedef struct TrackerPlayer {
     // Called with 0 when playback starts, 1 when it stops, 2 before the pending request plays, 3 before a global fade
-    // releases the song and 4 at an order jump back or the wrap at the song's end; never set in this build.
+    // releases the song, and 4 at an order jump back or the wrap at the song's end. Never set in this build.
     void (*mCallback)(int);
     void *mPatternBlock;
     void *mInstrumentBlock;
@@ -208,7 +211,7 @@ typedef struct TrackerPlayer {
     u32 mTickLength;
     u32 mTickTime;
     s32 mPlaying;
-    // When 1 the timer interrupt handler restarts the timer without advancing the song; only ever set to 0 in this
+    // When 1, the timer interrupt handler restarts the timer without advancing the song. Only ever set to 0 in this
     // build.
     s32 mPaused;
     u16 mSampleFileBase;
@@ -217,12 +220,11 @@ typedef struct TrackerPlayer {
     u16 mPendingSampleFileBase;
     u32 mPendingRestart;
     s16 mOrderIndex;
-    // Order index AdvanceOrder takes instead of the next one unless -1; only ever set to -1 in this build, so the jump
-    // never runs.
+    // Order index AdvanceOrder takes instead of the next one, unless -1. Only ever set to -1 in this build, so the
+    // jump never runs.
     s16 mJumpOrderIndex;
     u16 mPendingStartOrder;
-    // Stops the channels when AdvanceOrder takes mJumpOrderIndex; never written in this build (and the jump never
-    // runs).
+    // Stops the channels when AdvanceOrder takes mJumpOrderIndex. Never written in this build.
     u8 mStopOnJump;
     u8 mUnk_173f;
     s16 mLastRow;

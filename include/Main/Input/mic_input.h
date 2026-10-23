@@ -7,7 +7,6 @@
 extern "C" {
 #endif
 
-// Microphone capture and loudness analysis.
 #define MIC_FLAG_ACTIVE 0x800
 #define MIC_MAX_BANDS 8
 #define MIC_HISTORY 16

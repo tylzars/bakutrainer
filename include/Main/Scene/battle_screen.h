@@ -21,21 +21,21 @@ typedef struct BattleState {
     s8 mPickIndices[2];
     u8 mTotalFell[2];
     s8 mEntryCursor;
-    // ApplyTableEntry's done value: 0 for kind 2, for kind 5 while mSubtracted <= 0, for kind 15 while the other side's
-    // kind is not the table entry's column 5, and for kinds without a case; 1 otherwise. Cleared before each apply;
-    // nothing reads it.
+    // ApplyTableEntry's done value, cleared before each apply; nothing reads it. 0 for kind 2, for kind 5 while
+    // mSubtracted <= 0, for kind 15 while the other side's kind is not the table entry's column 5, and for kinds
+    // without a case; 1 otherwise.
     u8 mUnk_13;
-    // 0 or 1, toggled after each compare: while 0 the stage pick takes touch and keys (otherwise
-    // ComparePickIndicesWithBestPair decides), and the entry picks start with this side. The 2 set by
-    // SetupBattleScreen is replaced by 0 before the stage pick runs.
+    // 0 or 1, toggled after each compare. While 0 the stage pick takes touch and keys (otherwise
+    // ComparePickIndicesWithBestPair decides). The entry picks start with this side. The 2 set by SetupBattleScreen
+    // is replaced by 0 before the stage pick runs.
     u8 mFirstSide;
     // Turns taken, a skipped turn included; table entry kind 3 sets it to 4, which ends the picks.
     u8 mEntryPickCount;
     // Side whose record stayed in at the last compare. On a tie side 1 is kept; when both totals are 0 both records go
     // out but it is still 1.
     s8 mKeptSide;
-    // 60 while the side's pick is awaited; 59 after it, counted down while gBattleView.mModel[1] does not play
-    // (mId 0), and at 0 the next turn starts.
+    // 60 while the side's pick is awaited. 59 after it, then counted down while gBattleView.mModel[1] does not play
+    // (mId 0); at 0 the next turn starts.
     u8 mEntryTimer;
     // Frames since the side's total changed, counted up to 18 while the change sprite shows; 0xff parks it past that.
     u8 mChangeFrames[2];

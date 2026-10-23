@@ -36,9 +36,9 @@ static const Prompt sPrompts[0x49] = {
     {0x650, -1, 0, -1},     {0x658, -1, 0, -1}, {0x660, -1, 0, -1},
 };
 
-// Defined in reverse address order (see gSharedModel below). Each table has one entry, 0: the script's track command
-// uses gScriptTrackFileIds only when that entry is not 0, so never in this build, while the image and sound commands
-// index the other two with the script's value, which reads past the entry for any value above 0.
+// Defined in reverse address order (see gSharedModel below). Each table has one entry, 0. The script's track command
+// uses gScriptTrackFileIds only when that entry is not 0, so never in this build. The image and sound commands index
+// the other two with the script's value, which reads past the entry for any value above 0.
 const u16 gScriptTrackFileIds[1] = {0};
 const u16 gScriptImageIds[1] = {0};
 const u16 gScriptSoundIds[1] = {0};
@@ -64,9 +64,9 @@ const u16 gScriptSpriteIds[86] = {
 };
 
 // The one model that the prompt, battle and result screens and others play (SetupSharedModel), and SetupSharedModel's
-// loop: with 0 the model holds its last frame (mHoldAtEnd) and IsSharedModelDone reports mAnimEnded; with any other
-// value the model wraps to its start and IsSharedModelDone always returns 0. A start with the model's current index
-// does not clear the model, so after a start with loop 0 a start of the same index with a non-zero loop keeps
+// loop. With loop 0 the model holds its last frame (mHoldAtEnd), and IsSharedModelDone reports mAnimEnded. With any
+// other value the model wraps to its start, and IsSharedModelDone always returns 0. A start with the model's current
+// index does not clear the model: after a start with loop 0, a start of the same index with a non-zero loop keeps
 // mHoldAtEnd and still holds.
 typedef struct SharedModel {
     s32 mLoop;
@@ -79,8 +79,8 @@ const FontRange *gScriptFonts[8] = {
     (const FontRange *) data_0201a608, (const FontRange *) data_0201a608,
 };
 
-// Defined before gPromptSprite: with the font list above and the 2-byte tables defined in reverse, the compiler's
-// size sort then keeps those tables in address order.
+// Matching: defined before gPromptSprite. With the font list above and the 2-byte tables defined in reverse, the
+// compiler's size sort then keeps those tables in address order.
 SharedModel gSharedModel;
 PromptSprite gPromptSprite;
 LangMenu gLangMenu;
@@ -112,8 +112,8 @@ void SetupPrompt(void) {
     }
 }
 
-// Draw callback of the prompt's script text: while a sprite is chosen, eases its slide level, sets the text's y offset
-// (gScriptWork.mTextOffsetY) to the sprite's slide offset, draws the sprite and returns 0x7e; otherwise returns 0.
+// Draw callback of the prompt's script text. While a sprite is chosen: eases its slide level, sets the text's y offset
+// (gScriptWork.mTextOffsetY) to the sprite's slide offset, draws the sprite and returns 0x7e. Otherwise returns 0.
 int DrawPromptSprite(void) {
     PromptSprite *state = &gPromptSprite;
     if (gPromptSprite.mSpriteIndex != -1) {

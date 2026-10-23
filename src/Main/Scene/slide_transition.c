@@ -373,13 +373,13 @@ void RequestTitleState(int a, int b) {
     gTitleScreen.mSlideDirection = b;
 }
 
-// Copies of data_020b1084.mUnk_04 and mUnk_08 that state 6's buttons change (0x709 / 0x70a and 0x70b / 0x70c);
+// Copies of data_020b1084.mUnk_04 and mUnk_08 that state 6's buttons change (0x709 / 0x70a and 0x70b / 0x70c).
 // CloseMicEdit(1) writes them back when they differ.
 typedef struct MicEdit {
     u32 mUnk_00;
     u32 mUnk_04;
-    // Falling peak of state 6's mic value: raised to each larger value, drawn as sprite 0xe01 + mPeak while not 0 and
-    // lowered by one per frame; 0 while gSystemState.mUnk_492 is set.
+    // Falling peak of state 6's mic value: raised to each larger value, then lowered by one per frame. Drawn as sprite
+    // 0xe01 + mPeak while not 0. 0 while gSystemState.mUnk_492 is set.
     u32 mPeak;
 } MicEdit;
 
@@ -396,8 +396,8 @@ void OpenMicEdit(void) {
     StartMicSampling(0x82e, 0);
 }
 
-// With a = 1 (button 0x101) writes the copies back and saves when they changed; a = 0 (0x102) drops them. Starts the
-// title stream again.
+// With a = 1 (button 0x101) writes the copies back and saves when they changed; a = 0 (0x102) drops them. Then starts
+// the title stream again.
 void CloseMicEdit(int a) {
     ReleaseMic();
     if (a != 0) {
@@ -456,12 +456,14 @@ void SetupTitleScreen(void) {
     }
 }
 
-// Title state 4's language buttons, one in this build; that state is never reached (see mSelectedLanguage). Per
-// button the index into mSlideOffsets less 2 and the button sprite; the language sprite (only the first entry is
-// read); the button's x and y, the language sprite's x offset from it and a value nothing reads.
+// Title state 4's language buttons; one in this build. That state is never reached (see mSelectedLanguage).
+// Per button, the index into mSlideOffsets less 2.
 static const s16 sLanguageSlideIndices[1] = {0};
+// The language sprite; only the first entry is read.
 static const u32 sLanguageSpriteIds[1] = {0xdd1};
+// Per button, the button sprite.
 static const u32 sLanguageButtonSpriteIds[1] = {0xdce};
+// The button's x and y, the language sprite's x offset from it, and a value nothing reads.
 static const s16 sLanguageButtonPos[4] = {140, 70, -22, 0};
 
 typedef struct MicRange {
@@ -666,7 +668,7 @@ void UpdateTitleScreen(void) {
             DrawButtonEx((gTitleScreen.mSlideOffsets[2] >> 8) + 0x80, 0x70, 0, 0, 0x8c, 0x708, 0xdda, GetText(0xc9),
                          data_0201a61c, 2, 0, 0x167, flag, 0, 0, 0);
             DrawButton(0, (gTitleScreen.mSlideOffsets[4] >> 8) + 0xa1, 0x102, 0xe, 0, 0, 0x5a, flag);
-            // Never true in this build: no button 0x702 is added, so title state 4 is not reached.
+            // Never true in this build (see mSelectedLanguage).
             if (TestButton(0x20000000, 0x702)) {
                 gTitleScreen.mSelectedLanguage = data_020b1084.mLanguage;
                 RequestTitleState(4, -1);

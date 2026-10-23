@@ -9,12 +9,13 @@
 extern "C" {
 #endif
 
-// One 16-byte record of the stage data file's position chunk: the key, flags (GetMapEntryAngle reads that byte as an
-// angle, << 8), group and a position kept as three 32-bit values split into halfwords.
+// One 16-byte record of the stage data file's position chunk.
 typedef struct MapEntry {
     u16 mKey;
+    // Flags. GetMapEntryAngle reads this byte as an angle (<< 8).
     u8 mUnk_02;
     u8 mGroup;
+    // The position: three 32-bit values split into halfwords.
     u16 mX[2];
     u16 mY[2];
     u16 mZ[2];
@@ -22,27 +23,30 @@ typedef struct MapEntry {
 
 #define MAP_RECORDS 20
 
-// One object of a stage's object list (chunk entries of 4 + 2 * n bytes): the index of its entry in chunk 0x5513, a
-// model file byte (with the camera's mUnk_00 added, the id of the model the placed object shows), the number n of
-// halfwords and the halfwords.
+// One object of a stage's object list (4 + 2 * n bytes).
 typedef struct MapObjDef {
+    // Its entry in chunk 0x5513.
     u16 mEntryIndex;
+    // Plus the camera's mUnk_00: the id of the model the placed object shows.
     u8 mModelFile;
+    // n, the number of halfwords that follow.
     u8 mUnk_03;
     u16 mUnk_04[1];
 } MapObjDef;
 
-// The state of one placed object (0x190 bytes): its definition, its Model at 4, its position and angle. The Model
-// (0x178 bytes) runs to 0x17c, so mUnk_150 (the id of its animation 0, Model.mUnk_14c.mId), mUnk_152 (that
-// animation's mPlayFrames), mUnk_174 (its mId, the model file) and the bits at 0x176 (Model.mUnk_172) are fields of
-// that Model reached through the record.
+// The state of one placed object (0x190 bytes). Its Model (0x178 bytes) starts at 4 and runs to 0x17c, so the
+// members from mUnk_150 to the bits at 0x176 are fields of that Model reached through the record.
 typedef struct MapRecord {
     MapObjDef *mDef;
     u8 mModel[0x150 - 4];
+    // Model.mUnk_14c.mId: the id of its animation 0.
     u16 mUnk_150;
+    // That animation's mPlayFrames.
     u16 mUnk_152;
     u8 mUnk_154[0x174 - 0x154];
+    // The Model's mId: the model file.
     u16 mUnk_174;
+    // Model.mUnk_172.
     u16 mUnk_176_0 : 4;
     u16 mUnk_176_4 : 1;
     u16 mUnk_176_5 : 2;
@@ -69,21 +73,22 @@ typedef struct MapPair {
     u16 mUnk_2;
 } MapPair;
 
-// One cell of the grid (mCells in MapState, 4 bytes per cell; the grid of the area of chunk 0x5530 that holds the
-// point func_02032d50 starts from, fewer than 10000 cells): a direction to the target and, in mUnk_3, how the cell was
-// reached (0 = not visited).
+// One cell (4 bytes) of the grid at MapState.mCells. The grid covers the area of chunk 0x5530 that holds the point
+// func_02032d50 starts from, and has fewer than 10000 cells.
 typedef struct MapCell {
+    // A direction to the target.
     s8 mUnk_0;
     s8 mUnk_1;
     s8 mUnk_2;
+    // How the cell was reached; 0 = not visited.
     u8 mUnk_3;
 } MapCell;
 
-// An entry of the table at MapState.mMarkers, added by func_02032d50 (an area cell that names an object) and by
-// func_0203315c (a visible cell block): the model file DrawMap draws (mMarkerFileBase - 1 + key) and its position.
-// Bit 15 of mModelFile is set when func_02032368 added a MAP_LOD code to the key; DrawMap masks it off for the draw
-// and compares the whole value in its mMarkerFilter test.
+// An entry of the table at MapState.mMarkers. func_02032d50 adds one for an area cell that names an object,
+// func_0203315c for a visible cell block.
 typedef struct MapMarker {
+    // The model file DrawMap draws: mMarkerFileBase - 1 + key. Bit 15 is set when func_02032368 added a MAP_LOD code
+    // to the key; DrawMap masks it off for the draw, but compares the whole value in its mMarkerFilter test.
     u16 mModelFile;
     u16 mUnk_02;
     s32 mX;
@@ -137,13 +142,13 @@ typedef struct Unk_020c5f04 {
     VecFx32 mUnk_234;
 } Unk_020c5f04;
 
-// Values of mViewKind (Unk_020c6144): the view that was set up last; code that needs a view sets it up again when
-// another one is current. VIEW_KIND_CAMERA is SetupCameraView's perspective view from the camera (0 is also the
-// field's start value). The two others are orthographic set-ups: VIEW_KIND_ORTHO_SPRITE over the 0x100 x 0xc0 sprite
-// space (SetupOrthoSpriteView, for DrawSpritePolygons) and VIEW_KIND_ORTHO_MODEL over that space shifted left by 6
-// (SetupOrthoModelView, for models drawn in modes 4 and above).
+// Values of mViewKind (Unk_020c6144), the view set up last. Code that needs a view sets it up again when another one
+// is current.
+// SetupCameraView's perspective view from the camera. 0 is also the field's start value.
 #define VIEW_KIND_CAMERA 0
+// SetupOrthoModelView's orthographic view of the sprite space shifted left by 6, for models drawn in modes 4 and up.
 #define VIEW_KIND_ORTHO_MODEL 1
+// SetupOrthoSpriteView's orthographic view of the 0x100 x 0xc0 sprite space, for DrawSpritePolygons.
 #define VIEW_KIND_ORTHO_SPRITE 2
 // Set by ReleaseGxPool: none of the three is current, so the next set-up of any of them runs.
 #define VIEW_KIND_NONE 0xff
@@ -182,7 +187,7 @@ typedef struct Unk_020c6144 {
     u8 mUnk_48[2];
     // The view set up last (VIEW_KIND_*).
     u8 mViewKind;
-    // The polygon alpha and id the sprite polygon code last wrote to the polygon attribute register; DrawSpritePolygons
+    // The polygon alpha and id the sprite polygon code last wrote to the polygon attribute register. DrawSpritePolygons
     // writes the register again (with mPolygonId) only when its alpha differs from mPolygonAlpha.
     u8 mPolygonAlpha;
     u8 mPolygonId;
@@ -195,7 +200,7 @@ typedef struct Unk_020c6144 {
     u8 mUnk_58[0x5a - 0x58];
     u8 mUnk_5a;
     // The lights that are on, one bit per light number. No writer keeps earlier bits (SetLight0 stores 1,
-    // ClearLightMask 0, SetLight clears it before setting bit `num`), so in this build it holds 0 or a single bit.
+    // ClearLightMask 0, SetLight clears it before setting bit `num`), so it holds 0 or a single bit.
     u8 mLightMask;
     u8 mUnk_5c;
     u8 mUnk_5d[3];
@@ -203,16 +208,15 @@ typedef struct Unk_020c6144 {
     const u16 *mUnk_64;
 } Unk_020c6144;
 
-// The camera (0x344 bytes at 0x2024 of the map object gMapState): positions, targets, angles and flags, the
-// block at 0x9c and the view settings at 0x2dc. The ARM camera and model code reaches its bytes through the map
-// object + 0x2000 (0x2310 and 0x234a) and its halfwords through the map object + 0x2300 (0x2314..0x2318 and
+// The camera (0x344 bytes at 0x2024 of the map object gMapState). The ARM camera and model code reaches its bytes
+// through gMapState + 0x2000 (0x2310 and 0x234a), and its halfwords through gMapState + 0x2300 (0x2314..0x2318 and
 // 0x2340..0x2356).
 typedef struct CameraState {
     u16 mUnk_00;
     u16 mUnk_02;
     void (*mUnk_04)();
-    // DrawMap's table of object lists to place (Alloc(0x80): 32 pointers, freed after use); func_0203315c adds the
-    // list of each visible cell block with no bound check on the 32 slots.
+    // DrawMap's table of object lists to place: 32 pointers, allocated for the call and freed after use.
+    // func_0203315c adds the list of each visible cell block with no bound check on the 32 slots.
     u8 **mObjLists;
     u8 mObjListCount;
     u8 mUnk_0d[3];
@@ -233,7 +237,7 @@ typedef struct CameraState {
     u16 *mMapData;
     u16 *mUnk_4c;
     u16 mMapFile;
-    // A model DrawMap draws at the camera position when not 0 (SetupMap's b); every SetupMap call in this build
+    // A model DrawMap draws at the camera position when not 0 (SetupMap's b). Every SetupMap call in this build
     // passes 0.
     u16 mCameraModelFile;
     u16 mCellCountX;
@@ -260,13 +264,12 @@ typedef struct CameraState {
     Unk_020c6144 mUnk_2dc;
 } CameraState;
 
-// The map object (0x2368 bytes of .bss, up to gScriptWork): two bit sets, indexed by cell number (mUnk_24) and by
-// position in a rectangle (mUnk_28), the squared distance limits, the sorted pair table with its search step, the
-// buffers the map code allocates, the view matrices (0x6c computed from 0x3c, with its translation at 0x90, and the
-// projection at 0x9c), the placed objects and, right after the 20 records, the camera. Every file reaches the
-// camera as a part of this object: the compiler then counts each camera access as lying past the declared end
-// (pool anchor offset plus member offset exceeds the object's size), which keeps those loads and stores in the
-// original order against other stores.
+// The map object (0x2368 bytes of .bss, up to gScriptWork). mUnk_24 and mUnk_28 are bit sets, indexed by cell number
+// and by position in a rectangle. It also holds the squared distance limits and the pair table's search step.
+// mUnk_6c is computed from mViewMtx and has its translation at 0x90; mUnk_9c is the projection.
+// Matching: every file reaches the camera as part of this object. The compiler then counts each camera access as
+// lying past the declared end (pool anchor offset plus member offset exceeds the object's size), which keeps those
+// loads and stores in the original order against other stores.
 typedef struct MapState {
     s32 mUnk_00;
     u32 mUnk_04[3];
@@ -286,7 +289,7 @@ typedef struct MapState {
     MapCell *mCells;
     u16 mUnk_34;
     u16 mMarkerCount;
-    // With bit 15 set, DrawMap draws only the markers whose file is the low bits + mMarkerFileBase; only 0 is stored
+    // With bit 15 set, DrawMap draws only the markers whose file is the low bits + mMarkerFileBase. Only 0 is stored
     // in this build.
     u16 mMarkerFilter;
     u8 mUnk_3a[2];
@@ -299,29 +302,25 @@ typedef struct MapState {
     CameraState mCamera;
 } MapState;
 
-// Chunk keys of the stage data file (GetMapChunk): the cell table, the offsets of the cell block records and the
-// records (MapCellRec), the entries (MapEntry), the polygons (MapPoly) and their vertex index lists, the areas
-// (MapArea) and the ring quadtree (MapRingLeaf). Chunk 0x5514 (stage_camera.c) and the floor chunks (map_floor.h)
+// Chunk keys of the stage data file (GetMapChunk). Chunk 0x5514 (stage_camera.c) and the floor chunks (map_floor.h)
 // are read elsewhere.
-#define MAP_CHUNK_CELLS 0x5510
-#define MAP_CHUNK_CELL_REC_OFFSETS 0x5511
-#define MAP_CHUNK_CELL_RECS 0x5512
-#define MAP_CHUNK_ENTRIES 0x5513
-#define MAP_CHUNK_POLYS 0x5516
-#define MAP_CHUNK_POLY_VERTS 0x5517
-#define MAP_CHUNK_AREAS 0x5530
-#define MAP_CHUNK_RINGS 0x5540
+#define MAP_CHUNK_CELLS 0x5510            // the cell table
+#define MAP_CHUNK_CELL_REC_OFFSETS 0x5511 // offsets of the cell block records
+#define MAP_CHUNK_CELL_RECS 0x5512        // the cell block records (MapCellRec)
+#define MAP_CHUNK_ENTRIES 0x5513          // MapEntry
+#define MAP_CHUNK_POLYS 0x5516            // MapPoly
+#define MAP_CHUNK_POLY_VERTS 0x5517       // the polygons' vertex index lists
+#define MAP_CHUNK_AREAS 0x5530            // MapArea
+#define MAP_CHUNK_RINGS 0x5540            // the ring quadtree (MapRingLeaf)
 
 // The chunk of the stage data file whose key is id; 0 when the file has no such chunk.
 u16 *GetMapChunk(u32 id);
 
-// FindNearestRingSegment's result: MAP_RING_HIT when a segment was found (the low bits hold its ring << 8 |
-// segment), with MAP_RING_SEVERAL (more than one segment in range), MAP_RING_AT_END (a nearest point was a segment
-// end) and MAP_RING_TIE (another segment was as near as the nearest).
-#define MAP_RING_HIT 0x80000000
-#define MAP_RING_SEVERAL 0x40000000
-#define MAP_RING_AT_END 0x20000000
-#define MAP_RING_TIE 0x10000000
+// FindNearestRingSegment's result. With MAP_RING_HIT the low bits hold the segment's ring << 8 | segment.
+#define MAP_RING_HIT 0x80000000     // a segment was found
+#define MAP_RING_SEVERAL 0x40000000 // more than one segment in range
+#define MAP_RING_AT_END 0x20000000  // a nearest point was a segment end
+#define MAP_RING_TIE 0x10000000     // another segment was as near as the nearest
 
 u32 FindNearestRingSegment(VecFx32 *pos, int radius, int top, int bottom, u16 any, u16 none);
 void *GetFirstLinkedRing(void *p);
@@ -338,8 +337,8 @@ MapEntry *GetMapEntry(u32 a, u8 *count);
 int IsPosInMapPoly(int a, int b, VecFx32 *pos);
 
 // Defined further on in this file.
-// The cell table of chunk 0x5510: per map cell the number of its cell block record (low 15 bits, 0 = none) and a
-// flag in bit 15. Terminates when the chunk is missing.
+// The cell table of chunk 0x5510: per map cell, the number of its cell block record (low 15 bits, 0 = none) and a
+// flag in bit 15. Stops the program when the chunk is missing.
 u16 *GetMapCellChunk(void);
 // The vertex index list of one polygon of chunk 0x5516; *count receives its vertex count, or 0 when the walk passes
 // group a. NULL with *count unwritten when no polygon matches.
@@ -353,8 +352,7 @@ void AllocMapPairs(u16 count);
 u32 GetCameraRectDistSq(int x, int z, int w, int h);
 // Classifies how far the rectangle is from the camera: the low bits of flags plus a limit class.
 u32 func_02032368(u32 flags, int x, int z, int w, int h);
-// Maps key through the sorted pair table (sorting it first when needed); key itself when it has no entry. The table
-// is never filled in this build, so it always returns key.
+// Maps key through the sorted pair table (sorting it first when needed); key itself when it has no entry.
 u32 func_0203249c(u32 key);
 void SetupMap(u16 a, u16 b, u16 c, u16 d, u16 e, u16 f);
 void func_020325d0(u16 a, u16 b, u16 c, u16 count);

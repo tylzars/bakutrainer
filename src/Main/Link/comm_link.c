@@ -20,9 +20,9 @@
 
 Unk_020c6adc data_020c6adc;
 
-// The file link over the wireless helper. It does not run in this build: its per-frame steps (UpdateCommChild here,
+// The file link over the wireless helper. It does not run in this build. Its per-frame steps (UpdateCommChild here,
 // UpdateCommParent in arm_system.c) are called only while gSystemState.mFlags has 0x200 or 0x400 set, and nothing
-// sets either flag; the error state that HaltOnCommError waits for is entered only under 0x200 as well.
+// sets either flag. The error state that HaltOnCommError waits for is entered only under 0x200 as well.
 
 // The link keeps COMM_SLOTS received records of COMM_RECORD_SIZE bytes, indexed by slot.
 #define COMM_SLOTS 16
@@ -38,12 +38,12 @@ Unk_020c6adc data_020c6adc;
 #define COMM_CHUNK 0x1f7
 // Bit 9 of data_020c9e04: a packet is out.
 #define COMM_BUSY 0x200
-// Bit 23 of gSystemState.mUnk_2c8. Where the code tests it, the result goes nowhere (the test survives but whatever
-// it guarded does not): written below as a conditional expression whose value is unused.
+// Bit 23 of gSystemState.mUnk_2c8. Where the code tests it, the test survives but whatever it guarded does not, so it
+// is written as a conditional expression whose value is unused.
 #define COMM_TRACE 0x800000
 
-// A received record: the kind of message, then the message (a request carries a file number at 4; a range
-// message carries its start at 6 and its length at 2, both unaligned).
+// A received record: the kind of message, then the message. A request carries a file number at 4; a range message
+// carries its start at 6 and its length at 2, both unaligned.
 typedef struct Unk_CommRecord {
     u16 mUnk_0;
     u16 mUnk_2;
@@ -53,9 +53,9 @@ typedef struct Unk_CommRecord {
 
 #pragma thumb off
 
-// With the link in WH_SYSSTATE_DATASHARING and this frame's exchange gone through, reads each of the 16 slots: a slot
-// that holds data has its record stored in gCommRecords and its flag set (gCommRecordReceived, and a bit in the mask at
-// gSystemState.mLinkSlotMask); then CountUnchangedSlotMask follows the mask.
+// With the link in WH_SYSSTATE_DATASHARING and this frame's exchange gone through, reads each of the 16 slots. A slot
+// that holds data has its record stored in gCommRecords and its flags set (gCommRecordReceived, and its bit in
+// gSystemState.mLinkSlotMask). Then CountUnchangedSlotMask follows the mask.
 void ExchangeCommRecords(void) {
     u16 i;
 
@@ -94,10 +94,9 @@ void ClearCommSendData(void) {
     memset(gCommSendData, 0, 0xfe);
 }
 
-// Link error handler (the callback in gSystemState.mCommErrorFunc, run only by HaltOnCommError, so never in this
-// build): with 0 it tears down the display, the track and the waves; otherwise it opens the text screen and prints a
-// message that the wireless communication failed, in the owner's language (2 French, 3 German, 4 Italian, 5 Spanish,
-// English otherwise).
+// Link error handler: the callback in gSystemState.mCommErrorFunc, run only by HaltOnCommError. With 0 it tears down
+// the display, the track and the waves. Otherwise it opens the text screen and prints a message that the wireless
+// communication failed, in the owner's language (2 French, 3 German, 4 Italian, 5 Spanish, English otherwise).
 void ShowCommError(int a) {
     OSOwnerInfo info;
 
@@ -142,8 +141,7 @@ void ShowCommError(int a) {
     }
 }
 
-// When the error state (-2) is set: runs the handler with 0, then runs it with 1 and the frame update forever. In this
-// build the error state is never set, so it returns at once.
+// When the error state (-2) is set: runs the handler with 0, then runs it with 1 and the frame update forever.
 void HaltOnCommError(void) {
     if (gSystemState.mUnk_2a4[1] != -2) {
         return;
@@ -207,11 +205,11 @@ void WriteU32Bytes(u32 value, u8 *dst) {
     }
 }
 
-// Sends file data to the peer. For each queued transfer whose state byte is COMM_PENDING and no packet is out, it
-// reads up to COMM_CHUNK bytes at the transfer's position and sends them behind a COMM_PENDING tag and the position;
-// when the send is accepted the position advances, and the transfer ends when nothing is left. For each received
-// record it answers a request (COMM_REQUEST) with a reply carrying two values of the file table and the table's
-// size, and queues a range message (COMM_RANGE) unless it overlaps another queued transfer.
+// Sends file data to the peer. For each queued transfer whose state byte is COMM_PENDING, while no packet is out, it
+// reads up to COMM_CHUNK bytes at the transfer's position and sends them behind a COMM_PENDING tag and the position.
+// When the send is accepted the position advances; the transfer ends when nothing is left.
+// For each received record it answers a request (COMM_REQUEST) with a reply carrying two values of the file table and
+// the table's size, and queues a range message (COMM_RANGE) unless it overlaps another queued transfer.
 void ServeCommFiles(void) {
     u8 order[4];
     u32 i;
@@ -313,7 +311,7 @@ void ServeCommFiles(void) {
     }
 }
 
-// 1 when the file access goes through the link: bit 9 of the system flags is set and either data is still to be
+// 1 when the file access goes through the link: bit 9 of the system flags is set, and either data is still to be
 // received or the send buffer's high nibble is 5. In this build the flag is never set, so it returns 0.
 int IsCommReading(void) {
     if (gSystemState.mFlags & 0x200) {

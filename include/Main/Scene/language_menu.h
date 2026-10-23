@@ -9,9 +9,9 @@ extern "C" {
 #define LANG_MENU_MAX 256
 #define LANG_TEXT_SIZE 0x20
 
-// One row of the list: a non-empty string of table 0x246 before "LAST" (its text, and its index in the table, which
-// UpdateLangMenu passes to StartPromptAtLine) and mIndex, its list position minus 1, which becomes the prompt number
-// (flow value 0x14) when the row is chosen.
+// One row of the list: a non-empty string of table 0x246 before "LAST". It holds the text, its index in the table
+// (UpdateLangMenu passes it to StartPromptAtLine), and mIndex, its list position minus 1, which becomes the prompt
+// number (flow value 0x14) when the row is chosen.
 typedef struct LangEntry {
     char mText[LANG_TEXT_SIZE];
     s32 mLineId;
@@ -25,7 +25,7 @@ typedef struct LangMenu {
     u32 mSelected;
 } LangMenu;
 
-// The prompt's sprite: its index in gPromptSpriteDefs (-1: none; script event 6 sets it) and its slide level, which
+// The prompt's sprite: its index in gPromptSpriteDefs (-1: none; script event 6 sets it), and its slide level, which
 // DrawPromptSprite eases to full.
 typedef struct PromptSprite {
     s32 mSpriteIndex;

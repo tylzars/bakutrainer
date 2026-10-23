@@ -12,13 +12,13 @@ typedef struct StageInfo {
     // columns grade + 4 and grade + 5 of the stage's row of table 0xfd6.
     s16 mValue;
     s16 mKindValue;
-    // Subtracted by GetBattleTotal. Table entry kind 5 negates it, so that it then adds; the compare takes the same
+    // Subtracted by GetBattleTotal. Table entry kind 5 negates it, so that it then adds. The compare takes the same
     // amount off both sides through it.
     s16 mSubtracted;
     s16 mAdded;
     s16 mOthersHalfSum;
-    // The side's battle total before the last table entry applied by either side (stored after ApplyTableEntry);
-    // read by table entry kind 2.
+    // The side's battle total before the last table entry applied by either side (stored after ApplyTableEntry). Read
+    // by table entry kind 2.
     s16 mPrevBattleTotal;
     u8 mKind;
     u8 mGrade;
@@ -26,19 +26,19 @@ typedef struct StageInfo {
     u8 mStageId;
     // Set to 0 by LoadStageInfo; nothing reads it.
     u8 mUnk_14;
-    // Set by table entry kind 12; kinds 13-16 triple their amount and clear it (kind 15 only when it applies).
+    // Set by table entry kind 12. Kinds 13-16 then triple their amount and clear it (kind 15 only when it applies).
     // GetTableEntryTotalDiff's estimate triples only for kinds 13 and 14.
     u8 mTriplePending;
-    // Skips the side's next entry pick: set by table entry kind 4 for the other side, by key bit 2, by button 201 and
-    // when FindBestSide1Entry finds none; cleared after the side's turn.
+    // Skips the side's next entry pick. Set by table entry kind 4 for the other side, by key bit 2, by button 201, and
+    // when FindBestSide1Entry finds none. Cleared after the side's turn.
     u8 mSkipEntry;
-    // Screen position (mBattleY: y) of the stage's sprite on the battle screen; the sprite's moves start or end there.
+    // Screen position of the stage's sprite on the battle screen; the sprite's moves start or end there.
     u8 mBattleX;
     u8 mBattleY;
     u8 mOthersHalfSumAdded;
-    // A random value 0..3 (func_02014ccc; func_02014cdc picks a different one). The panel compares it with
-    // data_020b6ee0.mUnk_a13d while the stage's mUnk_22e is 1. In panel states 2 and 5 the selected stage is drawn
-    // with sprite mUnk_1a + 0x42 (DrawStageSprite) while data_020b6ee0.mUnk_a148 is 0.
+    // A random value 0..3 (func_02014ccc; func_02014cdc picks a different one). While the stage's mUnk_22e is 1, the
+    // panel compares it with data_020b6ee0.mUnk_a13d. In panel states 2 and 5, while data_020b6ee0.mUnk_a148 is 0,
+    // the selected stage is drawn with sprite mUnk_1a + 0x42 (DrawStageSprite).
     u8 mUnk_1a;
     // Index in gStages; set only on the battle copies (gBattleSlotStages), -1 in gStageInfos.
     s8 mStageIndex;
@@ -59,7 +59,7 @@ typedef struct StageRec {
     u8 mUnk_144[0x158 - 0x144];
     // The stage's position (mPos, or the draw position with the animation offset added), copied into the camera's
     // mLookAtGoal by SetStageCameraFar / SetStageCameraNear. It is Model.mNodePos, which UpdateAndDrawModel leaves
-    // alone here: a stage's node index stays 0xff.
+    // alone here, as a stage's node index stays 0xff.
     VecFx32 mLookAtPos;
     u8 mUnk_164[0x170 - 0x164];
     u16 mModelId;
@@ -80,19 +80,19 @@ typedef struct StageRec {
         };
     };
     s32 mStoredOffsetX;
-    // 0 when mStoredOffsetX/Z hold an offset from map entry 0 (StoreStageOffsets, the save reader), -1 when they hold
+    // 0 when mStoredOffsetX/Z hold an offset from map entry 0 (StoreStageOffsets, the save reader). -1 when they hold
     // none (InitStage); state 10's set-up then starts the stage at entry 0 with mDistancePerFrame 0x6000.
     s32 mNoStoredOffset;
     s32 mStoredOffsetZ;
     s32 mScreenX;
     s32 mScreenY;
     StageOffset mSpriteOffsets[3];
-    // mPos at the last func_02016008 call that met no map object (type-0x14 objects do not count); meeting a type-0xf
+    // mPos at the last func_02016008 call that met no map object (type-0x14 objects do not count). Meeting a type-0xf
     // object puts the stage back there.
     VecFx32 mPrevPos;
-    // Vertical speed, used with both signs: the panel's bounce (UpdatePanel) adds it to mPos.y and lowers it by 2000 a
-    // frame, while UpdateStageMotion subtracts it while the stage is above the ground and raises it by 5120 a frame, up
-    // to 51200.
+    // Vertical speed, used with both signs. The panel's bounce (UpdatePanel) adds it to mPos.y and lowers it by 2000 a
+    // frame. UpdateStageMotion subtracts it while the stage is above the ground and raises it by 5120 a frame, up to
+    // 51200.
     float mPosYPerFrame;
     s32 mDistancePerFrame;
     // Angle of the camera around the stage (SetStageCameraFar / SetStageCameraNear); only ever 0 in this build.
@@ -104,8 +104,8 @@ typedef struct StageRec {
     u8 mUnk_22c;
     u8 mInSlot;
     u8 mUnk_22e;
-    // 1 when any part of the stage is in view (IsBoxInView, set every frame of state 10); the selected stage is
-    // still projected and drawn while it is 0, but DrawStageSprite draws nothing for it.
+    // 1 when any part of the stage is in view (IsBoxInView, set every frame of state 10). The selected stage is still
+    // projected and drawn while it is 0, but DrawStageSprite draws nothing for it.
     u8 mVisible;
 } StageRec;
 

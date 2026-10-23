@@ -13,14 +13,13 @@
 #include <Main/System/file_loader.h>
 #include <Main/clib.h>
 
-// The stage data file starts with MAP_FILE_MAGIC and MAP_FILE_VERSION, followed by chunks of 16 * n bytes whose
-// first halfword is the chunk key (high byte MAP_CHUNK_TAG) and second halfword n; the first chunk follows a
-// 16-byte header.
+// The stage data file starts with MAP_FILE_MAGIC and MAP_FILE_VERSION. The first chunk follows a 16-byte header.
+// A chunk is 16 * n bytes: its first halfword is the chunk key (high byte MAP_CHUNK_TAG), its second halfword n.
 #define MAP_FILE_MAGIC 0x4d4d
 #define MAP_FILE_VERSION 0x3730
 #define MAP_CHUNK_TAG 0x55
 
-// func_02032368: the top two bits of the flags select how many limits apply; the result is the low ten bits plus
+// func_02032368: the top two bits of the flags select how many limits apply. The result is the low ten bits plus
 // the class of the farthest limit the rectangle lies beyond.
 #define MAP_LOD_MASK 0xc000
 #define MAP_LOD_SHIFT 14
@@ -32,7 +31,8 @@
 
 #define MAP_VIEWPORT_FULL 0xbfff0000
 
-// ReadMapRings: the count bits and the top-height flag of a ring's format byte; the most rings and points it unpacks.
+// ReadMapRings: the count bits and the top-height flag of a ring's format byte, and the most rings and points it
+// unpacks.
 #define MAP_RING_POINTS 0x1f
 #define MAP_RING_TOP 0x20
 #define MAP_RING_MAX 0x80
@@ -62,16 +62,16 @@ typedef struct MapPoint {
     int z;
 } MapPoint;
 
-// One polygon of chunk 0x5516: where its run starts in the vertex index list of chunk 0x5517 (whose values are
-// MapEntry indices), its group and key.
+// One polygon of chunk 0x5516. mFirstVertIndex is where its run starts in the vertex index list of chunk 0x5517,
+// whose values are MapEntry indices.
 typedef struct MapPoly {
     u16 mFirstVertIndex;
     u8 mGroup;
     u8 mKey;
 } MapPoly;
 
-// A leaf of the quadtree of chunk 0x5540 (an inner node holds the offsets of its four children instead, and its
-// first halfword is never 0): mUnk_02 set means the cell has no rings. The rings follow the leaf.
+// A leaf of the quadtree of chunk 0x5540; the rings follow it. mUnk_02 set means the cell has no rings. An inner node
+// holds the offsets of its four children instead, and its first halfword is never 0.
 typedef struct MapRingLeaf {
     u16 mUnk_00;
     u8 mUnk_02;
@@ -81,8 +81,8 @@ typedef struct MapRingLeaf {
     s16 mBaseY;
 } MapRingLeaf;
 
-// One area of chunk 0x5530: mCells holds w * h halfwords, one per cell (the low ten bits name an object, the top four
-// bits tell which neighbours are connected).
+// One area of chunk 0x5530. mCells holds w * h halfwords, one per cell: the low ten bits name an object, the top four
+// bits tell which neighbours are connected.
 typedef struct MapArea {
     u8 mCellCountX;
     u8 mCellCountZ;
@@ -98,12 +98,16 @@ static MapEntry *GetMapEntries(void);
 
 #pragma thumb off
 
-// Finds the quadtree leaf of chunk 0x5540 under pos and unpacks its rings: for each ring its address goes to rings,
-// its key to keys and its point count to counts (followed by a 0), and its points to out, scaled down by shift. A
-// ring is a halfword key, a byte holding the point count (MAP_RING_POINTS) and the point format, a byte, the offset
-// of the next ring of the same group (see GetFirstLinkedRing) and the points: x and z offsets from the leaf's corner
-// (bytes, or halfwords at the next even address with bit 7 set), with bit 6 a bottom height above the leaf's base
-// height and with MAP_RING_TOP a top height above the bottom.
+// Finds the quadtree leaf of chunk 0x5540 under pos and unpacks its rings. For each ring: its address goes to rings,
+// its key to keys, its point count to counts (followed by a 0), and its points to out, scaled down by shift.
+// A ring is:
+//   - a halfword key;
+//   - a byte with the point count (MAP_RING_POINTS) and the point format;
+//   - a byte;
+//   - the offset of the next ring of the same group (see GetFirstLinkedRing);
+//   - the points: x and z offsets from the leaf's corner (bytes, or with format bit 7 halfwords at the next even
+//     address); with format bit 6 a bottom height above the leaf's base height; with MAP_RING_TOP a top height above
+//     the bottom.
 static void ReadMapRings(VecFx32 *pos, MapRingPoint *out, u8 *counts, u16 *keys, u16 **rings, int shift) {
     int total;
     int n;
@@ -256,13 +260,12 @@ static void ReadMapRings(VecFx32 *pos, MapRingPoint *out, u8 *counts, u16 *keys,
     }
 }
 
-// Collects the ring segments of the quadtree leaf under pos whose key has a bit of any and none of none, and keeps
-// those whose nearest point to pos lies within half of radius (squared distances, in units of 512) and, when the
-// segment has a top height, whose height range overlaps pos.y + bottom .. pos.y + top. The camera records the
-// nearest one: its ring, its two ends, the nearest point, the squared distance and the ring's key. Returns 0 when
-// nothing was found, else the MAP_RING_* result.
-// atEnd and the block-local end are u8 and atEnd is set after best because the compiler's output needs it: as int,
-// end adds a mask when it is or-ed into atEnd, and an int atEnd or an earlier init reorders the stack stores.
+// Collects the ring segments of the quadtree leaf under pos whose key has a bit of any and none of none. Keeps those
+// whose nearest point to pos lies within half of radius (squared distances, in units of 512) and, if the segment has
+// a top height, whose height range overlaps pos.y + bottom .. pos.y + top. The camera records the nearest one.
+// Returns 0 when nothing was found, else the MAP_RING_* result.
+// Matching: atEnd and the block-local end are u8, and atEnd is set after best. An int end adds a mask when it is
+// or-ed into atEnd; an int atEnd or an earlier init reorders the stack stores.
 u32 FindNearestRingSegment(VecFx32 *pos, int radius, int top, int bottom, u16 any, u16 none) {
     MapRingPoint pts[MAP_RING_MAX_POINTS];
     u8 counts[MAP_RING_MAX];
@@ -526,8 +529,8 @@ int func_02031dc4(s32 x, s32 z) {
 }
 
 // Returns the data of the chunk with key id, or 0 when the file has none. Loads the file when mMapData is 0 or does
-// not start with MAP_FILE_MAGIC (then also refreshing the cell record offsets in mUnk_2dc.mUnk_50), and clears the
-// 20 records when the data pointer differs from the one seen last (mUnk_4c).
+// not start with MAP_FILE_MAGIC, and then also refreshes the cell record offsets in mUnk_2dc.mUnk_50. Clears the 20
+// records when the data pointer differs from the one seen last (mUnk_4c).
 #pragma thumb off
 u16 *GetMapChunk(u32 id) {
     u16 *p = gMapState.mCamera.mMapData;
@@ -688,10 +691,8 @@ static MapEntry *GetMapEntries(void) {
     return chunk->mEntries;
 }
 
-// The vertex index list of the polygon of chunk 0x5516 with group a and key b (-1 matches any); *count receives its
-// vertex count, or 0 when the walk passes group a. When no polygon matches (or the chunk is missing) it returns NULL
-// and leaves *count unwritten. A match also stores its group and key in mCamera.mUnk_3c and mUnk_3d, which nothing
-// reads.
+// The polygon with group a and key b (-1 matches any). A missing chunk also gives NULL. A match also stores its group
+// and key in mCamera.mUnk_3c and mUnk_3d, which nothing reads.
 u16 *FindMapPolyVerts(int a, int b, u32 *count) {
     MapPoly *p = (MapPoly *) GetMapChunk(MAP_CHUNK_POLYS);
     u16 n;
@@ -739,7 +740,7 @@ u32 FindMapPolys(int a, int b, u16 *out, u32 max) {
 }
 
 // Replaces the pair table with an empty one of count entries (when count is not 0) and marks it sorted, so
-// func_0203249c skips the sort. Nothing in this build adds pairs to it.
+// func_0203249c skips the sort.
 void AllocMapPairs(u16 count) {
     if (count != 0) {
         if (gMapState.mPairs != NULL) {
@@ -793,8 +794,9 @@ u32 GetCameraRectDistSq(int x, int z, int w, int h) {
     return LengthSquared2d((x - cx) / 512, (z - gMapState.mCamera.mPos.z) / 512);
 }
 
-// Classifies the rectangle's distance from the camera against the squared limits (rebuilt when the camera's value at
-// 0x344 changed): the low ten bits of flags plus a class, or just the low bits when the rectangle is inside.
+// Classifies the rectangle's distance from the camera against the squared limits, which are rebuilt when the camera's
+// value at 0x344 changed. Returns the low ten bits of flags plus a class, or just the low bits when the rectangle is
+// inside.
 u32 func_02032368(u32 flags, int x, int z, int w, int h) {
     if (flags & MAP_LOD_MASK) {
         u32 d;
@@ -853,8 +855,6 @@ u32 func_02032368(u32 flags, int x, int z, int w, int h) {
     return flags;
 }
 
-// Maps key through the sorted pair table (sorting it on first use); key itself when it has no entry. In this build
-// mPairCount is never raised, so the search does not run and key is returned.
 u32 func_0203249c(u32 key) {
     if (gMapState.mUnk_21 == 0 && gMapState.mPairCount != 0) {
         if (gMapState.mUnk_20 == 0) {
@@ -1009,7 +1009,6 @@ void func_020325d0(u16 a, u16 b, u16 c, u16 count) {
     gSystemState.mFlags &= ~0x10000;
 }
 
-// Frees the map buffers and clears the records.
 void ReleaseMap(void) {
     gMapState.mPairCount = 0;
     ClearMapRecords(1);
@@ -1020,7 +1019,6 @@ void ReleaseMap(void) {
     Free(&gMapState.mCells);
 }
 
-// The cell table of chunk 0x5510; terminates when the chunk is missing.
 u16 *GetMapCellChunk(void) {
     u16 *cells = GetMapChunk(MAP_CHUNK_CELLS);
 
@@ -1030,10 +1028,10 @@ u16 *GetMapCellChunk(void) {
     return cells;
 }
 
-// Runs the actions of the object's definition: each halfword (kind in the top bit, a 6-bit action and a 6-bit
-// animation) may call the camera's callback and picks the animation to show; starts it when it changed. DrawMap
-// zeroes the camera's action mask mUnk_44 before it runs the lists, so in this build only halfwords with action 0x3f
-// pick an animation.
+// Runs the actions of the object's definition. Each halfword (kind in the top bit, a 6-bit action and a 6-bit
+// animation) may call the camera's callback and picks the animation to show; the animation starts when it changed.
+// DrawMap zeroes the camera's action mask mUnk_44 before it runs the lists, so in this build only halfwords with
+// action 0x3f pick an animation.
 void func_020328b0(MapRecord *rec) {
     u16 anim = 0x3f;
     int kind = 0;
@@ -1157,7 +1155,6 @@ void func_020329d0(u8 *objs) {
     }
 }
 
-// Clears the 20 records (and the camera's halfwords mUnk_00 and mUnk_02 when a == 1).
 void ClearMapRecords(int a) {
     int i;
 
@@ -1251,7 +1248,8 @@ int func_02032bb8(int x0, int z0, int w, int x1, int z1) {
 static const s8 sMapDirs[5] = {-1, 0, 1, 0, -1};
 
 // Walks the cells of the area of chunk 0x5530 that holds the grid cell of (px, pz), outward from that cell. Each cell
-// the box test finds inside the view is listed with its position; the grid of func_02032bb8 records how it was reached.
+// the box test finds inside the view is listed with its position. The grid of func_02032bb8 records how it was
+// reached.
 void func_02032d50(u32 px, u32 pz) {
     u8 *area;
     int x0;
@@ -1415,9 +1413,9 @@ void func_02032d50(u32 px, u32 pz) {
     }
 }
 
-// One record of chunk 0x5512 (the offsets of the records are in the table at Unk_020c6144.mUnk_50): the key, the
-// size of the cell block in cells, its position as three 32-bit values split into halfwords and the number of cells
-// it lists; the list of cell numbers follows the 0x14-byte header at halfword 0x14.
+// One record of chunk 0x5512; the table at Unk_020c6144.mUnk_50 holds the records' offsets. The 0x14-byte header
+// holds the key, the size of the cell block in cells, its position (three 32-bit values split into halfwords) and the
+// number of cells it lists. The list of cell numbers follows at halfword 0x14.
 typedef struct MapCellRec {
     u16 mUnk_00;
     u8 mCellCountX;
@@ -1431,9 +1429,9 @@ typedef struct MapCellRec {
     u8 mUnk_13;
 } MapCellRec;
 
-// Collects the cell blocks of chunk 0x5512 that the camera sees, starting from the cell under (x, z): each block
-// within the view distance is box-tested, kept in the table at MapState.mMarkers (with its class) when visible and its
-// listed cells that are not marked yet are marked in the first bit set and queued for the same treatment.
+// Collects the cell blocks of chunk 0x5512 that the camera sees, starting from the cell under (x, z). Each block
+// within the view distance is box-tested. A visible block goes into the table at MapState.mMarkers (with its class),
+// and its listed cells that are not marked yet are marked in the first bit set and queued for the same test.
 void func_0203315c(int x, int z) {
     u32 mask = 0x7fff;
     int n;
@@ -1595,7 +1593,6 @@ void EaseCameraToGoals(void) {
     SetupCameraView();
 }
 
-// The camera's field of view angle.
 u16 func_020334ec(void) {
     return gMapState.mCamera.mUnk_2dc.mUnk_14;
 }
@@ -1615,10 +1612,10 @@ void func_020334f8(int a) {
     gMapState.mCamera.mUnk_2dc.mViewDistance = saved;
 }
 
-// Sets up the projection (from the field of view angle and the far distance) and the view matrix from the camera
-// position and target, once a map is loaded, and keeps the view matrix's rotation and the negated translation
-// derived from it. It first resets the geometry engine and, when the position equals the look-at point, raises
-// mPos.y by 0xc800.
+// Once a map is loaded: sets up the projection (from the field of view angle and the far distance) and the view
+// matrix from the camera position and target. Keeps the view matrix's rotation and the negated translation derived
+// from it. It first resets the geometry engine and, when the position equals the look-at point, raises mPos.y by
+// 0xc800.
 void SetupCameraView(void) {
     int a = func_020334ec();
 
@@ -1734,9 +1731,9 @@ void DrawMap(s32 x, s32 z) {
     func_020334f8(0);
 }
 
-// Moves the look-at point: with the divisor mUnk_4e set, 1 / mUnk_4e of the way to the blend point mUnk_9c.mUnk_228;
-// otherwise towards pos in mUnk_0d steps from the point where pos last moved far (squared distance beyond mUnk_30
-// squared) away.
+// Moves the look-at point. With the divisor mUnk_4e set: 1 / mUnk_4e of the way to the blend point mUnk_9c.mUnk_228.
+// Otherwise towards pos in mUnk_0d steps, from where it was when pos last moved far away (squared distance beyond
+// mUnk_30 squared).
 void func_0203393c(VecFx32 *pos) {
     VecFx32 *from;
     VecFx32 *cur;
@@ -1954,13 +1951,22 @@ void AdvanceCameraTrack(CameraTrack *t, s32 *whole, s32 *next, s32 *rest) {
 }
 #pragma thumb on
 
-// Moves the camera (position mode mPosMode, look-at mode mLookAtMode), then sets up the view. Position modes: 0 orbits
-// target mPosTarget at distance mUnk_28 and height mUnk_2c, turned by its angle; 1 and 2 blend towards mUnk_204; 3
-// plays track mUnk_1bc; 4 follows the target; 10 plays track mUnk_1ec and 11 the camera's own model, both giving a
-// position and a look-at point. Look-at modes: 5 the position of target mLookAtTarget and 6 its model point, raised by
-// mUnk_24; 7 and 8 blend towards mUnk_228; 9 plays track mUnk_1d4; 10 and 11 take the point mode 10 or 11 gave (jumping
-// there when flag 3 or 4 of track mUnk_1ec is set, else moving an eighth of the way). While the top bit of
-// gSystemState.mFlags is set only the tracks' timestamps follow the frame counter.
+// Moves the camera by mPosMode and mLookAtMode, then sets up the view.
+// Position modes:
+//   0      orbits target mPosTarget at distance mUnk_28 and height mUnk_2c, turned by its angle
+//   1, 2   blend towards mUnk_204
+//   3      plays track mUnk_1bc
+//   4      follows the target
+//   10     plays track mUnk_1ec, giving a position and a look-at point
+//   11     plays the camera's own model, giving a position and a look-at point
+// Look-at modes:
+//   5      the position of target mLookAtTarget, raised by mUnk_24
+//   6      its model point, raised by mUnk_24
+//   7, 8   blend towards mUnk_228
+//   9      plays track mUnk_1d4
+//   10, 11 the point position mode 10 or 11 gave: jumps there when flag 3 or 4 of track mUnk_1ec is set, else moves
+//          an eighth of the way
+// While the top bit of gSystemState.mFlags is set, only the tracks' timestamps follow the frame counter.
 #pragma thumb off
 void UpdateCamera(void) {
     VecFx32 eye;
@@ -2117,14 +2123,13 @@ void UpdateCamera(void) {
     SetupCameraView();
 }
 
-// Sets the fog with the default density table.
 void SetFog(int a, int b, int c) {
     SetFogEx(a, b, c, NULL);
 }
 
-// Turns the fog off when a and b are both 0. Otherwise it switches it on with the shift and offset worked out from
-// a and b, sets the fog colour to c (opaque) and the clear colour to c, and loads the density table: the given one,
-// else the camera's pending one (which it then forgets), else a ramp.
+// Turns the fog off when a and b are both 0. Otherwise switches it on with a shift and offset worked out from a and
+// b, sets the fog colour (opaque) and the clear colour to c, and loads the density table: the given one, else the
+// camera's pending one (which it then forgets), else a ramp.
 void SetFogEx(int a, int b, int c, const u16 *table) {
     u32 lim;
     u32 t;
@@ -2161,8 +2166,8 @@ void SetFogEx(int a, int b, int c, const u16 *table) {
     }
 }
 
-// Light 0: colour (r, g, b, 5 bits each) and a direction that has only the component -z (in 1/8 units, 10 bits),
-// under the identity matrix; marks light 0 as on in the camera object.
+// Light 0: colour (r, g, b, 5 bits each) and a direction with only a -z component (in 1/8 units, 10 bits), under the
+// identity matrix. Marks light 0 as on in the camera object.
 void SetLight0(int r, int g, int b, int z) {
     u32 color = (u16) (r | g << 5 | b << 10);
     s16 neg = -z;

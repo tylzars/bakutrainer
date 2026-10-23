@@ -40,7 +40,7 @@ typedef struct ThreeInRow {
     // Deepest depth FindBestMove recurses to; always 4 in this build.
     u8 mSearchDepth;
     // Low 4 bits: the board cell (x + y * 4) of the move. 0x40: waiting for the next move, until the computer's search
-    // or a touch replaces the whole value with the chosen cell; 0x80: the mark for that cell has started.
+    // or a touch replaces the whole value with the chosen cell. 0x80: the mark for that cell has started.
     u8 mMoveCell;
     u8 mMoveTimer;
     u8 mEmptyCount;

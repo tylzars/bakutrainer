@@ -36,8 +36,8 @@ extern "C" {
 #define WM_STATECODE_DISCONNECTED_FROM_MYSELF 26
 
 // Connect modes: the mode of WhConnectAsParent (parent modes) and WhConnectAsChild (child modes), kept as the wireless
-// work's connect mode. The key-sharing and data-sharing modes start that sharing when the MP exchange starts. Only the
-// two data-sharing modes are passed in this build (by UpdateCommParent and ConnectCommAsChild, which never run).
+// work's connect mode. The key-sharing and data-sharing modes start that sharing when the MP exchange starts. Only
+// the two data-sharing modes are passed in this build, by UpdateCommParent and ConnectCommAsChild, which never run.
 #define WH_CONNECT_MODE_PARENT 0
 #define WH_CONNECT_MODE_CHILD 1
 #define WH_CONNECT_MODE_PARENT_KEYSHARING 2
@@ -60,13 +60,13 @@ typedef struct WirelessMsg {
 // State of the wireless link (0x60 bytes).
 typedef struct WirelessWork {
     u16 mUnk_00;
-    // Bit per aid: bit 0 (this unit, aid 0) is set when hosting starts, a child's bit is set when it connects and
+    // Bit per aid. Bit 0 (this unit, aid 0) is set when hosting starts. A child's bit is set when it connects and
     // cleared when it disconnects. Nothing reads it in this build.
     u16 mAidBits;
     u16 mAid;
     u8 mUnk_06[0x16];
-    // Fills the key block (first argument) for the parent / the child (second argument is the parent parameter
-    // block / the child connect data) and returns the key mode. Neither this nor mChildWepKeyFunc is set in this build.
+    // Fills the key block (first argument) for the parent / the child and returns the key mode. The second argument is
+    // the parent parameter block / the child connect data. Neither this nor mChildWepKeyFunc is set in this build.
     u32 (*mParentWepKeyFunc)(void *key, void *param);
     u32 mSendBufferSize;
     // Last error code recorded by WhSetError; nothing reads it in this build.
@@ -101,11 +101,11 @@ extern char gWhSysStateMeasureChannelName[];
 extern char gWhSysStateConnectFailName[];
 extern char gWhSysStateErrorName[];
 
-// Key block mParentWepKeyFunc / mChildWepKeyFunc fill for WhSetParentWepKey / WhSetChildWepKey; neither runs in
-// this build (the key functions are never set).
+// Key block mParentWepKeyFunc / mChildWepKeyFunc fill for WhSetParentWepKey / WhSetChildWepKey.
 extern u8 gWhWepKey[0x30];
-// The parent parameter block, the child connect data (flushed from the data cache by range; the game code passes it
-// on without reading it) and the data-sharing block handed to the wireless library are 32-byte aligned.
+// The parent parameter block, the child connect data and the data-sharing block handed to the wireless library are
+// 32-byte aligned. The child connect data is flushed from the data cache by range; the game code passes it on
+// without reading it.
 extern WMParentParam gWhParentParam __attribute__((aligned(32)));
 extern u16 gWhChildConnectData[0x60] __attribute__((aligned(32)));
 extern u16 gWhDataSharingRecv[0x100];

@@ -10,11 +10,12 @@
 ; UnpackEz10, RemapPaletteRows, func_02028980, func_02028b8c, func_02028d48 and func_02028df4. Most of them save and
 ; restore every register they use, the argument registers included.
 ; The bytes of the packed samples and of the font are read from the ROM at build time.
-; Each routine's "Not compiled" lines say why the compiler cannot have produced it. "Save rule": in a compiled
-; ARM function the stmfd/ldmfd register list holds the callee-saved registers the function writes, r3 as a
-; stack pad, the frame pointer and lr; r0-r3 and r12 appear only in functions with the compiler's special entry
-; flag (the one that also makes it return with ldm ^), which then also save every register they write. Compiled
-; functions each start their own 4-byte-aligned section with their own literal pool.
+; Each routine's "Not compiled" lines say why the compiler cannot have produced it. They rest on two facts about
+; compiled code:
+;   - "Save rule": a compiled ARM function's stmfd/ldmfd list holds the callee-saved registers it writes, r3 as a
+;     stack pad, the frame pointer and lr. r0-r3 and r12 appear only with the compiler's special entry flag (the
+;     one that also makes it return with ldm ^), and such a function saves every register it writes.
+;   - Each compiled function starts its own 4-byte-aligned section with its own literal pool.
 
 	.extern data_020c1818
 	.extern data_020c1820
@@ -397,7 +398,7 @@ LeadingZeroCount:
 	.size LeadingZeroCount, .-LeadingZeroCount
 
 ; func_02028258: stores the instruction at .Lpatch_add ("add r0, r0, #1") over the instruction right after
-; the store, then runs that slot: returns 0 if the instruction already fetched ran, 1 if the stored one did.
+; the store, then runs that slot. Returns 0 if the instruction already fetched ran, 1 if the stored one did.
 ; Uses r1.
 ; Not compiled: stores into its own code, over the instruction right after the store (str r1, [pc, #-4]).
 	.global func_02028258
@@ -432,8 +433,8 @@ data_0202829c:
 
 ; GetEzUnpackedSize: returns the unpacked size of the packed block at r0, or 0 if it has none of the three
 ; tags. Uses r2; keeps r1.
-; Not compiled: its pool words (the three tags) are loaded pc-relative by UnpackEz, so both share one
-; section; also saves only r1 (save rule) while writing r0 and r2.
+; Not compiled: UnpackEz loads its pool words (the three tags) pc-relative, so both share one section. It
+; also saves only r1 (save rule) while writing r0 and r2.
 	.global GetEzUnpackedSize
 	.type GetEzUnpackedSize, @function
 GetEzUnpackedSize:
@@ -464,8 +465,8 @@ GetEzUnpackedSize:
 	.size GetEzUnpackedSize, .-GetEzUnpackedSize
 
 ; UnpackEz: unpacks the packed block at r0 to r1 by its tag: "EZ00" here, "EZ01" in func_02028578
-; (a branch; it returns for this routine), "EZ10" in the body of UnpackEz10. Returns 0 for an unknown
-; tag, the end of the byte area for "EZ00". Keeps r1-r12.
+; (reached by a branch; it returns for this routine), "EZ10" in the body of UnpackEz10. Returns 0 for an
+; unknown tag, and the end of the byte area for "EZ00". Keeps r1-r12.
 ; "EZ00": +8 offset of the byte area from +16, +12 number of sections (byte), +16 a stream of 16-bit words
 ; read from bit 0 up (func_02028558), then the bytes. The stream starts with 2 unused bits. Each section
 ; holds three code tables (func_02028480; literal run lengths, match distances, match lengths), a 16-bit
@@ -473,9 +474,9 @@ GetEzUnpackedSize:
 ; length of bytes from the byte area; a match copies length + 2 bytes from distance + 1 bytes back.
 ; Bit reader (here and in func_02028408, func_02028480, func_02028558): r10 = bit buffer, r9 = number of
 ; valid bits - 16, r12 = current input halfword, r6 = all ones.
-; Not compiled: loads GetEzUnpackedSize's pool words pc-relative (backwards); branches (not calls) into
-; func_02028578 and into UnpackEz10 after its two stmfd instructions; passes the bit reader to
-; func_02028408, func_02028480 and func_02028558 in r6, r9, r10, r12 and the table pointer in r8.
+; Not compiled: loads GetEzUnpackedSize's pool words pc-relative (backwards). Branches (does not call) into
+; func_02028578, and into UnpackEz10 after its two stmfd instructions. Passes the bit reader to
+; func_02028408, func_02028480 and func_02028558 in r6, r9, r10, r12, and the table pointer in r8.
 	.global UnpackEz
 	.type UnpackEz, @function
 UnpackEz:
@@ -560,11 +561,11 @@ UnpackEz:
 	.size UnpackEz, .-UnpackEz
 
 ; func_02028408: reads one value with the code table at r8 (built by func_02028480). Finds the entry whose
-; code matches the next bits, takes the code's bits, then for symbol 0 or 1 returns it; for symbol s >= 2
-; reads s - 1 more bits x and returns (1 << (s - 1)) | x. Takes the bit reader of UnpackEz; uses
-; r1, r2 and r8.
-; Not compiled: takes its inputs in r8 (table) and r6, r9, r10, r12 (bit reader) and returns r8, r9, r10
-; and r12 updated; no C caller sets or reads callee-saved registers as arguments or results.
+; code matches the next bits and takes those bits. Symbol 0 or 1 is returned as it is; for symbol s >= 2 it
+; reads s - 1 more bits x and returns (1 << (s - 1)) | x. Takes the bit reader of UnpackEz; uses r1, r2
+; and r8.
+; Not compiled: takes its inputs in r8 (table) and r6, r9, r10, r12 (bit reader), and returns r8, r9, r10
+; and r12 updated. No C caller passes or receives values in callee-saved registers.
 	.global func_02028408
 	.type func_02028408, @function
 func_02028408:
@@ -611,7 +612,7 @@ func_02028408:
 ; (by length, then by symbol) and stored bit-reversed, since the stream is read from bit 0. Entry k:
 ; +4k mask (halfword), +4k+2 code, +4k+64 symbol (byte), +4k+65 length. Takes the bit reader of
 ; UnpackEz; advances r8, uses r0-r4.
-; Not compiled: takes r8 and the bit reader in r6, r9, r10, r12 as inputs; moves sp inside its loops
+; Not compiled: takes r8 and the bit reader in r6, r9, r10, r12 as inputs. Moves sp inside its loops
 ; (stmfd/ldmfd) and reaches its locals relative to the moved sp ([sp, #20]).
 	.global func_02028480
 	.type func_02028480, @function
@@ -1016,8 +1017,8 @@ UnpackEz10:
 ; RemapPaletteRows: for each of the r2 halfwords at r0 (two pixel bytes, palette row << 4 | colour), gives
 ; every byte with a colour other than 0 the palette row the table at r1 holds for its row; bytes with colour
 ; 0 become 0. Halfwords with both colours 0 stay as they are. Keeps every register.
-; Not compiled (save rule): saves r8, which it never writes (and r1, which it only reads); no rule puts an
-; unwritten r8 in the list.
+; Not compiled (save rule): saves r8, which it never writes (and r1, which it only reads). The compiler
+; never lists an unwritten r8.
 	.global RemapPaletteRows
 	.type RemapPaletteRows, @function
 RemapPaletteRows:
@@ -1059,8 +1060,8 @@ RemapPaletteRows:
 ; codes (component 2 uses the chroma tables like 1); maxcode, mincode: 32 halfwords per table, valptr: 32
 ; bytes, huffval: 256 bytes. dc[component] is the running DC value; zigzag maps the coefficient order to
 ; positions in the block. Keeps every register.
-; Not compiled: uses the value func_02028b24 and func_02028a8c return in r1; keeps the bit reader in r4-r6
-; across the helper calls, which read and update it; func_02028aac reads this routine's stack frame.
+; Not compiled: uses the value func_02028b24 and func_02028a8c return in r1. Keeps the bit reader in r4-r6
+; across the helper calls, which read and update it. func_02028aac reads this routine's stack frame.
 	.global func_02028980
 	.type func_02028980, @function
 func_02028980:
@@ -1250,7 +1251,7 @@ func_02028b60:
 ; 2x2 pixels:
 ;   R = Y + 1.402 Cr', G = Y - 0.344 Cb' - 0.714 Cr', B = Y + 1.772 Cb'  (Cb' = Cb - 128, Cr' = Cr - 128;
 ;   factors in 13-bit fixed point), each clamped and cut to 5 bits; bit 15 set. Keeps r1-r12.
-; Not compiled: its pool word .Lmaxcode_mask is loaded by func_02028aac; it also moves sp inside its loop
+; Not compiled: func_02028aac loads its pool word .Lmaxcode_mask. It also moves sp inside its loop
 ; (stmfd/ldmfd of r10-r12).
 	.global func_02028b8c
 	.type func_02028b8c, @function

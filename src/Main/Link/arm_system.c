@@ -49,9 +49,10 @@ BOOL func_020010b4(u32 timeout) {
     return TRUE;
 }
 
-// Shuts the file link down: unless the link state (func_020350f8) is 0 or 5 it first runs func_020350a0 and waits up to
-// 0x3c frames for the state to clear, then releases the link's buffers and shuts the link down. In this build the state
-// stays 0, so the wait never runs, and the function is never reached: its caller needs mUnk_2a6_1, which is never set.
+// Shuts the file link down. Unless the link state (func_020350f8) is 0 or 5, it first runs func_020350a0 and waits up
+// to 0x3c frames for the state to clear. Then releases the link's buffers and shuts the link down. In this build the
+// state stays 0, so the wait never runs; and the function is never reached, as its caller needs mUnk_2a6_1, which is
+// never set.
 void ShutDownComm(void) {
     gSystemState.mUnk_2a6_1 = 0;
     gSystemState.mUnk_2a3 = 0x10;

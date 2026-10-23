@@ -163,7 +163,7 @@ int UpdateMoveObj(MoveObj *o, const Vec2i *pos) {
 }
 
 // The screen position of the object. When y has passed the edge of *layer's screen toward the other screen
-// (y < -0x1e00 or y > 0xde00, depending on which screen is on top), it switches *layer to the other layer and moves the
+// (y < -0x1e00 or y > 0xde00, depending on which screen is on top), switches *layer to the other layer and moves the
 // y position by 252.
 void GetMoveObjDrawPos(MoveObj *o, int *outX, int *outY, int *layer) {
     int flag = IsLcdSwapped();

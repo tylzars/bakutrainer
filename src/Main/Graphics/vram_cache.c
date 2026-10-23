@@ -10,8 +10,8 @@
 
 #pragma thumb off
 
-// Frees the run of 512-byte VRAM blocks that starts at block i of the texture cache's heap, merges it with free
-// neighbours, links it into the free list ordered by size and returns the merged run's length in blocks.
+// Frees the run of 512-byte VRAM blocks that starts at block i of the texture cache's heap. Merges it with free
+// neighbours, links it into the free list ordered by size, and returns the merged run's length in blocks.
 u32 FreeTexBlock(u32 i) {
     Unk_PoolRange *n = gGxState.mTexBlocks;
     u32 q;
@@ -62,9 +62,9 @@ u32 FreeTexBlock(u32 i) {
     return n[i].mUnk_0;
 }
 
-// Removes the least recently used entry of the texture cache, node i, which must be node 1's mNext (as at both
-// callers; any nodes between them would be unlinked too): marks its hash slot removed (-2), frees its blocks and puts
-// the node on the free chain headed by node 1's mPrev. Returns the length of the merged free run in 512-byte blocks.
+// Removes the least recently used entry of the texture cache, node i. It must be node 1's mNext, as at both callers
+// (any nodes between them would be unlinked too). Marks its hash slot removed (-2), frees its blocks and puts the node
+// on the free chain headed by node 1's mPrev. Returns the length of the merged free run in 512-byte blocks.
 u32 RemoveLeastRecentTexCacheEntry(u32 i) {
     u32 result;
 
@@ -78,9 +78,9 @@ u32 RemoveLeastRecentTexCacheEntry(u32 i) {
     return result;
 }
 
-// Allocates a run of 512-byte VRAM blocks for `size` bytes from the texture cache's heap: takes the smallest free run
-// that fits (removing least recently used entries until one does), marks it used, stores its byte offset in node
-// `node`, gives the rest of the run back to the free list and returns the offset.
+// Allocates a run of 512-byte VRAM blocks for `size` bytes from the texture cache's heap. Takes the smallest free run
+// that fits, removing least recently used entries until one does. Marks it used, stores its byte offset in node
+// `node`, gives the rest of the run back to the free list, and returns the offset.
 u32 AllocTexBlock(Unk_PoolRange *n, u32 size, u32 node) {
     unsigned long q;
     int found;
@@ -131,11 +131,11 @@ u32 AllocTexBlock(Unk_PoolRange *n, u32 size, u32 node) {
     return addr;
 }
 
-// Returns the VRAM byte offset of texture `key`, looked up in the texture cache's hash table; a hit makes the entry the
-// most recently used. On a miss it takes a free node (removing the least recently used entry once there are more
-// than 0x2bc), allocates blocks for `size` bytes and queues the transfer, so the offset is returned before the data
+// Returns the VRAM byte offset of texture `key`, looked up in the texture cache's hash table. A hit makes the entry the
+// most recently used. A miss takes a free node (removing the least recently used entry once there are more than
+// 0x2bc), allocates blocks for `size` bytes and queues the transfer, so the offset is returned before the data
 // arrives. `kind` picks the source: 1 a texture of the block file, 2 the file gSystemState.mUnk_42c, any other value
-// the data's offset in mTexFile (`srcSize` is the stored size for kinds other than 1; 0 means `size`). Counts calls
+// the data's offset in mTexFile. For kinds other than 1, `srcSize` is the stored size (0 means `size`). Counts calls
 // and probes in mTexLookupCount and mTexProbeCount.
 u32 FindOrLoadTex(u32 kind, u32 key, u32 size, u32 srcSize) {
     u32 idx;
@@ -327,12 +327,14 @@ u32 AllocPlttBlock(Unk_PoolRange *n, u32 size, u32 node) {
     return addr;
 }
 
-// Returns the VRAM byte offset of palette `key`, cached like FindOrLoadTex's textures, with these differences: the hash
-// starts at the key's low 8 bits and wraps its probe with 0x3ff although the table has 0x100 slots; a miss stops only
-// at a never-used slot; more than 200 entries remove the least recently used one; nothing is counted; the node records
-// `size`; and the key range picks the source: below GetPlttFileKeyCount() offset `kind` of mPlttFile, below
-// GetPaletteFileKeyEnd() palette `kind` of the palette file, else entry key - GetPaletteFileKeyEnd() of
-// gSystemState.mUnk_390.
+// Returns the VRAM byte offset of palette `key`, cached like FindOrLoadTex's textures, with these differences:
+//   - the hash starts at the key's low 8 bits and wraps its probe with 0x3ff, although the table has 0x100 slots;
+//   - a miss stops only at a never-used slot;
+//   - more than 200 entries remove the least recently used one;
+//   - nothing is counted, and the node records `size`;
+//   - the key range picks the source: below GetPlttFileKeyCount(), offset `kind` of mPlttFile; below
+//     GetPaletteFileKeyEnd(), palette `kind` of the palette file; else entry key - GetPaletteFileKeyEnd() of
+//     gSystemState.mUnk_390.
 u32 FindOrLoadPltt(u32 kind, u32 key, u32 size) {
     u32 idx = key & 0xff;
     int first = -1;
@@ -382,11 +384,11 @@ u32 FindOrLoadPltt(u32 kind, u32 key, u32 size) {
     }
 }
 
-// Reads node `nodeIndex` of track `track` into out/pos/vec and sets *done; nothing is written when the track has no
-// data. With *done already set it would instead combine the angles with out by the track's flags (1 adds the
-// difference from the node's own angles, 2 takes the read angles when one is more than 0x100 from the node's, else
-// terminates) and drop the read position and vector; both callers clear *done first, so that path does not run in
-// this build.
+// Reads node `nodeIndex` of track `track` into out/pos/vec and sets *done. Nothing is written when the track has no
+// data. With *done already set it would instead combine the angles with out by the track's flags, and drop the read
+// position and vector. Flag 1 adds the difference from the node's own angles; flag 2 takes the read angles when one
+// is more than 0x100 from the node's; any other value stops the program. Both callers clear *done first, so that
+// path does not run in this build.
 void ApplyAnimTrack(u32 track, u16 *out, s32 *pos, s32 *vec, u32 nodeIndex, int *done, const PoseNode *node) {
     u16 r[3];
     s32 p[3];

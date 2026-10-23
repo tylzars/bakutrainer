@@ -39,9 +39,8 @@ typedef struct MapFloorShape {
     MapFloorPoint mPoints[1];
 } MapFloorShape;
 
-// A floor region: its x/z bounds and the heights of its lowest and highest sample, all in units of 512 (mMinX and
-// mMinZ are also the corner the outline points and the height samples are placed from), then mUnk_14 and the outline
-// count as described above.
+// A floor region: its x/z bounds and the heights of its lowest and highest sample, all in units of 512. mMinX and
+// mMinZ are also the corner the outline points and height samples are placed from. mUnk_14 is described above.
 typedef struct MapFloorRegion {
     u32 mMinX;
     u32 mMinZ;
@@ -55,7 +54,7 @@ typedef struct MapFloorRegion {
 } MapFloorRegion;
 
 // The floor height under (x, z) for a position at height y: the highest floor of the map cell that y lies above (or
-// within a of below); 0 when (x, z) is outside the map. Outlines whose attribute bit is set in mask are skipped.
+// within a below it). 0 when (x, z) is outside the map. Outlines whose attribute bit is set in mask are skipped.
 // *out receives the floor's attribute (0xff when none was found) and *vec its normal; either may be NULL.
 int GetFloorHeightEx(fx32 x, fx32 z, fx32 y, int a, u32 mask, u8 *out, VecFx32 *vec);
 // GetFloorHeightEx without the normal.

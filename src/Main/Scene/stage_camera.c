@@ -723,12 +723,14 @@ static inline s32 cosIdx(int a) {
 
 #pragma thumb off
 
-// Per-frame step of stage index: clamps mDistancePerFrame to -0x20000..0x20000 and, on a touch press, records the
-// touch point in mUnk_a574. While the stage's mEventKey is not 1 or mPanelState is 3, 4, 6, 7 or 8 it then only turns
-// the selected stage by the decaying spin mUnk_a8e8 or lets a tap select another stage (panel states 0..2). The touch
-// drag that would set the spin here needs panel state 3 or 4 with flags bit 0 clear, which no call reaches in this
-// build (state 10 sets bit 0 in panel states 3 to 5, and state 4 keeps panel state 0). Otherwise it moves the stage
-// along mMoveAngle, keeps it on the ground and handles its hits with other stages and the map (FindNearestRingSegment).
+// Per-frame step of stage index. Clamps mDistancePerFrame to -0x20000..0x20000 and, on a touch press, records the
+// touch point in mUnk_a574.
+// While the stage's mEventKey is not 1, or mPanelState is 3, 4, 6, 7 or 8, it then only turns the selected stage by
+// the decaying spin mUnk_a8e8, or lets a tap select another stage (panel states 0..2). The touch drag that would set
+// the spin here needs panel state 3 or 4 with flags bit 0 clear, which no call reaches in this build: state 10 sets
+// bit 0 in panel states 3 to 5, and state 4 keeps panel state 0.
+// Otherwise it moves the stage along mMoveAngle, keeps it on the ground, and handles its hits with other stages and
+// the map (FindNearestRingSegment).
 void UpdateStageMotion(int index, int *sel, int flags) {
     StageRec *rec = &gStages[index];
     int hit = 0;
@@ -822,8 +824,8 @@ void UpdateStageMotion(int index, int *sel, int flags) {
         rec->mDistancePerFrame = 0;
         return;
     }
-    // k is loaded before spd is scaled and stored after the position copy, as the compiler's output needs: adding
-    // in one statement (or with +=) gives the load and the multiply other registers.
+    // Matching: k is loaded before spd is scaled and stored after the position copy. Adding in one statement (or with
+    // +=) gives the load and the multiply other registers.
     k = rec->mUnk_1dc;
     spd = spd * 0xc0 >> 12;
     k = k + spd;
@@ -1184,10 +1186,12 @@ void AddStageAmountObjSlots(StageRec *rec, int kind, int amount) {
     slot->mUsePos = 1;
 }
 
-// What meeting a map object of type `kind` gives the mode: types 0xf (mUnk_183 * 100 of the object `index`), 0x14 and
-// 5 (100 each) take time off mEndTimer and signal data_020b6ee0.mUnk_8e60's model (bit 2 for 0x14, else bit 0); type
-// 0x1e adds mUnk_181[0] * 300 time or, for a score object (mUnk_181[1] 0), mUnk_181[0] * 100 score and counts down
-// mUnk_8ad9. The amount is shown at the stage (AddStageAmountObjSlots).
+// What meeting a map object of type `kind` gives the mode:
+//   - types 0xf (mUnk_183 * 100 of the object `index`), 0x14 and 5 (100 each) take time off mEndTimer and signal
+//     data_020b6ee0.mUnk_8e60's model (bit 2 for 0x14, else bit 0);
+//   - type 0x1e adds mUnk_181[0] * 300 time or, for a score object (mUnk_181[1] 0), mUnk_181[0] * 100 score, and
+//     counts down mUnk_8ad9.
+// The amount is shown at the stage (AddStageAmountObjSlots).
 void AddMapObjectTimeOrScore(StageRec *rec, int kind, int index) {
     Unk_020bfd40 *obj = &data_020b6ee0.mUnk_8e60;
     int time, score;
@@ -1606,11 +1610,11 @@ void FindStagePolygonGroup(int stage) {
     }
 }
 
-// Called every frame of state 10; does nothing while mPanelState > 2. Picks a random stage and, unless it is the
-// selected one, moving, out of view or the panel is in state 2, may start a random turn or move or change its
-// mUnk_22e. About one call in 0x40 / mStageCount + 8 then updates that stage's polygon group and adds 2 percent when it
-// equals mInfo.mKind, or -2 when it is another group and mProgressState is 99 or more. While mUnk_a149 < 4, one call
-// in 512 also runs func_020198f0.
+// Called every frame of state 10; does nothing while mPanelState > 2. Picks a random stage. Unless that stage is the
+// selected one, moving or out of view, or the panel is in state 2, it may start a random turn or move or change its
+// mUnk_22e. About one call in 0x40 / mStageCount + 8 then updates that stage's polygon group. It adds 2 percent when
+// the group equals mInfo.mKind, or -2 when it is another group and mProgressState is 99 or more. While
+// mUnk_a149 < 4, one call in 512 also runs func_020198f0.
 void UpdateRandomStage(void) {
     s32 *c = data_020b6ee0.mUnk_9ddc;
     int result = 0;
@@ -1729,9 +1733,10 @@ void func_02019788(void) {
     }
 }
 
-// Finds the mUnk_9024 entry within range of the record's position (func_02019874). If it is kind 1, removes it, starts
-// the move object from the record's screen point (UpdateStageMoveObj adds 10 percent to the record when it ends),
-// plays sound 0xe0 (PlayWaveKeepAlive) and sets mUnk_a570. Called for the selected stage in panel states 0..2 and 5.
+// Finds the mUnk_9024 entry within range of the record's position (func_02019874). If it is kind 1: removes it, starts
+// the move object from the record's screen point, plays sound 0xe0 (PlayWaveKeepAlive) and sets mUnk_a570.
+// UpdateStageMoveObj adds 10 percent to the record when the move ends. Called for the selected stage in panel states
+// 0..2 and 5.
 void func_02019800(StageRec *rec) {
     int i = func_02019874(&rec->mPos);
 
@@ -1787,8 +1792,8 @@ void func_020198f0(void) {
 }
 
 // Eases the record's sprite offset index (0..2) toward mulX and mulY times a scale set by mPanelState (0x200 in state
-// 0, 0x280 in state 1, else 0x500) and draws sprite there; nothing while mVisible is 0. Sprite 0 is not drawn, and
-// index 1 only while mUnk_22e is set, on alternate 32-frame halves.
+// 0, 0x280 in state 1, else 0x500), and draws sprite there. Does nothing while mVisible is 0. Sprite 0 is not drawn,
+// and index 1 only while mUnk_22e is set, on alternate 32-frame halves.
 void DrawStageSprite(StageRec *rec, int index, int sprite, int mulX, int mulY, int prio) {
     int scale;
     StageOffset *e;
@@ -1825,8 +1830,8 @@ void DrawStageSprite(StageRec *rec, int index, int sprite, int mulX, int mulY, i
     }
 }
 
-// Starts the move object carrying the record: with mode 1 from (x, y) to the record's percent position (PercentToX of
-// mInfo.mPercent, 0x5e - 252), otherwise the reverse. c and d are unused.
+// Starts the move object carrying the record. With mode 1 it moves from (x, y) to the record's percent position
+// (PercentToX of mInfo.mPercent, 0x5e - 252); otherwise the reverse. c and d are unused.
 void StartStageMoveObj(StageRec *rec, int x, int y, int c, int d, int mode) {
     MoveObj *o = &data_020b6ee0.mMoveObj;
     Vec2i pos;
@@ -1869,10 +1874,10 @@ void UpdateStageMoveObj(void) {
 
 void func_02019b38(void) {}
 
-// Per-frame update of the map menu's cursor and camera: eases the camera's look-at toward lookAt and its position
-// toward cameraPos blended toward lookAt by mBlend (eased toward mTargetBlend; 0x200 = cameraPos itself), draws the
-// cursor sprites once mDelayTimer is 0, moves the cursor by the touch drag (within 0x320 of map entry 0) and moves
-// lookAt and cameraPos a sixteenth of the way toward the cursor in x and z.
+// Per-frame update of the map menu's cursor and camera. Eases the camera's look-at toward lookAt, and its position
+// toward cameraPos blended toward lookAt by mBlend (eased toward mTargetBlend; 0x200 = cameraPos itself). Draws the
+// cursor sprites once mDelayTimer is 0. Moves the cursor by the touch drag (within 0x320 of map entry 0), and lookAt
+// and cameraPos a sixteenth of the way toward the cursor in x and z.
 void UpdateMapCursorAndCamera(VecFx32 *lookAt, VecFx32 *cameraPos) {
     MapMenu *p = &data_020b6ee0.mMapMenu;
     VecFx32 v;

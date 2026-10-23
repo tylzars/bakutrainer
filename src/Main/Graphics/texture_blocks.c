@@ -56,8 +56,8 @@ u8 GetUnitShift(int layer) {
     return gTextureBlocks.mLayers[layer != 1].mUnitShift;
 }
 
-// The tile kept by the last DrawSprite call with id bit 21 (0x200000) set; -1 after any other call that gets past
-// the id check (a call that returns there leaves it as it was).
+// The tile kept by the last DrawSprite call with id bit 21 (0x200000) set. -1 after any other call that gets past
+// the id check; a call that returns there leaves it as it was.
 int GetSpriteTile(void) {
     return gTextureBlocks.mUnk_b28;
 }
@@ -77,8 +77,8 @@ u16 GetBlockCount(void) {
     return gTextureBlocks.mBlockCount;
 }
 
-// Number of OAM entries to fill with 0x200 for a layer: 128, or fewer on the screen that GetIndicatorLayer reports when
-// the flag byte or bit 9 of the system flags is set.
+// Number of OAM entries to fill with 0x200 for a layer: 128, or fewer on the screen GetIndicatorLayer reports when the
+// flag byte or bit 9 of the system flags is set.
 u32 GetOamFillCount(int layer) {
     if (layer == GetIndicatorLayer()) {
         if (gSystemState.mUnk_250.mUnk_28[0] != 0) {
@@ -134,8 +134,8 @@ void GetTexInfo(u32 index, TexInfo *out, u32 sub) {
     out->mHeight = data_02050998[out->mSizeCode][1];
 }
 
-// Frees the run of VRAM units that starts at unit `index` of a layer's block heap: merges it with a free neighbour
-// on each side, links it into the free list, which is ordered by size, and returns the merged run's length in units.
+// Frees the run of VRAM units that starts at unit `index` of a layer's block heap. Merges it with a free neighbour on
+// each side and links it into the free list, which is ordered by size. Returns the merged run's length in units.
 u16 FreeLayerBlock(u32 index, int layer) {
     TextureLayer *textureLayer = &gTextureBlocks.mLayers[layer == 2];
     Unk_PoolRange *n = textureLayer->mBlocks;
@@ -187,12 +187,11 @@ u16 FreeLayerBlock(u32 index, int layer) {
 }
 
 // Removes `key` from a layer's hash table of cached blocks. The search starts at the key's low 10 bits and steps by
-// an odd prime chosen from the next 7 bits; every entry passed on the way loses one from its path count, and an
-// entry that has no path left and was marked removed (-2) becomes free again (-1). The key's own entry becomes
-// free if no path goes through it, removed otherwise.
+// gHashSteps[next 7 bits]. Each entry passed loses one path; a removed entry (-2) left with no path becomes free
+// (-1). The key's own entry becomes free if no path goes through it, removed otherwise.
 void RemoveLayerKey(int layer, u32 key) {
     TextureLayer *textureLayer = &gTextureBlocks.mLayers[layer == 2];
-    unsigned long idx = key & 0x3ff; // unsigned long, not u32: the compiler's output needs it (register choice)
+    unsigned long idx = key & 0x3ff; // unsigned long, not u32: needed for the register choice
     u32 step = gHashSteps[(key >> 10) & 0x7f];
     TextureSlot *e;
 
@@ -218,8 +217,8 @@ void RemoveLayerKey(int layer, u32 key) {
     }
 }
 
-// Releases the least recently used entry of a layer's cache list, entry `index`, which must be entry 1's mNext (as at
-// both callers): drops its hash entry, frees its run of units and moves the entry to the head of the free chain
+// Releases the least recently used entry of a layer's cache list, entry `index`, which must be entry 1's mNext (both
+// callers pass that). Drops its hash entry, frees its run of units and moves the entry to the head of the free chain,
 // after the list's sentinel (entry 1). Returns the length FreeLayerBlock reports.
 u16 RemoveLeastRecentLayerCacheEntry(u32 index, int layer) {
     TextureLayer *textureLayer = &gTextureBlocks.mLayers[layer == 2];
@@ -250,14 +249,16 @@ u32 GetSizeCodeBytes(u32 index, int mode) {
 }
 
 // Finds or adds the cache entry of block `key` (with `sub` in mode-2 packed files) in a layer's hash table and returns
-// the first VRAM unit of its block. A hit moves its hash entry up into the first removed entry the search passed and
-// its list entry to the most recently used end of the list; its data is reloaded from the preloaded file block when
-// that block is the one asked for, and in mode 0 its sixteen 4-bit palette slots are compared with the current ones
-// and its tiles remapped when they differ. A miss takes the first never-used entry on the search path (or the first
-// removed one once the search comes round to it), a list entry and a run of VRAM units from the block heap (dropping
-// the oldest list entries until a large enough run is free), and queues the block's transfer from the packed file.
+// the first VRAM unit of its block.
+// A hit moves its hash entry up into the first removed entry the search passed, and its list entry to the most
+// recently used end of the list. Its data is reloaded from the preloaded file block when that block is the one asked
+// for. In mode 0 its sixteen 4-bit palette slots are compared with the current ones, and its tiles are remapped when
+// they differ.
+// A miss takes the first never-used entry on the search path (or the first removed one once the search comes round to
+// it), a list entry, and a run of VRAM units from the block heap; it drops the oldest list entries until a large
+// enough run is free. Then it queues the block's transfer from the packed file.
 u16 FindOrLoadLayerBlock(u32 code, u32 key, u32 sub, u32 mode, u32 count, int layer) {
-    unsigned long entry; // unsigned long, not u32: the compiler's output needs it (stack slot order)
+    unsigned long entry; // unsigned long, not u32: needed for the stack slot order
     s32 stored;
     u32 val;
     TextureLayer *textureLayer = &gTextureBlocks.mLayers[layer == 2];
@@ -458,11 +459,10 @@ u16 FindOrLoadLayerBlock(u32 code, u32 key, u32 sub, u32 mode, u32 count, int la
     }
 }
 
-// Resets a layer's tables: hides its sprites (ResetOam), then resets the cache list (entries 0 and 1 are the ends,
-// the rest chained as free), the hash table (all keys unused), the block heap (reallocated, one free run of
-// mUnitCount units between two sentinels), the palette slot list, the palette position lists and, when the layer has
-// a chain table (mUnk_57b == 1), that table's links. Also clears the long-search flag and
-// gSystemState.mUnk_250.mUnk_28[0].
+// Resets a layer's tables. Hides its sprites, then resets the cache list (entries 0 and 1 are the ends, the rest are
+// chained as free), the hash table (all keys unused), the block heap (reallocated: one free run of mUnitCount units
+// between two sentinels), the palette slot and position lists, and the chain table's links if the layer has one
+// (mUnk_57b == 1). Also clears the long-search flag and gSystemState.mUnk_250.mUnk_28[0].
 void ResetTextureLayer(int layer) {
     TextureLayer *textureLayer = &gTextureBlocks.mLayers[layer == 2];
     int i;
@@ -526,11 +526,11 @@ void ResetTextureLayer(int layer) {
     }
 }
 
-// Sets up a layer: checks the layer `e` (1 = main engine, 2 = sub engine) and the mode `d` (low 6 bits; bit 7 selects
-// the chain tables), programs the engine's display control register and VRAM banks, allocates the layer's tables
-// unless the layer is already set up, reads the header of packed file `b` and loads the block table from file `a`
-// unless files `b`/`c` are already loaded ("PACK" files keep their offsets in memory, "EZ10" files are read on
-// demand), then resets the layer.
+// Sets up layer `e` (1 = main engine, 2 = sub engine) in mode `d` (low 6 bits; bit 7 selects the chain tables).
+// Programs the engine's display control register and VRAM banks, and allocates the layer's tables unless the layer is
+// already set up. Unless files `b`/`c` are already loaded, reads the header of packed file `b` and loads the block
+// table from file `a`; "PACK" files keep their offsets in memory, "EZ10" files are read on demand. Then resets the
+// layer.
 void SetupTextureLayer(int a, int b, int c, u32 d, int e) {
     u32 sub = d >> 7;
     TextureLayer *textureLayer = &gTextureBlocks.mLayers[e == 2];
@@ -661,9 +661,9 @@ void ReleaseTextureLayersEx(int a) {
     gSystemState.mFlags &= ~3;
 }
 
-// Rearranges `w` x `h` tiles from sequential order into rows of a bitmap `w` tiles wide: for each tile, `mode` 1
-// copies eight words (4 bits per pixel), any other mode eight word pairs (8 bits per pixel). Terminates when the
-// source and destination are the same.
+// Rearranges `w` x `h` tiles from sequential order into rows of a bitmap `w` tiles wide. For each tile, `mode` 1
+// copies eight words (4 bits per pixel), any other mode eight word pairs (8 bits per pixel). Stops the program when
+// the source and destination are the same.
 void ArrangeTilesInRows(void *dst, const void *src, u32 w, u32 h, BOOL mode) {
     u32 *d = dst;
     u32(*d8)[2] = dst;
@@ -697,11 +697,11 @@ void ArrangeTilesInRows(void *dst, const void *src, u32 w, u32 h, BOOL mode) {
     }
 }
 
-// Expands the tiles of `src` (`w` tiles wide, 4 or 8 bits per pixel by the entry's byte 13) into 16-bit colours
-// at the entry's destination: every non-zero pixel is looked up in the palette memory of the layer the
-// destination belongs to and written with bit 15 set; the rows of the destination are GetLayerWidth(layer)
-// halfwords apart. Sets the entry's palette byte to 0xff. In the 8-bit branch the test uses the low four bits of
-// the pixel but the palette index is the whole byte.
+// Expands the tiles of `src` (`w` tiles wide, 4 or 8 bits per pixel by the entry's byte 13) into 16-bit colours at
+// the entry's destination. Every non-zero pixel is looked up in the palette memory of the destination's layer and
+// written with bit 15 set. The destination's rows are GetLayerWidth(layer) halfwords apart. Sets the entry's palette
+// byte to 0xff. In the 8-bit branch the zero test uses the low four bits of the pixel, but the palette index is the
+// whole byte.
 void ExpandRowsToColors(Transfer *entry, const void *src, u32 w) {
     u32 dst = entry->mDst;
     u32 size = entry->mSize;
@@ -781,9 +781,9 @@ u32 FindChainEntry(u32 key, u32 val, TextureLayer *textureLayer) {
     return 0xff;
 }
 
-// Takes the oldest entry of slot `val` from the list (MoveChainEntryToListEnd), loads block `key` into the 32 bytes
-// that entry names (from the file when `key` is below the file's block count, otherwise from the preloaded block at
-// gTextureBlocks.mUnk_008 + index * 32), chains the entry at the end of key `key`'s chain and returns its number.
+// Takes the oldest entry of slot `val` from the list and loads block `key` into the 32 bytes that entry names: from
+// the file when `key` is below the file's block count, else from the preloaded block at
+// gTextureBlocks.mUnk_008 + index * 32. Chains the entry at the end of key `key`'s chain and returns its number.
 u32 func_0202c5fc(u32 index, u32 key, u32 val, TextureLayer *textureLayer) {
     u32 n = textureLayer->mUnk_518[255].mNext;
     u32 sel;
@@ -824,11 +824,11 @@ u32 func_0202c5fc(u32 index, u32 key, u32 val, TextureLayer *textureLayer) {
     return textureLayer->mUnk_518[n].mUnk_6;
 }
 
-// Makes the `n` consecutive blocks starting at keys[0] (or the `n` keys listed there when keys[0] is below the
-// file's block count) resident in one slot: a slot already holding all of them is used if there is one, otherwise
-// the slot that needs the fewest loads and has room, evicting the oldest entries until one has. Each key is then
-// looked up or loaded (FindChainEntry, func_0202c5fc) and its entry's low nibble appended to the layer's index list
-// (mUnk_115, count in mUnk_516). Returns the slot. `a` is not used.
+// Makes the `n` consecutive blocks starting at keys[0] (or the `n` keys listed there, when keys[0] is below the file's
+// block count) resident in one slot. Uses a slot that already holds all of them if there is one; otherwise the slot
+// that needs the fewest loads and has room, evicting the oldest entries until one has. Each key is then looked up or
+// loaded, and its entry's low nibble is appended to the layer's index list (mUnk_115, count in mUnk_516). Returns the
+// slot. `a` is not used.
 s32 func_0202c778(u16 *keys, int a, u32 n, int layer) {
     TextureLayer *textureLayer = &gTextureBlocks.mLayers[layer == 2];
     u32 node2;
@@ -932,10 +932,10 @@ typedef struct Mat4 {
     s16 mUnk_6;
 } Mat4;
 
-// Slot list of a layer: the keys of the palettes in VRAM, most recently used first. For count keys (a key below
-// the preloaded block count comes from the list at ids, which advances; any other key is the first key plus its
-// position and is read from the block data) it finds or loads each palette and returns the last slot. With flag
-// 0 the slots are also appended to the layer's record, and a record that repeats the run before it is removed again.
+// The layer's slot list holds the keys of the palettes in VRAM, most recently used first. Finds or loads the palette
+// of each of count keys and returns the last slot. A key below the preloaded block count comes from the list at ids,
+// which advances; any other key is the first key plus its position and is read from the block data. With flag 0 the
+// slots are also appended to the layer's record, and a record that repeats the run before it is removed again.
 s32 func_0202ca80(u16 *ids, int flag, u32 count, int layer) {
     TextureLayer *textureLayer = &gTextureBlocks.mLayers[layer == 2];
     int base = textureLayer->mUnk_516;
@@ -1013,7 +1013,7 @@ s32 func_0202ca80(u16 *ids, int flag, u32 count, int layer) {
 }
 
 // Fills out (8 bytes) for a sprite record: the point GetSpritePoint gives for type 3 (or 0, 0), the record's two
-// 9-bit values, the width and height of its rect and of its size code.
+// 9-bit values, and the width and height of its rect and of its size code.
 void func_0202cce0(u32 obj, u32 rec, u8 *out) {
     s32 pt[2];
     s32 rect[4];
@@ -1081,15 +1081,18 @@ void DrawSprite(int id, int x, int y, int w, int layer) {
     DrawSpriteEx(id, x, y, w, 0, 0x100, 0x100, layer);
 }
 
-// Draws sprite `id` of a layer (layer 1 or 2) at x, y. The low 16 bits of id select the block; bits 16 and 17 flip
-// it horizontally and vertically, bit 18 sets the semi-transparent mode, bit 19 the double size of a rotated
-// sprite, bit 20 copies the tiles straight into the layer's background VRAM instead, bit 21 draws nothing and keeps
-// the tile and palette of the first record it reaches in mUnk_b28 and mUnk_b2c, bit 22 sets attribute 2 bit 11,
-// and bit 23 hands the sprite to DrawSpritePolygons with the alpha in bits 27-31 (0 = 31). w >> 8 is the priority and
-// its low byte the sort key of each entry. angle and the scales sx, sy (0x100 = 1) give the sprite a rotation/scale
-// matrix. The checks that stop the system are written as `(void) (cond || (OS_Terminate(), 0))` because the
-// compiler's output needs it: the expression form computes each condition's value and loads the 0, which an `if`
-// drops.
+// Draws sprite `id` of a layer (layer 1 or 2) at x, y. The low 16 bits of id select the block. The other id bits:
+//   16, 17  flip it horizontally, vertically
+//   18      semi-transparent mode
+//   19      double size of a rotated sprite
+//   20      copy the tiles straight into the layer's background VRAM instead
+//   21      draw nothing; keep the tile and palette of the first record reached in mUnk_b28 and mUnk_b2c
+//   22      set attribute 2 bit 11
+//   23      hand the sprite to DrawSpritePolygons, with the alpha in bits 27-31 (0 = 31)
+// w >> 8 is the priority and its low byte the sort key of each entry. angle and the scales sx, sy (0x100 = 1) give
+// the sprite a rotation/scale matrix.
+// Matching: the checks that stop the system are written as `(void) (cond || (OS_Terminate(), 0))`. The expression
+// form computes each condition's value and loads the 0, which an `if` drops.
 void DrawSpriteEx(int id, int x, int y, int w, int angle, int sx, int sy, int layer) {
     u32 bit;
     u32 flags;
@@ -1234,7 +1237,7 @@ void DrawSpriteEx(int id, int x, int y, int w, int angle, int sx, int sy, int la
                 src = off << 5;
             }
             // shift = log2 of the width: 32 minus the leading zeros of the bits below its lowest set bit. An asm
-            // statement: clz has no C expression.
+            // statement, since clz has no C form.
             bits = data_02050998[size][0];
             bits = ~bits & (bits - 1);
             asm { clz bits, bits }
@@ -1271,8 +1274,8 @@ void DrawSpriteEx(int id, int x, int y, int w, int angle, int sx, int sy, int la
     textureLayer->mOamCount = n;
 }
 
-// Looks up the point of type index in the object's record and flips it for the flip flags in bits 16 and 17 of
-// flags; returns whether it exists.
+// Looks up the point of type index in the object's record and flips it by bits 16 and 17 of flags. Returns whether it
+// exists.
 int GetSpritePoint(u16 flags, int index, s32 *out) {
     u32 *hdr = GetBlockHeader(flags);
     u32 i;

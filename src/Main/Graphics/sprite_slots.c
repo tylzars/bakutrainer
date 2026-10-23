@@ -25,7 +25,7 @@ void ClearObjSlots(void) {
     }
 }
 
-// Takes the first free slot (NULL when all 16 are in use); a negative drawOrder stops the system once a free slot is
+// Takes the first free slot (NULL when all 16 are in use). A negative drawOrder stops the system once a free slot is
 // found.
 ObjSlot *AddObjSlot(int kind, int a, int x, int y, int vx, int vy, int drawOrder, int layer) {
     u32 i;
@@ -211,8 +211,8 @@ void func_0200daec(void) {
 }
 
 // Draws the animation slots of kind 1 (UpdateAndDrawModel) and 2 (func_02024338) and counts their lifetimes down.
-// Nothing in this build sets a slot's mKind to 1 or 2 (ClearAnimSlots and this function only write 0), so the loop
-// body does not run.
+// Nothing in this build sets mKind to 1 or 2 (ClearAnimSlots and this function only write 0), so the loop body does
+// not run.
 void UpdateAnimSlots(void) {
     u32 i;
     AnimSlot *s = gAnimSlots;
@@ -335,8 +335,8 @@ void RunVideo(const char *path, int layer) {
     StopVideo();
 }
 
-// Starts the title screen's slide-in: sets TITLE_SLIDE_STATE_IN and the starting offsets for the current state, which
-// UpdateTitleSlide moves to 0 before it sets TITLE_SLIDE_STATE_IN_PLACE. With mReturnState >= 0 the offsets stay 0.
+// Starts the title screen's slide-in: sets TITLE_SLIDE_STATE_IN and the starting offsets for the current state.
+// UpdateTitleSlide moves them to 0, then sets TITLE_SLIDE_STATE_IN_PLACE. With mReturnState >= 0 the offsets stay 0.
 void StartTitleSlideIn(void) {
     int i;
     gTitleScreen.mSlideState = TITLE_SLIDE_STATE_IN;

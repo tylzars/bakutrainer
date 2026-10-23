@@ -11,15 +11,16 @@
 #include <Main/System/system_init.h>
 #include <Main/Link/link_indicator.h>
 
-// Of the code in this file only GetIndicatorLayer does any work in this build: the link conditions the rest needs
-// (gSystemState.mFlags 0x200 or 0x400, mUnk_2a6_0, mUnk_2a6_1, mUnk_2a4[1] above 1) never hold, so UpdateIndicator
-// returns at once and the other functions are never called.
+// Only GetIndicatorLayer does any work in this build. The link conditions the rest needs (gSystemState.mFlags 0x200 or
+// 0x400, mUnk_2a6_0, mUnk_2a6_1, mUnk_2a4[1] above 1) never hold, so UpdateIndicator returns at once and the other
+// functions are never called.
 
 void func_0203982c(u16 code) {}
 
-// Link indicator and shutdown. The work area of the code below: the bit set of finished steps and the buffers of
-// the link status exchange. Its zero initialiser makes it take part in the compiler's size ordering of this file's
-// data where it is defined, which puts the local initialisers of the functions below in the game's order.
+// Link indicator and shutdown. The work area of the code below: the bit set of finished steps and the buffers of the
+// link status exchange.
+// Matching: its zero initialiser makes it take part in the compiler's size ordering of this file's data where it is
+// defined, which puts the local initialisers of the functions below in the game's order.
 LinkBuffers gLinkBuffers __attribute__((aligned(32))) = {0};
 
 // Plane bits of the display control registers (the four backgrounds, then the objects).
@@ -28,7 +29,7 @@ LinkBuffers gLinkBuffers __attribute__((aligned(32))) = {0};
 
 // Steps whose end the link waits for in WaitForLinkStep (bits of LinkBuffers.mFlags). LINK_STEP_FIRST_SHUT_DOWN and
 // LINK_STEP_SECOND_SHUT_DOWN are set by the callbacks of ShutDownLink's first and second step, which both run
-// whatever the link's role; nothing sets LINK_STEP_STATUS.
+// whatever the link's role. Nothing sets LINK_STEP_STATUS.
 #define LINK_STEP_STATUS 0x10
 #define LINK_STEP_FIRST_SHUT_DOWN 0x20
 #define LINK_STEP_SECOND_SHUT_DOWN 0x40
@@ -42,9 +43,9 @@ typedef struct {
     vu16 mUnk_6;
 } OamEntry;
 
-// Sets up one object of layer `layer`: calls DrawSprite for the picture `id`, then writes object attribute entry
-// `index` (attr0, attribute 1 from `attr1`, and attribute 2 from a tile offset and the palette) and, when `rotate` is
-// set, the rotation entry of the layer's group from the sine/cosine table at the frame counter's phase.
+// Sets up one object of layer `layer`. Calls DrawSprite for the picture `id`, then writes object attribute entry
+// `index`: attr0, attribute 1 from `attr1`, and attribute 2 from a tile offset and the palette. When `rotate` is set
+// it also writes the rotation entry of the layer's group, from the sine/cosine table at the frame counter's phase.
 void WriteIndicatorOam(int id, u32 shift, u32 index, u32 attr1, u32 attr0, int rotate, int layer) {
     OamEntry *oam = layer == 1 ? (OamEntry *) 0x07000000 : (OamEntry *) 0x07000400;
     s16 tile;
@@ -73,9 +74,9 @@ void WriteIndicatorOam(int id, u32 shift, u32 index, u32 attr1, u32 attr0, int r
     oam[index].mUnk_4 = tile + (GetSpritePalette() << 12);
 }
 
-// Holds a countdown at 20 while IsCommReading reports 1 and counts it down otherwise. When the screens are flagged,
+// Holds a countdown at 20 while IsCommReading reports 1, and counts it down otherwise. When the screens are flagged,
 // saves the plane bits of each engine's display control (hiding all but the objects on the engine that is not the
-// indicator's), or puts them back, then draws the two objects.
+// indicator's), or puts them back. Then draws the two objects.
 void UpdateCommIndicator(u32 attr1, u32 attr0, int screen) {
     int layer;
     int other;
@@ -141,7 +142,7 @@ u32 GetIndicatorLayer(void) {
 }
 
 // While the link is flagged, draws an object (through UpdateCommIndicator when the 0x200 flag is set) and calls the
-// hook; otherwise copies a 16 by 8 halfword picture, chosen by the link level, into the background memory.
+// hook. Otherwise copies a 16 by 8 halfword picture, chosen by the link level, into the background memory.
 void UpdateIndicator(void) {
     u32 x;
     u32 y;
@@ -192,9 +193,10 @@ void UpdateIndicator(void) {
     }
 }
 
-// Restarts the countdown and, when the status call succeeds with state 3, waits for the status step (its bit is never
-// set, so the wait runs to its 0x78-frame timeout). The spinner characters are unused: they only reproduce the 4-byte
-// rodata object that sits before the other rodata of the file.
+// Restarts the countdown. When the status call succeeds with state 3, waits for the status step; its bit is never
+// set, so the wait runs to its 0x78-frame timeout.
+// Matching: the spinner characters are unused. They only reproduce the 4-byte rodata object that sits before the
+// other rodata of the file.
 void func_02039b70(void) {
     char spin[4] = {'-', '\\', '|', '/'};
     u16 buf[1000];
@@ -206,9 +208,9 @@ void func_02039b70(void) {
 }
 
 // Shuts the link down: prints, waits for the two end steps when the link is up, then clears the indicator state and
-// releases its buffers. The link level is tested once without effect before the flags: the code compares it with
-// 1 and drops the result (the compiler does not optimise a function that uses the 32-byte aligned gLinkBuffers, so
-// the test stays).
+// releases its buffers.
+// Matching: the link level is compared with 1 once, before the flags, and the result dropped. The compiler does not
+// optimise a function that uses the 32-byte aligned gLinkBuffers, so the test stays.
 void ShutDownLink(void) {
     gSystemState.mUnk_2a3 = 60;
     func_02021fa8("WIR Shut Down\n");
@@ -236,7 +238,7 @@ void ShutDownLink(void) {
 }
 
 // Waits until a step in `mask` has finished (a bit set by the callbacks below), calling the system frame function
-// whenever the frame counter changes; gives up and returns FALSE after `timeout` frames. Clears the bits on success.
+// whenever the frame counter changes. Gives up and returns FALSE after `timeout` frames. Clears the bits on success.
 BOOL WaitForLinkStep(u32 mask, u32 timeout) {
     u32 start = gSystemState.mElapsedFrames;
     u32 last = gSystemState.mElapsedFrames;

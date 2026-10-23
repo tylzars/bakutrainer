@@ -23,12 +23,12 @@
 #include <nitro/gx.h>
 #include <nitro/os.h>
 
-// Values of data_020b10fc.mSceneState, the state UpdateScene switches on: start (adds the first popups), run (the
-// timers count), popups only (set when a touched kind-3 popup brings mKind3TouchesRemaining to 0: the timers stop,
-// touches are ignored and the popups still update; that popup's slot, in POPUP_STATE_END_SCENE, moves the state on to
-// end at the next update), end (waits for the model, then ends the mode).
+// Values of data_020b10fc.mSceneState, the state UpdateScene switches on. START adds the first popups; in RUN the
+// timers count; END waits for the model, then ends the mode.
 #define SCENE_STATE_START 0
 #define SCENE_STATE_RUN 1
+// Set when a touched kind-3 popup brings mKind3TouchesRemaining to 0. The timers stop, touches are ignored and the
+// popups still update. That popup's slot, in POPUP_STATE_END_SCENE, moves the state on to END at the next update.
 #define SCENE_STATE_POPUPS_ONLY 2
 #define SCENE_STATE_END 3
 
@@ -239,7 +239,7 @@ void DrawScene(void) {
     }
 }
 
-// Draws sprite 0xe3a and, at gKind3TouchPositions, 3 - mKind3TouchesRemaining sprites 0xe39: one per touched kind-3
+// Draws sprite 0xe3a, and 3 - mKind3TouchesRemaining sprites 0xe39 at gKind3TouchPositions: one per touched kind-3
 // popup when the scene starts with 3 of them to touch.
 void DrawKind3Touches(void) {
     int n = 3 - gScene->mKind3TouchesRemaining;
@@ -265,9 +265,9 @@ void AdvancePopupRow(void) {
     }
 }
 
-// Restarts mPopupTimer. If a cell is free, steps mPopupRow back while that row of table 0xd64 has a popup count of 0,
-// then starts up to that many popups in free cells: the first of kind 1 when mTouchCount > mKind1TouchThreshold (which
-// resets mTouchCount), the rest of a kind picked by the row's four weights.
+// Restarts mPopupTimer. If a cell is free, steps mPopupRow back while that row of table 0xd64 has a popup count of 0.
+// Then starts up to that many popups in free cells: the first of kind 1 when mTouchCount > mKind1TouchThreshold
+// (which resets mTouchCount), the rest of a kind picked by the row's four weights.
 void AddPopups(void) {
     u32 mask;
     s32 cum[4];

@@ -56,9 +56,9 @@
 #define MM_REG 1
 #define MM_VALUE 2
 
-// This file's .bss (ascending sizes as one file's): the working matrix, gGxState, the map state and the matrix of
-// each pose node. Objects without an initialiser join the compiler's size order of this file's data after the others,
-// in reverse definition order; this order (with data_02050898 defined below, before its users) puts the vector
+// This file's .bss, in ascending size order as one file's.
+// Matching: objects without an initialiser join the compiler's size order of this file's data after the others, in
+// reverse definition order. This order, with data_02050898 defined below before its users, puts the vector
 // initialisers of SetupOrthoModelView and SetupOrthoSpriteView in the game's .rodata order.
 MtxFx43 gCurrentMtx;
 GxState gGxState;
@@ -71,7 +71,7 @@ typedef struct Unk_PoseChannel {
 } Unk_PoseChannel;
 
 // The channels of one node in a pose animation (ReadAnimTrackNode): three for the third vector, three angles and three
-// position values, each a mode (above 1: one value per frame) and a byte offset into the file.
+// position values. Each is a mode (above 1: one value per frame) and a byte offset into the file.
 typedef struct Unk_PoseFrame {
     Unk_PoseChannel mUnk_00[3];
     Unk_PoseChannel mUnk_0c[3];
@@ -208,12 +208,12 @@ void ReadAnimTrackNode(u16 *rot, s32 *pos, s32 *vec, u32 node, u32 track) {
     }
 }
 
-// Walks the pose tree from `node` through each node's first child and next sibling. The matrix of `from` is the
-// starting matrix; each node's matrix is stored in gPoseNodeMatrices[node], and nodes with a slot in mMtxStoreIndex
-// are also loaded into the geometry engine's matrix stack. Without track data a node's scale is applied squared
-// (mScaleX * (mScaleX << 4)). The walk stops at mStopNodeIndex, mHighestNodeIndex keeps the highest node number
-// reached, and bits 0-1 of mUnk_f reduce rows of the matrix to their length on the diagonal (all three, or with bit 1
-// rows 0 and 2).
+// Walks the pose tree from `node` through each node's first child and next sibling, starting from the matrix of
+// `from`. Each node's matrix is stored in gPoseNodeMatrices[node]; nodes with a slot in mMtxStoreIndex are also loaded
+// into the geometry engine's matrix stack. Without track data a node's scale is applied squared
+// (mScaleX * (mScaleX << 4)). The walk stops at mStopNodeIndex, and mHighestNodeIndex keeps the highest node number
+// reached. Bits 0-1 of mUnk_f reduce rows of the matrix to their length on the diagonal: all three rows, or with bit 1
+// rows 0 and 2.
 void ComputePoseMatrices(int from, int node) {
     PoseNode *n;
     MtxFx43 m;
@@ -360,9 +360,8 @@ void GetPoseNodePos(VecFx32 *out, int node) {
     out->z = m._[11];
 }
 
-// Sets the position, mUnk_28 (a), mUnk_38 (b), the mode in mUnk_43 (c) and mUnk_3e (d), clears mUnk_41, mUnk_3a,
-// mUnk_3c and the two flip bits, and sets the three animation masks to all bits (flags bit 8) or none. mUnk_0c,
-// mUnk_1c, mUnk_24, mUnk_3f, mUnk_40, mUnk_42 and mUnk_43_5 keep their values.
+// c is the draw mode (mUnk_43). The three animation masks get all bits with flags bit 8, else none. mUnk_0c, mUnk_1c,
+// mUnk_24, mUnk_3f, mUnk_40, mUnk_42 and mUnk_43_5 keep their values.
 void SetDrawParams(DrawParams *p, int x, int y, int z, int a, u16 b, u8 c, u8 d, int flags) {
     p->mUnk_41 = 0;
     p->mUnk_28 = a;
@@ -388,8 +387,9 @@ void SetDrawParams(DrawParams *p, int x, int y, int z, int a, u16 b, u8 c, u8 d,
 }
 
 // Unless mViewKind is already VIEW_KIND_ORTHO_MODEL: loads a view matrix looking from (0, 0, 0x1000) at the origin
-// (kept in gMapState.mViewMtx, with mUnk_6c derived from it) and the orthographic projection over 0x4000 x 0x3000
-// (kept in mUnk_9c), the 0x100 x 0xc0 sprite space shifted left by 6, as draw mode 4 places models at positions << 6.
+// (kept in gMapState.mViewMtx, with mUnk_6c derived from it), and the orthographic projection over 0x4000 x 0x3000
+// (kept in mUnk_9c). That is the 0x100 x 0xc0 sprite space shifted left by 6, as draw mode 4 places models at
+// positions << 6.
 void SetupOrthoModelView(void) {
     if (gMapState.mCamera.mUnk_2dc.mViewKind != VIEW_KIND_ORTHO_MODEL) {
         VecFx32 pos = {0, 0, 0x1000};
@@ -407,10 +407,10 @@ void SetupOrthoModelView(void) {
     }
 }
 
-// Unless mViewKind is already VIEW_KIND_ORTHO_SPRITE: loads a view matrix looking from (0, 0, 0x1000) at the origin
-// and the orthographic projection over the 0x100 x 0xc0 sprite space (kept in gMapState.mUnk_9c) that
-// DrawSpritePolygons draws in, then writes the POLYGON_ATTR (alpha 0x1f and id 0, recorded in mPolygonAlpha and
-// mPolygonId), TEXIMAGE_PARAM, DIF_AMB, SPE_EMI and LIGHT_COLOR registers.
+// Unless mViewKind is already VIEW_KIND_ORTHO_SPRITE: loads a view matrix looking from (0, 0, 0x1000) at the origin,
+// and the orthographic projection over the 0x100 x 0xc0 sprite space that DrawSpritePolygons draws in (kept in
+// gMapState.mUnk_9c). Then writes the POLYGON_ATTR (alpha 0x1f and id 0, recorded in mPolygonAlpha and mPolygonId),
+// TEXIMAGE_PARAM, DIF_AMB, SPE_EMI and LIGHT_COLOR registers.
 void SetupOrthoSpriteView(void) {
     if (gMapState.mCamera.mUnk_2dc.mViewKind != VIEW_KIND_ORTHO_SPRITE) {
         VecFx32 pos = {0, 0, 0x1000};
@@ -465,7 +465,7 @@ void func_02024338(void *a, void *b, int c) {
 }
 
 // Runs obj's model script and draws it in mode 4 at (x, y) with frame 0xff (the elapsed frame count). Unlike
-// UpdateAndDrawModel it also draws a model id of 0 and with flag 0x80.
+// UpdateAndDrawModel it also draws a model id of 0, and with flag 0x80.
 void UpdateAndDrawModelOrtho(Model *obj, int x, int y, int scale, u16 angle, int flags) {
     DrawParams params;
     SetOrthoDrawParams(&params, x, y, 0, scale, angle, -1, flags);
@@ -695,20 +695,24 @@ s32 GetRelativeScale(const u32 *data, const DrawParams *p) {
     return p->mUnk_28 >> -s;
 }
 
-// Draws model file `id` with the draw parameters `params`. In modes other than 3 and 5, with a model `obj`: when its
-// mUnk_172_0 is set it moves params->mPos to the position of map entry gGxState.mPlaceEntryId (func_02031fc4) or, when
-// that is 0xffff, so that node mNodeIndex lands on mNodePos, then clears mUnk_172_0 and sets mUnk_172_7; with
-// mUnk_172_2 set it adds mPosPerFrame to params->mPos; with mUnk_172_3 set it stores node 0's position in mNodePos.
-// None of these three paths runs in this build: mUnk_172_0 and mUnk_172_2 follow only MC_SET_3C / MC_SET_3E, which no
-// model script uses, and nothing sets mUnk_172_3.
+// Draws model file `id` with the draw parameters `params`. In modes other than 3 and 5, with a model `obj`:
+//   - mUnk_172_0 set: moves params->mPos to map entry gGxState.mPlaceEntryId (func_02031fc4), or, when that is
+//     0xffff, so that node mNodeIndex lands on mNodePos. Then clears mUnk_172_0 and sets mUnk_172_7.
+//   - mUnk_172_2 set: adds mPosPerFrame to params->mPos.
+//   - mUnk_172_3 set: stores node 0's position in mNodePos.
+// None of these runs in this build: mUnk_172_0 and mUnk_172_2 follow only MC_SET_3C / MC_SET_3E, which no model
+// script uses, and nothing sets mUnk_172_3.
 //
-// The table loads in the order cos2, sin2, cos0, sin0, cos1, sin1 give the index and load block, `y` holding
-// height << 16 gives the texture scale block, and `cur += 0x38` placed right before each DC_StoreRange keeps the
-// argument copy into r0 behind the material and polygon stores. The sh0 statement written after the six table
-// loads, with the sy/sz copies before the if, gives the shift block (the `16 << sh0` shift is scheduled after the
-// two products and the .bss address load, so the 16 lands in r8). The material colours dif and amb held in the dead
-// locals y and x give the material block's registers, and the texture key index held in the dead local sc, declared
-// long, gives the stack slots (an int index takes the other slot).
+// Matching:
+//   - The table loads in the order cos2, sin2, cos0, sin0, cos1, sin1 give the index and load block.
+//   - `y` holding height << 16 gives the texture scale block.
+//   - `cur += 0x38` right before each DC_StoreRange keeps the argument copy into r0 behind the material and polygon
+//     stores.
+//   - The sh0 statement after the six table loads, with the sy/sz copies before the if, gives the shift block. The
+//     `16 << sh0` shift is then scheduled after the two products and the .bss address load, so the 16 lands in r8.
+//   - The material colours dif and amb held in the dead locals y and x give the material block's registers.
+//   - The texture key index held in the dead local sc, declared long, gives the stack slots (an int index takes the
+//     other slot).
 void DrawModelFileEx(u32 id, void *params, void *obj, int flags) {
     DrawParams *p = params;
     Model *model = obj;
@@ -1114,9 +1118,9 @@ void ProjectToScreen(void *pos, s32 *out) {
     ProjectToScreenEx(pos, out, 0);
 }
 
-// Projects `pos` through gMapState.mViewMtx to the screen, centred on 128, 96. With steps 0 out receives the point;
-// otherwise out (in 1/0x1000 pixels) moves 1/steps of the way to it and jumps there when the distance is below `steps`
-// or 0xc000 or more. That path does not run in this build: the only caller, ProjectToScreen, passes 0.
+// Projects `pos` through gMapState.mViewMtx to the screen, centred on (128, 96). With steps 0, out receives the point.
+// Otherwise out (in 1/0x1000 pixels) moves 1/steps of the way to it, and jumps there when the distance is below
+// `steps` or 0xc000 or more. That path does not run in this build: the only caller, ProjectToScreen, passes 0.
 void ProjectToScreenEx(const VecFx32 *pos, s32 *out, int steps) {
     VecFx32 v;
     fx32 w;
@@ -1493,11 +1497,11 @@ void func_020266a8(Model *m, s32 *slot) {
     }
 }
 
-// Runs the model's command list at mCommand until a command stops it. A command is a 16-bit word (bits 10-15 the
-// command, bits 8-9 a mode that selects how the operand is given, bits 0-7 a signed argument), mostly followed by a
-// 16-bit operand word. In the register commands the argument names the register (read with GetModelScriptReg, written
-// with SetModelScriptReg); mode 2 takes the operand word as a value, mode 1 as a register number, and mode 0 takes the
-// value from bits 5-7 of the argument and has no operand word. mFlags bit 0 is the equal flag, bit 1 the less flag.
+// Runs the model's command list at mCommand until a command stops it. A command is a 16-bit word: bits 10-15 the
+// command, bits 8-9 the operand mode, bits 0-7 a signed argument. Most commands are followed by a 16-bit operand word.
+// In the register commands the argument names the register (read with GetModelScriptReg, written with
+// SetModelScriptReg). Mode 2 takes the operand word as a value, mode 1 as a register number; mode 0 takes the value
+// from bits 5-7 of the argument and has no operand word. mFlags bit 0 is the equal flag, bit 1 the less flag.
 // The model scripts of this build (script_data.s) use only MC_ADD, MC_ANIM, MC_EVENT, MC_FLAG, MC_JUMP, MC_SET,
 // MC_STEP, MC_WAIT and MC_WAIT_OR_IDLE.
 int ExecModelScript(Model *m) {
@@ -1750,7 +1754,7 @@ int ExecModelScript(Model *m) {
                     m->mCommand += 2;
                     break;
                 // Set gGxState.mPlaceEntryId and mUnk_172_0: the next DrawModelFileEx moves the model to that map
-                // entry. No model script in this build uses this command.
+                // entry.
                 case MC_SET_3C:
                     if (mode == MM_VALUE) {
                         gGxState.mPlaceEntryId = val;
@@ -1796,8 +1800,7 @@ int ExecModelScript(Model *m) {
                     break;
                 }
                 // Set gGxState.mMoveEntryId (the map entry StartModelAnim moves the model towards), reset
-                // mPlaceEntryId to 0xffff and set mUnk_172_0 and mUnk_172_1. No model script in this build uses this
-                // command.
+                // mPlaceEntryId to 0xffff and set mUnk_172_0 and mUnk_172_1.
                 case MC_SET_3E:
                     if (mode == MM_VALUE) {
                         gGxState.mMoveEntryId = val;
@@ -1818,8 +1821,8 @@ int ExecModelScript(Model *m) {
                     m->mFlags = (m->mFlags & ~4) | (arg << 2);
                     m->mCommand += 1;
                     break;
-                // Set mUnk_148, mUnk_144 and mUnk_146, none of which is read in this build (mUnk_148 is only copied
-                // to mUnk_149, which nothing reads).
+                // Set mUnk_148, mUnk_144 and mUnk_146. Nothing reads them in this build (mUnk_148 is only copied to
+                // mUnk_149, which nothing reads).
                 case MC_TRACK:
                     if (mode == MM_VALUE) {
                         m->mUnk_148 = arg;
@@ -1896,8 +1899,8 @@ int ExecModelScript(Model *m) {
                         break;
                     }
                     // fall through
-                // Stop for this frame (advance the animation; the command runs again) while the mask bit is set in
-                // mSignals and clear in mBlockedSignals and mUnk_172_14 is clear, or while mUnk_172_12 is set; else
+                // Stop for this frame (advance the animation; the command runs again) while mUnk_172_12 is set, or
+                // while the mask bit is set in mSignals and clear in mBlockedSignals and mUnk_172_14 is clear. Else
                 // step past.
                 case MC_WAIT: {
                     u32 mask;
@@ -1926,7 +1929,7 @@ int ExecModelScript(Model *m) {
     return 1;
 }
 
-// Zeroes mTrackFillCount and mTrack1Blend and clears track 0's data; track 1's data pointer is left.
+// Track 1's data pointer is left as it is.
 void ClearAnimTracks(void) {
     gGxState.mTrackFillCount = 0;
     gGxState.mTrack1Blend = 0;
@@ -1950,8 +1953,8 @@ void StartModel(void *obj, int id, int anim, int count, u32 script) {
     StartModelEx(obj, id, anim, count, 0, script);
 }
 
-// Starts model `id` on `script` (or, without one, animation `anim`). A different or zero id clears the whole object
-// first unless mode is -1.
+// Starts model `id` on `script` (or, without one, animation `anim`). A different or zero id first clears the whole
+// object, unless mode is -1.
 void StartModelEx(Model *m, int id, int anim, int count, int mode, u32 script) {
     if (m->mId != id || id == 0) {
         if (mode != -1) {

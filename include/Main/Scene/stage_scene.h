@@ -20,13 +20,13 @@ typedef struct PopupSlot {
     s32 mAppearTimer;
     s32 mShowTimer;
     s32 mDisappearFrameCount;
-    // Counts down in POPUP_STATE_DISAPPEAR; HandlePopupTouch also sets it to 30 for POPUP_STATE_TOUCHED, which counts
+    // Counts down in POPUP_STATE_DISAPPEAR. HandlePopupTouch also sets it to 30 for POPUP_STATE_TOUCHED, which counts
     // it down the same way.
     s32 mDisappearTimer;
     // Set by StartPopup to the scene's amount for the kind (kind 3 leaves it); never read in this build.
     s32 mAmount;
     s32 mState;
-    // Grid cell (3 across) the popup is drawn in; both StartPopup calls pass the slot's own index, so it always equals
+    // Grid cell (3 across) the popup is drawn in. Both StartPopup calls pass the slot's own index, so it always equals
     // the slot's position in mSlots.
     s32 mCellIndex;
 } PopupSlot;
@@ -38,8 +38,7 @@ typedef struct PopupPos {
     s32 y;
 } PopupPos;
 
-// The stage scene object (gScene points to it): the stage settings, two models, the draw parameters, the
-// scene's vectors and counters, and the timed popup slots.
+// The stage scene object; gScene points to it.
 typedef struct Scene {
     u8 mUnk_000[0x178];
     StageInfo mStage;
@@ -61,14 +60,14 @@ typedef struct Scene {
     u32 mScore;
     s32 mEndTimerMax;
     // Counts down in SCENE_STATE_RUN; at 0 the scene state becomes SCENE_STATE_END. Also the time DrawModeScoreAndTime
-    // draws, raised by mKind1Amount (up to mEndTimerMax) when a kind-1 popup is touched, and its ratio to mEndTimerMax
-    // places the camera points (UpdateSceneCamera).
+    // draws. A touched kind-1 popup raises it by mKind1Amount (up to mEndTimerMax). Its ratio to mEndTimerMax places
+    // the camera points (UpdateSceneCamera).
     s32 mEndTimer;
-    // Row of table 0xd64: advanced by AdvancePopupRow every mRowSeconds seconds, stepped back by AddPopups while the
+    // Row of table 0xd64. AdvancePopupRow advances it every mRowSeconds seconds; AddPopups steps it back while the
     // row's popup count is 0.
     s32 mPopupRow;
     s32 mRowPopupCount;
-    // From table 0xd63; a touched kind-3 popup counts it down, and at 0 the scene goes to SCENE_STATE_POPUPS_ONLY.
+    // From table 0xd63. A touched kind-3 popup counts it down; at 0 the scene goes to SCENE_STATE_POPUPS_ONLY.
     s32 mKind3TouchesRemaining;
     // AddPopups starts a kind-1 popup first when mTouchCount is more than this.
     s32 mKind1TouchThreshold;
@@ -90,8 +89,8 @@ typedef struct Scene {
     s32 mKind0Amount;
     s32 mUnk_664;
     PopupSlot mSlots[POPUP_SLOT_COUNT];
-    // The amount ShowNumber was last given (mKind2Amount or mKind0Amount, when a popup of a kind other than 1 and 3 is
-    // touched); DrawNumber draws nothing while it is 0.
+    // The amount ShowNumber was last given: mKind2Amount or mKind0Amount, when a popup of a kind other than 1 and 3 is
+    // touched. DrawNumber draws nothing while it is 0.
     s32 mNumber;
     u16 mNumberLevel;
     u16 mUnk_7d6;

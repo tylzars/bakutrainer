@@ -228,8 +228,8 @@ void ShiftGridGroups(void) {
     }
 }
 
-// Always 0 in this build: UpdateField's touch and key input for the x speed never runs, and the drive steps (its
-// other branch) always run instead.
+// Always 0 in this build: UpdateField's touch and key input for the x speed never runs; the drive steps (its other
+// branch) always run instead.
 int IsXInputEnabled(void) {
     return 0;
 }
@@ -241,7 +241,7 @@ int IsYInputEnabled(void) {
     return 0;
 }
 
-// Unlike StartDrivePlusX it does not wait for a running drive: it restarts over one of either direction and zeroes
+// Unlike StartDrivePlusX it does not wait for a running drive. It restarts over one of either direction and zeroes
 // the x speed.
 void StartDriveMinusX(s32 distance, u32 ms) {
     if (gFieldObjects.mBelowMinX == 0 && gFieldObjects.mEndTimer != 0) {

@@ -240,8 +240,8 @@ void UpdateNodeState(void) {
     }
 }
 
-// Refills the StageInfo list (gStageInfos) with the three stage ids of the selected node (GetSelectedNodeStageId);
-// node is only range-checked and mode is unused.
+// Refills the StageInfo list (gStageInfos) with the three stage ids of the selected node (GetSelectedNodeStageId).
+// node is only range-checked; mode is unused.
 void SetupNodeStageInfos(u32 node, int mode) {
     int i;
 
@@ -254,10 +254,11 @@ void SetupNodeStageInfos(u32 node, int mode) {
     }
 }
 
-// With flags bit 0, applies the battle's slot flags to each slot's stage: BATTLE_SLOT_GRADE_UP raises the grade by
-// one, and a stage that was picked loses 10 percent when BATTLE_SLOT_KEPT is set, else 30. Then empties mNodeStages
-// and, with flags bit 1, refills it with the node's stages (node values 15..17 that are not -1), each found in the
-// stage list or added to it; the first one added becomes the selected stage when none is selected.
+// With flags bit 0, applies the battle's slot flags to each slot's stage. BATTLE_SLOT_GRADE_UP raises the grade by
+// one, and a stage that was picked loses 10 percent when BATTLE_SLOT_KEPT is set, else 30.
+// Then empties mNodeStages and, with flags bit 1, refills it with the node's stages (node values 15..17 that are not
+// -1), each found in the stage list or added to it. The first one added becomes the selected stage if none is
+// selected.
 void ApplyBattleSlotFlagsAndSetNodeStages(int node, int flags) {
     int i;
 
@@ -391,8 +392,8 @@ int PickWeightedTableEntry(StageInfo *info) {
 static void InitStage(int index, int id);
 static void InitStageInfo(int index, int id);
 
-// Clears both stage lists, adds stage ids 3, 4 and 5 to the StageInfo list and, only when a is 0, stage id 0x19 to
-// the StageRec list.
+// Clears both stage lists and adds stage ids 3, 4 and 5 to the StageInfo list. Only when a is 0, also adds stage id
+// 0x19 to the StageRec list.
 void ResetStages(int a) {
     memset(gStages, 0, 0x5550);
     memset(gStageInfos, 0, 0x72);
@@ -406,8 +407,8 @@ void ResetStages(int a) {
     }
 }
 
-// Appends stage id to a list and returns its index: list 0 a StageRec in gStages (mStageCount), list 1 a
-// StageInfo in gStageInfos (mStageInfoCount, at most 3).
+// Appends stage id to a list and returns its index. List 0: a StageRec in gStages (mStageCount). List 1: a StageInfo
+// in gStageInfos (mStageInfoCount, at most 3).
 int AddStage(int list, int id) {
     int slot;
 
@@ -539,7 +540,7 @@ int AddValue(StageRec *rec, int delta) {
 }
 
 // Adds amount to the stage's percent (mInfo.mPercent), clamped to 0..100; returns 1 when it was clamped. When amount
-// is positive, a set plays sound 0xe8 (PlayWaveKeepAlive) and b set, while a stage is selected, adds an ObjSlot
+// is positive: with a set, plays sound 0xe8 (PlayWaveKeepAlive); with b set and a stage selected, adds an ObjSlot
 // (AddAnimObjSlotEx) at the gauge position of the old value (PercentToX). Reaching 100 clears mUnk_22e.
 int AddPercent(StageRec *rec, int amount, int a, int b) {
     StageInfo *info = &rec->mInfo;
@@ -593,7 +594,7 @@ void ResetSlots(int a) {
     data_020b6ee0.mSelectedSlotIndex = 0;
 }
 
-// Puts stage index stage (-1 for none) into slot and clears mInSlot of the stage it replaces; returns that stage's
+// Puts stage index stage (-1 for none) into slot and clears mInSlot of the stage it replaces. Returns that stage's
 // index (-1 for none).
 int SetSlotStage(int slot, int stage) {
     int old;

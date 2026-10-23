@@ -19,9 +19,9 @@ typedef struct ModelAnim {
     u8 mFlags;
 } ModelAnim;
 
-// An event set by MC_EVENT. Of the events whose bits are set in both mEventMask and mSignals, UpdateModelScript
-// starts the one whose mKey differs from mEventKey and has the highest high byte not below mEventKey's (on a tie, the
-// later entry).
+// An event set by MC_EVENT. Of the events whose bits are set in both mEventMask and mSignals, UpdateModelScript starts
+// the one whose mKey differs from mEventKey and has the highest high byte not below mEventKey's. On a tie it takes the
+// later entry.
 typedef struct ModelEvent {
     s16 *mCommand;
     u16 mKey;
@@ -49,19 +49,19 @@ typedef struct Model {
     // Entry 32 is the one an event index of -1 selects.
     ModelEvent mEvents[33];
     u32 mEventMask;
-    // Bits the script sees for one update: UpdateModelScript starts an event whose bit is set and then clears them all,
-    // and MC_WAIT stops while its bit is set. Only game code sets them in this build (no script uses MC_SIGNAL or
-    // writes register 0x19).
+    // Bits the script sees for one update. UpdateModelScript starts an event whose bit is set, then clears them all;
+    // MC_WAIT stops while its bit is set. Only game code sets them in this build (no script uses MC_SIGNAL or writes
+    // register 0x19).
     u32 mSignals;
-    // Bits of mSignals that UpdateModelScript and MC_WAIT ignore. Only register 0x1a sets it and no script writes that
-    // register, so it is always 0 in this build.
+    // Bits of mSignals that UpdateModelScript and MC_WAIT ignore. Only register 0x1a sets it, and no script writes
+    // that register, so it is always 0 in this build.
     u32 mBlockedSignals;
     // The command ExecModelScript runs next; NULL for a model without a script, which only steps its animation.
     s16 *mCommand;
     // When a script sets mEventKey (register 0x1e), the old key is copied here unless the new key equals this one.
     // Nothing reads it in this build.
     u16 mPrevEventKey;
-    // Key of the part of the script that runs, set by the scripts through register 0x1e; an event whose mKey equals it
+    // Key of the part of the script that runs, set by the scripts through register 0x1e. An event whose mKey equals it
     // is not started.
     u16 mEventKey;
     s16 mUnk_144;
@@ -77,11 +77,11 @@ typedef struct Model {
         ModelAnim mAnim[2];
     };
     // Position of node mNodeIndex, stored by UpdateAndDrawModel after the draw while mNodeIndex is not 0xff. Nothing
-    // that reads it runs in this build: the model code reads it only after MC_SET_3C or MC_SET_3E, which no script
-    // uses, and the camera only in look-at mode 6, which is never set.
+    // that reads it runs in this build: the model code reads it only after MC_SET_3C or MC_SET_3E, and the camera
+    // only in look-at mode 6, which is never set.
     VecFx32 mNodePos;
     // Added to the draw position by DrawModelFileEx once StartModelAnim has set it, which it does only after
-    // MC_SET_3E; no script uses that command, so it is never set in this build.
+    // MC_SET_3E. So it is never set in this build.
     VecFx32 mPosPerFrame;
     u16 mId;
     union {
@@ -97,15 +97,15 @@ typedef struct Model {
             u16 mUnk_172_7 : 1;
             u16 mUnk_172_8 : 1;
             u16 mUnk_172_9 : 1;
-            // Set when animation 0 reaches its end (also set through mUnk_172, as 0x400, by the battle screen); it
+            // Set when animation 0 reaches its end (the battle screen also sets it through mUnk_172, as 0x400). It
             // stays set, even while the animation loops, until the next StartModelAnim or a clear of the whole model.
             u16 mAnimEnded : 1;
             u16 mUnk_172_11 : 1;
             u16 mUnk_172_12 : 1;
-            // At the end of animation 0, hold instead of wrapping to the start: the count stops at the full length
-            // less 2, which shows the last frame when mFramesPerAnimFrame is 2 or more and the one before it when it
-            // is 1. A scripted run of ExecModelScript clears it first and MC_WAIT_OR_IDLE sets it, so a scripted
-            // model holds only while its script sits on MC_WAIT_OR_IDLE; SetupSharedModel sets it for loop 0.
+            // At the end of animation 0, hold instead of wrapping to the start. The count stops at the full length
+            // less 2: the last frame when mFramesPerAnimFrame is 2 or more, the one before it when it is 1.
+            // A scripted run of ExecModelScript clears it first and MC_WAIT_OR_IDLE sets it, so a scripted model holds
+            // only while its script sits on MC_WAIT_OR_IDLE. SetupSharedModel sets it for loop 0.
             u16 mHoldAtEnd : 1;
             u16 mUnk_172_14 : 1;
             u16 mUnk_172_15 : 1;

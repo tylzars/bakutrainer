@@ -31,10 +31,10 @@ typedef struct ObjSlot {
     // The sprite id (OBJ_KIND_SPRITE) or DrawText's align (OBJ_KIND_TEXT).
     s32 mUnk_44;
     u8 mUnk_48[0x10a - 0x48];
-    // Frames left for a text or a timed sprite, which is freed when it counts down to 0 (a text added with 0 wraps
-    // to 0xffff on its first update). A sprite added with a negative duration gets 0 here instead: it falls (mVy
-    // grows by mVyPerFrame) until it leaves the 0x100 x 0xc0 screen area. For OBJ_KIND_ANIM this halfword lies inside
-    // the sprite script state at mUnk_30 and is not used as a timer.
+    // Frames left for a text or a timed sprite; the slot is freed when it counts down to 0. A text added with 0 wraps
+    // to 0xffff on its first update. A sprite added with a negative duration gets 0 here instead and falls (mVy grows
+    // by mVyPerFrame) until it leaves the 0x100 x 0xc0 screen area. For OBJ_KIND_ANIM this halfword lies inside the
+    // sprite script state at mUnk_30 and is not a timer.
     u16 mTimer;
     u8 mUnk_10c[2];
     u8 mUnk_10e;
@@ -43,15 +43,15 @@ typedef struct ObjSlot {
     VecFx32 mPos;
     u8 mUsePos;
     u8 mUnk_141[3];
-    // The position in 1/256 pixels, moved by mVx and mVy each update; drawn at (mX, mY) >> 8, or that far from the
+    // The position in 1/256 pixels, moved by mVx and mVy each update. Drawn at (mX, mY) >> 8, or that far from the
     // projected mPos while mUsePos is set.
     s32 mX;
     s32 mY;
     s32 mVx;
     s32 mVy;
     s32 mVyPerFrame;
-    // DrawSprite's w (a text slot's glyphs get it through gSystemState.mUnk_308): the low byte is the sort key and
-    // w >> 8 would be the priority; every caller passes a value below 0x100.
+    // DrawSprite's w; a text slot's glyphs get it through gSystemState.mUnk_308. The low byte is the sort key and
+    // w >> 8 would be the priority, but every caller passes a value below 0x100.
     s32 mDrawOrder;
     s32 mLayer;
 } ObjSlot;

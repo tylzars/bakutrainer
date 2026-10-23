@@ -690,8 +690,8 @@ u32 GetPaletteFileKeyEnd(void) {
 }
 
 #pragma thumb off
-// Queues a transfer for ProcessTransfers: grows the queue's byte count, waits for the queue to drain when it is full
-// (terminating when it stays full), and appends the entry.
+// Queues a transfer for ProcessTransfers. When the queue is full it waits for it to drain (and stops the program if
+// it stays full).
 void QueueTransferEx(u32 file, u32 src, u32 dst, u32 size, u32 unpackedSize, u8 mode, u8 flag) {
     Transfer entry;
     int limit;
@@ -738,8 +738,8 @@ void ClearTransferQueue(void) {
     }
 }
 
-// While screen 1's fade state is FADE_STATE_CLEAR, limits a transfer size to what fits before the end of the scanline
-// window (lines 0xbf-0xd6), first waiting out the other lines; otherwise the size is returned as it is.
+// While screen 1 is FADE_STATE_CLEAR: waits for the scanline window (lines 0xbf-0xd6) and cuts the size to what fits
+// before it ends. Otherwise the size is returned as it is.
 u32 LimitTransferSize(u32 size) {
     u32 result = size;
     if (gSystemState.mFadeState[0] == FADE_STATE_CLEAR) {
@@ -768,16 +768,16 @@ void func_0201c78c(void) {
 #pragma thumb on
 
 #pragma thumb off
-// Runs the queued transfers: maps the VRAM banks to LCDC when the bank layout changed, picks the queued entries for
-// VRAM (flags & 2) or other memory (flags & 1), sorts them by file and offset, reads and unpacks them into one
-// buffer (packed block files, EZ10 blocks, plain file reads, memory copies), converts textures and palettes, then
-// copies each entry to its destination with the banks mapped. The removal of finished entries at the end, for a busy
-// system, never runs: while busy no entry is picked and the function returns before it.
-// Forms kept because the compiler's output needs them: the block-run search (block locals first, k and p, with
-// first an unsigned long) and the plain file read take the list through its address (`*(Transfer ***) &list`); the
-// plain file read takes the file id through a cast of e and the entry as list[j - 1] after j = i + 1; cachedFile and
-// w are u32. A plain `list`, `e->mFile` or `list[i]`, a u16 cachedFile, a u32 first or an int w changes the register
-// choice or the order of the loads and stores.
+// Runs the queued transfers. Maps the VRAM banks to LCDC when the bank layout changed and picks the entries for VRAM
+// (flags & 2) or other memory (flags & 1). Sorts them by file and offset, reads and unpacks them into one buffer
+// (packed block files, EZ10 blocks, plain file reads, memory copies) and converts textures and palettes. Then copies
+// each entry to its destination with the banks mapped. The removal of finished entries at the end never runs: it is
+// for a busy system, and while busy no entry is picked and the function returns earlier.
+// Matching: the block-run search and the plain file read take the list through its address
+// (`*(Transfer ***) &list`). The block-run search declares its block locals first (k and p), with `first` an
+// unsigned long. The plain file read takes the file id through a cast of e, and the entry as list[j - 1] after
+// j = i + 1. cachedFile and w are u32. A plain `list`, `e->mFile` or `list[i]`, a u16 cachedFile, a u32 first or an
+// int w changes the register choice or the order of loads and stores.
 void ProcessTransfers(int flags) {
     int i;
     Transfer **list;
@@ -1258,7 +1258,7 @@ restart:
     state = 0;
     i = 0;
     remaining = size;
-    // An expression rather than an `if`, as the compiler's output needs: it keeps the register copy an `if` drops.
+    // An expression, not an `if`: it keeps a register copy that an `if` drops.
     (void) (size <= 0xfb800 || (OS_Terminate(), 0));
     for (; remaining > 0; remaining -= 0x1f7) {
         gSystemState.mUnk_250.mUnk_24[i >> 3] &= ~(1 << (i & 7));
@@ -1429,7 +1429,6 @@ void LoadImage(int id, int layers) {
     LoadImageEx(id, layers, 0, 0);
 }
 
-// Every caller passes paletteFile 0, so LoadImageData's palette-file branch never runs in this build.
 void LoadImageEx(int id, int layers, int paletteFile, u16 flags) {
     int found;
     void *buf;
@@ -1452,8 +1451,6 @@ void LoadImageEx(int id, int layers, int paletteFile, u16 flags) {
     }
 }
 
-// paletteFile is 0 at every call (LoadImageEx's callers all pass 0), so the branch that maps the image's colours
-// through CreateNearestColorTable never runs in this build.
 void LoadImageData(u8 *data, int layers, int paletteFile, u16 flags) {
     void *tmp = NULL;
     void *rgb = NULL;
@@ -1608,9 +1605,9 @@ void LoadImageData(u8 *data, int layers, int paletteFile, u16 flags) {
     Free(&rgb);
 }
 
-// JPEG reader state (the asm block decoder func_02028980 uses it too): the count of buffered bits, the read
-// pointer (just past the marker of the current segment) and the bit buffer; gArenaLo is the arena start and
-// gPmCallbackInfo the sleep callback node the start-up code keeps.
+// JPEG reader state, also used by the asm block decoder func_02028980: the count of buffered bits, the read pointer
+// (just past the marker of the current segment) and the bit buffer. gArenaLo is the arena start and gPmCallbackInfo
+// the sleep callback node the start-up code keeps.
 u8 data_020c1818;
 void *gArenaLo;
 u8 *data_020c1820;
@@ -1633,9 +1630,9 @@ const u8 data_020502a4[4] = {4, 1, 1, 0};
 
 const u8 data_020502a8[4] = {0, 1, 1, 0};
 
-// Low and high bound of each of the four microphone bands. Defined here, after data_020502a8: the compiler sorts
-// the file's constant objects by size and orders equal sizes by the definition list, and this place gives the
-// original .rodata layout (with the microphone code or in address order, gLayerWidths or data_020502a4 move).
+// Low and high bound of each of the four microphone bands. Defined here for the .rodata layout: the compiler sorts
+// a file's constants by size, and equal sizes by definition order. Next to the microphone code or in address order,
+// gLayerWidths or data_020502a4 would move.
 const u16 gMicBandRanges[8] = {90, 150, 150, 200, 200, 300, 300, 400};
 
 const u8 gVramCtrlBitOffsets[9] = {0, 8, 16, 24, 0, 8, 16, 0, 8};
@@ -2197,8 +2194,8 @@ void *CreateNearestColorTable(int id, int layers) {
         idx = queue[head].mPaletteIndex;
         head = (head + 1) & 0x1fff;
         cell = r + ((b << 10) + (g << 5));
-        // Offers the entry idx to each neighbouring cell: the cell takes it when it is nearer to the cell's colour
-        // than the entry the cell has, and joins the queue.
+        // Offers entry idx to each neighbouring cell. A cell takes it if it is nearer to the cell's colour than the
+        // cell's current entry, and then joins the queue.
         if (r != 0) {
             n1 = cube + cell - 1;
             if (idx != *n1) {
@@ -2429,11 +2426,11 @@ void UpdateFade(void) {
     }
 }
 
-// Loads image `image` on both screens, sets up texture layer 1 from files b, c and a, swaps the LCDs and draws
-// sprite + step at (0x2c, 0x5d) each frame (the step goes up every fourth frame to 10, then loops through 10 to 24 one
-// per frame) until UpdateWaitForReleaseOrTimeout with 0x3c and 0x78 frames ends; then fades both screens. It never
-// starts the fade to clear itself, so the frames count only once UpdateSystem's automatic fade to clear
-// (gSystemState.mFlags 0x20000) has cleared both screens.
+// Loads image `image` on both screens, sets up texture layer 1 from files b, c and a, and swaps the LCDs. Each frame
+// it draws sprite + step at (0x2c, 0x5d): the step goes up every fourth frame to 10, then loops 10 to 24 one per
+// frame. Ends when UpdateWaitForReleaseOrTimeout (0x3c, 0x78 frames) does, then fades both screens.
+// It never starts the fade to clear itself, so frames count only once UpdateSystem's automatic fade to clear
+// (mFlags 0x20000) has cleared both screens.
 void RunImageWithSprite(int a, int b, int c, u16 image, u16 sprite) {
     int phase = 0;
     int touched = 0;
@@ -2544,11 +2541,10 @@ void SetFadeClear(int a) {
     }
 }
 
-// One frame of a wait: returns 1 once nothing is held (key bits 0 or 3, the touch) after something was and more than
-// minFrames frames have passed, or once *frames reaches maxFrames. *touched latches, so a press released before
-// minFrames ends the wait as soon as minFrames has passed. *frames counts up only while the screens in `layers` are
-// FADE_STATE_CLEAR. RunImage and RunImageWithSprite start it at 0; func_0201fed4 starts it at the frames elapsed since
-// gSystemState.mUnk_324.
+// One frame of a wait. Returns 1 once nothing is held (key bits 0 or 3, the touch) after something was and more than
+// minFrames frames have passed, or once *frames reaches maxFrames. *touched latches, so a press released early ends
+// the wait as soon as minFrames has passed. *frames counts only while the screens in `layers` are FADE_STATE_CLEAR.
+// RunImage and RunImageWithSprite start it at 0; func_0201fed4 at the frames elapsed since gSystemState.mUnk_324.
 int UpdateWaitForReleaseOrTimeout(u32 *frames, int *touched, u32 minFrames, u32 maxFrames, int layers) {
     if ((gSystemState.mKeysDown & 9) || ReadTouchAndAppendTrail(0, 0) == 1) {
         *touched = 1;
@@ -2565,10 +2561,10 @@ int UpdateWaitForReleaseOrTimeout(u32 *frames, int *touched, u32 minFrames, u32 
     return 0;
 }
 
-// Shows image `a` on the screens in mask e: waits for FADE_STATE_FADED, loads the image and starts the fade to clear,
-// then waits until a key (bits 0 or 3) or the touch is released after more than b frames, or until c frames have
-// passed (frames count while the screens are clear). Then d == 0 sets the screens faded, d == 2 fades them and waits,
-// d == 1 leaves them; the VRAM banks of uses 2 and 6 are freed for screens 1 and 2.
+// Shows image `a` on the screens in mask e. Waits for FADE_STATE_FADED, loads the image and starts the fade to clear.
+// Then waits until a key (bits 0 or 3) or the touch is released after more than b frames, or until c frames have
+// passed (counted while the screens are clear). Then d == 0 sets the screens faded, d == 2 fades them and waits,
+// d == 1 leaves them. The VRAM banks of uses 2 and 6 are freed for screens 1 and 2.
 void RunImage(int a, int b, int c, int d, int e) {
     u32 frames = 0;
     int touched = 0;
@@ -2638,8 +2634,8 @@ s64 LengthSquared2d64(int x, int y) {
     return (s64) x * x + (s64) y * y;
 }
 
-// Moves *value toward 0 (speed < 0) or LEVEL_FULL (speed > 0) by 1/|speed| of the distance when it is farther than
-// 2 * |speed| away; otherwise it lands on the step directly.
+// Moves *value toward 0 (speed < 0) or LEVEL_FULL (speed > 0) by 1/|speed| of the distance. Within 2 * |speed| of
+// the target it lands on the step directly.
 void EaseLevel(u16 *value, int speed) {
     int target;
     int diff;
@@ -2785,8 +2781,8 @@ u32 NextRandom(void) {
     return s;
 }
 
-// Random value between lo and hi. When lo == hi nothing is computed and lo is still in r0; adding `return lo;`
-// changes the code.
+// Random value between lo and hi. With lo == hi there is no return statement: lo is still in r0, and an explicit
+// `return lo;` changes the code.
 u32 RandomRange(u32 lo, u32 hi) {
     if (lo != hi) {
         return MapRangeFromZero((u16) NextRandom(), ANGLE_FULL, lo, hi);
@@ -2953,8 +2949,8 @@ u16 GetSaveBlockTag(int id, u32 index) {
 }
 
 // Sets up the block store for set a: kind, first and last field, status callback and the value for mUnk_454 (-1
-// leaves it; otherwise the callback is also called with 4). Reads every block, writes a zero record
-// (WriteZeroSaveBlock) over each one that does not read back intact, then waits for the store.
+// leaves it; otherwise the callback is also called with 4). Reads every block, writes a zero record over each one
+// that does not read back intact, then waits for the store.
 void InitSaveStore(u32 a, int b, u16 c, int d, void (*fn)(u32), int e) {
     u32 count = GetFileValue(a, d + 1);
     u32 r;
@@ -3003,8 +2999,8 @@ void InitSaveStore(u32 a, int b, u16 c, int d, void (*fn)(u32), int e) {
     gSystemState.mUnk_450 |= 4;
 }
 
-// Reads block index of set c. Bit 0 of the result: the checksum matches (the record is then unpacked into buf when
-// buf is not null); bit 1: the stored tag matches the block's tag.
+// Reads block index of set c. Result bit 0: the checksum matches (the record is then unpacked into buf, if buf is not
+// null). Bit 1: the stored tag matches the block's tag.
 u32 ReadSaveBlock(u32 index, void *buf, int c) {
     u16 table[256];
     u16 crc;
@@ -3247,8 +3243,7 @@ int IsLcdSwapped(void) {
     return 0;
 }
 
-// Only while both screens are FADE_STATE_CLEAR: returns 1 for a press of key bit 0 or of the touch and clears both
-// (bit 0 of mKeysPressed and mTouchPressed).
+// Only while both screens are FADE_STATE_CLEAR: returns 1 for a press of key bit 0 or of the touch, and clears both.
 int ConsumeKeyOrTouchPress(void) {
     if (gSystemState.mFadeState[0] == FADE_STATE_CLEAR && gSystemState.mFadeState[1] == FADE_STATE_CLEAR &&
         ((gSystemState.mKeysPressed & 1) || gSystemState.mTouchPressed == 1)) {
@@ -3272,8 +3267,7 @@ void SetTouchButtonSoundsAndKeys(int flags, u16 a, u16 b, u16 c) {
     gTouchInput.mButtons[index].mKeys = c;
 }
 
-// Under SYSTEM_TOUCH_LOCK no button is added, but the sounds and key mask are still written to the newest button
-// in the list.
+// Under SYSTEM_TOUCH_LOCK no button is added, but the sounds and key mask still go to the newest button in the list.
 void AddTouchButtonEx(int a, int b, int c, int d, int e, int f, u16 g, u16 h, u16 i) {
     AddTouchButtonWithSounds(a, b, c, d, e, f, g, h);
     SetTouchButtonSoundsAndKeys(a, g, h, i);
@@ -3398,8 +3392,8 @@ void ClearTouchButtons(void) {
     gTouchInput.mTrail.mTouchState.mButtonCount = 0;
 }
 
-// Polls the touch screen and the keys and returns the button state: the button id in the low half and the
-// TOUCH_* flags above it. It then empties the button list and plays the hit button's sound on a press or release.
+// Polls the touch screen and the keys and returns the button id (low half) and the TOUCH_* flags (high half). Then
+// empties the button list and plays the hit button's sound on a press or release.
 u32 UpdateTouchButtons(u32 mask) {
     u32 result = gTouchInput.mTrail.mTouchState.mHitId;
     u32 wanted = result;

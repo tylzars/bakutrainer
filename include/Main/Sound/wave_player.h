@@ -10,10 +10,11 @@ extern "C" {
 #define WAVE_CHANNEL_COUNT 16
 #define WAVE_FORMAT_MAGIC 0x4453504d
 
-// Flags of a wave id: the data is the caller's buffer, not a cached file (UpdateWaves skips its file check), and
-// a busy channel of the mask may be taken over when none is free (ClaimWaveChannel's steal). No caller sets
-// WAVE_ID_STEAL in this build.
+// Flags of a wave id.
+// The data is the caller's buffer, not a cached file; UpdateWaves skips its file check.
 #define WAVE_ID_NO_FILE 0x40000000
+// A busy channel of the mask may be taken over when none is free (ClaimWaveChannel's steal). No caller sets it in this
+// build.
 #define WAVE_ID_STEAL 0x80000000
 
 // Header of a wave file; the samples follow it.
@@ -45,7 +46,7 @@ typedef struct WaveChannel {
     /* 00 */ u32 mCommandTag;
     /* 04 */ u32 mId;
     /* 08 */ const void *mWave;
-    // Keep-alive mark: 0 none; PlayWaveKeepAlive sets 2, UpdateKeepAliveWaves turns 2 into 1 each frame and stops
+    // Keep-alive mark, 0 = none. PlayWaveKeepAlive sets 2; each frame UpdateKeepAliveWaves turns 2 into 1, and stops
     // the channel at 1.
     /* 0c */ u8 mKeepAlive;
     /* 0d */ u8 mUsed : 1;
@@ -55,8 +56,7 @@ typedef struct WaveChannel {
     u8 mFading : 1;
     /* 0e */ u8 mUnk_0e[2];
     /* 10 */ u32 mTimer;
-    // Volume last sent; UpdateWaves' fade branch, which never runs in this build (mFading is only ever 0), would
-    // count it down.
+    // Volume last sent. UpdateWaves' fade branch would count it down.
     /* 14 */ u32 mVolume;
 } WaveChannel; /* 18 */
 
@@ -86,9 +86,9 @@ typedef struct WavePlayer {
 
 extern WavePlayer gWavePlayer;
 
-// Claims a channel from the set of channel bits `mask`: the first channel in the mask that is not in use, or, when
-// `steal` is set and none is free, the first channel in the mask (stopping it first). Returns the channel number, or
-// the number of channels when none can be claimed.
+// Claims a channel from the set of channel bits `mask`: the first channel in the mask that is not in use. If none is
+// free and `steal` is set, the first channel in the mask, stopped first. Returns the channel number, or the number of
+// channels when none can be claimed.
 int ClaimWaveChannel(int steal, u32 mask);
 void PlayWaveBuffer(u32 id, int start, int volume, int repeat, int pan, u32 mask, WaveLoop *loop, const void *data,
                     int rate, u32 size, int mode);

@@ -8,8 +8,7 @@
 extern "C" {
 #endif
 
-// The movie playback state: the alarm that paces the audio, the decoded audio ring, the player and the file it reads
-// (the movie being played), the screen flags and the layer the frames go to.
+// The movie playback state. mAlarm paces the audio, and mFile is the movie the player reads.
 typedef struct VideoState {
     /* 00 */ OSAlarm mAlarm;
     /* 2c */ vu32 mAudioCallbackCount;
@@ -33,9 +32,9 @@ typedef struct VideoState {
     /* ac */ u32 mUnk_ac;
     /* b0 */ u32 mUnk_b0;
     /* b4 */ u8 mAudioStarted;
-    // 1 once UpdateScreensForLid has turned the screens off for a closed lid, 0 again once TurnScreensOn has turned
-    // them on (StartVideo also clears it). While it and mAudioStarted are set, UpdateVideo reads no new frame and holds
-    // the player.
+    // 1 once UpdateScreensForLid has turned the screens off for a closed lid; 0 again once TurnScreensOn has turned
+    // them on, or after StartVideo. While it and mAudioStarted are set, UpdateVideo reads no new frame and holds the
+    // player.
     /* b5 */ u8 mScreensOff;
     /* b6 */ u8 mLayer;
     u8 mUnk_b7;

@@ -189,8 +189,7 @@ int FindWaveChannel(u32 id, int *index) {
     return 0;
 }
 
-// Sets the volume of the channels playing id. Never runs in this build: its only caller is UpdateWaves' fade branch,
-// and mFading is only ever 0.
+// Sets the volume of the channels playing id. Its only caller is UpdateWaves' fade branch.
 void SetWaveVolume(u32 id, u32 volume) {
     u32 i;
     u32 mask = 0;
@@ -230,7 +229,7 @@ void UpdateWaves(void) {
     WaveChannel *ch;
     for (i = 0; i < gWavePlayer.mChannelCount; i++) {
         ch = &gWavePlayer.mChannels[i];
-        // Never runs in this build: mFading is only ever 0.
+        // Never runs: mFading is only ever 0.
         if (ch->mFading && ch->mVolume != 0) {
             u32 v = ch->mVolume;
             ch->mVolume = v - 1;
@@ -269,8 +268,8 @@ void ClearWaveChannel(u32 index) {
 }
 
 // Sets the channel count (16, or mRequestedChannelCount while a song is loaded), sets flag 0x2000 and frees every
-// channel. In this build it runs once, at boot before any song and before flag 0x2000 is set, so the
-// mRequestedChannelCount branch and StopWavePlayer's body never run.
+// channel. In this build it runs once, at boot, before any song and before flag 0x2000 is set, so the
+// mRequestedChannelCount branch never runs.
 void InitWavePlayer(void) {
     u32 i;
     StopWavePlayer();
@@ -286,8 +285,8 @@ void InitWavePlayer(void) {
     }
 }
 
-// Stops every wave and clears flag 0x2000; never does anything in this build (InitWavePlayer, its only caller, runs
-// before the flag is set).
+// Stops every wave and clears flag 0x2000. Never does anything in this build: InitWavePlayer, its only caller, runs
+// before the flag is set.
 void StopWavePlayer(void) {
     if (gSystemState.mFlags & 0x2000) {
         StopAllWaves();
@@ -296,8 +295,8 @@ void StopWavePlayer(void) {
 }
 
 // Makes mChannelCount equal to mRequestedChannelCount, freeing the added channels or stopping the removed ones. Its
-// only caller PlayTrack sets flag 0x1000000 first and flag 0x2000 stays set from boot, so in this build the first two
-// branches never run.
+// only caller PlayTrack sets flag 0x1000000 first, and flag 0x2000 stays set from boot, so in this build the first
+// two branches never run.
 void RefreshWaveChannelCount(void) {
     u32 i;
     u32 cur;
@@ -338,9 +337,9 @@ void RefreshWaveChannelCount(void) {
 #define WAVE_STREAM_ID 0x4d2
 #define WAVE_STREAM_KEY (WAVE_ID_NO_FILE | WAVE_STREAM_ID)
 
-// With repeat 0 the same as PlayWave. Otherwise, when id is not playing, plays it and marks its repeating channels;
-// when it plays, renews the mark of its first repeating channel and sends the pan and a changed volume. A caller keeps
-// the wave by calling this every frame: UpdateKeepAliveWaves stops a channel whose mark was not renewed.
+// With repeat 0 the same as PlayWave. Otherwise, if id is not playing, plays it and marks its repeating channels. If
+// it plays, renews the mark of its first repeating channel and sends the pan and a changed volume. A caller keeps the
+// wave by calling this every frame: UpdateKeepAliveWaves stops a channel whose mark was not renewed.
 void PlayWaveKeepAlive(int id, int volume, int repeat, int pan, int mask, int loop) {
     u32 i;
     u32 bit;
@@ -393,8 +392,8 @@ void UpdateKeepAliveWaves(void) {
 }
 
 // Sends the timer of the last active channel playing id, scaled by scale / 0x100, to all of them (mTimer is not
-// changed). Never called in this build: PlaySeEx calls it only for a scale other than 0x100, and its only caller
-// PlaySe passes 0x100.
+// changed). Never called in this build: PlaySeEx calls it only for a scale other than 0x100, and PlaySe, the only
+// caller of PlaySeEx, passes 0x100.
 void ScaleWaveTimer(int id, int scale) {
     int i;
     u32 mask = 0;

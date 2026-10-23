@@ -36,8 +36,8 @@
 #define GAUGE_MAX 0x31
 #define TABLE_ENTRY_COUNT 100
 
-// Slot screen (state 9) state; the first three fields are used only by the model viewers, mSignalBit and mStageId by
-// state 22 and mSharedModelIndex by state 21.
+// Slot screen (state 9) state. The first three fields are used only by the model viewers, mSignalBit and mStageId by
+// state 22, and mSharedModelIndex by state 21.
 typedef struct Unk_020b13b0 {
     u8 mSignalBit;
     u8 mStageId;
@@ -55,8 +55,8 @@ Unk_020b13b0 data_020b13b0;
 // The three stage indices of mSlotStages as they were when the screen was entered; button 0x102 writes them back.
 s32 gSavedSlotStages[3];
 
-// Loads the image for screen `layer` unless that screen already shows it: in state 10 with stage -1 or a text set,
-// image 0x1e4 + mTextImageIndex; otherwise the stage's image (0xdb3 + its stage id). A stage of -1 outside state 10
+// Loads the image for screen `layer` unless that screen already shows it. In state 10 with stage -1 or a text set, the
+// image is 0x1e4 + mTextImageIndex; otherwise the stage's image (0xdb3 + its stage id). A stage of -1 outside state 10
 // reads gStages[-1]; UpdateSlotScreen passes -1 when no stage is selected.
 void LoadStageOrTextImage(int stage, int layer) {
     u16 current;
@@ -108,9 +108,9 @@ void FormatSignedSeconds(int frames, char *buf) {
     }
 }
 
-// Draws the panel shown while a mode runs: score and scoreThreshold, each as at least three digits, and, unless
-// UpdateTimeRemaining(frames) is not 0, the time remaining from frames. UpdateTimeRemaining also plays wave 361 when
-// frames falls below 600, 300, 240, 180, 120 or 60. stage is only range-checked (-1 counts as 0).
+// Draws the panel shown while a mode runs: score and scoreThreshold, each as at least three digits, and the time
+// remaining from frames while UpdateTimeRemaining(frames) is 0. UpdateTimeRemaining also plays wave 361 when frames
+// falls below 600, 300, 240, 180, 120 or 60. stage is only range-checked (-1 counts as 0).
 void DrawModeScoreAndTime(int stage, u32 score, int scoreThreshold, int frames, int layer) {
     char time[12];
     char text[32];
@@ -164,7 +164,7 @@ void DrawPercentGauge(int stage, int layer) {
 }
 
 // Draws the info of the stage at index level (nothing when it is negative) and eases mPanelLevel. Always sets
-// mTextOffsetY to 0x100, the offset DrawTextPanel eases to 0, also for a negative index.
+// mTextOffsetY to 0x100 (the offset DrawTextPanel eases to 0), even for a negative index.
 void DrawStageInfo(int level, int layer) {
     StageRec *rec;
     int total;
@@ -232,8 +232,8 @@ void func_02011b70(int stage, int layer) {
 }
 
 // a = -1 clears the shown text id, image index and timer and their saved copies; -2 clears only the shown ones; -3
-// restores the saved copies; any other value shows text a with image index b for c frames and saves them. Always
-// resets mTextOffsetY to 0x100 and mTextButtonOffsetY to 0x28.
+// restores the saved copies. Any other a shows text a with image index b for c frames and saves them. Always resets
+// mTextOffsetY to 0x100 and mTextButtonOffsetY to 0x28.
 void SetTextAndImage(int a, int b, int c) {
     Unk_020c1454 *p = &data_020b6ee0.mUnk_a574;
 
@@ -272,8 +272,8 @@ void SetTextAndImage(int a, int b, int c) {
     }
 }
 
-// The compiler sorts the file's objects by size and orders equal sizes by the whole list: defining data_0204ff08
-// first and data_0204fee2 after data_0204fefc gives the original .rodata layout.
+// Matching: the compiler sorts the file's objects by size, and equal sizes by the whole definition list. Defining
+// data_0204ff08 first and data_0204fee2 after data_0204fefc gives the original .rodata layout.
 static const s32 data_0204ff08[3] = {1, 1, 1};
 static const u16 data_0204fee8[3] = {0xdac, 0xdad, 0xdae};
 static const u32 data_0204fef0[3] = {0x25, 0x2c, 0x2e};
@@ -294,9 +294,9 @@ static const s32 data_02050038[STAGE_MAX] = {
     0x11, 0x11, 0x11, 0x10, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x10, 0x10, 0x10,
 };
 
-// Eases mTextOffsetY toward 0 and draws the header (text 0x4b), the percent gauge while 2 < mProgressState < 99
-// (stage 0's before 11, then the selected stage's) and, when mTextId is not -1, that text at mTextOffsetY + 0xa0.
-// UpdateTextAndStageInfo draws it in panel state 0 even when no text is set.
+// Eases mTextOffsetY toward 0 and draws the header (text 0x4b). Draws the percent gauge while
+// 2 < mProgressState < 99 (stage 0's before 11, then the selected stage's), and, when mTextId is not -1, that text at
+// mTextOffsetY + 0xa0. UpdateTextAndStageInfo draws it in panel state 0 even when no text is set.
 void DrawTextPanel(void) {
     u32 v;
 
@@ -316,9 +316,9 @@ void DrawTextPanel(void) {
     }
 }
 
-// Counts the text timer down (SetTextAndImage(-2) when it runs out), then draws by mPanelState: in state 0 the text
-// panel; otherwise the text panel while a text is set, else func_02011a94 (states 3 and 4), func_02011b70 (6 to 8)
-// or DrawStageInfo (the rest) for the selected stage. In panel states 0 and 1 it also shows button 0x112, which
+// Counts the text timer down (SetTextAndImage(-2) when it runs out), then draws by mPanelState. State 0: the text
+// panel. Otherwise the text panel while a text is set, else, for the selected stage, func_02011a94 (states 3 and 4),
+// func_02011b70 (6 to 8) or DrawStageInfo (the rest). In panel states 0 and 1 it also shows button 0x112, which
 // clears the text, or, when only a saved text is left, button 0x111, which restores it.
 void UpdateTextAndStageInfo(void) {
     Unk_020c1454 *p = &data_020b6ee0.mUnk_a574;
@@ -551,8 +551,8 @@ void StartGauge(u8 type) {
     }
 }
 
-// Ends the gauge of the selected stage: moves the panel to state 5, adds the amount ObjSlots for mUnk_a100, stops
-// the stage and, when mUnk_a13d is 0, releases the microphone.
+// Ends the gauge of the selected stage: moves the panel to state 5, adds the amount ObjSlots for mUnk_a100, stops the
+// stage, and releases the microphone when mUnk_a13d is 0.
 void StopGauge(int a) {
     StageRec *rec;
     int step;
@@ -1367,8 +1367,8 @@ void DrawTableEntryButton(StageInfo *info, s16 tableEntryId, u8 flag, int a, int
     DrawSprite(name, b + 8, c - 4, 0x92, d);
 }
 
-// Draws the table entry's three sprites on layer a (and sprite 0x80113f when b bit 0 is set) and its two texts, which
-// depend on its kind (below 14, 14, 15 or 16; other kinds draw none) and always go to layer 1.
+// Draws the table entry's three sprites on layer a (and sprite 0x80113f when b bit 0 is set), and its two texts. The
+// texts depend on its kind (below 14, 14, 15 or 16; other kinds draw none) and always go to layer 1.
 void DrawTableEntryInfo(StageInfo *info, s16 tableEntryId, int a, int b) {
     int frame;
     int icon;
@@ -1586,8 +1586,8 @@ void ResetAndReadSaveSlot(void) {
     ReadSaveSlot(data_020b1084.mSaveSlot);
 }
 
-// Only when OpenPromptScreen returns 1 (else nothing is saved): runs a 0x78-frame loop with the volume faded down
-// and, once IsFadeState(3, FADE_STATE_CLEAR), stores the stage offsets and writes the save: a = 0 the slot mSaveSlot
+// Only when OpenPromptScreen returns 1 (else nothing is saved): runs a 0x78-frame loop with the volume faded down.
+// Once IsFadeState(3, FADE_STATE_CLEAR), it stores the stage offsets and writes the save: a = 0 the slot mSaveSlot
 // (WriteSaveSlot), a = 1 every slot through WriteLanguageAndMic. Then closes the prompt screen.
 void RunSaveScreen(int a) {
     int local;
@@ -1627,7 +1627,7 @@ void RunSaveScreen(int a) {
     }
 }
 
-// Row of table 0x1d9 whose column 2 holds id; -1 for id -1. Terminates when no row holds id.
+// Row of table 0x1d9 whose column 2 holds id; -1 for id -1. Stops the program when no row holds id.
 int FindTableEntryIndex(int id) {
     int i;
 

@@ -6,17 +6,18 @@
 extern "C" {
 #endif
 
-// States of the script engine (mState, returned by GetScriptState): reading lines; waiting after an EOF line for the
-// wait timer or a key; finishing the EOF block (the sprites slide back unless EOF flag 1 is set, then END with EOF
-// flag 4, else READ again); ended (UpdateScript still applies images, moves and draws sprites and text, but reads no
-// more lines).
+// States of the script engine (mState, returned by GetScriptState).
+// Reading lines.
 #define SCRIPT_STATE_READ 0
+// Waiting after an EOF line for the wait timer or a key.
 #define SCRIPT_STATE_WAIT 1
+// Finishing the EOF block: the sprites slide back unless EOF flag 1 is set; then END with EOF flag 4, else READ again.
 #define SCRIPT_STATE_FINISH 2
+// Ended: UpdateScript still applies images, moves and draws sprites and text, but reads no more lines.
 #define SCRIPT_STATE_END 3
 
-// One entry of the event queue: up to 16 values read from the text (mKind the event, mParam its argument, the rest
-// from mUnk_04 on) and how many there are.
+// One entry of the event queue: up to 16 values read from the text. mKind is the event, mParam its argument, and the
+// rest follow from mUnk_04.
 typedef struct ScriptEvent {
     s16 mKind;
     s16 mParam;
@@ -55,7 +56,7 @@ typedef struct ScriptLs {
 } ScriptLs;
 
 // A text of the script (AddScriptText). The texts in mTexts are drawn as one string, placed and styled by the first
-// entry only (mX, mY, mFontIndex and the other draw values); each entry keeps its own character count and speed.
+// entry only (mX, mY, mFontIndex and the other draw values). Each entry keeps its own character count and speed.
 typedef struct ScriptText {
     u16 mTextId;
     s16 mX;
@@ -73,7 +74,7 @@ typedef struct ScriptText {
 } ScriptText;
 
 // A sprite or shape of the script (AddScriptSprite). Sprites (top bit of mDrawId clear) are drawn through
-// mSpriteDrawFunc or DrawSprite, shapes (SHAPE, top bit set) through DrawModelFileOrtho; the eye and Ls overlays are
+// mSpriteDrawFunc or DrawSprite, shapes (SHAPE, top bit set) through DrawModelFileOrtho. The eye and Ls overlays are
 // drawn on both.
 typedef struct ScriptSprite {
     s32 mId;
@@ -85,23 +86,22 @@ typedef struct ScriptSprite {
     // Where the move heads while mMovePerFrame is positive, in hundredths of a pixel.
     s16 mMoveEndX;
     s16 mMoveEndY;
-    // 0: no move. Otherwise its absolute value is added to or subtracted from mX and mY (hundredths of a pixel) once
-    // per UpdateScript pass, towards mMoveEndX/mMoveEndY while it is positive and towards mStartX/mStartY while it is
-    // negative.
+    // 0: no move. Otherwise its absolute value moves mX and mY (hundredths of a pixel) once per UpdateScript pass:
+    // towards mMoveEndX/mMoveEndY while it is positive, towards mStartX/mStartY while it is negative.
     s16 mMovePerFrame;
-    // Two roles. Where the slide starts (ReverseScriptSprite swaps them with mX/mY so that the sprite slides back);
-    // and for a moving sprite, the target while mMovePerFrame is negative. A moving sprite first gets its own position
-    // in hundredths of a pixel here, then AddScriptSprite overwrites mStartX (SLIDE_X set) or mStartY (SLIDE_X clear)
-    // with the slide start point in pixels, while mX/mY stay in hundredths; that pixel value is the target when the
-    // move runs back.
+    // Where the slide starts; ReverseScriptSprite swaps it with mX/mY so that the sprite slides back.
+    // For a moving sprite it is also the target while mMovePerFrame is negative. Such a sprite first gets its own
+    // position here, in hundredths of a pixel. AddScriptSprite then overwrites mStartX (SLIDE_X set) or mStartY
+    // (SLIDE_X clear) with the slide start point in pixels, while mX/mY stay in hundredths. That pixel value is the
+    // target when the move runs back.
     s16 mStartX;
     s16 mStartY;
     u16 mDelayTimer;
-    // Counts down once mDelayTimer is 0. At 0 the sprite is removed (mDrawId -1) when mStartX/mStartY equal mX/mY,
+    // Counts down once mDelayTimer is 0. At 0 the sprite is removed (mDrawId -1) if mStartX/mStartY equal mX/mY;
     // otherwise it is sent back (ReverseScriptSprite) and mNoReverse is set.
     u16 mShowTimer;
-    // DrawSprite's w for a sprite (its eye and Ls overlays use mDrawOrder - 2), shifted left by 6 for a shape's draw.
-    // For a shape AddScriptSprite stops the system when the value is >= 0x100, but that check runs before the new value
+    // DrawSprite's w for a sprite (its eye and Ls overlays use mDrawOrder - 2); shifted left by 6 for a shape's draw.
+    // For a shape, AddScriptSprite stops the system when the value is >= 0x100. That check runs before the new value
     // is stored, so it tests the slot's previous value.
     u16 mDrawOrder;
     // Animation frames (cells, not game frames): their number, and those remaining.
@@ -113,16 +113,16 @@ typedef struct ScriptSprite {
     union {
         u8 mUnk_21;
         struct {
-            // While set ReverseScriptSprite does nothing. Set for a moving sprite and after the show timer sent the
-            // sprite back, cleared for a sprite that neither slides nor moves; a sprite that slides without moving
+            // While set, ReverseScriptSprite does nothing. Set for a moving sprite and after the show timer sent the
+            // sprite back. Cleared for a sprite that neither slides nor moves. A sprite that slides without moving
             // keeps the slot's previous value.
             u8 mNoReverse : 1;
             u8 mAnimLoop : 1;
             // Each axis negates mMovePerFrame on its own when it reaches its target, so the axis that arrives first
             // turns the other one round as well.
             u8 mMoveBounce : 1;
-            // Mirrors the drawn sprite in x whenever mMovePerFrame is negative, from the start when it starts negative;
-            // a shape itself is drawn without the flip (the eye and Ls overlays on it still get it).
+            // Mirrors the drawn sprite in x whenever mMovePerFrame is negative (from the start, if it starts negative).
+            // A shape itself is drawn without the flip, but the eye and Ls overlays on it still get it.
             u8 mFlipOnReturn : 1;
             u8 mUnk_21_4 : 1;
             u8 mUnk_21_5 : 3;
@@ -132,23 +132,22 @@ typedef struct ScriptSprite {
     u8 mUnk_23;
 } ScriptSprite;
 
-// The part of gScriptWork from 0x280 on, which the code reaches through one base address: the event queue's write
-// and read indices, the queued image changes, the sprite or shape of SPRSCR/SHPSCR (mScrDrawId, mScrX, mScrY), the
-// values the conditional commands compare, the callback, the image ids last loaded and the selected Ls indices.
+// The part of gScriptWork from 0x280 on, which the code reaches through one base address.
 typedef struct Unk_020c642c {
     u8 mUnk_00[0x10];
     u8 mEventWriteIndex;
     u8 mEventReadIndex;
     u8 mUnk_12[2];
-    // Image changes queued by ScriptCmdScreen for UpdateScript (0 = none): [0] holds the script's raw odd value and
-    // [1] is 2; UpdateScript reads the value as the 1|2 layer mask (SetFaded, LoadImage) and compares it with 1, 2, 3.
+    // Image changes queued by ScriptCmdScreen for UpdateScript (0 = none). [0] holds the script's raw odd value and
+    // [1] is 2. UpdateScript reads the value as the 1|2 layer mask (SetFaded, LoadImage) and compares it with 1, 2, 3.
     u8 mPendingImageLayers[2];
     u16 mPendingImageIndices[2];
     u8 mUnk_1a[2];
-    // The sprite or shape SetScriptScrSprite set, drawn at mScrX, mScrY on each UpdateScript pass; 0 = none (cleared
-    // by StartScript and by an image queued with layer value 1). Its top bits differ from ScriptSprite.mDrawId's: bit
-    // 31 marks it new (the first pass clears it, calls SetFaded(1) and copies the id to mUnk_30); bit 30 set means a
-    // sprite (drawn with DrawSprite on layer 1), clear a shape (DrawModelFileOrtho).
+    // The sprite or shape of SPRSCR/SHPSCR (set by SetScriptScrSprite), drawn at mScrX, mScrY on each UpdateScript
+    // pass. 0 = none; StartScript and an image queued with layer value 1 clear it. Its top bits differ from
+    // ScriptSprite.mDrawId's:
+    //   - bit 31 marks it new; the first pass clears it, calls SetFaded(1) and copies the id to mUnk_30;
+    //   - bit 30 set means a sprite (DrawSprite on layer 1), clear a shape (DrawModelFileOrtho).
     s32 mScrDrawId;
     u16 mScrX;
     u16 mScrY;
@@ -156,7 +155,7 @@ typedef struct Unk_020c642c {
     s16 mIfValueB;
     u8 (*mTextEscapeFunc)(void);
     // Images last loaded by a queued image change: layer value 1 sets mLayer1ImageId, 2 mLayer2ImageId, 3 both, any
-    // other value neither. Not read in this build.
+    // other value neither. Nothing reads them in this build.
     u16 mLayer1ImageId;
     u16 mLayer2ImageId;
     u16 mUnk_30;
@@ -170,8 +169,8 @@ typedef struct Unk_020c642c {
 } Unk_020c642c;
 
 typedef struct ScriptWork {
-    // Draws the sprites instead of DrawSprite when set, and maps the queued sound ids when set; neither is set in this
-    // build (both SetupScript calls pass 0).
+    // When set, draws the sprites instead of DrawSprite, and maps the queued sound ids. Neither is set in this build
+    // (both SetupScript calls pass 0).
     void (*mSpriteDrawFunc)(u32 id, int x, int y, int w, int mode);
     u32 (*mSoundIdFunc)(u32);
     u16 mScriptFileId;
@@ -189,15 +188,15 @@ typedef struct ScriptWork {
     union {
         u8 mUnk_1c;
         struct {
-            // Set while a sprite waits its delay, counts its show timer, animates or slides; SCRIPT_STATE_FINISH ends
-            // only when it is 0. A moving sprite's movement does not set it, and a looping animation's wrap clears it
-            // for the sprites before it in the pass.
+            // Set while a sprite waits its delay, counts its show timer, animates or slides. SCRIPT_STATE_FINISH ends
+            // only when it is 0. A moving sprite's movement does not set it. A looping animation's wrap clears it for
+            // the sprites before it in the pass.
             u8 mSpritesBusy : 1;
             // Set by a key press in the wait state while the text is incomplete: the text position then advances 2
             // more per frame.
             u8 mFastText : 1;
-            // Never set in this build (StartScript clears it). While set, one UpdateScript call keeps running the
-            // script, drawing no sprites or text, not waiting and playing no queued waves, until SCRIPT_STATE_END.
+            // Never set in this build (StartScript clears it). While set, one UpdateScript call runs the script on
+            // until SCRIPT_STATE_END, without drawing sprites or text, waiting or playing queued waves.
             u8 mSkipToEnd : 1;
             // The drawn text still has characters past the text position, not drawn yet.
             u8 mTextIncomplete : 1;
@@ -206,7 +205,7 @@ typedef struct ScriptWork {
     };
     u8 mUnk_1d;
     u16 mTextCount;
-    // A text character advances every mCharFrameCount + 1 passes (TXTSPD sets 3 plus its value); mCharFrames counts
+    // A text character advances every mCharFrameCount + 1 passes (TXTSPD sets 3 plus its value). mCharFrames counts
     // the passes since the last advance.
     u16 mCharFrameCount;
     u16 mCharFrames;
@@ -230,7 +229,8 @@ typedef struct ScriptWork {
     ScriptLs *mLsList;
     ScriptEye *mEyes;
     ScriptSprite *mSprites;
-    // The texts that are drawn; mUnk_68 holds texts added with a non-zero seventh value and is not read in this build.
+    // The texts that are drawn. mUnk_68 holds texts added with a non-zero seventh value; nothing reads it in this
+    // build.
     ScriptText *mTexts;
     ScriptText *mUnk_68;
     void *mUnk_6c;

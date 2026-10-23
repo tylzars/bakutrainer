@@ -93,11 +93,13 @@ void DrawText(int x, int y, const void *font, const char *text, int align, int w
     DrawTextEx(x, y, (const FontRange *const *) &f, 0, (const u8 *) text, 0, align, width, height, layer);
 }
 
-// The `const u16 *` read into c keeps the glyph's own *q load (without the cast the compiler merges it with the load
-// into c), maxW doubles as the line loop's character count (zero first, so lineW and breakW copy it), spaces and lineW
-// are reused for the skipped count and the drawn width, and spaceW is reloaded inside the width loop: these keep the
-// stack slots in the original's order. i is an unsigned long: as u32 it changes the saved registers and the stack
-// frame.
+// Matching:
+//   - The `const u16 *` read into c keeps the glyph's own *q load; without the cast the compiler merges it with the
+//     load into c.
+//   - maxW doubles as the line loop's character count (zeroed first, so lineW and breakW copy it); spaces and lineW
+//     are reused for the skipped count and the drawn width; spaceW is reloaded inside the width loop. These keep the
+//     stack slots in the original order.
+//   - i is an unsigned long: as u32 it changes the saved registers and the stack frame.
 int DrawTextEx(int x, int y, const FontRange *const *fonts, u8 fontIndex, const u8 *text, u16 angle, u32 flags,
                u32 width, int height, int layer) {
     u8 widths[0x400];
@@ -452,8 +454,9 @@ const u8 *GetFileValueData(u32 id, const u8 *entry) {
     return (const u8 *) FindOrLoadCachedFile(id + entry[1]) + *(const u16 *) (entry + 2);
 }
 
-// The type of value `index` of indexed file `id`: 1 and 4 strings (GetFileString; CountFileStringChars counts type 1
-// in encoded characters, type 4 in bytes), 2 a 16-bit and 3 a 32-bit number (GetFileValue); 0 for any type above 4.
+// The type of value `index` of indexed file `id`. 1 and 4 are strings (GetFileString; CountFileStringChars counts
+// type 1 in encoded characters, type 4 in bytes). 2 is a 16-bit and 3 a 32-bit number (GetFileValue). 0 for any type
+// above 4.
 int GetFileValueType(u16 id, int index) {
     const u8 *entry = GetFileValueEntry(id, index);
     if (entry[0] > 4) {

@@ -243,20 +243,22 @@ const s16 *gEffectWaves[8] = {gSineWave, gFallingWave, gSquareWave, gSineWave,
 #pragma thumb off
 
 // Loads the song in file fileId and starts it with volume (at most 0x80; 0 while gSystemState.mUseTrackerVolume is 0).
-// The song already loaded, with the global fade at TRACKER_GLOBAL_FADE_NONE and restart 0, only takes the new volume.
-// sampleFileBase is the number added to each sample name's number to get the sample's file id (0 keeps the last one);
-// startOrder goes to StartPlayback. With fadeFirst == 1 while a song plays the request is stored and the global fade
-// started (TRACKER_GLOBAL_FADE_TO_PENDING), for UpdateTracker to play once it is done. A new song's file gives the
-// header bytes, the order table, the patterns (a cell byte with bit 7 set says which of the five bytes follow; the
-// others become 0xff, 0, 0, 0xff, 0), the instruments with their two envelopes, and their samples, whose data is loaded
-// by the number in the sample's name.
+//   - The song already loaded, with the global fade at TRACKER_GLOBAL_FADE_NONE and restart 0, only takes the new
+//     volume.
+//   - sampleFileBase is added to each sample name's number to get the sample's file id (0 keeps the last one).
+//   - startOrder goes to StartPlayback.
+//   - With fadeFirst == 1 while a song plays, the request is stored and the global fade started
+//     (TRACKER_GLOBAL_FADE_TO_PENDING), for UpdateTracker to play once it is done.
+// A new song's file gives the header bytes, the order table, the patterns, the instruments with their two envelopes,
+// and their samples, whose data is loaded by the number in the sample's name. In a pattern, a cell byte with bit 7 set
+// says which of the five bytes follow; the others become 0xff, 0, 0, 0xff, 0.
 void PlayTrack(u16 fileId, u16 sampleFileBase, u8 volume, u16 startOrder, int fadeFirst, int restart) {
     u8 name[0x17];
     u8 *patterns;
     TrackerInstrument *instruments;
     u8 *next;
     u32 size;
-    unsigned long i; // unsigned long, not u32: the compiler's output needs it (register choice)
+    unsigned long i; // unsigned long, not u32: needed for the register choice
     u8 *src;
     u8 *pattern;
     u32 j;
@@ -485,9 +487,8 @@ void PlayTrack(u16 fileId, u16 sampleFileBase, u8 volume, u16 startOrder, int fa
     gTrackerPlayer.mLoading = 0;
 }
 
-// Releases everything the loaded song allocated and resets the player; with fadeOut == 1 while a song plays it only
-// starts the global fade (TRACKER_GLOBAL_FADE_TO_RELEASE), except in TRACKER_GLOBAL_FADE_DONE, where it releases at
-// once.
+// Releases everything the loaded song allocated and resets the player. With fadeOut == 1 while a song plays it only
+// starts the global fade (TRACKER_GLOBAL_FADE_TO_RELEASE); in TRACKER_GLOBAL_FADE_DONE it still releases at once.
 void ReleaseTrack(int fadeOut) {
     u32 i;
     u32 j;
@@ -671,7 +672,7 @@ void StopTrackerChannels(void) {
     func_020401b8(mask, 0);
 }
 
-// Installs the timer interrupt handler and starts the timer at the rate the flags select; with
+// Installs the timer interrupt handler and starts the timer at the rate the flags select. With
 // TRACKER_TIMER_AUTO_FINE it first sets TRACKER_TIMER_FINE unless the tick rate is 125, and clears it otherwise.
 void StartTrackerTimer(void) {
     OS_SetIrqFunction(TRACKER_IRQ_TIMER2, HandleTrackerIrq);
@@ -696,10 +697,10 @@ void StopTrackerTimer(void) {
     func_0203f024(2);
 }
 
-// Timer interrupt handler. With the global fade at TRACKER_GLOBAL_FADE_NONE it runs AdvanceTracker; in
-// TRACKER_GLOBAL_FADE_TO_PENDING and TRACKER_GLOBAL_FADE_TO_RELEASE it lowers the global volume by 4 and runs
-// AdvanceTracker until the volume is below 4, then TO_PENDING becomes TRACKER_GLOBAL_FADE_DONE and TO_RELEASE calls
-// the player's callback with 3 and releases the song; either way the timer is left stopped.
+// Timer interrupt handler. With the global fade at TRACKER_GLOBAL_FADE_NONE it runs AdvanceTracker. In TO_PENDING and
+// TO_RELEASE it lowers the global volume by 4 and runs AdvanceTracker until the volume is below 4. Then TO_PENDING
+// becomes DONE, and TO_RELEASE calls the player's callback with 3 and releases the song; either way the timer is left
+// stopped.
 void HandleTrackerIrq(void) {
     gTrackerPlayer.mFramesSinceIrq = 0;
     if (gTrackerPlayer.mPaused == 1) {
@@ -743,8 +744,8 @@ void HandleTrackerIrq(void) {
     }
 }
 
-// Frame update: while a global fade state is set, counts the frames since the last timer interrupt and releases the
-// song after more than 8; in TRACKER_GLOBAL_FADE_DONE calls the player's callback with 2 and plays the pending request.
+// Frame update. While a global fade state is set, counts the frames since the last timer interrupt and releases the
+// song after more than 8. In TRACKER_GLOBAL_FADE_DONE calls the player's callback with 2 and plays the pending request.
 void UpdateTracker(void) {
     if (gTrackerPlayer.mGlobalFadeState != TRACKER_GLOBAL_FADE_NONE) {
         gTrackerPlayer.mFramesSinceIrq++;
@@ -764,12 +765,13 @@ void UpdateTracker(void) {
 
 void func_02036194(void) {}
 
-// Player tick, run from the timer interrupt. Each time the tick accumulator passes the tick length the tick counter
-// advances: on the first tick of a row the row's cells are read (note, instrument, volume column, effect, parameter;
-// the volume column is applied as a second effect), the samples of new notes are started and the first-tick effects
-// applied; on the other ticks the running effects and envelopes update period, volume and pan. The changes go to the
-// sound driver as channel commands. With flag 0x400 of gSystemState.mUnk_2c8 each channel's effect parameter is
-// formatted for display.
+// Player tick, run from the timer interrupt. Each time the tick accumulator passes the tick length, the tick counter
+// advances.
+//   - On the first tick of a row the row's cells are read (note, instrument, volume column, effect, parameter; the
+//     volume column is applied as a second effect). The samples of new notes start and the first-tick effects apply.
+//   - On the other ticks the running effects and envelopes update period, volume and pan.
+// The changes go to the sound driver as channel commands. With flag 0x400 of gSystemState.mUnk_2c8 each channel's
+// effect parameter is formatted for display.
 void AdvanceTracker(void) {
     s8 globalVol;
     char text[3];
@@ -1444,7 +1446,7 @@ void AdvanceTracker(void) {
                             }
                             if (gSystemState.mUnk_2c8 & 0x400) {
                                 // The debug display flag is tested here, but nothing in this branch formats the
-                                // parameter: the statement only keeps the test, as in the original.
+                                // parameter. The statement keeps the original's test.
                                 param = (u16) param;
                             }
                         }

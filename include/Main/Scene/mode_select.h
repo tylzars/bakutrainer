@@ -6,14 +6,14 @@
 extern "C" {
 #endif
 
-// Values of ModeSelectState.mSlideState (GetModeSlideState): no slide, the slide every mode starts with (it moves out
-// and ends), the slide a mode ends with (it stays; the caller then goes to the result screen).
+// Values of ModeSelectState.mSlideState (GetModeSlideState).
 #define MODE_SLIDE_STATE_NONE 0
+// The slide every mode starts with; it moves out and ends.
 #define MODE_SLIDE_STATE_START 1
+// The slide a mode ends with; it stays, and the caller then goes to the result screen.
 #define MODE_SLIDE_STATE_END 2
 
-// State of the mode selection screen (the selected mode's score threshold and best score) and of the slide every mode
-// shows at its start and end.
+// State of the mode selection screen, and of the slide every mode shows at its start and end.
 typedef struct ModeSelectState {
     s32 mScoreThreshold;
     s32 mBestScore;
@@ -21,7 +21,7 @@ typedef struct ModeSelectState {
     u8 mPad_09[3];
     s32 mSlideX;
     s32 mSlideHoldTimer;
-    // StartModeSlide's b: every start slide passes 0, so it is read only for the end slide. The modes pass it on to
+    // StartModeSlide's b. Every start slide passes 0, so it is read only for the end slide. The modes pass it on to
     // StartResultScreen (data_020b10fc.mUnk_0c).
     s32 mScoreThresholdMet;
 } ModeSelectState;

@@ -78,11 +78,11 @@ typedef struct FieldObjects {
     u32 mDriveTimer;
     u8 mDrivePlusX;
     u8 mUnk_261[3];
-    // Set while mEndTimer runs, mDrivePlusX is 0 and mStageOffset.mX is below -0x106800 (it then blocks
-    // StartDriveMinusX); cleared, while no drive runs, once the offset is back at or above that bound.
+    // Set while mEndTimer runs, mDrivePlusX is 0 and mStageOffset.mX is below -0x106800; it then blocks
+    // StartDriveMinusX. Cleared, while no drive runs, once the offset is back at or above that bound.
     s32 mBelowMinX;
     s32 mAboveMaxX;
-    // In units of 512: the x / z distance from mScrollOrigin to mInfo.mMapEntry2Pos. The grid groups shift each time
+    // The x / z distance from mScrollOrigin to mInfo.mMapEntry2Pos, in units of 512. The grid groups shift each time
     // the scroll passes it.
     s32 mGridShiftDistance;
     s32 mScrollSpeed;

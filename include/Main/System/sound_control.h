@@ -6,13 +6,11 @@
 extern "C" {
 #endif
 
-// Volume fade of SoundCtl mVolumeFadeState (set by StartVolumeFade, stepped by UpdateSoundCtl one step per call): none,
-// down to 0, up to the target volume, down to the target volume (0x40). No caller passes VOLUME_FADE_DOWN_TO_TARGET in
-// this build.
+// Volume fade of SoundCtl mVolumeFadeState: set by StartVolumeFade, stepped once per UpdateSoundCtl call.
 #define VOLUME_FADE_NONE 0
-#define VOLUME_FADE_DOWN 1
-#define VOLUME_FADE_UP 2
-#define VOLUME_FADE_DOWN_TO_TARGET 3
+#define VOLUME_FADE_DOWN 1           // down to 0
+#define VOLUME_FADE_UP 2             // up to the target volume
+#define VOLUME_FADE_DOWN_TO_TARGET 3 // down to the target volume (0x40); no caller passes it in this build
 
 // Volume and track control.
 typedef struct SoundCtl {

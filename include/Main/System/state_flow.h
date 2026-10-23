@@ -11,9 +11,8 @@
 extern "C" {
 #endif
 
-// Main loop state: frame counter, current/previous/requested state numbers, the queue of requested states (PushState
-// terminates at 25 entries) and a table of values the states pass on (a prompt number, a selection, a state to
-// push): SetFlowValue sets an entry and GetFlowValue reads it back.
+// Main loop state. PushState stops the program at 25 queued states. mValues holds values the states pass on (a prompt
+// number, a selection, a state to push), set by SetFlowValue and read by GetFlowValue.
 #define QUEUE_SIZE 0x1c
 #define FLOW_VALUE_COUNT 24
 typedef struct GameFlow {
@@ -22,8 +21,8 @@ typedef struct GameFlow {
     u32 mState;
     u32 mPrevState;
     u32 mNextState;
-    // 1 makes the main loop leave and enter the state again even when it does not change. Only PopStateEx writes it
-    // from a parameter, and its only caller passes 0, so it is never 1 in this build.
+    // 1 makes the main loop leave and enter the state again even if it did not change. Only PopStateEx sets it, from a
+    // parameter its only caller passes as 0, so it is never 1 in this build.
     s32 mReenterRequested;
     u32 mQueueCount;
     u8 mQueue[QUEUE_SIZE];
@@ -45,8 +44,8 @@ extern const StateFunc gStateLeaveFuncs[STATE_COUNT];
 typedef struct Unk_020b10fc {
     s32 mSceneState;
     s32 mMode;
-    // mInfo.mGrade - 1 of the selected stage (checked 0..11), set when a mode starts; the row of the mode's value
-    // tables.
+    // The row of the mode's value tables: mInfo.mGrade - 1 of the selected stage (checked 0..11), set when a mode
+    // starts.
     s32 mTableRow;
     s32 mUnk_0c;
     u32 mScore;
@@ -54,20 +53,21 @@ typedef struct Unk_020b10fc {
 } Unk_020b10fc;
 extern Unk_020b10fc data_020b10fc;
 
-// Language and three more settings words (the language is saved under the key "LANGUAGE"). mUnk_04 and mUnk_08 are
-// the mic settings: mUnk_04 is SetupMic's second argument; mUnk_08 (at most 7) sets the level func_020213e8 tests
-// the mic against, (8 - mUnk_08) * 25, and picks the entries of data_0204ff50 and data_0204ff70.
+// Language and three more settings words.
 typedef struct Unk_020b1084 {
+    // Saved under the key "LANGUAGE".
     u32 mLanguage;
+    // Mic setting: SetupMic's second argument.
     u32 mUnk_04;
+    // Mic setting, at most 7. func_020213e8 tests the mic against the level (8 - mUnk_08) * 25. It also picks the
+    // entries of data_0204ff50 and data_0204ff70.
     u32 mUnk_08;
     s32 mSaveSlot;
 } Unk_020b1084;
 extern Unk_020b1084 data_020b1084;
 
-// An entry of data_020b6ee0.mUnk_9024 (mUnk_a149 counts the used ones): a model, a position and a kind. Used only by
-// func_020196b4..func_020198f0 in stage_camera.c; func_02019800 removes the kind-1 entry the selected stage comes
-// within range of.
+// An entry of data_020b6ee0.mUnk_9024; mUnk_a149 counts the used ones. Used only by func_020196b4..func_020198f0 in
+// stage_camera.c. func_02019800 removes the kind-1 entry that the selected stage comes within range of.
 typedef struct Unk_020bff04 {
     Model mModel;
     VecFx32 mPos;
@@ -101,9 +101,8 @@ typedef struct Unk_020bfd40 {
     u32 mScore;
 } Unk_020bfd40;
 
-// Map menu (state 6) state: the cursor's draw parameters and its per-frame x/z move from the touch drag, the model
-// drawn at the reached node, two sprites started when the cursor snaps to a node, the blend of the camera's second
-// point and its target, the delay before the cursor shows, and the cursor-snapped and node-info-hidden flags.
+// Map menu (state 6) state. The touch drag moves the cursor by mCursorXPerFrame and mCursorZPerFrame each frame.
+// mReachedNodeModel is drawn at the reached node. The two sprites start when the cursor snaps to a node.
 typedef struct MapMenu {
     DrawParams mCursor;
     s32 mCursorXPerFrame;
@@ -117,26 +116,26 @@ typedef struct MapMenu {
     s32 mBlend;
     // 0x100 once the cursor snaps to a node; 0x200 at set-up and when button 0x101 or 0x102 hides the node info.
     s32 mTargetBlend;
-    // 0xb4 at set-up and counted down while the cursor sprites are hidden; snapping to a node also waits for 0. A
-    // touch press off buttons 0x101 and 0x102 zeroes it.
+    // The delay before the cursor shows: 0xb4 at set-up, counted down while the cursor sprites are hidden. Snapping
+    // to a node also waits for 0. A touch press off buttons 0x101 and 0x102 zeroes it.
     s32 mDelayTimer;
     // Set when the cursor is moved onto the selected node; 0 while no node is selected or mDelayTimer is not 0.
     u8 mCursorSnapped;
-    // 0 once the cursor snaps to a node (the node info and buttons 0x101 and 0x102 are drawn); 1 at set-up and after
-    // button 0x101 or 0x102. While 1 the touch drag can move the cursor and only button 0x102 is drawn, which then
-    // leaves the menu.
+    // 0 once the cursor snaps to a node: the node info and buttons 0x101 and 0x102 are drawn. 1 at set-up and after
+    // button 0x101 or 0x102: the touch drag can move the cursor, and only button 0x102 is drawn, which then leaves the
+    // menu.
     u8 mNodeInfoHidden;
     u8 mUnk_3de[2];
 } MapMenu;
 
-// Bits of data_020b6ee0.mBattleSlotFlags[slot], set by the battle screen (battle_screen.c) for the three stage slots:
-// GRADE_UP when the slot's total was not lower and its grade below the other side's (the grade is raised by one
-// afterwards), NOT_PICKED until the slot's stage is picked into a compare, KEPT when its record stayed in at its last
-// compare that set a record out. STAGE_INFOS_OUT is used in entry 0 only: set when every gStageInfos record is out at
-// the end, cleared when every slot copy is out.
+// Bits of data_020b6ee0.mBattleSlotFlags[slot], set by the battle screen (battle_screen.c) for the three stage slots.
+// The slot's total was not lower and its grade was below the other side's; the grade is then raised by one.
 #define BATTLE_SLOT_GRADE_UP 1
+// Set until the slot's stage is picked into a compare.
 #define BATTLE_SLOT_NOT_PICKED 2
+// The slot's record stayed in at its last compare that set a record out.
 #define BATTLE_SLOT_KEPT 4
+// Entry 0 only: set when every gStageInfos record is out at the end, cleared when every slot copy is out.
 #define BATTLE_STAGE_INFOS_OUT 0x80
 
 // Large block of game state shared by several screens; only the members the code touches are named.
@@ -162,7 +161,7 @@ typedef struct Unk_020b6ee0 {
     s32 mSlotStages[3];
     s32 mUnk_c6c[3];
     // 1 when there are more than 3 stages (SetupSlotScreen). On the slot screen it gates the unslotted stage, button
-    // 0x200, the slot cursor and buttons 0x109 and 0x110; it also picks image 0x10ce or 0x10cd, the offset of the slot
+    // 0x200, the slot cursor and buttons 0x109 and 0x110. It also picks image 0x10ce or 0x10cd, the offset of the slot
     // row and the highlight of the selected slot.
     u8 mUnslottedVisible;
     u8 mSelectedSlotIndex;
@@ -277,9 +276,9 @@ typedef struct Unk_020b6ee0 {
     u8 mUnk_a571[3];
     Unk_020c1454 mUnk_a574;
     u8 mUnk_a5b8[0xa5d0 - 0xa5b8];
-    // 0 from a touch press that hit none of the screen's buttons until a frame with neither touch down nor release;
-    // TestButton reports no button while it is 0. The camera drag of panel state 0 (state 10) and the map menu's
-    // cursor drag move only while it is 0.
+    // 0 from a touch press that hit no button until a frame with neither touch down nor release. While it is 0,
+    // TestButton reports no button, and only then do the camera drag of panel state 0 (state 10) and the map menu's
+    // cursor drag move.
     u8 mButtonsEnabled;
     u8 mUnk_a5d1[3];
     Sprite mSelectionSprite;

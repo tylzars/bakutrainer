@@ -31,8 +31,8 @@ typedef struct Unk_020b7ef4 {
     // Map entry type: 0xf, 0x14, 0x19, 0x23 or 0x28.
     u8 mKind;
     u8 mUnk_183;
-    // Set only for types 0x14 and 0x23 (the entry's flags >> 6). The draws of types 0xf, 0x14 and 0x28 and the
-    // direction a type-0x23 object gives a stage add one quarter turn to it; the type-0x23 draw uses it as it is.
+    // Set only for types 0x14 and 0x23 (the entry's flags >> 6). The draws of types 0xf, 0x14 and 0x28, and the
+    // direction a type-0x23 object gives a stage, add one quarter turn to it. The type-0x23 draw uses it as it is.
     u8 mQuarterTurns;
     // Type 0x28: mId of the type-0x28 object that a stage meeting this one is moved to (the first one found).
     u8 mTargetId;
@@ -76,7 +76,7 @@ typedef struct Follower {
     // 32.0 for a follower from an entry, 0 for the chased stage (not written for the fixed point). MoveFollowers runs
     // UpdateFollower only when it is not 0, which every moved follower is in this build.
     float mMaxDistancePerFrame;
-    // 300 for a follower from an entry, 900 for the chased stage, 0 for the fixed point; the ring test and the spacing
+    // 300 for a follower from an entry, 900 for the chased stage, 0 for the fixed point. The ring test and the spacing
     // of two followers use half of it.
     u16 mDiameter;
     u16 mTargetAngle;
@@ -159,9 +159,9 @@ void func_020196b4(void);
 int func_020196e0(int value);
 void func_02019750(u32 index);
 void func_02019788(void);
-// The points the map menu's camera eases toward (map entry ids 1 and 0 at set-up), moved with the cursor: the look-at
-// toward gMapMenuLookAt, the position toward gMapMenuCameraPos blended toward gMapMenuLookAt by mBlend (0x200 =
-// gMapMenuCameraPos itself). Neither is the camera's own position or look-at.
+// The points the map menu's camera eases toward (map entry ids 1 and 0 at set-up), moved with the cursor. The look-at
+// eases toward gMapMenuLookAt; the position toward gMapMenuCameraPos blended toward gMapMenuLookAt by mBlend
+// (0x200 = gMapMenuCameraPos itself). Neither is the camera's own position or look-at.
 extern VecFx32 gMapMenuCameraPos;
 extern VecFx32 gMapMenuLookAt;
 int func_02019874(VecFx32 *pos);

@@ -15,9 +15,9 @@ extern "C" {
 #define PROMPT_SCREEN_BUTTON_FIRST 0x400
 #define PROMPT_SCREEN_BUTTON_SECOND 0x401
 
-// State of the two-button prompt screen: the saved display setup restored when it closes (mUnk_6c and mUnk_6e hold
-// the sub screen's 0x04001050 and 0x04001052 registers, zeroed while it is open), and the position of the buttons and
-// the text while they slide in and out.
+// State of the two-button prompt screen: the display setup it restores when it closes, and the positions of the
+// buttons and text while they slide. mUnk_6c and mUnk_6e hold the sub screen's 0x04001050 and 0x04001052 registers,
+// which are zeroed while it is open.
 typedef struct PromptScreen {
     // DrawSaveScreen also reads entry 1.
     u16 mSavedImageIds[2];
@@ -50,7 +50,7 @@ typedef struct PromptScreen {
 extern PromptScreen gPromptScreen;
 
 // A prompt (0x49 of them, indexed by the prompt number, flow value 0x14). mUnk_08 goes to SetupSharedModel with
-// mSharedModelIndex when that is not negative; mNextPromptIndex -1 means none. language_menu.c and game_system.c each
+// mSharedModelIndex when that is not negative. mNextPromptIndex -1 means none. language_menu.c and game_system.c each
 // hold a copy of the table.
 typedef struct Prompt {
     /* 00 */ s32 mLineId;
