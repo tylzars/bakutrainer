@@ -360,8 +360,9 @@ void GetPoseNodePos(VecFx32 *out, int node) {
     out->z = m._[11];
 }
 
-// c is the draw mode (mUnk_43). The three animation masks get all bits with flags bit 8, else none. mUnk_0c, mUnk_1c,
-// mUnk_24, mUnk_3f, mUnk_40, mUnk_42 and mUnk_43_5 keep their values.
+// Stores the position, a in mUnk_28, b in mUnk_38, the draw mode c in mUnk_43 and d in mUnk_3e, and clears mUnk_41,
+// mUnk_3a, mUnk_3c and the two flip bits. The three animation masks get all bits with flags bit 8, else none.
+// mUnk_0c, mUnk_1c, mUnk_24, mUnk_3f, mUnk_40, mUnk_42 and mUnk_43_5 keep their values.
 void SetDrawParams(DrawParams *p, int x, int y, int z, int a, u16 b, u8 c, u8 d, int flags) {
     p->mUnk_41 = 0;
     p->mUnk_28 = a;
